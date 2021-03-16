@@ -1,0 +1,9 @@
+{
+  "Simulator Target Bundle": "co.pointfree.IsoWordsTesting",
+  "aps": {
+    "alert": "Today’s challenge is ready! Yesterday’s results:\n  🥉 Timed: you ranked #3 out of 345\n  ✔️ Unlimited: #23 out of 5,423\nPlay again today!",
+    "sound": "default",
+    "badge": 1
+  },
+  "dailyChallengeReport": true
+}

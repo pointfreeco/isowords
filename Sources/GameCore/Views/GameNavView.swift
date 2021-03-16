@@ -1,0 +1,87 @@
+import ComposableArchitecture
+import Styleguide
+import SwiftUI
+
+struct GameNavView: View {
+  let store: Store<GameState, GameAction>
+  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+
+  struct ViewState: Equatable {
+    let isTrayAvailable: Bool
+    let isTrayVisible: Bool
+    let trayTitle: String
+
+    init(state: GameState) {
+      self.isTrayAvailable = state.isTrayAvailable
+      self.isTrayVisible = state.isTrayVisible
+      self.trayTitle = state.displayTitle
+    }
+  }
+
+  public init(
+    store: Store<GameState, GameAction>
+  ) {
+    self.store = store
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+  }
+
+  var body: some View {
+    HStack(alignment: .center, spacing: 8) {
+      Button(action: { self.viewStore.send(.trayButtonTapped, animation: .default) }) {
+        HStack {
+          Text(self.viewStore.trayTitle)
+
+          Spacer()
+
+          Image(systemName: "chevron.down")
+            .rotationEffect(.degrees(self.viewStore.isTrayVisible ? 180 : 0))
+            .opacity(self.viewStore.isTrayAvailable ? 1 : 0)
+        }
+        .adaptiveFont(.matterMedium, size: 14)
+        .foregroundColor(.adaptiveBlack)
+        .adaptivePadding()
+      }
+      .background(
+        Color.adaptiveBlack
+          .opacity(0.05)
+      )
+      .cornerRadius(12)
+      .disabled(!self.viewStore.isTrayAvailable)
+
+      Button(action: { self.viewStore.send(.menuButtonTapped, animation: .default) }) {
+        Image(systemName: "ellipsis")
+          .foregroundColor(.adaptiveBlack)
+          .adaptivePadding()
+          .rotationEffect(.degrees(90))
+      }
+      .frame(maxHeight: .infinity)
+      .background(
+        Color.adaptiveBlack
+          .opacity(0.05)
+      )
+      .cornerRadius(12)
+    }
+    .fixedSize(horizontal: false, vertical: true)
+    .padding([.leading, .trailing])
+    .adaptivePadding([.top, .bottom], 8)
+  }
+}
+
+#if DEBUG
+  import Overture
+
+  struct GameNavView_Previews: PreviewProvider {
+    static var previews: some View {
+      VStack {
+        GameNavView(
+          store: .init(
+            initialState: .init(inProgressGame: .mock),
+            reducer: .empty,
+            environment: ()
+          )
+        )
+        Spacer()
+      }
+    }
+  }
+#endif

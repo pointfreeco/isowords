@@ -1,0 +1,29 @@
+{
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "51A56598",
+      "localizations" : [
+        {
+          "description" : "Full Game!",
+          "displayName" : "Full Game!",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "co.pointfree.isowords_testing.full_game",
+      "referenceName" : "Full Game!",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 1,
+    "minor" : 0
+  }
+}

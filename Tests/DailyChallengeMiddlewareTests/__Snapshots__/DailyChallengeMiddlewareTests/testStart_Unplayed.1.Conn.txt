@@ -1,0 +1,427 @@
+POST /api/daily-challenges?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&gameMode=unlimited&language=en
+
+200 OK
+Content-Length: 8709
+Content-Type: application/json
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{
+  "dailyChallenge" : {
+    "createdAt" : 256260690,
+    "endsAt" : 256260690,
+    "gameMode" : "unlimited",
+    "gameNumber" : 1,
+    "id" : "DEADBEEF-DEAD-BEEF-DEAD-DA117C4A1132",
+    "language" : "en",
+    "puzzle" : [
+      [
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ],
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ],
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ],
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ],
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ],
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ],
+        [
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          },
+          {
+            "left" : {
+              "letter" : "A",
+              "side" : 1
+            },
+            "right" : {
+              "letter" : "B",
+              "side" : 2
+            },
+            "top" : {
+              "letter" : "C",
+              "side" : 0
+            }
+          }
+        ]
+      ]
+    ]
+  },
+  "dailyChallengePlayId" : "DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF"
+}

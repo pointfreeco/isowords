@@ -1,0 +1,429 @@
+{
+  "cubes" : [
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ]
+  ],
+  "gameMode" : "timed",
+  "language" : "en",
+  "metadata" : {
+    "playerIndexToId" : {
+      "0" : "00000000-0000-0000-0000-000000000000",
+      "1" : "00000000-0000-0000-0000-000000000001"
+    }
+  },
+  "moves" : [
+    {
+      "playedAt" : 1234567890,
+      "playerIndex" : 0,
+      "reactions" : {
+        "0" : "😇"
+      },
+      "score" : 200,
+      "type" : {
+        "playedWord" : [
+
+        ]
+      }
+    }
+  ]
+}

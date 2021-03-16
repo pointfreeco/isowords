@@ -1,0 +1,9 @@
+{
+  "Simulator Target Bundle": "co.pointfree.IsoWordsTesting",
+  "aps": {
+    "alert": "The daily challenge ends in 30 minutes! Finish your game before it’s over.",
+    "sound": "default",
+    "badge": 1
+  },
+  "dailyChallengeEndsSoon": true
+}

@@ -1,0 +1,6 @@
+module zlibLinux [system] {
+    header "/usr/include/zlib.h"
+    header "/usr/include/zconf.h"
+    link "z"
+    export *
+}

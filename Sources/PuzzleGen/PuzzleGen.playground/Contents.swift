@@ -1,0 +1,17 @@
+import PuzzleGen
+
+score("WAITER")
+score("SORCERER")
+score("SORCERERS")
+score("JAZZIEST")
+score("JAZZED")
+score("QUILTING")
+score("BEZELS")
+score("SHAM")
+score("SHAME")
+score("SHAMER")
+score("FAIL")
+score("FAILS")
+score("FAILED")
+score("FAILING")
+score("ZEALOUS")

@@ -1,0 +1,23 @@
+name: Format
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  swift_format:
+    name: swift-format
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install
+        run: brew install st3ffwo3/formulae/swift-format
+      - name: Format
+        run: make format
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Run swift-format
+          branch: 'main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

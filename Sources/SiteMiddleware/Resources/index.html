@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>isowords: word search on a vanishing cube.</title>
+
+  <link rel="apple-touch-icon" sizes="57x57" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://dbsqho33cgp4y.cloudfront.net/images/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="https://dbsqho33cgp4y.cloudfront.net/images/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://dbsqho33cgp4y.cloudfront.net/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="https://dbsqho33cgp4y.cloudfront.net/images/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://dbsqho33cgp4y.cloudfront.net/images/favicon-16x16.png">
+  <link rel="manifest" href="https://dbsqho33cgp4y.cloudfront.net/images/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="https://dbsqho33cgp4y.cloudfront.net/images/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- AppClip -->
+  <meta
+     name="apple-itunes-app"
+     content="app-clip-bundle-id=co.pointfree.IsoWordsTesting.Clip,app-id=1528246952">
+   <meta
+     name="apple-itunes-app"
+     content="app-clip-bundle-id=co.pointfree.IsoWordsTesting.Clip,app-id=1528246952">
+
+  <!-- Meta -->
+  <meta property="name" content="isowords" />
+  <meta property="description" content="An all new word search game for your phone." />
+  <meta content="width=device-width,initial-scale=1" name="viewport">
+  <meta property="og:description" content="isowords is an all new word search game for your phone" />
+  <meta property="og:image" content="https://dbsqho33cgp4y.cloudfront.net/images/twitter-card.png" />
+  <meta property="og:site_name" content="isowords" />
+  <meta property="og:title" content="isowords" />
+  <meta property="og:url" content="https://www.isowords.xyz" />
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:creator" content="@isowords" />
+  <meta property="twitter:description" content="isowords is an all new word search game for your phone." />
+  <meta property="twitter:image" content="https://dbsqho33cgp4y.cloudfront.net/images/twitter-card.png" />
+  <meta property="twitter:image:alt" content="The isowords logo: a stylized black cube against an orange-red linear gradient." />
+  <meta property="twitter:player:width" content="334" />
+  <meta property="twitter:player:height" content="720" />
+  <meta property="twitter:site" content="@isowords" />
+  <meta property="twitter:title" content="isowords" />
+
+  <!-- Styles -->
+  <link href="https://dbsqho33cgp4y.cloudfront.net/css/base.css" rel="stylesheet">
+  <link href="https://dbsqho33cgp4y.cloudfront.net/css/style.css" rel="stylesheet">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BVKZTX7L5N"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-BVKZTX7L5N');
+  </script>
+</head>
+
+  <body id="body" class="dark-mode">
+
+    <section class="max-container flex-desktop">
+      <div class="flex-1 pt4 pb4 pl4 mobile-p2">
+        <header class="pb8 mobile-pb4">
+          <div class="flex">
+            <div class="flex-1 flex">
+              <a href="/">
+                <img class="my-auto hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/app-icon.png" width="70" height="70" alt="isowords app icon" />
+                <img class="my-auto show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/app-icon-dark.png" width="70" height="70" alt="isowords app icon" />
+              </a>
+              <span class="opacity-50 my-auto">&nbsp;&nbsp;by&nbsp;&nbsp;</span>
+              <a class="my-auto hover-opacity-50 transition-all" href="https://www.pointfree.co" target="_blank">
+                <img class="hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/point-free-logo.svg" width="115" height="13" alt="Point-Free Logo" />
+                <img class="show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/point-free-logo-dark.svg" width="115" height="13" alt="Point-Free Logo" />
+              </a>
+            </div>
+            <div class="my-auto flex align-left justify-end">
+              <button class="transition-all" id="light-mode-button">light <span class="mobile-hide">mode</span></button>
+              <button class="transition-all selected" id="dark-mode-button">dark <span class="mobile-hide">mode</span></button>
+            </div>
+          </div>
+        </header>
+
+        <div class="pr4 mobile-pr0">
+          <p class="big-type">isowords <span class="opacity-50">is an all new word search game for your phone</span></p>
+          <div class="flex-desktop">
+            <div class="my-auto">
+              <a class="hover-opacity-50 transition-all" href="/app-store"><img src="https://dbsqho33cgp4y.cloudfront.net/images/app-store-badge.svg" width="170" height="57" alt="Download on the App Store" /></a>
+            </div>
+            <div class="my-auto ml1 mobile-no-margin mobile-pt2">
+              <span class="opacity-50">or&nbsp;&nbsp;</span>
+              <a href="/press-kit" class="opacity-50 hover-opacity-100 transition-all underline">view the press kit</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pt3 pb3 pr4 pl4 mobile-p2 margin-auto">
+        <div class="video">
+          <iframe class="hide-light-mode" src="https://player.vimeo.com/video/523994766?autoplay=1&controls=0&byline=0&dnt=1&loop=1&muted=1&playsinline=1" width="315" height="680" frameborder="0" allowfullscreen></iframe>
+          <iframe class="show-light-mode" src="https://player.vimeo.com/video/523828420?autoplay=1&controls=0&byline=0&dnt=1&loop=1&muted=1&playsinline=1" width="315" height="680" frameborder="0" allowfullscreen></iframe>
+          <div class="screen"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-container features pl4 pr4">
+      <div class="flex-desktop">
+        <div class="feature bg-yellow center flex-1 p3 mr1">
+          <img class="mx-auto mb3 hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/feature-1.png" width="80%" height="auto" alt="isowrds feature 1" />
+          <img class="mx-auto mb3 show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/feature-1-light-mode.png" width="80%" height="auto" alt="isowrds feature 1" />
+          <p class="no-margin pl3 pr3">Find as many words as you can on the vanishing cube</p>
+        </div>
+        <div class="feature bg-orange center flex-1 p3 ml1 mr1">
+          <img class="mx-auto mb3 hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/feature-2.png" width="80%" height="auto" alt="isowrds feature 2" />
+          <img class="mx-auto mb3 show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/feature-2-light-mode.png" width="80%" height="auto" alt="isowrds feature 2" />
+          <p class="no-margin pl3 pr3">Play timed or unlimited to refine your skills and kill time</p>
+        </div>
+        <div class="feature bg-red center flex-1 p3 ml1">
+          <img class="mx-auto mb3 hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/feature-3.png" width="80%" height="auto" alt="isowrds feature 3" />
+          <img class="mx-auto mb3 show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/feature-3-light-mode.png" width="80%" height="auto" alt="isowrds feature 3" />
+          <p class="no-margin pl3 pr3">Play against a friend with multiplayer mode</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="newsletter-signup max-container pt3 pb3 pl4 pr4 mobile-p2">
+      <div class="flex-desktop bg-gradient pl2 pr2 pt3 pb3 feature">
+        <div class="flex-2 my-auto">
+          <p class="medium-type no-margin mobile-center">Stay up to date with isowords!</p>
+        </div>
+        <div class="flex-1 my-auto mobile-pt2">
+          <!-- Begin Mailchimp Signup Form -->
+          <div id="mc_embed_signup">
+            <form action="https://hey.us7.list-manage.com/subscribe/post?u=f903124a4048e6d1e6d3efbb8&amp;id=3f6a345c7f" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                <div id="mc_embed_signup_scroll">
+            <div class="mc-field-group">
+              <label for="mce-EMAIL" class="offscreen">Email address</label>
+              <div class="flex flex-override">
+                 <input type="email" value="" name="EMAIL" class="required flex-1 email transition-all" id="mce-EMAIL" placeholder="hey@isowords.xyz" autocorrect="off" autocapitalize="none">
+                 <input type="submit" value="Sign up" name="subscribe" id="mc-embedded-subscribe" class="button block transition-all hover-opacity-50">
+                </div>
+            </div>
+              <div id="mce-responses" class="clear full-width">
+                <div class="response pt1" id="mce-error-response" style="display:none"></div>
+                <div class="response pt1" id="mce-success-response" style="display:none"></div>
+              </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+              <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_f903124a4048e6d1e6d3efbb8_3f6a345c7f" tabindex="-1" value=""></div>
+              </div>
+            </form>
+          </div>
+          <script type='text/javascript' src='https://s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+          <!--End mc_embed_signup-->
+        </div>
+      </div>
+
+    </section>
+
+    <footer class="max-container pl4 pr4 mobile-p2 mobile-center">
+      <div class="flex-desktop border-top pb2 pt2">
+        <div class="flex-1 my-auto">
+          <p class="no-margin"><span class="opacity-50">&copy; Copyright 2021</span> <a href="https://www.pointfree.co" target="_blank" class="opacity-50 underline hover-opacity-100 transition-all">Point-Free</a></p>
+        </div>
+        <div class="flex-1 flex justify-center full-width center my-auto mobile-pt2 mobile-pb2">
+          <a class="p1 opacity-50 transition-all hover-opacity-100" href="https://twitter.com/isowords" target="_blank">
+            <img class="hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/icon-twitter.svg" width="22.12" height="18" alt="Twitter Icon" />
+            <img class="show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/icon-twitter-light-mode.svg" width="22.12" height="18" alt="Twitter Icon" />
+          </a>
+          <a class="p1 opacity-50 hover-opacity-100 transition-all" href="https://github.com/pointfreeco/isowords" target="_blank" class="opacity-50">
+            <img class="hide-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/icon-github.svg" width="21" height="21" alt="Github Icon" />
+            <img class="show-light-mode" src="https://dbsqho33cgp4y.cloudfront.net/images/icon-github-light-mode.svg" width="21" height="21" alt="Github Icon" />
+          </a>
+        </div>
+        <div class="flex-1 my-auto">
+          <p class="align-right mobile-center no-margin">
+            <span class="opacity-50">isowords is an open source project, <span class="block mobile-inline"><span class="opacity-50">you can view or clone the repository</span> <a href="https://github.com/pointfreeco/isowords" class="underline transition-all opacity-50 hover-opacity-100">here</a></span></span>
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+
+      var lightModeButton = document.getElementById('light-mode-button');
+      var darkModeButton = document.getElementById('dark-mode-button');
+
+      lightModeButton.onclick=function(){
+        var bodyClasses = document.getElementById('body').classList;
+
+        bodyClasses.remove('dark-mode');
+        bodyClasses.add('light-mode');
+
+        darkModeButton.classList.remove('selected');
+        lightModeButton.classList.add('selected');
+      }
+
+      darkModeButton.onclick=function(){
+        var bodyClasses = document.getElementById('body').classList;
+
+        bodyClasses.remove('light-mode');
+        bodyClasses.add('dark-mode');
+
+        lightModeButton.classList.remove('selected');
+        darkModeButton.classList.add('selected');
+      }
+
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.getElementById('body').classList.remove('dark-mode');
+        document.getElementById('body').classList.add('light-mode');
+        lightModeButton.classList.add('selected');
+        darkModeButton.classList.remove('selected');
+      } else {
+        document.getElementById('body').classList.remove('light-mode');
+        document.getElementById('body').classList.add('dark-mode');
+        lightModeButton.classList.remove('selected');
+        darkModeButton.classList.add('selected');
+      }
+
+    </script>
+  </body>
+</html>

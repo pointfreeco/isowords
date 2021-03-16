@@ -1,0 +1,47 @@
+GET /api/current-player?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
+
+200 OK
+Content-Length: 1056
+Content-Type: application/json
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{
+  "appleReceipt" : {
+    "environment" : "Production",
+    "is-retryable" : true,
+    "receipt" : {
+      "app_item_id" : 1,
+      "application_version" : "1",
+      "bundle_id" : "co.pointfree.isowords",
+      "in_app" : [
+        {
+          "original_purchase_date_ms" : "2212875090000",
+          "original_transaction_id" : "deadbeef",
+          "product_id" : "full-game",
+          "purchase_date_ms" : "2212875090000",
+          "quantity" : "1",
+          "transaction_id" : "deadbeef"
+        }
+      ],
+      "original_purchase_date_ms" : "2212875090000",
+      "receipt_creation_date_ms" : "2212875090000",
+      "request_date_ms" : "2212875090000"
+    },
+    "status" : 0
+  },
+  "player" : {
+    "accessToken" : "ACCE5500-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+    "createdAt" : 1234567890,
+    "deviceId" : "DE71CE00-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+    "displayName" : "Blob",
+    "id" : "B10BB10B-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+    "sendDailyChallengeReminder" : true,
+    "sendDailyChallengeSummary" : true,
+    "timeZone" : "America\/New_York"
+  }
+}

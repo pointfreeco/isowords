@@ -1,0 +1,13 @@
+{
+  "APP_ENV": "development",
+  "PORT": "9876",
+  "BASE_URL": "http://localhost:9876",
+  "SECRETS": "deadbeef",
+  "DATABASE_URL": "postgres://isowords:@localhost:5432/isowords_development",
+  "AWS_ACCESS_KEY_ID": "blank-aws-access-key-id",
+  "AWS_PLATFORM_APPLICATION_ARN": "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef",
+  "AWS_PLATFORM_APPLICATION_SANDBOX_ARN": "arn:aws:sns:us-east-1:1234567890:app/APNS_SANDBOX/deadbeef",
+  "AWS_SECRET_KEY": "blank-aws-secret-key",
+  "MAILGUN_API_KEY": "blank-mailgun-api-key",
+  "MAILGUN_DOMAIN": "blank-mailgun-domain"
+}

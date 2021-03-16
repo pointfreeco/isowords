@@ -1,0 +1,571 @@
+import ApiClient
+import ClientModels
+import ComposableArchitecture
+import ComposableUserNotifications
+import DailyChallengeHelpers
+import DateHelpers
+import FileClient
+import NotificationHelpers
+import NotificationsAuthAlert
+import Overture
+import RemoteNotificationsClient
+import SharedModels
+import Styleguide
+import SwiftUI
+
+public struct DailyChallengeState: Equatable {
+  public var alert: AlertState<DailyChallengeAction>?
+  public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
+  public var inProgressDailyChallengeUnlimited: InProgressGame?
+  public var route: Route?
+  public var notificationsAuthAlert: NotificationsAuthAlertState?
+  public var userNotificationSettings: UserNotificationClient.Notification.Settings?
+
+  public enum Route: Equatable {
+    case results(DailyChallengeResultsState)
+
+    public enum Tag: Int {
+      case results
+    }
+
+    var tag: Tag {
+      switch self {
+      case .results:
+        return .results
+      }
+    }
+  }
+
+  public init(
+    alert: AlertState<DailyChallengeAction>? = nil,
+    dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
+    inProgressDailyChallengeUnlimited: InProgressGame? = nil,
+    route: Route? = nil,
+    notificationsAuthAlert: NotificationsAuthAlertState? = nil,
+    userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
+  ) {
+    self.alert = alert
+    self.dailyChallenges = dailyChallenges
+    self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
+    self.route = route
+    self.notificationsAuthAlert = notificationsAuthAlert
+    self.userNotificationSettings = userNotificationSettings
+  }
+}
+
+public enum DailyChallengeAction: Equatable {
+  case dailyChallengeResults(DailyChallengeResultsAction)
+  case delegate(DelegateAction)
+  case dismissAlert
+  case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case gameButtonTapped(GameMode)
+  case onAppear
+  case notificationButtonTapped
+  case notificationsAuthAlert(NotificationsAuthAlertAction)
+  case setNavigation(tag: DailyChallengeState.Route.Tag?)
+  case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
+  case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
+
+  public enum DelegateAction: Equatable {
+    case startGame(InProgressGame)
+  }
+}
+
+public struct DailyChallengeEnvironment {
+  var apiClient: ApiClient
+  var fileClient: FileClient
+  var mainQueue: AnySchedulerOf<DispatchQueue>
+  var mainRunLoop: AnySchedulerOf<RunLoop>
+  var remoteNotifications: RemoteNotificationsClient
+  var userNotifications: UserNotificationClient
+
+  public init(
+    apiClient: ApiClient,
+    fileClient: FileClient,
+    mainQueue: AnySchedulerOf<DispatchQueue>,
+    mainRunLoop: AnySchedulerOf<RunLoop>,
+    remoteNotifications: RemoteNotificationsClient,
+    userNotifications: UserNotificationClient
+  ) {
+    self.apiClient = apiClient
+    self.fileClient = fileClient
+    self.mainQueue = mainQueue
+    self.mainRunLoop = mainRunLoop
+    self.remoteNotifications = remoteNotifications
+    self.userNotifications = userNotifications
+  }
+
+  #if DEBUG
+    static let failing = Self(
+      apiClient: .failing,
+      fileClient: .failing,
+      mainQueue: .failing,
+      mainRunLoop: .failing,
+      remoteNotifications: .failing,
+      userNotifications: .failing
+    )
+  #endif
+}
+
+public let dailyChallengeReducer = Reducer<
+  DailyChallengeState, DailyChallengeAction, DailyChallengeEnvironment
+>.combine(
+  dailyChallengeResultsReducer
+    ._pullback(
+      state: (\DailyChallengeState.route).appending(path: /DailyChallengeState.Route.results),
+      action: /DailyChallengeAction.dailyChallengeResults,
+      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
+    ),
+
+  notificationsAuthAlertReducer
+    .optional()
+    .pullback(
+      state: \.notificationsAuthAlert,
+      action: /DailyChallengeAction.notificationsAuthAlert,
+      environment: {
+        NotificationsAuthAlertEnvironment(
+          mainQueue: $0.mainQueue,
+          remoteNotifications: $0.remoteNotifications,
+          userNotifications: $0.userNotifications
+        )
+      }
+    ),
+
+  .init { state, action, environment in
+    switch action {
+    case .dailyChallengeResults:
+      return .none
+
+    case .delegate:
+      return .none
+
+    case .dismissAlert:
+      state.alert = nil
+      return .none
+
+    case .fetchTodaysDailyChallengeResponse(.failure):
+      return .none
+
+    case let .fetchTodaysDailyChallengeResponse(.success(response)):
+      state.dailyChallenges = response
+      return .none
+
+    case let .gameButtonTapped(gameMode):
+      guard
+        let challenge = state.dailyChallenges
+          .first(where: { $0.dailyChallenge.gameMode == gameMode })
+      else { return .none }
+
+      let isPlayable: Bool
+      switch challenge.dailyChallenge.gameMode {
+      case .timed:
+        isPlayable = !challenge.yourResult.started
+      case .unlimited:
+        isPlayable = !challenge.yourResult.started || state.inProgressDailyChallengeUnlimited != nil
+      }
+
+      guard isPlayable
+      else {
+        state.alert = .alreadyPlayed(nextStartsAt: challenge.dailyChallenge.endsAt)
+        return .none
+      }
+
+      return startDailyChallenge(
+        challenge,
+        apiClient: environment.apiClient,
+        date: { environment.mainRunLoop.now.date },
+        fileClient: environment.fileClient,
+        mainRunLoop: environment.mainRunLoop
+      )
+      .catchToEffect()
+      .map(DailyChallengeAction.startDailyChallengeResponse)
+
+    case .onAppear:
+      return .merge(
+        environment.apiClient.apiRequest(
+          route: .dailyChallenge(.today(language: .en)),
+          as: [FetchTodaysDailyChallengeResponse].self
+        )
+        .receive(on: environment.mainRunLoop.animation())
+        .catchToEffect()
+        .map(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
+
+        environment.userNotifications.getNotificationSettings
+          .receive(on: environment.mainRunLoop)
+          .map(DailyChallengeAction.userNotificationSettingsResponse)
+          .eraseToEffect()
+      )
+
+    case .notificationButtonTapped:
+      state.notificationsAuthAlert = .init()
+      return .none
+
+    case .notificationsAuthAlert(.delegate(.close)):
+      state.notificationsAuthAlert = nil
+      return .none
+
+    case let .notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings))):
+      state.userNotificationSettings = settings
+      state.notificationsAuthAlert = nil
+      return .none
+
+    case .notificationsAuthAlert:
+      return .none
+
+    case .setNavigation(tag: .results):
+      state.route = .results(.init())
+      return .none
+
+    case .setNavigation(tag: .none):
+      state.route = nil
+      return .none
+
+    case let .startDailyChallengeResponse(.failure(.alreadyPlayed(endsAt))):
+      state.alert = .alreadyPlayed(nextStartsAt: endsAt)
+      return .none
+
+    case let .startDailyChallengeResponse(.failure(.couldNotFetch(nextStartsAt))):
+      state.alert = .couldNotFetchDaily(nextStartsAt: nextStartsAt)
+      return .none
+
+    case let .startDailyChallengeResponse(.success(inProgressGame)):
+      return .init(value: .delegate(.startGame(inProgressGame)))
+
+    case let .userNotificationSettingsResponse(settings):
+      state.userNotificationSettings = settings
+      return .none
+    }
+  }
+)
+
+extension AlertState where Action == DailyChallengeAction {
+  static func alreadyPlayed(nextStartsAt: Date) -> Self {
+    Self(
+      title: .init("Already played"),
+      message: .init(
+        """
+        You already played today’s daily challenge. You can play the next one in \
+        \(nextStartsAt, formatter: relativeFormatter).
+        """),
+      primaryButton: .default(.init("OK"), send: .dismissAlert),
+      secondaryButton: nil,
+      onDismiss: .dismissAlert
+    )
+  }
+
+  static func couldNotFetchDaily(nextStartsAt: Date) -> Self {
+    Self(
+      title: .init("Couldn’t start today’s daily"),
+      message: .init(
+        """
+        We’re sorry. We were unable to fetch today’s daily or you already started today’s daily \
+        earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
+        """),
+      primaryButton: .default(.init("OK"), send: .dismissAlert),
+      secondaryButton: nil,
+      onDismiss: .dismissAlert
+    )
+  }
+}
+
+public struct DailyChallengeView: View {
+  @Environment(\.adaptiveSize) var adaptiveSize
+  @Environment(\.colorScheme) var colorScheme
+  @Environment(\.date) var date
+  let store: Store<DailyChallengeState, DailyChallengeAction>
+  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeAction>
+
+  struct ViewState: Equatable {
+    let isNotificationStatusDetermined: Bool
+    let numberOfPlayers: Int
+    let routeTag: DailyChallengeState.Route.Tag?
+    let timedState: ButtonState
+    let unlimitedState: ButtonState
+
+    enum ButtonState: Equatable {
+      case played(rank: Int, outOf: Int)
+      case playable
+      case resume(currentScore: Int)
+      case unplayable
+    }
+
+    init(state: DailyChallengeState) {
+      self.isNotificationStatusDetermined = ![.notDetermined, .provisional]
+        .contains(state.userNotificationSettings?.authorizationStatus)
+      self.numberOfPlayers = state.dailyChallenges.numberOfPlayers
+      self.routeTag = state.route?.tag
+      self.timedState = .init(
+        fetchedResponse: state.dailyChallenges.timed,
+        inProgressGame: nil
+      )
+      self.unlimitedState = .init(
+        fetchedResponse: state.dailyChallenges.unlimited,
+        inProgressGame: state.inProgressDailyChallengeUnlimited
+      )
+    }
+  }
+
+  public init(store: Store<DailyChallengeState, DailyChallengeAction>) {
+    self.store = store
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
+  }
+
+  public var body: some View {
+    GeometryReader { proxy in
+      VStack {
+        Spacer()
+          .frame(maxHeight: .grid(16))
+
+        if self.viewStore.numberOfPlayers <= 1 {
+          VStack(spacing: -8) {
+            Text("Play")
+            Text("against the")
+            Text("community")
+          }
+          .font(.custom(.matter, size: self.adaptiveSize.pad(48, by: 2)))
+        } else {
+          VStack(spacing: 32) {
+            VStack(spacing: -8) {
+              Text("\(self.viewStore.numberOfPlayers)")
+              Text("people have")
+              Text("played!")
+            }
+            .font(.custom(.matterMedium, size: self.adaptiveSize.pad(48, by: 2)))
+            (Text("(") + Text(timeDescriptionUntilTomorrow(now: self.date())) + Text(" left)"))
+              .adaptiveFont(.matter, size: 20)
+          }
+        }
+
+        Spacer()
+
+        LazyVGrid(
+          columns: [
+            GridItem(.flexible(), spacing: 16),
+            GridItem(.flexible()),
+          ]
+        ) {
+          GameButton(
+            title: Text("Timed"),
+            icon: Image(systemName: "clock.fill"),
+            color: .dailyChallenge,
+            inactiveText: self.viewStore.timedState.inactiveText,
+            resumeText: self.viewStore.timedState.resumeText,
+            action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
+          )
+          GameButton(
+            title: Text("Unlimited"),
+            icon: Image(systemName: "infinity"),
+            color: .dailyChallenge,
+            inactiveText: self.viewStore.unlimitedState.inactiveText,
+            resumeText: self.viewStore.unlimitedState.resumeText,
+            action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
+          )
+        }
+        .adaptivePadding([.vertical])
+        .screenEdgePadding(.horizontal)
+
+        NavigationLink(
+          destination: IfLetStore(
+            self.store.scope(
+              state: (\DailyChallengeState.route)
+                .appending(path: /DailyChallengeState.Route.results)
+                .extract(from:),
+              action: DailyChallengeAction.dailyChallengeResults
+            ),
+            then: DailyChallengeResultsView.init(store:)
+          ),
+          tag: DailyChallengeState.Route.Tag.results,
+          selection: viewStore.binding(
+            get: \.routeTag,
+            send: DailyChallengeAction.setNavigation(tag:)
+          )
+        ) {
+          HStack {
+            Text("View all results")
+              .adaptiveFont(.matterMedium, size: 16)
+            Spacer()
+            Image(systemName: "arrow.right")
+              .font(.system(size: self.adaptiveSize.pad(16)))
+          }
+          .adaptivePadding(.horizontal, .grid(5))
+          .adaptivePadding(.vertical, .grid(9))
+          .padding(.bottom, proxy.safeAreaInsets.bottom / 2)
+        }
+        .frame(maxWidth: .infinity)
+        .foregroundColor((self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge))
+        .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
+      }
+      .onAppear { self.viewStore.send(.onAppear) }
+      .alert(self.store.scope(state: \.alert))
+      .navigationStyle(
+        backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
+        foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
+        title: Text("Daily Challenge"),
+        trailing: Group {
+          if !self.viewStore.isNotificationStatusDetermined {
+            ReminderBell {
+              self.viewStore.send(.notificationButtonTapped, animation: .default)
+            }
+            .transition(
+              AnyTransition
+                .scale(scale: 0)
+                .animation(Animation.easeOut.delay(1))
+            )
+          }
+        }
+      )
+      .edgesIgnoringSafeArea(.bottom)
+    }
+    .notificationsAlert(
+      store: self.store.scope(
+        state: \.notificationsAuthAlert,
+        action: DailyChallengeAction.notificationsAuthAlert
+      )
+    )
+  }
+}
+
+extension DailyChallengeView.ViewState.ButtonState {
+  init(
+    fetchedResponse: FetchTodaysDailyChallengeResponse?,
+    inProgressGame: InProgressGame?
+  ) {
+    if let rank = fetchedResponse?.yourResult.rank,
+      let outOf = fetchedResponse?.yourResult.outOf
+    {
+      self = .played(rank: rank, outOf: outOf)
+    } else if let currentScore = inProgressGame?.currentScore {
+      self = .resume(currentScore: currentScore)
+    } else if fetchedResponse?.yourResult.rank != nil,
+      fetchedResponse?.dailyChallenge.gameMode == .timed,
+      fetchedResponse?.yourResult.started == .some(true)
+    {
+      self = .unplayable
+    } else {
+      self = .playable
+    }
+  }
+
+  var inactiveText: Text? {
+    switch self {
+    case let .played(rank: rank, outOf: outOf):
+      return Text("Played\n(#\(rank) of \(outOf))")
+    case .resume:
+      return nil
+    case .playable:
+      return nil
+    case .unplayable:
+      return Text("Played")
+    }
+  }
+
+  var resumeText: Text? {
+    switch self {
+    case .played:
+      return nil
+    case let .resume(currentScore: currentScore):
+      return currentScore > 0 ? Text("\(currentScore) pts") : nil
+    case .playable:
+      return nil
+    case .unplayable:
+      return nil
+    }
+  }
+}
+
+private let relativeFormatter = RelativeDateTimeFormatter()
+
+private struct ReminderBell: View {
+  @State var shake = false
+  let action: () -> Void
+
+  var body: some View {
+    Button(action: self.action) {
+      Image(systemName: "bell.badge.fill")
+        .font(.system(size: 20))
+        .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
+        .onAppear {
+          withAnimation(Animation.easeInOut(duration: 1).delay(2)) {
+            self.shake = true
+          }
+        }
+    }
+  }
+}
+
+private struct RingEffect: GeometryEffect {
+  var animatableData: CGFloat
+
+  func effectValue(size: CGSize) -> ProjectionTransform {
+    ProjectionTransform(
+      CGAffineTransform(rotationAngle: -.pi / 30 * sin(animatableData * .pi * 10))
+    )
+  }
+}
+
+#if DEBUG
+  import SwiftUIHelpers
+
+  struct DailyChallengeView_Previews: PreviewProvider {
+    static var previews: some View {
+      Preview {
+        NavigationView {
+          DailyChallengeView(store: .dailyChallenge)
+        }
+      }
+    }
+  }
+
+  extension Store where State == DailyChallengeState, Action == DailyChallengeAction {
+    static var dailyChallenge: Self {
+      let environment = update(
+        DailyChallengeEnvironment(
+          apiClient: .noop,
+          fileClient: .noop,
+          mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
+          mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
+          remoteNotifications: .noop,
+          userNotifications: .noop
+        )
+      ) {
+        $0.apiClient.apiRequest = { route in
+          switch route {
+          case .dailyChallenge(.today(language: _)):
+            return .ok([
+              FetchTodaysDailyChallengeResponse(
+                dailyChallenge: .init(
+                  endsAt: .distantFuture,
+                  gameMode: .timed,
+                  id: .init(rawValue: .deadbeef),
+                  language: .en
+                ),
+                yourResult: .init(outOf: 3_632, rank: 3_632, score: 2_350)
+              ),
+              FetchTodaysDailyChallengeResponse(
+                dailyChallenge: .init(
+                  endsAt: .distantFuture,
+                  gameMode: .unlimited,
+                  id: .init(rawValue: .deadbeef),
+                  language: .en
+                ),
+                yourResult: .init(outOf: 2_298, rank: nil, score: nil)
+              ),
+            ])
+          default:
+            fatalError()
+          }
+        }
+      }
+
+      return Self(
+        initialState: .init(
+          inProgressDailyChallengeUnlimited: update(.mock) {
+            $0?.moves = [.highScoringMove]
+          }
+        ),
+        reducer: dailyChallengeReducer,
+        environment: environment
+      )
+    }
+  }
+#endif

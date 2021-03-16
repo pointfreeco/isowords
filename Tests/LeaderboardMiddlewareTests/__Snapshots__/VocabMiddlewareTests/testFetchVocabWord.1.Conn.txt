@@ -1,0 +1,455 @@
+GET /api/leaderboard-scores/vocab/words/deadbeef-dead-beef-dead-beefdead304d?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
+
+200 OK
+Content-Length: 8339
+Content-Type: application/json
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{
+  "moveIndex" : 0,
+  "moves" : [
+    {
+      "playedAt" : 1234567890,
+      "score" : 100,
+      "type" : {
+        "playedWord" : [
+          {
+            "index" : {
+              "x" : 0,
+              "y" : 0,
+              "z" : 0
+            },
+            "side" : 1
+          },
+          {
+            "index" : {
+              "x" : 0,
+              "y" : 0,
+              "z" : 0
+            },
+            "side" : 2
+          },
+          {
+            "index" : {
+              "x" : 0,
+              "y" : 0,
+              "z" : 0
+            },
+            "side" : 0
+          }
+        ]
+      }
+    }
+  ],
+  "playerDisplayName" : "Blob",
+  "playerId" : "DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+  "puzzle" : [
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ]
+  ]
+}

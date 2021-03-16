@@ -1,0 +1,30 @@
+GET /api/leaderboard-scores/week-in-review?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en
+
+200 OK
+Content-Length: 239
+Content-Type: application/json
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{
+  "ranks" : [
+    {
+      "gameMode" : "timed",
+      "outOf" : 10,
+      "rank" : 9
+    },
+    {
+      "gameMode" : "unlimited",
+      "outOf" : 10,
+      "rank" : 2
+    }
+  ],
+  "word" : {
+    "letters" : "GAME",
+    "score" : 36
+  }
+}

@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  db:
+    environment:
+      POSTGRES_DB: isowords_development
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_USER: isowords
+    image: postgres
+    ports:
+      - '5434:5432'
+    restart: always
+
+  web:
+    build:
+      context: .
+      dockerfile: Bootstrap/development.dockerfile
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://isowords:@db:5432/isowords_development
+    ports:
+      - '9876:9876'

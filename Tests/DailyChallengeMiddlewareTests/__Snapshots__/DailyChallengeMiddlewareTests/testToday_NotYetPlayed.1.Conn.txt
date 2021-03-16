@@ -1,0 +1,38 @@
+GET /api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en
+
+200 OK
+Content-Length: 498
+Content-Type: application/json
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+[
+  {
+    "dailyChallenge" : {
+      "endsAt" : 256260690,
+      "gameMode" : "timed",
+      "id" : "DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+      "language" : "en"
+    },
+    "yourResult" : {
+      "outOf" : 100,
+      "started" : false
+    }
+  },
+  {
+    "dailyChallenge" : {
+      "endsAt" : 256260690,
+      "gameMode" : "unlimited",
+      "id" : "DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+      "language" : "en"
+    },
+    "yourResult" : {
+      "outOf" : 100,
+      "started" : false
+    }
+  }
+]

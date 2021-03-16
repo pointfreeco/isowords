@@ -1,0 +1,476 @@
+POST /api/sharedGames?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
+
+{
+  "cubes" : [
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ],
+    [
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ],
+      [
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        },
+        {
+          "left" : {
+            "letter" : "A",
+            "side" : 1
+          },
+          "right" : {
+            "letter" : "B",
+            "side" : 2
+          },
+          "top" : {
+            "letter" : "C",
+            "side" : 0
+          }
+        }
+      ]
+    ]
+  ],
+  "gameContext" : {
+    "solo" : true
+  },
+  "gameMode" : "timed",
+  "gameStartTime" : 1234567890,
+  "language" : "en",
+  "moves" : [
+    {
+      "playedAt" : 1234567890,
+      "score" : 0,
+      "type" : {
+        "removedCube" : {
+          "x" : 0,
+          "y" : 0,
+          "z" : 0
+        }
+      }
+    },
+    {
+      "playedAt" : 1234567890,
+      "score" : 10,
+      "type" : {
+        "playedWord" : [
+          {
+            "index" : {
+              "x" : 0,
+              "y" : 0,
+              "z" : 0
+            },
+            "side" : 1
+          },
+          {
+            "index" : {
+              "x" : 0,
+              "y" : 0,
+              "z" : 0
+            },
+            "side" : 2
+          },
+          {
+            "index" : {
+              "x" : 0,
+              "y" : 0,
+              "z" : 0
+            },
+            "side" : 0
+          }
+        ]
+      }
+    }
+  ],
+  "secondsPlayed" : 0
+}
+
+200 OK
+Content-Length: 134
+Content-Type: application/json
+Referrer-Policy: strict-origin-when-cross-origin
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{
+  "code" : "deadbeef",
+  "id" : "DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF",
+  "url" : "http:\/\/localhost:9876\/sharedGames\/deadbeef"
+}
