@@ -269,6 +269,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   Reducer { state, action, environment in
     struct DidBecomeActiveId: Hashable {}
     struct PaymentObserverId: Hashable {}
+    struct UpdateRemoteSettingsId: Hashable {}
 
     switch action {
     case .binding(\.developer.currentBaseUrl):
@@ -314,8 +315,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       }
 
     case .binding(\.sendDailyChallengeReminder):
-      struct CancelId: Hashable {}
-      return .concatenate(
+      return Effect.concatenate(
         environment.apiClient.apiRequest(
           route: .push(
             .updateSetting(
@@ -326,16 +326,15 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
             )
           )
         )
-        .debounce(id: CancelId(), for: 1, scheduler: environment.mainQueue)
         .fireAndForget(),
         environment.apiClient.refreshCurrentPlayer()
           .catchToEffect()
           .map(SettingsAction.currentPlayerRefreshed)
       )
+      .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.sendDailyChallengeSummary):
-      struct CancelId: Hashable {}
-      return .concatenate(
+      return Effect.concatenate(
         environment.apiClient.apiRequest(
           route: .push(
             .updateSetting(
@@ -346,12 +345,12 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
             )
           )
         )
-        .debounce(id: CancelId(), for: 1, scheduler: environment.mainQueue)
         .fireAndForget(),
         environment.apiClient.refreshCurrentPlayer()
           .catchToEffect()
           .map(SettingsAction.currentPlayerRefreshed)
       )
+      .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.userSettings.appIcon):
       return environment.applicationClient

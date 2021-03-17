@@ -198,6 +198,69 @@ class SettingsFeatureTests: XCTestCase {
     store.send(.onDismiss)
   }
 
+  func testNotifications_DebounceRemoteSettingsUpdates() {
+    let mainQueue = DispatchQueue.testScheduler
+
+    var environment = self.defaultEnvironment
+    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
+    environment.apiClient.override(
+      route: .push(
+        .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: true))
+      ),
+      withResponse: .none
+    )
+    environment.apiClient.override(
+      route: .push(
+        .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
+      ),
+      withResponse: .none
+    )
+    environment.applicationClient.alternateIconName = { nil }
+    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.fileClient.save = { _, _ in .none }
+    environment.mainQueue = mainQueue.eraseToAnyScheduler()
+    environment.remoteNotifications.register = { .none }
+    environment.serverConfig.config = { .init() }
+    environment.userDefaults.boolForKey = { _ in false }
+    environment.userNotifications.getNotificationSettings = .init(
+      value: .init(authorizationStatus: .authorized)
+    )
+
+    let store = TestStore(
+      initialState: SettingsState(),
+      reducer: settingsReducer,
+      environment: environment
+    )
+
+    store.send(.onAppear) {
+      $0.buildNumber = 42
+      $0.developer.currentBaseUrl = .localhost
+      $0.fullGamePurchasedAt = .mock
+    }
+
+    mainQueue.advance()
+
+    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+      $0.enableNotifications = true
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+    }
+
+    store.send(.binding(.set(\.sendDailyChallengeReminder, true))) {
+      $0.sendDailyChallengeReminder = true
+    }
+    mainQueue.advance(by: 0.5)
+
+    store.send(.binding(.set(\.sendDailyChallengeSummary, true))) {
+      $0.sendDailyChallengeSummary = true
+    }
+    mainQueue.advance(by: 0.5)
+    mainQueue.advance(by: 0.5)
+
+    store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
+
+    store.send(.onDismiss)
+  }
+
   // MARK: - Sounds
 
   func testSetMusicVolume() {
