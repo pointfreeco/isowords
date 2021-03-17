@@ -15,6 +15,7 @@ extension AudioPlayerClient {
                 files[sound] = AudioPlayer(category: sound.category, url: url)
               }
             }
+            guard !files.isEmpty else { return }
             try? audioEngine.start()
           }
         }
