@@ -261,8 +261,8 @@ public let onboardingReducer = Reducer<
     .game(.wordSubmitButton(.delegate(.confirmSubmit))):
     switch state.step {
     case .step5_Submit where state.game.selectedWordString == "GAME",
-      .step8_FindCubes where state.game.selectedWordString == "CUBES",
-      .step12_CubeIsShaking where state.game.selectedWordString == "REMOVE",
+         .step8_FindCubes where state.game.selectedWordString == "CUBE",
+      .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
       .step16_FindAnyWord where environment.dictionary.contains(state.game.selectedWordString, .en):
 
       state.step.next()
@@ -398,11 +398,11 @@ public let onboardingReducer = Reducer<
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in
   switch state.step {
   case .step4_FindGame where selectedWord == "GAME",
-    .step11_FindRemove where selectedWord == "REMOVE":
+       .step11_FindRemove where selectedWord.isRemove:
     state.step.next()
     return .none
   case .step5_Submit where selectedWord != "GAME",
-    .step12_CubeIsShaking where selectedWord != "REMOVE":
+       .step12_CubeIsShaking where !selectedWord.isRemove:
     state.step.previous()
     return .none
   default:
@@ -632,5 +632,11 @@ extension Puzzle {
     cubes.2.0.0.right.letter = "E"
 
     return cubes
+  }
+}
+
+extension String {
+  var isRemove: Bool {
+    self == "REMOVE" || self == "REMOVES"
   }
 }

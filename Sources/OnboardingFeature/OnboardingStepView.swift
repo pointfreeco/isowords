@@ -30,9 +30,9 @@ struct OnboardingStepView: View {
       case .step5_Submit:
         self.isSubmitButtonVisible = state.game.selectedWordString == "GAME"
       case .step8_FindCubes:
-        self.isSubmitButtonVisible = state.game.selectedWordString == "CUBES"
+        self.isSubmitButtonVisible = state.game.selectedWordString == "CUBE"
       case .step12_CubeIsShaking:
-        self.isSubmitButtonVisible = state.game.selectedWordString == "REMOVE"
+        self.isSubmitButtonVisible = state.game.selectedWordString.isRemove
       case .step16_FindAnyWord:
         self.isSubmitButtonVisible = !state.game.selectedWordString.isEmpty
       default:
