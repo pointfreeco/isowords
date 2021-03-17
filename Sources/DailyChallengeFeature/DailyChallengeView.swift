@@ -316,25 +316,31 @@ public struct DailyChallengeView: View {
         Spacer()
           .frame(maxHeight: .grid(16))
 
-        if self.viewStore.numberOfPlayers <= 1 {
-          VStack(spacing: -8) {
-            Text("Play")
-            Text("against the")
-            Text("community")
-          }
-          .font(.custom(.matter, size: self.adaptiveSize.pad(48, by: 2)))
-        } else {
-          VStack(spacing: 32) {
-            VStack(spacing: -8) {
-              Text("\(self.viewStore.numberOfPlayers)")
-              Text("people have")
-              Text("played!")
+        VStack(spacing: .grid(8)) {
+          Group {
+            if self.viewStore.numberOfPlayers <= 1 {
+              (
+                Text("Play")
+                  + Text("\nagainst the")
+                  + Text("\ncommunity")
+              )
+            } else {
+              (
+                Text("\(self.viewStore.numberOfPlayers)")
+                  + Text("\npeople have")
+                  + Text("\nplayed!")
+              )
             }
-            .font(.custom(.matterMedium, size: self.adaptiveSize.pad(48, by: 2)))
-            (Text("(") + Text(timeDescriptionUntilTomorrow(now: self.date())) + Text(" left)"))
-              .adaptiveFont(.matter, size: 20)
           }
+          .font(.custom(.matterMedium, size: self.adaptiveSize.pad(48, by: 2)))
+          .lineLimit(3)
+          .minimumScaleFactor(0.2)
+          .multilineTextAlignment(.center)
+
+          (Text("(") + Text(timeDescriptionUntilTomorrow(now: self.date())) + Text(" left)"))
+            .adaptiveFont(.matter, size: 20)
         }
+        .screenEdgePadding(.horizontal)
 
         Spacer()
 

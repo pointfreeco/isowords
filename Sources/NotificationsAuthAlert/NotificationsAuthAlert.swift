@@ -106,12 +106,15 @@ struct NotificationsAuthAlert: View {
 
       ZStack(alignment: .topTrailing) {
         VStack(spacing: .grid(8)) {
-          (Text("Want to get\nnotified about\n")
-            + Text("your ranks?").fontWeight(.medium))
-            .adaptiveFont(.matter, size: 28)
-            .foregroundColor(.dailyChallenge)
-            .lineLimit(.max)
-            .multilineTextAlignment(.center)
+          (
+            Text("Want to get notified about ")
+              + Text("your ranks?").fontWeight(.medium)
+          )
+          .adaptiveFont(.matter, size: 28)
+          .foregroundColor(.dailyChallenge)
+          .lineLimit(.max)
+          .minimumScaleFactor(0.2)
+          .multilineTextAlignment(.center)
 
           Button(action: { viewStore.send(.turnOnNotificationsButtonTapped, animation: .default) })
           {
@@ -120,7 +123,7 @@ struct NotificationsAuthAlert: View {
           .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
         }
         .padding(.top, .grid(4))
-        .padding(.grid(12))
+        .padding(.grid(8))
         .background(Color.black)
 
         Button(action: { viewStore.send(.closeButtonTapped, animation: .default) }) {

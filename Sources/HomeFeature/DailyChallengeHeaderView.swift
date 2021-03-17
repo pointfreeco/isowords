@@ -125,7 +125,6 @@ struct DailyChallengeHeaderView: View {
         }
         .foregroundColor(self.colorScheme == .dark ? yellow6 : .isowordsBlack)
         .adaptiveFont(.matter, size: 12)
-        .lineLimit(nil)
         .padding(.top)
       }
     }
