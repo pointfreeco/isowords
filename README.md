@@ -76,7 +76,8 @@ For example, [here](https://github.com/pointfreeco/isowords/blob/main/App/Previe
 
 This repo contains both the client and server code for running the entire [isowords](https://www.isowords.xyz) application, as well as an extensive test suite. To get things running:
 
-1. Open up a terminal window and grab the code:
+1. Make sure [`git-lfs`](https://git-lfs.github.com) is installed so that app assets (images, etc.) can be fetched.
+1. Grab the code:
     ```sh
     git clone https://github.com/pointfreeco/isowords
     cd isowords
@@ -86,7 +87,7 @@ This repo contains both the client and server code for running the entire [isowo
         ```sh
         make bootstrap-client
         ```
-    2. If you want to build the client and server make sure [PostgreSQL](https://www.postgresql.org/) is installed and running, and then run the following bootstrap command:
+    1. If you want to build the client and server make sure [PostgreSQL](https://www.postgresql.org/) is installed and running, and then run the following bootstrap command:
         ```sh
         make bootstrap
         ```

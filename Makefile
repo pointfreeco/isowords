@@ -4,6 +4,8 @@ endif
 
 bootstrap: bootstrap-client bootstrap-server
 
+homebrew: homebrew-client homebrew-server
+
 test: test-client build-client-preview-apps test-server
 
 clean: clean-client clean-server
@@ -15,6 +17,11 @@ bootstrap-client: check-dependencies-client audio fonts words-import words-impor
 check-dependencies-client:
 ifdef PRIVATE
 	@$(MAKE) homebrew-client
+else
+	@echo "  ⚠️  Checking for Git LFS..."
+	@command -v git-lfs >/dev/null || (echo "$$GITLFS_ERROR_INSTALL" && exit 1)
+	@echo "  ✅ Git LFS is good to go!"
+	@git lfs pull
 endif
 
 PLATFORM_IOS = iOS Simulator,name=iPhone 12 Pro,OS=14.4
@@ -56,7 +63,8 @@ build-client-preview-apps:
 
 clean-client: clean-audio
 
-homebrew-client: homebrew
+homebrew-client: homebrew-shared
+	@brew ls ffmpeg --versions || brew install ffmpeg
 
 audio: audio-clean audio-touch audio-download audio-sounds audio-music
 
@@ -185,8 +193,12 @@ test-server-linux:
 
 clean-server: clean-db
 
-homebrew-server: homebrew
+homebrew-server: homebrew-shared
 	@brew ls postgresql@12 --versions || brew install postgresql@12
+	@if test "$(PRIVATE)" != ""; then \
+		brew tap heroku/brew; \
+		brew ls heroku --versions || brew install heroku; \
+		fi
 
 db:
 	@createuser --superuser isowords || true
@@ -204,13 +216,8 @@ env-example:
 
 # shared
 
-homebrew:
-	@brew ls ffmpeg --versions || brew install ffmpeg
+homebrew-shared:
 	@brew ls git-lfs --versions || brew install git-lfs
-	@if test "$(PRIVATE)" != ""; then \
-		brew tap heroku/brew; \
-		brew ls heroku --versions || brew install heroku; \
-		fi
 
 # private
 
@@ -276,6 +283,20 @@ format:
 
 loc:
 	find . -name '*.swift' | xargs wc -l | sort -nr
+
+	GITLFS_ERROR_INSTALL
+define GITLFS_ERROR_INSTALL
+  🛑 Git LFS not installed! isowords stores its assets in Git LFS.
+
+     Install it with your favorite package manager, e.g.:
+
+       $$ \033[1mbrew\033[0m \033[38;5;66minstall git-lfs\033[0m
+
+		 And run:
+
+			 $$ \033[1mgit\033[0m \033[38;5;66mlfs pull\033[0m
+
+endef
 
 define POSTGRES_ERROR_INSTALL
   🛑 PostgreSQL not found! The isowords backend depends on this.
