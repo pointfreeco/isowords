@@ -58,42 +58,39 @@ struct OnboardingStepView: View {
             Group {
               if self.viewStore.step == .step1_Welcome {
                 FullscreenStepView(
-                  Text("Hello!\nWelcome\nto ")
+                  Text("Hello!\nWelcome to ")
                     + Text("isowords").fontWeight(.medium)
-                    + Text(", a\nword game.")
+                    + Text(", a word game.")
                 )
               }
               if self.viewStore.step == .step2_FindWordsOnCube {
                 FullscreenStepView(
-                  Text("The point of\n")
-                    + Text("the game is\n")
-                    + Text("to find words\n")
-                    + Text("on a ") + Text("cube").fontWeight(.medium) + Text(".")
+                  Text("The point of the game is to find words on a ")
+                    + Text("cube").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step3_ConnectLettersTouching {
                 FullscreenStepView(
-                  Text("Words are\n")
-                    + Text("formed by\n")
-                    + Text("connecting\n")
-                    + Text("letters that are\n")
-                    + Text("touching").fontWeight(.medium) + Text(".")
+                  Text("Words are formed by connecting letters that are ")
+                    + Text("touching").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step4_FindGame {
                 InlineStepView(
                   height: height,
-                  Text("Let's try!\n")
-                    + Text("Connect letters\n")
-                    + Text("to form ") + Text("GAME").fontWeight(.medium) + Text(".")
+                  Text("Let’s try!\nConnect letters to form ")
+                    + Text("GAME").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step5_Submit {
                 InlineStepView(
                   height: height,
-                  Text("Now submit the\n")
-                    + Text("word by tapping\n")
-                    + Text("the ") + Text("thumbs up").fontWeight(.medium) + Text(".")
+                  Text("Now submit the word by tapping the ")
+                    + Text("thumbs up").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step6_Congrats {
@@ -104,18 +101,17 @@ struct OnboardingStepView: View {
               }
               if self.viewStore.step == .step7_BiggerCube {
                 FullscreenStepView(
-                  Text("Let’s find\n")
-                    + Text("another word,\n")
-                    + Text("but this time\n")
-                    + Text("with more\n")
-                    + Text("letters revealed").fontWeight(.medium) + Text(".")
+                  Text("Let’s find another word, but this time with more ")
+                    + Text("letters revealed").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step8_FindCubes {
                 InlineStepView(
                   height: height,
-                  Text("Find and submit\n")
-                    + Text("the word ") + Text("CUBES").fontWeight(.medium) + Text(".")
+                  Text("Find and submit the word ")
+                    + Text("CUBES").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step9_Congrats {
@@ -126,10 +122,9 @@ struct OnboardingStepView: View {
               }
               if self.viewStore.step == .step10_CubeDisappear {
                 FullscreenStepView(
-                  Text("You can use\n")
-                    + Text("each letter three\n")
-                    + Text("times before the\n")
-                    + Text("cube ") + Text("disappears").fontWeight(.medium) + Text(".")
+                  Text("You can use each letter three times before the cube ")
+                    + Text("disappears").fontWeight(.medium)
+                    + Text(".")
                 )
               }
             }
@@ -137,18 +132,17 @@ struct OnboardingStepView: View {
               if self.viewStore.step == .step11_FindRemove {
                 InlineStepView(
                   height: height,
-                  Text("Let’s try it!\n")
-                    + Text("Find the word\n")
-                    + Text("REMOVE").fontWeight(.medium) + Text(".")
+                  Text("Let’s try it!\nFind the word ")
+                    + Text("REMOVE").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step12_CubeIsShaking {
                 InlineStepView(
                   height: height,
-                  Text("The shaking cube\n")
-                    + Text("means it will\n")
-                    + Text("disappear").fontWeight(.medium) + Text(". Now\n")
-                    + Text("submit the word.")
+                  Text("The shaking cube means it will ")
+                    + Text("disappear").fontWeight(.medium)
+                    + Text(". Now submit the word.")
                 )
               }
               if self.viewStore.step == .step13_Congrats {
@@ -160,56 +154,48 @@ struct OnboardingStepView: View {
               }
               if self.viewStore.step == .step14_LettersRevealed {
                 FullscreenStepView(
-                  Text("As cubes are\n")
-                    + Text("removed the\n")
-                    + Text("letters inside are\n")
-                    + Text("revealed, helping\n")
-                    + Text("you find more\n")
-                    + Text("words").fontWeight(.medium) + Text(".")
+                  Text(
+                    "As cubes are removed the letters inside are revealed, helping you find more "
+                  )
+                  + Text("words").fontWeight(.medium)
+                  + Text(".")
                 )
               }
               if self.viewStore.step == .step15_FullCube {
                 FullscreenStepView(
-                  Text("Good job so\n")
-                    + Text("far, but the\n")
-                    + Text("real game is\n")
-                    + Text("played with all\n")
-                    + Text("letters ") + Text("revealed").fontWeight(.medium) + Text(".")
+                  Text("Good job so far, but the real game is played with all letters ")
+                    + Text("revealed").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step16_FindAnyWord {
                 InlineStepView(
                   height: height,
-                  Text("Find ") + Text("any").fontWeight(.medium) + Text(" word\n")
-                    + Text("on the full cube.")
+                  Text("Find ")
+                    + Text("any").fontWeight(.medium)
+                    + Text(" word on the full cube.")
                 )
               }
               if self.viewStore.step == .step17_Congrats {
                 InlineStepView(
                   height: height,
-                  Text("That's a great\n")
-                    + Text("word!")
+                  Text("That’s a great one!")
                 )
               }
               if self.viewStore.step == .step18_OneLastThing {
                 FullscreenStepView(
-                  Text("One last thing.\n")
-                    + Text("You can remove\n")
-                    + Text("a cube by\n")
-                    + Text("double tapping\n").fontWeight(.medium)
-                    + Text("it. This can\n")
-                    + Text("be handy\n")
-                    + Text("for exposing\n")
-                    + Text("more letters").fontWeight(.medium) + Text(".")
+                  Text("One last thing.\nYou can remove a cube by double-tapping it. ")
+                    + Text("This can be handy for exposing ")
+                    + Text("more letters").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step19_DoubleTapToRemove {
                 InlineStepView(
                   height: height,
-                  Text("Let’s try it.\n")
-                    + Text("Double tap\n")
-                    + Text("any cube to\n")
-                    + Text("remove").fontWeight(.medium) + Text(" it.")
+                  Text("Let’s try it.\nDouble tap any cube to ")
+                    + Text("remove").fontWeight(.medium)
+                    + Text(" it.")
                 )
               }
             }
@@ -224,21 +210,14 @@ struct OnboardingStepView: View {
                 switch self.viewStore.presentationStyle {
                 case .demo:
                   FullscreenStepView(
-                    Text("Ok, ready?\n")
-                      + Text("Let’s try a\n")
-                      + Text("3 minute timed\n")
-                      + Text("game!\n")
+                    Text("Ok, ready?\n Let’s try a 3 minute timed game!")
                   )
 
                 case .firstLaunch, .help:
                   FullscreenStepView(
-                    Text("Ok, there’s more\n")
-                      + Text("strategy to the\n")
-                      + Text("game, but the\n")
-                      + Text("only way to\n")
-                      + Text("learn is to\n")
-                      + Text("play a game\n").fontWeight(.medium)
-                      + Text("yourself").fontWeight(.medium) + Text("!")
+                    Text("Ok, there’s more strategy to the game, but the only way to learn is to ")
+                      + Text("play a game yourself").fontWeight(.medium)
+                      + Text("!")
                   )
                 }
               }
@@ -366,6 +345,7 @@ private struct FullscreenStepView: View {
   var body: some View {
     self.text
       .adaptiveFont(.matter, size: 40)
+      .minimumScaleFactor(0.2)
   }
 }
 
@@ -381,6 +361,7 @@ private struct InlineStepView: View {
   var body: some View {
     self.text
       .adaptiveFont(.matter, size: 28)
+      .minimumScaleFactor(0.2)
       .frame(height: self.height)
   }
 }
