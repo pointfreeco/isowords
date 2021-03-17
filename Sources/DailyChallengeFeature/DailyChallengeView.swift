@@ -319,17 +319,13 @@ public struct DailyChallengeView: View {
         VStack(spacing: .grid(8)) {
           Group {
             if self.viewStore.numberOfPlayers <= 1 {
-              (
-                Text("Play")
-                  + Text("\nagainst the")
-                  + Text("\ncommunity")
-              )
+              (Text("Play")
+                + Text("\nagainst the")
+                + Text("\ncommunity"))
             } else {
-              (
-                Text("\(self.viewStore.numberOfPlayers)")
-                  + Text("\npeople have")
-                  + Text("\nplayed!")
-              )
+              (Text("\(self.viewStore.numberOfPlayers)")
+                + Text("\npeople have")
+                + Text("\nplayed!"))
             }
           }
           .font(.custom(.matterMedium, size: self.adaptiveSize.pad(48, by: 2)))

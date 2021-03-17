@@ -157,8 +157,8 @@ struct OnboardingStepView: View {
                   Text(
                     "As cubes are removed the letters inside are revealed, helping you find more "
                   )
-                  + Text("words").fontWeight(.medium)
-                  + Text(".")
+                    + Text("words").fontWeight(.medium)
+                    + Text(".")
                 )
               }
               if self.viewStore.step == .step15_FullCube {
