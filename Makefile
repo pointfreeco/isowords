@@ -4,6 +4,8 @@ endif
 
 bootstrap: bootstrap-client bootstrap-server
 
+homebrew: homebrew-client homebrew-server
+
 test: test-client build-client-preview-apps test-server
 
 clean: clean-client clean-server
@@ -61,7 +63,7 @@ build-client-preview-apps:
 
 clean-client: clean-audio
 
-homebrew-client: homebrew
+homebrew-client: homebrew-shared
 	@brew ls ffmpeg --versions || brew install ffmpeg
 
 audio: audio-clean audio-touch audio-download audio-sounds audio-music
@@ -191,8 +193,12 @@ test-server-linux:
 
 clean-server: clean-db
 
-homebrew-server: homebrew
+homebrew-server: homebrew-shared
 	@brew ls postgresql@12 --versions || brew install postgresql@12
+	@if test "$(PRIVATE)" != ""; then \
+		brew tap heroku/brew; \
+		brew ls heroku --versions || brew install heroku; \
+		fi
 
 db:
 	@createuser --superuser isowords || true
@@ -210,12 +216,8 @@ env-example:
 
 # shared
 
-homebrew:
+homebrew-shared:
 	@brew ls git-lfs --versions || brew install git-lfs
-	@if test "$(PRIVATE)" != ""; then \
-		brew tap heroku/brew; \
-		brew ls heroku --versions || brew install heroku; \
-		fi
 
 # private
 
