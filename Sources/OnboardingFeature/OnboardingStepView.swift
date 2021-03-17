@@ -72,7 +72,7 @@ struct OnboardingStepView: View {
               }
               if self.viewStore.step == .step3_ConnectLettersTouching {
                 FullscreenStepView(
-                  Text("Words are formed by connecting letters that are\n")
+                  Text("Words are formed by connecting letters that are ")
                     + Text("touching").fontWeight(.medium)
                     + Text(".")
                 )
