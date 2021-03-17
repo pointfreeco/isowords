@@ -31,7 +31,6 @@ struct GameNavView: View {
         HStack {
           Text(self.viewStore.trayTitle)
             .lineLimit(1)
-            .truncationMode(.tail)
 
           Spacer()
 
