@@ -77,9 +77,7 @@ struct GameNavView: View {
       VStack {
         GameNavView(
           store: .init(
-            initialState: .init(
-              inProgressGame: .mock
-            ),
+            initialState: .init(inProgressGame: .mock),
             reducer: .empty,
             environment: ()
           )
