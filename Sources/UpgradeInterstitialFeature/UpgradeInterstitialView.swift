@@ -244,7 +244,10 @@ public struct UpgradeInterstitialView: View {
       .onAppear { viewStore.send(.onAppear) }
       .applying {
         if self.colorScheme == .dark {
-          $0.background(Color.isowordsBlack)
+          $0.background(
+            Color.isowordsBlack
+              .ignoresSafeArea()
+          )
         } else {
           $0.background(
             LinearGradient(
