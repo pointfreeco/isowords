@@ -30,6 +30,8 @@ struct GameNavView: View {
       Button(action: { self.viewStore.send(.trayButtonTapped, animation: .default) }) {
         HStack {
           Text(self.viewStore.trayTitle)
+            .lineLimit(1)
+            .truncationMode(.tail)
 
           Spacer()
 
@@ -75,7 +77,9 @@ struct GameNavView: View {
       VStack {
         GameNavView(
           store: .init(
-            initialState: .init(inProgressGame: .mock),
+            initialState: .init(
+              inProgressGame: .mock
+            ),
             reducer: .empty,
             environment: ()
           )
