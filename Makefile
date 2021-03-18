@@ -323,7 +323,7 @@ define POSTGRES_WARNING
 
      Reset at any time with:
 
-       $$ \033[1mmake\033[0m \033[38;5;66mdb-drop\033[0m
+       $$ \033[1mmake\033[0m \033[38;5;66mclean-db\033[0m
 
 endef
 export POSTGRES_WARNING
