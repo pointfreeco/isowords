@@ -164,22 +164,6 @@ public struct DatabaseClient {
     }
   }
 
-  public struct _DailyChallengeResultsRequest {
-    public let gameMode: GameMode
-    public let language: Language
-    public let playerId: Player.Id
-
-    public init(
-      gameMode: GameMode,
-      language: Language,
-      playerId: Player.Id
-    ) {
-      self.gameMode = gameMode
-      self.language = language
-      self.playerId = playerId
-    }
-  }
-
   public struct DailyChallengeResultsRequest {
     public let gameMode: GameMode
     public let gameNumber: DailyChallenge.GameNumber?
