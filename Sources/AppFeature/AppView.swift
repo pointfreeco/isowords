@@ -16,19 +16,15 @@ import SwiftUI
 import SwiftUIHelpers
 
 public struct AppState: Equatable {
-  public var appDelegate = AppDelegateState()
-  public var alert: AlertState<AppAction.AlertAction>?
   public var game: GameState?
   public var onboarding: OnboardingState?
   public var home: HomeState
 
   public init(
-    alert: AlertState<AppAction.AlertAction>? = nil,
     game: GameState? = nil,
     home: HomeState = .init(),
     onboarding: OnboardingState? = nil
   ) {
-    self.alert = alert
     self.game = game
     self.home = home
     self.onboarding = onboarding
@@ -66,11 +62,15 @@ public struct AppState: Equatable {
       return self.onboarding
     }
   }
+
+  var void: Void {
+    get { () }
+    set { }
+  }
 }
 
 public enum AppAction: Equatable {
   case appDelegate(AppDelegateAction)
-  case alert(AlertAction)
   case currentGame(GameFeatureAction)
   case didChangeScenePhase(ScenePhase)
   case dismissGame
@@ -82,12 +82,6 @@ public enum AppAction: Equatable {
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case userSettingsLoaded(Result<UserSettings, NSError>)
   case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, NSError>)
-
-  public enum AlertAction: Equatable {
-    case dismissAlert
-    case noThanksButtonTapped
-    case rematchButtonTapped(TurnBasedMatch)
-  }
 }
 
 extension AppEnvironment {
@@ -142,7 +136,7 @@ extension AppEnvironment {
 public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
   appDelegateReducer
     .pullback(
-      state: \.appDelegate,
+      state: \.void,
       action: /AppAction.appDelegate,
       environment: {
         .init(
@@ -285,20 +279,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case .appDelegate:
     return .none
-
-  case .alert(.dismissAlert):
-    state.alert = nil
-    return .none
-
-  case .alert(.noThanksButtonTapped):
-    state.alert = nil
-    return .none
-
-  case let .alert(.rematchButtonTapped(match)):
-    return environment.gameCenter.turnBasedMatch.rematch(match.matchId)
-      .mapError { $0 as NSError }
-      .catchToEffect()
-      .map { .gameCenter(.rematchResponse($0)) }
 
   case .currentGame(.game(.endGameButtonTapped)),
     .currentGame(.game(.gameOver(.onAppear))):

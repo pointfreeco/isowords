@@ -8,8 +8,6 @@ import RemoteNotificationsClient
 import SharedModels
 import UserNotifications
 
-public struct AppDelegateState: Equatable {}
-
 public enum AppDelegateAction: Equatable {
   case didFinishLaunching
   case didRegisterForRemoteNotifications(Result<Data, NSError>)
@@ -41,7 +39,7 @@ struct AppDelegateEnvironment {
 }
 
 let appDelegateReducer = Reducer<
-  AppDelegateState, AppDelegateAction, AppDelegateEnvironment
+  Void, AppDelegateAction, AppDelegateEnvironment
 > { state, action, environment in
   switch action {
   case .didFinishLaunching:
