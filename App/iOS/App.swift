@@ -19,10 +19,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     environment: .live
   )
   lazy var viewStore = ViewStore(
-    self.store.scope(
-      state: { _ in () },
-      action: AppAction.appDelegate
-    ),
+    self.store.scope(state: { _ in () }),
     removeDuplicates: ==
   )
 
@@ -31,7 +28,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     Styleguide.registerFonts()
-    self.viewStore.send(.didFinishLaunching)
+    self.viewStore.send(.appDelegate(.didFinishLaunching))
     return true
   }
 
@@ -39,14 +36,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
-    self.viewStore.send(.didRegisterForRemoteNotifications(.success(deviceToken)))
+    self.viewStore.send(.appDelegate(.didRegisterForRemoteNotifications(.success(deviceToken))))
   }
 
   func application(
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
-    self.viewStore.send(.didRegisterForRemoteNotifications(.failure(error as NSError)))
+    self.viewStore.send(
+      .appDelegate(.didRegisterForRemoteNotifications(.failure(error as NSError)))
+    )
   }
 }
 
@@ -54,7 +53,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 struct IsowordsApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @Environment(\.scenePhase) private var scenePhase
-  
+
   var body: some Scene {
     WindowGroup {
       AppView(store: self.appDelegate.store)
