@@ -8,7 +8,7 @@ extension ServerConfigClient {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension ServerConfigClient {
     public static let failing = Self(

@@ -1,5 +1,5 @@
 import SharedModels
-import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 extension DictionaryClient {
   public static let everyString = Self(

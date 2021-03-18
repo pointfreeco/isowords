@@ -39,6 +39,7 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.1.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen.git", .exact("0.3.0")),
     .package(url: "https://github.com/pointfreeco/swift-tagged.git", .branch("iso")),
+    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git", .branch("main")),
     .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
     .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
     .package(
@@ -59,7 +60,8 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
-        "XCTestDebugSupport"
+        "XCTestDebugSupport",
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .systemLibrary(
@@ -74,8 +76,8 @@ var package = Package(
       dependencies: [
         "SharedModels",
         "SnsClient",
-        "XCTestDebugSupport",
         .product(name: "Either", package: "Prelude"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .target(
@@ -100,7 +102,7 @@ var package = Package(
       name: "DictionaryClient",
       dependencies: [
         "SharedModels",
-        "XCTestDebugSupport",
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .target(
@@ -299,7 +301,7 @@ var package = Package(
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
     .package(
-      url: "https://github.com/pointfreeco/swift-composable-architecture.git", .branch("iso"))
+      url: "https://github.com/pointfreeco/swift-composable-architecture.git", .branch("iso-2"))
   ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
@@ -616,7 +618,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "DeviceId",
       dependencies: [
-        "XCTestDebugSupport"
+        "XCTestDebugSupport",
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .target(

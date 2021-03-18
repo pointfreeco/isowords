@@ -14,7 +14,7 @@ extension StoreKitClient {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension StoreKitClient {
     public static let failing = Self(

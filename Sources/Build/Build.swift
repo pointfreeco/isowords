@@ -1,5 +1,5 @@
 import Foundation
-import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 public struct Build {
   public var gitSha: () -> String
