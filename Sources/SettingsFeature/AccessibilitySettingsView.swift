@@ -42,6 +42,18 @@ struct AccessibilitySettingsView: View {
           .adaptiveFont(.matterMedium, size: 16)
         }
       }
+      SettingsRow {
+        VStack(alignment: .leading) {
+          Toggle(
+            "Reduce animation",
+            isOn: self.viewStore.binding(
+              keyPath: \.userSettings.enableReducedAnimation,
+              send: SettingsAction.binding
+            )
+          )
+          .adaptiveFont(.matterMedium, size: 16)
+        }
+      }
     }
     .navigationStyle(title: Text("Accessibility"))
   }

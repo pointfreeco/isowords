@@ -25,6 +25,7 @@ public struct UserSettings: Codable, Equatable {
   public var colorScheme: ColorScheme
   public var enableGyroMotion: Bool
   public var enableHaptics: Bool
+  public var enableReducedAnimation: Bool
   public var musicVolume: Float
   public var soundEffectsVolume: Float
 
@@ -50,6 +51,7 @@ public struct UserSettings: Codable, Equatable {
     colorScheme: ColorScheme = .system,
     enableGyroMotion: Bool = true,
     enableHaptics: Bool = true,
+    enableReducedAnimation: Bool = false,
     musicVolume: Float = 1,
     soundEffectsVolume: Float = 1
   ) {
@@ -57,6 +59,7 @@ public struct UserSettings: Codable, Equatable {
     self.colorScheme = colorScheme
     self.enableGyroMotion = enableGyroMotion
     self.enableHaptics = enableHaptics
+    self.enableReducedAnimation = enableReducedAnimation
     self.musicVolume = musicVolume
     self.soundEffectsVolume = soundEffectsVolume
   }
@@ -233,7 +236,8 @@ public struct SettingsEnvironment {
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
+      setUserInterfaceStyle: { _ in
+        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
       },
       storeKit: .failing,
       userDefaults: .failing,

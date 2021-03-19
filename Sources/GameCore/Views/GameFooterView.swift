@@ -4,6 +4,7 @@ import Styleguide
 import SwiftUI
 
 public struct GameFooterView: View {
+  let isAnimationReduced: Bool
   let isLeftToRight: Bool
   let store: Store<GameState, GameAction>
   @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
@@ -17,9 +18,11 @@ public struct GameFooterView: View {
   }
 
   public init(
+    isAnimationReduced: Bool,
     isLeftToRight: Bool = false,
     store: Store<GameState, GameAction>
   ) {
+    self.isAnimationReduced = isAnimationReduced
     self.isLeftToRight = isLeftToRight
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
@@ -32,7 +35,9 @@ public struct GameFooterView: View {
         store: self.store
       )
       .transition(
-        AnyTransition.offset(y: 50)
+        isAnimationReduced
+          ? .opacity
+          : AnyTransition.offset(y: 50)
           .combined(with: .opacity)
       )
     }
