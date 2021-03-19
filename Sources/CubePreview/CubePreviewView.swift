@@ -1,261 +1,338 @@
 import ComposableArchitecture
 import CubeCore
+import DictionaryClient
+import GameCore
 import SharedModels
 import Styleguide
 import SwiftUI
 
-public enum PreviewType: Equatable {
-  case game(Game)
-  case words(Words)
-
-  public struct Game: Equatable {
-    public var cubes: ArchivablePuzzle
-    public var currentMoveIndex: Index
-    public var moves: Moves
-
-    public enum Index: Equatable {
-      case end
-      case middle(Int)
-      case start
-    }
-
-    public init(
-      cubes: ArchivablePuzzle,
-      currentMoveIndex: Index = .start,
-      moves: Moves
-    ) {
-      self.cubes = cubes
-      self.currentMoveIndex = currentMoveIndex
-      self.moves = moves
-    }
-
-    var selectedWord: String? {
-      switch self.currentMoveIndex {
-      case .end:
-        return nil
-      case let .middle(index) where index < self.moves.count:
-        let move = self.moves[index]
-        switch move.type {
-        case let .playedWord(cubeFaces):
-          return self.cubes.string(from: cubeFaces)
-        case .removedCube:
-          return nil
-        }
-
-      case .middle:
-        return nil
-      case .start:
-        return nil
-      }
-    }
-
-    var selectedScore: Int? {
-      switch self.currentMoveIndex {
-      case .end:
-        return nil
-      case let .middle(index) where index < self.moves.count:
-        let move = self.moves[index]
-        switch move.type {
-        case .playedWord:
-          return move.score
-        case .removedCube:
-          return nil
-        }
-
-      case .middle:
-        return nil
-      case .start:
-        return nil
-      }
-    }
-  }
-
-  public struct Words: Equatable {
-    public var words: [Word]
-    public var currentWordIndex: Int
-
-    public init(
-      words: [Word],
-      currentWordIndex: Int = 0
-    ) {
-      self.words = words
-      self.currentWordIndex = currentWordIndex
-    }
-
-    var hasPreviousWords: Bool {
-      self.words.count > 1 && self.currentWordIndex > 0
-    }
-
-    var hasNextWords: Bool {
-      self.words.count > 1 && self.currentWordIndex != self.words.count - 1
-    }
-
-    var selectedWord: String? {
-      guard self.currentWordIndex < self.words.count else { return nil }
-      let word = self.words[self.currentWordIndex]
-      guard word.moveIndex < word.moves.count else { return nil }
-      let move = word.moves[word.moveIndex]
-
-      switch move.type {
-      case let .playedWord(cubeFaces):
-        return word.cubes.string(from: cubeFaces)
-      case .removedCube:
-        return nil
-      }
-    }
-
-    var selectedScore: Int? {
-      guard self.currentWordIndex < self.words.count else { return nil }
-      let word = self.words[self.currentWordIndex]
-      guard word.moveIndex < word.moves.count else { return nil }
-      let move = word.moves[word.moveIndex]
-
-      switch move.type {
-      case .playedWord:
-        return move.score
-      case .removedCube:
-        return nil
-      }
-    }
-  }
-
-  public struct Word: Equatable {
-    public var cubes: ArchivablePuzzle
-    public var moveIndex: Int
-    public var moves: Moves
-
-    public init(
-      cubes: ArchivablePuzzle,
-      moveIndex: Int,
-      moves: Moves
-    ) {
-      self.cubes = cubes
-      self.moveIndex = moveIndex
-      self.moves = moves
-    }
-  }
+public struct CubePreviewState_: Equatable {
+  var game: GameState
+  var nub: CubeSceneView.ViewState.NubState
+  var moveIndex: Int
 }
 
-public struct CubePreviewState: Equatable {
-  public var preview: PreviewType
+public enum CubePreviewAction_: Equatable {
+  case game(GameAction)
+  case binding(BindingAction<CubePreviewState_>)
+  case onAppear
+}
+
+import FeedbackGeneratorClient
+public struct CubePreviewEnvironment {
+  var dictionary: DictionaryClient
+  var feedbackGenerator: FeedbackGeneratorClient
 
   public init(
-    preview: PreviewType
+    dictionary: DictionaryClient
   ) {
-    self.preview = preview
-  }
-
-  var cubes: ArchivablePuzzle {
-    switch self.preview {
-    case let .game(game):
-      return game.cubes
-
-    case let .words(words):
-      return words.words[words.currentWordIndex].cubes
-    }
-  }
-
-  var moves: Moves {
-    switch self.preview {
-    case let .game(game):
-      return game.moves
-    case let .words(words):
-      return words.words[words.currentWordIndex].moves
-    }
+    self.dictionary = dictionary
   }
 }
 
-public enum CubePreviewAction: Equatable {
-  case game(Game)
-  case word(Word)
+let cubePreviewReducer = Reducer<
+CubePreviewState_,
+CubePreviewAction_,
+CubePreviewEnvironment
+>.combine(
 
-  public enum Game: Equatable {
-    case nextButtonTapped
-    case previousButtonTapped
-    case scene(CubeSceneView.ViewAction)
-  }
-
-  public enum Word: Equatable {
-    case nextButtonTapped
-    case previousButtonTapped
-    case scene(CubeSceneView.ViewAction)
-  }
-}
-
-public struct CubePreviewEnvironment {
-  public init() {}
-}
-
-public let cubePreviewReducer = Reducer<CubePreviewState, CubePreviewAction, CubePreviewEnvironment>
-  .combine(
-    gamePreviewReducer
-      ._pullback(
-        state: (\CubePreviewState.preview).appending(path: /PreviewType.game),
-        action: /CubePreviewAction.game,
-        environment: { _ in () }
-      ),
-
-    wordPreviewReducer
-      ._pullback(
-        state: (\CubePreviewState.preview).appending(path: /PreviewType.words),
-        action: /CubePreviewAction.word,
-        environment: { _ in () }
+  gameReducer(
+    state: \CubePreviewState_.game,
+    action: /CubePreviewAction_.game,
+    environment: {
+      .init(
+        apiClient: .noop,
+        applicationClient: .noop,
+        audioPlayer: .noop,
+        backgroundQueue: DispatchQueue(label: "").eraseToAnyScheduler(),
+        build: .noop,
+        database: .noop,
+        dictionary: $0.dictionary,
+        feedbackGenerator: $0.feedbackGenerator,
+        fileClient: .noop,
+        gameCenter: .noop,
+        lowPowerMode: .false,
+        mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+        mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+        remoteNotifications: .noop,
+        serverConfig: .noop,
+        setUserInterfaceStyle: { _ in .none },
+        storeKit: .noop,
+        userDefaults: .noop,
+        userNotifications: .noop
       )
+    },
+    isHapticsEnabled: { _ in false }
   )
 
-let gamePreviewReducer = Reducer<PreviewType.Game, CubePreviewAction.Game, Void> {
-  state, action, environment in
-  switch action {
-  case .nextButtonTapped:
-    switch state.currentMoveIndex {
-    case .end:
-      return .none
-    case let .middle(index) where index < state.moves.count - 1:
-      state.currentMoveIndex = .middle(index + 1)
-      return .none
-    case .middle:
-      state.currentMoveIndex = .end
-      return .none
-    case .start:
-      state.currentMoveIndex = .middle(0)
-      return .none
-    }
+)
 
-  case .previousButtonTapped:
-    switch state.currentMoveIndex {
-    case .end:
-      state.currentMoveIndex = .middle(state.moves.count - 1)
-      return .none
-    case let .middle(index) where index > 0:
-      state.currentMoveIndex = .middle(index - 1)
-      return .none
-    case .middle:
-      state.currentMoveIndex = .start
-      return .none
-    case .start:
-      return .none
-    }
 
-  case .scene:
-    return .none
-  }
-}
+//public enum PreviewType: Equatable {
+//  case game(Game)
+//  case words(Words)
+//
+//  public struct Game: Equatable {
+//    public var cubes: ArchivablePuzzle
+//    public var currentMoveIndex: Index
+//    public var moves: Moves
+//
+//    public enum Index: Equatable {
+//      case end
+//      case middle(Int)
+//      case start
+//    }
+//
+//    public init(
+//      cubes: ArchivablePuzzle,
+//      currentMoveIndex: Index = .start,
+//      moves: Moves
+//    ) {
+//      self.cubes = cubes
+//      self.currentMoveIndex = currentMoveIndex
+//      self.moves = moves
+//    }
+//
+//    var selectedWord: String? {
+//      switch self.currentMoveIndex {
+//      case .end:
+//        return nil
+//      case let .middle(index) where index < self.moves.count:
+//        let move = self.moves[index]
+//        switch move.type {
+//        case let .playedWord(cubeFaces):
+//          return self.cubes.string(from: cubeFaces)
+//        case .removedCube:
+//          return nil
+//        }
+//
+//      case .middle:
+//        return nil
+//      case .start:
+//        return nil
+//      }
+//    }
+//
+//    var selectedScore: Int? {
+//      switch self.currentMoveIndex {
+//      case .end:
+//        return nil
+//      case let .middle(index) where index < self.moves.count:
+//        let move = self.moves[index]
+//        switch move.type {
+//        case .playedWord:
+//          return move.score
+//        case .removedCube:
+//          return nil
+//        }
+//
+//      case .middle:
+//        return nil
+//      case .start:
+//        return nil
+//      }
+//    }
+//  }
+//
+//  public struct Words: Equatable {
+//    public var words: [Word]
+//    public var currentWordIndex: Int
+//
+//    public init(
+//      words: [Word],
+//      currentWordIndex: Int = 0
+//    ) {
+//      self.words = words
+//      self.currentWordIndex = currentWordIndex
+//    }
+//
+//    var hasPreviousWords: Bool {
+//      self.words.count > 1 && self.currentWordIndex > 0
+//    }
+//
+//    var hasNextWords: Bool {
+//      self.words.count > 1 && self.currentWordIndex != self.words.count - 1
+//    }
+//
+//    var selectedWord: String? {
+//      guard self.currentWordIndex < self.words.count else { return nil }
+//      let word = self.words[self.currentWordIndex]
+//      guard word.moveIndex < word.moves.count else { return nil }
+//      let move = word.moves[word.moveIndex]
+//
+//      switch move.type {
+//      case let .playedWord(cubeFaces):
+//        return word.cubes.string(from: cubeFaces)
+//      case .removedCube:
+//        return nil
+//      }
+//    }
+//
+//    var selectedScore: Int? {
+//      guard self.currentWordIndex < self.words.count else { return nil }
+//      let word = self.words[self.currentWordIndex]
+//      guard word.moveIndex < word.moves.count else { return nil }
+//      let move = word.moves[word.moveIndex]
+//
+//      switch move.type {
+//      case .playedWord:
+//        return move.score
+//      case .removedCube:
+//        return nil
+//      }
+//    }
+//  }
+//
+//  public struct Word: Equatable {
+//    public var cubes: ArchivablePuzzle
+//    public var moveIndex: Int
+//    public var moves: Moves
+//
+//    public init(
+//      cubes: ArchivablePuzzle,
+//      moveIndex: Int,
+//      moves: Moves
+//    ) {
+//      self.cubes = cubes
+//      self.moveIndex = moveIndex
+//      self.moves = moves
+//    }
+//  }
+//}
 
-let wordPreviewReducer = Reducer<PreviewType.Words, CubePreviewAction.Word, Void> {
-  state, action, environment in
-  switch action {
-  case .nextButtonTapped:
-    state.currentWordIndex += 1
-    return .none
+//public struct CubePreviewState: Equatable {
+//  public var preview: PreviewType
+//
+//  public init(
+//    preview: PreviewType
+//  ) {
+//    self.preview = preview
+//  }
+//
+//  var cubes: ArchivablePuzzle {
+//    switch self.preview {
+//    case let .game(game):
+//      return game.cubes
+//
+//    case let .words(words):
+//      return words.words[words.currentWordIndex].cubes
+//    }
+//  }
+//
+//  var moves: Moves {
+//    switch self.preview {
+//    case let .game(game):
+//      return game.moves
+//    case let .words(words):
+//      return words.words[words.currentWordIndex].moves
+//    }
+//  }
+//}
 
-  case .previousButtonTapped:
-    state.currentWordIndex -= 1
-    return .none
+//public enum CubePreviewAction: Equatable {
+//  case game(Game)
+//  case onAppear
+//  case word(Word)
+//
+//  public enum Game: Equatable {
+//    case nextButtonTapped
+//    case previousButtonTapped
+//    case scene(CubeSceneView.ViewAction)
+//  }
+//
+//  public enum Word: Equatable {
+//    case nextButtonTapped
+//    case previousButtonTapped
+//    case scene(CubeSceneView.ViewAction)
+//  }
+//}
 
-  case .scene:
-    return .none
-  }
-}
+//public let cubePreviewReducer = Reducer<
+//  CubePreviewState,
+//  CubePreviewAction,
+//  CubePreviewEnvironment
+//>.combine(
+//  gamePreviewReducer
+//    ._pullback(
+//      state: (\CubePreviewState.preview).appending(path: /PreviewType.game),
+//      action: /CubePreviewAction.game,
+//      environment: { _ in () }
+//    ),
+//
+//  wordPreviewReducer
+//    ._pullback(
+//      state: (\CubePreviewState.preview).appending(path: /PreviewType.words),
+//      action: /CubePreviewAction.word,
+//      environment: { _ in () }
+//    ),
+//
+//  .init { state, action, environment in
+//    switch action {
+//    case .game:
+//      return .none
+//
+//    case .onAppear:
+//      return .none
+//
+//    case .word:
+//      return .none
+//    }
+//  }
+//)
+
+//let gamePreviewReducer = Reducer<PreviewType.Game, CubePreviewAction.Game, Void> {
+//  state, action, environment in
+//  switch action {
+//  case .nextButtonTapped:
+//    switch state.currentMoveIndex {
+//    case .end:
+//      return .none
+//    case let .middle(index) where index < state.moves.count - 1:
+//      state.currentMoveIndex = .middle(index + 1)
+//      return .none
+//    case .middle:
+//      state.currentMoveIndex = .end
+//      return .none
+//    case .start:
+//      state.currentMoveIndex = .middle(0)
+//      return .none
+//    }
+//
+//  case .previousButtonTapped:
+//    switch state.currentMoveIndex {
+//    case .end:
+//      state.currentMoveIndex = .middle(state.moves.count - 1)
+//      return .none
+//    case let .middle(index) where index > 0:
+//      state.currentMoveIndex = .middle(index - 1)
+//      return .none
+//    case .middle:
+//      state.currentMoveIndex = .start
+//      return .none
+//    case .start:
+//      return .none
+//    }
+//
+//  case .scene:
+//    return .none
+//  }
+//}
+
+//let wordPreviewReducer = Reducer<PreviewType.Words, CubePreviewAction.Word, Void> {
+//  state, action, environment in
+//  switch action {
+//  case .nextButtonTapped:
+//    state.currentWordIndex += 1
+//    return .none
+//
+//  case .previousButtonTapped:
+//    state.currentWordIndex -= 1
+//    return .none
+//
+//  case .scene:
+//    return .none
+//  }
+//}
 
 public struct CubePreviewView: View {
   let store: Store<CubePreviewState, CubePreviewAction>
@@ -286,6 +363,7 @@ public struct CubePreviewView: View {
           )
         }
       }
+      .onAppear { viewStore.send(.onAppear) }
     }
   }
 }
