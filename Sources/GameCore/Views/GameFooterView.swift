@@ -38,7 +38,7 @@ public struct GameFooterView: View {
         isAnimationReduced
           ? .opacity
           : AnyTransition.offset(y: 50)
-          .combined(with: .opacity)
+            .combined(with: .opacity)
       )
     }
   }
