@@ -1,4 +1,4 @@
-public struct VerifiedPuzzleResult {
+public struct VerifiedPuzzleResult: Equatable {
   public var totalScore = 0
   public var verifiedMoves: [VerifiedMoveResult] = []
 }
@@ -17,8 +17,13 @@ public func verify(
   var puzzle = Puzzle(archivableCubes: puzzle)
 
   var result = VerifiedPuzzleResult()
-  for move in moves {
-    if let moveResult = verify(move: move, playedOn: &puzzle, isValidWord: isValidWord) {
+  for index in moves.indices {
+    if let moveResult = verify(
+        moveIndex: index,
+        moves: moves,
+        playedOn: &puzzle,
+        isValidWord: isValidWord
+    ) {
       result.totalScore += moveResult.score
       result.verifiedMoves.append(moveResult)
     } else {
@@ -31,10 +36,13 @@ public func verify(
 }
 
 public func verify(
-  move: Move,
+  moveIndex: Int,
+  moves: Moves,
   playedOn puzzle: inout Puzzle,
   isValidWord: (String) -> Bool
 ) -> VerifiedMoveResult? {
+  let move = moves[moveIndex]
+
   switch move.type {
   case let .playedWord(cubeFaces):
     guard cubeFaces.count == Set(cubeFaces).count
@@ -61,12 +69,16 @@ public func verify(
       // TODO: this score should be computed from the string rather than using what is handed us.
       //       in fact maybe we need an ArchivableMove to remove that info?
       return .init(cubeFaces: cubeFaces, foundWord: foundWord, score: move.score)
-    } else {
-      return nil
-    }
+    } else { return nil }
 
   case let .removedCube(point):
-    if puzzle[point].isInPlay {
+
+
+
+    if
+      puzzle[point].isInPlay
+    || (moveIndex > 0 && moves[moveIndex - 1].type == move.type)
+    {
       apply(move: move, to: &puzzle)
       return .init(cubeFaces: [], foundWord: nil, score: 0)
     } else {
