@@ -85,6 +85,19 @@ class SettingsViewTests: XCTestCase {
       ),
       as: .image(layout: .device(config: .iPhoneXsMax))
     )
+
+    assertSnapshot(
+      matching: SoundsSettingsView(
+        store: .init(
+          initialState: .init(
+            userSettings: .init(musicVolume: 0, soundEffectsVolume: 0)
+          ),
+          reducer: .empty,
+          environment: ()
+        )
+      ),
+      as: .image(layout: .device(config: .iPhoneXsMax))
+    )
   }
 
   func testAppearance() {
