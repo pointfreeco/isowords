@@ -63,6 +63,18 @@ public struct UserSettings: Codable, Equatable {
     self.musicVolume = musicVolume
     self.soundEffectsVolume = soundEffectsVolume
   }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.appIcon = try? container.decode(AppIcon.self, forKey: .appIcon)
+    self.colorScheme = (try? container.decode(ColorScheme.self, forKey: .colorScheme)) ?? .system
+    self.enableGyroMotion = (try? container.decode(Bool.self, forKey: .enableGyroMotion)) ?? true
+    self.enableHaptics = (try? container.decode(Bool.self, forKey: .enableHaptics)) ?? true
+    self.enableReducedAnimation =
+      (try? container.decode(Bool.self, forKey: .enableReducedAnimation)) ?? false
+    self.musicVolume = (try? container.decode(Float.self, forKey: .musicVolume)) ?? 1
+    self.soundEffectsVolume = (try? container.decode(Float.self, forKey: .soundEffectsVolume)) ?? 1
+  }
 }
 
 public struct DeveloperSettings: Equatable {
