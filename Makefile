@@ -143,7 +143,7 @@ words-import:
 ifdef PRIVATE
 	@curl -o $(DICTIONARY_GZIP) $(DICTIONARY_URL)
 else
-	@cat /usr/share/dict/words | tr a-z A-Z | uniq | grep '^[A-Z]\{3,\}$$' | gzip > $(DICTIONARY_GZIP)
+	@cat /usr/share/dict/words | tr a-z A-Z | sort -u | grep '^[A-Z]\{3,\}$$' | gzip > $(DICTIONARY_GZIP)
 endif
 
 DICTIONARY_DB = Sources/DictionarySqliteClient/Dictionaries/Words.en.db
