@@ -39,11 +39,6 @@ class VerificationTests: XCTestCase {
           )
         ]
       )
-//      (
-//        cubeFaces: ,
-//        foundWord: "QUA",
-//        score: 10
-//      )
     )
   }
 
