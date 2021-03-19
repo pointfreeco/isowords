@@ -18,6 +18,7 @@ public struct GameView<Content>: View where Content: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
   let content: Content
+  let isAnimationReduced: Bool
   let store: Store<GameState, GameAction>
   var trayHeight: CGFloat { ActiveGamesView.height + (16 + self.adaptiveSize.padding) * 2 }
   @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
@@ -40,9 +41,11 @@ public struct GameView<Content>: View where Content: View {
 
   public init(
     content: Content,
+    isAnimationReduced: Bool,
     store: Store<GameState, GameAction>
   ) {
     self.content = content
+    self.isAnimationReduced = isAnimationReduced
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
   }
@@ -81,7 +84,7 @@ public struct GameView<Content>: View where Content: View {
             }
             .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
             Spacer()
-            GameFooterView(store: self.store)
+            GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
               .padding(.bottom)
           }
           .ignoresSafeArea(.keyboard)
@@ -95,9 +98,11 @@ public struct GameView<Content>: View where Content: View {
             )
             .ignoresSafeArea()
             .transition(
-              AnyTransition
-                .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
-                .combined(with: .opacity)
+              self.isAnimationReduced
+                ? .opacity
+                : AnyTransition
+                  .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
+                  .combined(with: .opacity)
             )
           }
 
@@ -153,7 +158,9 @@ public struct GameView<Content>: View where Content: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(
-        BloomBackground(size: proxy.size, store: self.store)
+        self.isAnimationReduced
+          ? nil
+          : BloomBackground(size: proxy.size, store: self.store)
       )
       .background(
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
