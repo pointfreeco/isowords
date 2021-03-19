@@ -622,6 +622,9 @@ extension GameState {
   }
 
   mutating func removeCube(at index: LatticePoint, playedAt: Date) {
+    guard self.cubes[index].isInPlay
+    else { return }
+
     self.cubes[index].wasRemoved = true
     self.moves.append(
       Move(
