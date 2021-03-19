@@ -1,13 +1,15 @@
 import XCTest
+
 @testable import SharedModels
 
 class VerificationTests: XCTestCase {
   func testWordLength() {
-    var puzzle = ArchivablePuzzle.mock
+    var puzzle = Puzzle.mock
     puzzle.2.2.2.left.letter = "QU"
     puzzle.2.2.2.right.letter = "A"
 
     let result = verify(
+      moveIndex: 0,
       moves: [
         .init(
           playedAt: .init(),
@@ -20,34 +22,30 @@ class VerificationTests: XCTestCase {
           ])
         )
       ],
-      playedOn: puzzle,
+      playedOn: &puzzle,
       isValidWord: { _ in true }
     )
 
     XCTAssertEqual(
       result,
       .init(
-        totalScore: 10,
-        verifiedMoves: [
-          .init(
-            cubeFaces: [
-              .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-              .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-            ],
-            foundWord: "QUA",
-            score: 10
-          )
-        ]
+        cubeFaces: [
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+        ],
+        foundWord: "QUA",
+        score: 10
       )
     )
   }
 
   func testDuplicatesNotAllowed() {
-    var puzzle = ArchivablePuzzle.mock
+    var puzzle = Puzzle.mock
     puzzle.2.2.2.left.letter = "T"
     puzzle.2.2.2.right.letter = "O"
 
     let result = verify(
+      moveIndex: 0,
       moves: [
         .init(
           playedAt: .init(),
@@ -61,7 +59,7 @@ class VerificationTests: XCTestCase {
           ])
         )
       ],
-      playedOn: puzzle,
+      playedOn: &puzzle,
       isValidWord: { _ in true }
     )
 
@@ -72,12 +70,13 @@ class VerificationTests: XCTestCase {
   }
 
   func testWordNotInDictionary() {
-    var puzzle = ArchivablePuzzle.mock
+    var puzzle = Puzzle.mock
     puzzle.2.2.2.left.letter = "C"
     puzzle.2.2.2.right.letter = "A"
     puzzle.2.2.2.top.letter = "B"
 
     let result = verify(
+      moveIndex: 0,
       moves: [
         .init(
           playedAt: .init(),
@@ -91,7 +90,7 @@ class VerificationTests: XCTestCase {
           ])
         )
       ],
-      playedOn: puzzle,
+      playedOn: &puzzle,
       isValidWord: { _ in false }
     )
 

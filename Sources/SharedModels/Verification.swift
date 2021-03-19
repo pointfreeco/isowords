@@ -1,4 +1,4 @@
-public struct VerifiedPuzzleResult: Equatable {
+public struct VerifiedPuzzleResult {
   public var totalScore = 0
   public var verifiedMoves: [VerifiedMoveResult] = []
 }
