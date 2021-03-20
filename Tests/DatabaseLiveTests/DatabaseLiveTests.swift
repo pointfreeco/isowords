@@ -535,7 +535,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     .run.perform().unwrap()
 
     let entriesSortedByScore = try self.database.fetchVocabLeaderboard(
-      .en, player, .allTime, .score
+      .en, player, .allTime
     )
     .run.perform().unwrap()
 
@@ -585,61 +585,6 @@ class DatabaseLiveTests: DatabaseTestCase {
           score: 20,
           word: "MATH",
           wordId: .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000005")!)
-        ),
-      ]
-    )
-
-    let entriesSortedByLength = try self.database.fetchVocabLeaderboard(
-      .en, player, .allTime, .length
-    )
-    .run.perform().unwrap()
-
-    XCTAssertEqual(
-      entriesSortedByLength,
-      [
-        .init(
-          denseRank: 1,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: player.id,
-          rank: 1,
-          score: 500,
-          word: "LOGOPHILES",
-          wordId: .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000007")!)
-        ),
-        .init(
-          denseRank: 2,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: player.id,
-          rank: 2,
-          score: 100,
-          word: "SHRIMP",
-          wordId: .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!)
-        ),
-        .init(
-          denseRank: 3,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: player.id,
-          rank: 3,
-          score: 20,
-          word: "MATH",
-          wordId: .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000005")!)
-        ),
-        .init(
-          denseRank: 3,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: player.id,
-          rank: 3,
-          score: 150,
-          word: "ZZZZ",
-          wordId: .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000006")!)
         ),
       ]
     )

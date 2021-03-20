@@ -497,13 +497,17 @@ extension DatabaseClient {
         )
         .all(decoding: DailyChallenge.self)
       },
-      fetchVocabLeaderboard: { language, player, timeScope, sort in
+      fetchVocabLeaderboard: { language, player, timeScope in
         let orderByClause: String
-        switch sort {
-        case .length:
-          orderByClause = #"LENGTH("word") DESC"#
-        case .score:
+        switch timeScope {
+        case .allTime:
           orderByClause = #""score" DESC"#
+        case .lastDay:
+          orderByClause = #""score" DESC"#
+        case .lastWeek:
+          orderByClause = #""score" DESC"#
+        case .magic:
+          orderByClause = #""score" * ("moveIndex" + 1) DESC"#
         }
 
         return pool.sqlDatabase.raw(
@@ -512,6 +516,7 @@ extension DatabaseClient {
             SELECT
               DISTINCT ON ("leaderboardScores"."playerId", "words"."word")
               "leaderboardScores"."playerId" = \(bind: player.id) AS "isYourScore",
+              "words"."moveIndex",
               "words"."id" AS "wordId",
               "words"."score",
               "words"."word",
@@ -1152,6 +1157,8 @@ extension TimeScope {
       return "1 DAY"
     case .lastWeek:
       return "1 WEEK"
+    case .magic:
+      return "99 YEARS"
     }
   }
 }

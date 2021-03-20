@@ -35,7 +35,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
       ).run.perform().unwrap()
     }
 
-    let scores = try self.database.fetchVocabLeaderboard(.en, lastPlayer, .allTime, .score)
+    let scores = try self.database.fetchVocabLeaderboard(.en, lastPlayer, .allTime)
       .run.perform().unwrap()
 
     XCTAssertEqual(scores.count, 110)
