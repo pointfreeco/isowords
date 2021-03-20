@@ -11,6 +11,7 @@ public struct FetchDailyChallengeResultsResponse: Codable, Equatable {
   }
 
   public struct Result: Codable, Equatable {
+    public var isSupporter: Bool
     public var isYourScore: Bool
     public var outOf: Int
     public var playerDisplayName: String?
@@ -19,6 +20,7 @@ public struct FetchDailyChallengeResultsResponse: Codable, Equatable {
     public var score: Int
 
     public init(
+      isSupporter: Bool,
       isYourScore: Bool,
       outOf: Int,
       playerDisplayName: String?,
@@ -26,6 +28,7 @@ public struct FetchDailyChallengeResultsResponse: Codable, Equatable {
       rank: Int,
       score: Int
     ) {
+      self.isSupporter = isSupporter
       self.isYourScore = isYourScore
       self.outOf = outOf
       self.playerDisplayName = playerDisplayName
