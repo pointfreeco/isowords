@@ -508,7 +508,7 @@ extension DatabaseClient {
           wordCountClause = #"SELECT COUNT("wordId") FROM "scores""#
         case .magic:
           additionalWhereClause = #"AND "words"."score" >= 300"#
-          orderByClause = #""score" * ("moveIndex" + 1) DESC"#
+          orderByClause = #""score" * "moveIndex" DESC"#
           wordCountClause = "0"
         }
 
