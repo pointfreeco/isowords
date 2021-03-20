@@ -498,16 +498,18 @@ extension DatabaseClient {
         .all(decoding: DailyChallenge.self)
       },
       fetchVocabLeaderboard: { language, player, timeScope in
-        let orderByClause: String
+        let additionalWhereClause: SQLQueryString
+        let orderByClause: SQLQueryString
+        let wordCountClause: SQLQueryString
         switch timeScope {
-        case .allTime:
+        case .allTime, .lastDay, .lastWeek:
+          additionalWhereClause = ""
           orderByClause = #""score" DESC"#
-        case .lastDay:
-          orderByClause = #""score" DESC"#
-        case .lastWeek:
-          orderByClause = #""score" DESC"#
+          wordCountClause = #"SELECT COUNT("wordId") FROM "scores""#
         case .magic:
+          additionalWhereClause = #"AND "words"."score" >= 300"#
           orderByClause = #""score" * ("moveIndex" + 1) DESC"#
+          wordCountClause = "0"
         }
 
         return pool.sqlDatabase.raw(
@@ -550,16 +552,17 @@ extension DatabaseClient {
               "leaderboardScores"."playerId" = \(bind: player.id)
               OR "hiddenWords"."word" IS NULL
             )
+            \(additionalWhereClause)
           ),
           "rankedScores" AS (
             SELECT
               *,
-              (SELECT COUNT("wordId") FROM "scores") AS "outOf",
-              RANK() OVER (ORDER BY \(raw: orderByClause)) AS "rank",
-              DENSE_RANK() OVER (ORDER BY \(raw: orderByClause)) AS "denseRank"
+              (\(wordCountClause)) AS "outOf",
+              RANK() OVER (ORDER BY \(orderByClause)) AS "rank",
+              DENSE_RANK() OVER (ORDER BY \(orderByClause)) AS "denseRank"
             FROM "scores"
             ORDER BY
-              \(raw: orderByClause), "word" ASC, "wordCreatedAt" ASC
+              \(orderByClause), "word" ASC, "wordCreatedAt" ASC
             LIMIT 150
           ),
           "top100" AS (
