@@ -83,7 +83,6 @@ public let upgradeInterstitialReducer = Reducer<
 
   case let .fullGameProductResponse(product):
     state.fullGameProduct = product
-    fatalError()
     return .none
 
   case .maybeLaterButtonTapped:
