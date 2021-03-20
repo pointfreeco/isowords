@@ -76,7 +76,6 @@ public let upgradeInterstitialReducer = Reducer<
   struct StoreKitObserverId: Hashable {}
   struct TimerId: Hashable {}
 
-
   switch action {
   case .delegate:
     return .none
