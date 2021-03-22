@@ -504,6 +504,17 @@ extension DatabaseClient {
         case .interesting:
           orderByClause = #""score" * "moveIndex" DESC"#
         }
+        let minimumScore: Int
+        switch timeScope {
+        case .allTime:
+          minimumScore = 800
+        case .lastDay:
+          minimumScore = 200
+        case .lastWeek:
+          minimumScore = 400
+        case .interesting:
+          minimumScore = 400
+        }
 
         return pool.sqlDatabase.raw(
           """
@@ -527,7 +538,8 @@ extension DatabaseClient {
             LEFT JOIN "dailyChallenges" ON "leaderboardScores"."dailyChallengeId" = "dailyChallenges"."id"
             LEFT OUTER JOIN "hiddenWords" ON "words"."word" = "hiddenWords"."word"
             WHERE
-            (
+            "words"."score" >= \(bind: minimumScore)
+            AND (
               -- Words from daily challenges get a little more time for `lastDay` scopes since
               -- their scores aren't released until the challenge is over.
               (

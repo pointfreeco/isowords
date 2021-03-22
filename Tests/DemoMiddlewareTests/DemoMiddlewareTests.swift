@@ -27,6 +27,8 @@ class DemoMiddlewareTests: XCTestCase {
         return pure(.init(outOf: 20, rank: 10))
       case .lastWeek:
         return pure(.init(outOf: 50, rank: 30))
+      case .interesting:
+        return throwE(unit)
       }
     }
 

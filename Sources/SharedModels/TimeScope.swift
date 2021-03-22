@@ -3,6 +3,8 @@ public enum TimeScope: String, CaseIterable, Codable {
   case lastDay
   case lastWeek
   case interesting
+
+  public static let soloCases: [Self] = [.allTime, .lastDay, .lastWeek]
 }
 
 #if canImport(SwiftUI)

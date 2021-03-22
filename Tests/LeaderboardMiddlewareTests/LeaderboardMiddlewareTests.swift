@@ -7,6 +7,7 @@ import Foundation
 #endif
 import HttpPipeline
 import HttpPipelineTestSupport
+import Prelude
 import Overture
 import ServerRouter
 import ServerRoutes
@@ -93,6 +94,8 @@ class LeaderboardMiddlewareTests: XCTestCase {
         return pure(.init(outOf: 100, rank: 2))
       case .lastWeek:
         return pure(.init(outOf: 1000, rank: 50))
+      case .interesting:
+        return throwE(unit)
       }
     }
     environment.dictionary = .everyString
