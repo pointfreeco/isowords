@@ -6,6 +6,7 @@ import XCTest
 
 class DailyChallengeViewTests: XCTestCase {
   override class func setUp() {
+    super.setUp()
     Styleguide.registerFonts()
     SnapshotTesting.diffTool = "ksdiff"
   }
@@ -24,7 +25,8 @@ class DailyChallengeViewTests: XCTestCase {
           reducer: .empty,
           environment: ()
         )
-      ),
+      )
+      .environment(\.date) { .mock },
       as: .image(layout: .device(config: .iPhoneXsMax))
     )
   }
@@ -68,7 +70,7 @@ class DailyChallengeViewTests: XCTestCase {
           environment: ()
         )
       )
-      .environment(\.date, { .mock }),
+      .environment(\.date) { .mock },
       as: .image(layout: .device(config: .iPhoneXsMax))
     )
   }
