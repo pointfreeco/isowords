@@ -21,9 +21,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
       dictionary: .init(
         contains: { string, _ in
           [
-            "SAY", "HELLO", "TO", "ISOWORDS", "A", "NEW", "WORD", "SEARCH", "GAME", "FOR", "YOUR",
-            "PHONE",
-            "COMING", "NEXT", "YEAR",
+            "SEQUESTERING",
           ]
           .contains(string.uppercased())
         },

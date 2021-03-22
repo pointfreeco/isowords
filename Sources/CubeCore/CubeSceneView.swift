@@ -143,10 +143,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
 
         LatticePoint.cubeIndices.forEach { index in
-          guard cubes[index].isInPlay else {
-            return
-          }
-
           let cube = CubeNode(
             letterGeometry: letterGeometry,
             store: store
@@ -259,6 +255,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
             3 * 3 * face.index.x.rawValue
             + 3 * face.index.y.rawValue
             + face.index.z.rawValue
+          print(linearIndex)
 
           let faceNode = self.gameCubeNode
             .childNodes[linearIndex]
@@ -274,7 +271,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         case .submitButton:
           nub.transform = .init(
             translationX: self.bounds.midX - nub.bounds.midX + .random(in: -10...10),
-            y: self.bounds.maxY - nub.bounds.midY - 130 + .random(in: -10...10)
+            y: self.bounds.maxY - nub.bounds.midY - 80 + .random(in: -10...10)
           )
         }
       }

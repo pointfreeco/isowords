@@ -10,9 +10,9 @@ float worldScale;
 float sqrt2_2 = M_SQRT2_H / 2.0;
 float size = 0.5 * worldScale;
 
-int cubeX = max(0, min(int(floor((in.pos.x + size) / 2.0 / size * 3.0 - 0.1)), 2));
-int cubeY = max(0, min(int(floor((in.pos.y + size) / 2.0 / size * 3.0 - 0.1)), 2));
-int cubeZ = max(0, min(int(floor((in.pos.z + size) / 2.0 / size * 3.0 - 0.1)), 2));
+int cubeX = max(0, min(int(floor((in.pos.x + size) / 2.0 / size * 3.0 - 0.01)), 2));
+int cubeY = max(0, min(int(floor((in.pos.y + size) / 2.0 / size * 3.0 - 0.01)), 2));
+int cubeZ = max(0, min(int(floor((in.pos.z + size) / 2.0 / size * 3.0 - 0.01)), 2));
 
 int index = cubeX * 27 + cubeY * 9 + cubeZ * 3 + in.side;
 float xIndex = float(index % 9);

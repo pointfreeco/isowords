@@ -217,7 +217,8 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
       // Fade the scene out
       effects.append(
         Effect(value: .binding(.set(\.opacity, 0)))
-          .receive(on: environment.mainQueue.animation(.linear(duration: moveNubOffScreenDuration)))
+          .delay(for: .seconds(fadeOutDelay), scheduler: environment.mainQueue)
+          .receive(on: environment.mainQueue.animation(.linear(duration: fadeOutDuration)))
           .eraseToEffect()
       )
 
@@ -324,13 +325,13 @@ public struct TrailerView: View {
             .offset(y: .grid(6))
           }
 
-          WordListView(
-            isLeftToRight: true,
-            store: self.store.scope(
-              state: \.game,
-              action: TrailerAction.game
-            )
-          )
+//          WordListView(
+//            isLeftToRight: true,
+//            store: self.store.scope(
+//              state: \.game,
+//              action: TrailerAction.game
+//            )
+//          )
         }
         .adaptivePadding(.top, .grid(18))
         .adaptivePadding(.bottom, .grid(2))
@@ -372,11 +373,12 @@ public struct TrailerView: View {
 }
 
 private let firstCharacterDelay: DispatchQueue.SchedulerTimeType.Stride = 0.3
-private let firstWordDelay: DispatchQueue.SchedulerTimeType.Stride = 1.5
-private let moveNubToFaceDuration = 0.45
-private let moveNubToSubmitButtonDuration = 0.4
-private let moveNubOffScreenDuration = 0.5
-private let fadeInDuration = 0.3
-private let fadeOutDuration = 0.3
+private let firstWordDelay: DispatchQueue.SchedulerTimeType.Stride = 2
+private let moveNubToFaceDuration = 0.7
+private let moveNubToSubmitButtonDuration = 2.0
+private let moveNubOffScreenDuration = 1.0
+private let fadeInDuration = 1.0
+private let fadeOutDuration = 1.0
+private let fadeOutDelay = 1.0
 private let submitPressDuration = 0.05
-private let submitHestitationDuration = 0.15
+private let submitHestitationDuration = 1.0
