@@ -99,6 +99,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
       [
         .init(
           id: leaderboardScoreIds[0],
+          isSupporter: false,
           isYourScore: true,
           outOf: 1,
           playerDisplayName: "Blob",
@@ -123,6 +124,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
       [
         .init(
           id: leaderboardScoreIds[1],
+          isSupporter: false,
           isYourScore: true,
           outOf: 1,
           playerDisplayName: "Blob",
@@ -147,6 +149,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
       [
         .init(
           id: leaderboardScoreIds[2],
+          isSupporter: false,
           isYourScore: true,
           outOf: 1,
           playerDisplayName: "Blob",
@@ -229,6 +232,54 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
       [
         .init(
           id: yesterdayDailyChallengeScore.id,
+          isSupporter: false,
+          isYourScore: true,
+          outOf: 1,
+          playerDisplayName: player.displayName,
+          rank: 1,
+          score: 0
+        )
+      ]
+    )
+  }
+
+  func testFetchRankedLeaderboardScores_WithSupporter() throws {
+    let player = try self.database.insertPlayer(.blob)
+      .run.perform().unwrap()
+    try self.database.updateAppleReceipt(player.id, .mock)
+      .run.perform().unwrap()
+
+    let score = try self.database.submitLeaderboardScore(
+      .init(
+        dailyChallengeId: nil,
+        gameContext: .solo,
+        gameMode: .timed,
+        language: .en,
+        moves: [],
+        playerId: player.id,
+        puzzle: .mock,
+        score: 0,
+        words: []
+      )
+    )
+    .run.perform().unwrap()
+
+    let entries = try self.database.fetchRankedLeaderboardScores(
+      .init(
+        gameMode: .timed,
+        language: .en,
+        playerId: player.id,
+        timeScope: .allTime
+      )
+    )
+    .run.perform().unwrap()
+
+    XCTAssertEqual(
+      entries,
+      [
+        .init(
+          id: score.id,
+          isSupporter: true,
           isYourScore: true,
           outOf: 1,
           playerDisplayName: player.displayName,

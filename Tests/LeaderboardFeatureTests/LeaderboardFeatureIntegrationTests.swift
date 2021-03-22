@@ -13,6 +13,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     let fetchLeaderboardsEntries = [
       FetchLeaderboardResponse.Entry(
         id: .init(rawValue: .deadbeef),
+        isSupporter: false,
         isYourScore: true,
         outOf: 100,
         playerDisplayName: "Blob",
@@ -60,6 +61,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     let fetchVocabEntries = [
       FetchVocabLeaderboardResponse.Entry.init(
         denseRank: 1,
+        isSupporter: false,
         isYourScore: true,
         outOf: 1_000,
         playerDisplayName: "Blob",

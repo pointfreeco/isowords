@@ -11,6 +11,7 @@ public struct FetchLeaderboardResponse: Codable, Equatable {
 
   public struct Entry: Codable, Equatable {
     public let id: LeaderboardScore.Id
+    public let isSupporter: Bool
     public let isYourScore: Bool
     public let outOf: Int
     public let playerDisplayName: String?
@@ -19,6 +20,7 @@ public struct FetchLeaderboardResponse: Codable, Equatable {
 
     public init(
       id: LeaderboardScore.Id,
+      isSupporter: Bool,
       isYourScore: Bool,
       outOf: Int,
       playerDisplayName: String?,
@@ -26,6 +28,7 @@ public struct FetchLeaderboardResponse: Codable, Equatable {
       score: Int
     ) {
       self.id = id
+      self.isSupporter = isSupporter
       self.isYourScore = isYourScore
       self.outOf = outOf
       self.playerDisplayName = playerDisplayName

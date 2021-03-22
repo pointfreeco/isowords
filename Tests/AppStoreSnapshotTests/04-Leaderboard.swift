@@ -5,13 +5,6 @@ import SharedModels
 import SwiftUI
 
 var leaderboardAppStoreView: AnyView {
-  let json = #"""
-    [{"score":1680,"outOf":13380,"isYourScore":false,"playerDisplayName":"junebash","word":"INQUISITOR","denseRank":1,"playerId":"00000000-0000-0000-0000-000000000000","rank":1,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":1120,"outOf":13380,"isYourScore":false,"playerDisplayName":"ryanbooker","word":"TRADITIONS","denseRank":2,"playerId":"00000000-0000-0000-0000-000000000000","rank":2,"wordId":"00000000-0000-0000-0000-000000000001"},{"score":920,"outOf":13380,"isYourScore":false,"playerDisplayName":"stephen","word":"QUEENING","denseRank":3,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000002","rank":3},{"score":880,"outOf":13380,"isYourScore":true,"playerDisplayName":"You","word":"QUINTILE","denseRank":4,"playerId":"00000000-0000-0000-0000-000000000000","rank":4,"wordId":"00000000-0000-0000-0000-000000000003"},{"score":880,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"QUINTILE","denseRank":4,"playerId":"00000000-0000-0000-0000-000000000000","rank":4,"wordId":"00000000-0000-0000-0000-000000000004"},{"score":880,"outOf":13380,"isYourScore":false,"playerDisplayName":"junebash","word":"QUINTILE","denseRank":4,"playerId":"00000000-0000-0000-0000-000000000000","rank":4,"wordId":"00000000-0000-0000-0000-000000000005"},{"score":864,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"RENOUNCER","denseRank":5,"playerId":"00000000-0000-0000-0000-000000000000","rank":7,"wordId":"00000000-0000-0000-0000-000000000006"},{"score":864,"outOf":13380,"isYourScore":false,"playerDisplayName":"-jcoono-","word":"RENOUNCER","denseRank":5,"playerId":"00000000-0000-0000-0000-000000000000","rank":7,"wordId":"00000000-0000-0000-0000-000000000007"},{"score":840,"outOf":13380,"isYourScore":false,"playerDisplayName":"vunt","word":"EXPLAINS","denseRank":6,"playerId":"00000000-0000-0000-0000-000000000000","rank":9,"wordId":"00000000-0000-0000-0000-000000000008"},{"score":840,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"UNEQUALS","denseRank":6,"playerId":"00000000-0000-0000-0000-000000000000","rank":9,"wordId":"00000000-0000-0000-0000-000000000009"},{"score":840,"denseRank":6,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"UNEQUALS","wordId":"00000000-0000-0000-0000-000000000010","playerDisplayName":"eDickC","rank":9,"outOf":13380},{"score":760,"denseRank":7,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"SEXTETTE","wordId":"00000000-0000-0000-0000-000000000011","playerDisplayName":"stephencelis","rank":12,"outOf":13380},{"score":760,"denseRank":7,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"TEXTILES","wordId":"00000000-0000-0000-0000-000000000012","playerDisplayName":"robsr 47","rank":12,"outOf":13380},{"score":760,"denseRank":7,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"TEXTILES","wordId":"00000000-0000-0000-0000-000000000013","playerDisplayName":"stephencelis","rank":12,"outOf":13380},{"score":720,"denseRank":8,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"CORVETTE","wordId":"00000000-0000-0000-0000-000000000014","playerDisplayName":"robsr 47","rank":15,"outOf":13380},{"score":720,"denseRank":8,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"GLITTERY","wordId":"00000000-0000-0000-0000-000000000015","playerDisplayName":"robsr 47","rank":15,"outOf":13380},{"score":720,"denseRank":8,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"PRODUCER","wordId":"00000000-0000-0000-0000-000000000016","playerDisplayName":"carletonbowser","rank":15,"outOf":13380},{"score":720,"denseRank":8,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"VOLITIVE","wordId":"00000000-0000-0000-0000-000000000000","playerDisplayName":"Connoljoff","rank":15,"outOf":13380},{"score":720,"denseRank":8,"playerId":"00000000-0000-0000-0000-000000000000","isYourScore":false,"word":"WANDERED","wordId":"00000000-0000-0000-0000-000000000000","playerDisplayName":"kmh2021","rank":15,"outOf":13380},{"score":720,"outOf":13380,"isYourScore":false,"playerDisplayName":"rajivjhoomuck","word":"WEIRDING","denseRank":8,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":15},{"score":702,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"RESISTENT","denseRank":9,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":21},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"BORDERED","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","rank":22,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"Mossy26!","word":"BROMIDES","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":22},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"BROMIDES","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","rank":22,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"kmh2021","word":"CEMENTER","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","rank":22,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"kmh2021","word":"FILTERED","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":22},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"junebash","word":"FILTERED","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":22},{"score":680,"outOf":13380,"isYourScore":false,"playerDisplayName":"sanjimaitra","word":"TETHERED","denseRank":10,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":22},{"score":672,"outOf":13380,"isYourScore":false,"playerDisplayName":"carletonbowser","word":"QUIETLY","denseRank":11,"playerId":"00000000-0000-0000-0000-000000000000","rank":29,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":644,"outOf":13380,"isYourScore":false,"playerDisplayName":"mas544","word":"ANCHOVY","denseRank":12,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":30},{"score":644,"outOf":13380,"isYourScore":false,"playerDisplayName":"lelandr","word":"BREEZED","denseRank":12,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":30},{"score":644,"outOf":13380,"isYourScore":false,"playerDisplayName":"Wyntermutex","word":"QUIVERS","denseRank":12,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":30},{"score":640,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"COONCANS","denseRank":13,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":33},{"score":640,"outOf":13380,"isYourScore":false,"playerDisplayName":"kmh2021","word":"FILTERER","denseRank":13,"playerId":"00000000-0000-0000-0000-000000000000","rank":33,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":640,"outOf":13380,"isYourScore":false,"playerDisplayName":"ryanbooker","word":"REEFINGS","denseRank":13,"playerId":"00000000-0000-0000-0000-000000000000","rank":33,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":640,"outOf":13380,"isYourScore":false,"word":"RETROFIT","denseRank":13,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":33},{"score":600,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"GREETING","denseRank":14,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":37},{"score":600,"outOf":13380,"isYourScore":false,"playerDisplayName":"ryanbooker","word":"PEELINGS","denseRank":14,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":37},{"score":600,"outOf":13380,"isYourScore":false,"playerDisplayName":"carohodges","word":"PRISONED","denseRank":14,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":37},{"score":600,"outOf":13380,"isYourScore":false,"playerDisplayName":"stephencelis","word":"REMAINED","denseRank":14,"playerId":"00000000-0000-0000-0000-000000000000","rank":37,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":600,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"SISTERLY","denseRank":14,"playerId":"00000000-0000-0000-0000-000000000000","rank":37,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"BREEZES","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"BREEZES","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"lelandr","word":"BREEZES","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","rank":42,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"stephencelis","word":"BREEZES","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"kmh2021","word":"EQUATED","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"smartman 2000","word":"QUEENED","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","rank":42,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"carletonbowser","word":"QUEENED","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","rank":42,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"-jcoono-","word":"QUELLER","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"jaci.h","word":"QUIETED","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":588,"outOf":13380,"isYourScore":false,"playerDisplayName":"jcc7nstwl6r4r","word":"QUINTET","denseRank":15,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":42},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"BUNTIEST","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"ENLUMINE","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"vunt","word":"EXPLAIN","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"smartman 2000","word":"INQUIET","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"jaci.h","word":"LITTERED","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"junebash","word":"LITTERED","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"stephencelis","word":"LITTERED","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"LITTERED","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"ryanbooker","word":"PRICKER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"carohodges","word":"PRISONER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"smartman 2000","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"stephencelis","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"lelandr","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"kmh2021","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"jaci.h","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"-jcoono-","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"jcc7nstwl6r4r","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"junebash","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"mas544","word":"QUIETER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"eDickC","word":"REQUOTE","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"crtotheg","word":"REQUOTE","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"kmh2021","word":"SHEENIER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"Wyntermutex","word":"SHOOTERS","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"SQUALOR","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"carletonbowser","word":"SQUALOR","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"carohodges","word":"SQUALOR","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"TITTERED","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"Connoljoff","word":"TREADLER","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":52},{"score":560,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"UNEQUAL","denseRank":16,"playerId":"00000000-0000-0000-0000-000000000000","rank":52,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":532,"outOf":13380,"isYourScore":false,"playerDisplayName":"rajivjhoomuck","word":"COFFLES","denseRank":17,"playerId":"00000000-0000-0000-0000-000000000000","rank":84,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":532,"outOf":13380,"isYourScore":false,"playerDisplayName":"jaci.h","word":"PERFECT","denseRank":17,"playerId":"00000000-0000-0000-0000-000000000000","rank":84,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":532,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"QUEENIE","denseRank":17,"playerId":"00000000-0000-0000-0000-000000000000","rank":84,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":520,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"BASTILES","denseRank":18,"playerId":"00000000-0000-0000-0000-000000000000","rank":87,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":520,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"EPISTLES","denseRank":18,"playerId":"00000000-0000-0000-0000-000000000000","rank":87,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":520,"outOf":13380,"isYourScore":false,"playerDisplayName":"jaci.h","word":"LITTERER","denseRank":18,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":87},{"score":520,"outOf":13380,"isYourScore":false,"word":"LITTERER","denseRank":18,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":87},{"score":520,"outOf":13380,"isYourScore":true,"word":"RESTORED","denseRank":18,"playerId":"00000000-0000-0000-0000-000000000000","rank":87,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":520,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"SETTERED","denseRank":18,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":87},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"Yo Yoks","word":"BROWNED","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","rank":93,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"ryanbooker","word":"CHANCES","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","rank":93,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"vunt","word":"FAINTLY","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":93},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"smartman 2000","word":"QUASSES","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":93},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"smartman 2000","word":"QUEZAL","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":93},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"mbrandonw","word":"SWAYING","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","rank":93,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"stephencelis","word":"TEXTERS","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","rank":93,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"robsr 47","word":"TEXTILE","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":93},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"jaci.h","word":"THIRSTY","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","rank":93,"wordId":"00000000-0000-0000-0000-000000000000"},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"carletonbowser","word":"THROWER","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":93},{"score":504,"outOf":13380,"isYourScore":false,"playerDisplayName":"ryanbooker","word":"TRICKER","denseRank":19,"playerId":"00000000-0000-0000-0000-000000000000","wordId":"00000000-0000-0000-0000-000000000000","rank":93}]
-    """#
-  let results = try! JSONDecoder()
-    .decode([FetchVocabLeaderboardResponse.Entry].self, from: Data(json.utf8))
-    .map(ResultEnvelope.Result.init)
-
   let view = LeaderboardView(
     store: Store(
       initialState: LeaderboardState(
@@ -32,8 +25,8 @@ var leaderboardAppStoreView: AnyView {
           isLoading: false,
           isTimeScopeMenuVisible: false,
           resultEnvelope: ResultEnvelope(
-            outOf: 13_380,
-            results: results
+            outOf: 332_380,
+            results: .snapshot
           ),
           timeScope: .lastWeek
         )
@@ -43,4 +36,135 @@ var leaderboardAppStoreView: AnyView {
     )
   )
   return AnyView(view)
+}
+
+extension Array where Element == ResultEnvelope.Result {
+  static let snapshot: [ResultEnvelope.Result] = [
+    .init(
+      denseRank: 1,
+      id: .init(),
+      isYourScore: false,
+      rank: 1,
+      score: 1_680,
+      subtitle: "junebash",
+      title: "Inquisitor"
+    ),
+    .init(
+      denseRank: 2,
+      id: .init(),
+      isYourScore: false,
+      rank: 2,
+      score: 1_120,
+      subtitle: "ryanbooker",
+      title: "Traditions"
+    ),
+    .init(
+      denseRank: 3,
+      id: .init(),
+      isYourScore: false,
+      rank: 3,
+      score: 920,
+      subtitle: "stephen",
+      title: "Queening"
+    ),
+    .init(
+      denseRank: 4,
+      id: .init(),
+      isYourScore: true,
+      rank: 4,
+      score: 880,
+      subtitle: "You",
+      title: "Quintile"
+    ),
+    .init(
+      denseRank: 5,
+      id: .init(),
+      isYourScore: false,
+      rank: 4,
+      score: 880,
+      subtitle: "Connoljoff",
+      title: "Quintile"
+    ),
+    .init(
+      denseRank: 6,
+      id: .init(),
+      isYourScore: false,
+      rank: 4,
+      score: 880,
+      subtitle: "junebash",
+      title: "Quintile"
+    ),
+    .init(
+      denseRank: 7,
+      id: .init(),
+      isYourScore: false,
+      rank: 7,
+      score: 864,
+      subtitle: "Connoljoff",
+      title: "Renouncer"
+    ),
+    .init(
+      denseRank: 8,
+      id: .init(),
+      isYourScore: false,
+      rank: 7,
+      score: 864,
+      subtitle: "-jcoono-",
+      title: "Renouncer"
+    ),
+    .init(
+      denseRank: 9,
+      id: .init(),
+      isYourScore: false,
+      rank: 9,
+      score: 840,
+      subtitle: "vunt",
+      title: "Explains"
+    ),
+    .init(
+      denseRank: 10,
+      id: .init(),
+      isYourScore: false,
+      rank: 9,
+      score: 840,
+      subtitle: "robsr 47",
+      title: "Unequals"
+    ),
+    .init(
+      denseRank: 11,
+      id: .init(),
+      isYourScore: false,
+      rank: 9,
+      score: 840,
+      subtitle: "eDickC",
+      title: "Unequals"
+    ),
+    .init(
+      denseRank: 12,
+      id: .init(),
+      isYourScore: false,
+      rank: 12,
+      score: 760,
+      subtitle: "stephencelis",
+      title: "Sextette"
+    ),
+    .init(
+      denseRank: 13,
+      id: .init(),
+      isYourScore: false,
+      rank: 12,
+      score: 760,
+      subtitle: "robsr 47",
+      title: "Textiles"
+    ),
+    .init(
+      denseRank: 14,
+      id: .init(),
+      isYourScore: false,
+      rank: 12,
+      score: 760,
+      subtitle: "stephencelis",
+      title: "Textiles"
+    )
+  ]
 }
