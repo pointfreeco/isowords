@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import GameFeature
+import GameCore
 import XCTest
 
 class GameCoreTests: XCTestCase {
