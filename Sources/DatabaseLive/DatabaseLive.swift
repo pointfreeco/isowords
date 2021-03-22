@@ -24,7 +24,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: DailyChallengePlay.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("completeDailyChallenge(\(dailyChallengeId), \(playerId))"))
       },
       createTodaysDailyChallenge: { request in
         pool.sqlDatabase.raw(
@@ -45,7 +45,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: DailyChallenge.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("createTodaysDailyChallenge(\(request))"))
       },
       fetchActiveDailyChallengeArns: {
         pool.sqlDatabase.raw(
@@ -86,7 +86,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: DailyChallenge.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("fetchDailyChallengeById(\(id))"))
       },
       fetchDailyChallengeHistory: { request in
         pool.sqlDatabase.raw(
@@ -216,7 +216,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: DailyChallengeResult.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("fetchDailyChallengeResult(\(request))"))
       },
       fetchDailyChallengeResults: { request in
         pool.sqlDatabase.raw(
@@ -318,7 +318,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: LeaderboardScoreResult.Rank.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("fetchLeaderboardSummary(\(request))"))
       },
       fetchLeaderboardWeeklyRanks: { language, player in
         pool.sqlDatabase.raw(
@@ -480,7 +480,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: SharedGame.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("fetchSharedGame(\(code))"))
       },
       fetchTodaysDailyChallenges: { language in
         pool.sqlDatabase.raw(
@@ -586,7 +586,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: FetchVocabWordResponse.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("fetchVocabLeaderboardWord(\(wordId))"))
       },
       insertPlayer: { request in
         pool.sqlDatabase.raw(
@@ -604,7 +604,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: Player.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("insertPlayer(\(request))"))
       },
       insertPushToken: { request in
         pool.sqlDatabase.raw(
@@ -645,7 +645,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: SharedGame.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("insertSharedGame(\(completedGame), \(player))"))
       },
       migrate: { () -> EitherIO<Error, Void> in
         let database = pool.database(logger: Logger(label: "Postgres"))
@@ -1007,7 +1007,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: DailyChallengePlay.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("startDailyChallenge(\(dailyChallengeId), \(playerId))"))
       },
       submitLeaderboardScore: { request in
         pool.sqlDatabase.raw(
@@ -1031,7 +1031,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: LeaderboardScore.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("submitLeaderboardScore(\(request))"))
         .flatMap { (leaderboardScore: LeaderboardScore) in
           sequence(
             request.words
@@ -1082,7 +1082,7 @@ extension DatabaseClient {
           """
         )
         .first(decoding: Player.self)
-        .mapExcept(requireSome)
+        .mapExcept(requireSome("updatePlayer(\(request))"))
       },
       updatePushSetting: { playerId, pushNotificationType, sendNotifications in
         return pool.sqlDatabase.raw(
@@ -1122,13 +1122,21 @@ extension DatabaseClient {
   #endif
 }
 
-func requireSome<A>(_ e: Either<Error, A?>) -> Either<Error, A> {
-  switch e {
-  case let .left(e):
-    return .left(e)
-  case let .right(a):
-    return a.map(Either.right) ?? .left(unit)
+func requireSome<A>(
+  _ message: String
+) -> (Either<Error, A?>) -> Either<Error, A> {
+  { e in
+    switch e {
+    case let .left(e):
+      return .left(e)
+    case let .right(a):
+      return a.map(Either.right) ?? .left(RequireSomeError(message: message))
+    }
   }
+}
+
+struct RequireSomeError: Error {
+  let message: String
 }
 
 private let gameEpoch = "2020-01-01"
