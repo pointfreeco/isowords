@@ -1,5 +1,4 @@
 import Foundation
-import XCTestDynamicOverlay
 
 public struct DeviceIdentifier {
   public var id: () -> UUID
@@ -23,7 +22,7 @@ extension DeviceIdentifier {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension DeviceIdentifier {
     public static let failing = Self(
