@@ -29,6 +29,7 @@ import UserDefaultsClient
 
 public struct GameState: Equatable {
   public var activeGames: ActiveGamesState
+  public var alert: AlertState<GameAction.AlertAction>?
   public var bottomMenu: BottomMenuState<GameAction>?
   public var cubes: Puzzle
   public var cubeStartedShakingAt: Date?
@@ -54,6 +55,7 @@ public struct GameState: Equatable {
 
   public init(
     activeGames: ActiveGamesState = .init(),
+    alert: AlertState<GameAction.AlertAction>? = nil,
     bottomMenu: BottomMenuState<GameAction>? = nil,
     cubes: Puzzle,
     cubeStartedShakingAt: Date? = nil,
@@ -78,6 +80,7 @@ public struct GameState: Equatable {
     wordSubmit: WordSubmitButtonState = .init()
   ) {
     self.activeGames = activeGames
+    self.alert = alert
     self.bottomMenu = bottomMenu
     self.cubes = cubes
     self.cubeStartedShakingAt = cubeStartedShakingAt
@@ -144,6 +147,7 @@ public struct GameState: Equatable {
 
 public enum GameAction: Equatable {
   case activeGames(ActiveGamesAction)
+  case alert(AlertAction)
   case cancelButtonTapped
   case confirmRemoveCube(LatticePoint)
   case delayedShowUpgradeInterstitial
@@ -168,6 +172,12 @@ public enum GameAction: Equatable {
   case trayButtonTapped
   case upgradeInterstitial(UpgradeInterstitialAction)
   case wordSubmitButton(WordSubmitButtonAction)
+
+  public enum AlertAction: Equatable {
+    case dismiss
+    case dontForfeitButtonTapped
+    case forfeitButtonTapped
+  }
 
   public enum GameCenterAction: Equatable {
     case listener(LocalPlayerClient.ListenerEvent)
@@ -294,6 +304,14 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
       case .activeGames:
         return .none
 
+      case .alert(.dismiss), .alert(.dontForfeitButtonTapped):
+        state.alert = nil
+        return .none
+
+      case .alert(.forfeitButtonTapped):
+        state.alert = nil
+        return state.gameOver(environment: environment)
+
       case .cancelButtonTapped:
         state.selectedWord = []
         return .none
@@ -322,7 +340,16 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
         return Effect.gameTearDownEffects.fireAndForget()
 
       case .forfeitGameButtonTapped:
-        return state.gameOver(environment: environment)
+        state.alert = .init(
+          title: .init("Are you sure?"),
+          message: .init("""
+            Forfeiting will end the game and your opponent will win. Are you sure you want to forfeit?
+            """),
+          primaryButton: .default(.init("Don't forfeit"), send: .dontForfeitButtonTapped),
+          secondaryButton: .destructive(.init("Yes, forfeit"), send: .forfeitButtonTapped),
+          onDismiss: .dismiss
+        )
+        return .none
 
       case .gameCenter:
         return .none
