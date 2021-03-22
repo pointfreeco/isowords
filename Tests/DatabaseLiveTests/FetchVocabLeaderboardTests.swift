@@ -74,7 +74,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     .run.perform().unwrap()
 
     let entriesSortedByScore = try self.database.fetchVocabLeaderboard(
-      .en, blob, .allTime, .score
+      .en, blob, .allTime
     )
     .run.perform().unwrap()
 
@@ -133,7 +133,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     )
 
     let entriesSortedByLength = try self.database.fetchVocabLeaderboard(
-      .en, blob, .allTime, .length
+      .en, blob, .allTime
     )
     .run.perform().unwrap()
 

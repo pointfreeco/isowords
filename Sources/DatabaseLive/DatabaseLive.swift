@@ -497,18 +497,12 @@ extension DatabaseClient {
         .all(decoding: DailyChallenge.self)
       },
       fetchVocabLeaderboard: { language, player, timeScope in
-        let additionalWhereClause: SQLQueryString
         let orderByClause: SQLQueryString
-        let wordCountClause: SQLQueryString
         switch timeScope {
         case .allTime, .lastDay, .lastWeek:
-          additionalWhereClause = ""
           orderByClause = #""score" DESC"#
-          wordCountClause = #"SELECT COUNT("wordId") FROM "scores""#
-        case .magic:
-          additionalWhereClause = #"AND "words"."score" >= 300"#
+        case .interesting:
           orderByClause = #""score" * "moveIndex" DESC"#
-          wordCountClause = "0"
         }
 
         return pool.sqlDatabase.raw(
@@ -553,12 +547,10 @@ extension DatabaseClient {
               "leaderboardScores"."playerId" = \(bind: player.id)
               OR "hiddenWords"."word" IS NULL
             )
-            \(additionalWhereClause)
           ),
           "rankedScores" AS (
             SELECT
               *,
-              (\(wordCountClause)) AS "outOf",
               RANK() OVER (ORDER BY \(orderByClause)) AS "rank",
               DENSE_RANK() OVER (ORDER BY \(orderByClause)) AS "denseRank"
             FROM "scores"
@@ -566,11 +558,18 @@ extension DatabaseClient {
               \(orderByClause), "word" ASC, "wordCreatedAt" ASC
             LIMIT 150
           ),
+          "wordCount" AS (
+            SELECT COUNT(*) as "outOf"
+            FROM "words"
+            WHERE "words"."createdAt" BETWEEN
+              NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
+          ),
           "top100" AS (
             SELECT
               *
             FROM
               "rankedScores"
+            LEFT JOIN "wordCount" ON 1=1
             WHERE "rank" <= 100
           )
           SELECT * FROM "top100";
@@ -1157,12 +1156,12 @@ extension TimeScope {
     switch self {
     case .allTime:
       return "99 YEARS"
+    case .interesting:
+      return "99 YEARS"
     case .lastDay:
       return "1 DAY"
     case .lastWeek:
       return "1 WEEK"
-    case .magic:
-      return "99 YEARS"
     }
   }
 }

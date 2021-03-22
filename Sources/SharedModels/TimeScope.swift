@@ -2,7 +2,7 @@ public enum TimeScope: String, CaseIterable, Codable {
   case allTime
   case lastDay
   case lastWeek
-  case magic
+  case interesting
 }
 
 #if canImport(SwiftUI)
@@ -17,8 +17,8 @@ public enum TimeScope: String, CaseIterable, Codable {
         return "Past day"
       case .lastWeek:
         return "Past week"
-      case .magic:
-        return "Magic"
+      case .interesting:
+        return "Interesting"
       }
     }
   }
