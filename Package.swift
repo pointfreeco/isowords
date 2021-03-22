@@ -60,7 +60,7 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
       ]
     ),
     .systemLibrary(
