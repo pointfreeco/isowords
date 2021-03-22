@@ -110,10 +110,14 @@ class DailyChallengeFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.gameButtonTapped(.unlimited))
+    store.send(.gameButtonTapped(.unlimited)) {
+      $0.gameModeIsLoading = .unlimited
+    }
 
     self.mainRunLoop.advance()
-    store.receive(.startDailyChallengeResponse(.success(inProgressGame)))
+    store.receive(.startDailyChallengeResponse(.success(inProgressGame))) {
+      $0.gameModeIsLoading = nil
+    }
     store.receive(.delegate(.startGame(inProgressGame)))
   }
 
@@ -143,9 +147,13 @@ class DailyChallengeFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.gameButtonTapped(.unlimited))
+    store.send(.gameButtonTapped(.unlimited)) {
+      $0.gameModeIsLoading = .unlimited
+    }
 
-    store.receive(.startDailyChallengeResponse(.success(inProgressGame)))
+    store.receive(.startDailyChallengeResponse(.success(inProgressGame))) {
+      $0.gameModeIsLoading = nil
+    }
     store.receive(.delegate(.startGame(inProgressGame)))
   }
 
