@@ -1,6 +1,6 @@
 import ComposableArchitecture
 import SharedModels
-import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 extension LocalDatabaseClient {
   public static var mock: Self {

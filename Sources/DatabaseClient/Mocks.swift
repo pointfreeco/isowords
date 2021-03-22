@@ -1,5 +1,5 @@
 import Either
-import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 #if DEBUG
   extension DatabaseClient {

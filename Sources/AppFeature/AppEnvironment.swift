@@ -17,7 +17,7 @@ import SharedModels
 import UIApplicationClient
 import UIKit
 import UserDefaultsClient
-import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 public struct AppEnvironment {
   public var apiClient: ApiClient
