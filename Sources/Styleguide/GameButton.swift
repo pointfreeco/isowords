@@ -7,6 +7,7 @@ public struct GameButton: View {
   @Environment(\.colorScheme) var colorScheme
   let icon: Image
   let inactiveText: Text?
+  let isLoading: Bool
   let resumeText: Text?
   let title: Text
 
@@ -15,6 +16,7 @@ public struct GameButton: View {
     icon: Image,
     color: Color,
     inactiveText: Text?,
+    isLoading: Bool,
     resumeText: Text?,
     action: @escaping () -> Void
   ) {
@@ -22,36 +24,52 @@ public struct GameButton: View {
     self.icon = icon
     self.color = color
     self.inactiveText = inactiveText
+    self.isLoading = isLoading
     self.resumeText = resumeText
     self.action = action
   }
 
   public var body: some View {
-    Button(action: self.action) {
-      Group {
-        if let resumeText = self.resumeText {
-          self.resumeView(context: resumeText)
-            .transition(.opacity)
-        } else {
-          self.standardView
-            .transition(.opacity)
+    ZStack {
+      Button(action: self.action) {
+        Group {
+          if let resumeText = self.resumeText {
+            self.resumeView(context: resumeText)
+              .transition(.opacity)
+          } else {
+            self.standardView
+              .transition(.opacity)
+          }
         }
+        .opacity(self.isLoading ? 0.25 : 1)
+        .foregroundColor(
+          self.colorScheme == .light
+            ? self.color
+            : .black
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(
+          self.colorScheme == .light
+            ? .black
+            : self.color
+        )
+        .continuousCornerRadius(12)
       }
-      .foregroundColor(
-        self.colorScheme == .light
-          ? self.color
-          : .black
-      )
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-      .background(
-        self.colorScheme == .light
-          ? .black
-          : self.color
-      )
-      .continuousCornerRadius(12)
+      .opacity(self.inactiveText == nil ? 1 : 0.5)
+      .buttonStyle(GameButtonStyle())
+
+      if self.isLoading {
+        ProgressView()
+          .progressViewStyle(
+            CircularProgressViewStyle(
+              tint: self.colorScheme == .light
+                ? self.color
+                : .black
+            )
+          )
+          .scaleEffect(1.5)
+      }
     }
-    .opacity(self.inactiveText == nil ? 1 : 0.5)
-    .buttonStyle(GameButtonStyle())
   }
 
   private func resumeView(context: Text) -> some View {
@@ -138,6 +156,7 @@ private struct GameButtonStyle: ButtonStyle {
                 icon: Image(systemName: "clock.fill"),
                 color: .isowordsOrange,
                 inactiveText: nil,
+                isLoading: true,
                 resumeText: nil,
                 action: {}
               )
@@ -146,6 +165,7 @@ private struct GameButtonStyle: ButtonStyle {
                 icon: Image(systemName: "infinity"),
                 color: .isowordsOrange,
                 inactiveText: nil,
+                isLoading: false,
                 resumeText: Text("1,234 points"),
                 action: {}
               )
@@ -163,6 +183,7 @@ private struct GameButtonStyle: ButtonStyle {
                 icon: Image(systemName: "clock.fill"),
                 color: .isowordsOrange,
                 inactiveText: Text("Played.\n#4 of 1,234"),
+                isLoading: false,
                 resumeText: nil,
                 action: {}
               )
@@ -171,6 +192,7 @@ private struct GameButtonStyle: ButtonStyle {
                 icon: Image(systemName: "infinity"),
                 color: .isowordsOrange,
                 inactiveText: nil,
+                isLoading: false,
                 resumeText: nil,
                 action: {}
               )

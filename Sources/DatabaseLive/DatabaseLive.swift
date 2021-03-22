@@ -223,14 +223,16 @@ extension DatabaseClient {
           """
           WITH "rankedChallengeResults" AS (
             SELECT
-              DENSE_RANK() OVER (ORDER BY "score" DESC) AS "rank",
+              "appleReceipts"."id" IS NOT NULL AS "isSupporter",
+              "players"."id" = \(bind: request.playerId) AS "isYourScore",
               "displayName" AS "playerDisplayName",
-              "leaderboardScores"."playerId" = \(bind: request.playerId) AS "isYourScore",
-              "leaderboardScores"."playerId" AS "playerId",
+              "players"."id" AS "playerId",
+              DENSE_RANK() OVER (ORDER BY "score" DESC) AS "rank",
               "score"
             FROM "leaderboardScores"
             JOIN "dailyChallenges" ON "leaderboardScores"."dailyChallengeId" = "dailyChallenges"."id"
             JOIN "players" ON "leaderboardScores"."playerId" = "players"."id"
+            LEFT JOIN "appleReceipts" ON "appleReceipts"."playerId" = "players"."id"
             WHERE "dailyChallenges"."gameNumber" = COALESCE(\(bind: request.gameNumber), CURRENT_DAILY_CHALLENGE_NUMBER())
             AND "dailyChallenges"."gameMode" = \(bind: request.gameMode)
             AND "dailyChallenges"."language" = \(bind: request.language)
@@ -240,12 +242,7 @@ extension DatabaseClient {
             FROM "rankedChallengeResults"
           )
           SELECT
-            "isYourScore",
-            "outOf",
-            "playerDisplayName",
-            "playerId",
-            "rank",
-            "score"
+            *
           FROM "rankedChallengeResults"
           JOIN "rankedChallengeResultsCount" ON 1=1
           WHERE "rank" <= 100 OR "isYourScore"
@@ -424,12 +421,14 @@ extension DatabaseClient {
               DISTINCT ON ("leaderboardScores"."playerId")
               "displayName" AS "playerDisplayName",
               "leaderboardScores"."id",
-              "playerId" = \(bind: request.playerId) AS "isYourScore",
-              "playerId",
+              "appleReceipts"."id" IS NOT NULL AS "isSupporter",
+              "players"."id" = \(bind: request.playerId) AS "isYourScore",
+              "players"."id" AS "playerId",
               "score"
             FROM
               "leaderboardScores"
             LEFT JOIN "players" ON "leaderboardScores"."playerId" = "players"."id"
+            LEFT JOIN "appleReceipts" ON "appleReceipts"."playerId" = "players"."id"
             LEFT JOIN "dailyChallenges" ON "leaderboardScores"."dailyChallengeId" = "dailyChallenges"."id"
           WHERE
             "leaderboardScores"."gameMode" = \(bind: request.gameMode)
@@ -517,7 +516,8 @@ extension DatabaseClient {
           WITH "scores" AS (
             SELECT
               DISTINCT ON ("leaderboardScores"."playerId", "words"."word")
-              "leaderboardScores"."playerId" = \(bind: player.id) AS "isYourScore",
+              "appleReceipts"."id" IS NOT NULL AS "isSupporter",
+              "players"."id" = \(bind: player.id) AS "isYourScore",
               "words"."moveIndex",
               "words"."id" AS "wordId",
               "words"."score",
@@ -529,6 +529,7 @@ extension DatabaseClient {
               "words"
             LEFT JOIN "leaderboardScores" ON "leaderboardScores"."id" = "words"."leaderboardScoreId"
             LEFT JOIN "players" ON "players"."id" = "leaderboardScores"."playerId"
+            LEFT JOIN "appleReceipts" ON "appleReceipts"."playerId" = "players"."id"
             LEFT JOIN "dailyChallenges" ON "leaderboardScores"."dailyChallengeId" = "dailyChallenges"."id"
             LEFT OUTER JOIN "hiddenWords" ON "words"."word" = "hiddenWords"."word"
             WHERE

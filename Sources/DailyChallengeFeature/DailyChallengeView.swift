@@ -16,6 +16,7 @@ import SwiftUI
 public struct DailyChallengeState: Equatable {
   public var alert: AlertState<DailyChallengeAction>?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
+  public var gameModeIsLoading: GameMode?
   public var inProgressDailyChallengeUnlimited: InProgressGame?
   public var route: Route?
   public var notificationsAuthAlert: NotificationsAuthAlertState?
@@ -39,6 +40,7 @@ public struct DailyChallengeState: Equatable {
   public init(
     alert: AlertState<DailyChallengeAction>? = nil,
     dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
+    gameModeIsLoading: GameMode? = nil,
     inProgressDailyChallengeUnlimited: InProgressGame? = nil,
     route: Route? = nil,
     notificationsAuthAlert: NotificationsAuthAlertState? = nil,
@@ -46,6 +48,7 @@ public struct DailyChallengeState: Equatable {
   ) {
     self.alert = alert
     self.dailyChallenges = dailyChallenges
+    self.gameModeIsLoading = gameModeIsLoading
     self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
     self.route = route
     self.notificationsAuthAlert = notificationsAuthAlert
@@ -170,6 +173,8 @@ public let dailyChallengeReducer = Reducer<
         return .none
       }
 
+      state.gameModeIsLoading = challenge.dailyChallenge.gameMode
+
       return startDailyChallenge(
         challenge,
         apiClient: environment.apiClient,
@@ -222,13 +227,16 @@ public let dailyChallengeReducer = Reducer<
 
     case let .startDailyChallengeResponse(.failure(.alreadyPlayed(endsAt))):
       state.alert = .alreadyPlayed(nextStartsAt: endsAt)
+      state.gameModeIsLoading = nil
       return .none
 
     case let .startDailyChallengeResponse(.failure(.couldNotFetch(nextStartsAt))):
       state.alert = .couldNotFetchDaily(nextStartsAt: nextStartsAt)
+      state.gameModeIsLoading = nil
       return .none
 
     case let .startDailyChallengeResponse(.success(inProgressGame)):
+      state.gameModeIsLoading = nil
       return .init(value: .delegate(.startGame(inProgressGame)))
 
     case let .userNotificationSettingsResponse(settings):
@@ -258,7 +266,7 @@ extension AlertState where Action == DailyChallengeAction {
       title: .init("Couldn’t start today’s daily"),
       message: .init(
         """
-        We’re sorry. We were unable to fetch today’s daily or you already started today’s daily \
+        We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
         """),
       primaryButton: .default(.init("OK"), send: .dismissAlert),
@@ -276,6 +284,7 @@ public struct DailyChallengeView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeAction>
 
   struct ViewState: Equatable {
+    let gameModeIsLoading: GameMode?
     let isNotificationStatusDetermined: Bool
     let numberOfPlayers: Int
     let routeTag: DailyChallengeState.Route.Tag?
@@ -290,6 +299,7 @@ public struct DailyChallengeView: View {
     }
 
     init(state: DailyChallengeState) {
+      self.gameModeIsLoading = state.gameModeIsLoading
       self.isNotificationStatusDetermined = ![.notDetermined, .provisional]
         .contains(state.userNotificationSettings?.authorizationStatus)
       self.numberOfPlayers = state.dailyChallenges.numberOfPlayers
@@ -351,17 +361,22 @@ public struct DailyChallengeView: View {
             icon: Image(systemName: "clock.fill"),
             color: .dailyChallenge,
             inactiveText: self.viewStore.timedState.inactiveText,
+            isLoading: self.viewStore.gameModeIsLoading == .timed,
             resumeText: self.viewStore.timedState.resumeText,
             action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
           )
+          .disabled(self.viewStore.gameModeIsLoading != nil)
+
           GameButton(
             title: Text("Unlimited"),
             icon: Image(systemName: "infinity"),
             color: .dailyChallenge,
             inactiveText: self.viewStore.unlimitedState.inactiveText,
+            isLoading: self.viewStore.gameModeIsLoading == .unlimited,
             resumeText: self.viewStore.unlimitedState.resumeText,
             action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
           )
+          .disabled(self.viewStore.gameModeIsLoading != nil)
         }
         .adaptivePadding([.vertical])
         .screenEdgePadding(.horizontal)

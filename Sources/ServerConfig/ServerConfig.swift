@@ -31,7 +31,7 @@ public struct ServerConfig: Codable, Equatable, Hashable {
     public var nagBannerAfterInstallDuration = 60 * 60 * 24 * 2
     public var playedDailyChallengeGamesTriggerCount = 2
     public var playedMultiplayerGamesTriggerCount = 1
-    public var playedSoloGamesTriggerCount = 10
+    public var playedSoloGamesTriggerCount = 6
     public var soloGameTriggerEvery = 3
 
     public static let `default` = Self()

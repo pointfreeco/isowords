@@ -18,6 +18,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     let currentPlayer = Player.blob
 
     let timedResult = FetchDailyChallengeResultsResponse.Result(
+      isSupporter: false,
       isYourScore: true,
       outOf: 10,
       playerDisplayName: "Blob",
@@ -40,6 +41,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       ]
     )
     let unlimitedResult = FetchDailyChallengeResultsResponse.Result(
+      isSupporter: false,
       isYourScore: false,
       outOf: 10,
       playerDisplayName: "Blob Jr",

@@ -95,6 +95,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
       results,
       [
         .init(
+          isSupporter: false,
           isYourScore: true,
           outOf: 1,
           playerDisplayName: player.displayName,
@@ -119,6 +120,9 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
       )
       .run.perform().unwrap()
     }
+
+    try self.database.updateAppleReceipt(players[0].id, .mock)
+      .run.perform().unwrap()
 
     let dailyChallenge = try self.database.createTodaysDailyChallenge(
       .init(
@@ -161,6 +165,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
       scores.enumerated()
         .map { idx, score in
           FetchDailyChallengeResultsResponse.Result(
+            isSupporter: idx == 0,
             isYourScore: idx == 29,
             outOf: 30,
             playerDisplayName: "Blob \(idx)",

@@ -14,7 +14,20 @@ class UpgradeInterstitialViewTests: XCTestCase {
     assertSnapshot(
       matching: UpgradeInterstitialView(
         store: .init(
-          initialState: .init(),
+          initialState: .init(
+            fullGameProduct: .init(
+              downloadContentLengths: [],
+              downloadContentVersion: "",
+              isDownloadable: false,
+              localizedDescription: "Full Game",
+              localizedTitle: "Full Game",
+              price: 5,
+              priceLocale: Locale.init(identifier: "en_US"),
+              productIdentifier: "full_game"
+            ),
+            isDismissable: false,
+            secondsPassedCount: 0
+          ),
           reducer: .empty,
           environment: ()
         )

@@ -357,7 +357,7 @@ class GameOverFeatureTests: XCTestCase {
         return .none
       }
     }
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.playedGamesCount = { _ in .init(value: 6) }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
