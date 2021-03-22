@@ -17,22 +17,22 @@ public enum GameContext: String, Codable {
 }
 
 public struct UpgradeInterstitialState: Equatable {
+  public var fullGameProduct: StoreKitClient.Product?
   public var isDismissable: Bool
   public var isPurchasing: Bool
-  public var products: [StoreKitClient.Product]?
   public var secondsPassedCount: Int
   public var upgradeInterstitialDuration: Int
 
   public init(
+    fullGameProduct: StoreKitClient.Product? = nil,
     isDismissable: Bool = false,
     isPurchasing: Bool = false,
-    products: [StoreKitClient.Product]? = nil,
     secondsPassedCount: Int = 0,
     upgradeInterstitialDuration: Int = ServerConfig.UpgradeInterstitial.default.duration
   ) {
+    self.fullGameProduct = fullGameProduct
     self.isDismissable = isDismissable
     self.isPurchasing = isPurchasing
-    self.products = products
     self.secondsPassedCount = secondsPassedCount
     self.upgradeInterstitialDuration = upgradeInterstitialDuration
   }
@@ -40,6 +40,7 @@ public struct UpgradeInterstitialState: Equatable {
 
 public enum UpgradeInterstitialAction: Equatable {
   case delegate(DelegateAction)
+  case fullGameProductResponse(StoreKitClient.Product)
   case maybeLaterButtonTapped
   case onAppear
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
@@ -77,6 +78,10 @@ public let upgradeInterstitialReducer = Reducer<
 
   switch action {
   case .delegate:
+    return .none
+
+  case let .fullGameProductResponse(product):
+    state.fullGameProduct = product
     return .none
 
   case .maybeLaterButtonTapped:
@@ -120,6 +125,19 @@ public let upgradeInterstitialReducer = Reducer<
         .map(UpgradeInterstitialAction.paymentTransaction)
         .eraseToEffect()
         .cancellable(id: StoreKitObserverId()),
+
+      environment.storeKit.fetchProducts([
+        environment.serverConfig.config().productIdentifiers.fullGame
+      ])
+      .ignoreFailure()
+      .compactMap { response in
+        response.products.first { product in
+          product.productIdentifier == environment.serverConfig.config().productIdentifiers.fullGame
+        }
+      }
+      .receive(on: environment.mainRunLoop.animation())
+      .map(UpgradeInterstitialAction.fullGameProductResponse)
+      .eraseToEffect(),
 
       !state.isDismissable
         ? Effect.timer(id: TimerId(), every: 1, on: environment.mainRunLoop.animation())
@@ -180,9 +198,10 @@ public struct UpgradeInterstitialView: View {
               """
               Hello! We could put an ad here, but we chose not to because ads suck. But also, keeping \
               this game running costs money. So if you can, please purchase the full version and help \
-              support the development of new features!
+              support the development of new features and remove these annoying prompts!
               """
             )
+            .minimumScaleFactor(0.2)
             .multilineTextAlignment(.center)
             .adaptiveFont(.matter, size: 16)
           }
@@ -215,7 +234,14 @@ public struct UpgradeInterstitialView: View {
                     )
                   )
               }
-              Text("Upgrade")
+              if
+                let fullGameProduct = viewStore.fullGameProduct,
+                let cost = cost(product: fullGameProduct)
+              {
+                Text("Upgrade for \(cost)")
+              } else {
+                Text("Upgrade")
+              }
             }
             .frame(maxWidth: .infinity)
           }
@@ -337,6 +363,13 @@ extension ServerConfig {
   }
 }
 
+private func cost(product: StoreKitClient.Product) -> String {
+  let formatter = NumberFormatter()
+  formatter.numberStyle = .currency
+  formatter.locale = product.priceLocale
+  return formatter.string(from: product.price) ?? ""
+}
+
 extension View {
   func foreground<V: View>(_ view: V) -> some View {
     self.overlay(view).mask(self)
@@ -349,7 +382,20 @@ struct UpgradeInterstitialPreviews: PreviewProvider {
       NavigationView {
         UpgradeInterstitialView(
           store: .init(
-            initialState: .init(isDismissable: true, secondsPassedCount: 0),
+            initialState: .init(
+              fullGameProduct: .init(
+                downloadContentLengths: [],
+                downloadContentVersion: "",
+                isDownloadable: false,
+                localizedDescription: "Full Game",
+                localizedTitle: "Full Game",
+                price: 5,
+                priceLocale: Locale.init(identifier: "en_US"),
+                productIdentifier: "full_game"
+              ),
+              isDismissable: false,
+              secondsPassedCount: 0
+            ),
             reducer: upgradeInterstitialReducer,
             environment: .init(
               mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
