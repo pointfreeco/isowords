@@ -39,7 +39,7 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.1.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen.git", .exact("0.3.0")),
     .package(url: "https://github.com/pointfreeco/swift-tagged.git", .branch("iso")),
-    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git", .branch("main")),
+    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git", from: "0.1.0"),
     .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
     .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
     .package(
