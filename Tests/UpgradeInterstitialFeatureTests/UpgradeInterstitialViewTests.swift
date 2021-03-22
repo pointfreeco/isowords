@@ -25,7 +25,7 @@ class UpgradeInterstitialViewTests: XCTestCase {
               priceLocale: Locale.init(identifier: "en_US"),
               productIdentifier: "full_game"
             ),
-            isDismissable: true,
+            isDismissable: false,
             secondsPassedCount: 0
           ),
           reducer: .empty,
