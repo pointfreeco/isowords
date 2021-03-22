@@ -117,6 +117,7 @@ public struct ApiClient {
 
 #if DEBUG
   import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension ApiClient {
     public static let failing = Self(

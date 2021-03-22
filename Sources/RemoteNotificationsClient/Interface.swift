@@ -15,7 +15,7 @@ extension RemoteNotificationsClient {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension RemoteNotificationsClient {
     public static let failing = Self(

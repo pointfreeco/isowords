@@ -18,7 +18,6 @@ import TcaHelpers
 import UIApplicationClient
 import UserDefaultsClient
 import UserNotifications
-import XCTestDebugSupport
 
 public struct UserSettings: Codable, Equatable {
   public var appIcon: AppIcon?
@@ -236,6 +235,8 @@ public struct SettingsEnvironment {
 }
 
 #if DEBUG
+  import XCTestDynamicOverlay
+
   extension SettingsEnvironment {
     public static let failing = Self(
       apiClient: .failing,

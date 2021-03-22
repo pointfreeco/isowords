@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 extension UIApplicationClient {
   #if DEBUG

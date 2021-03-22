@@ -22,7 +22,7 @@ extension DeviceIdentifier {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension DeviceIdentifier {
     public static let failing = Self(
