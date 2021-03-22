@@ -43,6 +43,14 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       return .none
     }
     environment.storeKit.observer = observer.eraseToEffect()
+    environment.storeKit.fetchProducts = { _ in
+      .init(
+        value: .init(
+          invalidProductIdentifiers: [],
+          products: [fullGameProduct]
+        )
+      )
+    }
 
     let store = TestStore(
       initialState: .init(),
@@ -51,6 +59,11 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
+
+    store.receive(.fullGameProductResponse(fullGameProduct)) {
+      $0.fullGameProduct = fullGameProduct
+    }
+
     store.send(.upgradeButtonTapped) {
       $0.isPurchasing = true
     }
@@ -67,6 +80,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = .none
+    environment.storeKit.fetchProducts = { _ in .none }
 
     let store = TestStore(
       initialState: .init(),
@@ -106,6 +120,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = .none
+    environment.storeKit.fetchProducts = { _ in .none }
 
     let store = TestStore(
       initialState: .init(isDismissable: true),
@@ -127,7 +142,7 @@ let fullGameProduct = StoreKitClient.Product(
   localizedTitle: "",
   price: 4.99,
   priceLocale: .init(identifier: "en_US"),
-  productIdentifier: "co.pointfree.full_game"
+  productIdentifier: "co.pointfree.isowords_testing.full_game"
 )
 
 extension UpgradeInterstitialEnvironment {

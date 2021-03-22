@@ -40,6 +40,7 @@ struct PurchasesSettingsView: View {
               ) {
                 Text("Upgrade")
                   .foregroundColor(.isowordsOrange)
+                  .adaptiveFont(.matterMedium, size: 20)
               }
             }
           case .failure:

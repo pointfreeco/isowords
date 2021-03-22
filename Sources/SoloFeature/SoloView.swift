@@ -95,6 +95,7 @@ public struct SoloView: View {
             icon: Image(systemName: "clock.fill"),
             color: .solo,
             inactiveText: nil,
+            isLoading: false,
             resumeText: nil,
             action: { viewStore.send(.gameButtonTapped(.timed), animation: .default) }
           )
@@ -104,6 +105,7 @@ public struct SoloView: View {
             icon: Image(systemName: "infinity"),
             color: .solo,
             inactiveText: nil,
+            isLoading: false,
             resumeText: (viewStore.currentScore).flatMap {
               $0 > 0 ? Text("\($0) points") : nil
             },

@@ -29,6 +29,7 @@ import UserDefaultsClient
 public struct GameOverState: Equatable {
   public var completedGame: CompletedGame
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
+  public var gameModeIsLoading: GameMode?
   public var isDemo: Bool
   public var isNotificationMenuPresented: Bool
   public var notificationsAuthAlert: NotificationsAuthAlertState?
@@ -41,6 +42,7 @@ public struct GameOverState: Equatable {
   public init(
     completedGame: CompletedGame,
     dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
+    gameModeIsLoading: GameMode? = nil,
     isDemo: Bool,
     isNotificationMenuPresented: Bool = false,
     notificationsAuthAlert: NotificationsAuthAlertState? = nil,
@@ -52,6 +54,7 @@ public struct GameOverState: Equatable {
   ) {
     self.completedGame = completedGame
     self.dailyChallenges = dailyChallenges
+    self.gameModeIsLoading = gameModeIsLoading
     self.isDemo = isDemo
     self.isNotificationMenuPresented = isNotificationMenuPresented
     self.notificationsAuthAlert = notificationsAuthAlert
@@ -219,7 +222,11 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .gameButtonTapped(gameMode):
       switch state.completedGame.gameContext {
       case .dailyChallenge:
-        return state.dailyChallenges.first(where: { $0.dailyChallenge.gameMode == gameMode })
+        let challenge = state.dailyChallenges
+          .first(where: { $0.dailyChallenge.gameMode == gameMode })
+        state.gameModeIsLoading = challenge?.dailyChallenge.gameMode
+        return
+          challenge
           .map {
             startDailyChallenge(
               $0,
@@ -347,9 +354,11 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     //        .fireAndForget()
 
     case .startDailyChallengeResponse(.failure):
+      state.gameModeIsLoading = nil
       return .none
 
     case let .startDailyChallengeResponse(.success(inProgressGame)):
+      state.gameModeIsLoading = nil
       return .init(value: .delegate(.startGame(inProgressGame)))
 
     case let .submitGameResponse(.success(.dailyChallenge(result))):
@@ -422,6 +431,7 @@ public struct GameOverView: View {
     let completedMatch: CompletedMatch?
     let gameContext: CompletedGame.GameContext
     let gameMode: GameMode
+    let gameModeIsLoading: GameMode?
     let isDemo: Bool
     let isUpgradeInterstitialPresented: Bool
     let showConfetti: Bool
@@ -439,6 +449,7 @@ public struct GameOverView: View {
       self.gameMode = state.completedGame.gameMode
       let yourWords = state.completedGame.words(
         forPlayerIndex: state.completedGame.localPlayerIndex)
+      self.gameModeIsLoading = state.gameModeIsLoading
       let yourScore = yourWords.reduce(into: 0) { $0 += $1.score }
       switch state.completedGame.gameContext {
       case .dailyChallenge:
@@ -635,18 +646,22 @@ public struct GameOverView: View {
               icon: Image(systemName: "clock.fill"),
               color: self.color,
               inactiveText: unplayedDaily == .unlimited ? Text("Played") : nil,
+              isLoading: self.viewStore.gameModeIsLoading == .timed,
               resumeText: nil,
               action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
             )
+            .disabled(self.viewStore.gameModeIsLoading != nil)
 
             GameButton(
               title: Text("Unlimited"),
               icon: Image(systemName: "infinity"),
               color: self.color,
               inactiveText: unplayedDaily == .timed ? Text("Played") : nil,
+              isLoading: self.viewStore.gameModeIsLoading == .unlimited,
               resumeText: nil,
               action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
             )
+            .disabled(self.viewStore.gameModeIsLoading != nil)
           }
         }
         .adaptivePadding([.leading, .trailing])
@@ -724,6 +739,7 @@ public struct GameOverView: View {
               icon: Image(systemName: "clock.fill"),
               color: .solo,
               inactiveText: nil,
+              isLoading: false,
               resumeText: nil,
               action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
             )
@@ -733,6 +749,7 @@ public struct GameOverView: View {
               icon: Image(systemName: "infinity"),
               color: .solo,
               inactiveText: nil,
+              isLoading: false,
               resumeText: nil,
               action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
             )

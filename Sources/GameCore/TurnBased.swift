@@ -11,6 +11,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         return state.isYourTurn
 
       case .activeGames,
+        .alert,
         .cancelButtonTapped,
         .confirmRemoveCube,
         .delayedShowUpgradeInterstitial,

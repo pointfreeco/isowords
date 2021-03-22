@@ -384,6 +384,7 @@ extension ResultEnvelope.Result {
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
                               id: .init(rawValue: .init()),
+                              isSupporter: idx == 2,
                               isYourScore: false,
                               outOf: 100,
                               playerDisplayName: "Blob",

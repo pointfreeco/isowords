@@ -665,6 +665,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ],
       resources: [.process("Resources/")]
     ),
+    .testTarget(
+      name: "GameCoreTests",
+      dependencies: [
+        "GameCore",
+        "TestHelpers",
+      ]
+    ),
     .target(
       name: "GameFeature",
       dependencies: [
