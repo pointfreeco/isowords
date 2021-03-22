@@ -229,12 +229,14 @@ private: .private
 HEROKU_NAME = isowords-staging
 deploy-server:
 	@test "$(PRIVATE)" != "" || exit 1
+ifndef SKIP_GIT_CHECK
 	@git fetch origin
 	@test "$$(git status --porcelain)" = "" \
 		|| (echo "  🛑 Can't deploy while the working tree is dirty" && exit 1)
 	@test "$$(git rev-parse @)" = "$$(git rev-parse origin/main)" \
 		&& test "$$(git rev-parse --abbrev-ref HEAD)" = "main" \
 		|| (echo "  🛑 Must deploy from an up-to-date origin/main" && exit 1)
+endif
 	@heroku container:login
 	@cd Bootstrap && heroku container:push web --context-path .. -a $(HEROKU_NAME)
 	@heroku container:release web -a $(HEROKU_NAME)
