@@ -234,8 +234,7 @@ public struct UpgradeInterstitialView: View {
                     )
                   )
               }
-              if
-                let fullGameProduct = viewStore.fullGameProduct,
+              if let fullGameProduct = viewStore.fullGameProduct,
                 let cost = cost(product: fullGameProduct)
               {
                 Text("Upgrade for \(cost)")

@@ -225,7 +225,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         let challenge = state.dailyChallenges
           .first(where: { $0.dailyChallenge.gameMode == gameMode })
         state.gameModeIsLoading = challenge?.dailyChallenge.gameMode
-        return challenge
+        return
+          challenge
           .map {
             startDailyChallenge(
               $0,

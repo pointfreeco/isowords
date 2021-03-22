@@ -342,7 +342,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
       case .forfeitGameButtonTapped:
         state.alert = .init(
           title: .init("Are you sure?"),
-          message: .init("""
+          message: .init(
+            """
             Forfeiting will end the game and your opponent will win. Are you sure you want to forfeit?
             """),
           primaryButton: .default(.init("Don't forfeit"), send: .dontForfeitButtonTapped),
