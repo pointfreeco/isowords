@@ -406,10 +406,10 @@ extension ResultEnvelope {
         LeaderboardResultsView(
           store: .init(
             initialState: LeaderboardResultsState(
-              gameMode: .timed,
+              gameMode: GameMode.timed,
               isLoading: false,
               resultEnvelope: nil,
-              timeScope: .lastWeek
+              timeScope: TimeScope.lastWeek
             ),
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
@@ -431,7 +431,7 @@ extension ResultEnvelope {
                   )
                 )
               },
-              mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+              mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
             )
           ),
           title: Text("362,998 words"),
@@ -446,10 +446,10 @@ extension ResultEnvelope {
         LeaderboardResultsView(
           store: .init(
             initialState: LeaderboardResultsState(
-              gameMode: .timed,
+              gameMode: GameMode.timed,
               isLoading: false,
               resultEnvelope: nil,
-              timeScope: .lastWeek
+              timeScope: TimeScope.lastWeek
             ),
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
@@ -472,7 +472,7 @@ extension ResultEnvelope {
                 .delay(for: 1, scheduler: DispatchQueue.main.animation())
                 .eraseToEffect()
               },
-              mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+              mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
             )
           ),
           title: Text("Daily challenge"),
@@ -487,15 +487,15 @@ extension ResultEnvelope {
         LeaderboardResultsView(
           store: .init(
             initialState: LeaderboardResultsState(
-              gameMode: .timed,
+              gameMode: GameMode.timed,
               isLoading: false,
               resultEnvelope: nil,
-              timeScope: .lastWeek
+              timeScope: TimeScope.lastWeek
             ),
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
               loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-              mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+              mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
             )
           ),
           title: Text("Solo"),
