@@ -227,33 +227,24 @@ private: .private
 	touch .private
 
 HEROKU_NAME = isowords-staging
-deploy-server:
-	@test "$(PRIVATE)" != "" || exit 1
-ifndef SKIP_GIT_CHECK
+HEROKU_VERSION = $(shell heroku releases -a isowords -n 1 | tail -1 | sed -n -e 's/\(v[0-9]*\).*/\1/p')
+deploy-server: check-porcelain
 	@git fetch origin
 	@test "$$(git status --porcelain)" = "" \
 		|| (echo "  🛑 Can't deploy while the working tree is dirty" && exit 1)
 	@test "$$(git rev-parse @)" = "$$(git rev-parse origin/main)" \
 		&& test "$$(git rev-parse --abbrev-ref HEAD)" = "main" \
 		|| (echo "  🛑 Must deploy from an up-to-date origin/main" && exit 1)
-endif
 	@heroku container:login
 	@cd Bootstrap && heroku container:push web --context-path .. -a $(HEROKU_NAME)
 	@heroku container:release web -a $(HEROKU_NAME)
+	@git tag -a "$(HEROKU_NAME)-deploy-$(HEROKU_VERSION)" -m "Deploy"
+	@git push origin main
+	@git push origin "$(HEROKU_NAME)-deploy-$(HEROKU_VERSION)"
 
-set-marketing-version:
-	@cd App && agvtool new-marketing-version $(VERSION)
-
-bump-build:
-	@cd App && xcrun agvtool next-version -all
+archive-marketing: check-porcelain set-marketing-version archive
 
 archive: bootstrap-client
-	@git fetch origin
-	@test "$$(git status --porcelain)" = "" \
-		|| (echo "  🛑 Can't archive while the working tree is dirty" && exit 1)
-	@test "$$(git rev-parse @)" = "$$(git rev-parse origin/main)" \
-		&& test "$$(git rev-parse --abbrev-ref HEAD)" = "main" \
-		|| (echo "  🛑 Must archive from an up-to-date origin/main" && exit 1)
 	 @$(MAKE) bump-build
 	 @cd App && xcodebuild -workspace ../isowords.xcworkspace -scheme "isowords" archive \
 		|| (git checkout . && echo "  🛑 Failed to build archive" && exit 1)
@@ -261,6 +252,21 @@ archive: bootstrap-client
 	 @git tag -a "archive-$$(cd App && agvtool what-version -terse)" -m "Archive"
 	 @git push origin main
 	 @git push origin "archive-$$(cd App && agvtool what-version -terse)"
+
+set-marketing-version:
+	@cd App && agvtool new-marketing-version $(VERSION)
+
+bump-build:
+	@cd App && xcrun agvtool next-version -all
+
+check-porcelain:
+	@test "$(PRIVATE)" != "" || exit 1
+	@git fetch origin
+	@test "$$(git status --porcelain)" = "" \
+		|| (echo "  🛑 Can't proceed while the working tree is dirty" && exit 1)
+	@test "$$(git rev-parse @)" = "$$(git rev-parse origin/main)" \
+		&& test "$$(git rev-parse --abbrev-ref HEAD)" = "main" \
+		|| (echo "  🛑 Can only proceed from an up-to-date origin/main" && exit 1)
 
 app-preview-iphone:
 	ffmpeg -i $(MP4) -acodec copy -crf 12 -vf scale=886:1920,setsar=1:1,fps=30 iphone.mp4
