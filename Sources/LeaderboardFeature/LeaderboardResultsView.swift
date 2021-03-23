@@ -417,13 +417,13 @@ extension ResultEnvelope {
                 Effect(
                   value: .init(
                     outOf: 1000,
-                    results: ([1, 2, 3, 4, 5, 7]).map { index in
+                    results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
                       ResultEnvelope.Result(
                         denseRank: index,
                         id: UUID(),
-                        isYourScore: index == 3,
+                        isYourScore: index == 15,
                         rank: index,
-                        score: 6000 - index * 800,
+                        score: 6000 - index * 300,
                         subtitle: "mbrandonw",
                         title: "Longword\(index)"
                       )
@@ -436,7 +436,7 @@ extension ResultEnvelope {
           ),
           title: Text("362,998 words"),
           subtitle: nil,
-          isFilterable: true,
+          isFilterable: false,
           color: .isowordsRed,
           timeScopeLabel: Text("Today"),
           timeScopeMenu: EmptyView()

@@ -28,14 +28,14 @@ class DailyChallengeFeatureTests: XCTestCase {
     ]
 
     var environment = DailyChallengeEnvironment.failing
-    environment.apiClient.override(
-      route: .dailyChallenge(.today(language: .en)),
-      withResponse: .ok(fetchChallengeResults)
-    )
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .authorized)
-    )
+//    environment.apiClient.override(
+//      route: .dailyChallenge(.today(language: .en)),
+//      withResponse: .ok(fetchChallengeResults)
+//    )
+//    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+//    environment.userNotifications.getNotificationSettings = .init(
+//      value: .init(authorizationStatus: .authorized)
+//    )
 
     let store = TestStore(
       initialState: DailyChallengeState(),
