@@ -7,6 +7,7 @@ import CasePaths
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
+import ComposableGameCenterHelpers
 import ComposableStoreKit
 import ComposableUserNotifications
 import CubeCore
@@ -310,7 +311,16 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
 
       case .alert(.forfeitButtonTapped):
         state.alert = nil
-        return state.gameOver(environment: environment)
+
+        guard let match = state.turnBasedContext?.match
+        else { return .none }
+
+        return .merge(
+          forceQuitMatch(match: match, gameCenter: environment.gameCenter)
+            .fireAndForget(),
+
+          state.gameOver(environment: environment)
+        )
 
       case .cancelButtonTapped:
         state.selectedWord = []
