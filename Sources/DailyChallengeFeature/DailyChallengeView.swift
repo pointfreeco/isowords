@@ -541,7 +541,7 @@ private struct RingEffect: GeometryEffect {
                   id: .init(rawValue: .deadbeef),
                   language: .en
                 ),
-                yourResult: .init(outOf: 3_632, rank: 3_632, score: 2_350)
+                yourResult: .init(outOf: 5_102, rank: 332, score: 2_350)
               ),
               FetchTodaysDailyChallengeResponse(
                 dailyChallenge: .init(
