@@ -462,6 +462,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       pure(
         [
           FetchDailyChallengeResultsResponse.Result(
+            isSupporter: false,
             isYourScore: true,
             outOf: 42,
             playerDisplayName: "Blob",
@@ -470,6 +471,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
             score: 1_000
           ),
           FetchDailyChallengeResultsResponse.Result(
+            isSupporter: false,
             isYourScore: true,
             outOf: 100,
             playerDisplayName: "Blob",
@@ -486,9 +488,9 @@ class DailyChallengeMiddlewareTests: XCTestCase {
 
     _assertInlineSnapshot(matching: result, as: .conn, with: """
       GET /api/daily-challenges/results?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&gameMode=unlimited&language=en
-
+      
       200 OK
-      Content-Length: 413
+      Content-Length: 471
       Content-Type: application/json
       Referrer-Policy: strict-origin-when-cross-origin
       X-Content-Type-Options: nosniff
@@ -496,10 +498,11 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-
+      
       {
         "results" : [
           {
+            "isSupporter" : false,
             "isYourScore" : true,
             "outOf" : 42,
             "playerDisplayName" : "Blob",
@@ -508,6 +511,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
             "score" : 1000
           },
           {
+            "isSupporter" : false,
             "isYourScore" : true,
             "outOf" : 100,
             "playerDisplayName" : "Blob",

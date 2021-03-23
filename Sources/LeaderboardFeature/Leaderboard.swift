@@ -154,6 +154,9 @@ public let leaderboardReducer = Reducer<
     case .solo:
       return .none
 
+    case .vocab(.timeScopeChanged(.interesting)):
+      return .none
+
     case let .vocab(.timeScopeChanged(timeScope)):
       state.solo.timeScope = timeScope
       return .none
@@ -246,7 +249,7 @@ public struct LeaderboardView: View {
             color: .isowordsRed,
             timeScopeLabel: Text(self.viewStore.vocab.timeScope.displayTitle),
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
-              ForEach([TimeScope.lastDay, .lastWeek, .allTime], id: \.self) { scope in
+              ForEach([TimeScope.lastDay, .lastWeek, .allTime, .interesting], id: \.self) { scope in
                 Button(scope.displayTitle) {
                   self.viewStore.send(.vocab(.timeScopeChanged(scope)), animation: .default)
                 }
@@ -329,7 +332,6 @@ extension ApiClient {
         .vocab(
           .fetch(
             language: .en,
-            sort: .score,
             timeScope: timeScope
           )
         )
@@ -384,6 +386,7 @@ extension ResultEnvelope.Result {
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
                               id: .init(rawValue: .init()),
+                              isSupporter: idx == 2,
                               isYourScore: false,
                               outOf: 100,
                               playerDisplayName: "Blob",

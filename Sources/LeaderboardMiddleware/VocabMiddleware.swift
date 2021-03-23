@@ -10,20 +10,17 @@ public struct FetchVocabLeaderboardRequest {
   let database: DatabaseClient
   let language: Language
   let timeScope: TimeScope
-  let vocabSort: VocabSort
 
   public init(
     currentPlayer: Player,
     database: DatabaseClient,
     language: Language,
-    timeScope: TimeScope,
-    vocabSort: VocabSort
+    timeScope: TimeScope
   ) {
     self.currentPlayer = currentPlayer
     self.database = database
     self.language = language
     self.timeScope = timeScope
-    self.vocabSort = vocabSort
   }
 }
 
@@ -36,8 +33,7 @@ public func fetchVocabLeaderboard(
   return request.database.fetchVocabLeaderboard(
     request.language,
     request.currentPlayer,
-    request.timeScope,
-    request.vocabSort
+    request.timeScope
   )
   .run
   .flatMap { errorOrEntries in

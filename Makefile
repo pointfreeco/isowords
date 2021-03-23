@@ -143,7 +143,7 @@ words-import:
 ifdef PRIVATE
 	@curl -o $(DICTIONARY_GZIP) $(DICTIONARY_URL)
 else
-	@cat /usr/share/dict/words | tr a-z A-Z | uniq | grep '^[A-Z]\{3,\}$$' | gzip > $(DICTIONARY_GZIP)
+	@cat /usr/share/dict/words | tr a-z A-Z | sort -u | grep '^[A-Z]\{3,\}$$' | gzip > $(DICTIONARY_GZIP)
 endif
 
 DICTIONARY_DB = Sources/DictionarySqliteClient/Dictionaries/Words.en.db
@@ -229,12 +229,14 @@ private: .private
 HEROKU_NAME = isowords-staging
 deploy-server:
 	@test "$(PRIVATE)" != "" || exit 1
+ifndef SKIP_GIT_CHECK
 	@git fetch origin
 	@test "$$(git status --porcelain)" = "" \
 		|| (echo "  🛑 Can't deploy while the working tree is dirty" && exit 1)
 	@test "$$(git rev-parse @)" = "$$(git rev-parse origin/main)" \
 		&& test "$$(git rev-parse --abbrev-ref HEAD)" = "main" \
 		|| (echo "  🛑 Must deploy from an up-to-date origin/main" && exit 1)
+endif
 	@heroku container:login
 	@cd Bootstrap && heroku container:push web --context-path .. -a $(HEROKU_NAME)
 	@heroku container:release web -a $(HEROKU_NAME)

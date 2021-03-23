@@ -18,13 +18,13 @@ import TcaHelpers
 import UIApplicationClient
 import UserDefaultsClient
 import UserNotifications
-import XCTestDebugSupport
 
 public struct UserSettings: Codable, Equatable {
   public var appIcon: AppIcon?
   public var colorScheme: ColorScheme
   public var enableGyroMotion: Bool
   public var enableHaptics: Bool
+  public var enableReducedAnimation: Bool
   public var musicVolume: Float
   public var soundEffectsVolume: Float
 
@@ -50,6 +50,7 @@ public struct UserSettings: Codable, Equatable {
     colorScheme: ColorScheme = .system,
     enableGyroMotion: Bool = true,
     enableHaptics: Bool = true,
+    enableReducedAnimation: Bool = false,
     musicVolume: Float = 1,
     soundEffectsVolume: Float = 1
   ) {
@@ -57,8 +58,21 @@ public struct UserSettings: Codable, Equatable {
     self.colorScheme = colorScheme
     self.enableGyroMotion = enableGyroMotion
     self.enableHaptics = enableHaptics
+    self.enableReducedAnimation = enableReducedAnimation
     self.musicVolume = musicVolume
     self.soundEffectsVolume = soundEffectsVolume
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.appIcon = try? container.decode(AppIcon.self, forKey: .appIcon)
+    self.colorScheme = (try? container.decode(ColorScheme.self, forKey: .colorScheme)) ?? .system
+    self.enableGyroMotion = (try? container.decode(Bool.self, forKey: .enableGyroMotion)) ?? true
+    self.enableHaptics = (try? container.decode(Bool.self, forKey: .enableHaptics)) ?? true
+    self.enableReducedAnimation =
+      (try? container.decode(Bool.self, forKey: .enableReducedAnimation)) ?? false
+    self.musicVolume = (try? container.decode(Float.self, forKey: .musicVolume)) ?? 1
+    self.soundEffectsVolume = (try? container.decode(Float.self, forKey: .soundEffectsVolume)) ?? 1
   }
 }
 
@@ -221,6 +235,8 @@ public struct SettingsEnvironment {
 }
 
 #if DEBUG
+  import XCTestDynamicOverlay
+
   extension SettingsEnvironment {
     public static let failing = Self(
       apiClient: .failing,
@@ -233,7 +249,8 @@ public struct SettingsEnvironment {
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
+      setUserInterfaceStyle: { _ in
+        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
       },
       storeKit: .failing,
       userDefaults: .failing,

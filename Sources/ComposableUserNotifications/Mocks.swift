@@ -10,7 +10,7 @@ extension UserNotificationClient {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension UserNotificationClient {
     public static let failing = Self(

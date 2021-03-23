@@ -52,6 +52,7 @@ class LeaderboardFeatureTests: XCTestCase {
     let wordId = Word.Id(rawValue: UUID(uuidString: "00000000-0000-0000-0000-00000000304d")!)
     let vocabEntry = FetchVocabLeaderboardResponse.Entry(
       denseRank: 1,
+      isSupporter: false,
       isYourScore: false,
       outOf: 1,
       playerDisplayName: "Blob",
@@ -85,7 +86,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
     let siteEnvironment = update(Environment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
-      $0.database.fetchVocabLeaderboard = { _, _, _, _ in
+      $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure([vocabEntry])
       }
       $0.database.fetchVocabLeaderboardWord = {

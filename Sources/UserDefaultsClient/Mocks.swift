@@ -12,7 +12,7 @@ extension UserDefaultsClient {
 
 #if DEBUG
   import Foundation
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension UserDefaultsClient {
     public static let failing = Self(

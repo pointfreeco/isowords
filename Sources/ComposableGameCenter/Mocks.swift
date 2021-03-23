@@ -56,7 +56,7 @@ extension TurnBasedMatchmakerViewControllerClient {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension GameCenterClient {
     public static let failing = Self(

@@ -433,7 +433,6 @@ class ServerRouterTests: XCTestCase {
         string: """
           /api/leaderboard-scores/vocab?\
           language=en&\
-          vocabSort=length&\
           timeScope=allTime&\
           accessToken=deadbeef-dead-beef-dead-beefdeadbeef
           """
@@ -442,7 +441,7 @@ class ServerRouterTests: XCTestCase {
         .init(
           accessToken: .init(rawValue: .deadbeef),
           isDebug: false,
-          route: .leaderboard(.vocab(.fetch(language: .en, sort: .length, timeScope: .allTime)))
+          route: .leaderboard(.vocab(.fetch(language: .en, timeScope: .allTime)))
         )
       )
     )

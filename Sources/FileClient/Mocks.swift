@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Foundation
 import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 extension FileClient {
   public static let noop = Self(

@@ -12,6 +12,10 @@ import XCTest
 @testable import SiteMiddleware
 
 class ServerConfigMiddlewareTests: XCTestCase {
+  override func setUp() {
+    super.setUp()
+  }
+
   func testServerConfig() {
     let request = URLRequest(
       url: URL(
@@ -30,9 +34,9 @@ class ServerConfigMiddlewareTests: XCTestCase {
 
     _assertInlineSnapshot(matching: result, as: .conn, with: """
       GET /api/config?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&build=42
-
+      
       200 OK
-      Content-Length: 491
+      Content-Length: 490
       Content-Type: application/json
       Referrer-Policy: strict-origin-when-cross-origin
       X-Content-Type-Options: nosniff
@@ -40,7 +44,7 @@ class ServerConfigMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-
+      
       {
         "appId" : "1528246952",
         "forceUpgradeVersion" : 0,
@@ -54,7 +58,7 @@ class ServerConfigMiddlewareTests: XCTestCase {
           "nagBannerAfterInstallDuration" : 172800,
           "playedDailyChallengeGamesTriggerCount" : 2,
           "playedMultiplayerGamesTriggerCount" : 1,
-          "playedSoloGamesTriggerCount" : 10,
+          "playedSoloGamesTriggerCount" : 6,
           "soloGameTriggerEvery" : 3
         }
       }

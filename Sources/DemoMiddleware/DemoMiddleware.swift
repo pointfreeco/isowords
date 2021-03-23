@@ -27,7 +27,7 @@ public func submitDemoGameMiddleware(
 ) -> IO<Conn<HeadersOpen, Either<ApiError, LeaderboardScoreResult>>> {
 
   sequence(
-    TimeScope.allCases.map { timeScope in
+    TimeScope.soloCases.map { timeScope in
       conn.data.database.fetchLeaderboardSummary(
         .init(
           gameMode: conn.data.submitRequest.gameMode,

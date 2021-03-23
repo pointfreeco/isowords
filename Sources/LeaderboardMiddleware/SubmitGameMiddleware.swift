@@ -181,7 +181,7 @@ public func submitGameMiddleware(
           return throwE(ApiError(error: AbsurdError()))
         }
         return sequence(
-          TimeScope.allCases
+          TimeScope.soloCases
             .map { timeScope in
               request.database.fetchLeaderboardSummary(
                 .init(

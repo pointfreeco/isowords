@@ -31,6 +31,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       return .none
 
     case .activeGames,
+      .alert,
       .delayedShowUpgradeInterstitial,
       .exitButtonTapped,
       .dismissBottomMenu,

@@ -100,9 +100,7 @@ public struct ActiveGamesView: View {
             : nil
 
           ActiveGameCard(
-            button: self.showMenuItems
-              ? turnBasedButton(match: match)
-              : ActiveGameCardButton(icon: nil, isActive: false, title: Text("Their turn")),
+            button: turnBasedButton(match: match),
             message: turnBasedMessage(match: match),
             tapAction: { self.viewStore.send(.turnBasedGameTapped(match.id), animation: .default) },
             buttonAction: self.showMenuItems
