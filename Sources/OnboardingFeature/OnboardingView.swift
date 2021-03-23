@@ -261,7 +261,7 @@ public let onboardingReducer = Reducer<
     .game(.wordSubmitButton(.delegate(.confirmSubmit))):
     switch state.step {
     case .step5_Submit where state.game.selectedWordString == "GAME",
-      .step8_FindCubes where state.game.selectedWordString == "CUBE",
+      .step8_FindCubes where state.game.selectedWordString == "CUBES",
       .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
       .step16_FindAnyWord where environment.dictionary.contains(state.game.selectedWordString, .en):
 
