@@ -129,14 +129,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               }
               .eraseToEffect()
 
-          case .currentGame(.game(.forfeitGameButtonTapped)):
-            guard
-              let game = state.game,
-              let match = game.turnBasedContext?.match
-            else { return .none }
-            return forceQuitMatch(match: match, gameCenter: environment.gameCenter)
-              .fireAndForget()
-
           case .currentGame(.game(.gameOver(.rematchButtonTapped))):
             guard
               let game = state.game,

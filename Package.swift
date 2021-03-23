@@ -649,6 +649,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Build",
         "ClientModels",
         "ComposableGameCenter",
+        "ComposableGameCenterHelpers",
         "ComposableUserNotifications",
         "CubeCore",
         "DictionaryClient",
