@@ -246,3 +246,14 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
   }
 }
+
+extension DailyChallengeEnvironment {
+  static let failing = Self(
+    apiClient: .failing,
+    fileClient: .failing,
+    mainQueue: .failing,
+    mainRunLoop: .failing,
+    remoteNotifications: .failing,
+    userNotifications: .failing
+  )
+}

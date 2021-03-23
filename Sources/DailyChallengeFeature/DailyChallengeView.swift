@@ -97,17 +97,6 @@ public struct DailyChallengeEnvironment {
     self.remoteNotifications = remoteNotifications
     self.userNotifications = userNotifications
   }
-
-  #if DEBUG
-    static let failing = Self(
-      apiClient: .failing,
-      fileClient: .failing,
-      mainQueue: .failing,
-      mainRunLoop: .failing,
-      remoteNotifications: .failing,
-      userNotifications: .failing
-    )
-  #endif
 }
 
 public let dailyChallengeReducer = Reducer<
