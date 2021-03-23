@@ -496,13 +496,24 @@ extension DatabaseClient {
         )
         .all(decoding: DailyChallenge.self)
       },
-      fetchVocabLeaderboard: { language, player, timeScope, sort in
-        let orderByClause: String
-        switch sort {
-        case .length:
-          orderByClause = #"LENGTH("word") DESC"#
-        case .score:
+      fetchVocabLeaderboard: { language, player, timeScope in
+        let orderByClause: SQLQueryString
+        switch timeScope {
+        case .allTime, .lastDay, .lastWeek:
           orderByClause = #""score" DESC"#
+        case .interesting:
+          orderByClause = #""score" * "moveIndex" DESC"#
+        }
+        let minimumScore: Int
+        switch timeScope {
+        case .allTime:
+          minimumScore = 800
+        case .lastDay:
+          minimumScore = 200
+        case .lastWeek:
+          minimumScore = 400
+        case .interesting:
+          minimumScore = 400
         }
 
         return pool.sqlDatabase.raw(
@@ -512,6 +523,7 @@ extension DatabaseClient {
               DISTINCT ON ("leaderboardScores"."playerId", "words"."word")
               "appleReceipts"."id" IS NOT NULL AS "isSupporter",
               "players"."id" = \(bind: player.id) AS "isYourScore",
+              "words"."moveIndex",
               "words"."id" AS "wordId",
               "words"."score",
               "words"."word",
@@ -526,7 +538,8 @@ extension DatabaseClient {
             LEFT JOIN "dailyChallenges" ON "leaderboardScores"."dailyChallengeId" = "dailyChallenges"."id"
             LEFT OUTER JOIN "hiddenWords" ON "words"."word" = "hiddenWords"."word"
             WHERE
-            (
+            "words"."score" >= \(bind: minimumScore)
+            AND (
               -- Words from daily challenges get a little more time for `lastDay` scopes since
               -- their scores aren't released until the challenge is over.
               (
@@ -543,26 +556,31 @@ extension DatabaseClient {
               OR "dailyChallenges"."gameNumber" != CURRENT_DAILY_CHALLENGE_NUMBER()
             )
             AND (
-              "leaderboardScores"."playerId" = \(bind: player.id)
-              OR "hiddenWords"."word" IS NULL
+              "hiddenWords"."word" IS NULL
             )
           ),
           "rankedScores" AS (
             SELECT
               *,
-              (SELECT COUNT("wordId") FROM "scores") AS "outOf",
-              RANK() OVER (ORDER BY \(raw: orderByClause)) AS "rank",
-              DENSE_RANK() OVER (ORDER BY \(raw: orderByClause)) AS "denseRank"
+              RANK() OVER (ORDER BY \(orderByClause)) AS "rank",
+              DENSE_RANK() OVER (ORDER BY \(orderByClause)) AS "denseRank"
             FROM "scores"
             ORDER BY
-              \(raw: orderByClause), "word" ASC, "wordCreatedAt" ASC
+              \(orderByClause), "word" ASC, "wordCreatedAt" ASC
             LIMIT 150
+          ),
+          "wordCount" AS (
+            SELECT COUNT(*) as "outOf"
+            FROM "words"
+            WHERE "words"."createdAt" BETWEEN
+              NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
           ),
           "top100" AS (
             SELECT
               *
             FROM
               "rankedScores"
+            LEFT JOIN "wordCount" ON 1=1
             WHERE "rank" <= 100
           )
           SELECT * FROM "top100";
@@ -1156,6 +1174,8 @@ extension TimeScope {
   var postgresInterval: String {
     switch self {
     case .allTime:
+      return "99 YEARS"
+    case .interesting:
       return "99 YEARS"
     case .lastDay:
       return "1 DAY"

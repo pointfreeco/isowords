@@ -34,7 +34,7 @@ public struct DatabaseClient {
   public var fetchSharedGame: (SharedGame.Code) -> EitherIO<Error, SharedGame>
   public var fetchTodaysDailyChallenges: (Language) -> EitherIO<Error, [DailyChallenge]>
   public var fetchVocabLeaderboard:
-    (Language, Player, TimeScope, VocabSort) -> EitherIO<
+    (Language, Player, TimeScope) -> EitherIO<
       Error, [FetchVocabLeaderboardResponse.Entry]
     >
   public var fetchVocabLeaderboardWord: (Word.Id) -> EitherIO<Error, FetchVocabWordResponse>
@@ -92,7 +92,7 @@ public struct DatabaseClient {
     >,
     fetchSharedGame: @escaping (SharedGame.Code) -> EitherIO<Error, SharedGame>,
     fetchTodaysDailyChallenges: @escaping (Language) -> EitherIO<Error, [DailyChallenge]>,
-    fetchVocabLeaderboard: @escaping (Language, Player, TimeScope, VocabSort) -> EitherIO<
+    fetchVocabLeaderboard: @escaping (Language, Player, TimeScope) -> EitherIO<
       Error, [FetchVocabLeaderboardResponse.Entry]
     >,
     fetchVocabLeaderboardWord: @escaping (Word.Id) -> EitherIO<Error, FetchVocabWordResponse>,

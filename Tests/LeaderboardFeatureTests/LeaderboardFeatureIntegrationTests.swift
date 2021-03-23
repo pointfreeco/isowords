@@ -89,7 +89,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let siteEnvironment = update(Environment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
-      $0.database.fetchVocabLeaderboard = { _, _, _, _ in
+      $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure(fetchVocabEntries)
       }
     }

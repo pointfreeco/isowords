@@ -25,8 +25,8 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
         puzzle: puzzles.next()!,
         score: 0,
         words: [
-          .init(moveIndex: 0, score: 100, word: "SHRIMP"),
-          .init(moveIndex: 0, score: 20, word: "MATH"),
+          .init(moveIndex: 0, score: 700, word: "SHRIMP"),
+          .init(moveIndex: 0, score: 400, word: "MATH"),
         ]
       )
     )
@@ -43,8 +43,8 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
         puzzle: puzzles.next()!,
         score: 0,
         words: [
-          .init(moveIndex: 0, score: 150, word: "ZZZZ"),
-          .init(moveIndex: 0, score: 500, word: "LOGOPHILES"),
+          .init(moveIndex: 0, score: 900, word: "ZZZZ"),
+          .init(moveIndex: 0, score: 1_000, word: "LOGOPHILES"),
         ]
       )
     )
@@ -65,7 +65,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
         moves: [],
         playerId: blobJr.id,
         puzzle: dailyChallengePuzzle,
-        score: 1_000,
+        score: 1_500,
         words: [
           .init(moveIndex: 0, score: 1_000, word: "BAMBOOZLED")
         ]
@@ -74,7 +74,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     .run.perform().unwrap()
 
     let entriesSortedByScore = try self.database.fetchVocabLeaderboard(
-      .en, blob, .allTime, .score
+      .en, blob, .allTime
     )
     .run.perform().unwrap()
 
@@ -85,11 +85,11 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
           denseRank: 1,
           isSupporter: false,
           isYourScore: false,
-          outOf: 4,
+          outOf: 5,
           playerDisplayName: "Blob Jr",
           playerId: blobJr.id,
           rank: 1,
-          score: 500,
+          score: 1_000,
           word: "LOGOPHILES",
           wordId: entriesSortedByScore[0].wordId
         ),
@@ -97,96 +97,13 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
           denseRank: 2,
           isSupporter: false,
           isYourScore: false,
-          outOf: 4,
+          outOf: 5,
           playerDisplayName: "Blob Jr",
           playerId: blobJr.id,
           rank: 2,
-          score: 150,
+          score: 900,
           word: "ZZZZ",
           wordId: entriesSortedByScore[1].wordId
-        ),
-        .init(
-          denseRank: 3,
-          isSupporter: true,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: blob.id,
-          rank: 3,
-          score: 100,
-          word: "SHRIMP",
-          wordId: entriesSortedByScore[2].wordId
-        ),
-        .init(
-          denseRank: 4,
-          isSupporter: true,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: blob.id,
-          rank: 4,
-          score: 20,
-          word: "MATH",
-          wordId: entriesSortedByScore[3].wordId
-        ),
-      ]
-    )
-
-    let entriesSortedByLength = try self.database.fetchVocabLeaderboard(
-      .en, blob, .allTime, .length
-    )
-    .run.perform().unwrap()
-
-    XCTAssertEqual(
-      entriesSortedByLength,
-      [
-        .init(
-          denseRank: 1,
-          isSupporter: false,
-          isYourScore: false,
-          outOf: 4,
-          playerDisplayName: "Blob Jr",
-          playerId: blobJr.id,
-          rank: 1,
-          score: 500,
-          word: "LOGOPHILES",
-          wordId: entriesSortedByLength[0].wordId
-        ),
-        .init(
-          denseRank: 2,
-          isSupporter: true,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: blob.id,
-          rank: 2,
-          score: 100,
-          word: "SHRIMP",
-          wordId: entriesSortedByLength[1].wordId
-        ),
-        .init(
-          denseRank: 3,
-          isSupporter: true,
-          isYourScore: true,
-          outOf: 4,
-          playerDisplayName: "Blob",
-          playerId: blob.id,
-          rank: 3,
-          score: 20,
-          word: "MATH",
-          wordId: entriesSortedByLength[2].wordId
-        ),
-        .init(
-          denseRank: 3,
-          isSupporter: false,
-          isYourScore: false,
-          outOf: 4,
-          playerDisplayName: "Blob Jr",
-          playerId: blobJr.id,
-          rank: 3,
-          score: 150,
-          word: "ZZZZ",
-          wordId: entriesSortedByLength[3].wordId
         ),
       ]
     )
@@ -217,13 +134,13 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
           moves: [],
           playerId: player.id,
           puzzle: .mock,
-          score: 100,
-          words: [.init(moveIndex: 0, score: 100, word: "DOG")]
+          score: 1000,
+          words: [.init(moveIndex: 0, score: 1000, word: "DOG")]
         )
       ).run.perform().unwrap()
     }
 
-    let scores = try self.database.fetchVocabLeaderboard(.en, lastPlayer, .allTime, .score)
+    let scores = try self.database.fetchVocabLeaderboard(.en, lastPlayer, .allTime)
       .run.perform().unwrap()
 
     XCTAssertEqual(scores.count, 110)

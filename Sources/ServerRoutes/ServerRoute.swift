@@ -242,7 +242,7 @@ public enum ServerRoute: Equatable {
         case weekInReview(language: Language)
 
         public enum Vocab: Equatable {
-          case fetch(language: Language, sort: VocabSort, timeScope: TimeScope)
+          case fetch(language: Language, timeScope: TimeScope)
           case fetchWord(wordId: Word.Id)
         }
       }

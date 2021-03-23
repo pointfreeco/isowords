@@ -70,7 +70,7 @@ class FetchLeaderboardSummaryTests: DatabaseTestCase {
 
     var summaries: [TimeScope: [LeaderboardScoreResult.Rank]] = [:]
     try leaderboardIds[.lastDay]?.forEach { leaderboardScoreId, playerId in
-      try TimeScope.allCases.forEach { timeScope in
+      try TimeScope.soloCases.forEach { timeScope in
         summaries[timeScope, default: []].append(
           try self.database.fetchLeaderboardSummary(
             .init(
@@ -169,7 +169,7 @@ class FetchLeaderboardSummaryTests: DatabaseTestCase {
 
     var summaries: [TimeScope: [LeaderboardScoreResult.Rank]] = [:]
     try leaderboardIds[.lastDay]?.forEach { leaderboardScoreId, playerId in
-      try TimeScope.allCases.forEach { timeScope in
+      try TimeScope.soloCases.forEach { timeScope in
         summaries[timeScope, default: []].append(
           try self.database.fetchLeaderboardSummary(
             .init(

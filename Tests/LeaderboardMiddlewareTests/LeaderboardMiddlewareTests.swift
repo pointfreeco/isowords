@@ -8,6 +8,7 @@ import Foundation
 import HttpPipeline
 import HttpPipelineTestSupport
 import Overture
+import Prelude
 import ServerRouter
 import ServerRoutes
 import SharedModels
@@ -93,6 +94,8 @@ class LeaderboardMiddlewareTests: XCTestCase {
         return pure(.init(outOf: 100, rank: 2))
       case .lastWeek:
         return pure(.init(outOf: 1000, rank: 50))
+      case .interesting:
+        return throwE(unit)
       }
     }
     environment.dictionary = .everyString

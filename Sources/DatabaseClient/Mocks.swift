@@ -53,7 +53,7 @@ import XCTestDynamicOverlay
       fetchTodaysDailyChallenges: { _ in
         .failing("\(Self.self).fetchTodaysDailyChallenges is unimplemented")
       },
-      fetchVocabLeaderboard: { _, _, _, _ in
+      fetchVocabLeaderboard: { _, _, _ in
         .failing("\(Self.self).fetchVocabLeaderboard is unimplemented")
       },
       fetchVocabLeaderboardWord: { _ in

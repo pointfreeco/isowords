@@ -70,10 +70,9 @@ private func apiRouter(
       <%> queryParam("timeScope", .rawRepresentable)
       <% end,
 
-    parenthesize(.case { .leaderboard(.vocab(.fetch(language: $0, sort: $1, timeScope: $2))) })
+    parenthesize(.case { .leaderboard(.vocab(.fetch(language: $0, timeScope: $1))) })
       <¢> get %> "leaderboard-scores" %> "vocab"
       %> queryParam("language", .rawRepresentable)
-      <%> queryParam("vocabSort", .rawRepresentable)
       <%> queryParam("timeScope", .rawRepresentable)
       <% end,
 

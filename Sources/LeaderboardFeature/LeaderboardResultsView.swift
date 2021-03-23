@@ -160,12 +160,12 @@ where
   public var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       HStack {
-        (self.title ?? Text("Loading"))
+        self.title
           .animation(nil)
           .adaptiveFont(.matterMedium, size: 16)
           .frame(maxWidth: .infinity, alignment: .leading)
           .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
-          .redacted(reason: self.title == nil ? .placeholder : [])
+          .redacted(reason: self.viewStore.isLoading ? .placeholder : [])
 
         Spacer()
 
