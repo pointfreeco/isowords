@@ -227,25 +227,29 @@ private: .private
 	touch .private
 
 HEROKU_NAME = isowords-staging
+HEROKU_VERSION = $(shell heroku releases -a isowords -n 1 | tail -1 | sed -n -e 's/\(v[0-9]*\).*/\1/p')
 deploy-server:
 	@test "$(PRIVATE)" != "" || exit 1
-ifndef SKIP_GIT_CHECK
 	@git fetch origin
 	@test "$$(git status --porcelain)" = "" \
 		|| (echo "  🛑 Can't deploy while the working tree is dirty" && exit 1)
 	@test "$$(git rev-parse @)" = "$$(git rev-parse origin/main)" \
 		&& test "$$(git rev-parse --abbrev-ref HEAD)" = "main" \
 		|| (echo "  🛑 Must deploy from an up-to-date origin/main" && exit 1)
-endif
 	@heroku container:login
 	@cd Bootstrap && heroku container:push web --context-path .. -a $(HEROKU_NAME)
 	@heroku container:release web -a $(HEROKU_NAME)
+	@git tag -a "$(HEROKU_NAME)-deploy-$(HEROKU_VERSION)" -m "Deploy"
+	@git push origin main
+	@git push origin "$(HEROKU_NAME)-deploy-$(HEROKU_VERSION)"
 
 set-marketing-version:
 	@cd App && agvtool new-marketing-version $(VERSION)
 
 bump-build:
 	@cd App && xcrun agvtool next-version -all
+
+archive-marketing: set-marketing-version archive
 
 archive: bootstrap-client
 	@git fetch origin
