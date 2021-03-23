@@ -556,8 +556,7 @@ extension DatabaseClient {
               OR "dailyChallenges"."gameNumber" != CURRENT_DAILY_CHALLENGE_NUMBER()
             )
             AND (
-              "leaderboardScores"."playerId" = \(bind: player.id)
-              OR "hiddenWords"."word" IS NULL
+              "hiddenWords"."word" IS NULL
             )
           ),
           "rankedScores" AS (
