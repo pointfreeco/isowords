@@ -10,49 +10,42 @@ class DailyChallengeFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.testScheduler
 
   func testOnAppear() {
-    let fetchChallengeResults = [
-      FetchTodaysDailyChallengeResponse(
-        dailyChallenge: .init(
-          endsAt: .init(timeIntervalSinceReferenceDate: 1_234_567_890),
-          gameMode: .unlimited,
-          id: .init(rawValue: .deadbeef),
-          language: .en
-        ),
-        yourResult: .init(
-          outOf: 1_000,
-          rank: 20,
-          score: 3_000,
-          started: true
-        )
-      )
-    ]
-
     var environment = DailyChallengeEnvironment.failing
+    environment.apiClient.override(
+      route: .dailyChallenge(.today(language: .en)),
+      withResponse: .ok(FetchTodaysDailyChallengeResponse.played)
+    )
 //    environment.apiClient.override(
 //      route: .dailyChallenge(.today(language: .en)),
 //      withResponse: .ok(fetchChallengeResults)
 //    )
-//    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
 //    environment.userNotifications.getNotificationSettings = .init(
 //      value: .init(authorizationStatus: .authorized)
 //    )
 
     let store = TestStore(
-      initialState: DailyChallengeState(),
+      initialState: .init(),
       reducer: dailyChallengeReducer,
       environment: environment
     )
 
     store.send(.onAppear)
 
-    self.mainRunLoop.advance()
-    store.receive(.fetchTodaysDailyChallengeResponse(.success(fetchChallengeResults))) {
-      $0.dailyChallenges = fetchChallengeResults
-    }
+//      TestStore(
+//      initialState: .init(),
+//      reducer: dailyChallengeReducer,
+//      environment: environment
+//    )
 
-    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
-      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
-    }
+//    self.mainRunLoop.advance()
+//    store.receive(.fetchTodaysDailyChallengeResponse(.success(fetchChallengeResults))) {
+//      $0.dailyChallenges = fetchChallengeResults
+//    }
+//
+//    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+//      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+//    }
   }
 
   func testTapGameThatWasPlayed() {

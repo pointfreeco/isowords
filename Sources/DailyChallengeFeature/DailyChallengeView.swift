@@ -175,7 +175,12 @@ public let dailyChallengeReducer = Reducer<
       .map(DailyChallengeAction.startDailyChallengeResponse)
 
     case .onAppear:
+
+//      _ = environment.apiClient.apiRequest(.currentPlayer)
+
       return .merge(
+//        environment.apiClient.apiRequest(.currentPlayer).fireAndForget(),
+        
         environment.apiClient.apiRequest(
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
