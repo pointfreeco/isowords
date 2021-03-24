@@ -17,19 +17,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     )
 
     switch action {
-    case .cancelButtonTapped,
-      .confirmRemoveCube,
-      .doubleTap,
-      .endGameButtonTapped,
-      .forfeitGameButtonTapped,
-      .menuButtonTapped,
-      .pan,
-      .submitButtonTapped,
-      .tap,
-      .wordSubmitButton:
-      state.isTrayVisible = false
-      return .none
-
     case .activeGames,
       .alert,
       .delayedShowUpgradeInterstitial,
@@ -44,6 +31,19 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .settingsButtonTapped,
       .timerTick,
       .upgradeInterstitial:
+      return .none
+
+    case .cancelButtonTapped,
+      .confirmRemoveCube,
+      .doubleTap,
+      .endGameButtonTapped,
+      .forfeitGameButtonTapped,
+      .menuButtonTapped,
+      .pan,
+      .submitButtonTapped,
+      .tap,
+      .wordSubmitButton:
+      state.isTrayVisible = false
       return .none
 
     case let .matchesLoaded(.success(matches)):

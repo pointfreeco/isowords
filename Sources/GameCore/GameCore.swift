@@ -371,9 +371,6 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
           .timer(id: TimerId(), every: 1, on: environment.mainRunLoop)
           .map { GameAction.timerTick($0.date) }
 
-      case .gameOver(.delegate(.close)):
-        return Effect.gameTearDownEffects.fireAndForget()
-
       case let .gameOver(.delegate(.startGame(inProgressGame))):
         state = .init(inProgressGame: inProgressGame)
         return .none
@@ -739,11 +736,11 @@ extension GameState {
 
     switch self.gameContext {
     case .dailyChallenge, .shared, .solo:
-      return saveGameEffect
+      return .merge(saveGameEffect, Effect.gameTearDownEffects.fireAndForget())
 
     case let .turnBased(turnBasedMatch):
       self.gameOver?.turnBasedContext = turnBasedMatch
-      return .none
+      return Effect.gameTearDownEffects.fireAndForget()
     }
   }
 
@@ -1098,7 +1095,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     case .onAppear:
       return environment.gameCenter.localPlayer.listener
         .map { .gameCenter(.listener($0)) }
-        .cancellable(id: ListenerId())
+        .cancellable(id: ListenerId(), cancelInFlight: true)
 
     case .submitButtonTapped,
       .wordSubmitButton(.delegate(.confirmSubmit)),

@@ -26,6 +26,7 @@ public struct GameView<Content>: View where Content: View {
   struct ViewState: Equatable {
     let isDailyChallenge: Bool
     let isGameLoaded: Bool
+//    let isGameOver: Bool
     let isNavVisible: Bool
     let isTrayVisible: Bool
     let selectedWordString: String
@@ -33,6 +34,7 @@ public struct GameView<Content>: View where Content: View {
     init(state: GameState) {
       self.isDailyChallenge = state.dailyChallengeId != nil
       self.isGameLoaded = state.isGameLoaded
+//      self.isGameOver = state.isGameOver
       self.isNavVisible = state.isNavVisible
       self.isTrayVisible = state.isTrayVisible
       self.selectedWordString = state.selectedWordString
@@ -53,87 +55,87 @@ public struct GameView<Content>: View where Content: View {
   public var body: some View {
     GeometryReader { proxy in
       ZStack {
-        ZStack(alignment: .top) {
-          if self.viewStore.isGameLoaded {
-            self.content
-              .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-              .ignoresSafeArea()
-              .transition(
-                .asymmetric(
-                  insertion: AnyTransition.opacity.animation(Animation.default.delay(1.5)),
-                  removal: .game
-                )
-              )
-              .adaptivePadding(self.deviceState.isPad ? .horizontal : [], .grid(30))
-          } else {
-            ProgressView()
-              .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveBlack))
-              .frame(maxWidth: .infinity, maxHeight: .infinity)
-              .transition(AnyTransition.opacity.animation(Animation.default.delay(1.5)))
-          }
-
-          VStack {
-            Group {
-              if self.viewStore.isNavVisible {
-                GameNavView(store: self.store)
-              } else {
-                GameNavView(store: self.store)
-                  .hidden()
-              }
-              GameHeaderView(store: self.store)
-            }
-            .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
-            Spacer()
-            GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
-              .padding(.bottom)
-          }
-          .ignoresSafeArea(.keyboard)
-
-          if !self.viewStore.selectedWordString.isEmpty {
-            WordSubmitButton(
-              store: self.store.scope(
-                state: \.wordSubmitButtonFeature,
-                action: GameAction.wordSubmitButton
-              )
-            )
-            .ignoresSafeArea()
-            .transition(
-              self.isAnimationReduced
-                ? .opacity
-                : AnyTransition
-                  .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
-                  .combined(with: .opacity)
-            )
-          }
-
-          ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: GameAction.activeGames),
-            showMenuItems: false
-          )
-          .adaptivePadding([.top, .bottom], 8)
-          .frame(maxWidth: .infinity, minHeight: ActiveGamesView.height)
-          .background(
-            LinearGradient(
-              gradient: Gradient(
-                stops: [
-                  .init(color: Color.adaptiveBlack.opacity(0.1), location: 0),
-                  .init(color: Color.adaptiveBlack.opacity(0), location: 0.2),
-                ]
-              ),
-              startPoint: .bottom,
-              endPoint: .top
-            )
-          )
-          .fixedSize(horizontal: false, vertical: true)
-          .opacity(self.viewStore.isTrayVisible ? 1 : 0)
-          .offset(y: -self.trayHeight)
-        }
-        .offset(y: self.viewStore.isTrayVisible ? self.trayHeight : 0)
-        .zIndex(0)
-
         IfLetStore(
           self.store.scope(state: \.gameOver, action: GameAction.gameOver),
-          then: GameOverView.init(store:)
+          then: GameOverView.init(store:),
+          else: ZStack(alignment: .top) {
+            if self.viewStore.isGameLoaded {
+              self.content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .ignoresSafeArea()
+                .transition(
+                  .asymmetric(
+                    insertion: AnyTransition.opacity.animation(Animation.default.delay(1.5)),
+                    removal: .game
+                  )
+                )
+                .adaptivePadding(self.deviceState.isPad ? .horizontal : [], .grid(30))
+            } else {
+              ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveBlack))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(AnyTransition.opacity.animation(Animation.default.delay(1.5)))
+            }
+
+            VStack {
+              Group {
+                if self.viewStore.isNavVisible {
+                  GameNavView(store: self.store)
+                } else {
+                  GameNavView(store: self.store)
+                    .hidden()
+                }
+                GameHeaderView(store: self.store)
+              }
+              .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
+              Spacer()
+              GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
+                .padding(.bottom)
+            }
+            .ignoresSafeArea(.keyboard)
+
+            if !self.viewStore.selectedWordString.isEmpty {
+              WordSubmitButton(
+                store: self.store.scope(
+                  state: \.wordSubmitButtonFeature,
+                  action: GameAction.wordSubmitButton
+                )
+              )
+              .ignoresSafeArea()
+              .transition(
+                self.isAnimationReduced
+                  ? .opacity
+                  : AnyTransition
+                  .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
+                  .combined(with: .opacity)
+              )
+            }
+
+            ActiveGamesView(
+              store: self.store.scope(state: \.activeGames, action: GameAction.activeGames),
+              showMenuItems: false
+            )
+            .adaptivePadding([.top, .bottom], 8)
+            .frame(maxWidth: .infinity, minHeight: ActiveGamesView.height)
+            .background(
+              LinearGradient(
+                gradient: Gradient(
+                  stops: [
+                    .init(color: Color.adaptiveBlack.opacity(0.1), location: 0),
+                    .init(color: Color.adaptiveBlack.opacity(0), location: 0.2),
+                  ]
+                ),
+                startPoint: .bottom,
+                endPoint: .top
+              )
+            )
+            .fixedSize(horizontal: false, vertical: true)
+            .opacity(self.viewStore.isTrayVisible ? 1 : 0)
+            .offset(y: -self.trayHeight)
+          }
+          .offset(y: self.viewStore.isTrayVisible ? self.trayHeight : 0)
+          .onAppear { self.viewStore.send(.onAppear) }
+          .zIndex(0)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
         .transition(
@@ -169,6 +171,5 @@ public struct GameView<Content>: View where Content: View {
       .bottomMenu(self.store.scope(state: \.bottomMenu))
       .alert(self.store.scope(state: \.alert, action: GameAction.alert))
     }
-    .onAppear { self.viewStore.send(.onAppear) }
   }
 }

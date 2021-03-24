@@ -8,23 +8,29 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .combined(
         with: .init { state, action, environment in
           switch action {
-          case .onAppear:
+          case .onAppear/*, .gameOver(.delegate(.startGame)), .gameOver(.delegate(.startSoloGame))*/:
+            let sound: AudioPlayerClient.Sound
             let soundEffect: Effect<Never, Never>
             if state.gameMode == .timed {
-              soundEffect = environment.audioPlayer
-                .play(
-                  state.isDemo
-                    ? .timedGameBgLoop1
-                    : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
-                )
+              sound = state.isDemo
+                ? .timedGameBgLoop1
+                : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
+              soundEffect = environment.audioPlayer.play(sound)
 
             } else {
-              soundEffect = environment.audioPlayer
-                .loop([.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!)
+              sound = [.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!
+              soundEffect = environment.audioPlayer.loop(sound)
             }
-            return
+            return Effect.concatenate(
+              .merge(
+                AudioPlayerClient.Sound.allMusic
+                  .filter { $0 != sound }
+                  .map(environment.audioPlayer.stop)
+              ),
+
               soundEffect
-              .fireAndForget()
+            )
+            .fireAndForget()
 
           case .confirmRemoveCube:
             return environment.audioPlayer.play(.cubeRemove)
@@ -35,8 +41,8 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           }
         }
       )
-      .onChange(of: { $0.gameOver == nil }) { gameOver, _, _, environment in
-        .merge(
+      .onChange(of: { $0.gameOver != nil }) { gameOver, _, _, environment in
+        return .merge(
           Effect
             .merge(
               AudioPlayerClient.Sound.allMusic

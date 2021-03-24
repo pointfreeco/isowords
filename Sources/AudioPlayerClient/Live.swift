@@ -146,9 +146,6 @@ private class AudioPlayer {
     switch self.source {
     case let .music(player):
       player.setVolume(0, fadeDuration: 2.5)
-      queue.asyncAfter(deadline: .now() + 2.5) {
-        player.stop()
-      }
 
     case let .soundEffect(node, _):
       node.stop()
