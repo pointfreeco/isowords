@@ -235,7 +235,7 @@ public let dailyChallengeReducer = Reducer<
 
     case let .userNotificationSettingsResponse(settings):
       state.userNotificationSettings = settings
-      return .none
+      return environment.apiClient.apiRequest(.currentPlayer).fireAndForget()
     }
   }
 )
@@ -537,8 +537,7 @@ private struct RingEffect: GeometryEffect {
         remoteNotifications: .noop,
         userNotifications: .noop
       )
-
-      environment.userNotifications.getNotificationSettings = .init(value: .init(authorizationStatus: .notDetermined))
+//      environment.userNotifications.getNotificationSettings = .init(value: .init(authorizationStatus: .notDetermined))
 
       environment.apiClient.apiRequest = { route in
         switch route {
