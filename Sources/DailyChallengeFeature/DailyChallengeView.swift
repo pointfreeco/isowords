@@ -460,7 +460,7 @@ extension DailyChallengeView.ViewState.ButtonState {
   var inactiveText: Text? {
     switch self {
     case let .played(rank: rank, outOf: outOf):
-      return Text("Played\n(#\(rank) of \(outOf))")
+      return Text("Played\n#\(rank) of \(outOf)")
     case .resume:
       return nil
     case .playable:
@@ -529,42 +529,42 @@ private struct RingEffect: GeometryEffect {
 
   extension Store where State == DailyChallengeState, Action == DailyChallengeAction {
     static var dailyChallenge: Self {
-      let environment = update(
-        DailyChallengeEnvironment(
-          apiClient: .noop,
-          fileClient: .noop,
-          mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
-          mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
-          remoteNotifications: .noop,
-          userNotifications: .noop
-        )
-      ) {
-        $0.apiClient.apiRequest = { route in
-          switch route {
-          case .dailyChallenge(.today(language: _)):
-            return .ok([
-              FetchTodaysDailyChallengeResponse(
-                dailyChallenge: .init(
-                  endsAt: .distantFuture,
-                  gameMode: .timed,
-                  id: .init(rawValue: .deadbeef),
-                  language: .en
-                ),
-                yourResult: .init(outOf: 5_102, rank: 332, score: 2_350)
+      var environment = DailyChallengeEnvironment(
+        apiClient: .noop,
+        fileClient: .noop,
+        mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
+        mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
+        remoteNotifications: .noop,
+        userNotifications: .noop
+      )
+
+      environment.userNotifications.getNotificationSettings = .init(value: .init(authorizationStatus: .notDetermined))
+
+      environment.apiClient.apiRequest = { route in
+        switch route {
+        case .dailyChallenge(.today(language: _)):
+          return .ok([
+            FetchTodaysDailyChallengeResponse(
+              dailyChallenge: .init(
+                endsAt: .distantFuture,
+                gameMode: .timed,
+                id: .init(rawValue: .deadbeef),
+                language: .en
               ),
-              FetchTodaysDailyChallengeResponse(
-                dailyChallenge: .init(
-                  endsAt: .distantFuture,
-                  gameMode: .unlimited,
-                  id: .init(rawValue: .deadbeef),
-                  language: .en
-                ),
-                yourResult: .init(outOf: 2_298, rank: nil, score: nil)
+              yourResult: .init(outOf: 5_102, rank: 332, score: 2_350)
+            ),
+            FetchTodaysDailyChallengeResponse(
+              dailyChallenge: .init(
+                endsAt: .distantFuture,
+                gameMode: .unlimited,
+                id: .init(rawValue: .deadbeef),
+                language: .en
               ),
-            ])
-          default:
-            fatalError()
-          }
+              yourResult: .init(outOf: 2_298, rank: nil, score: nil)
+            ),
+          ])
+        default:
+          fatalError()
         }
       }
 

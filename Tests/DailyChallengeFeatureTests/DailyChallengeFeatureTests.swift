@@ -13,16 +13,12 @@ class DailyChallengeFeatureTests: XCTestCase {
     var environment = DailyChallengeEnvironment.failing
     environment.apiClient.override(
       route: .dailyChallenge(.today(language: .en)),
-      withResponse: .ok(FetchTodaysDailyChallengeResponse.played)
+      withResponse: .ok([FetchTodaysDailyChallengeResponse.played])
     )
-//    environment.apiClient.override(
-//      route: .dailyChallenge(.today(language: .en)),
-//      withResponse: .ok(fetchChallengeResults)
-//    )
     environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-//    environment.userNotifications.getNotificationSettings = .init(
-//      value: .init(authorizationStatus: .authorized)
-//    )
+    environment.userNotifications.getNotificationSettings = .init(
+      value: .init(authorizationStatus: .authorized)
+    )
 
     let store = TestStore(
       initialState: .init(),
@@ -32,20 +28,13 @@ class DailyChallengeFeatureTests: XCTestCase {
 
     store.send(.onAppear)
 
-//      TestStore(
-//      initialState: .init(),
-//      reducer: dailyChallengeReducer,
-//      environment: environment
-//    )
+    store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
+      $0.dailyChallenges = [.played]
+    }
 
-//    self.mainRunLoop.advance()
-//    store.receive(.fetchTodaysDailyChallengeResponse(.success(fetchChallengeResults))) {
-//      $0.dailyChallenges = fetchChallengeResults
-//    }
-//
-//    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
-//      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
-//    }
+    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+    }
   }
 
   func testTapGameThatWasPlayed() {
