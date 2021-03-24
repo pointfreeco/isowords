@@ -45,6 +45,7 @@ public class CubeFaceNode: SCNNode {
     let letterNode = SCNNode(geometry: letterGeometry)
     letterNode.castsShadow = false
     letterNode.name = "text"
+    letterNode.position = .init(0, 0, 0.01)
     self.addChildNode(letterNode)
 
     self.category = [.cubeFace, .shadowSurface]
