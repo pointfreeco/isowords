@@ -545,8 +545,8 @@ extension DatabaseClient {
               (
                 "leaderboardScores"."gameContext" = 'dailyChallenge'
                 AND '\(raw: timeScope.rawValue)' = 'lastDay'
-                AND DATE_TRUNC('DAY', "words"."createdAt" + INTERVAL '1 DAY') BETWEEN
-                  NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
+                AND "words"."createdAt"
+                  BETWEEN DATE_TRUNC('DAY', NOW() - INTERVAL '1 DAY') AND DATE_TRUNC('DAY', NOW())
               )
               OR "words"."createdAt" BETWEEN
                 NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
