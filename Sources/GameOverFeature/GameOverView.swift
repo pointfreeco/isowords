@@ -568,6 +568,7 @@ public struct GameOverView: View {
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
+        .ignoresSafeArea()
     }
   }
 
