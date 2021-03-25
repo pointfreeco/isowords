@@ -7,6 +7,7 @@ public struct FetchVocabLeaderboardResponse: Codable, Equatable {
 
   public struct Entry: Codable, Equatable {
     public let denseRank: Int
+    public let isSupporter: Bool
     public let isYourScore: Bool
     public let outOf: Int
     public let playerDisplayName: String?
@@ -18,6 +19,7 @@ public struct FetchVocabLeaderboardResponse: Codable, Equatable {
 
     public init(
       denseRank: Int,
+      isSupporter: Bool,
       isYourScore: Bool,
       outOf: Int,
       playerDisplayName: String?,
@@ -28,6 +30,7 @@ public struct FetchVocabLeaderboardResponse: Codable, Equatable {
       wordId: Word.Id
     ) {
       self.denseRank = denseRank
+      self.isSupporter = isSupporter
       self.isYourScore = isYourScore
       self.outOf = outOf
       self.playerDisplayName = playerDisplayName

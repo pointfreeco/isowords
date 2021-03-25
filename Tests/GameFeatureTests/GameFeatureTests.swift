@@ -12,7 +12,7 @@ import XCTest
 
 @testable import GameFeature
 
-class GameCoreTests: XCTestCase {
+class GameFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.testScheduler
 
   func testRemoveCubeMove() {

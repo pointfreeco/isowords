@@ -19,9 +19,12 @@ public struct GameFeatureView<Content>: View where Content: View {
     IfLetStore(
       self.store.scope(state: \.game),
       then: { store in
-        WithViewStore(self.store.stateless) { viewStore in
+        WithViewStore(
+          self.store.scope(state: \.settings.userSettings.enableReducedAnimation)
+        ) { viewStore in
           GameView(
             content: self.content,
+            isAnimationReduced: viewStore.state,
             store: store.scope(state: { $0 }, action: GameFeatureAction.game)
           )
           .onDisappear { viewStore.send(.onDisappear) }

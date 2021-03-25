@@ -2,6 +2,9 @@ public enum TimeScope: String, CaseIterable, Codable {
   case allTime
   case lastDay
   case lastWeek
+  case interesting
+
+  public static let soloCases: [Self] = [.allTime, .lastDay, .lastWeek]
 }
 
 #if canImport(SwiftUI)
@@ -10,12 +13,14 @@ public enum TimeScope: String, CaseIterable, Codable {
   extension TimeScope {
     public var displayTitle: LocalizedStringKey {
       switch self {
+      case .allTime:
+        return "All time"
       case .lastDay:
         return "Past day"
       case .lastWeek:
         return "Past week"
-      case .allTime:
-        return "All time"
+      case .interesting:
+        return "Interesting"
       }
     }
   }

@@ -208,15 +208,14 @@ private func _apiMiddleware(
       |> fetchLeaderboardMiddleware
       >=> respondJson(envVars: conn.data.envVars)
 
-  case let .leaderboard(.vocab(.fetch(language: language, sort: sort, timeScope: timeScope))):
+  case let .leaderboard(.vocab(.fetch(language: language, timeScope: timeScope))):
     return conn.map(
       const(
         .init(
           currentPlayer: conn.data.player,
           database: conn.data.database,
           language: language,
-          timeScope: timeScope,
-          vocabSort: sort
+          timeScope: timeScope
         )
       )
     )

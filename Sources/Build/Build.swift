@@ -1,5 +1,4 @@
 import Foundation
-import XCTestDebugSupport
 
 public struct Build {
   public var gitSha: () -> String
@@ -22,19 +21,25 @@ public struct Build {
     }
   )
 
-  public static let failing = Self(
-    gitSha: {
-      XCTFail("\(Self.self).gitSha is unimplemented")
-      return ""
-    },
-    number: {
-      XCTFail("\(Self.self).number is unimplemented")
-      return 0
-    }
-  )
-
   public static let noop = Self(
     gitSha: { "deadbeef" },
     number: { 0 }
   )
 }
+
+#if DEBUG
+  import XCTestDynamicOverlay
+
+  extension Build {
+    public static let failing = Self(
+      gitSha: {
+        XCTFail("\(Self.self).gitSha is unimplemented")
+        return ""
+      },
+      number: {
+        XCTFail("\(Self.self).number is unimplemented")
+        return 0
+      }
+    )
+  }
+#endif

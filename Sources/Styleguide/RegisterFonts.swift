@@ -34,7 +34,7 @@ extension UIFont {
         \(error.map { " \($0.takeUnretainedValue().localizedDescription)" } ?? "")
         """
       )
-      return false
+      return true
     }
 
     return true

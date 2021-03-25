@@ -50,7 +50,7 @@ extension AudioPlayerClient {
 }
 
 #if DEBUG
-  import XCTestDebugSupport
+  import XCTestDynamicOverlay
 
   extension AudioPlayerClient {
     public static let failing = Self(

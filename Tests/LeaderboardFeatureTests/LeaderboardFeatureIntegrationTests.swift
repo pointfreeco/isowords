@@ -13,6 +13,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     let fetchLeaderboardsEntries = [
       FetchLeaderboardResponse.Entry(
         id: .init(rawValue: .deadbeef),
+        isSupporter: false,
         isYourScore: true,
         outOf: 100,
         playerDisplayName: "Blob",
@@ -60,6 +61,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     let fetchVocabEntries = [
       FetchVocabLeaderboardResponse.Entry.init(
         denseRank: 1,
+        isSupporter: false,
         isYourScore: true,
         outOf: 1_000,
         playerDisplayName: "Blob",
@@ -87,7 +89,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let siteEnvironment = update(Environment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
-      $0.database.fetchVocabLeaderboard = { _, _, _, _ in
+      $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure(fetchVocabEntries)
       }
     }

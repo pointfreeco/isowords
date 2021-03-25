@@ -22,6 +22,35 @@ class SettingsFeatureTests: XCTestCase {
     return environment
   }
 
+  func testUserSettingsBackwardsDecodability() {
+    XCTAssertEqual(
+      try JSONDecoder().decode(UserSettings.self, from: Data("{}".utf8)),
+      UserSettings()
+    )
+
+    let partialJson = """
+      {
+        "appIcon": "icon-1",
+        "colorScheme": "dark",
+        "enableGyroMotion": false,
+        "enableHaptics": false,
+        "musicVolume": 0.25,
+        "soundEffectsVolume": 0.5,
+      }
+      """
+    XCTAssertEqual(
+      try JSONDecoder().decode(UserSettings.self, from: Data(partialJson.utf8)),
+      UserSettings(
+        appIcon: .icon1,
+        colorScheme: .dark,
+        enableGyroMotion: false,
+        enableHaptics: false,
+        musicVolume: 0.25,
+        soundEffectsVolume: 0.5
+      )
+    )
+  }
+
   // MARK: - Notifications
 
   func testEnableNotifications_NotDetermined_GrantAuthorization() {
