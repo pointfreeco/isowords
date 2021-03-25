@@ -5,6 +5,11 @@ import SnapshotTesting
 import XCTest
 
 class CubeViewTests: XCTestCase {
+  override class func setUp() {
+    super.setUp()
+    SnapshotTesting.diffTool = "ksdiff"
+  }
+
   func testLetterSurfaceShaderBorderBuffer() throws {
     let json = """
       [
