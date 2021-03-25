@@ -506,7 +506,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "Overture", package: "Overture"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ]
+      ],
+      resources: [.process("Resources/")]
     ),
     .target(
       name: "ComposableGameCenterHelpers",
