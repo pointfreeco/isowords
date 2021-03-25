@@ -10,36 +10,35 @@ import XCTest
 
 class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.testScheduler
-
+  
   func testSubmitLeaderboardScore() throws {
-    let enviroment = update(GameOverEnvironment.failing) {
-      $0.audioPlayer = .noop
-      $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-      $0.apiClient.override(
-        route: .games(
-          .submit(
-            .init(
-              gameContext: .solo(.init(gameMode: .timed, language: .en, puzzle: .mock)),
-              moves: [.mock]
-            )
+    var enviroment = GameOverEnvironment.failing
+    enviroment.audioPlayer = .noop
+    enviroment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    enviroment.apiClient.override(
+      route: .games(
+        .submit(
+          .init(
+            gameContext: .solo(.init(gameMode: .timed, language: .en, puzzle: .mock)),
+            moves: [.mock]
           )
-        ),
-        withResponse: .ok([
-          "solo": [
-            "ranks": [
-              "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
-              "lastWeek": .init(outOf: 1000, rank: 10),
-              "allTime": .init(outOf: 10000, rank: 100),
-            ]
+        )
+      ),
+      withResponse: .ok([
+        "solo": [
+          "ranks": [
+            "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
+            "lastWeek": .init(outOf: 1000, rank: 10),
+            "allTime": .init(outOf: 10000, rank: 100),
           ]
-        ])
-      )
-      $0.database.playedGamesCount = { _ in .init(value: 10) }
-      $0.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-      $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-      $0.serverConfig.config = { .init() }
-      $0.userNotifications.getNotificationSettings = .none
-    }
+        ]
+      ])
+    )
+    enviroment.database.playedGamesCount = { _ in .init(value: 10) }
+    enviroment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    enviroment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    enviroment.serverConfig.config = { .init() }
+    enviroment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
       initialState: GameOverState(
