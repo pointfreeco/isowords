@@ -541,6 +541,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "CubePreview",
       dependencies: [
         "CubeCore",
+        "GameCore",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
