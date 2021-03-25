@@ -11,7 +11,7 @@ class CubeViewTests: XCTestCase {
   }
 
   func testLetterSurfaceShaderBorderBuffer() throws {
-    XCTSkipIf(ProcessInfo.processInfo.environment["CI"] != nil)
+    try XCTSkipIf(ProcessInfo.processInfo.environment["CI"] != nil)
     let json = """
       [
         [
