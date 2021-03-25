@@ -180,6 +180,7 @@ public struct SettingsView: View {
     .alert(self.store.scope(state: \.alert))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
+        .ignoresSafeArea()
     }
   }
 }
