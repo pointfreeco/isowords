@@ -89,19 +89,18 @@ public struct TurnBasedMatchClient {
   public var sendReminder: (SendReminderRequest) -> Effect<Void, Error>
 
   public struct EndMatchInTurnRequest: Equatable {
-    // TODO: public var matchOutcomes: [GKTurnBasedMatch.Outcome] or [String: GKTurnBasedMatch.Outcome]
     public var localPlayerMatchOutcome: GKTurnBasedMatch.Outcome
     public var localPlayerId: Player.Id
     public var matchId: TurnBasedMatch.Id
     public var matchData: Data
-    public var message: String?
+    public var message: LocalizableMessage
 
     public init(
       for matchId: TurnBasedMatch.Id,
       matchData: Data,
       localPlayerId: Player.Id,
       localPlayerMatchOutcome: GKTurnBasedMatch.Outcome,
-      message: String?
+      message: LocalizableMessage
     ) {
       self.localPlayerMatchOutcome = localPlayerMatchOutcome
       self.localPlayerId = localPlayerId
@@ -114,12 +113,12 @@ public struct TurnBasedMatchClient {
   public struct EndTurnRequest: Equatable {
     public var matchId: TurnBasedMatch.Id
     public var matchData: Data
-    public var message: String
+    public var message: LocalizableMessage
 
     public init(
       for matchId: TurnBasedMatch.Id,
       matchData: Data,
-      message: String
+      message: LocalizableMessage
     ) {
       self.matchId = matchId
       self.matchData = matchData
@@ -127,21 +126,28 @@ public struct TurnBasedMatchClient {
     }
   }
 
-  public struct SendReminderRequest: Equatable {
-    public var arguments: [String]
+  public struct LocalizableMessage: Equatable {
     public var key: String
+    public var arguments: [String]
+
+    public init(_ key: String, arguments: [String] = []) {
+      self.key = key
+      self.arguments = arguments
+    }
+  }
+
+  public struct SendReminderRequest: Equatable {
     public var matchId: TurnBasedMatch.Id
+    public var message: LocalizableMessage
     public var participantsAtIndices: [Int]
 
     public init(
       for matchId: TurnBasedMatch.Id,
       to participantsAtIndices: [Int],
-      localizableMessageKey key: String,
-      arguments: [String]
+      message: LocalizableMessage
     ) {
-      self.arguments = arguments
-      self.key = key
       self.matchId = matchId
+      self.message = message
       self.participantsAtIndices = participantsAtIndices
     }
   }

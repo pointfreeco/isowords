@@ -70,6 +70,7 @@
 		DC8099F324FFD9040076F35B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DC8099F224FFD9040076F35B /* Assets.xcassets */; };
 		DC8099F524FFDAA00076F35B /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DC8099F424FFDAA00076F35B /* Launch Screen.storyboard */; };
 		DC9D46AE24CF8DC20052B234 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9D468524CF8DC10052B234 /* App.swift */; };
+		DCACBA38260D27C0005C825A /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = DCACBA37260D27C0005C825A /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -161,6 +162,7 @@
 		DC9D468524CF8DC10052B234 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		DC9D468C24CF8DC20052B234 /* isowords.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = isowords.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC9D468F24CF8DC20052B234 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DCACBA37260D27C0005C825A /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -446,6 +448,7 @@
 				DC9D468524CF8DC10052B234 /* App.swift */,
 				DC8099F224FFD9040076F35B /* Assets.xcassets */,
 				CAB4F9F825B0AE2000D2C0F8 /* icons */,
+				DCACBA37260D27C0005C825A /* Localizable.strings */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -828,6 +831,7 @@
 				CA73215B25DF36860095F978 /* icon-1@2x.png in Resources */,
 				CA73215D25DF36860095F978 /* icon-2@3x.png in Resources */,
 				CA73215925DF36860095F978 /* icon-8@2x.png in Resources */,
+				DCACBA38260D27C0005C825A /* Localizable.strings in Resources */,
 				CA73215125DF36860095F978 /* icon-iso@2x.png in Resources */,
 				CA73215325DF36860095F978 /* icon-2@2x.png in Resources */,
 				CA73215725DF36860095F978 /* icon-5@2x.png in Resources */,

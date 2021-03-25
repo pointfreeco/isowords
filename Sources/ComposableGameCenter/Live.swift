@@ -210,7 +210,9 @@ extension TurnBasedMatchClient {
             callback(.failure(error ?? invalidStateError))
             return
           }
-          match.message = request.message
+          match.setLocalizableMessageWithKey(
+            request.message.key, arguments: request.message.arguments
+          )
           match.participants.forEach { participant in
             if participant.status == .active, let player = participant.player {
               let matchOutcome =
@@ -240,7 +242,9 @@ extension TurnBasedMatchClient {
             callback(.failure(error ?? invalidStateError))
             return
           }
-          match.message = request.message
+          match.setLocalizableMessageWithKey(
+            request.message.key, arguments: request.message.arguments
+          )
           match.endTurn(
             withNextParticipants: match.participants
               .filter { $0.player?.gamePlayerID != match.currentParticipant?.player?.gamePlayerID },
@@ -354,8 +358,8 @@ extension TurnBasedMatchClient {
           }
           match.sendReminder(
             to: request.participantsAtIndices.map { match.participants[$0] },
-            localizableMessageKey: request.key,
-            arguments: request.arguments
+            localizableMessageKey: request.message.key,
+            arguments: request.message.arguments
           ) { error in callback(error.map(Result.failure) ?? .success(())) }
         }
       }
@@ -390,7 +394,7 @@ extension TurnBasedMatchmakerViewControllerClient {
         }
 
         let matchRequest = GKMatchRequest()
-        matchRequest.inviteMessage = "Let's play isowords!"  // TODO: Pass in/localize
+        matchRequest.inviteMessage = "Let's play isowords!"
         matchRequest.maxPlayers = 2
         matchRequest.minPlayers = 2
         matchRequest.recipientResponseHandler = { player, response in

@@ -328,17 +328,27 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex))):
+
       return environment.gameCenter.turnBasedMatch
-        .sendReminder(
-          .init(
-            for: matchId,
-            to: [otherPlayerIndex.rawValue],
-            localizableMessageKey: "It's your turn now!",
-            arguments: []
+        .load(matchId)
+        .flatMap { match -> Effect<Void, Error> in
+          let displayName = otherPlayerIndex.rawValue < match.participants.endIndex
+            ? match.participants[otherPlayerIndex.rawValue].player?.displayName
+            : nil
+
+          return environment.gameCenter.turnBasedMatch.sendReminder(
+            .init(
+              for: matchId,
+              to: [otherPlayerIndex.rawValue],
+              message: .init(
+                displayName == nil
+                  ? "It’s your turn now!"
+                  : "It’s your turn in your game with %@!",
+                arguments: displayName.map { [$0] } ?? []
+              )
+            )
           )
-        )
-        .ignoreOutput()
-        .ignoreFailure()
+        }
         .eraseToEffect()
         .fireAndForget()
 

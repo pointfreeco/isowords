@@ -177,8 +177,10 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                   matchData: match.matchData ?? Data(),
                   localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId,
                   localPlayerMatchOutcome: .quit,
-                  message:
-                    "\(environment.gameCenter.localPlayer.localPlayer().displayName) forfeited the match."
+                  message: .init(
+                    "%@ forfeited the match.",
+                    arguments: [environment.gameCenter.localPlayer.localPlayer().displayName]
+                  )
                 )
               )
               .catchToEffect()

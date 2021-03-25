@@ -17,7 +17,7 @@ public func forceQuitMatch(
           matchData: match.matchData ?? Data(),
           localPlayerId: localPlayer.gamePlayerId,
           localPlayerMatchOutcome: .quit,
-          message: "\(localPlayer.displayName) forfeited the match."
+          message: .init("%@ forfeited the match.", arguments: [localPlayer.displayName])
         )
       )
       .ignoreOutput()

@@ -1129,6 +1129,8 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           )
         else { return .none }
 
+        let displayName = turnBasedContext.otherParticipant?.player?.displayName
+
         return .concatenate(
           environment.gameCenter.turnBasedMatch
             .endMatchInTurn(
@@ -1137,7 +1139,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 matchData: matchData,
                 localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
                 localPlayerMatchOutcome: completedMatch.yourOutcome,
-                message: "Game over! Let's see how you did!"
+                message: .init(
+                  displayName == nil
+                    ? "Game over! See how you did!"
+                    : "Your game with %@ is over! See how you did!",
+                  arguments: displayName.map { [$0] } ?? []
+                )
               )
             )
             .catchToEffect()
@@ -1166,7 +1173,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                   .init(
                     for: turnBasedContext.match.matchId,
                     matchData: matchData,
-                    message: "\(turnBasedContext.localPlayer.displayName) removed cubes!"
+                    message: .init(
+                      "%@ removed cubes!",
+                      arguments: [turnBasedContext.localPlayer.displayName]
+                    )
                   )
                 )
                 .ignoreOutput()
@@ -1193,8 +1203,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 .init(
                   for: turnBasedContext.match.matchId,
                   matchData: matchData,
-                  message:
-                    "\(turnBasedContext.localPlayer.displayName) played \(word)! (+\(score)\(reaction))"
+                  message: .init(
+                    "%@ played %@! (+%@%@)",
+                    arguments: [
+                      turnBasedContext.localPlayer.displayName, word, String(score), reaction
+                    ]
+                  )
                 )
               )
               .ignoreOutput()
