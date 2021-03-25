@@ -673,7 +673,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "GameCore",
         "TestHelpers",
-      ]
+        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      ],
+      exclude: ["__Snapshots__"]
     ),
     .target(
       name: "GameFeature",
