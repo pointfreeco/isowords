@@ -20,6 +20,8 @@ jobs:
       run: make bootstrap
     - name: Run tests
       run: make test
+      env:
+        CI: 1
 
   ubuntu:
     name: Ubuntu
@@ -32,3 +34,5 @@ jobs:
       run: make bootstrap-client
     - name: Run tests
       run: make test-server-linux
+      env:
+        CI: 1
