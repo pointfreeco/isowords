@@ -1095,7 +1095,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         turnBasedMatchData: turnBasedMatchData
       )
       gameState.activeGames = state.activeGames
-      gameState.isGameLoaded = true
+      gameState.isGameLoaded = state.isGameLoaded
       state = gameState
       return .none
 
