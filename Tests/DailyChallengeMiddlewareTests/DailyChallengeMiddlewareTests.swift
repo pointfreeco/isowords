@@ -435,9 +435,9 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         X-XSS-Protection: 1; mode=block
 
         {
-          "errorDump" : "▿ SharedModels.ApiError\n  - errorDump: \"- LeaderboardMiddleware.VerificationFailed\\n\"\n  - file: \"LeaderboardMiddleware\/SubmitGameMiddleware.swift\"\n  - line: 113\n  - message: \"The operation couldn’t be completed. (LeaderboardMiddleware.VerificationFailed error 1.)\"\n",
+          "errorDump" : "▿ SharedModels.ApiError\n  - errorDump: \"- LeaderboardMiddleware.VerificationFailed\\n\"\n  - file: \"LeaderboardMiddleware\/SubmitGameMiddleware.swift\"\n  - line: 110\n  - message: \"The operation couldn’t be completed. (LeaderboardMiddleware.VerificationFailed error 1.)\"\n",
           "file" : "LeaderboardMiddleware\/SubmitGameMiddleware.swift",
-          "line" : 206,
+          "line" : 203,
           "message" : "The operation couldn’t be completed. (LeaderboardMiddleware.VerificationFailed error 1.)"
         }
         """#

@@ -99,7 +99,7 @@ extension Gen where Value == TurnBasedContext {
   static let turnBasedContext = zip(
     .localPlayer,
     .turnBasedMatch,
-    .always(.init())
+    .always(.init(playerIndexToId: [:]))
   )
   .map {
     TurnBasedContext(
