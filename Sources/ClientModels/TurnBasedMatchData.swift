@@ -28,7 +28,7 @@ public struct TurnBasedMatchData: Codable, Equatable {
     public var playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id]
 
     public init(
-      playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id] = [:]
+      playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id]
     ) {
       self.playerIndexToId = playerIndexToId
     }

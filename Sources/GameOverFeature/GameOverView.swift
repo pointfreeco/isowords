@@ -1200,7 +1200,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
                   update(.remote) { $0.matchOutcome = .lost },
                 ]
               },
-              metadata: .init()
+              metadata: .init(playerIndexToId: [:])
             )
           ),
           reducer: gameOverReducer,
