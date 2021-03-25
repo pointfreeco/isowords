@@ -2,6 +2,7 @@ import ComposableArchitecture
 import CubeCore
 import SharedModels
 import SnapshotTesting
+import Styleguide
 import XCTest
 
 class CubeViewTests: XCTestCase {
@@ -10,8 +11,13 @@ class CubeViewTests: XCTestCase {
     SnapshotTesting.diffTool = "ksdiff"
   }
 
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try XCTSkipIf(!Styleguide.registerFonts())
+//    isRecording = true
+  }
+
   func testLetterSurfaceShaderBorderBuffer() throws {
-    try XCTSkipIf(ProcessInfo.processInfo.environment["CI"] != nil)
     let json = """
       [
         [
