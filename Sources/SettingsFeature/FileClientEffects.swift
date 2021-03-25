@@ -13,4 +13,4 @@ extension FileClient {
   }
 }
 
-public let userSettingsFileName = "user-settings"
+let userSettingsFileName = "user-settings"

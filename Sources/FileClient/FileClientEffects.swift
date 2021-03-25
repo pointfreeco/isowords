@@ -14,4 +14,4 @@ extension FileClient {
   }
 }
 
-public let savedGamesFileName = "saved-games"
+let savedGamesFileName = "saved-games"
