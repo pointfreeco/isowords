@@ -29,7 +29,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 }
 
 public struct LeaderboardState: Equatable {
-  public var cubePreview: CubePreviewState?
+  public var cubePreview: CubePreviewState_?
   public var scope: LeaderboardScope = .games
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
@@ -37,7 +37,7 @@ public struct LeaderboardState: Equatable {
   public var isCubePreviewPresented: Bool { self.cubePreview != nil }
 
   public init(
-    cubePreview: CubePreviewState? = nil,
+    cubePreview: CubePreviewState_? = nil,
     scope: LeaderboardScope = .games,
     solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
@@ -50,7 +50,7 @@ public struct LeaderboardState: Equatable {
 }
 
 public enum LeaderboardAction: Equatable {
-  case cubePreview(CubePreviewAction)
+  case cubePreview(CubePreviewAction_)
   case dismissCubePreview
   case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
   case scopeTapped(LeaderboardScope)
@@ -88,7 +88,14 @@ public let leaderboardReducer = Reducer<
     ._pullback(
       state: OptionalPath(\.cubePreview),
       action: /LeaderboardAction.cubePreview,
-      environment: { _ in CubePreviewEnvironment() }
+      environment: { _ in
+        CubePreviewEnvironment(
+          dictionary: .everyString,
+          feedbackGenerator: .live,
+          mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+          mainRunLoop: RunLoop.main.eraseToAnyScheduler()
+        )
+      }
     ),
 
   Reducer.leaderboardResultsReducer()
@@ -128,19 +135,20 @@ public let leaderboardReducer = Reducer<
       return .none
 
     case let .fetchWordResponse(.success(response)):
-      state.cubePreview = .init(
-        preview: .words(
-          .init(
-            words: [
-              .init(
-                cubes: response.puzzle,
-                moveIndex: response.moveIndex,
-                moves: response.moves
-              )
-            ]
-          )
-        )
-      )
+
+//      state.cubePreview = .init(
+//        preview: .words(
+//          .init(
+//            words: [
+//              .init(
+//                cubes: response.puzzle,
+//                moveIndex: response.moveIndex,
+//                moves: response.moves
+//              )
+//            ]
+//          )
+//        )
+//      )
       return .none
 
     case let .scopeTapped(scope):

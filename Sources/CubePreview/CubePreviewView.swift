@@ -38,7 +38,7 @@ public struct CubePreviewEnvironment {
   }
 }
 
-let cubePreviewReducer = Reducer<
+public let cubePreviewReducer = Reducer<
 CubePreviewState_,
 CubePreviewAction_,
 CubePreviewEnvironment
