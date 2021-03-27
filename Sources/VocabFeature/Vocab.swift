@@ -98,20 +98,6 @@ public let vocabReducer = Reducer<
         moveIndex: moveIndex,
         settings: .init()
       )
-
-      //      .init(
-      //      preview: .words(
-      //        .init(
-      //          words: [
-      //            .init(
-      //              cubes: game.completedGame.cubes,
-      //              moveIndex: moveIndex,
-      //              moves: game.completedGame.moves
-      //            )
-      //          ]
-      //        )
-      //      )
-      //    )
       return .none
 
     case .onAppear:

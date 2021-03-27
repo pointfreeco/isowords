@@ -36,8 +36,8 @@ public struct CubePreviewState: Equatable {
 }
 
 public enum CubePreviewAction: Equatable {
-  case cubeScene(CubeSceneView.ViewAction)
   case binding(BindingAction<CubePreviewState>)
+  case cubeScene(CubeSceneView.ViewAction)
   case onAppear
 }
 
@@ -60,10 +60,10 @@ CubePreviewState,
   CubePreviewEnvironment
 > { state, action, environment in
   switch action {
-  case .cubeScene:
+  case .binding:
     return .none
 
-  case .binding:
+  case .cubeScene:
     return .none
 
   case .onAppear:
@@ -79,11 +79,13 @@ CubePreviewState,
     switch move.type {
     case let .playedWord(faces):
       for (faceIndex, face) in faces.enumerated() {
+        let moveDuration = Double.random(in: (0.8 ... 1))
+
         effects.append(
           Effect(value: CubePreviewAction.binding(.set(\.nub.location, .face(face))))
             .receive(
               on: environment.mainQueue
-                .animate(withDuration: 0.7, options: .curveEaseInOut)
+                .animate(withDuration: moveDuration, options: .curveEaseInOut)
             )
             .eraseToEffect()
         )
@@ -94,17 +96,15 @@ CubePreviewState,
           Effect.merge(
             // Press the nub on the first character
             faceIndex == 0 ? Effect(value: .binding(.set(\.nub.isPressed, true))) : .none,
-            // Tap on each face in the word being played
-            Effect<CubePreviewAction, Never>.init(
-              value: .binding(.set(\.selectedCubeFaces, accumulatedSelectedFaces))
-            )
-            //              Effect(value: .game(.tap(.began, face)))
+
+            // Select the faces that have been tapped so far
+            Effect(value: .binding(.set(\.selectedCubeFaces, accumulatedSelectedFaces)))
           )
           .delay(
             for: .seconds(
               faceIndex == 0
-                ? 0.7
-                : .random(in: (0.3 * 0.7)...(0.7 * 0.7))
+                ? moveDuration
+                : 0.5 * moveDuration
             ),
             scheduler: environment.mainQueue.animation()
           )
@@ -112,12 +112,13 @@ CubePreviewState,
         )
       }
       effects.append(
+        Effect(value: .binding(.set(\.nub.isPressed, false)))
+      )
+      effects.append(
         Effect(value: .binding(.set(\.nub.location, .offScreenRight)))
           .receive(on: environment.mainQueue.animate(withDuration: 1))
           .eraseToEffect()
       )
-
-    // todo: isPressed = false
 
     case let .removedCube(index):
       break
