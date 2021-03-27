@@ -1,6 +1,7 @@
 import ApiClient
 import ComposableArchitecture
 import CubePreview
+import FeedbackGeneratorClient
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -60,13 +61,16 @@ public enum LeaderboardAction: Equatable {
 
 public struct LeaderboardEnvironment {
   public var apiClient: ApiClient
+  public var feedbackGenerator: FeedbackGeneratorClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
     apiClient: ApiClient,
+    feedbackGenerator: FeedbackGeneratorClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.apiClient = apiClient
+    self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
   }
 }
@@ -75,6 +79,7 @@ public struct LeaderboardEnvironment {
   extension LeaderboardEnvironment {
     public static let failing = Self(
       apiClient: .failing,
+      feedbackGenerator: .failing,
       mainQueue: .failing("mainQueue")
     )
   }
@@ -88,10 +93,10 @@ public let leaderboardReducer = Reducer<
     ._pullback(
       state: OptionalPath(\.cubePreview),
       action: /LeaderboardAction.cubePreview,
-      environment: { _ in
+      environment: {
         CubePreviewEnvironment(
-          feedbackGenerator: .live, // TODO
-          mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+          feedbackGenerator: $0.feedbackGenerator,
+          mainQueue: $0.mainQueue
         )
       }
     ),
@@ -404,6 +409,7 @@ extension ResultEnvelope.Result {
                     }
                   }
                 },
+                feedbackGenerator: .noop,
                 mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )
             )

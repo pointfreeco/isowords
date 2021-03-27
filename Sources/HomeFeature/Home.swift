@@ -251,7 +251,13 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     ._pullback(
       state: (\HomeState.route).appending(path: /AppRoute.leaderboard),
       action: /HomeAction.leaderboard,
-      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
+      environment: {
+        .init(
+          apiClient: $0.apiClient,
+          feedbackGenerator: $0.feedbackGenerator,
+          mainQueue: $0.mainQueue
+        )
+      }
     ),
 
   multiplayerReducer
@@ -263,6 +269,19 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           backgroundQueue: $0.backgroundQueue,
           gameCenter: $0.gameCenter,
           mainQueue: $0.mainQueue
+        )
+      }
+    ),
+
+  nagBannerFeatureReducer
+    .pullback(
+      state: \HomeState.nagBanner,
+      action: /HomeAction.nagBannerFeature,
+      environment: {
+        NagBannerEnvironment(
+          mainRunLoop: $0.mainRunLoop,
+          serverConfig: $0.serverConfig,
+          storeKit: $0.storeKit
         )
       }
     ),
@@ -299,21 +318,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       environment: { .init(fileClient: $0.fileClient) }
     ),
 
-  nagBannerFeatureReducer
-    .pullback(
-      state: \HomeState.nagBanner,
-      action: /HomeAction.nagBannerFeature,
-      environment: {
-        NagBannerEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
-      }
-    ),
-
   .init { state, action, environment in
-
     switch action {
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
       return .concatenate(
