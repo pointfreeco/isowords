@@ -79,7 +79,7 @@ CubePreviewState,
     switch move.type {
     case let .playedWord(faces):
       for (faceIndex, face) in faces.enumerated() {
-        let moveDuration = Double.random(in: (0.8 ... 1))
+        let moveDuration = Double.random(in: (0.6 ... 0.8))
 
         effects.append(
           Effect(value: CubePreviewAction.binding(.set(\.nub.location, .face(face))))
