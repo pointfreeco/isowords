@@ -134,19 +134,13 @@ public let leaderboardReducer = Reducer<
 
     case let .fetchWordResponse(.success(response)):
 
-//      state.cubePreview = .init(
-//        preview: .words(
-//          .init(
-//            words: [
-//              .init(
-//                cubes: response.puzzle,
-//                moveIndex: response.moveIndex,
-//                moves: response.moves
-//              )
-//            ]
-//          )
-//        )
-//      )
+      state.cubePreview = CubePreviewState_(
+        cubes: response.puzzle,
+        isOnLowPowerMode: false, // TODO
+        moves: response.moves,
+        moveIndex: response.moveIndex,
+        settings: .init() // TODO
+      )
       return .none
 
     case let .scopeTapped(scope):

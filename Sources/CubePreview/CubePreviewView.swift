@@ -170,7 +170,7 @@ CubePreviewEnvironment
             Effect(value: CubePreviewAction_.binding(.set(\.nub.location, .face(face))))
               .receive(
                 on: environment.mainQueue
-                  .animate(withDuration: 0.45, options: .curveEaseInOut)
+                  .animate(withDuration: 0.7, options: .curveEaseInOut)
               )
               .eraseToEffect()
           )
@@ -190,8 +190,8 @@ CubePreviewEnvironment
             .delay(
               for: .seconds(
                 faceIndex == 0
-                  ? 0.45
-                  : .random(in: (0.3 * 0.45)...(0.7 * 0.45))
+                  ? 0.7
+                  : .random(in: (0.3 * 0.7)...(0.7 * 0.7))
               ),
               scheduler: environment.mainQueue.animation()
             )
@@ -203,6 +203,8 @@ CubePreviewEnvironment
             .receive(on: environment.mainQueue.animate(withDuration: 1))
             .eraseToEffect()
         )
+
+        // todo: isPressed = false
 
       case let .removedCube(index):
         break
