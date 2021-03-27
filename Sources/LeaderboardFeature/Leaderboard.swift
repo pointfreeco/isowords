@@ -90,7 +90,7 @@ public let leaderboardReducer = Reducer<
       action: /LeaderboardAction.cubePreview,
       environment: { _ in
         CubePreviewEnvironment(
-          dictionary: .everyString,
+//          dictionary: .everyString,
           feedbackGenerator: .live,
           mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
           mainRunLoop: RunLoop.main.eraseToAnyScheduler()

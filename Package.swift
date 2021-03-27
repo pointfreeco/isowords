@@ -541,7 +541,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "CubePreview",
       dependencies: [
         "CubeCore",
-        "GameCore",
+        "FeedbackGeneratorClient",
+//        "GameCore",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
@@ -626,6 +627,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "FeedbackGeneratorClient",
       dependencies: [
+        "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]

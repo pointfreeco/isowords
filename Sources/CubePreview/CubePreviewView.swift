@@ -1,47 +1,119 @@
 import ComposableArchitecture
 import CubeCore
-import DictionaryClient
 import FeedbackGeneratorClient
-import GameCore
 import SharedModels
 import Styleguide
 import SwiftUI
 
+extension CubeSceneView.ViewState {
+  public init(
+    preview: CubePreviewState_
+  ) {
+    var puzzle = Puzzle(archivableCubes: preview.cubes)
+    apply(moves: preview.moves[0..<preview.moveIndex], to: &puzzle)
+
+//    switch preview.moves[preview.moveIndex].type {
+//
+//    case .playedWord(_):
+//      <#code#>
+//    case .removedCube(_):
+//      <#code#>
+//    }
+
+    self.init(
+      cubes: puzzle.enumerated().map { x, cubes in
+        cubes.enumerated().map { y, cubes in
+          cubes.enumerated().map { z, cube in
+            let index = LatticePoint.init(x: x, y: y, z: z)
+            return CubeNode.ViewState(
+              cubeShakeStartedAt: nil,
+              index: .init(x: x, y: y, z: z),
+              isCriticallySelected: false,
+              isInPlay: cube.isInPlay,
+              left: .init(
+                cubeFace: .init(
+                  letter: cube.left.letter,
+                  side: .left
+                ),
+                status: preview.selectedCubeFaces.contains(.init(index: index, side: .left))
+                  ? .selected
+                  : .deselected
+              ),
+              right: .init(
+                cubeFace: .init(letter: cube.left.letter, side: .right),
+                status: preview.selectedCubeFaces.contains(.init(index: index, side: .right))
+                  ? .selected
+                  : .deselected
+              ),
+              top: .init(
+                cubeFace: .init(letter: cube.left.letter, side: .top),
+                status: preview.selectedCubeFaces.contains(.init(index: index, side: .top))
+                  ? .selected
+                  : .deselected
+              )
+            )
+          }
+        }
+      },
+      isOnLowPowerMode: preview.isOnLowPowerMode,
+      nub: preview.nub,
+      playedWords: [],
+      selectedFaceCount: 0,
+      selectedWordIsValid: false,
+      selectedWordString: "",
+      settings: preview.settings
+    )
+  }
+}
+
 public struct CubePreviewState_: Equatable {
-  var game: GameState
+  var cubes: ArchivablePuzzle
+  var isOnLowPowerMode: Bool
+  var moves: Moves
   var nub: CubeSceneView.ViewState.NubState
   var moveIndex: Int
+  var selectedCubeFaces: [IndexedCubeFace]
+  let settings: CubeSceneView.ViewState.Settings
 
   public init(
-    game: GameState,
+    cubes: ArchivablePuzzle,
+    isOnLowPowerMode: Bool,
+    moves: Moves,
     nub: CubeSceneView.ViewState.NubState = .init(),
-    moveIndex: Int
+    moveIndex: Int,
+    selectedCubeFaces: [IndexedCubeFace] = [],
+    settings: CubeSceneView.ViewState.Settings
   ) {
-    self.game = game
+    self.cubes = cubes
+    self.isOnLowPowerMode = isOnLowPowerMode
+    self.moves = moves
     self.nub = nub
     self.moveIndex = moveIndex
+    self.selectedCubeFaces = selectedCubeFaces
+    self.settings = settings
   }
 }
 
 public enum CubePreviewAction_: Equatable {
-  case game(GameAction)
+//  case game(GameAction)
+  case cube(CubeSceneView.ViewAction)
   case binding(BindingAction<CubePreviewState_>)
   case onAppear
 }
 
 public struct CubePreviewEnvironment {
-  var dictionary: DictionaryClient
+//  var dictionary: DictionaryClient
   var feedbackGenerator: FeedbackGeneratorClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var mainRunLoop: AnySchedulerOf<RunLoop>
 
   public init(
-    dictionary: DictionaryClient,
+//    dictionary: DictionaryClient,
     feedbackGenerator: FeedbackGeneratorClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     mainRunLoop: AnySchedulerOf<RunLoop>
   ) {
-    self.dictionary = dictionary
+//    self.dictionary = dictionary
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
     self.mainRunLoop = mainRunLoop
@@ -54,39 +126,43 @@ CubePreviewAction_,
 CubePreviewEnvironment
 >.combine(
 
-  gameReducer(
-    state: \CubePreviewState_.game,
-    action: /CubePreviewAction_.game,
-    environment: {
-      .init(
-        apiClient: .noop,
-        applicationClient: .noop,
-        audioPlayer: .noop,
-        backgroundQueue: $0.mainQueue,
-        build: .noop,
-        database: .noop,
-        dictionary: $0.dictionary,
-        feedbackGenerator: $0.feedbackGenerator,
-        fileClient: .noop,
-        gameCenter: .noop,
-        lowPowerMode: .false,
-        mainQueue: $0.mainQueue,
-        mainRunLoop: $0.mainRunLoop,
-        remoteNotifications: .noop,
-        serverConfig: .noop,
-        setUserInterfaceStyle: { _ in .none },
-        storeKit: .noop,
-        userDefaults: .noop,
-        userNotifications: .noop
-      )
-    },
-    isHapticsEnabled: { _ in false }
-  ),
+
+
+//  gameReducer(
+//    state: \CubePreviewState_.game,
+//    action: /CubePreviewAction_.game,
+//    environment: {
+//      .init(
+//        apiClient: .noop,
+//        applicationClient: .noop,
+//        audioPlayer: .noop,
+//        backgroundQueue: $0.mainQueue,
+//        build: .noop,
+//        database: .noop,
+//        dictionary: $0.dictionary,
+//        feedbackGenerator: $0.feedbackGenerator,
+//        fileClient: .noop,
+//        gameCenter: .noop,
+//        lowPowerMode: .false,
+//        mainQueue: $0.mainQueue,
+//        mainRunLoop: $0.mainRunLoop,
+//        remoteNotifications: .noop,
+//        serverConfig: .noop,
+//        setUserInterfaceStyle: { _ in .none },
+//        storeKit: .noop,
+//        userDefaults: .noop,
+//        userNotifications: .noop
+//      )
+//    },
+//    isHapticsEnabled: { _ in false }
+//  ),
 
   .init { state, action, environment in
-
     switch action {
-    case .game:
+//    case .game:
+//      return .none
+
+    case .cube:
       return .none
 
     case .binding:
@@ -99,7 +175,9 @@ CubePreviewEnvironment
           .eraseToEffect()
       ]
 
-      let move = state.game.moves[state.moveIndex]
+      var accumulatedSelectedFaces: [IndexedCubeFace] = []
+
+      let move = state.moves[state.moveIndex]
       switch move.type {
       case let .playedWord(faces):
         for (faceIndex, face) in faces.enumerated() {
@@ -112,12 +190,17 @@ CubePreviewEnvironment
               .eraseToEffect()
           )
 
+          accumulatedSelectedFaces.append(face)
+
           effects.append(
             Effect.merge(
               // Press the nub on the first character
               faceIndex == 0 ? Effect(value: .binding(.set(\.nub.isPressed, true))) : .none,
               // Tap on each face in the word being played
-              Effect(value: .game(.tap(.began, face)))
+              Effect<CubePreviewAction_, Never>.init(
+                value: .binding(.set(\.selectedCubeFaces, accumulatedSelectedFaces))
+              )
+//              Effect(value: .game(.tap(.began, face)))
             )
             .delay(
               for: .seconds(
@@ -142,10 +225,10 @@ CubePreviewEnvironment
 
       return .concatenate(effects)
     }
-
   }
 )
 .binding(action: /CubePreviewAction_.binding)
+// TODO: sounds, haptics
 
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
@@ -159,32 +242,16 @@ public struct CubePreviewView: View {
     WithViewStore(self.store) { viewStore in
       CubeView(
         store: self.store.scope(
-          state: {
-            var state = CubeSceneView.ViewState(game: $0.game, nub: $0.nub, settings: .init())
-            state.cubes.deselectTheDeselectable()
-
-            return state
-          },
-          action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
+          state: CubeSceneView.ViewState.init(preview:),
+          action: CubePreviewAction_.cube
         )
       )
       .adaptivePadding(
         self.deviceState.idiom == .pad ? .horizontal : [],
         .grid(30)
       )
-
-      .onAppear { viewStore.send(.onAppear) }
-    }
-  }
-}
-
-extension CubeSceneView.ViewState.ViewPuzzle {
-  mutating func deselectTheDeselectable() {
-    LatticePoint.cubeIndices.forEach { index in
-      CubeFace.Side.allCases.forEach { face in
-        if self[index][face].status == .selectable {
-          self[index][face].status = .deselected
-        }
+      .onAppear {
+        viewStore.send(.onAppear)
       }
     }
   }

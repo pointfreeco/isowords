@@ -17,11 +17,6 @@ public struct VocabState: Equatable {
     self.vocab = vocab
   }
 
-  var cubePreviewIsPresented: Bool {
-    get { self.cubePreview != nil }
-    set { self.cubePreview = nil }
-  }
-
   public struct GamesResponse: Equatable {
     var games: [LocalDatabaseClient.Game]
     var word: String
@@ -71,12 +66,11 @@ public let vocabReducer = Reducer<VocabState, VocabAction, VocabEnvironment> {
     else { return .none }
 
     state.cubePreview = .init(
-      game: .init(
-        completedGame: game.completedGame,
-        gameCurrentTime: .init(),  // TODO: ???
-        gameStartTime: .init() // TODO: ???
-      ),
-      moveIndex: moveIndex
+      cubes: game.completedGame.cubes,
+      isOnLowPowerMode: false, // TODO
+      moves: game.completedGame.moves,
+      moveIndex: moveIndex,
+      settings: .init()
     )
 
 //      .init(
@@ -161,7 +155,7 @@ public struct VocabView: View {
       .onAppear { viewStore.send(.onAppear) }
       .sheet(
         isPresented: viewStore.binding(
-          get: \.cubePreviewIsPresented,
+          get: { $0.cubePreview != nil },
           send: .dismissCubePreview
         )
       ) {

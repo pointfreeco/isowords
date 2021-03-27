@@ -35,7 +35,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           }
         }
       )
-      .onChange(of: { $0.gameOver == nil }) { gameOver, _, _, environment in
+      .onChange(of: { $0.gameOver == nil }) { _, _, _, environment in
         .merge(
           Effect
             .merge(
