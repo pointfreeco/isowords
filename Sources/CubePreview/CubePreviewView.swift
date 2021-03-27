@@ -132,7 +132,7 @@ CubePreviewState,
 .haptics(
   feedbackGenerator: \.feedbackGenerator,
   isEnabled: { _ in true }, // todo
-  triggerOnChangeOf: \.selectedCubeFaces
+  triggerOnChangeOf: { $0.selectedCubeFaces }
 )
 // TODO: sounds, cancel on dismiss
 
