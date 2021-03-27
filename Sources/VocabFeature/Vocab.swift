@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import CubePreview
+import FeedbackGeneratorClient
 import LocalDatabaseClient
 import SharedModels
 import Styleguide
@@ -34,84 +35,110 @@ public enum VocabAction: Equatable {
 
 public struct VocabEnvironment {
   var database: LocalDatabaseClient
+  var feedbackGenerator: FeedbackGeneratorClient
+  var mainQueue: AnySchedulerOf<DispatchQueue>
 
-  public init(database: LocalDatabaseClient) {
+  public init(
+    database: LocalDatabaseClient,
+    feedbackGenerator: FeedbackGeneratorClient,
+    mainQueue: AnySchedulerOf<DispatchQueue>
+  ) {
     self.database = database
+    self.feedbackGenerator = feedbackGenerator
+    self.mainQueue = mainQueue
   }
 }
 
-public let vocabReducer = Reducer<VocabState, VocabAction, VocabEnvironment> {
-  state, action, environment in
-  switch action {
-  case .dismissCubePreview:
-    state.cubePreview = nil
-    return .none
-
-  case let .gamesResponse(.failure(error)):
-    return .none
-
-  case let .gamesResponse(.success(response)):
-    guard let game = response.games.first
-    else { return .none }
-
-    let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
-      switch move.type {
-      case let .playedWord(cubeFaces):
-        return game.completedGame.cubes.string(from: cubeFaces) == response.word
-      case .removedCube:
-        return false
+public let vocabReducer = Reducer<
+  VocabState,
+  VocabAction,
+  VocabEnvironment
+>.combine(
+  cubePreviewReducer
+    .optional()
+    .pullback(
+      state: \.cubePreview,
+      action: /VocabAction.preview,
+      environment: {
+        CubePreviewEnvironment(
+          feedbackGenerator: $0.feedbackGenerator,
+          mainQueue: $0.mainQueue
+        )
       }
+    ),
+
+  .init { state, action, environment in
+    switch action {
+    case .dismissCubePreview:
+      state.cubePreview = nil
+      return .none
+
+    case let .gamesResponse(.failure(error)):
+      return .none
+
+    case let .gamesResponse(.success(response)):
+      guard let game = response.games.first
+      else { return .none }
+
+      let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
+        switch move.type {
+        case let .playedWord(cubeFaces):
+          return game.completedGame.cubes.string(from: cubeFaces) == response.word
+        case .removedCube:
+          return false
+        }
+      }
+      guard let moveIndex = possibleMoveIndex
+      else { return .none }
+
+      state.cubePreview = .init(
+        cubes: game.completedGame.cubes,
+        isOnLowPowerMode: false, // TODO
+        moves: game.completedGame.moves,
+        moveIndex: moveIndex,
+        settings: .init()
+      )
+
+      //      .init(
+      //      preview: .words(
+      //        .init(
+      //          words: [
+      //            .init(
+      //              cubes: game.completedGame.cubes,
+      //              moveIndex: moveIndex,
+      //              moves: game.completedGame.moves
+      //            )
+      //          ]
+      //        )
+      //      )
+      //    )
+      return .none
+
+    case .onAppear:
+      return environment.database.fetchVocab
+        .mapError { $0 as NSError }
+        .catchToEffect()
+        .map(VocabAction.vocabResponse)
+
+    case .preview:
+      return .none
+
+    case let .vocabResponse(.success(vocab)):
+      state.vocab = vocab
+      return .none
+
+    case let .vocabResponse(.failure(error)):
+      return .none
+
+    case let .wordTapped(word):
+      return environment.database.fetchGamesForWord(word.letters)
+        .map { .init(games: $0, word: word.letters) }
+        .mapError { $0 as NSError }
+        .catchToEffect()
+        .map(VocabAction.gamesResponse)
     }
-    guard let moveIndex = possibleMoveIndex
-    else { return .none }
-
-    state.cubePreview = .init(
-      cubes: game.completedGame.cubes,
-      isOnLowPowerMode: false, // TODO
-      moves: game.completedGame.moves,
-      moveIndex: moveIndex,
-      settings: .init()
-    )
-
-//      .init(
-//      preview: .words(
-//        .init(
-//          words: [
-//            .init(
-//              cubes: game.completedGame.cubes,
-//              moveIndex: moveIndex,
-//              moves: game.completedGame.moves
-//            )
-//          ]
-//        )
-//      )
-//    )
-    return .none
-
-  case .onAppear:
-    return environment.database.fetchVocab
-      .mapError { $0 as NSError }
-      .catchToEffect()
-      .map(VocabAction.vocabResponse)
-
-  case .preview:
-    return .none
-
-  case let .vocabResponse(.success(vocab)):
-    state.vocab = vocab
-    return .none
-
-  case let .vocabResponse(.failure(error)):
-    return .none
-
-  case let .wordTapped(word):
-    return environment.database.fetchGamesForWord(word.letters)
-      .map { .init(games: $0, word: word.letters) }
-      .mapError { $0 as NSError }
-      .catchToEffect()
-      .map(VocabAction.gamesResponse)
   }
-}
+)
 
 public struct VocabView: View {
   public let store: Store<VocabState, VocabAction>
@@ -201,7 +228,11 @@ public struct VocabView: View {
         )
       ),
       reducer: vocabReducer,
-      environment: .init(database: .noop)
+      environment: .init(
+        database: .noop,
+        feedbackGenerator: .noop,
+        mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+      )
     )
   }
 #endif

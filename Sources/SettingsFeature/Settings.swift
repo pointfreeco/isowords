@@ -4,6 +4,7 @@ import Build
 import ComposableArchitecture
 import ComposableStoreKit
 import ComposableUserNotifications
+import FeedbackGeneratorClient
 import FileClient
 import LocalDatabaseClient
 import RemoteNotificationsClient
@@ -192,6 +193,7 @@ public struct SettingsEnvironment {
   public var backgroundQueue: AnySchedulerOf<DispatchQueue>
   public var build: Build
   public var database: LocalDatabaseClient
+  public var feedbackGenerator: FeedbackGeneratorClient
   public var fileClient: FileClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
@@ -208,6 +210,7 @@ public struct SettingsEnvironment {
     backgroundQueue: AnySchedulerOf<DispatchQueue>,
     build: Build,
     database: LocalDatabaseClient,
+    feedbackGenerator: FeedbackGeneratorClient,
     fileClient: FileClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
@@ -223,6 +226,7 @@ public struct SettingsEnvironment {
     self.backgroundQueue = backgroundQueue
     self.build = build
     self.database = database
+    self.feedbackGenerator = feedbackGenerator
     self.fileClient = fileClient
     self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
@@ -245,6 +249,7 @@ public struct SettingsEnvironment {
       backgroundQueue: .failing("backgroundQueue"),
       build: .failing,
       database: .failing,
+      feedbackGenerator: .failing,
       fileClient: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
@@ -264,6 +269,7 @@ public struct SettingsEnvironment {
       backgroundQueue: DispatchQueue.main.eraseToAnyScheduler(),
       build: .noop,
       database: .noop,
+      feedbackGenerator: .noop,
       fileClient: .noop,
       mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
       remoteNotifications: .noop,
@@ -280,7 +286,13 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   statsReducer.pullback(
     state: \.stats,
     action: /SettingsAction.stats,
-    environment: { StatsEnvironment(database: $0.database) }
+    environment: {
+      StatsEnvironment(
+        database: $0.database,
+        feedbackGenerator: $0.feedbackGenerator,
+        mainQueue: $0.mainQueue
+      )
+    }
   ),
 
   Reducer { state, action, environment in

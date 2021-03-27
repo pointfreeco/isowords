@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import FeedbackGeneratorClient
 import LocalDatabaseClient
 import SharedModels
 import Styleguide
@@ -66,9 +67,17 @@ public enum StatsAction: Equatable {
 
 public struct StatsEnvironment {
   var database: LocalDatabaseClient
+  var feedbackGenerator: FeedbackGeneratorClient
+  var mainQueue: AnySchedulerOf<DispatchQueue>
 
-  public init(database: LocalDatabaseClient) {
+  public init(
+    database: LocalDatabaseClient,
+    feedbackGenerator: FeedbackGeneratorClient,
+    mainQueue: AnySchedulerOf<DispatchQueue>
+  ) {
     self.database = database
+    self.feedbackGenerator = feedbackGenerator
+    self.mainQueue = mainQueue
   }
 }
 
@@ -77,7 +86,13 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
     ._pullback(
       state: (\StatsState.route).appending(path: /StatsState.Route.vocab),
       action: /StatsAction.vocab,
-      environment: { VocabEnvironment(database: $0.database) }
+      environment: {
+        VocabEnvironment(
+          database: $0.database,
+          feedbackGenerator: $0.feedbackGenerator,
+          mainQueue: $0.mainQueue
+        )
+      }
     ),
 
   .init { state, action, environment in
@@ -271,8 +286,10 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 wordsFound: 200
               ),
               reducer: statsReducer,
-              environment: .init(
-                database: .noop
+              environment: StatsEnvironment.init(
+                database: .noop,
+                feedbackGenerator: .noop,
+                mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )
             )
           )

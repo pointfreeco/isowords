@@ -1038,6 +1038,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "VocabFeature",
       dependencies: [
         "CubePreview",
+        "FeedbackGeneratorClient",
         "LocalDatabaseClient",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),

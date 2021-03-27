@@ -9,19 +9,8 @@ extension CubeSceneView.ViewState {
   public init(
     preview: CubePreviewState_
   ) {
-    var puzzle = Puzzle(archivableCubes: preview.cubes)
-    apply(moves: preview.moves[0..<preview.moveIndex], to: &puzzle)
-
-//    switch preview.moves[preview.moveIndex].type {
-//
-//    case .playedWord(_):
-//      <#code#>
-//    case .removedCube(_):
-//      <#code#>
-//    }
-
     self.init(
-      cubes: puzzle.enumerated().map { x, cubes in
+      cubes: preview.cubes.enumerated().map { x, cubes in
         cubes.enumerated().map { y, cubes in
           cubes.enumerated().map { z, cube in
             let index = LatticePoint.init(x: x, y: y, z: z)
@@ -40,13 +29,13 @@ extension CubeSceneView.ViewState {
                   : .deselected
               ),
               right: .init(
-                cubeFace: .init(letter: cube.left.letter, side: .right),
+                cubeFace: .init(letter: cube.right.letter, side: .right),
                 status: preview.selectedCubeFaces.contains(.init(index: index, side: .right))
                   ? .selected
                   : .deselected
               ),
               top: .init(
-                cubeFace: .init(letter: cube.left.letter, side: .top),
+                cubeFace: .init(letter: cube.top.letter, side: .top),
                 status: preview.selectedCubeFaces.contains(.init(index: index, side: .top))
                   ? .selected
                   : .deselected
@@ -67,7 +56,7 @@ extension CubeSceneView.ViewState {
 }
 
 public struct CubePreviewState_: Equatable {
-  var cubes: ArchivablePuzzle
+  var cubes: Puzzle
   var isOnLowPowerMode: Bool
   var moves: Moves
   var nub: CubeSceneView.ViewState.NubState
@@ -84,7 +73,9 @@ public struct CubePreviewState_: Equatable {
     selectedCubeFaces: [IndexedCubeFace] = [],
     settings: CubeSceneView.ViewState.Settings
   ) {
-    self.cubes = cubes
+    self.cubes = .init(archivableCubes: cubes)
+    apply(moves: moves[0..<moveIndex], to: &self.cubes)
+
     self.isOnLowPowerMode = isOnLowPowerMode
     self.moves = moves
     self.nub = nub
@@ -102,21 +93,15 @@ public enum CubePreviewAction_: Equatable {
 }
 
 public struct CubePreviewEnvironment {
-//  var dictionary: DictionaryClient
   var feedbackGenerator: FeedbackGeneratorClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
-  var mainRunLoop: AnySchedulerOf<RunLoop>
 
   public init(
-//    dictionary: DictionaryClient,
     feedbackGenerator: FeedbackGeneratorClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>
+    mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
-//    self.dictionary = dictionary
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
   }
 }
 

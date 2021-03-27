@@ -124,6 +124,7 @@ extension AppEnvironment {
       build: self.build,
       database: self.database,
       deviceId: self.deviceId,
+      feedbackGenerator: self.feedbackGenerator,
       fileClient: self.fileClient,
       gameCenter: self.gameCenter,
       mainQueue: self.mainQueue,

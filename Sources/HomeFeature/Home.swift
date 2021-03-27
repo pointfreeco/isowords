@@ -12,6 +12,7 @@ import ComposableStoreKit
 import ComposableUserNotifications
 import DailyChallengeFeature
 import DeviceId
+import FeedbackGeneratorClient
 import FileClient
 import GameKit
 import LeaderboardFeature
@@ -147,6 +148,7 @@ public struct HomeEnvironment {
   public var build: Build
   public var database: LocalDatabaseClient
   public var deviceId: DeviceIdentifier
+  public var feedbackGenerator: FeedbackGeneratorClient
   public var fileClient: FileClient
   public var gameCenter: GameCenterClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
@@ -167,6 +169,7 @@ public struct HomeEnvironment {
     build: Build,
     database: LocalDatabaseClient,
     deviceId: DeviceIdentifier,
+    feedbackGenerator: FeedbackGeneratorClient,
     fileClient: FileClient,
     gameCenter: GameCenterClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
@@ -186,6 +189,7 @@ public struct HomeEnvironment {
     self.build = build
     self.database = database
     self.deviceId = deviceId
+    self.feedbackGenerator = feedbackGenerator
     self.fileClient = fileClient
     self.gameCenter = gameCenter
     self.mainQueue = mainQueue
@@ -210,6 +214,7 @@ public struct HomeEnvironment {
       build: .noop,
       database: .noop,
       deviceId: .noop,
+      feedbackGenerator: .noop,
       fileClient: .noop,
       gameCenter: .noop,
       mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
@@ -274,6 +279,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           backgroundQueue: $0.backgroundQueue,
           build: $0.build,
           database: $0.database,
+          feedbackGenerator: $0.feedbackGenerator,
           fileClient: $0.fileClient,
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
@@ -823,10 +829,11 @@ private struct AuthenticationId: Hashable {}
         apiClient: .noop,
         applicationClient: .live,
         audioPlayer: .noop,
-        backgroundQueue: DispatchQueue.global().eraseToAnyScheduler(),
+        backgroundQueue: DispatchQueue(label: "preview").eraseToAnyScheduler(),
         build: .noop,
         database: .noop,
         deviceId: .live,
+        feedbackGenerator: .noop,
         fileClient: .noop,
         gameCenter: .noop,
         mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
