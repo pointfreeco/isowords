@@ -29,7 +29,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 }
 
 public struct LeaderboardState: Equatable {
-  public var cubePreview: CubePreviewState_?
+  public var cubePreview: CubePreviewState?
   public var scope: LeaderboardScope = .games
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
@@ -37,7 +37,7 @@ public struct LeaderboardState: Equatable {
   public var isCubePreviewPresented: Bool { self.cubePreview != nil }
 
   public init(
-    cubePreview: CubePreviewState_? = nil,
+    cubePreview: CubePreviewState? = nil,
     scope: LeaderboardScope = .games,
     solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
@@ -50,7 +50,7 @@ public struct LeaderboardState: Equatable {
 }
 
 public enum LeaderboardAction: Equatable {
-  case cubePreview(CubePreviewAction_)
+  case cubePreview(CubePreviewAction)
   case dismissCubePreview
   case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
   case scopeTapped(LeaderboardScope)
@@ -134,7 +134,7 @@ public let leaderboardReducer = Reducer<
 
     case let .fetchWordResponse(.success(response)):
 
-      state.cubePreview = CubePreviewState_(
+      state.cubePreview = CubePreviewState(
         cubes: response.puzzle,
         isOnLowPowerMode: false, // TODO
         moves: response.moves,

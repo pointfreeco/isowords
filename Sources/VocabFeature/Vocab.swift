@@ -7,11 +7,11 @@ import Styleguide
 import SwiftUI
 
 public struct VocabState: Equatable {
-  var cubePreview: CubePreviewState_?
+  var cubePreview: CubePreviewState?
   var vocab: LocalDatabaseClient.Vocab?
 
   public init(
-    cubePreview: CubePreviewState_? = nil,
+    cubePreview: CubePreviewState? = nil,
     vocab: LocalDatabaseClient.Vocab? = nil
   ) {
     self.cubePreview = cubePreview
@@ -28,7 +28,7 @@ public enum VocabAction: Equatable {
   case dismissCubePreview
   case gamesResponse(Result<VocabState.GamesResponse, NSError>)
   case onAppear
-  case preview(CubePreviewAction_)
+  case preview(CubePreviewAction)
   case vocabResponse(Result<LocalDatabaseClient.Vocab, NSError>)
   case wordTapped(LocalDatabaseClient.Vocab.Word)
 }

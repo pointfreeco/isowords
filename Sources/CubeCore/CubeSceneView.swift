@@ -143,6 +143,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
 
         LatticePoint.cubeIndices.forEach { index in
+          // TODO: ok to get rid of this?
 //          guard cubes[index].isInPlay else {
 //            return
 //          }
