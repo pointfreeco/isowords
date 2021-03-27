@@ -329,6 +329,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "GameCore", targets: ["GameCore"]),
     .library(name: "GameFeature", targets: ["GameFeature"]),
     .library(name: "GameOverFeature", targets: ["GameOverFeature"]),
+    .library(name: "HapticsCore", targets: ["HapticsCore"]),
     .library(name: "HomeFeature", targets: ["HomeFeature"]),
     .library(name: "IntegrationTestHelpers", targets: ["IntegrationTestHelpers"]),
     .library(name: "LeaderboardFeature", targets: ["LeaderboardFeature"]),
@@ -542,6 +543,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "CubeCore",
         "FeedbackGeneratorClient",
+        "HapticsCore",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
@@ -658,6 +660,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "FeedbackGeneratorClient",
         "FileClient",
+        "HapticsCore",
         "LowPowerModeClient",
         "PuzzleGen",
         "RemoteNotificationsClient",
@@ -758,6 +761,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "IntegrationTestHelpers",
         "SiteMiddleware",
+      ]
+    ),
+    .target(
+      name: "HapticsCore",
+      dependencies: [
+        "FeedbackGeneratorClient",
+        "TcaHelpers",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(

@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import CubeCore
 import FeedbackGeneratorClient
+import HapticsCore
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -128,7 +129,12 @@ CubePreviewState,
   }
 }
 .binding(action: /CubePreviewAction.binding)
-// TODO: sounds, haptics
+.haptics(
+  feedbackGenerator: \.feedbackGenerator,
+  isEnabled: { _ in true }, // todo
+  triggerOnChangeOf: \.selectedCubeFaces
+)
+// TODO: sounds, cancel on dismiss
 
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
