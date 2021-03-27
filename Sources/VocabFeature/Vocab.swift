@@ -6,11 +6,11 @@ import Styleguide
 import SwiftUI
 
 public struct VocabState: Equatable {
-  var cubePreview: CubePreviewState?
+  var cubePreview: CubePreviewState_?
   var vocab: LocalDatabaseClient.Vocab?
 
   public init(
-    cubePreview: CubePreviewState? = nil,
+    cubePreview: CubePreviewState_? = nil,
     vocab: LocalDatabaseClient.Vocab? = nil
   ) {
     self.cubePreview = cubePreview
@@ -32,7 +32,7 @@ public enum VocabAction: Equatable {
   case dismissCubePreview
   case gamesResponse(Result<VocabState.GamesResponse, NSError>)
   case onAppear
-  case preview(CubePreviewAction)
+  case preview(CubePreviewAction_)
   case vocabResponse(Result<LocalDatabaseClient.Vocab, NSError>)
   case wordTapped(LocalDatabaseClient.Vocab.Word)
 }
@@ -71,18 +71,27 @@ public let vocabReducer = Reducer<VocabState, VocabAction, VocabEnvironment> {
     else { return .none }
 
     state.cubePreview = .init(
-      preview: .words(
-        .init(
-          words: [
-            .init(
-              cubes: game.completedGame.cubes,
-              moveIndex: moveIndex,
-              moves: game.completedGame.moves
-            )
-          ]
-        )
-      )
+      game: .init(
+        completedGame: game.completedGame,
+        gameCurrentTime: .init(),  // TODO: ???
+        gameStartTime: .init() // TODO: ???
+      ),
+      moveIndex: moveIndex
     )
+
+//      .init(
+//      preview: .words(
+//        .init(
+//          words: [
+//            .init(
+//              cubes: game.completedGame.cubes,
+//              moveIndex: moveIndex,
+//              moves: game.completedGame.moves
+//            )
+//          ]
+//        )
+//      )
+//    )
     return .none
 
   case .onAppear:

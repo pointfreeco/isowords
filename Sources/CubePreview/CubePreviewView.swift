@@ -11,6 +11,16 @@ public struct CubePreviewState_: Equatable {
   var game: GameState
   var nub: CubeSceneView.ViewState.NubState
   var moveIndex: Int
+
+  public init(
+    game: GameState,
+    nub: CubeSceneView.ViewState.NubState = .init(),
+    moveIndex: Int
+  ) {
+    self.game = game
+    self.nub = nub
+    self.moveIndex = moveIndex
+  }
 }
 
 public enum CubePreviewAction_: Equatable {
