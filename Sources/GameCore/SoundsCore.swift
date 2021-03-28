@@ -1,5 +1,6 @@
 import AudioPlayerClient
 import ComposableArchitecture
+import SelectionSoundsCore
 import SharedModels
 
 extension Reducer where State == GameState, Action == GameAction, Environment == GameEnvironment {
@@ -80,12 +81,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, _, environment in
-        guard
-          let noteIndex = noteIndex(
-            selectedWord: selectedWord,
-            cubes: state.cubes,
-            notes: AudioPlayerClient.Sound.allNotes
-          )
+        guard !selectedWord.isEmpty // TODO: is this correct
         else {
           state.cubeStartedShakingAt = nil
           return .cancel(id: CubeShakingId())
@@ -97,17 +93,15 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           && !state.hasBeenPlayed(word: previousWord)
         let cubeWasShaking =
           previousWordIsValid
-          && previousSelection.contains { state.cubes[$0.index][$0.side].useCount == 2 }
+          && previousSelection.contains { state.cubes[$0].useCount == 2 }
         let cubeIsShaking =
           state.selectedWordIsValid
-          && selectedWord.contains { state.cubes[$0.index][$0.side].useCount == 2 }
+          && selectedWord.contains { state.cubes[$0].useCount == 2 }
 
-        let shakingEffect: Effect<GameAction, Never>
         if cubeIsShaking {
           state.cubeStartedShakingAt = state.cubeStartedShakingAt ?? environment.date()
 
-          shakingEffect =
-            cubeWasShaking
+          return cubeWasShaking
             ? .none
             : Effect.timer(
               id: CubeShakingId(),
@@ -121,14 +115,8 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
         } else {
           state.cubeStartedShakingAt = nil
-          shakingEffect = .cancel(id: CubeShakingId())
+          return .cancel(id: CubeShakingId())
         }
-
-        return .merge(
-          environment.audioPlayer.play(AudioPlayerClient.Sound.allNotes[noteIndex])
-            .fireAndForget(),
-          shakingEffect
-        )
       }
       .onChange(of: \.moves.last) { lastMove, state, _, environment in
         guard
@@ -147,27 +135,17 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         return environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
           .fireAndForget()
       }
-      .onChange(of: \.selectedWord) { _, selectedWord, state, _, environment in
-        let selectedWordString = state.cubes.string(from: selectedWord)
-        guard
-          !state.hasBeenPlayed(word: selectedWordString),
-          environment.dictionary.contains(selectedWordString, state.language)
-        else { return .none }
-
-        let validCount = selectedWordString
-          .indices
-          .dropFirst(2)
-          .reduce(0) { count, index in
-            environment.dictionary.contains(String(selectedWordString[...index]), state.language)
-              ? count + 1
-              : count
-          }
-
-        return validCount > 0
-          ? environment.audioPlayer.play(.validWord(level: validCount))
-            .fireAndForget()
-          : .none
-      }
+      .selectionSounds(
+        audioPlayer: \.audioPlayer,
+        contains: { state, environment, string in
+          environment.dictionary.contains(string, state.language)
+        },
+        hasBeenPlayed: { state, string in
+          state.hasBeenPlayed(word: string)
+        },
+        puzzle: \.cubes,
+        selectedWord: \.selectedWord
+      )
   }
 }
 

@@ -288,6 +288,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     action: /SettingsAction.stats,
     environment: {
       StatsEnvironment(
+        audioPlayer: $0.audioPlayer,
         database: $0.database,
         feedbackGenerator: $0.feedbackGenerator,
         mainQueue: $0.mainQueue

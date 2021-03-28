@@ -1,3 +1,4 @@
+import AudioPlayerClient
 import ComposableArchitecture
 import CubePreview
 import FeedbackGeneratorClient
@@ -34,15 +35,18 @@ public enum VocabAction: Equatable {
 }
 
 public struct VocabEnvironment {
+  var audioPlayer: AudioPlayerClient
   var database: LocalDatabaseClient
   var feedbackGenerator: FeedbackGeneratorClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
+    audioPlayer: AudioPlayerClient,
     database: LocalDatabaseClient,
     feedbackGenerator: FeedbackGeneratorClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
+    self.audioPlayer = audioPlayer
     self.database = database
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
@@ -61,6 +65,7 @@ public let vocabReducer = Reducer<
       action: /VocabAction.preview,
       environment: {
         CubePreviewEnvironment(
+          audioPlayer: $0.audioPlayer,
           feedbackGenerator: $0.feedbackGenerator,
           mainQueue: $0.mainQueue
         )
@@ -215,6 +220,7 @@ public struct VocabView: View {
       ),
       reducer: vocabReducer,
       environment: .init(
+        audioPlayer: .noop,
         database: .noop,
         feedbackGenerator: .noop,
         mainQueue: DispatchQueue.main.eraseToAnyScheduler()

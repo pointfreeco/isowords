@@ -254,6 +254,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       environment: {
         .init(
           apiClient: $0.apiClient,
+          audioPlayer: $0.audioPlayer,
           feedbackGenerator: $0.feedbackGenerator,
           mainQueue: $0.mainQueue
         )

@@ -1,3 +1,4 @@
+import AudioPlayerClient
 import ComposableArchitecture
 import FeedbackGeneratorClient
 import LocalDatabaseClient
@@ -66,15 +67,18 @@ public enum StatsAction: Equatable {
 }
 
 public struct StatsEnvironment {
+  var audioPlayer: AudioPlayerClient
   var database: LocalDatabaseClient
   var feedbackGenerator: FeedbackGeneratorClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
+    audioPlayer: AudioPlayerClient,
     database: LocalDatabaseClient,
     feedbackGenerator: FeedbackGeneratorClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
+    self.audioPlayer = audioPlayer
     self.database = database
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
@@ -88,6 +92,7 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
       action: /StatsAction.vocab,
       environment: {
         VocabEnvironment(
+          audioPlayer: $0.audioPlayer,
           database: $0.database,
           feedbackGenerator: $0.feedbackGenerator,
           mainQueue: $0.mainQueue
@@ -287,6 +292,7 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
               ),
               reducer: statsReducer,
               environment: StatsEnvironment.init(
+                audioPlayer: .noop,
                 database: .noop,
                 feedbackGenerator: .noop,
                 mainQueue: DispatchQueue.main.eraseToAnyScheduler()

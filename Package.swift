@@ -340,6 +340,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "NotificationsAuthAlert", targets: ["NotificationsAuthAlert"]),
     .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
     .library(name: "RemoteNotificationsClient", targets: ["RemoteNotificationsClient"]),
+    .library(name: "SelectionSoundsCore", targets: ["SelectionSoundsCore"]),
     .library(name: "ServerConfigClient", targets: ["ServerConfigClient"]),
     .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
     .library(name: "SharedSwiftUIEnvironment", targets: ["SharedSwiftUIEnvironment"]),
@@ -541,9 +542,11 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "CubePreview",
       dependencies: [
+        "AudioPlayerClient",
         "CubeCore",
         "FeedbackGeneratorClient",
         "HapticsCore",
+        "SelectionSoundsCore",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
@@ -664,6 +667,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "PuzzleGen",
         "RemoteNotificationsClient",
+        "SelectionSoundsCore",
         "SharedSwiftUIEnvironment",
         "Styleguide",
         "TcaHelpers",
@@ -825,6 +829,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "LeaderboardFeature",
       dependencies: [
         "ApiClient",
+        "AudioPlayerClient",
         "CubePreview",
         "Styleguide",
         "SwiftUIHelpers",
@@ -903,6 +908,16 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "OnboardingFeature"
       ]
     ),
+    //SelectionSoundsCore
+    .target(
+      name: "SelectionSoundsCore",
+      dependencies: [
+        "AudioPlayerClient",
+        "SharedModels",
+        "TcaHelpers",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "RemoteNotificationsClient",
       dependencies: [
@@ -966,6 +981,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "StatsFeature",
       dependencies: [
+        "AudioPlayerClient",
         "LocalDatabaseClient",
         "Styleguide",
         "VocabFeature",
@@ -1047,6 +1063,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "VocabFeature",
       dependencies: [
+        "AudioPlayerClient",
         "CubePreview",
         "FeedbackGeneratorClient",
         "LocalDatabaseClient",

@@ -1,13 +1,16 @@
+import AudioPlayerClient
 import ComposableArchitecture
 import CubeCore
 import FeedbackGeneratorClient
 import HapticsCore
+import SelectionSoundsCore
 import SharedModels
 import Styleguide
 import SwiftUI
 
 public struct CubePreviewState: Equatable {
   var cubes: Puzzle
+  var finalWordString: String?
   var isOnLowPowerMode: Bool
   var moves: Moves
   var nub: CubeSceneView.ViewState.NubState
@@ -17,6 +20,7 @@ public struct CubePreviewState: Equatable {
 
   public init(
     cubes: ArchivablePuzzle,
+    finalWordString: String? = nil,
     isOnLowPowerMode: Bool,
     moves: Moves,
     nub: CubeSceneView.ViewState.NubState = .init(),
@@ -27,6 +31,7 @@ public struct CubePreviewState: Equatable {
     self.cubes = .init(archivableCubes: cubes)
     apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
+    self.finalWordString = finalWordString
     self.isOnLowPowerMode = isOnLowPowerMode
     self.moves = moves
     self.nub = nub
@@ -43,20 +48,23 @@ public enum CubePreviewAction: Equatable {
 }
 
 public struct CubePreviewEnvironment {
+  var audioPlayer: AudioPlayerClient
   var feedbackGenerator: FeedbackGeneratorClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
+    audioPlayer: AudioPlayerClient,
     feedbackGenerator: FeedbackGeneratorClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
+    self.audioPlayer = audioPlayer
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
   }
 }
 
 public let cubePreviewReducer = Reducer<
-CubePreviewState,
+  CubePreviewState,
   CubePreviewAction,
   CubePreviewEnvironment
 > { state, action, environment in
@@ -76,9 +84,13 @@ CubePreviewState,
 
     var accumulatedSelectedFaces: [IndexedCubeFace] = []
 
+
+
     let move = state.moves[state.moveIndex]
     switch move.type {
     case let .playedWord(faces):
+      state.finalWordString = state.cubes.string(from: faces)
+
       for (faceIndex, face) in faces.enumerated() {
         let moveDuration = Double.random(in: (0.6 ... 0.8))
 
@@ -134,7 +146,16 @@ CubePreviewState,
   isEnabled: { _ in true }, // todo
   triggerOnChangeOf: { $0.selectedCubeFaces }
 )
-// TODO: sounds, cancel on dismiss
+.selectionSounds(
+  audioPlayer: \.audioPlayer,
+  contains: { state, _, string in
+    state.finalWordString?.uppercased() == string.uppercased()
+  },
+  hasBeenPlayed: { _, _ in false },
+  puzzle: \.cubes,
+  selectedWord: \.selectedCubeFaces
+)
+// TODO: cancel effects on dismiss
 
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState

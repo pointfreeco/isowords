@@ -1,4 +1,5 @@
 import ApiClient
+import AudioPlayerClient
 import ComposableArchitecture
 import CubePreview
 import FeedbackGeneratorClient
@@ -61,15 +62,18 @@ public enum LeaderboardAction: Equatable {
 
 public struct LeaderboardEnvironment {
   public var apiClient: ApiClient
+  public var audioPlayer: AudioPlayerClient
   public var feedbackGenerator: FeedbackGeneratorClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
     apiClient: ApiClient,
+    audioPlayer: AudioPlayerClient,
     feedbackGenerator: FeedbackGeneratorClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.apiClient = apiClient
+    self.audioPlayer = audioPlayer
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
   }
@@ -79,6 +83,7 @@ public struct LeaderboardEnvironment {
   extension LeaderboardEnvironment {
     public static let failing = Self(
       apiClient: .failing,
+      audioPlayer: .failing,
       feedbackGenerator: .failing,
       mainQueue: .failing("mainQueue")
     )
@@ -95,6 +100,7 @@ public let leaderboardReducer = Reducer<
       action: /LeaderboardAction.cubePreview,
       environment: {
         CubePreviewEnvironment(
+          audioPlayer: $0.audioPlayer,
           feedbackGenerator: $0.feedbackGenerator,
           mainQueue: $0.mainQueue
         )
@@ -387,7 +393,7 @@ extension ResultEnvelope.Result {
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
                       return Effect.ok(
-                        FetchLeaderboardResponse.init(
+                        FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
                               id: .init(rawValue: .init()),
@@ -409,6 +415,7 @@ extension ResultEnvelope.Result {
                     }
                   }
                 },
+                audioPlayer: .noop,
                 feedbackGenerator: .noop,
                 mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )

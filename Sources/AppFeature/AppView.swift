@@ -246,13 +246,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
           environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
         )
         .fireAndForget()
-        : .none,
-
-      environment.serverConfig.refresh()
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
-        .fireAndForget()
+        : .none
     )
 
   case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
