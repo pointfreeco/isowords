@@ -13,7 +13,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testScopeSwitcher() {
     let store = TestStore(
-      initialState: LeaderboardState(),
+      initialState: .init(settings: .init()),
       reducer: leaderboardReducer,
       environment: .failing
     )
@@ -28,10 +28,13 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testTimeScopeSynchronization() {
     let store = TestStore(
-      initialState: .init(),
+      initialState: .init(settings: .init()),
       reducer: leaderboardReducer,
       environment: .init(
         apiClient: .noop,
+        audioPlayer: .noop,
+        feedbackGenerator: .noop,
+        lowPowerMode: .false,
         mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
       )
     )
@@ -103,7 +106,8 @@ class LeaderboardFeatureTests: XCTestCase {
 
     let store = TestStore(
       initialState: LeaderboardState(
-        scope: .vocab
+        scope: .vocab,
+        settings: .init()
       ),
       reducer: leaderboardReducer,
       environment: leaderboardEnvironment
@@ -120,18 +124,11 @@ class LeaderboardFeatureTests: XCTestCase {
     store.send(.vocab(.tappedRow(id: wordId.rawValue)))
     store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
       $0.cubePreview = .init(
-        preview: .words(
-          .init(
-            words: [
-              .init(
-                cubes: .mock,
-                moveIndex: 0,
-                moves: []
-              )
-            ],
-            currentWordIndex: 0
-          )
-        )
+        cubes: .mock,
+        isOnLowPowerMode: false,
+        moves: [],
+        moveIndex: 0,
+        settings: .init()
       )
     }
     store.send(.dismissCubePreview) {

@@ -10,6 +10,7 @@ var leaderboardAppStoreView: AnyView {
       initialState: LeaderboardState(
         cubePreview: nil,
         scope: .vocab,
+        settings: .init(),
         solo: LeaderboardResultsState(
           gameMode: .unlimited,
           isLoading: false,
