@@ -53,6 +53,7 @@ struct CubePreviewPreviewApp: App {
           ),
           reducer: cubePreviewReducer,
           environment: CubePreviewEnvironment(
+            audioPlayer: .noop,
             feedbackGenerator: .live,
             mainQueue: DispatchQueue.main.eraseToAnyScheduler()
           )
