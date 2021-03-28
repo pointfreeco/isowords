@@ -38,6 +38,7 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
             database: $0.database,
             feedbackGenerator: $0.feedbackGenerator,
             fileClient: $0.fileClient,
+            lowPowerMode: $0.lowPowerMode,
             mainQueue: $0.mainQueue,
             remoteNotifications: $0.remoteNotifications,
             serverConfig: $0.serverConfig,

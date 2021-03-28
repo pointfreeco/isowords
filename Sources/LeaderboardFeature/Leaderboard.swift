@@ -3,6 +3,7 @@ import AudioPlayerClient
 import ComposableArchitecture
 import CubePreview
 import FeedbackGeneratorClient
+import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -32,6 +33,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct LeaderboardState: Equatable {
   public var cubePreview: CubePreviewState?
+  public var isOnLowPowerMode: Bool
   public var scope: LeaderboardScope = .games
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
@@ -40,11 +42,13 @@ public struct LeaderboardState: Equatable {
 
   public init(
     cubePreview: CubePreviewState? = nil,
+    isOnLowPowerMode: Bool = false,
     scope: LeaderboardScope = .games,
     solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   ) {
     self.cubePreview = cubePreview
+    self.isOnLowPowerMode = isOnLowPowerMode
     self.scope = scope
     self.solo = solo
     self.vocab = vocab
@@ -64,17 +68,20 @@ public struct LeaderboardEnvironment {
   public var apiClient: ApiClient
   public var audioPlayer: AudioPlayerClient
   public var feedbackGenerator: FeedbackGeneratorClient
+  public var lowPowerMode: LowPowerModeClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
     apiClient: ApiClient,
     audioPlayer: AudioPlayerClient,
     feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.apiClient = apiClient
     self.audioPlayer = audioPlayer
     self.feedbackGenerator = feedbackGenerator
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
   }
 }
@@ -85,6 +92,7 @@ public struct LeaderboardEnvironment {
       apiClient: .failing,
       audioPlayer: .failing,
       feedbackGenerator: .failing,
+      lowPowerMode: .failing,
       mainQueue: .failing("mainQueue")
     )
   }
@@ -144,10 +152,9 @@ public let leaderboardReducer = Reducer<
       return .none
 
     case let .fetchWordResponse(.success(response)):
-
       state.cubePreview = CubePreviewState(
         cubes: response.puzzle,
-        isOnLowPowerMode: false, // TODO
+        isOnLowPowerMode: state.isOnLowPowerMode,
         moves: response.moves,
         moveIndex: response.moveIndex,
         settings: .init() // TODO
@@ -417,6 +424,7 @@ extension ResultEnvelope.Result {
                 },
                 audioPlayer: .noop,
                 feedbackGenerator: .noop,
+                lowPowerMode: .false,
                 mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )
             )

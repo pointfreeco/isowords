@@ -3,19 +3,23 @@ import ComposableArchitecture
 import CubePreview
 import FeedbackGeneratorClient
 import LocalDatabaseClient
+import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
 
 public struct VocabState: Equatable {
   var cubePreview: CubePreviewState?
+  var isOnLowPowerMode: Bool
   var vocab: LocalDatabaseClient.Vocab?
 
   public init(
     cubePreview: CubePreviewState? = nil,
+    isOnLowPowerMode: Bool = false,
     vocab: LocalDatabaseClient.Vocab? = nil
   ) {
     self.cubePreview = cubePreview
+    self.isOnLowPowerMode = isOnLowPowerMode
     self.vocab = vocab
   }
 
@@ -28,6 +32,7 @@ public struct VocabState: Equatable {
 public enum VocabAction: Equatable {
   case dismissCubePreview
   case gamesResponse(Result<VocabState.GamesResponse, NSError>)
+  case lowPowerModeResponse(Bool)
   case onAppear
   case preview(CubePreviewAction)
   case vocabResponse(Result<LocalDatabaseClient.Vocab, NSError>)
@@ -38,16 +43,19 @@ public struct VocabEnvironment {
   var audioPlayer: AudioPlayerClient
   var database: LocalDatabaseClient
   var feedbackGenerator: FeedbackGeneratorClient
+  var lowPowerMode: LowPowerModeClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
     audioPlayer: AudioPlayerClient,
     database: LocalDatabaseClient,
     feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.audioPlayer = audioPlayer
     self.database = database
+    self.lowPowerMode = lowPowerMode
     self.feedbackGenerator = feedbackGenerator
     self.mainQueue = mainQueue
   }
@@ -98,18 +106,29 @@ public let vocabReducer = Reducer<
 
       state.cubePreview = .init(
         cubes: game.completedGame.cubes,
-        isOnLowPowerMode: false, // TODO
+        isOnLowPowerMode: state.isOnLowPowerMode,
         moves: game.completedGame.moves,
         moveIndex: moveIndex,
         settings: .init()
       )
       return .none
 
+    case let .lowPowerModeResponse(isOnLowPowerMode):
+      state.isOnLowPowerMode = isOnLowPowerMode
+      return .none
+
     case .onAppear:
-      return environment.database.fetchVocab
-        .mapError { $0 as NSError }
-        .catchToEffect()
-        .map(VocabAction.vocabResponse)
+      return .merge(
+        environment.database.fetchVocab
+          .mapError { $0 as NSError }
+          .catchToEffect()
+          .map(VocabAction.vocabResponse),
+
+        environment.lowPowerMode.start
+          .prefix(1)
+          .map(VocabAction.lowPowerModeResponse)
+          .eraseToEffect()
+      )
 
     case .preview:
       return .none
@@ -211,6 +230,7 @@ public struct VocabView: View {
     static let vocab = Store(
       initialState: .init(
         cubePreview: nil,
+        isOnLowPowerMode: true,
         vocab: .init(
           words: [
             .init(letters: "STENOGRAPHER", playCount: 1, score: 1_230),
@@ -223,6 +243,7 @@ public struct VocabView: View {
         audioPlayer: .noop,
         database: .noop,
         feedbackGenerator: .noop,
+        lowPowerMode: .false,
         mainQueue: DispatchQueue.main.eraseToAnyScheduler()
       )
     )

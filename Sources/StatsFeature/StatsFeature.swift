@@ -2,6 +2,7 @@ import AudioPlayerClient
 import ComposableArchitecture
 import FeedbackGeneratorClient
 import LocalDatabaseClient
+import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -42,7 +43,6 @@ public struct StatsState: Equatable {
     longestWord: String? = nil,
     route: Route? = nil,
     secondsPlayed: Int = 0,
-    //    vocab: VocabState? = nil,
     wordsFound: Int = 0
   ) {
     self.averageWordLength = averageWordLength
@@ -53,7 +53,6 @@ public struct StatsState: Equatable {
     self.longestWord = longestWord
     self.route = route
     self.secondsPlayed = secondsPlayed
-    //    self.vocab = vocab
     self.wordsFound = wordsFound
   }
 }
@@ -69,6 +68,7 @@ public enum StatsAction: Equatable {
 public struct StatsEnvironment {
   var audioPlayer: AudioPlayerClient
   var database: LocalDatabaseClient
+  var lowPowerMode: LowPowerModeClient
   var feedbackGenerator: FeedbackGeneratorClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
 
@@ -76,11 +76,13 @@ public struct StatsEnvironment {
     audioPlayer: AudioPlayerClient,
     database: LocalDatabaseClient,
     feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.audioPlayer = audioPlayer
     self.database = database
     self.feedbackGenerator = feedbackGenerator
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
   }
 }
@@ -95,6 +97,7 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
           audioPlayer: $0.audioPlayer,
           database: $0.database,
           feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue
         )
       }
@@ -295,6 +298,7 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 audioPlayer: .noop,
                 database: .noop,
                 feedbackGenerator: .noop,
+                lowPowerMode: .false,
                 mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )
             )

@@ -17,6 +17,7 @@ import FileClient
 import GameKit
 import LeaderboardFeature
 import LocalDatabaseClient
+import LowPowerModeClient
 import MultiplayerFeature
 import Overture
 import RemoteNotificationsClient
@@ -151,6 +152,7 @@ public struct HomeEnvironment {
   public var feedbackGenerator: FeedbackGeneratorClient
   public var fileClient: FileClient
   public var gameCenter: GameCenterClient
+  public var lowPowerMode: LowPowerModeClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
@@ -172,6 +174,7 @@ public struct HomeEnvironment {
     feedbackGenerator: FeedbackGeneratorClient,
     fileClient: FileClient,
     gameCenter: GameCenterClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
@@ -192,6 +195,7 @@ public struct HomeEnvironment {
     self.feedbackGenerator = feedbackGenerator
     self.fileClient = fileClient
     self.gameCenter = gameCenter
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
@@ -217,6 +221,7 @@ public struct HomeEnvironment {
       feedbackGenerator: .noop,
       fileClient: .noop,
       gameCenter: .noop,
+      lowPowerMode: .false,
       mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
       mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
       remoteNotifications: .noop,
@@ -256,6 +261,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           apiClient: $0.apiClient,
           audioPlayer: $0.audioPlayer,
           feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue
         )
       }
@@ -301,6 +307,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           database: $0.database,
           feedbackGenerator: $0.feedbackGenerator,
           fileClient: $0.fileClient,
+          lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
           serverConfig: $0.serverConfig,
@@ -842,6 +849,7 @@ private struct AuthenticationId: Hashable {}
         feedbackGenerator: .noop,
         fileClient: .noop,
         gameCenter: .noop,
+        lowPowerMode: .false,
         mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
         mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
         remoteNotifications: .noop,

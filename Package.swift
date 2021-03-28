@@ -793,6 +793,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FileClient",
         "LeaderboardFeature",
         "LocalDatabaseClient",
+        "LowPowerModeClient",
         "MultiplayerFeature",
         "ServerConfigClient",
         "SettingsFeature",
@@ -831,6 +832,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "AudioPlayerClient",
         "CubePreview",
+        "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -908,7 +910,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "OnboardingFeature"
       ]
     ),
-    //SelectionSoundsCore
     .target(
       name: "SelectionSoundsCore",
       dependencies: [
@@ -943,6 +944,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ComposableUserNotifications",
         "FileClient",
         "LocalDatabaseClient",
+        "LowPowerModeClient",
         "RemoteNotificationsClient",
         "ServerConfigClient",
         "StatsFeature",
@@ -1067,6 +1069,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "CubePreview",
         "FeedbackGeneratorClient",
         "LocalDatabaseClient",
+        "LowPowerModeClient",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

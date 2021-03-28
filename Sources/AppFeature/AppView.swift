@@ -127,6 +127,7 @@ extension AppEnvironment {
       feedbackGenerator: self.feedbackGenerator,
       fileClient: self.fileClient,
       gameCenter: self.gameCenter,
+      lowPowerMode: self.lowPowerMode,
       mainQueue: self.mainQueue,
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,

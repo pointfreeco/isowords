@@ -7,6 +7,7 @@ import ComposableUserNotifications
 import FeedbackGeneratorClient
 import FileClient
 import LocalDatabaseClient
+import LowPowerModeClient
 import RemoteNotificationsClient
 import SceneKit
 import ServerConfigClient
@@ -195,6 +196,7 @@ public struct SettingsEnvironment {
   public var database: LocalDatabaseClient
   public var feedbackGenerator: FeedbackGeneratorClient
   public var fileClient: FileClient
+  public var lowPowerMode: LowPowerModeClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
@@ -212,6 +214,7 @@ public struct SettingsEnvironment {
     database: LocalDatabaseClient,
     feedbackGenerator: FeedbackGeneratorClient,
     fileClient: FileClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
@@ -228,6 +231,7 @@ public struct SettingsEnvironment {
     self.database = database
     self.feedbackGenerator = feedbackGenerator
     self.fileClient = fileClient
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
@@ -251,6 +255,7 @@ public struct SettingsEnvironment {
       database: .failing,
       feedbackGenerator: .failing,
       fileClient: .failing,
+      lowPowerMode: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       serverConfig: .failing,
@@ -271,6 +276,7 @@ public struct SettingsEnvironment {
       database: .noop,
       feedbackGenerator: .noop,
       fileClient: .noop,
+      lowPowerMode: .false,
       mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
       remoteNotifications: .noop,
       serverConfig: .noop,
@@ -291,6 +297,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         audioPlayer: $0.audioPlayer,
         database: $0.database,
         feedbackGenerator: $0.feedbackGenerator,
+        lowPowerMode: $0.lowPowerMode,
         mainQueue: $0.mainQueue
       )
     }

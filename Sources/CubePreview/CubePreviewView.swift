@@ -83,15 +83,13 @@ public let cubePreviewReducer = Reducer<
     ]
 
     var accumulatedSelectedFaces: [IndexedCubeFace] = []
-
-
-
     let move = state.moves[state.moveIndex]
     switch move.type {
     case let .playedWord(faces):
       state.finalWordString = state.cubes.string(from: faces)
 
       for (faceIndex, face) in faces.enumerated() {
+        accumulatedSelectedFaces.append(face)
         let moveDuration = Double.random(in: (0.6 ... 0.8))
 
         effects.append(
@@ -102,8 +100,6 @@ public let cubePreviewReducer = Reducer<
             )
             .eraseToEffect()
         )
-
-        accumulatedSelectedFaces.append(face)
 
         effects.append(
           Effect.merge(
@@ -186,11 +182,11 @@ public struct CubePreviewView: View {
 }
 
 extension CubeSceneView.ViewState {
-  public init(
-    preview: CubePreviewState
-  ) {
+  public init(preview state: CubePreviewState) {
+    let selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
+
     self.init(
-      cubes: preview.cubes.enumerated().map { x, cubes in
+      cubes: state.cubes.enumerated().map { x, cubes in
         cubes.enumerated().map { y, cubes in
           cubes.enumerated().map { z, cube in
             let index = LatticePoint.init(x: x, y: y, z: z)
@@ -204,19 +200,19 @@ extension CubeSceneView.ViewState {
                   letter: cube.left.letter,
                   side: .left
                 ),
-                status: preview.selectedCubeFaces.contains(.init(index: index, side: .left))
+                status: state.selectedCubeFaces.contains(.init(index: index, side: .left))
                   ? .selected
                   : .deselected
               ),
               right: .init(
                 cubeFace: .init(letter: cube.right.letter, side: .right),
-                status: preview.selectedCubeFaces.contains(.init(index: index, side: .right))
+                status: state.selectedCubeFaces.contains(.init(index: index, side: .right))
                   ? .selected
                   : .deselected
               ),
               top: .init(
                 cubeFace: .init(letter: cube.top.letter, side: .top),
-                status: preview.selectedCubeFaces.contains(.init(index: index, side: .top))
+                status: state.selectedCubeFaces.contains(.init(index: index, side: .top))
                   ? .selected
                   : .deselected
               )
@@ -224,13 +220,13 @@ extension CubeSceneView.ViewState {
           }
         }
       },
-      isOnLowPowerMode: preview.isOnLowPowerMode,
-      nub: preview.nub,
+      isOnLowPowerMode: state.isOnLowPowerMode,
+      nub: state.nub,
       playedWords: [],
       selectedFaceCount: 0,
-      selectedWordIsValid: false, // TODO?
-      selectedWordString: "", // TODO?
-      settings: preview.settings
+      selectedWordIsValid: selectedWordString == state.finalWordString,
+      selectedWordString: selectedWordString,
+      settings: state.settings
     )
   }
 }
