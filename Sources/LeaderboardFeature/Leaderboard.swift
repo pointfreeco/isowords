@@ -1,6 +1,7 @@
 import ApiClient
 import AudioPlayerClient
 import ComposableArchitecture
+import CubeCore
 import CubePreview
 import FeedbackGeneratorClient
 import LowPowerModeClient
@@ -35,6 +36,7 @@ public struct LeaderboardState: Equatable {
   public var cubePreview: CubePreviewState?
   public var isOnLowPowerMode: Bool
   public var scope: LeaderboardScope = .games
+  public var settings: CubeSceneView.ViewState.Settings
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
 
@@ -44,12 +46,14 @@ public struct LeaderboardState: Equatable {
     cubePreview: CubePreviewState? = nil,
     isOnLowPowerMode: Bool = false,
     scope: LeaderboardScope = .games,
+    settings: CubeSceneView.ViewState.Settings,
     solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   ) {
     self.cubePreview = cubePreview
     self.isOnLowPowerMode = isOnLowPowerMode
     self.scope = scope
+    self.settings = settings
     self.solo = solo
     self.vocab = vocab
   }
@@ -157,7 +161,7 @@ public let leaderboardReducer = Reducer<
         isOnLowPowerMode: state.isOnLowPowerMode,
         moves: response.moves,
         moveIndex: response.moveIndex,
-        settings: .init() // TODO
+        settings: state.settings
       )
       return .none
 
@@ -392,7 +396,9 @@ extension ResultEnvelope.Result {
         NavigationView {
           LeaderboardView(
             store: .init(
-              initialState: LeaderboardState(),
+              initialState: LeaderboardState(
+                settings: .init()
+              ),
               reducer: leaderboardReducer,
               environment: LeaderboardEnvironment(
                 apiClient: update(.noop) {

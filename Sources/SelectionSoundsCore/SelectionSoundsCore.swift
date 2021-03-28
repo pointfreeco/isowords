@@ -58,7 +58,7 @@ private func noteIndex(
 ) -> Int? {
   guard
     let firstFace = selectedWord.first,
-    let firstAscii = cubes[firstFace.index][firstFace.side].letter.first?.utf8.first
+    let firstAscii = cubes[firstFace].letter.first?.utf8.first
   else { return nil }
 
   let firstIndex = Int(

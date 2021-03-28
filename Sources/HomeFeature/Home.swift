@@ -462,7 +462,15 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           )
         )
       case .leaderboard:
-        state.route = .leaderboard(.init())
+        state.route = .leaderboard(
+          .init(
+            settings: .init(
+              enableCubeShadow: state.settings.enableCubeShadow,
+              enableGyroMotion: state.settings.userSettings.enableGyroMotion,
+              showSceneStatistics: state.settings.showSceneStatistics
+            )
+          )
+        )
       case .multiplayer:
         state.route = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
       case .settings:

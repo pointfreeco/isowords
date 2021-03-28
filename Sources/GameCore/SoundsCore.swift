@@ -151,28 +151,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
 private struct CubeShakingId: Hashable {}
 
-private func noteIndex(
-  selectedWord: [IndexedCubeFace],
-  cubes: Puzzle,
-  notes: [AudioPlayerClient.Sound]
-) -> Int? {
-  guard
-    let firstFace = selectedWord.first,
-    let firstAscii = cubes[firstFace.index][firstFace.side].letter.first?.utf8.first
-  else { return nil }
-
-  let firstIndex = Int(
-    (firstAscii - .init(ascii: "A"))
-      .quotientAndRemainder(dividingBy: .init(ascii: "O") - .init(ascii: "A"))
-      .remainder
-  )
-
-  return min(
-    firstIndex + selectedWord.count - 1,
-    notes.count - 1
-  )
-}
-
 extension GameState {
   func hasBeenPlayed(word: String) -> Bool {
     self.moves.contains {
