@@ -12,10 +12,10 @@ class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.testScheduler
   
   func testSubmitLeaderboardScore() throws {
-    var enviroment = GameOverEnvironment.failing
-    enviroment.audioPlayer = .noop
-    enviroment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-    enviroment.apiClient.override(
+    var environment = GameOverEnvironment.failing
+    environment.audioPlayer = .noop
+    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.override(
       route: .games(
         .submit(
           .init(
@@ -34,11 +34,11 @@ class GameOverFeatureTests: XCTestCase {
         ]
       ])
     )
-    enviroment.database.playedGamesCount = { _ in .init(value: 10) }
-    enviroment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-    enviroment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-    enviroment.serverConfig.config = { .init() }
-    enviroment.userNotifications.getNotificationSettings = .none
+    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.serverConfig.config = { .init() }
+    environment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
       initialState: GameOverState(
