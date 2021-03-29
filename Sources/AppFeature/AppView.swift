@@ -185,7 +185,6 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
 
   appReducerCore
 )
-.sounds()
 .gameCenter()
 .storeKit()
 .persistence()
