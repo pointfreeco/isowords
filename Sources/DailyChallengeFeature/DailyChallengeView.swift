@@ -453,9 +453,9 @@ extension DailyChallengeView.ViewState.ButtonState {
       self = .played(rank: rank, outOf: outOf)
     } else if let currentScore = inProgressGame?.currentScore {
       self = .resume(currentScore: currentScore)
-    } else if fetchedResponse?.yourResult.rank != nil,
-      fetchedResponse?.dailyChallenge.gameMode == .timed,
-      fetchedResponse?.yourResult.started == .some(true)
+    } else if fetchedResponse?.yourResult.rank != nil
+      || fetchedResponse?.dailyChallenge.gameMode == .timed
+      && fetchedResponse?.yourResult.started == .some(true)
     {
       self = .unplayable
     } else {
