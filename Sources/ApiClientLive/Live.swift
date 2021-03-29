@@ -157,7 +157,8 @@ extension URLRequest {
     let gitSha = (infoDictionary["GitSHA"] as? String).map { $0.isEmpty ? "" : "git/\($0)" } ?? ""
 
     var request = self
-    request.setValue("\(bundleName)\(marketingVersion)\(bundleVersion)\(gitSha)", forHTTPHeaderField: "User-Agent")
+    request.setValue(
+      "\(bundleName)\(marketingVersion)\(bundleVersion)\(gitSha)", forHTTPHeaderField: "User-Agent")
 
     return request
   }
