@@ -236,16 +236,6 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             for: 1,
             scheduler: environment.mainQueue.animation(.easeInOut(duration: fadeInDuration))
           )
-          .eraseToEffect(),
-
-        // NB: "Warm" the scene with a selection to avoid a hitch when selecting the first letter
-        Effect(
-          value: .binding(
-            .set(\.game.selectedWord, [.init(index: .init(x: .two, y: .two, z: .two), side: .top)])
-          )
-        ),
-        Effect(value: .binding(.set(\.game.selectedWord, [])))
-          .delay(for: 1, scheduler: environment.mainQueue)
           .eraseToEffect()
       )
     }
