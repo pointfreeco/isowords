@@ -27,6 +27,7 @@ import SharedModels
 import SoloFeature
 import Styleguide
 import SwiftUI
+import TcaHelpers
 import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
@@ -522,23 +523,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
   }
 )
 .binding(action: /HomeAction.binding)
-
-extension Effect {
-  func prefix(id: AnyHashable, _ maxLength: Int) -> Self {
-    Just(())
-      .flatMap { () -> AnyPublisher<Output, Failure> in
-        if tokens[id] ?? 0 > maxLength {
-          return Empty().eraseToAnyPublisher()
-        } else {
-          tokens[id, default: 0] += 1
-          return self.eraseToAnyPublisher()
-        }
-      }
-      .eraseToEffect()
-  }
-}
-
-var tokens: [AnyHashable: Int] = [:]
 
 public struct HomeView: View {
   struct ViewState: Equatable {
