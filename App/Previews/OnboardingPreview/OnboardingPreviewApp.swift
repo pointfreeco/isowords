@@ -1,3 +1,5 @@
+import AppAudioLibrary
+import AppClipAudioLibrary
 import DictionarySqliteClient
 import OnboardingFeature
 import Styleguide
@@ -16,7 +18,12 @@ struct OnboardingPreviewApp: App {
           initialState: .init(presentationStyle: .firstLaunch),
           reducer: onboardingReducer,
           environment: OnboardingEnvironment(
-            audioPlayer: .noop,
+            audioPlayer: .live(
+              bundles: [
+                AppClipAudioLibrary.bundle,
+                AppAudioLibrary.bundle,
+              ]
+            ),
             backgroundQueue: DispatchQueue.global().eraseToAnyScheduler(),
             dictionary: .sqlite(),
             feedbackGenerator: .live,

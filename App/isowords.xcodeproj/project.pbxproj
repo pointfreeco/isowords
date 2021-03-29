@@ -49,6 +49,8 @@
 		CA97087525D5B2EE0027EABE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA97087425D5B2EE0027EABE /* Assets.xcassets */; };
 		CA97087D25D5B2EF0027EABE /* AppClip.app in Embed App Clips */ = {isa = PBXBuildFile; fileRef = CA97086E25D5B2EE0027EABE /* AppClip.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA9708B425D5B7F80027EABE /* DictionaryFileClient in Frameworks */ = {isa = PBXBuildFile; productRef = CA9708B325D5B7F80027EABE /* DictionaryFileClient */; };
+		CAAF6DEC261292DC00ECFD9D /* AppAudioLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = CAAF6DEB261292DC00ECFD9D /* AppAudioLibrary */; };
+		CAAF6DEE261292DC00ECFD9D /* AppClipAudioLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = CAAF6DED261292DC00ECFD9D /* AppClipAudioLibrary */; };
 		CAB0ABF925D5D8BF00565865 /* DemoFeature in Frameworks */ = {isa = PBXBuildFile; productRef = CAB0ABF825D5D8BF00565865 /* DemoFeature */; };
 		CAB0AC2825D5E76800565865 /* AppClipAudioLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = CAB0AC2725D5E76800565865 /* AppClipAudioLibrary */; };
 		CAB8861725730C1B00F15956 /* CubeCorePreviewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB8861625730C1B00F15956 /* CubeCorePreviewApp.swift */; };
@@ -205,7 +207,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA78AD6C2537A9220073724C /* OnboardingFeature in Frameworks */,
+				CAAF6DEC261292DC00ECFD9D /* AppAudioLibrary in Frameworks */,
 				CA64C3072586EC3A0086E0D5 /* DictionarySqliteClient in Frameworks */,
+				CAAF6DEE261292DC00ECFD9D /* AppClipAudioLibrary in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -552,6 +556,8 @@
 			packageProductDependencies = (
 				CA78AD6B2537A9220073724C /* OnboardingFeature */,
 				CA64C3062586EC3A0086E0D5 /* DictionarySqliteClient */,
+				CAAF6DEB261292DC00ECFD9D /* AppAudioLibrary */,
+				CAAF6DED261292DC00ECFD9D /* AppClipAudioLibrary */,
 			);
 			productName = OnboardingPreview;
 			productReference = CA78AD552537A9010073724C /* OnboardingPreview.app */;
@@ -1940,6 +1946,14 @@
 		CA9708B325D5B7F80027EABE /* DictionaryFileClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DictionaryFileClient;
+		};
+		CAAF6DEB261292DC00ECFD9D /* AppAudioLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppAudioLibrary;
+		};
+		CAAF6DED261292DC00ECFD9D /* AppClipAudioLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppClipAudioLibrary;
 		};
 		CAB0ABF825D5D8BF00565865 /* DemoFeature */ = {
 			isa = XCSwiftPackageProductDependency;
