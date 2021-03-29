@@ -156,28 +156,82 @@ public let cubePreviewReducer = Reducer<
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
   let store: Store<CubePreviewState, CubePreviewAction>
+  @ObservedObject var viewStore: ViewStore<ViewState, CubePreviewAction>
+
+  struct ViewState: Equatable {
+    let selectedWordIsFinalWord: Bool
+    let selectedWordScore: Int?
+    let selectedWordString: String
+
+    init(state: CubePreviewState) {
+      self.selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
+      self.selectedWordIsFinalWord = state.finalWordString == self.selectedWordString
+      self.selectedWordScore = self.selectedWordIsFinalWord
+        ? state.moves.reduce(into: 0) { $0 += $1.score }
+        : nil
+    }
+  }
 
   public init(store: Store<CubePreviewState, CubePreviewAction>) {
     self.store = store
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
   }
 
   public var body: some View {
-    // TODO: selected word
-    WithViewStore(self.store) { viewStore in
-      CubeView(
-        store: self.store.scope(
-          state: CubeSceneView.ViewState.init(preview:),
-          action: CubePreviewAction.cubeScene
+    GeometryReader { proxy in
+      ZStack(alignment: .top) {
+        if !self.viewStore.selectedWordString.isEmpty {
+          (Text(self.viewStore.selectedWordString)
+            + self.scoreText
+            .baselineOffset(
+              (self.deviceState.idiom == .pad ? 2 : 1) * 16
+            )
+            .font(
+              .custom(
+                .matterMedium,
+                size: (self.deviceState.idiom == .pad ? 2 : 1) * 20
+              )
+            ))
+            .adaptiveFont(
+              .matterSemiBold,
+              size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
+            )
+            .opacity(self.viewStore.selectedWordIsFinalWord ? 1 : 0.5)
+            .allowsTightening(true)
+            .minimumScaleFactor(0.2)
+            .lineLimit(1)
+            .transition(.opacity)
+            .animation(nil, value: self.viewStore.selectedWordString)
+            .adaptivePadding(.top, .grid(16))
+        }
+
+        CubeView(
+          store: self.store.scope(
+            state: CubeSceneView.ViewState.init(preview:),
+            action: CubePreviewAction.cubeScene
+          )
         )
-      )
-      .adaptivePadding(
-        self.deviceState.idiom == .pad ? .horizontal : [],
-        .grid(30)
-      )
-      .onAppear {
-        viewStore.send(.onAppear)
+        .onAppear {
+          self.viewStore.send(.onAppear)
+        }
       }
     }
+    // TODO: implement bloom and refer to settings to decide if it should be shown
+//    .background(
+//      BloomBackground(
+//        size: proxy.size,
+//        store: self.store.scope(
+//          state: \.game,
+//          action: TrailerAction.game
+//        )
+//      )
+//    )
+  }
+
+  var scoreText: Text {
+    self.viewStore.selectedWordScore.map {
+      Text(" \($0)")
+    } ?? Text("")
   }
 }
 

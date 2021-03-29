@@ -3,10 +3,15 @@ import CubeCore
 import CubePreview
 import PuzzleGen
 import SharedModels
+import Styleguide
 import SwiftUI
 
 @main
 struct CubePreviewPreviewApp: App {
+  init() {
+    Styleguide.registerFonts()
+  }
+  
   var body: some Scene {
     WindowGroup {
       CubePreviewView(

@@ -81,7 +81,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, _, environment in
-        guard !selectedWord.isEmpty // TODO: is this correct
+        guard !selectedWord.isEmpty
         else {
           state.cubeStartedShakingAt = nil
           return .cancel(id: CubeShakingId())
