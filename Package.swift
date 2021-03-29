@@ -10,53 +10,32 @@ var package = Package(
     .iOS(.v14),
   ],
   products: [
-    .library(name: "AnyComparable", targets: ["AnyComparable"]),
     .library(name: "Build", targets: ["Build"]),
-    .library(name: "DatabaseClient", targets: ["DatabaseClient"]),
-    .library(name: "DatabaseLive", targets: ["DatabaseLive"]),
     .library(name: "DictionaryClient", targets: ["DictionaryClient"]),
-    .library(name: "DictionaryFileClient", targets: ["DictionaryFileClient"]),
     .library(name: "DictionarySqliteClient", targets: ["DictionarySqliteClient"]),
-    .library(name: "EnvVars", targets: ["EnvVars"]),
     .library(name: "FirstPartyMocks", targets: ["FirstPartyMocks"]),
-    .library(name: "MailgunClient", targets: ["MailgunClient"]),
-    .library(name: "MiddlewareHelpers", targets: ["MiddlewareHelpers"]),
     .library(name: "PuzzleGen", targets: ["PuzzleGen"]),
-    .library(name: "RunnerTasks", targets: ["RunnerTasks"]),
     .library(name: "ServerConfig", targets: ["ServerConfig"]),
     .library(name: "ServerRouter", targets: ["ServerRouter"]),
     .library(name: "ServerRoutes", targets: ["ServerRoutes"]),
     .library(name: "SharedModels", targets: ["SharedModels"]),
-    .library(name: "SnsClient", targets: ["SnsClient"]),
-    .library(name: "SnsClientLive", targets: ["SnsClientLive"]),
     .library(name: "Sqlite", targets: ["Sqlite"]),
     .library(name: "TestHelpers", targets: ["TestHelpers"]),
     .library(name: "XCTestDebugSupport", targets: ["XCTestDebugSupport"]),
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto.git", from: "1.1.2"),
-    .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.1.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen.git", .exact("0.3.0")),
     .package(url: "https://github.com/pointfreeco/swift-tagged.git", .branch("iso")),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.1.0"),
-    .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
-    .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
     .package(
       name: "Overture", url: "https://github.com/pointfreeco/swift-overture.git", .exact("0.5.0")),
-    .package(
-      name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
-    ),
-    .package(
-      name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
     .package(
       name: "SnapshotTesting", url: "https://github.com/pointfreeco/swift-snapshot-testing.git",
       .exact("1.8.2")),
   ],
   targets: [
-    .target(
-      name: "AnyComparable"
-    ),
     .target(
       name: "Build",
       dependencies: [
@@ -71,52 +50,10 @@ var package = Package(
       ]
     ),
     .target(
-      name: "DatabaseClient",
-      dependencies: [
-        "SharedModels",
-        "SnsClient",
-        .product(name: "Either", package: "Prelude"),
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ]
-    ),
-    .target(
-      name: "DatabaseLive",
-      dependencies: [
-        "DatabaseClient",
-        .product(name: "CasePaths", package: "swift-case-paths"),
-        .product(name: "Overture", package: "Overture"),
-        .product(name: "Prelude", package: "Prelude"),
-        .product(name: "PostgresKit", package: "postgres-kit"),
-      ]
-    ),
-    .testTarget(
-      name: "DatabaseLiveTests",
-      dependencies: [
-        "DatabaseLive",
-        "FirstPartyMocks",
-        "TestHelpers",
-      ]
-    ),
-    .target(
       name: "DictionaryClient",
       dependencies: [
         "SharedModels",
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ]
-    ),
-    .target(
-      name: "DictionaryFileClient",
-      dependencies: [
-        "DictionaryClient",
-        "Gzip",
-        "PuzzleGen",
-      ],
-      resources: [.copy("Dictionaries/")]
-    ),
-    .testTarget(
-      name: "DictionaryFileClientTests",
-      dependencies: [
-        "DictionaryFileClient"
       ]
     ),
     .target(
@@ -135,20 +72,7 @@ var package = Package(
       ]
     ),
     .target(
-      name: "EnvVars",
-      dependencies: [
-        "SnsClient",
-        .product(name: "Tagged", package: "swift-tagged"),
-      ]
-    ),
-    .target(
       name: "FirstPartyMocks"
-    ),
-    .target(
-      name: "Gzip",
-      dependencies: [
-        "system-zlib"
-      ]
     ),
     .testTarget(
       name: "LeaderboardMiddlewareIntegrationTests",
@@ -165,21 +89,6 @@ var package = Package(
       ],
       exclude: [
         "__Snapshots__"
-      ]
-    ),
-    .target(
-      name: "MailgunClient",
-      dependencies: [
-        .product(name: "Either", package: "Prelude"),
-        .product(name: "Tagged", package: "swift-tagged"),
-        .product(name: "UrlFormEncoding", package: "Web"),
-      ]
-    ),
-    .target(
-      name: "MiddlewareHelpers",
-      dependencies: [
-        "EnvVars",
-        .product(name: "HttpPipeline", package: "Web"),
       ]
     ),
     .target(
@@ -217,27 +126,6 @@ var package = Package(
       ]
     ),
     .target(
-      name: "SnsClient",
-      dependencies: [
-        .product(name: "Either", package: "Prelude"),
-        .product(name: "Tagged", package: "swift-tagged"),
-      ]
-    ),
-    .testTarget(
-      name: "SnsClientTests",
-      dependencies: [
-        "SnsClient",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
-      ]
-    ),
-    .target(
-      name: "SnsClientLive",
-      dependencies: [
-        "SnsClient",
-        .product(name: "SwiftAWSSignatureV4", package: "SwiftAWSSignatureV4"),
-      ]
-    ),
-    .target(
       name: "Sqlite",
       dependencies: [
         .target(name: "Csqlite3")
@@ -264,31 +152,7 @@ var package = Package(
       ]
     ),
     .target(
-      name: "system-zlib"
-    ),
-    .target(
       name: "TestHelpers"
-    ),
-    .target(
-      name: "VerifyReceiptMiddleware",
-      dependencies: [
-        "DatabaseClient",
-        "MiddlewareHelpers",
-        "ServerRouter",
-        "SharedModels",
-        .product(name: "HttpPipeline", package: "Web"),
-        .product(name: "Overture", package: "Overture"),
-      ]
-    ),
-    .testTarget(
-      name: "VerifyReceiptMiddlewareTests",
-      dependencies: [
-        "VerifyReceiptMiddleware",
-        "SiteMiddleware",
-        .product(name: "HttpPipelineTestSupport", package: "Web"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
-      ],
-      exclude: ["__Snapshots__"]
     ),
     .target(
       name: "XCTestDebugSupport"
@@ -304,6 +168,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
+    .library(name: "AnyComparable", targets: ["AnyComparable"]),
     .library(name: "ApiClient", targets: ["ApiClient"]),
     .library(name: "ApiClientLive", targets: ["ApiClientLive"]),
     .library(name: "AppAudioLibrary", targets: ["AppAudioLibrary"]),
@@ -325,6 +190,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "DateHelpers", targets: ["DateHelpers"]),
     .library(name: "DemoFeature", targets: ["DemoFeature"]),
     .library(name: "DeviceId", targets: ["DeviceId"]),
+    .library(name: "DictionaryFileClient", targets: ["DictionaryFileClient"]),
     .library(name: "FeedbackGeneratorClient", targets: ["FeedbackGeneratorClient"]),
     .library(name: "FileClient", targets: ["FileClient"]),
     .library(name: "GameCore", targets: ["GameCore"]),
@@ -369,6 +235,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
+    ),
+    .target(
+      name: "AnyComparable"
     ),
     .target(
       name: "ApiClient",
@@ -640,6 +509,21 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "DictionaryFileClient",
+      dependencies: [
+        "DictionaryClient",
+        "Gzip",
+        "PuzzleGen",
+      ],
+      resources: [.copy("Dictionaries/")]
+    ),
+    .testTarget(
+      name: "DictionaryFileClientTests",
+      dependencies: [
+        "DictionaryFileClient"
+      ]
+    ),
+    .target(
       name: "FeedbackGeneratorClient",
       dependencies: [
         "XCTestDebugSupport",
@@ -777,6 +661,12 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "IntegrationTestHelpers",
         "SiteMiddleware",
+      ]
+    ),
+    .target(
+      name: "Gzip",
+      dependencies: [
+        "system-zlib"
       ]
     ),
     .target(
@@ -1019,6 +909,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "system-zlib"
+    ),
+    .target(
       name: "TcaHelpers",
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture")
@@ -1098,14 +991,32 @@ package.products.append(contentsOf: [
   .library(name: "AppSiteAssociationMiddleware", targets: ["AppSiteAssociationMiddleware"]),
   .library(name: "DailyChallengeMiddleware", targets: ["DailyChallengeMiddleware"]),
   .library(name: "DailyChallengeReports", targets: ["DailyChallengeReports"]),
+  .library(name: "DatabaseClient", targets: ["DatabaseClient"]),
+  .library(name: "DatabaseLive", targets: ["DatabaseLive"]),
   .library(name: "DemoMiddleware", targets: ["DemoMiddleware"]),
+  .library(name: "EnvVars", targets: ["EnvVars"]),
   .library(name: "LeaderboardMiddleware", targets: ["LeaderboardMiddleware"]),
+  .library(name: "MailgunClient", targets: ["MailgunClient"]),
+  .library(name: "MiddlewareHelpers", targets: ["MiddlewareHelpers"]),
   .library(name: "PushMiddleware", targets: ["PushMiddleware"]),
+  .library(name: "RunnerTasks", targets: ["RunnerTasks"]),
   .library(name: "ServerBootstrap", targets: ["ServerBootstrap"]),
   .library(name: "ServerConfigMiddleware", targets: ["ServerConfigMiddleware"]),
   .library(name: "ShareGameMiddleware", targets: ["ShareGameMiddleware"]),
   .library(name: "SiteMiddleware", targets: ["SiteMiddleware"]),
+  .library(name: "SnsClient", targets: ["SnsClient"]),
+  .library(name: "SnsClientLive", targets: ["SnsClientLive"]),
   .library(name: "VerifyReceiptMiddleware", targets: ["VerifyReceiptMiddleware"]),
+])
+package.dependencies.append(contentsOf: [
+  .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
+  .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
+  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
+  .package(
+    name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
+  ),
+  .package(
+    name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
 ])
 package.targets.append(contentsOf: [
   .target(
@@ -1164,6 +1075,33 @@ package.targets.append(contentsOf: [
     ]
   ),
   .target(
+    name: "DatabaseClient",
+    dependencies: [
+      "SharedModels",
+      "SnsClient",
+      .product(name: "Either", package: "Prelude"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+    ]
+  ),
+  .target(
+    name: "DatabaseLive",
+    dependencies: [
+      "DatabaseClient",
+      .product(name: "CasePaths", package: "swift-case-paths"),
+      .product(name: "Overture", package: "Overture"),
+      .product(name: "Prelude", package: "Prelude"),
+      .product(name: "PostgresKit", package: "postgres-kit"),
+    ]
+  ),
+  .testTarget(
+    name: "DatabaseLiveTests",
+    dependencies: [
+      "DatabaseLive",
+      "FirstPartyMocks",
+      "TestHelpers",
+    ]
+  ),
+  .target(
     name: "DemoMiddleware",
     dependencies: [
       "DatabaseClient",
@@ -1180,6 +1118,13 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "Web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+    ]
+  ),
+  .target(
+    name: "EnvVars",
+    dependencies: [
+      "SnsClient",
+      .product(name: "Tagged", package: "swift-tagged"),
     ]
   ),
   .target(
@@ -1202,6 +1147,21 @@ package.targets.append(contentsOf: [
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
     exclude: ["__Snapshots__"]
+  ),
+  .target(
+    name: "MailgunClient",
+    dependencies: [
+      .product(name: "Either", package: "Prelude"),
+      .product(name: "Tagged", package: "swift-tagged"),
+      .product(name: "UrlFormEncoding", package: "Web"),
+    ]
+  ),
+  .target(
+    name: "MiddlewareHelpers",
+    dependencies: [
+      "EnvVars",
+      .product(name: "HttpPipeline", package: "Web"),
+    ]
   ),
   .target(
     name: "PushMiddleware",
@@ -1341,6 +1301,48 @@ package.targets.append(contentsOf: [
       "FirstPartyMocks",
       "SiteMiddleware",
       "TestHelpers",
+      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+    ],
+    exclude: ["__Snapshots__"]
+  ),
+  .target(
+    name: "SnsClient",
+    dependencies: [
+      .product(name: "Either", package: "Prelude"),
+      .product(name: "Tagged", package: "swift-tagged"),
+    ]
+  ),
+  .testTarget(
+    name: "SnsClientTests",
+    dependencies: [
+      "SnsClient",
+      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+    ]
+  ),
+  .target(
+    name: "SnsClientLive",
+    dependencies: [
+      "SnsClient",
+      .product(name: "SwiftAWSSignatureV4", package: "SwiftAWSSignatureV4"),
+    ]
+  ),
+  .target(
+    name: "VerifyReceiptMiddleware",
+    dependencies: [
+      "DatabaseClient",
+      "MiddlewareHelpers",
+      "ServerRouter",
+      "SharedModels",
+      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "Overture", package: "Overture"),
+    ]
+  ),
+  .testTarget(
+    name: "VerifyReceiptMiddlewareTests",
+    dependencies: [
+      "VerifyReceiptMiddleware",
+      "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "Web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
