@@ -265,7 +265,7 @@ public func gameReducer<StatePath, Action, Environment>(
   isHapticsEnabled: @escaping (StatePath.Root) -> Bool
 ) -> Reducer<StatePath.Root, Action, Environment>
 where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
-  return Reducer.combine(
+  Reducer.combine(
     gameOverReducer
       .optional()
       .pullback(

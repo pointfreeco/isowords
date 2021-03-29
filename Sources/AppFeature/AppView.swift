@@ -78,7 +78,6 @@ public enum AppAction: Equatable {
   case onboarding(OnboardingAction)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
-  case userSettingsLoaded(Result<UserSettings, NSError>)
   case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, NSError>)
 }
 
@@ -232,7 +231,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
         .fireAndForget(),
 
       environment.fileClient.loadSavedGames().map(AppAction.savedGamesLoaded),
-      environment.fileClient.loadUserSettings().map(AppAction.userSettingsLoaded),
 
       environment.userDefaults.installationTime <= 0
         ? environment.userDefaults.setInstallationTime(
@@ -430,27 +428,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case let .savedGamesLoaded(.success(savedGames)):
     state.home.savedGames = savedGames
     return .none
-
-  case let .userSettingsLoaded(result):
-    state.home.settings.userSettings = (try? result.get()) ?? state.home.settings.userSettings
-    return .merge(
-      environment.audioPlayer.setGlobalVolumeForSoundEffects(
-        state.home.settings.userSettings.soundEffectsVolume
-      )
-      .fireAndForget(),
-
-      environment.setUserInterfaceStyle(
-        state.home.settings.userSettings.colorScheme.userInterfaceStyle
-      )
-      // NB: Due to a bug in UIKit, if you override the user interface style too quickly it will
-      //     not stick. So, we wait for a tick of the runloop before setting it.
-      .debounce(
-        id: { struct Id: Hashable {}; return Id() }(),
-        for: 0,
-        scheduler: environment.mainQueue
-      )
-      .fireAndForget()
-    )
 
   case .verifyReceiptResponse:
     return .none

@@ -128,10 +128,10 @@ public enum HomeAction: Equatable {
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
   case onDisappear
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case setNavigation(tag: AppRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
+  case userSettingsLoaded(Result<UserSettings, NSError>)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
 
   public enum GameButtonAction: Equatable {
@@ -327,6 +327,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     ),
 
   .init { state, action, environment in
+    struct OnAppearPrefixId: Hashable {}
+    
     switch action {
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
       return .concatenate(
@@ -424,6 +426,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .merge(
         onAppearEffects(environment: environment),
 
+        environment.fileClient.loadUserSettings()
+          .map(HomeAction.userSettingsLoaded)
+          .prefix(id: OnAppearPrefixId(), 1),
+
         environment.gameCenter.localPlayer.listener
           .cancellable(id: ListenerId(), cancelInFlight: true)
           .filter {
@@ -444,13 +450,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           }
           .eraseToEffect()
       )
-
-    case .savedGamesLoaded(.failure):
-      return .none
-
-    case let .savedGamesLoaded(.success(savedGames)):
-      state.savedGames = savedGames
-      return .none
 
     case let .setNavigation(tag: tag):
       switch tag {
@@ -498,10 +497,48 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case let .weekInReviewResponse(.success(response)):
       state.weekInReview = response
       return .none
+
+    case let .userSettingsLoaded(result):
+      state.settings.userSettings = (try? result.get()) ?? state.settings.userSettings
+      return .merge(
+        environment.audioPlayer.setGlobalVolumeForSoundEffects(
+          state.settings.userSettings.soundEffectsVolume
+        )
+        .fireAndForget(),
+
+        environment.setUserInterfaceStyle(
+          state.settings.userSettings.colorScheme.userInterfaceStyle
+        )
+        // NB: Due to a bug in UIKit, if you override the user interface style too quickly it will
+        //     not stick. So, we wait for a tick of the runloop before setting it.
+        .debounce(
+          id: { struct Id: Hashable {}; return Id() }(),
+          for: 0,
+          scheduler: environment.mainQueue
+        )
+        .fireAndForget()
+      )
     }
   }
 )
 .binding(action: /HomeAction.binding)
+
+extension Effect {
+  func prefix(id: AnyHashable, _ maxLength: Int) -> Self {
+    Just(())
+      .flatMap { () -> AnyPublisher<Output, Failure> in
+        if tokens[id] ?? 0 > maxLength {
+          return Empty().eraseToAnyPublisher()
+        } else {
+          tokens[id, default: 0] += 1
+          return self.eraseToAnyPublisher()
+        }
+      }
+      .eraseToEffect()
+  }
+}
+
+var tokens: [AnyHashable: Int] = [:]
 
 public struct HomeView: View {
   struct ViewState: Equatable {
