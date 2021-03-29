@@ -441,6 +441,8 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         .receipt
         .originalPurchaseDate
       state.buildNumber = environment.build.number()
+      state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
+      state.stats.isHapticsEnabled = state.userSettings.enableHaptics
       state.userSettings.appIcon = environment.applicationClient.alternateIconName()
         .flatMap(AppIcon.init(rawValue:))
 

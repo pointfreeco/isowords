@@ -12,6 +12,7 @@ import SwiftUI
 
 public struct CubePreviewState: Equatable {
   var cubes: Puzzle
+  var isAnimationReduced: Bool
   var isHapticsEnabled: Bool
   var isOnLowPowerMode: Bool
   var moveIndex: Int
@@ -22,6 +23,7 @@ public struct CubePreviewState: Equatable {
 
   public init(
     cubes: ArchivablePuzzle,
+    isAnimationReduced: Bool,
     isHapticsEnabled: Bool,
     isOnLowPowerMode: Bool = false,
     moveIndex: Int,
@@ -33,6 +35,7 @@ public struct CubePreviewState: Equatable {
     self.cubes = .init(archivableCubes: cubes)
     apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
+    self.isAnimationReduced = isAnimationReduced
     self.isHapticsEnabled = isHapticsEnabled
     self.isOnLowPowerMode = isOnLowPowerMode
     self.moveIndex = moveIndex
@@ -98,6 +101,17 @@ public let cubePreviewReducer = Reducer<
     return .none
 
   case .onAppear:
+    let move = state.moves[state.moveIndex]
+    if state.isAnimationReduced {
+      switch move.type {
+      case let .playedWord(faces):
+        state.selectedCubeFaces = faces
+      case .removedCube:
+        break
+      }
+      return .none
+    }
+
     var effects: [Effect<CubePreviewAction, Never>] = [
       environment.lowPowerMode.start
         .prefix(1)
@@ -110,7 +124,6 @@ public let cubePreviewReducer = Reducer<
     ]
 
     var accumulatedSelectedFaces: [IndexedCubeFace] = []
-    let move = state.moves[state.moveIndex]
     switch move.type {
     case let .playedWord(faces):
       for (faceIndex, face) in faces.enumerated() {
@@ -195,11 +208,13 @@ public struct CubePreviewView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, CubePreviewAction>
 
   struct ViewState: Equatable {
+    let isAnimationReduced: Bool
     let selectedWordIsFinalWord: Bool
     let selectedWordScore: Int?
     let selectedWordString: String
 
     init(state: CubePreviewState) {
+      self.isAnimationReduced = state.isAnimationReduced
       self.selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
       self.selectedWordIsFinalWord = state.finalWordString == self.selectedWordString
       self.selectedWordScore =
@@ -253,18 +268,20 @@ public struct CubePreviewView: View {
         }
       }
       .background(
-        BloomBackground(
-          size: proxy.size,
-          store: self.store.actionless
-            .scope(
-              state: { _ in
-                BloomBackground.ViewState(
-                  bloomCount: self.viewStore.selectedWordString.count,
-                  word: self.viewStore.selectedWordString
-                )
-              }
-            )
-        )
+        self.viewStore.isAnimationReduced
+          ? nil
+          : BloomBackground(
+            size: proxy.size,
+            store: self.store.actionless
+              .scope(
+                state: { _ in
+                  BloomBackground.ViewState(
+                    bloomCount: self.viewStore.selectedWordString.count,
+                    word: self.viewStore.selectedWordString
+                  )
+                }
+              )
+          )
       )
     }
     .onTapGesture {

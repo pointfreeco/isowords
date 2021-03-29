@@ -14,6 +14,7 @@ public struct StatsState: Equatable {
   public var highestScoringWord: LocalDatabaseClient.Stats.Word?
   public var highScoreTimed: Int?
   public var highScoreUnlimited: Int?
+  public var isAnimationReduced: Bool
   public var isHapticsEnabled: Bool
   public var longestWord: String?
   public var route: Route?
@@ -41,6 +42,7 @@ public struct StatsState: Equatable {
     highestScoringWord: LocalDatabaseClient.Stats.Word? = nil,
     highScoreTimed: Int? = nil,
     highScoreUnlimited: Int? = nil,
+    isAnimationReduced: Bool = false,
     isHapticsEnabled: Bool = true,
     longestWord: String? = nil,
     route: Route? = nil,
@@ -52,6 +54,7 @@ public struct StatsState: Equatable {
     self.highestScoringWord = highestScoringWord
     self.highScoreTimed = highScoreTimed
     self.highScoreUnlimited = highScoreUnlimited
+    self.isAnimationReduced = isAnimationReduced
     self.isHapticsEnabled = isHapticsEnabled
     self.longestWord = longestWord
     self.route = route
@@ -134,7 +137,12 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
       return .none
 
     case .setNavigation(tag: .vocab):
-      state.route = .vocab(.init(isHapticsEnabled: state.isHapticsEnabled))
+      state.route = .vocab(
+        .init(
+          isAnimationReduced: state.isAnimationReduced,
+          isHapticsEnabled: state.isHapticsEnabled
+        )
+      )
       return .none
 
     case .setNavigation(tag: .none):
@@ -292,6 +300,7 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 averageWordLength: 5,
                 gamesPlayed: 1234,
                 highestScoringWord: .init(letters: "ENFEEBLINGS", score: 1022),
+                isAnimationReduced: false,
                 isHapticsEnabled: true,
                 longestWord: "ENFEEBLINGS",
                 secondsPlayed: 42000,
