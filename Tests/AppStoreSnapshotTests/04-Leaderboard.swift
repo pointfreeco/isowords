@@ -9,6 +9,7 @@ var leaderboardAppStoreView: AnyView {
     store: Store(
       initialState: LeaderboardState(
         cubePreview: nil,
+        isHapticsEnabled: true,
         scope: .vocab,
         settings: .init(),
         solo: LeaderboardResultsState(

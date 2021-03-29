@@ -13,7 +13,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testScopeSwitcher() {
     let store = TestStore(
-      initialState: .init(settings: .init()),
+      initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: .failing
     )
@@ -28,7 +28,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testTimeScopeSynchronization() {
     let store = TestStore(
-      initialState: .init(settings: .init()),
+      initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: .init(
         apiClient: .noop,
@@ -106,6 +106,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
     let store = TestStore(
       initialState: LeaderboardState(
+        isHapticsEnabled: false,
         scope: .vocab,
         settings: .init()
       ),
@@ -125,9 +126,10 @@ class LeaderboardFeatureTests: XCTestCase {
     store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
       $0.cubePreview = .init(
         cubes: .mock,
+        isHapticsEnabled: false,
         isOnLowPowerMode: false,
-        moves: [],
         moveIndex: 0,
+        moves: [],
         settings: .init()
       )
     }
