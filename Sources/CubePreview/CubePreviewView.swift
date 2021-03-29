@@ -3,6 +3,7 @@ import ComposableArchitecture
 import CubeCore
 import FeedbackGeneratorClient
 import HapticsCore
+import LowPowerModeClient
 import SelectionSoundsCore
 import SharedModels
 import Styleguide
@@ -10,21 +11,24 @@ import SwiftUI
 
 public struct CubePreviewState: Equatable {
   var cubes: Puzzle
+  // TODO: could be computed property
   var finalWordString: String?
+  var isHapticsEnabled: Bool
   var isOnLowPowerMode: Bool
+  var moveIndex: Int
   var moves: Moves
   var nub: CubeSceneView.ViewState.NubState
-  var moveIndex: Int
   var selectedCubeFaces: [IndexedCubeFace]
   let settings: CubeSceneView.ViewState.Settings
 
   public init(
     cubes: ArchivablePuzzle,
     finalWordString: String? = nil,
-    isOnLowPowerMode: Bool,
+    isHapticsEnabled: Bool,
+    isOnLowPowerMode: Bool = false,
+    moveIndex: Int,
     moves: Moves,
     nub: CubeSceneView.ViewState.NubState = .init(),
-    moveIndex: Int,
     selectedCubeFaces: [IndexedCubeFace] = [],
     settings: CubeSceneView.ViewState.Settings
   ) {
@@ -32,10 +36,11 @@ public struct CubePreviewState: Equatable {
     apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
     self.finalWordString = finalWordString
+    self.isHapticsEnabled = isHapticsEnabled
     self.isOnLowPowerMode = isOnLowPowerMode
+    self.moveIndex = moveIndex
     self.moves = moves
     self.nub = nub
-    self.moveIndex = moveIndex
     self.selectedCubeFaces = selectedCubeFaces
     self.settings = settings
   }
@@ -44,21 +49,26 @@ public struct CubePreviewState: Equatable {
 public enum CubePreviewAction: Equatable {
   case binding(BindingAction<CubePreviewState>)
   case cubeScene(CubeSceneView.ViewAction)
+  case lowPowerModeResponse(Bool)
   case onAppear
+  // case tap // TODO: cancel animation
 }
 
 public struct CubePreviewEnvironment {
   var audioPlayer: AudioPlayerClient
   var feedbackGenerator: FeedbackGeneratorClient
+  var lowPowerMode: LowPowerModeClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
     audioPlayer: AudioPlayerClient,
     feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.audioPlayer = audioPlayer
     self.feedbackGenerator = feedbackGenerator
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
   }
 }
@@ -75,8 +85,17 @@ public let cubePreviewReducer = Reducer<
   case .cubeScene:
     return .none
 
+  case let .lowPowerModeResponse(isOn):
+    state.isOnLowPowerMode = isOn
+    return .none
+
   case .onAppear:
     var effects: [Effect<CubePreviewAction, Never>] = [
+      environment.lowPowerMode.start
+        .prefix(1)
+        .map(CubePreviewAction.lowPowerModeResponse)
+        .eraseToEffect(),
+
       Effect.none
         .delay(for: 1, scheduler: environment.mainQueue)
         .eraseToEffect()
@@ -139,7 +158,7 @@ public let cubePreviewReducer = Reducer<
 .binding(action: /CubePreviewAction.binding)
 .haptics(
   feedbackGenerator: \.feedbackGenerator,
-  isEnabled: { _ in true }, // todo
+  isEnabled: \.isHapticsEnabled,
   triggerOnChangeOf: { $0.selectedCubeFaces }
 )
 .selectionSounds(
@@ -277,7 +296,7 @@ extension CubeSceneView.ViewState {
       isOnLowPowerMode: state.isOnLowPowerMode,
       nub: state.nub,
       playedWords: [],
-      selectedFaceCount: 0,
+      selectedFaceCount: state.selectedCubeFaces.count,
       selectedWordIsValid: selectedWordString == state.finalWordString,
       selectedWordString: selectedWordString,
       settings: state.settings

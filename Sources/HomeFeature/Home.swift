@@ -464,6 +464,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       case .leaderboard:
         state.route = .leaderboard(
           .init(
+            isHapticsEnabled: state.settings.userSettings.enableHaptics,
             settings: .init(
               enableCubeShadow: state.settings.enableCubeShadow,
               enableGyroMotion: state.settings.userSettings.enableGyroMotion,

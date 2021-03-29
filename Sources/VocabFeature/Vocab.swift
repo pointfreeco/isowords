@@ -10,16 +10,16 @@ import SwiftUI
 
 public struct VocabState: Equatable {
   var cubePreview: CubePreviewState?
-  var isOnLowPowerMode: Bool
+  var isHapticsEnabled: Bool
   var vocab: LocalDatabaseClient.Vocab?
 
   public init(
     cubePreview: CubePreviewState? = nil,
-    isOnLowPowerMode: Bool = false,
+    isHapticsEnabled: Bool,
     vocab: LocalDatabaseClient.Vocab? = nil
   ) {
     self.cubePreview = cubePreview
-    self.isOnLowPowerMode = isOnLowPowerMode
+    self.isHapticsEnabled = isHapticsEnabled
     self.vocab = vocab
   }
 
@@ -32,7 +32,6 @@ public struct VocabState: Equatable {
 public enum VocabAction: Equatable {
   case dismissCubePreview
   case gamesResponse(Result<VocabState.GamesResponse, NSError>)
-  case lowPowerModeResponse(Bool)
   case onAppear
   case preview(CubePreviewAction)
   case vocabResponse(Result<LocalDatabaseClient.Vocab, NSError>)
@@ -75,6 +74,7 @@ public let vocabReducer = Reducer<
         CubePreviewEnvironment(
           audioPlayer: $0.audioPlayer,
           feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue
         )
       }
@@ -106,29 +106,18 @@ public let vocabReducer = Reducer<
 
       state.cubePreview = .init(
         cubes: game.completedGame.cubes,
-        isOnLowPowerMode: state.isOnLowPowerMode,
-        moves: game.completedGame.moves,
+        isHapticsEnabled: state.isHapticsEnabled,
         moveIndex: moveIndex,
+        moves: game.completedGame.moves,
         settings: .init()
       )
       return .none
 
-    case let .lowPowerModeResponse(isOnLowPowerMode):
-      state.isOnLowPowerMode = isOnLowPowerMode
-      return .none
-
     case .onAppear:
-      return .merge(
-        environment.database.fetchVocab
-          .mapError { $0 as NSError }
-          .catchToEffect()
-          .map(VocabAction.vocabResponse),
-
-        environment.lowPowerMode.start
-          .prefix(1)
-          .map(VocabAction.lowPowerModeResponse)
-          .eraseToEffect()
-      )
+      return environment.database.fetchVocab
+        .mapError { $0 as NSError }
+        .catchToEffect()
+        .map(VocabAction.vocabResponse)
 
     case .preview:
       return .none
@@ -230,7 +219,7 @@ public struct VocabView: View {
     static let vocab = Store(
       initialState: .init(
         cubePreview: nil,
-        isOnLowPowerMode: true,
+        isHapticsEnabled: false,
         vocab: .init(
           words: [
             .init(letters: "STENOGRAPHER", playCount: 1, score: 1_230),

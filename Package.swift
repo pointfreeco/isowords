@@ -546,6 +546,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "CubeCore",
         "FeedbackGeneratorClient",
         "HapticsCore",
+        "LowPowerModeClient",
         "SelectionSoundsCore",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),

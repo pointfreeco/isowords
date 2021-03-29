@@ -34,7 +34,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct LeaderboardState: Equatable {
   public var cubePreview: CubePreviewState?
-  public var isOnLowPowerMode: Bool
+  public var isHapticsEnabled: Bool
   public var scope: LeaderboardScope = .games
   public var settings: CubeSceneView.ViewState.Settings
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
@@ -44,14 +44,14 @@ public struct LeaderboardState: Equatable {
 
   public init(
     cubePreview: CubePreviewState? = nil,
-    isOnLowPowerMode: Bool = false,
+    isHapticsEnabled: Bool,
     scope: LeaderboardScope = .games,
     settings: CubeSceneView.ViewState.Settings,
     solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   ) {
     self.cubePreview = cubePreview
-    self.isOnLowPowerMode = isOnLowPowerMode
+    self.isHapticsEnabled = isHapticsEnabled
     self.scope = scope
     self.settings = settings
     self.solo = solo
@@ -114,6 +114,7 @@ public let leaderboardReducer = Reducer<
         CubePreviewEnvironment(
           audioPlayer: $0.audioPlayer,
           feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue
         )
       }
@@ -158,9 +159,9 @@ public let leaderboardReducer = Reducer<
     case let .fetchWordResponse(.success(response)):
       state.cubePreview = CubePreviewState(
         cubes: response.puzzle,
-        isOnLowPowerMode: state.isOnLowPowerMode,
-        moves: response.moves,
+        isHapticsEnabled: state.isHapticsEnabled,
         moveIndex: response.moveIndex,
+        moves: response.moves,
         settings: state.settings
       )
       return .none
@@ -397,6 +398,7 @@ extension ResultEnvelope.Result {
           LeaderboardView(
             store: .init(
               initialState: LeaderboardState(
+                isHapticsEnabled: true,
                 settings: .init()
               ),
               reducer: leaderboardReducer,
