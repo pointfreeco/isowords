@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
       dictionary: .init(
         contains: { string, _ in
           [
-            "SEQUESTERING",
+            "YULETIDES",
           ]
           .contains(string.uppercased())
         },
