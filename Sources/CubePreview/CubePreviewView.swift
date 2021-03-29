@@ -167,7 +167,7 @@ public struct CubePreviewView: View {
       self.selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
       self.selectedWordIsFinalWord = state.finalWordString == self.selectedWordString
       self.selectedWordScore = self.selectedWordIsFinalWord
-        ? state.moves.reduce(into: 0) { $0 += $1.score }
+        ? state.moves[state.moveIndex].score
         : nil
     }
   }
