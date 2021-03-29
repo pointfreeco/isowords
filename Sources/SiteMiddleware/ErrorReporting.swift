@@ -16,7 +16,7 @@ func errorReporting(
           return pure(finalConn)
         }
 
-        let sanatizedRequestUrl = conn.request.url.flatMap { url -> URL? in
+        let sanitizedRequestUrl = conn.request.url.flatMap { url -> URL? in
           var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
           components.queryItems = components.queryItems?.map {
             $0.name == "accessToken"
@@ -37,7 +37,7 @@ func errorReporting(
                   Player: \(conn.data.player.id.rawValue)
                   Display name: \(conn.data.player.displayName ?? "None")
 
-                  Request URL: \(sanatizedRequestUrl?.absoluteString ?? "None")
+                  Request URL: \(sanitizedRequestUrl?.absoluteString ?? "None")
                   Request method: \(conn.request.httpMethod ?? "None")
                   Request headers: \(conn.request.allHTTPHeaderFields ?? [:])
                   Request body:

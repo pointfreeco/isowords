@@ -26,7 +26,6 @@ public struct GameView<Content>: View where Content: View {
   struct ViewState: Equatable {
     let isDailyChallenge: Bool
     let isGameLoaded: Bool
-//    let isGameOver: Bool
     let isNavVisible: Bool
     let isTrayVisible: Bool
     let selectedWordString: String
@@ -34,7 +33,6 @@ public struct GameView<Content>: View where Content: View {
     init(state: GameState) {
       self.isDailyChallenge = state.dailyChallengeId != nil
       self.isGameLoaded = state.isGameLoaded
-//      self.isGameOver = state.isGameOver
       self.isNavVisible = state.isNavVisible
       self.isTrayVisible = state.isTrayVisible
       self.selectedWordString = state.selectedWordString
