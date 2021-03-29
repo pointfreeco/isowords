@@ -101,17 +101,6 @@ public let cubePreviewReducer = Reducer<
     return .none
 
   case .onAppear:
-    let move = state.moves[state.moveIndex]
-    if state.isAnimationReduced {
-      switch move.type {
-      case let .playedWord(faces):
-        state.selectedCubeFaces = faces
-      case .removedCube:
-        break
-      }
-      return .none
-    }
-
     var effects: [Effect<CubePreviewAction, Never>] = [
       environment.lowPowerMode.start
         .prefix(1)
@@ -124,6 +113,7 @@ public let cubePreviewReducer = Reducer<
     ]
 
     var accumulatedSelectedFaces: [IndexedCubeFace] = []
+    let move = state.moves[state.moveIndex]
     switch move.type {
     case let .playedWord(faces):
       for (faceIndex, face) in faces.enumerated() {
