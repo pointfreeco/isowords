@@ -35,8 +35,8 @@ class GameOverFeatureTests: XCTestCase {
         ])
       )
       $0.database.playedGamesCount = { _ in .init(value: 10) }
-      $0.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
       $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+      $0.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
       $0.userNotifications.getNotificationSettings = .none
     }
@@ -59,7 +59,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     store.receive(
       .submitGameResponse(
         .success(
@@ -166,7 +166,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     store.receive(
       .submitGameResponse(
         .success(
@@ -242,7 +242,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     store.receive(.submitGameResponse(.success(.turnBased)))
   }
 
@@ -388,7 +388,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     self.mainRunLoop.advance(by: .seconds(1))
     store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
@@ -436,6 +436,6 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView)
+    store.receive(.enableView) { $0.isViewEnabled = true }
   }
 }
