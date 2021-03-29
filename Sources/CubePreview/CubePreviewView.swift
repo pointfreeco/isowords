@@ -106,7 +106,7 @@ public let cubePreviewReducer = Reducer<
 
       Effect.none
         .delay(for: 1, scheduler: environment.mainQueue)
-        .eraseToEffect()
+        .eraseToEffect(),
     ]
 
     var accumulatedSelectedFaces: [IndexedCubeFace] = []
@@ -115,7 +115,7 @@ public let cubePreviewReducer = Reducer<
     case let .playedWord(faces):
       for (faceIndex, face) in faces.enumerated() {
         accumulatedSelectedFaces.append(face)
-        let moveDuration = Double.random(in: (0.6 ... 0.8))
+        let moveDuration = Double.random(in: (0.6...0.8))
 
         effects.append(
           Effect(value: CubePreviewAction.binding(.set(\.nub.location, .face(face))))
@@ -202,7 +202,8 @@ public struct CubePreviewView: View {
     init(state: CubePreviewState) {
       self.selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
       self.selectedWordIsFinalWord = state.finalWordString == self.selectedWordString
-      self.selectedWordScore = self.selectedWordIsFinalWord
+      self.selectedWordScore =
+        self.selectedWordIsFinalWord
         ? state.moves[state.moveIndex].score
         : nil
     }

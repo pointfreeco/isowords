@@ -11,7 +11,7 @@ struct CubePreviewPreviewApp: App {
   init() {
     Styleguide.registerFonts()
   }
-  
+
   var body: some Scene {
     WindowGroup {
       CubePreviewView(
