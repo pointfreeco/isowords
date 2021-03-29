@@ -393,9 +393,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       .fireAndForget(),
 
       environment.serverConfig.refresh()
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
         .fireAndForget()
     )
 
@@ -483,44 +480,42 @@ public struct MainAppView: View {
       .navigationViewStyle(StackNavigationViewStyle())
       .zIndex(0)
     } else {
-      Group {
-        IfLetStore(
-          self.store.scope(
-            state: { appState in
-              appState.game.map {
-                (
-                  game: $0,
-                  nub: nil,
-                  settings: .init(
-                    enableCubeShadow: appState.home.settings.enableCubeShadow,
-                    enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
-                    showSceneStatistics: appState.home.settings.showSceneStatistics
-                  )
+      IfLetStore(
+        self.store.scope(
+          state: { appState in
+            appState.game.map {
+              (
+                game: $0,
+                nub: nil,
+                settings: .init(
+                  enableCubeShadow: appState.home.settings.enableCubeShadow,
+                  enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
+                  showSceneStatistics: appState.home.settings.showSceneStatistics
                 )
-              }
+              )
             }
-          ),
-          then: { gameAndSettingsStore in
-            GameFeatureView(
-              content: CubeView(
-                store: gameAndSettingsStore.scope(
-                  state: CubeSceneView.ViewState.init(game:nub:settings:),
-                  action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
-                )
-              ),
-              store: self.store.scope(state: \.currentGame, action: AppAction.currentGame)
-            )
           }
-        )
-        .transition(.game)
-        .zIndex(1)
+        ),
+        then: { gameAndSettingsStore in
+          GameFeatureView(
+            content: CubeView(
+              store: gameAndSettingsStore.scope(
+                state: CubeSceneView.ViewState.init(game:nub:settings:),
+                action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
+              )
+            ),
+            store: self.store.scope(state: \.currentGame, action: AppAction.currentGame)
+          )
+        }
+      )
+      .transition(.game)
+      .zIndex(1)
 
-        IfLetStore(
-          self.store.scope(state: \.onboarding, action: AppAction.onboarding),
-          then: OnboardingView.init(store:)
-        )
-        .zIndex(2)
-      }
+      IfLetStore(
+        self.store.scope(state: \.onboarding, action: AppAction.onboarding),
+        then: OnboardingView.init(store:)
+      )
+      .zIndex(2)
     }
   }
 }
