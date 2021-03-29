@@ -62,7 +62,7 @@ struct CubePreviewPreviewApp: App {
             audioPlayer: .noop,
             feedbackGenerator: .live,
             lowPowerMode: .live,
-            mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+            mainQueue: .main
           )
         )
       )

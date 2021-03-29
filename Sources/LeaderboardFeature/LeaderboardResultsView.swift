@@ -431,7 +431,7 @@ extension ResultEnvelope {
                   )
                 )
               },
-              mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+              mainQueue: .immediate
             )
           ),
           title: Text("362,998 words"),
@@ -472,7 +472,7 @@ extension ResultEnvelope {
                 .delay(for: 1, scheduler: DispatchQueue.main.animation())
                 .eraseToEffect()
               },
-              mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+              mainQueue: .immediate
             )
           ),
           title: Text("Daily challenge"),
@@ -495,7 +495,7 @@ extension ResultEnvelope {
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
               loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-              mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+              mainQueue: .immediate
             )
           ),
           title: Text("Solo"),

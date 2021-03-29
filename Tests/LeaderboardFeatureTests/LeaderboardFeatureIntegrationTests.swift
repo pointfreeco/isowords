@@ -38,7 +38,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
       $0.apiClient = ApiClient(middleware: middleware)
-      $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+      $0.mainQueue = .immediate
     }
 
     let store = TestStore(
@@ -97,7 +97,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
       $0.apiClient = ApiClient(middleware: middleware)
-      $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+      $0.mainQueue = .immediate
     }
 
     let store = TestStore(

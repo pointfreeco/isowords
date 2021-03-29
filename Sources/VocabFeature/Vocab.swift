@@ -233,7 +233,7 @@ public struct VocabView: View {
         database: .noop,
         feedbackGenerator: .noop,
         lowPowerMode: .false,
-        mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+        mainQueue: .main
       )
     )
   }

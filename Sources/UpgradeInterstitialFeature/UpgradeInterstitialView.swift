@@ -397,7 +397,7 @@ struct UpgradeInterstitialPreviews: PreviewProvider {
             ),
             reducer: upgradeInterstitialReducer,
             environment: .init(
-              mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+              mainRunLoop: .main,
               serverConfig: .noop,
               storeKit: .live()
             )

@@ -33,7 +33,7 @@ struct SettingsPreviewApp: App {
               feedbackGenerator: .live,
               fileClient: .live,
               lowPowerMode: .live,
-              mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+              mainQueue: .main,
               remoteNotifications: .live,
               serverConfig: ServerConfigClient.live(fetch: { .init(value: .init()) }),
               setUserInterfaceStyle: { userInterfaceStyle in

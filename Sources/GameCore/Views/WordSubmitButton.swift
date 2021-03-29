@@ -304,7 +304,7 @@ struct ReactionsView: View {
             environment: WordSubmitEnvironment(
               audioPlayer: .noop,
               feedbackGenerator: .live,
-              mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+              mainQueue: .main
             )
           )
         )
