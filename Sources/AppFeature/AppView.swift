@@ -73,8 +73,6 @@ public enum AppAction: Equatable {
   case appDelegate(AppDelegateAction)
   case currentGame(GameFeatureAction)
   case didChangeScenePhase(ScenePhase)
-  case dismissGame
-  case dismissOnboarding
   case gameCenter(GameCenterAction)
   case home(HomeAction)
   case onboarding(OnboardingAction)
@@ -407,14 +405,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .didChangeScenePhase:
     return .none
 
-  case .dismissGame:
-    state.game = nil
-    return .none
-
-  case .dismissOnboarding:
-    state.onboarding = nil
-    return .none
-
   case .gameCenter:
     return .none
 
@@ -455,10 +445,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       // NB: Due to a bug in UIKit, if you override the user interface style too quickly it will
       //     not stick. So, we wait for a tick of the runloop before setting it.
       .debounce(
-        id: {
-          struct Id: Hashable {}
-          return Id()
-        }(),
+        id: { struct Id: Hashable {}; return Id() }(),
         for: 0,
         scheduler: environment.mainQueue
       )
