@@ -34,6 +34,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct LeaderboardState: Equatable {
   public var cubePreview: CubePreviewState?
+  public var isAnimationReduced: Bool
   public var isHapticsEnabled: Bool
   public var scope: LeaderboardScope = .games
   public var settings: CubeSceneView.ViewState.Settings
@@ -44,6 +45,7 @@ public struct LeaderboardState: Equatable {
 
   public init(
     cubePreview: CubePreviewState? = nil,
+    isAnimationReduced: Bool = false,
     isHapticsEnabled: Bool,
     scope: LeaderboardScope = .games,
     settings: CubeSceneView.ViewState.Settings,
@@ -51,6 +53,7 @@ public struct LeaderboardState: Equatable {
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   ) {
     self.cubePreview = cubePreview
+    self.isAnimationReduced = isAnimationReduced
     self.isHapticsEnabled = isHapticsEnabled
     self.scope = scope
     self.settings = settings
@@ -159,6 +162,7 @@ public let leaderboardReducer = Reducer<
     case let .fetchWordResponse(.success(response)):
       state.cubePreview = CubePreviewState(
         cubes: response.puzzle,
+        isAnimationReduced: state.isAnimationReduced,
         isHapticsEnabled: state.isHapticsEnabled,
         moveIndex: response.moveIndex,
         moves: response.moves,
@@ -398,6 +402,7 @@ extension ResultEnvelope.Result {
           LeaderboardView(
             store: .init(
               initialState: LeaderboardState(
+                isAnimationReduced: false,
                 isHapticsEnabled: true,
                 settings: .init()
               ),

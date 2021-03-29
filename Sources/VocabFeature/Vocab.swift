@@ -10,15 +10,18 @@ import SwiftUI
 
 public struct VocabState: Equatable {
   var cubePreview: CubePreviewState?
+  var isAnimationReduced: Bool
   var isHapticsEnabled: Bool
   var vocab: LocalDatabaseClient.Vocab?
 
   public init(
     cubePreview: CubePreviewState? = nil,
+    isAnimationReduced: Bool,
     isHapticsEnabled: Bool,
     vocab: LocalDatabaseClient.Vocab? = nil
   ) {
     self.cubePreview = cubePreview
+    self.isAnimationReduced = isAnimationReduced
     self.isHapticsEnabled = isHapticsEnabled
     self.vocab = vocab
   }
@@ -106,6 +109,7 @@ public let vocabReducer = Reducer<
 
       state.cubePreview = .init(
         cubes: game.completedGame.cubes,
+        isAnimationReduced: state.isAnimationReduced,
         isHapticsEnabled: state.isHapticsEnabled,
         moveIndex: moveIndex,
         moves: game.completedGame.moves,
@@ -219,6 +223,7 @@ public struct VocabView: View {
     static let vocab = Store(
       initialState: .init(
         cubePreview: nil,
+        isAnimationReduced: false,
         isHapticsEnabled: false,
         vocab: .init(
           words: [
