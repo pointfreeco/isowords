@@ -166,7 +166,7 @@ public struct GameView<Content>: View where Content: View {
             store: self.store.actionless
               .scope(
                 state: {
-                  BloomBackground.ViewState.init(
+                  BloomBackground.ViewState(
                     bloomCount: $0.selectedWord.count,
                     word: $0.selectedWordString
                   )

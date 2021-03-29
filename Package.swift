@@ -1028,6 +1028,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "TrailerFeature",
       dependencies: [
         "ApiClient",
+        "Bloom",
         "CubeCore",
         "GameCore",
         "DictionaryClient",

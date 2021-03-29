@@ -1,4 +1,5 @@
 import AudioPlayerClient
+import Bloom
 import Combine
 import ComposableArchitecture
 import CubeCore
@@ -349,10 +350,15 @@ public struct TrailerView: View {
       .background(
         BloomBackground(
           size: proxy.size,
-          store: self.store.scope(
-            state: \.game,
-            action: TrailerAction.game
-          )
+          store: self.store.actionless
+            .scope(
+              state: {
+                BloomBackground.ViewState(
+                  bloomCount: $0.game.selectedWord.count,
+                  word: $0.game.selectedWordString
+                )
+              }
+            )
         )
       )
     }

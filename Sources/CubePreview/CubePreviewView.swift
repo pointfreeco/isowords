@@ -254,15 +254,15 @@ public struct CubePreviewView: View {
       .background(
         BloomBackground(
           size: proxy.size,
-          store: self.store.scope(
-            state: { _ in
-              BloomBackground.ViewState(
-                bloomCount: self.viewStore.selectedWordString.count,
-                word: self.viewStore.selectedWordString
-              )
-            },
-            action: { (n: Never) -> CubePreviewAction in }
-          )
+          store: self.store.actionless
+            .scope(
+              state: { _ in
+                BloomBackground.ViewState(
+                  bloomCount: self.viewStore.selectedWordString.count,
+                  word: self.viewStore.selectedWordString
+                )
+              }
+            )
         )
       )
     }
