@@ -77,25 +77,22 @@ public func submitGameMiddleware(
     ])
 
   case let .turnBased(turnBased):
-    unverifiedArchiveData =
-      turnBased.playerIndexToId.values.contains(request.currentPlayer.id)
-      ? pure(
-        turnBased.playerIndexToId.map { playerIndex, playerId in
-          UnverifiedArchiveData(
-            dailyChallengeId: nil,
-            gameContext: .turnBased,
-            gameMode: turnBased.gameMode,
-            language: turnBased.language,
-            playerId: playerId,
-            puzzle: turnBased.puzzle,
-            wordIndices: request.submitRequest.moves
-              .enumerated()
-              .filter { $0.element.playerIndex == playerIndex }
-              .map(\.offset)
-          )
-        }
-      )
-      : throwE(ApiError(error: VerificationFailed()))
+    unverifiedArchiveData = pure(
+      turnBased.playerIndexToId.map { playerIndex, playerId in
+        UnverifiedArchiveData(
+          dailyChallengeId: nil,
+          gameContext: .turnBased,
+          gameMode: turnBased.gameMode,
+          language: turnBased.language,
+          playerId: playerId,
+          puzzle: turnBased.puzzle,
+          wordIndices: request.submitRequest.moves
+            .enumerated()
+            .filter { $0.element.playerIndex == playerIndex }
+            .map(\.offset)
+        )
+      }
+    )
   }
 
   let leaderboardScore: EitherIO<Error, LeaderboardScore?> =

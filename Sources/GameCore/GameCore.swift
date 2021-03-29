@@ -1085,8 +1085,19 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         .fireAndForget()
 
     case let .gameCenter(.turnBasedMatchResponse(.success(match))):
-      // TODO: Should this replace `GameState`?
-      state.turnBasedContext?.match = match
+      guard
+        let turnBasedMatchData = match.matchData?.turnBasedMatchData
+      else { return .none }
+
+      var gameState = GameState(
+        gameCurrentTime: environment.mainRunLoop.now.date,
+        localPlayer: environment.gameCenter.localPlayer.localPlayer(),
+        turnBasedMatch: match,
+        turnBasedMatchData: turnBasedMatchData
+      )
+      gameState.activeGames = state.activeGames
+      gameState.isGameLoaded = state.isGameLoaded
+      state = gameState
       return .none
 
     case .gameCenter(.turnBasedMatchResponse(.failure)):

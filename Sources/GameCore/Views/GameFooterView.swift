@@ -192,7 +192,7 @@ extension WordListView.ViewState {
               cubes: .mock,
               gameMode: .unlimited,
               language: .en,
-              metadata: .init(),
+              metadata: .init(playerIndexToId: [:]),
               moves: [
                 .init(
                   playedAt: Date(),
