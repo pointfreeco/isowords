@@ -10,7 +10,7 @@ import UserDefaultsClient
 extension AppEnvironment {
   static let didFinishLaunching = update(failing) {
     $0.audioPlayer.load = { _ in .none }
-    $0.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    $0.backgroundQueue = .immediate
     $0.database.migrate = .none
     $0.dictionary.load = { _ in false }
     let fileClient = $0.fileClient
@@ -19,8 +19,8 @@ extension AppEnvironment {
     }
     $0.fileClient.override(load: userSettingsFileName, Effect<UserSettings, Error>.none)
     $0.gameCenter.localPlayer.authenticate = .none
-    $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-    $0.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    $0.mainQueue = .immediate
+    $0.mainRunLoop = .immediate
     $0.serverConfig.refresh = { .none }
     $0.storeKit.observer = .none
     $0.userDefaults.override(true, forKey: "hasShownFirstLaunchOnboardingKey")

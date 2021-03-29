@@ -33,7 +33,7 @@ class PersistenceTests: XCTestCase {
       reducer: appReducer,
       environment: update(.failing) {
         $0.audioPlayer.play = { _ in .none }
-        $0.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+        $0.backgroundQueue = .immediate
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
@@ -41,7 +41,7 @@ class PersistenceTests: XCTestCase {
           saves.append(data)
           return .none
         }
-        $0.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+        $0.mainRunLoop = .immediate
       }
     )
 
@@ -54,9 +54,9 @@ class PersistenceTests: XCTestCase {
       $0.game = GameState(
         cubes: .mock,
         gameContext: .solo,
-        gameCurrentTime: RunLoop.immediateScheduler.now.date,
+        gameCurrentTime: RunLoop.immediate.now.date,
         gameMode: .unlimited,
-        gameStartTime: RunLoop.immediateScheduler.now.date
+        gameStartTime: RunLoop.immediate.now.date
       )
       $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
     }
@@ -98,7 +98,7 @@ class PersistenceTests: XCTestCase {
       try XCTUnwrap(&$0.game) {
         $0.moves = [
           .init(
-            playedAt: RunLoop.immediateScheduler.now.date,
+            playedAt: RunLoop.immediate.now.date,
             playerIndex: nil,
             reactions: nil,
             score: 27,
@@ -161,7 +161,7 @@ class PersistenceTests: XCTestCase {
       reducer: appReducer,
       environment: update(.failing) {
         $0.audioPlayer.stop = { _ in .none }
-        $0.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+        $0.backgroundQueue = .immediate
         $0.database.saveGame = { _ in
           didArchiveGame = true
           return .none

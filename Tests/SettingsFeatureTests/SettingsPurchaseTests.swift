@@ -13,8 +13,8 @@ class SettingsPurchaseTests: XCTestCase {
     environment.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     environment.applicationClient.alternateIconName = { nil }
     environment.build.number = { 42 }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
     environment.userNotifications.getNotificationSettings = .none
     environment.userNotifications.requestAuthorization = { _ in .init(value: false) }

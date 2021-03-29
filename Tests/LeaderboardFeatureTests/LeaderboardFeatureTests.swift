@@ -35,7 +35,7 @@ class LeaderboardFeatureTests: XCTestCase {
         audioPlayer: .noop,
         feedbackGenerator: .noop,
         lowPowerMode: .false,
-        mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+        mainQueue: .immediate
       )
     )
 
@@ -101,7 +101,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
     let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
       $0.apiClient = ApiClient(middleware: middleware)
-      $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+      $0.mainQueue = .immediate
     }
 
     let store = TestStore(

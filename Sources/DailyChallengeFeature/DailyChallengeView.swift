@@ -536,8 +536,8 @@ private struct RingEffect: GeometryEffect {
         DailyChallengeEnvironment(
           apiClient: .noop,
           fileClient: .noop,
-          mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
-          mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
+          mainQueue: .immediate,
+          mainRunLoop: .immediate,
           remoteNotifications: .noop,
           userNotifications: .noop
         )

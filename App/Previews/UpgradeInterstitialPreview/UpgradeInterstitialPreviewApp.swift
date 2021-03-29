@@ -16,7 +16,7 @@ struct UpgradeInterstitialPreviewApp: App {
           initialState: .init(),
           reducer: upgradeInterstitialReducer,
           environment: .init(
-            mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+            mainRunLoop: .main,
             serverConfig: .noop,
             storeKit: .live()
           )

@@ -219,7 +219,7 @@ public struct MultiplayerView: View {
       environment: MultiplayerEnvironment(
         backgroundQueue: DispatchQueue(label: "background").eraseToAnyScheduler(),
         gameCenter: .noop,
-        mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+        mainQueue: .main
       )
     )
   }

@@ -73,7 +73,7 @@ class DailyChallengeFeatureTests: XCTestCase {
 
     let clientEnvironment = DailyChallengeResultsEnvironment(
       apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment)),
-      mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+      mainQueue: .immediate
     )
 
     let store = TestStore(

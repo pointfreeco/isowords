@@ -75,7 +75,7 @@ class LeaderboardTests: XCTestCase {
         loadResults: { _, _ in
           .init(error: .init(error: SomeError()))
         },
-        mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+        mainQueue: .immediate
       )
     )
 
@@ -131,7 +131,7 @@ extension LeaderboardResultsEnvironment {
           return .init(value: untimedResults)
         }
       },
-      mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+      mainQueue: .immediate
     )
   }
 }

@@ -6,8 +6,8 @@ import XCTest
 @testable import SharedModels
 
 class DailyChallengeFeatureTests: XCTestCase {
-  let mainQueue = DispatchQueue.testScheduler
-  let mainRunLoop = RunLoop.testScheduler
+  let mainQueue = DispatchQueue.test
+  let mainRunLoop = RunLoop.test
 
   func testOnAppear() {
     let fetchChallengeResults = [
@@ -188,7 +188,7 @@ class DailyChallengeFeatureTests: XCTestCase {
         didRegisterForRemoteNotifications = true
       }
     }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(),
@@ -222,7 +222,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     environment.userNotifications.requestAuthorization = { options in
       .init(value: false)
     }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(),

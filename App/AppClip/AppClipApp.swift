@@ -94,8 +94,8 @@ extension DemoEnvironment {
       dictionary: .file(),
       feedbackGenerator: .live,
       lowPowerMode: .live,
-      mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-      mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+      mainQueue: .main,
+      mainRunLoop: .main,
       serverConfig: .noop,
       userDefaults: .live()
     )

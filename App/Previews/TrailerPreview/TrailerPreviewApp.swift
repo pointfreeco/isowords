@@ -17,7 +17,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
           AppClipAudioLibrary.bundle,
         ]
       ),
-      backgroundQueue: DispatchQueue.main.eraseToAnyScheduler(),
+      backgroundQueue: .main,
       dictionary: .init(
         contains: { string, _ in
           [
@@ -32,8 +32,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         randomCubes: { _ in .mock },
         unload: { _ in }
       ),
-      mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-      mainRunLoop: RunLoop.main.eraseToAnyScheduler()
+      mainQueue: .main,
+      mainRunLoop: .main
     )
   )
 

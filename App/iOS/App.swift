@@ -104,8 +104,8 @@ extension AppEnvironment {
       fileClient: .live,
       gameCenter: .live,
       lowPowerMode: .live,
-      mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-      mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+      mainQueue: .main,
+      mainRunLoop: .main,
       remoteNotifications: .live,
       serverConfig: serverConfig,
       setUserInterfaceStyle: { userInterfaceStyle in
