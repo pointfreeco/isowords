@@ -20,16 +20,10 @@ public func forceQuitMatch(
           message: "\(localPlayer.displayName) forfeited the match."
         )
       )
-      .ignoreOutput()
-      .ignoreFailure()
-      .eraseToEffect()
       .fireAndForget()
   } else {
     return gameCenter.turnBasedMatch
       .participantQuitOutOfTurn(match.matchId)
-      .ignoreOutput()
-      .ignoreFailure()
-      .eraseToEffect()
       .fireAndForget()
   }
 }
