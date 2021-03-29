@@ -1,25 +1,26 @@
+import AudioPlayerClient
 import ComposableArchitecture
 import CubePreview
+import FeedbackGeneratorClient
 import LocalDatabaseClient
+import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
 
 public struct VocabState: Equatable {
   var cubePreview: CubePreviewState?
+  var isHapticsEnabled: Bool
   var vocab: LocalDatabaseClient.Vocab?
 
   public init(
     cubePreview: CubePreviewState? = nil,
+    isHapticsEnabled: Bool,
     vocab: LocalDatabaseClient.Vocab? = nil
   ) {
     self.cubePreview = cubePreview
+    self.isHapticsEnabled = isHapticsEnabled
     self.vocab = vocab
-  }
-
-  var cubePreviewIsPresented: Bool {
-    get { self.cubePreview != nil }
-    set { self.cubePreview = nil }
   }
 
   public struct GamesResponse: Equatable {
@@ -38,77 +39,105 @@ public enum VocabAction: Equatable {
 }
 
 public struct VocabEnvironment {
+  var audioPlayer: AudioPlayerClient
   var database: LocalDatabaseClient
+  var feedbackGenerator: FeedbackGeneratorClient
+  var lowPowerMode: LowPowerModeClient
+  var mainQueue: AnySchedulerOf<DispatchQueue>
 
-  public init(database: LocalDatabaseClient) {
+  public init(
+    audioPlayer: AudioPlayerClient,
+    database: LocalDatabaseClient,
+    feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
+    mainQueue: AnySchedulerOf<DispatchQueue>
+  ) {
+    self.audioPlayer = audioPlayer
     self.database = database
+    self.lowPowerMode = lowPowerMode
+    self.feedbackGenerator = feedbackGenerator
+    self.mainQueue = mainQueue
   }
 }
 
-public let vocabReducer = Reducer<VocabState, VocabAction, VocabEnvironment> {
-  state, action, environment in
-  switch action {
-  case .dismissCubePreview:
-    state.cubePreview = nil
-    return .none
-
-  case let .gamesResponse(.failure(error)):
-    return .none
-
-  case let .gamesResponse(.success(response)):
-    guard let game = response.games.first
-    else { return .none }
-
-    let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
-      switch move.type {
-      case let .playedWord(cubeFaces):
-        return game.completedGame.cubes.string(from: cubeFaces) == response.word
-      case .removedCube:
-        return false
-      }
-    }
-    guard let moveIndex = possibleMoveIndex
-    else { return .none }
-
-    state.cubePreview = .init(
-      preview: .words(
-        .init(
-          words: [
-            .init(
-              cubes: game.completedGame.cubes,
-              moveIndex: moveIndex,
-              moves: game.completedGame.moves
-            )
-          ]
+public let vocabReducer = Reducer<
+  VocabState,
+  VocabAction,
+  VocabEnvironment
+>.combine(
+  cubePreviewReducer
+    .optional()
+    .pullback(
+      state: \.cubePreview,
+      action: /VocabAction.preview,
+      environment: {
+        CubePreviewEnvironment(
+          audioPlayer: $0.audioPlayer,
+          feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
+          mainQueue: $0.mainQueue
         )
+      }
+    ),
+
+  .init { state, action, environment in
+    switch action {
+    case .dismissCubePreview:
+      state.cubePreview = nil
+      return .none
+
+    case let .gamesResponse(.failure(error)):
+      return .none
+
+    case let .gamesResponse(.success(response)):
+      guard let game = response.games.first
+      else { return .none }
+
+      let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
+        switch move.type {
+        case let .playedWord(cubeFaces):
+          return game.completedGame.cubes.string(from: cubeFaces) == response.word
+        case .removedCube:
+          return false
+        }
+      }
+      guard let moveIndex = possibleMoveIndex
+      else { return .none }
+
+      state.cubePreview = .init(
+        cubes: game.completedGame.cubes,
+        isHapticsEnabled: state.isHapticsEnabled,
+        moveIndex: moveIndex,
+        moves: game.completedGame.moves,
+        settings: .init()
       )
-    )
-    return .none
+      return .none
 
-  case .onAppear:
-    return environment.database.fetchVocab
-      .mapError { $0 as NSError }
-      .catchToEffect()
-      .map(VocabAction.vocabResponse)
+    case .onAppear:
+      return environment.database.fetchVocab
+        .mapError { $0 as NSError }
+        .catchToEffect()
+        .map(VocabAction.vocabResponse)
 
-  case .preview:
-    return .none
+    case .preview:
+      return .none
 
-  case let .vocabResponse(.success(vocab)):
-    state.vocab = vocab
-    return .none
+    case let .vocabResponse(.success(vocab)):
+      state.vocab = vocab
+      return .none
 
-  case let .vocabResponse(.failure(error)):
-    return .none
+    case let .vocabResponse(.failure(error)):
+      return .none
 
-  case let .wordTapped(word):
-    return environment.database.fetchGamesForWord(word.letters)
-      .map { .init(games: $0, word: word.letters) }
-      .mapError { $0 as NSError }
-      .catchToEffect()
-      .map(VocabAction.gamesResponse)
+    case let .wordTapped(word):
+      return environment.database.fetchGamesForWord(word.letters)
+        .map { .init(games: $0, word: word.letters) }
+        .mapError { $0 as NSError }
+        .catchToEffect()
+        .map(VocabAction.gamesResponse)
+    }
   }
-}
+)
 
 public struct VocabView: View {
   public let store: Store<VocabState, VocabAction>
@@ -152,7 +181,7 @@ public struct VocabView: View {
       .onAppear { viewStore.send(.onAppear) }
       .sheet(
         isPresented: viewStore.binding(
-          get: \.cubePreviewIsPresented,
+          get: { $0.cubePreview != nil },
           send: .dismissCubePreview
         )
       ) {
@@ -190,6 +219,7 @@ public struct VocabView: View {
     static let vocab = Store(
       initialState: .init(
         cubePreview: nil,
+        isHapticsEnabled: false,
         vocab: .init(
           words: [
             .init(letters: "STENOGRAPHER", playCount: 1, score: 1_230),
@@ -198,7 +228,13 @@ public struct VocabView: View {
         )
       ),
       reducer: vocabReducer,
-      environment: .init(database: .noop)
+      environment: .init(
+        audioPlayer: .noop,
+        database: .noop,
+        feedbackGenerator: .noop,
+        lowPowerMode: .false,
+        mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+      )
     )
   }
 #endif

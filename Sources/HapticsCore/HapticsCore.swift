@@ -1,14 +1,15 @@
 import ComposableArchitecture
 import FeedbackGeneratorClient
+import TcaHelpers
 
 extension Reducer {
-  func haptics(
+  public func haptics(
     feedbackGenerator: @escaping (Environment) -> FeedbackGeneratorClient,
-    gameState: @escaping (State) -> GameState?,
-    isEnabled: @escaping (State) -> Bool
+    isEnabled: @escaping (State) -> Bool,
+    triggerOnChangeOf trigger: @escaping (State) -> AnyHashable
   ) -> Self {
     self.onChange(
-      of: { gameState($0)?.selectedWord },
+      of: trigger,
       perform: { _, state, _, environment in
         guard isEnabled(state) else { return .none }
         return feedbackGenerator(environment).selectionChanged().fireAndForget()

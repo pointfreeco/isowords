@@ -16,6 +16,7 @@ import FeedbackGeneratorClient
 import FileClient
 import GameOverFeature
 import Gen
+import HapticsCore
 import LocalDatabaseClient
 import LowPowerModeClient
 import Overture
@@ -565,8 +566,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
   ._pullback(state: state, action: action, environment: environment)
   .haptics(
     feedbackGenerator: { environment($0).feedbackGenerator },
-    gameState: state.extract(from:),
-    isEnabled: isHapticsEnabled
+    isEnabled: isHapticsEnabled,
+    triggerOnChangeOf:  { state.extract(from: $0)?.selectedWord }
   )
 }
 

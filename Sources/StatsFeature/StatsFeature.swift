@@ -1,5 +1,8 @@
+import AudioPlayerClient
 import ComposableArchitecture
+import FeedbackGeneratorClient
 import LocalDatabaseClient
+import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -11,6 +14,7 @@ public struct StatsState: Equatable {
   public var highestScoringWord: LocalDatabaseClient.Stats.Word?
   public var highScoreTimed: Int?
   public var highScoreUnlimited: Int?
+  public var isHapticsEnabled: Bool
   public var longestWord: String?
   public var route: Route?
   public var secondsPlayed: Int
@@ -37,10 +41,10 @@ public struct StatsState: Equatable {
     highestScoringWord: LocalDatabaseClient.Stats.Word? = nil,
     highScoreTimed: Int? = nil,
     highScoreUnlimited: Int? = nil,
+    isHapticsEnabled: Bool = true,
     longestWord: String? = nil,
     route: Route? = nil,
     secondsPlayed: Int = 0,
-    //    vocab: VocabState? = nil,
     wordsFound: Int = 0
   ) {
     self.averageWordLength = averageWordLength
@@ -48,10 +52,10 @@ public struct StatsState: Equatable {
     self.highestScoringWord = highestScoringWord
     self.highScoreTimed = highScoreTimed
     self.highScoreUnlimited = highScoreUnlimited
+    self.isHapticsEnabled = isHapticsEnabled
     self.longestWord = longestWord
     self.route = route
     self.secondsPlayed = secondsPlayed
-    //    self.vocab = vocab
     self.wordsFound = wordsFound
   }
 }
@@ -65,10 +69,24 @@ public enum StatsAction: Equatable {
 }
 
 public struct StatsEnvironment {
+  var audioPlayer: AudioPlayerClient
   var database: LocalDatabaseClient
+  var lowPowerMode: LowPowerModeClient
+  var feedbackGenerator: FeedbackGeneratorClient
+  var mainQueue: AnySchedulerOf<DispatchQueue>
 
-  public init(database: LocalDatabaseClient) {
+  public init(
+    audioPlayer: AudioPlayerClient,
+    database: LocalDatabaseClient,
+    feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
+    mainQueue: AnySchedulerOf<DispatchQueue>
+  ) {
+    self.audioPlayer = audioPlayer
     self.database = database
+    self.feedbackGenerator = feedbackGenerator
+    self.lowPowerMode = lowPowerMode
+    self.mainQueue = mainQueue
   }
 }
 
@@ -77,7 +95,15 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
     ._pullback(
       state: (\StatsState.route).appending(path: /StatsState.Route.vocab),
       action: /StatsAction.vocab,
-      environment: { VocabEnvironment(database: $0.database) }
+      environment: {
+        VocabEnvironment(
+          audioPlayer: $0.audioPlayer,
+          database: $0.database,
+          feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
+          mainQueue: $0.mainQueue
+        )
+      }
     ),
 
   .init { state, action, environment in
@@ -108,7 +134,7 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
       return .none
 
     case .setNavigation(tag: .vocab):
-      state.route = .vocab(.init())
+      state.route = .vocab(.init(isHapticsEnabled: state.isHapticsEnabled))
       return .none
 
     case .setNavigation(tag: .none):
@@ -266,13 +292,18 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 averageWordLength: 5,
                 gamesPlayed: 1234,
                 highestScoringWord: .init(letters: "ENFEEBLINGS", score: 1022),
+                isHapticsEnabled: true,
                 longestWord: "ENFEEBLINGS",
                 secondsPlayed: 42000,
                 wordsFound: 200
               ),
               reducer: statsReducer,
-              environment: .init(
-                database: .noop
+              environment: StatsEnvironment.init(
+                audioPlayer: .noop,
+                database: .noop,
+                feedbackGenerator: .noop,
+                lowPowerMode: .false,
+                mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )
             )
           )
