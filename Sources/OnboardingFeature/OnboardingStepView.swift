@@ -397,8 +397,8 @@ extension OnboardingState.Step {
               dictionary: .everyString,
               feedbackGenerator: .live,
               lowPowerMode: .false,
-              mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-              mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+              mainQueue: .main,
+              mainRunLoop: .main,
               userDefaults: .noop
             )
           )

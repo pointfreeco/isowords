@@ -298,12 +298,12 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 wordsFound: 200
               ),
               reducer: statsReducer,
-              environment: StatsEnvironment.init(
+              environment: StatsEnvironment(
                 audioPlayer: .noop,
                 database: .noop,
                 feedbackGenerator: .noop,
                 lowPowerMode: .false,
-                mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+                mainQueue: .main
               )
             )
           )

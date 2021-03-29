@@ -58,8 +58,8 @@ struct GameOverPreviewApp: App {
       //                .appendingPathComponent("Isowords.sqlite3")
       //            ),
       //            fileClient: .noop,
-      //            mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-      //            mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+      //            mainQueue: .main,
+      //            mainRunLoop: .main,
       //            remoteNotifications: .noop,
       //            serverConfig: .noop,
       //            storeKit: .live(),

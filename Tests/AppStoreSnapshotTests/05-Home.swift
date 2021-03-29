@@ -11,7 +11,7 @@ import SwiftUIHelpers
 
 var homeAppStoreView: AnyView {
   let environment = update(HomeEnvironment.noop) {
-    $0.mainRunLoop = RunLoop.testScheduler.eraseToAnyScheduler()
+    $0.mainRunLoop = RunLoop.test.eraseToAnyScheduler()
   }
   let view = HomeView(
     store: Store(

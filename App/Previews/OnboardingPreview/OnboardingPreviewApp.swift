@@ -21,8 +21,8 @@ struct OnboardingPreviewApp: App {
             dictionary: .sqlite(),
             feedbackGenerator: .live,
             lowPowerMode: .live,
-            mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-            mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+            mainQueue: .main,
+            mainRunLoop: .main,
             userDefaults: .noop
           )
         )

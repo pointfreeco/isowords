@@ -10,7 +10,7 @@ import XCTest
 @testable import ServerConfigClient
 
 class UpgradeInterstitialFeatureTests: XCTestCase {
-  let scheduler = RunLoop.testScheduler
+  let scheduler = RunLoop.test
 
   func testUpgrade() {
     var paymentAdded: SKPayment?
@@ -36,7 +36,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     ]
 
     var environment = UpgradeInterstitialEnvironment.failing
-    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.addPayment = { payment in
       paymentAdded = payment
@@ -117,7 +117,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
   func testMaybeLater_Dismissable() {
     var environment = UpgradeInterstitialEnvironment.failing
-    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = .none
     environment.storeKit.fetchProducts = { _ in .none }

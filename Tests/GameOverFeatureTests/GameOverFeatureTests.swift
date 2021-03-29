@@ -9,7 +9,7 @@ import XCTest
 @testable import UserDefaultsClient
 
 class GameOverFeatureTests: XCTestCase {
-  let mainRunLoop = RunLoop.testScheduler
+  let mainRunLoop = RunLoop.test
 
   func testSubmitLeaderboardScore() throws {
     let environment = update(GameOverEnvironment.failing) {
@@ -35,8 +35,8 @@ class GameOverFeatureTests: XCTestCase {
         ])
       )
       $0.database.playedGamesCount = { _ in .init(value: 10) }
-      $0.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-      $0.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+      $0.mainQueue = .immediate
+      $0.mainRunLoop = .immediate
       $0.serverConfig.config = { .init() }
       $0.userNotifications.getNotificationSettings = .none
     }
@@ -143,8 +143,8 @@ class GameOverFeatureTests: XCTestCase {
       ])
     )
     environment.database.playedGamesCount = { _ in .init(value: 10) }
-    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -218,8 +218,8 @@ class GameOverFeatureTests: XCTestCase {
         wordsFound: 1
       )
     )
-    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -363,7 +363,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.database.playedGamesCount = { _ in .init(value: 6) }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
       self.mainRunLoop.now.date.timeIntervalSince1970, forKey: "last-review-request-timeinterval"
@@ -410,8 +410,8 @@ class GameOverFeatureTests: XCTestCase {
     }
     environment.database.playedGamesCount = { _ in .init(value: 5) }
     environment.database.fetchStats = .init(value: .init())
-    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
       self.mainRunLoop.now.date.timeIntervalSince1970, forKey: "last-review-request-timeinterval"

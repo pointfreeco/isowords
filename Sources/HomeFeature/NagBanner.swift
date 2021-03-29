@@ -153,7 +153,7 @@ let messages = [
               initialState: NagBannerState(),
               reducer: nagBannerReducer,
               environment: NagBannerEnvironment(
-                mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
+                mainRunLoop: .main,
                 serverConfig: .noop,
                 storeKit: .noop
               )

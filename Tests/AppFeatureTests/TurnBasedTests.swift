@@ -21,9 +21,9 @@ import XCTest
 @testable import HomeFeature
 
 class TurnBasedTests: XCTestCase {
-  let backgroundQueue = DispatchQueue.testScheduler
-  let mainQueue = DispatchQueue.testScheduler
-  let mainRunLoop = RunLoop.testScheduler
+  let backgroundQueue = DispatchQueue.test
+  let mainQueue = DispatchQueue.test
+  let mainRunLoop = RunLoop.test
 
   func testNewGame() {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?

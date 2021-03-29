@@ -10,8 +10,8 @@
 //@testable import AppFeature
 //
 //class SharedGameTests: XCTestCase {
-//  let mainQueue = DispatchQueue.testScheduler
-//  let mainRunLoop = RunLoop.testScheduler
+//  let mainQueue = DispatchQueue.test
+//  let mainRunLoop = RunLoop.test
 //
 //  func testOpenSharedGameUrl() throws {
 //    let sharedGameResponse = SharedGameResponse(

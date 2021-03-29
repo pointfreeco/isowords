@@ -147,7 +147,7 @@ struct NotificationMenu_Previews: PreviewProvider {
         initialState: NotificationsAuthAlertState(),
         reducer: notificationsAuthAlertReducer,
         environment: NotificationsAuthAlertEnvironment(
-          mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
+          mainQueue: .main,
           remoteNotifications: .noop,
           userNotifications: .noop
         )

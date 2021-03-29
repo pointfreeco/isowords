@@ -150,7 +150,7 @@ struct PastGamesView: View {
               environment: .init(
                 backgroundQueue: DispatchQueue.global(qos: .userInitiated).eraseToAnyScheduler(),
                 gameCenter: .noop,
-                mainQueue: DispatchQueue.main.eraseToAnyScheduler()
+                mainQueue: .main
               )
             )
           )

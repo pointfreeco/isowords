@@ -14,8 +14,8 @@ class SettingsFeatureTests: XCTestCase {
     environment.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     environment.apiClient.currentPlayer = { .some(.init(appleReceipt: .mock, player: .blob)) }
     environment.build.number = { 42 }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
     environment.storeKit.fetchProducts = { _ in .none }
     environment.storeKit.observer = .run { _ in AnyCancellable {} }
@@ -58,9 +58,9 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
     environment.userNotifications.getNotificationSettings = .init(
@@ -103,9 +103,9 @@ class SettingsFeatureTests: XCTestCase {
   func testEnableNotifications_NotDetermined_DenyAuthorization() {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
     environment.userNotifications.getNotificationSettings = .init(
@@ -143,9 +143,9 @@ class SettingsFeatureTests: XCTestCase {
   func testNotifications_PreviouslyGranted() {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
     environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
@@ -187,9 +187,9 @@ class SettingsFeatureTests: XCTestCase {
       openedUrl = url
       return .init(value: true)
     }
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
     environment.userNotifications.getNotificationSettings = .init(
@@ -228,7 +228,7 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testNotifications_DebounceRemoteSettingsUpdates() {
-    let mainQueue = DispatchQueue.testScheduler
+    let mainQueue = DispatchQueue.test
 
     var environment = self.defaultEnvironment
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
@@ -245,7 +245,7 @@ class SettingsFeatureTests: XCTestCase {
       withResponse: .none
     )
     environment.applicationClient.alternateIconName = { nil }
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
     environment.mainQueue = mainQueue.eraseToAnyScheduler()
     environment.remoteNotifications.register = { .none }
@@ -400,9 +400,9 @@ class SettingsFeatureTests: XCTestCase {
         overriddenIconName = newValue
       }
     }
-    environment.backgroundQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
-    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
     environment.userNotifications.getNotificationSettings = .none
