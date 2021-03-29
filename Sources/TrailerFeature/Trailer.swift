@@ -1,4 +1,5 @@
 import AudioPlayerClient
+import Bloom
 import Combine
 import ComposableArchitecture
 import CubeCore
@@ -236,16 +237,6 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             for: 1,
             scheduler: environment.mainQueue.animation(.easeInOut(duration: fadeInDuration))
           )
-          .eraseToEffect(),
-
-        // NB: "Warm" the scene with a selection to avoid a hitch when selecting the first letter
-        Effect(
-          value: .binding(
-            .set(\.game.selectedWord, [.init(index: .init(x: .two, y: .two, z: .two), side: .top)])
-          )
-        ),
-        Effect(value: .binding(.set(\.game.selectedWord, [])))
-          .delay(for: 1, scheduler: environment.mainQueue)
           .eraseToEffect()
       )
     }
@@ -349,10 +340,15 @@ public struct TrailerView: View {
       .background(
         BloomBackground(
           size: proxy.size,
-          store: self.store.scope(
-            state: \.game,
-            action: TrailerAction.game
-          )
+          store: self.store.actionless
+            .scope(
+              state: {
+                BloomBackground.ViewState(
+                  bloomCount: $0.game.selectedWord.count,
+                  word: $0.game.selectedWordString
+                )
+              }
+            )
         )
       )
     }

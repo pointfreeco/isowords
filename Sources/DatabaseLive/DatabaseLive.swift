@@ -523,6 +523,7 @@ extension DatabaseClient {
               DISTINCT ON ("leaderboardScores"."playerId", "words"."word")
               "appleReceipts"."id" IS NOT NULL AS "isSupporter",
               "players"."id" = \(bind: player.id) AS "isYourScore",
+              (SELECT COUNT(*) FROM "words" where "createdAt" BETWEEN NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()) AS "outOf",
               "words"."moveIndex",
               "words"."id" AS "wordId",
               "words"."score",
@@ -545,8 +546,8 @@ extension DatabaseClient {
               (
                 "leaderboardScores"."gameContext" = 'dailyChallenge'
                 AND '\(raw: timeScope.rawValue)' = 'lastDay'
-                AND DATE_TRUNC('DAY', "words"."createdAt" + INTERVAL '1 DAY') BETWEEN
-                  NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
+                AND "words"."createdAt"
+                  BETWEEN DATE_TRUNC('DAY', NOW() - INTERVAL '1 DAY') AND DATE_TRUNC('DAY', NOW())
               )
               OR "words"."createdAt" BETWEEN
                 NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
@@ -569,18 +570,11 @@ extension DatabaseClient {
               \(orderByClause), "word" ASC, "wordCreatedAt" ASC
             LIMIT 150
           ),
-          "wordCount" AS (
-            SELECT COUNT(*) as "outOf"
-            FROM "words"
-            WHERE "words"."createdAt" BETWEEN
-              NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
-          ),
           "top100" AS (
             SELECT
               *
             FROM
               "rankedScores"
-            LEFT JOIN "wordCount" ON 1=1
             WHERE "rank" <= 100
           )
           SELECT * FROM "top100";

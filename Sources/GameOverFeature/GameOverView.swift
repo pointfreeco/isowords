@@ -32,6 +32,7 @@ public struct GameOverState: Equatable {
   public var gameModeIsLoading: GameMode?
   public var isDemo: Bool
   public var isNotificationMenuPresented: Bool
+  public var isViewEnabled: Bool
   public var notificationsAuthAlert: NotificationsAuthAlertState?
   public var showConfetti: Bool
   public var summary: RankSummary?
@@ -45,6 +46,7 @@ public struct GameOverState: Equatable {
     gameModeIsLoading: GameMode? = nil,
     isDemo: Bool,
     isNotificationMenuPresented: Bool = false,
+    isViewEnabled: Bool = false,
     notificationsAuthAlert: NotificationsAuthAlertState? = nil,
     showConfetti: Bool = false,
     summary: RankSummary? = nil,
@@ -57,6 +59,7 @@ public struct GameOverState: Equatable {
     self.gameModeIsLoading = gameModeIsLoading
     self.isDemo = isDemo
     self.isNotificationMenuPresented = isNotificationMenuPresented
+    self.isViewEnabled = isViewEnabled
     self.notificationsAuthAlert = notificationsAuthAlert
     self.showConfetti = showConfetti
     self.summary = summary
@@ -76,6 +79,7 @@ public enum GameOverAction: Equatable {
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
+  case enableView
   case gameButtonTapped(GameMode)
   case onAppear
   case notificationsAuthAlert(NotificationsAuthAlertAction)
@@ -219,6 +223,10 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case .delegate:
       return .none
 
+    case .enableView:
+      state.isViewEnabled = true
+      return .none
+
     case let .gameButtonTapped(gameMode):
       switch state.completedGame.gameContext {
       case .dailyChallenge:
@@ -291,6 +299,10 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       //        : .none
 
       return .merge(
+        Effect(value: .enableView)
+          .delay(for: 2, scheduler: environment.mainQueue)
+          .eraseToEffect(),
+
         submitGameEffect,
 
         //        turnBasedConfettiEffect,
@@ -434,6 +446,7 @@ public struct GameOverView: View {
     let gameModeIsLoading: GameMode?
     let isDemo: Bool
     let isUpgradeInterstitialPresented: Bool
+    let isViewEnabled: Bool
     let showConfetti: Bool
     let summary: GameOverState.RankSummary?
     let unplayedDaily: GameMode?
@@ -465,6 +478,7 @@ public struct GameOverView: View {
       }
       self.isDemo = state.isDemo
       self.isUpgradeInterstitialPresented = state.upgradeInterstitial != nil
+      self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
       self.unplayedDaily =
@@ -568,7 +582,9 @@ public struct GameOverView: View {
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
+        .ignoresSafeArea()
     }
+    .disabled(!self.viewStore.isViewEnabled)
   }
 
   @ViewBuilder
@@ -1200,7 +1216,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
                   update(.remote) { $0.matchOutcome = .lost },
                 ]
               },
-              metadata: .init()
+              metadata: .init(playerIndexToId: [:])
             )
           ),
           reducer: gameOverReducer,

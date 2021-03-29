@@ -118,8 +118,10 @@ extension AppEnvironment {
       build: self.build,
       database: self.database,
       deviceId: self.deviceId,
+      feedbackGenerator: self.feedbackGenerator,
       fileClient: self.fileClient,
       gameCenter: self.gameCenter,
+      lowPowerMode: self.lowPowerMode,
       mainQueue: self.mainQueue,
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
@@ -239,13 +241,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
           environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
         )
         .fireAndForget()
-        : .none,
-
-      environment.serverConfig.refresh()
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
-        .fireAndForget()
+        : .none
     )
 
   case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):

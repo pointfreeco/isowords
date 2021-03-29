@@ -310,6 +310,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "AppClipAudioLibrary", targets: ["AppClipAudioLibrary"]),
     .library(name: "AppFeature", targets: ["AppFeature"]),
     .library(name: "AudioPlayerClient", targets: ["AudioPlayerClient"]),
+    .library(name: "Bloom", targets: ["Bloom"]),
     .library(name: "BottomMenu", targets: ["BottomMenu"]),
     .library(name: "ClientModels", targets: ["ClientModels"]),
     .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
@@ -329,6 +330,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "GameCore", targets: ["GameCore"]),
     .library(name: "GameFeature", targets: ["GameFeature"]),
     .library(name: "GameOverFeature", targets: ["GameOverFeature"]),
+    .library(name: "HapticsCore", targets: ["HapticsCore"]),
     .library(name: "HomeFeature", targets: ["HomeFeature"]),
     .library(name: "IntegrationTestHelpers", targets: ["IntegrationTestHelpers"]),
     .library(name: "LeaderboardFeature", targets: ["LeaderboardFeature"]),
@@ -339,6 +341,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "NotificationsAuthAlert", targets: ["NotificationsAuthAlert"]),
     .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
     .library(name: "RemoteNotificationsClient", targets: ["RemoteNotificationsClient"]),
+    .library(name: "SelectionSoundsCore", targets: ["SelectionSoundsCore"]),
     .library(name: "ServerConfigClient", targets: ["ServerConfigClient"]),
     .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
     .library(name: "SharedSwiftUIEnvironment", targets: ["SharedSwiftUIEnvironment"]),
@@ -468,6 +471,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "Bloom",
+      dependencies: [
+        "Styleguide",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "Gen", package: "swift-gen"),
+      ]
+    ),
+    .target(
       name: "BottomMenu",
       dependencies: [
         "Styleguide",
@@ -540,7 +551,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "CubePreview",
       dependencies: [
+        "AudioPlayerClient",
+        "Bloom",
         "CubeCore",
+        "FeedbackGeneratorClient",
+        "HapticsCore",
+        "LowPowerModeClient",
+        "SelectionSoundsCore",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
@@ -625,6 +642,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "FeedbackGeneratorClient",
       dependencies: [
+        "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -645,6 +663,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ActiveGamesFeature",
         "ApiClient",
         "AudioPlayerClient",
+        "Bloom",
         "BottomMenu",
         "Build",
         "ClientModels",
@@ -656,9 +675,11 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "FeedbackGeneratorClient",
         "FileClient",
+        "HapticsCore",
         "LowPowerModeClient",
         "PuzzleGen",
         "RemoteNotificationsClient",
+        "SelectionSoundsCore",
         "SharedSwiftUIEnvironment",
         "Styleguide",
         "TcaHelpers",
@@ -673,7 +694,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "GameCore",
         "TestHelpers",
-      ]
+        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      ],
+      exclude: ["__Snapshots__"]
     ),
     .target(
       name: "GameFeature",
@@ -757,6 +780,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "HapticsCore",
+      dependencies: [
+        "FeedbackGeneratorClient",
+        "TcaHelpers",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
       name: "HomeFeature",
       dependencies: [
         "ActiveGamesFeature",
@@ -774,6 +805,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FileClient",
         "LeaderboardFeature",
         "LocalDatabaseClient",
+        "LowPowerModeClient",
         "MultiplayerFeature",
         "ServerConfigClient",
         "SettingsFeature",
@@ -810,7 +842,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "LeaderboardFeature",
       dependencies: [
         "ApiClient",
+        "AudioPlayerClient",
         "CubePreview",
+        "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -889,6 +923,15 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "SelectionSoundsCore",
+      dependencies: [
+        "AudioPlayerClient",
+        "SharedModels",
+        "TcaHelpers",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
       name: "RemoteNotificationsClient",
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -913,6 +956,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ComposableUserNotifications",
         "FileClient",
         "LocalDatabaseClient",
+        "LowPowerModeClient",
         "RemoteNotificationsClient",
         "ServerConfigClient",
         "StatsFeature",
@@ -951,6 +995,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "StatsFeature",
       dependencies: [
+        "AudioPlayerClient",
         "LocalDatabaseClient",
         "Styleguide",
         "VocabFeature",
@@ -983,6 +1028,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "TrailerFeature",
       dependencies: [
         "ApiClient",
+        "Bloom",
         "CubeCore",
         "GameCore",
         "DictionaryClient",
@@ -1032,8 +1078,11 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "VocabFeature",
       dependencies: [
+        "AudioPlayerClient",
         "CubePreview",
+        "FeedbackGeneratorClient",
         "LocalDatabaseClient",
+        "LowPowerModeClient",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

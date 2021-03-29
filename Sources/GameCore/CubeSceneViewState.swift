@@ -56,7 +56,6 @@ extension CubeSceneView.ViewAction {
 
 extension CubeNode.ViewState {
   init(viewState: GameState, index: LatticePoint) {
-    let index = index
     let isInPlay = viewState.cubes[index].isInPlay
 
     let leftIndex = IndexedCubeFace(index: index, side: .left)

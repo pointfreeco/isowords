@@ -1,6 +1,10 @@
 import ApiClient
+import AudioPlayerClient
 import ComposableArchitecture
+import CubeCore
 import CubePreview
+import FeedbackGeneratorClient
+import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -30,7 +34,9 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct LeaderboardState: Equatable {
   public var cubePreview: CubePreviewState?
+  public var isHapticsEnabled: Bool
   public var scope: LeaderboardScope = .games
+  public var settings: CubeSceneView.ViewState.Settings
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
 
@@ -38,12 +44,16 @@ public struct LeaderboardState: Equatable {
 
   public init(
     cubePreview: CubePreviewState? = nil,
+    isHapticsEnabled: Bool,
     scope: LeaderboardScope = .games,
+    settings: CubeSceneView.ViewState.Settings,
     solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
     vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   ) {
     self.cubePreview = cubePreview
+    self.isHapticsEnabled = isHapticsEnabled
     self.scope = scope
+    self.settings = settings
     self.solo = solo
     self.vocab = vocab
   }
@@ -60,13 +70,22 @@ public enum LeaderboardAction: Equatable {
 
 public struct LeaderboardEnvironment {
   public var apiClient: ApiClient
+  public var audioPlayer: AudioPlayerClient
+  public var feedbackGenerator: FeedbackGeneratorClient
+  public var lowPowerMode: LowPowerModeClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
     apiClient: ApiClient,
+    audioPlayer: AudioPlayerClient,
+    feedbackGenerator: FeedbackGeneratorClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>
   ) {
     self.apiClient = apiClient
+    self.audioPlayer = audioPlayer
+    self.feedbackGenerator = feedbackGenerator
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
   }
 }
@@ -75,6 +94,9 @@ public struct LeaderboardEnvironment {
   extension LeaderboardEnvironment {
     public static let failing = Self(
       apiClient: .failing,
+      audioPlayer: .failing,
+      feedbackGenerator: .failing,
+      lowPowerMode: .failing,
       mainQueue: .failing("mainQueue")
     )
   }
@@ -88,7 +110,14 @@ public let leaderboardReducer = Reducer<
     ._pullback(
       state: OptionalPath(\.cubePreview),
       action: /LeaderboardAction.cubePreview,
-      environment: { _ in CubePreviewEnvironment() }
+      environment: {
+        CubePreviewEnvironment(
+          audioPlayer: $0.audioPlayer,
+          feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
+          mainQueue: $0.mainQueue
+        )
+      }
     ),
 
   Reducer.leaderboardResultsReducer()
@@ -128,18 +157,12 @@ public let leaderboardReducer = Reducer<
       return .none
 
     case let .fetchWordResponse(.success(response)):
-      state.cubePreview = .init(
-        preview: .words(
-          .init(
-            words: [
-              .init(
-                cubes: response.puzzle,
-                moveIndex: response.moveIndex,
-                moves: response.moves
-              )
-            ]
-          )
-        )
+      state.cubePreview = CubePreviewState(
+        cubes: response.puzzle,
+        isHapticsEnabled: state.isHapticsEnabled,
+        moveIndex: response.moveIndex,
+        moves: response.moves,
+        settings: state.settings
       )
       return .none
 
@@ -374,7 +397,10 @@ extension ResultEnvelope.Result {
         NavigationView {
           LeaderboardView(
             store: .init(
-              initialState: LeaderboardState(),
+              initialState: LeaderboardState(
+                isHapticsEnabled: true,
+                settings: .init()
+              ),
               reducer: leaderboardReducer,
               environment: LeaderboardEnvironment(
                 apiClient: update(.noop) {
@@ -382,7 +408,7 @@ extension ResultEnvelope.Result {
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
                       return Effect.ok(
-                        FetchLeaderboardResponse.init(
+                        FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
                               id: .init(rawValue: .init()),
@@ -404,6 +430,9 @@ extension ResultEnvelope.Result {
                     }
                   }
                 },
+                audioPlayer: .noop,
+                feedbackGenerator: .noop,
+                lowPowerMode: .false,
                 mainQueue: DispatchQueue.main.eraseToAnyScheduler()
               )
             )

@@ -37,4 +37,18 @@ float4 textureColor = lettersTexture.sample(
   )
 );
 
-_surface.diffuse.rgba = float4(0, 0, 0, textureColor.a);
+// NB: This avoids drawing letter pixels in the corner of a face
+float borderBuffer = 0.05;
+if (
+  in.side == 2
+    && (
+      texcoord.x <= borderBuffer
+      || texcoord.x >= 1 - borderBuffer
+      || texcoord.y <= borderBuffer
+      || texcoord.y >= 1 - borderBuffer
+  )
+) {
+  _surface.diffuse.rgba = float4(0, 0, 0, 0);
+} else {
+  _surface.diffuse.rgba = float4(0, 0, 0, textureColor.a);
+}

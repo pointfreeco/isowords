@@ -4,8 +4,10 @@ import Build
 import ComposableArchitecture
 import ComposableStoreKit
 import ComposableUserNotifications
+import FeedbackGeneratorClient
 import FileClient
 import LocalDatabaseClient
+import LowPowerModeClient
 import RemoteNotificationsClient
 import SceneKit
 import ServerConfigClient
@@ -192,7 +194,9 @@ public struct SettingsEnvironment {
   public var backgroundQueue: AnySchedulerOf<DispatchQueue>
   public var build: Build
   public var database: LocalDatabaseClient
+  public var feedbackGenerator: FeedbackGeneratorClient
   public var fileClient: FileClient
+  public var lowPowerMode: LowPowerModeClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
@@ -208,7 +212,9 @@ public struct SettingsEnvironment {
     backgroundQueue: AnySchedulerOf<DispatchQueue>,
     build: Build,
     database: LocalDatabaseClient,
+    feedbackGenerator: FeedbackGeneratorClient,
     fileClient: FileClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
@@ -223,7 +229,9 @@ public struct SettingsEnvironment {
     self.backgroundQueue = backgroundQueue
     self.build = build
     self.database = database
+    self.feedbackGenerator = feedbackGenerator
     self.fileClient = fileClient
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
@@ -245,7 +253,9 @@ public struct SettingsEnvironment {
       backgroundQueue: .failing("backgroundQueue"),
       build: .failing,
       database: .failing,
+      feedbackGenerator: .failing,
       fileClient: .failing,
+      lowPowerMode: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       serverConfig: .failing,
@@ -264,7 +274,9 @@ public struct SettingsEnvironment {
       backgroundQueue: DispatchQueue.main.eraseToAnyScheduler(),
       build: .noop,
       database: .noop,
+      feedbackGenerator: .noop,
       fileClient: .noop,
+      lowPowerMode: .false,
       mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
       remoteNotifications: .noop,
       serverConfig: .noop,
@@ -280,7 +292,15 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   statsReducer.pullback(
     state: \.stats,
     action: /SettingsAction.stats,
-    environment: { StatsEnvironment(database: $0.database) }
+    environment: {
+      StatsEnvironment(
+        audioPlayer: $0.audioPlayer,
+        database: $0.database,
+        feedbackGenerator: $0.feedbackGenerator,
+        lowPowerMode: $0.lowPowerMode,
+        mainQueue: $0.mainQueue
+      )
+    }
   ),
 
   Reducer { state, action, environment in

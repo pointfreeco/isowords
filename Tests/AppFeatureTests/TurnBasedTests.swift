@@ -30,10 +30,9 @@ class TurnBasedTests: XCTestCase {
     var didSaveCurrentTurn = false
     let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
 
-    let match = update(TurnBasedMatch.inProgress) {
-      $0.currentParticipant?.player = .remote
-    }
+    let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
+    let currentPlayer = CurrentPlayerEnvelope.mock
     let store = TestStore(
       initialState: .init(
         home: .init(route: .multiplayer(.init(hasPastGames: false)))
@@ -44,12 +43,16 @@ class TurnBasedTests: XCTestCase {
         $0.apiClient
           .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
         $0.apiClient.authenticate = { _ in .init(value: .mock) }
-        $0.apiClient.currentPlayer = { nil }
+        $0.apiClient.currentPlayer = { currentPlayer }
+        $0.audioPlayer.loop = { _ in .none }
         $0.audioPlayer.play = { _ in .none }
+        $0.audioPlayer.stop = { _ in .none }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+        $0.database.playedGamesCount = { _ in .none }
         $0.deviceId.id = { .deviceId }
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
+        $0.feedbackGenerator = .noop
         $0.gameCenter.localPlayer.authenticate = .init(value: nil)
         $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
         $0.gameCenter.localPlayer.localPlayer = { .mock }
@@ -57,7 +60,6 @@ class TurnBasedTests: XCTestCase {
           didEndTurnWithRequest = $0
           return .none
         }
-        $0.gameCenter.turnBasedMatch.load = { _ in .init(value: match) }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
           didSaveCurrentTurn = true
@@ -65,7 +67,7 @@ class TurnBasedTests: XCTestCase {
         }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.gameCenter.turnBasedMatchmakerViewController._present = { _ in .none }
-        $0.feedbackGenerator = .noop
+        $0.lowPowerMode.start = .none
         $0.serverConfig.config = { .init() }
         $0.serverConfig.refresh = { .init(value: .init()) }
         $0.timeZone = { .newYork }
@@ -83,21 +85,36 @@ class TurnBasedTests: XCTestCase {
 
     store.send(.home(.multiplayer(.startButtonTapped)))
 
-    listener.send(.turnBased(.receivedTurnEventForMatch(.new, didBecomeActive: true)))
+    listener.send(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
 
-    store.receive(
-      .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(.new, didBecomeActive: true))))
-    ) {
-      $0.game = GameState(
-        inProgressGame: InProgressGame(
-          cubes: .mock,
-          gameContext: .turnBased(.init(localPlayer: .mock, match: .new, metadata: .init())),
-          gameMode: .unlimited,
-          gameStartTime: self.mainRunLoop.now.date,
-          moves: [],
-          secondsPlayed: 0
-        )
+    let initialGameState = GameState(
+      inProgressGame: InProgressGame(
+        cubes: .mock,
+        gameContext: .turnBased(
+          .init(localPlayer: .mock, match: newMatch, metadata: .init(playerIndexToId: [:]))
+        ),
+        gameMode: .unlimited,
+        gameStartTime: newMatch.creationDate,
+        moves: [],
+        secondsPlayed: 0
       )
+    )
+    store.receive(
+      .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true))))
+    ) {
+      $0.game = initialGameState
+    }
+    store.send(.currentGame(.game(.onAppear)))
+
+    store.receive(.currentGame(.game(.gameLoaded))) {
+      try XCTUnwrap(&$0.game) {
+        $0.isGameLoaded = true
+      }
+    }
+    store.receive(.currentGame(.game(.matchesLoaded(.success([]))))) {
+      try XCTUnwrap(&$0.game) {
+        $0.isGameLoaded = true
+      }
     }
 
     self.backgroundQueue.advance()
@@ -145,33 +162,54 @@ class TurnBasedTests: XCTestCase {
         $0.optimisticallySelectedFace = nil
       }
     }
+
+    let updatedGameState = update(initialGameState) {
+      $0.isGameLoaded = true
+      $0.moves = [
+        .init(
+          playedAt: self.mainRunLoop.now.date,
+          playerIndex: 0,
+          reactions: [0: .angel],
+          score: 27,
+          type: .playedWord([C, A, B])
+        )
+      ]
+      $0.selectedWord = []
+      $0.selectedWordIsValid = false
+      $0.cubes[index].left.useCount = 1
+      $0.cubes[index].right.useCount = 1
+      $0.cubes[index].top.useCount = 1
+    }
+    let updatedMatch = update(newMatch) {
+      $0.currentParticipant = .remote
+      $0.matchData = Data(
+        turnBasedMatchData: TurnBasedMatchData(
+          context: TurnBasedContext(
+            localPlayer: .mock,
+            match: newMatch,
+            metadata: .init(playerIndexToId: [0: currentPlayer.player.id])
+          ),
+          gameState: updatedGameState,
+          playerId: currentPlayer.player.id
+        )
+      )
+    }
+    store.environment.gameCenter.turnBasedMatch.load = { _ in
+      .init(value: updatedMatch)
+    }
+
     store.send(.currentGame(.game(.submitButtonTapped(.angel)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.moves = [
-          .init(
-            playedAt: self.mainRunLoop.now.date,
-            playerIndex: 0,
-            reactions: [0: .angel],
-            score: 27,
-            type: .playedWord($0.selectedWord)
-          )
-        ]
-        $0.selectedWord = []
-        $0.selectedWordIsValid = false
-        $0.cubes[index].left.useCount = 1
-        $0.cubes[index].right.useCount = 1
-        $0.cubes[index].top.useCount = 1
-      }
+      $0.game = updatedGameState
 
       XCTAssertEqual(
         didEndTurnWithRequest,
         .init(
-          for: match.matchId,
+          for: newMatch.matchId,
           matchData: Data(
             turnBasedMatchData: TurnBasedMatchData(
               context: try XCTUnwrap($0.currentGame.game?.turnBasedContext),
               gameState: try XCTUnwrap($0.game),
-              playerId: nil
+              playerId: currentPlayer.player.id
             )
           ),
           message: "Blob played CAB! (+27 😇)"
@@ -179,12 +217,19 @@ class TurnBasedTests: XCTestCase {
       )
     }
 
-    store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(match)))))) {
+    store.receive(
+      .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
+    ) {
       try XCTUnwrap(&$0.game) {
-        $0.turnBasedContext = .init(localPlayer: .mock, match: match, metadata: .init())
+        $0.turnBasedContext = .init(
+          localPlayer: .mock,
+          match: updatedMatch,
+          metadata: .init(playerIndexToId: [0: currentPlayer.player.id])
+        )
       }
     }
 
+    store.send(.currentGame(.onDisappear))
     listener.send(completion: .finished)
   }
 
@@ -235,7 +280,7 @@ class TurnBasedTests: XCTestCase {
           inProgressGame: InProgressGame(
             cubes: .mock,
             gameContext: .turnBased(
-              .init(localPlayer: .mock, match: .inProgress, metadata: .init())
+              .init(localPlayer: .mock, match: .inProgress, metadata: .init(playerIndexToId: [:]))
             ),
             gameMode: .unlimited,
             gameStartTime: .mock,
@@ -299,7 +344,7 @@ class TurnBasedTests: XCTestCase {
         inProgressGame: InProgressGame(
           cubes: .mock,
           gameContext: .turnBased(
-            .init(localPlayer: .mock, match: .forfeited, metadata: .init())
+            .init(localPlayer: .mock, match: .forfeited, metadata: .init(playerIndexToId: [:]))
           ),
           gameMode: .unlimited,
           gameStartTime: .mock,
@@ -311,7 +356,9 @@ class TurnBasedTests: XCTestCase {
       gameState.gameOver = GameOverState(
         completedGame: CompletedGame(gameState: gameState),
         isDemo: false,
-        turnBasedContext: .init(localPlayer: .mock, match: .forfeited, metadata: .init())
+        turnBasedContext: .init(
+          localPlayer: .mock, match: .forfeited, metadata: .init(playerIndexToId: [:])
+        )
       )
       $0.game = gameState
     }
@@ -326,6 +373,7 @@ class TurnBasedTests: XCTestCase {
   func testRemovingCubes() {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
     let match = update(TurnBasedMatch.inProgress) {
+      $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
       $0.participants = [.local, .remote]
     }
 
@@ -333,7 +381,6 @@ class TurnBasedTests: XCTestCase {
       $0.apiClient.currentPlayer = { nil }
       $0.audioPlayer.play = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
-      $0.gameCenter.turnBasedMatch.load = { _ in .init(value: .inProgress) }
       $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .init(value: ()) }
       $0.gameCenter.turnBasedMatch.endTurn = {
         didEndTurnWithRequest = $0
@@ -342,68 +389,68 @@ class TurnBasedTests: XCTestCase {
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
 
-    let store = TestStore(
-      initialState: AppState(
-        game: GameState(
-          cubes: update(.mock) {
-            $0.0.0.0 = .init(
-              left: .init(letter: "A", side: .left),
-              right: .init(letter: "A", side: .right),
-              top: .init(letter: "A", side: .top)
-            )
-            $0.0.0.1 = .init(
-              left: .init(letter: "A", side: .left),
-              right: .init(letter: "A", side: .right),
-              top: .init(letter: "A", side: .top)
-            )
-            $0.0.0.2 = .init(
-              left: .init(letter: "A", side: .left),
-              right: .init(letter: "A", side: .right),
-              top: .init(letter: "A", side: .top)
-            )
-          },
-          gameContext: .turnBased(.init(localPlayer: .mock, match: match, metadata: .init())),
-          gameCurrentTime: self.mainRunLoop.now.date,
-          gameMode: .unlimited,
-          gameStartTime: .mock,
-          secondsPlayed: 0
-        )
+    let initialGameState = GameState(
+      cubes: .mock,
+      gameContext: .turnBased(
+        .init(localPlayer: .mock, match: match, metadata: .init(playerIndexToId: [:]))
       ),
+      gameCurrentTime: self.mainRunLoop.now.date,
+      gameMode: .unlimited,
+      gameStartTime: match.creationDate,
+      secondsPlayed: 0
+    )
+    let store = TestStore(
+      initialState: AppState(game: initialGameState),
       reducer: appReducer,
       environment: environment
     )
-
-    let nextTurn = update(TurnBasedMatch.inProgress) {
-      $0.currentParticipant = .init(
-        lastTurnDate: .mock,
-        matchOutcome: .none,
-        player: .remote,
-        status: .active,
-        timeoutDate: nil
-      )
-    }
 
     store.send(.currentGame(.game(.doubleTap(index: .zero)))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .removeCube(index: .zero, state: $0, isTurnEndingRemoval: false)
       }
     }
-    store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.bottomMenu = nil
-        $0.cubes.0.0.0.wasRemoved = true
-        $0.moves.append(
-          .init(
-            playedAt: self.mainRunLoop.now.date,
-            playerIndex: 0,
-            reactions: nil,
-            score: 0,
-            type: .removedCube(.zero)
-          )
+
+    var updatedGameState = update(initialGameState) {
+      $0.bottomMenu = nil
+      $0.cubes.0.0.0.wasRemoved = true
+      $0.moves.append(
+        .init(
+          playedAt: self.mainRunLoop.now.date,
+          playerIndex: 0,
+          reactions: nil,
+          score: 0,
+          type: .removedCube(.zero)
         )
+      )
+    }
+    var updatedMatch = update(match) {
+      $0.matchData = Data(
+        turnBasedMatchData: TurnBasedMatchData(
+          context: TurnBasedContext(
+            localPlayer: .mock,
+            match: match,
+            metadata: .init(playerIndexToId: [:])
+          ),
+          gameState: updatedGameState,
+          playerId: nil
+        )
+      )
+    }
+    store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: updatedMatch) }
+
+    store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
+      $0.game = updatedGameState
+    }
+    store.receive(
+      .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
+    ) {
+      try XCTUnwrap(&$0.game) {
+        try XCTUnwrap(&$0.turnBasedContext) {
+          $0.match = updatedMatch
+        }
       }
     }
-    store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(.inProgress))))))
     store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .removeCube(
@@ -414,27 +461,43 @@ class TurnBasedTests: XCTestCase {
       }
     }
 
-    store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: nextTurn) }
+    updatedGameState = update(updatedGameState) {
+      $0.moves.append(
+        .init(
+          playedAt: self.mainRunLoop.now.date,
+          playerIndex: 0,
+          reactions: nil,
+          score: 0,
+          type: .removedCube(.init(x: .zero, y: .zero, z: .one))
+        )
+      )
+      $0.turnBasedContext?.match = updatedMatch
+      $0.cubes.0.0.1.wasRemoved = true
+      $0.bottomMenu = nil
+    }
+    updatedMatch = update(updatedMatch) {
+      $0.currentParticipant = .remote
+      $0.matchData = Data(
+        turnBasedMatchData: TurnBasedMatchData(
+          context: TurnBasedContext(
+            localPlayer: .mock,
+            match: updatedMatch,
+            metadata: .init(playerIndexToId: [:])
+          ),
+          gameState: updatedGameState,
+          playerId: nil
+        )
+      )
+    }
+    store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: updatedMatch) }
 
     store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
-      try XCTUnwrap(&$0.game) {
-        $0.moves.append(
-          .init(
-            playedAt: self.mainRunLoop.now.date,
-            playerIndex: 0,
-            reactions: nil,
-            score: 0,
-            type: .removedCube(.init(x: .zero, y: .zero, z: .one))
-          )
-        )
-        $0.cubes.0.0.1.wasRemoved = true
-        $0.bottomMenu = nil
-      }
+      $0.game = updatedGameState
     }
-    store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(nextTurn)))))) {
+    store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))) {
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
-          $0.match = nextTurn
+          $0.match = updatedMatch
         }
       }
     }
@@ -460,9 +523,12 @@ class TurnBasedTests: XCTestCase {
     let localParticipant = TurnBasedParticipant.local
     let match = update(TurnBasedMatch.inProgress) {
       $0.currentParticipant = localParticipant
+      $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
       $0.participants = [localParticipant, .remote]
     }
     var didRematchWithId: TurnBasedMatch.Id?
+
+    let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
@@ -474,7 +540,7 @@ class TurnBasedTests: XCTestCase {
       $0.gameCenter.turnBasedMatch.loadMatches = { .none }
       $0.gameCenter.turnBasedMatch.rematch = {
         didRematchWithId = $0
-        return .init(value: .new)
+        return .init(value: newMatch)
       }
       $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
       $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
@@ -487,7 +553,9 @@ class TurnBasedTests: XCTestCase {
         game: update(
           GameState(
             cubes: .mock,
-            gameContext: .turnBased(.init(localPlayer: .mock, match: match, metadata: .init())),
+            gameContext: .turnBased(
+              .init(localPlayer: .mock, match: match, metadata: .init(playerIndexToId: [:]))
+            ),
             gameCurrentTime: .mock,
             gameMode: .unlimited,
             gameStartTime: .mock
@@ -509,14 +577,16 @@ class TurnBasedTests: XCTestCase {
     XCTAssertEqual(didRematchWithId, match.matchId)
     self.mainQueue.advance()
 
-    store.receive(.gameCenter(.rematchResponse(.success(.new)))) {
+    store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
       $0.currentGame = GameFeatureState(
         game: GameState(
           cubes: .mock,
-          gameContext: .turnBased(.init(localPlayer: .mock, match: .new, metadata: .init())),
+          gameContext: .turnBased(
+            .init(localPlayer: .mock, match: newMatch, metadata: .init(playerIndexToId: [:]))
+          ),
           gameCurrentTime: self.mainRunLoop.now.date,
           gameMode: .unlimited,
-          gameStartTime: self.mainRunLoop.now.date
+          gameStartTime: newMatch.creationDate
         ),
         settings: $0.home.settings
       )
@@ -539,7 +609,7 @@ class TurnBasedTests: XCTestCase {
           cubes: .mock,
           gameMode: .unlimited,
           language: .en,
-          metadata: .init(),
+          metadata: .init(playerIndexToId: [:]),
           moves: [
             .init(
               playedAt: remoteParticipant.lastTurnDate!,
@@ -610,7 +680,7 @@ class TurnBasedTests: XCTestCase {
           cubes: .mock,
           gameMode: .unlimited,
           language: .en,
-          metadata: .init(),
+          metadata: .init(playerIndexToId: [:]),
           moves: [
             .init(
               playedAt: remoteParticipant.lastTurnDate!,

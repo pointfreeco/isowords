@@ -54,10 +54,11 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: enviroment
+      environment: environment
     )
 
     store.send(.onAppear)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     store.receive(
       .submitGameResponse(
         .success(
@@ -164,6 +165,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     store.receive(
       .submitGameResponse(
         .success(
@@ -183,10 +185,10 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testTurnBased_TrackLeaderboards() throws {
-    var enviroment = GameOverEnvironment.failing
-    enviroment.audioPlayer = .noop
-    enviroment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-    enviroment.apiClient.override(
+    var environment = GameOverEnvironment.failing
+    environment.audioPlayer = .noop
+    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.override(
       route: .games(
         .submit(
           .init(
@@ -204,8 +206,8 @@ class GameOverFeatureTests: XCTestCase {
       ),
       withResponse: .ok(["turnBased": true])
     )
-    enviroment.database.playedGamesCount = { _ in .init(value: 10) }
-    enviroment.database.fetchStats = .init(
+    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.fetchStats = .init(
       value: .init(
         averageWordLength: nil,
         gamesPlayed: 1,
@@ -215,10 +217,10 @@ class GameOverFeatureTests: XCTestCase {
         wordsFound: 1
       )
     )
-    enviroment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
-    enviroment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
-    enviroment.serverConfig.config = { .init() }
-    enviroment.userNotifications.getNotificationSettings = .none
+    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    environment.mainQueue = DispatchQueue.immediateScheduler.eraseToAnyScheduler()
+    environment.serverConfig.config = { .init() }
+    environment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
       initialState: GameOverState(
@@ -235,10 +237,11 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: enviroment
+      environment: environment
     )
 
     store.send(.onAppear)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     store.receive(.submitGameResponse(.success(.turnBased)))
   }
 
@@ -283,7 +286,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
-      initialState: GameOverState(completedGame: completedGame, isDemo: false),
+      initialState: GameOverState(completedGame: completedGame, isDemo: false, isViewEnabled: true),
       reducer: gameOverReducer,
       environment: environment
     )
@@ -384,6 +387,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
+    store.receive(.enableView) { $0.isViewEnabled = true }
     self.mainRunLoop.advance(by: .seconds(1))
     store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
@@ -431,5 +435,6 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
+    store.receive(.enableView) { $0.isViewEnabled = true }
   }
 }

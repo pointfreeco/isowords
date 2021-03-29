@@ -12,10 +12,12 @@ import ComposableStoreKit
 import ComposableUserNotifications
 import DailyChallengeFeature
 import DeviceId
+import FeedbackGeneratorClient
 import FileClient
 import GameKit
 import LeaderboardFeature
 import LocalDatabaseClient
+import LowPowerModeClient
 import MultiplayerFeature
 import Overture
 import RemoteNotificationsClient
@@ -147,8 +149,10 @@ public struct HomeEnvironment {
   public var build: Build
   public var database: LocalDatabaseClient
   public var deviceId: DeviceIdentifier
+  public var feedbackGenerator: FeedbackGeneratorClient
   public var fileClient: FileClient
   public var gameCenter: GameCenterClient
+  public var lowPowerMode: LowPowerModeClient
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
@@ -167,8 +171,10 @@ public struct HomeEnvironment {
     build: Build,
     database: LocalDatabaseClient,
     deviceId: DeviceIdentifier,
+    feedbackGenerator: FeedbackGeneratorClient,
     fileClient: FileClient,
     gameCenter: GameCenterClient,
+    lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
@@ -186,8 +192,10 @@ public struct HomeEnvironment {
     self.build = build
     self.database = database
     self.deviceId = deviceId
+    self.feedbackGenerator = feedbackGenerator
     self.fileClient = fileClient
     self.gameCenter = gameCenter
+    self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
@@ -210,8 +218,10 @@ public struct HomeEnvironment {
       build: .noop,
       database: .noop,
       deviceId: .noop,
+      feedbackGenerator: .noop,
       fileClient: .noop,
       gameCenter: .noop,
+      lowPowerMode: .false,
       mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
       mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
       remoteNotifications: .noop,
@@ -246,7 +256,15 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     ._pullback(
       state: (\HomeState.route).appending(path: /AppRoute.leaderboard),
       action: /HomeAction.leaderboard,
-      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
+      environment: {
+        .init(
+          apiClient: $0.apiClient,
+          audioPlayer: $0.audioPlayer,
+          feedbackGenerator: $0.feedbackGenerator,
+          lowPowerMode: $0.lowPowerMode,
+          mainQueue: $0.mainQueue
+        )
+      }
     ),
 
   multiplayerReducer
@@ -258,6 +276,19 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           backgroundQueue: $0.backgroundQueue,
           gameCenter: $0.gameCenter,
           mainQueue: $0.mainQueue
+        )
+      }
+    ),
+
+  nagBannerFeatureReducer
+    .pullback(
+      state: \HomeState.nagBanner,
+      action: /HomeAction.nagBannerFeature,
+      environment: {
+        NagBannerEnvironment(
+          mainRunLoop: $0.mainRunLoop,
+          serverConfig: $0.serverConfig,
+          storeKit: $0.storeKit
         )
       }
     ),
@@ -274,7 +305,9 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           backgroundQueue: $0.backgroundQueue,
           build: $0.build,
           database: $0.database,
+          feedbackGenerator: $0.feedbackGenerator,
           fileClient: $0.fileClient,
+          lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
           serverConfig: $0.serverConfig,
@@ -293,21 +326,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       environment: { .init(fileClient: $0.fileClient) }
     ),
 
-  nagBannerFeatureReducer
-    .pullback(
-      state: \HomeState.nagBanner,
-      action: /HomeAction.nagBannerFeature,
-      environment: {
-        NagBannerEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
-      }
-    ),
-
   .init { state, action, environment in
-
     switch action {
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
       return .concatenate(
@@ -443,7 +462,16 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           )
         )
       case .leaderboard:
-        state.route = .leaderboard(.init())
+        state.route = .leaderboard(
+          .init(
+            isHapticsEnabled: state.settings.userSettings.enableHaptics,
+            settings: .init(
+              enableCubeShadow: state.settings.enableCubeShadow,
+              enableGyroMotion: state.settings.userSettings.enableGyroMotion,
+              showSceneStatistics: state.settings.showSceneStatistics
+            )
+          )
+        )
       case .multiplayer:
         state.route = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
       case .settings:
@@ -823,12 +851,14 @@ private struct AuthenticationId: Hashable {}
         apiClient: .noop,
         applicationClient: .live,
         audioPlayer: .noop,
-        backgroundQueue: DispatchQueue.global().eraseToAnyScheduler(),
+        backgroundQueue: DispatchQueue(label: "preview").eraseToAnyScheduler(),
         build: .noop,
         database: .noop,
         deviceId: .live,
+        feedbackGenerator: .noop,
         fileClient: .noop,
         gameCenter: .noop,
+        lowPowerMode: .false,
         mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
         mainRunLoop: RunLoop.main.eraseToAnyScheduler(),
         remoteNotifications: .noop,

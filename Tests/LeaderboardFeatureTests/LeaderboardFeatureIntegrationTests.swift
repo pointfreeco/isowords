@@ -42,7 +42,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
 
     let store = TestStore(
-      initialState: LeaderboardState(),
+      initialState: LeaderboardState(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: leaderboardEnvironment
     )
@@ -101,7 +101,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
 
     let store = TestStore(
-      initialState: LeaderboardState(),
+      initialState: LeaderboardState(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: leaderboardEnvironment
     )

@@ -26,18 +26,17 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             didBecomeActive: Bool
           ) -> Effect<AppAction, Never> {
             guard let matchData = match.matchData, !matchData.isEmpty else {
-              let date = environment.mainRunLoop.now.date
               let context = TurnBasedContext(
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 match: match,
-                metadata: .init()
+                metadata: .init(playerIndexToId: [:])
               )
               let game = GameState(
                 cubes: environment.dictionary.randomCubes(.en),
                 gameContext: .turnBased(context),
-                gameCurrentTime: date,
+                gameCurrentTime: environment.mainRunLoop.now.date,
                 gameMode: .unlimited,
-                gameStartTime: date
+                gameStartTime: match.creationDate
               )
               state.currentGame = .init(
                 game: game,
@@ -99,7 +98,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             let context = TurnBasedContext(
               localPlayer: environment.gameCenter.localPlayer.localPlayer(),
               match: match,
-              metadata: .init()
+              metadata: turnBasedMatchData.metadata
             )
             guard
               state.game?.turnBasedContext?.match.matchId != match.matchId,

@@ -16,6 +16,7 @@ import FeedbackGeneratorClient
 import FileClient
 import GameOverFeature
 import Gen
+import HapticsCore
 import LocalDatabaseClient
 import LowPowerModeClient
 import Overture
@@ -565,8 +566,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
   ._pullback(state: state, action: action, environment: environment)
   .haptics(
     feedbackGenerator: { environment($0).feedbackGenerator },
-    gameState: state.extract(from:),
-    isEnabled: isHapticsEnabled
+    isEnabled: isHapticsEnabled,
+    triggerOnChangeOf:  { state.extract(from: $0)?.selectedWord }
   )
 }
 
@@ -1084,8 +1085,19 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         .fireAndForget()
 
     case let .gameCenter(.turnBasedMatchResponse(.success(match))):
-      // TODO: Should this replace `GameState`?
-      state.turnBasedContext?.match = match
+      guard
+        let turnBasedMatchData = match.matchData?.turnBasedMatchData
+      else { return .none }
+
+      var gameState = GameState(
+        gameCurrentTime: environment.mainRunLoop.now.date,
+        localPlayer: environment.gameCenter.localPlayer.localPlayer(),
+        turnBasedMatch: match,
+        turnBasedMatchData: turnBasedMatchData
+      )
+      gameState.activeGames = state.activeGames
+      gameState.isGameLoaded = state.isGameLoaded
+      state = gameState
       return .none
 
     case .gameCenter(.turnBasedMatchResponse(.failure)):
