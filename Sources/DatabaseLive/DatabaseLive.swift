@@ -523,6 +523,7 @@ extension DatabaseClient {
               DISTINCT ON ("leaderboardScores"."playerId", "words"."word")
               "appleReceipts"."id" IS NOT NULL AS "isSupporter",
               "players"."id" = \(bind: player.id) AS "isYourScore",
+              (SELECT COUNT(*) FROM "words" where "createdAt" BETWEEN NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()) AS "outOf",
               "words"."moveIndex",
               "words"."id" AS "wordId",
               "words"."score",
@@ -569,18 +570,11 @@ extension DatabaseClient {
               \(orderByClause), "word" ASC, "wordCreatedAt" ASC
             LIMIT 150
           ),
-          "wordCount" AS (
-            SELECT COUNT(*) as "outOf"
-            FROM "words"
-            WHERE "words"."createdAt" BETWEEN
-              NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()
-          ),
           "top100" AS (
             SELECT
               *
             FROM
               "rankedScores"
-            LEFT JOIN "wordCount" ON 1=1
             WHERE "rank" <= 100
           )
           SELECT * FROM "top100";
