@@ -192,7 +192,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     switch action {
     case .closeButtonTapped:
-      guard state.isViewEnabled else { return .none }
       guard
         [.notDetermined, .provisional]
           .contains(state.userNotificationSettings?.authorizationStatus),
