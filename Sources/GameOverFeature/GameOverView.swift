@@ -568,6 +568,7 @@ public struct GameOverView: View {
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
+        .ignoresSafeArea()
     }
   }
 
@@ -1200,7 +1201,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
                   update(.remote) { $0.matchOutcome = .lost },
                 ]
               },
-              metadata: .init()
+              metadata: .init(playerIndexToId: [:])
             )
           ),
           reducer: gameOverReducer,
