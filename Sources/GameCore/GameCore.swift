@@ -567,7 +567,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
   .haptics(
     feedbackGenerator: { environment($0).feedbackGenerator },
     isEnabled: isHapticsEnabled,
-    triggerOnChangeOf:  { state.extract(from: $0)?.selectedWord }
+    triggerOnChangeOf: { state.extract(from: $0)?.selectedWord }
   )
 }
 
