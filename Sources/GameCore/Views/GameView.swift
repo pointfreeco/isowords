@@ -1,4 +1,5 @@
 import ActiveGamesFeature
+import Bloom
 import BottomMenu
 import ComposableArchitecture
 import GameOverFeature
@@ -160,7 +161,18 @@ public struct GameView<Content>: View where Content: View {
       .background(
         self.isAnimationReduced
           ? nil
-          : BloomBackground(size: proxy.size, store: self.store)
+          : BloomBackground(
+            size: proxy.size,
+            store: self.store.actionless
+              .scope(
+                state: {
+                  BloomBackground.ViewState.init(
+                    bloomCount: $0.selectedWord.count,
+                    word: $0.selectedWordString
+                  )
+                }
+              )
+          )
       )
       .background(
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)

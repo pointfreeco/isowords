@@ -66,20 +66,23 @@ public struct Blooms: View {
 }
 
 public struct BloomBackground: View {
-  struct ViewState: Equatable {
+  public struct ViewState: Equatable {
     let bloomCount: Int
     let word: String
 
-    init(state: GameState) {
-      self.bloomCount = state.selectedWord.count
-      self.word = state.selectedWordString
+    public init(
+      bloomCount: Int,
+      word: String
+    ) {
+      self.bloomCount = bloomCount
+      self.word = word
     }
   }
 
   @State var blooms: [Bloom] = []
   @Environment(\.colorScheme) var colorScheme
   let size: CGSize
-  let store: Store<GameState, GameAction>
+  let store: Store<ViewState, Never>
   @State var vertexGenerator: AnyIterator<CGPoint> = {
     var rng = Xoshiro(seed: 0)
     var vertices: [CGPoint] = [
@@ -99,10 +102,10 @@ public struct BloomBackground: View {
   }()
   @ObservedObject var viewStore: ViewStore<ViewState, Never>
 
-  public init(size: CGSize, store: Store<GameState, GameAction>) {
+  public init(size: CGSize, store: Store<ViewState, Never>) {
     self.size = size
     self.store = store
-    self.viewStore = ViewStore(self.store.actionless.scope(state: ViewState.init))
+    self.viewStore = ViewStore(self.store)
   }
 
   public var body: some View {
@@ -122,6 +125,8 @@ public struct BloomBackground: View {
           key.contains(self.viewStore.word)
         }?
         .value ?? []
+      guard colors.count > 0
+      else { return }
       (self.blooms.count..<count).forEach { index in
         let color = colors[index % colors.count]
           .withAlphaComponent(self.colorScheme == .dark ? 0.5 : 1)

@@ -310,6 +310,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "AppClipAudioLibrary", targets: ["AppClipAudioLibrary"]),
     .library(name: "AppFeature", targets: ["AppFeature"]),
     .library(name: "AudioPlayerClient", targets: ["AudioPlayerClient"]),
+    .library(name: "Bloom", targets: ["Bloom"]),
     .library(name: "BottomMenu", targets: ["BottomMenu"]),
     .library(name: "ClientModels", targets: ["ClientModels"]),
     .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
@@ -470,6 +471,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "Bloom",
+      dependencies: [
+        "Styleguide",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "Gen", package: "swift-gen"),
+      ]
+    ),
+    .target(
       name: "BottomMenu",
       dependencies: [
         "Styleguide",
@@ -543,6 +552,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "CubePreview",
       dependencies: [
         "AudioPlayerClient",
+        "Bloom",
         "CubeCore",
         "FeedbackGeneratorClient",
         "HapticsCore",
@@ -653,6 +663,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ActiveGamesFeature",
         "ApiClient",
         "AudioPlayerClient",
+        "Bloom",
         "BottomMenu",
         "Build",
         "ClientModels",

@@ -1,4 +1,5 @@
 import AudioPlayerClient
+import Bloom
 import ComposableArchitecture
 import CubeCore
 import FeedbackGeneratorClient
@@ -11,8 +12,6 @@ import SwiftUI
 
 public struct CubePreviewState: Equatable {
   var cubes: Puzzle
-  // TODO: could be computed property
-  var finalWordString: String?
   var isHapticsEnabled: Bool
   var isOnLowPowerMode: Bool
   var moveIndex: Int
@@ -23,7 +22,6 @@ public struct CubePreviewState: Equatable {
 
   public init(
     cubes: ArchivablePuzzle,
-    finalWordString: String? = nil,
     isHapticsEnabled: Bool,
     isOnLowPowerMode: Bool = false,
     moveIndex: Int,
@@ -35,7 +33,6 @@ public struct CubePreviewState: Equatable {
     self.cubes = .init(archivableCubes: cubes)
     apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
-    self.finalWordString = finalWordString
     self.isHapticsEnabled = isHapticsEnabled
     self.isOnLowPowerMode = isOnLowPowerMode
     self.moveIndex = moveIndex
@@ -44,6 +41,15 @@ public struct CubePreviewState: Equatable {
     self.selectedCubeFaces = selectedCubeFaces
     self.settings = settings
   }
+
+  var finalWordString: String? {
+    switch self.moves[self.moveIndex].type {
+    case let .playedWord(faces):
+      return self.cubes.string(from: faces)
+    case .removedCube:
+      return nil
+    }
+  }
 }
 
 public enum CubePreviewAction: Equatable {
@@ -51,7 +57,7 @@ public enum CubePreviewAction: Equatable {
   case cubeScene(CubeSceneView.ViewAction)
   case lowPowerModeResponse(Bool)
   case onAppear
-  // case tap // TODO: cancel animation
+  case tap
 }
 
 public struct CubePreviewEnvironment {
@@ -78,6 +84,8 @@ public let cubePreviewReducer = Reducer<
   CubePreviewAction,
   CubePreviewEnvironment
 > { state, action, environment in
+  struct SelectionId: Hashable {}
+
   switch action {
   case .binding:
     return .none
@@ -105,8 +113,6 @@ public let cubePreviewReducer = Reducer<
     let move = state.moves[state.moveIndex]
     switch move.type {
     case let .playedWord(faces):
-      state.finalWordString = state.cubes.string(from: faces)
-
       for (faceIndex, face) in faces.enumerated() {
         accumulatedSelectedFaces.append(face)
         let moveDuration = Double.random(in: (0.6 ... 0.8))
@@ -152,7 +158,18 @@ public let cubePreviewReducer = Reducer<
       break
     }
 
-    return .concatenate(effects)
+    return Effect.concatenate(effects)
+      .cancellable(id: SelectionId())
+
+  case .tap:
+    state.nub.location = .offScreenRight
+    switch state.moves[state.moveIndex].type {
+    case let .playedWord(faces):
+      state.selectedCubeFaces = faces
+    case .removedCube:
+      break
+    }
+    return .cancel(id: SelectionId())
   }
 }
 .binding(action: /CubePreviewAction.binding)
@@ -234,17 +251,26 @@ public struct CubePreviewView: View {
           self.viewStore.send(.onAppear)
         }
       }
+      .background(
+        BloomBackground(
+          size: proxy.size,
+          store: self.store.scope(
+            state: { _ in
+              BloomBackground.ViewState(
+                bloomCount: self.viewStore.selectedWordString.count,
+                word: self.viewStore.selectedWordString
+              )
+            },
+            action: { (n: Never) -> CubePreviewAction in }
+          )
+        )
+      )
     }
-    // TODO: implement bloom and refer to settings to decide if it should be shown
-//    .background(
-//      BloomBackground(
-//        size: proxy.size,
-//        store: self.store.scope(
-//          state: \.game,
-//          action: TrailerAction.game
-//        )
-//      )
-//    )
+    .onTapGesture {
+      UIView.setAnimationsEnabled(false)
+      self.viewStore.send(.tap)
+      UIView.setAnimationsEnabled(true)
+    }
   }
 
   var scoreText: Text {

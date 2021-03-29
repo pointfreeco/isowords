@@ -18,7 +18,9 @@ struct CubePreviewPreviewApp: App {
         store: .init(
           initialState: .init(
             cubes: .mock,
+            isHapticsEnabled: true,
             isOnLowPowerMode: false,
+            moveIndex: 0,
             moves: [
               .init(
                 playedAt: .mock,
@@ -53,13 +55,13 @@ struct CubePreviewPreviewApp: App {
                 ])
               )
             ],
-            moveIndex: 0,
             settings: .init()
           ),
           reducer: cubePreviewReducer,
           environment: CubePreviewEnvironment(
             audioPlayer: .noop,
             feedbackGenerator: .live,
+            lowPowerMode: .live,
             mainQueue: DispatchQueue.main.eraseToAnyScheduler()
           )
         )
