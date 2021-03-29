@@ -65,7 +65,7 @@ public struct AppState: Equatable {
 
   var void: Void {
     get { () }
-    set { }
+    set {}
   }
 }
 

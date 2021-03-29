@@ -176,11 +176,11 @@ public let dailyChallengeReducer = Reducer<
 
     case .onAppear:
 
-//      _ = environment.apiClient.apiRequest(.currentPlayer)
+      //      _ = environment.apiClient.apiRequest(.currentPlayer)
 
       return .merge(
-//        environment.apiClient.apiRequest(.currentPlayer).fireAndForget(),
-        
+        //        environment.apiClient.apiRequest(.currentPlayer).fireAndForget(),
+
         environment.apiClient.apiRequest(
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
@@ -512,35 +512,36 @@ private struct RingEffect: GeometryEffect {
 }
 
 #if DEBUG
-import SwiftUIHelpers
+  import SwiftUIHelpers
 
-struct DailyChallengeView_Previews: PreviewProvider {
-  static var previews: some View {
-    var environment = DailyChallengeEnvironment(
-      apiClient: .noop,
-      fileClient: .noop,
-      mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
-      mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
-      remoteNotifications: .noop,
-      userNotifications: .noop
-    )
-    environment.userNotifications.getNotificationSettings = .init(value: .init(authorizationStatus: .notDetermined))
+  struct DailyChallengeView_Previews: PreviewProvider {
+    static var previews: some View {
+      var environment = DailyChallengeEnvironment(
+        apiClient: .noop,
+        fileClient: .noop,
+        mainQueue: DispatchQueue.immediateScheduler.eraseToAnyScheduler(),
+        mainRunLoop: RunLoop.immediateScheduler.eraseToAnyScheduler(),
+        remoteNotifications: .noop,
+        userNotifications: .noop
+      )
+      environment.userNotifications.getNotificationSettings = .init(
+        value: .init(authorizationStatus: .notDetermined))
 
-    return Preview {
-      NavigationView {
-        DailyChallengeView(
-          store: .init(
-            initialState: .init(
-              inProgressDailyChallengeUnlimited: update(.mock) {
-                $0?.moves = [.highScoringMove]
-              }
-            ),
-            reducer: dailyChallengeReducer,
-            environment: environment
+      return Preview {
+        NavigationView {
+          DailyChallengeView(
+            store: .init(
+              initialState: .init(
+                inProgressDailyChallengeUnlimited: update(.mock) {
+                  $0?.moves = [.highScoringMove]
+                }
+              ),
+              reducer: dailyChallengeReducer,
+              environment: environment
+            )
           )
-        )
+        }
       }
     }
   }
-}
 #endif
