@@ -180,9 +180,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                     "\(environment.gameCenter.localPlayer.localPlayer().displayName) forfeited the match."
                 )
               )
-              .catchToEffect()
-              .ignoreOutput()
-              .eraseToEffect()
               .fireAndForget()
 
           case .gameCenter(.listener):
