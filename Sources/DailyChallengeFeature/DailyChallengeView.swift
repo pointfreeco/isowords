@@ -175,12 +175,7 @@ public let dailyChallengeReducer = Reducer<
       .map(DailyChallengeAction.startDailyChallengeResponse)
 
     case .onAppear:
-
-      //      _ = environment.apiClient.apiRequest(.currentPlayer)
-
       return .merge(
-        //        environment.apiClient.apiRequest(.currentPlayer).fireAndForget(),
-
         environment.apiClient.apiRequest(
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
@@ -235,7 +230,7 @@ public let dailyChallengeReducer = Reducer<
 
     case let .userNotificationSettingsResponse(settings):
       state.userNotificationSettings = settings
-      return environment.apiClient.apiRequest(.currentPlayer).fireAndForget()
+      return .none
     }
   }
 )
