@@ -152,6 +152,29 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
           cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
           self.gameCubeNode.addChildNode(cube)
         }
+
+        // NB: "Warm" the scene with selected/selectable faces to avoid a hitch when selecting the
+        //     first letter
+        [CubeFaceNode.ViewState.Status.selected, .selectable].forEach { status in
+          let warmer = CubeFaceNode(
+            letterGeometry: letterGeometry,
+            store: Store(
+              initialState: .init(
+                cubeFace: .init(letter: "A", side: .top),
+                letterIsHidden: true,
+                status: status
+              ),
+              reducer: .empty,
+              environment: ()
+            )
+          )
+          warmer.position = .init(-1, -1, -1)
+          warmer.scale = .init(0.001, 0.001, 0.001)
+          self.gameCubeNode.addChildNode(warmer)
+          DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            warmer.removeFromParentNode()
+          }
+        }
       }
       .store(in: &self.cancellables)
 
