@@ -41,7 +41,7 @@ public struct OnboardingState: Equatable {
     case step2_FindWordsOnCube
     case step3_ConnectLettersTouching
     case step4_FindGame
-    case step5_Submit
+    case step5_SubmitGame
     case step6_Congrats
     case step7_BiggerCube
     case step8_FindCubes
@@ -81,7 +81,7 @@ public struct OnboardingState: Equatable {
         return true
 
       case .step4_FindGame,
-        .step5_Submit,
+        .step5_SubmitGame,
         .step6_Congrats,
         .step8_FindCubes,
         .step9_Congrats,
@@ -109,7 +109,7 @@ public struct OnboardingState: Equatable {
         .step2_FindWordsOnCube,
         .step3_ConnectLettersTouching,
         .step4_FindGame,
-        .step5_Submit,
+        .step5_SubmitGame,
         .step7_BiggerCube,
         .step8_FindCubes,
         .step10_CubeDisappear,
@@ -261,7 +261,7 @@ public let onboardingReducer = Reducer<
 
   case .game(.submitButtonTapped):
     switch state.step {
-    case .step5_Submit where state.game.selectedWordString == "GAME",
+    case .step5_SubmitGame where state.game.selectedWordString == "GAME",
       .step8_FindCubes where state.game.selectedWordString == "CUBES",
       .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
       .step16_FindAnyWord where environment.dictionary.contains(state.game.selectedWordString, .en):
@@ -404,7 +404,7 @@ public let onboardingReducer = Reducer<
     .step11_FindRemove where selectedWord.isRemove:
     state.step.next()
     return .none
-  case .step5_Submit where selectedWord != "GAME",
+  case .step5_SubmitGame where selectedWord != "GAME",
     .step12_CubeIsShaking where !selectedWord.isRemove:
     state.step.previous()
     return .none
@@ -418,7 +418,7 @@ public let onboardingReducer = Reducer<
     .step2_FindWordsOnCube,
     .step3_ConnectLettersTouching,
     .step4_FindGame,
-    .step5_Submit,
+    .step5_SubmitGame,
     .step7_BiggerCube,
     .step8_FindCubes,
     .step10_CubeDisappear,

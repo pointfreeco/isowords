@@ -27,7 +27,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    Styleguide.registerFonts()
     self.viewStore.send(.appDelegate(.didFinishLaunching))
     return true
   }
@@ -53,6 +52,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 struct IsowordsApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @Environment(\.scenePhase) private var scenePhase
+
+  init() {
+    Styleguide.registerFonts()
+  }
 
   var body: some Scene {
     WindowGroup {

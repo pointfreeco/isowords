@@ -5,6 +5,7 @@ import ComposableArchitecture
 import ComposableUserNotifications
 import DictionaryClient
 import RemoteNotificationsClient
+import SettingsFeature
 import SharedModels
 import UserNotifications
 
@@ -39,7 +40,7 @@ struct AppDelegateEnvironment {
 }
 
 let appDelegateReducer = Reducer<
-  Void, AppDelegateAction, AppDelegateEnvironment
+  UserSettings, AppDelegateAction, AppDelegateEnvironment
 > { state, action, environment in
   switch action {
   case .didFinishLaunching:
@@ -78,7 +79,14 @@ let appDelegateReducer = Reducer<
 
       // Preload sounds
       environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget()
+        .fireAndForget(),
+
+      environment.audioPlayer.setGlobalVolumeForMusic(
+        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
+          ? 0
+          : state.musicVolume
+      )
+      .fireAndForget()
     )
 
   case .didRegisterForRemoteNotifications(.failure):

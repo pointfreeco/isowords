@@ -62,11 +62,6 @@ public struct AppState: Equatable {
       return self.onboarding
     }
   }
-
-  var void: Void {
-    get { () }
-    set {}
-  }
 }
 
 public enum AppAction: Equatable {
@@ -135,7 +130,7 @@ extension AppEnvironment {
 public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
   appDelegateReducer
     .pullback(
-      state: \.void,
+      state: \.home.settings.userSettings,
       action: /AppAction.appDelegate,
       environment: {
         .init(
@@ -224,9 +219,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
     return .merge(
       environment.database.migrate
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
         .fireAndForget(),
 
       environment.fileClient.loadSavedGames().map(AppAction.savedGamesLoaded),
@@ -378,13 +370,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case .didChangeScenePhase(.active):
     return .merge(
-      environment.audioPlayer.setGlobalVolumeForMusic(
-        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
-          ? 0
-          : state.home.settings.userSettings.musicVolume
-      )
-      .fireAndForget(),
-
       Effect.registerForRemoteNotifications(
         mainQueue: environment.mainQueue,
         remoteNotifications: environment.remoteNotifications,

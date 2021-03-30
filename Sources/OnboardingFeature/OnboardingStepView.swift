@@ -27,7 +27,7 @@ struct OnboardingStepView: View {
         && state.step != OnboardingState.Step.allCases.last
 
       switch state.step {
-      case .step5_Submit:
+      case .step5_SubmitGame:
         self.isSubmitButtonVisible = state.game.selectedWordString == "GAME"
       case .step8_FindCubes:
         self.isSubmitButtonVisible = state.game.selectedWordString == "CUBES"
@@ -85,7 +85,7 @@ struct OnboardingStepView: View {
                     + Text(".")
                 )
               }
-              if self.viewStore.step == .step5_Submit {
+              if self.viewStore.step == .step5_SubmitGame {
                 InlineStepView(
                   height: height,
                   Text("Now submit the word by tapping the ")
