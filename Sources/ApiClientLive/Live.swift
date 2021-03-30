@@ -152,11 +152,13 @@ extension URLRequest {
     guard let infoDictionary = Bundle.main.infoDictionary else { return self }
 
     let bundleName = infoDictionary[kCFBundleNameKey as String] ?? "isowords"
-    let bundleVersion = infoDictionary[kCFBundleVersionKey as String].map { "/\($0)" } ?? ""
-    let gitSha = infoDictionary["GitSHA"].map { " (\($0))" } ?? ""
+    let marketingVersion = infoDictionary["CFBundleShortVersionString"].map { "/\($0)" } ?? ""
+    let bundleVersion = infoDictionary[kCFBundleVersionKey as String].map { " bundle/\($0)" } ?? ""
+    let gitSha = (infoDictionary["GitSHA"] as? String).map { $0.isEmpty ? "" : "git/\($0)" } ?? ""
 
     var request = self
-    request.setValue("\(bundleName)\(bundleVersion)\(gitSha)", forHTTPHeaderField: "User-Agent")
+    request.setValue(
+      "\(bundleName)\(marketingVersion)\(bundleVersion)\(gitSha)", forHTTPHeaderField: "User-Agent")
 
     return request
   }

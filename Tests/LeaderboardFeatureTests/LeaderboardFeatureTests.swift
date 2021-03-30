@@ -126,6 +126,7 @@ class LeaderboardFeatureTests: XCTestCase {
     store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
       $0.cubePreview = .init(
         cubes: .mock,
+        isAnimationReduced: false,
         isHapticsEnabled: false,
         isOnLowPowerMode: false,
         moveIndex: 0,

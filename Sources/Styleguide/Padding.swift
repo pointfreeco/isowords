@@ -81,10 +81,10 @@ private struct AdaptivePadding: ViewModifier {
 extension EdgeInsets {
   fileprivate func apply(_ adaptiveSize: AdaptiveSize) -> EdgeInsets {
     EdgeInsets(
-      top: self.top + adaptiveSize.padding,
-      leading: self.leading + adaptiveSize.padding,
-      bottom: self.bottom + adaptiveSize.padding,
-      trailing: self.trailing + adaptiveSize.padding
+      top: self.top == 0 ? 0 : self.top + adaptiveSize.padding,
+      leading: self.leading == 0 ? 0 : self.leading + adaptiveSize.padding,
+      bottom: self.bottom == 0 ? 0 : self.bottom + adaptiveSize.padding,
+      trailing: self.trailing == 0 ? 0 : self.trailing + adaptiveSize.padding
     )
   }
 }

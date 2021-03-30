@@ -18,6 +18,7 @@ struct CubePreviewPreviewApp: App {
         store: .init(
           initialState: .init(
             cubes: .mock,
+            isAnimationReduced: false,
             isHapticsEnabled: true,
             isOnLowPowerMode: false,
             moveIndex: 0,
