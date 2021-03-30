@@ -444,7 +444,12 @@ extension ResultEnvelope {
               timeScopeMenu: EmptyView()
             )
             .padding()
+          }
+          .navigationStyle(title: Text("Leaderboards"))
+        }
 
+        NavigationView {
+          ScrollView {
             LeaderboardResultsView(
               store: .init(
                 initialState: LeaderboardResultsState(
@@ -474,7 +479,7 @@ extension ResultEnvelope {
                     .delay(for: 1, scheduler: DispatchQueue.main.animation())
                     .eraseToEffect()
                   },
-                  mainQueue: .main
+                  mainQueue: .immediate
                 )
               ),
               title: Text("Daily challenge"),
@@ -485,7 +490,12 @@ extension ResultEnvelope {
               timeScopeMenu: EmptyView()
             )
             .padding()
+          }
+          .navigationStyle(title: Text("Leaderboards"))
+        }
 
+        NavigationView {
+          ScrollView {
             LeaderboardResultsView(
               store: .init(
                 initialState: LeaderboardResultsState(
@@ -497,7 +507,7 @@ extension ResultEnvelope {
                 reducer: .leaderboardResultsReducer(),
                 environment: LeaderboardResultsEnvironment(
                   loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-                  mainQueue: .main
+                  mainQueue: .immediate
                 )
               ),
               title: Text("Solo"),
@@ -512,7 +522,6 @@ extension ResultEnvelope {
           .navigationStyle(title: Text("Leaderboards"))
         }
       }
-      .previewLayout(.fixed(width: 400, height: 2000))
     }
   }
 #endif
