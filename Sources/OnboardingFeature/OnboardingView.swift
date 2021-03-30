@@ -211,20 +211,13 @@ public struct OnboardingEnvironment {
 }
 
 public let onboardingReducer = Reducer<
-  OnboardingState, OnboardingAction, OnboardingEnvironment
+  OnboardingState,
+  OnboardingAction,
+  OnboardingEnvironment
 > { state, action, environment in
-
-  struct DelayedNextStepId: Hashable {}
-
-  let gameReducer = GameCore.gameReducer(
-    state: \.self,
-    action: /.self,
-    environment: { $0 },
-    isHapticsEnabled: { _ in true }
-  )
-
   switch action {
   case .alert(.confirmSkipButtonTapped):
+    state.alert = nil
     state.step = OnboardingState.Step.allCases.last!
     return .none
 
@@ -266,8 +259,7 @@ public let onboardingReducer = Reducer<
   case .game where state.step.isCongratsStep:
     return .none
 
-  case .game(.submitButtonTapped),
-    .game(.wordSubmitButton(.delegate(.confirmSubmit))):
+  case .game(.submitButtonTapped):
     switch state.step {
     case .step5_Submit where state.game.selectedWordString == "GAME",
       .step8_FindCubes where state.game.selectedWordString == "CUBES",
@@ -276,13 +268,11 @@ public let onboardingReducer = Reducer<
 
       state.step.next()
 
-      return gameReducer.run(
-        &state.game,
-        .submitButtonTapped(nil),
-        environment.gameEnvironment
+      return onboardingGameReducer.run(
+        &state,
+        .game(.submitButtonTapped(nil)),
+        environment
       )
-      .map(OnboardingAction.game)
-      .eraseToEffect()
 
     default:
       state.game.selectedWord = []
@@ -291,13 +281,11 @@ public let onboardingReducer = Reducer<
 
   case let .game(.confirmRemoveCube(index)):
     state.step.next()
-    return gameReducer.run(
-      &state.game,
-      .confirmRemoveCube(index),
-      environment.gameEnvironment
+    return onboardingGameReducer.run(
+      &state,
+      .game(.confirmRemoveCube(index)),
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
   case let .game(.doubleTap(index: index)):
     guard state.step == .some(.step19_DoubleTapToRemove)
@@ -310,13 +298,11 @@ public let onboardingReducer = Reducer<
       ? indexedCubeFace
       : nil
 
-    return gameReducer.run(
-      &state.game,
-      .tap(gestureState, index),
-      environment.gameEnvironment
+    return onboardingGameReducer.run(
+      &state,
+      .game(.tap(gestureState, index)),
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
   case let .game(.pan(recognizerState, panData)):
     if let indexedCubeFace = panData?.cubeFaceState,
@@ -324,22 +310,18 @@ public let onboardingReducer = Reducer<
     {
       return .none
     }
-    return gameReducer.run(
-      &state.game,
-      .pan(recognizerState, panData),
-      environment.gameEnvironment
+    return onboardingGameReducer.run(
+      &state,
+      .game(.pan(recognizerState, panData)),
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
-  case let .game(action):
-    return gameReducer.run(
-      &state.game,
+  case .game:
+    return onboardingGameReducer.run(
+      &state,
       action,
-      environment.gameEnvironment
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
   case .getStartedButtonTapped:
     return .init(value: .delegate(.getStarted))
@@ -413,6 +395,8 @@ public let onboardingReducer = Reducer<
     return environment.audioPlayer.play(.uiSfxTap)
       .fireAndForget()
   }
+
+  struct DelayedNextStepId: Hashable {}
 }
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in
   switch state.step {
@@ -555,6 +539,19 @@ private func isVisible(
   return true
 }
 
+extension String {
+  var isRemove: Bool {
+    self == "REMOVE" || self == "REMOVES"
+  }
+}
+
+private let onboardingGameReducer = gameReducer(
+  state: \OnboardingState.game,
+  action: /OnboardingAction.game,
+  environment: { (environment: OnboardingEnvironment) in environment.gameEnvironment },
+  isHapticsEnabled: { _ in true }
+)
+
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
@@ -568,9 +565,3 @@ private func isVisible(
     }
   }
 #endif
-
-extension String {
-  var isRemove: Bool {
-    self == "REMOVE" || self == "REMOVES"
-  }
-}
