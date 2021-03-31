@@ -10,7 +10,6 @@ import HttpPipelineTestSupport
 import Overture
 import Prelude
 import ServerRouter
-import ServerRoutes
 import SharedModels
 import SiteMiddleware
 import SnapshotTesting
