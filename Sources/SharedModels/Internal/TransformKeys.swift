@@ -1,4 +1,3 @@
-
 extension Dictionary {
   func transformKeys<NewKey>(_ f: (Key) -> NewKey) -> [NewKey: Value] {
     var result: [NewKey: Value] = [:]
