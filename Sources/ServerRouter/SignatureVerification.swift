@@ -4,6 +4,7 @@ import Prelude
 
 func verifiedDataBody(
   date: @escaping () -> Date,
+  require: Bool = true,
   secrets: [String],
   sha256: @escaping (Data) -> Data
 ) -> Router<Data> {
@@ -11,12 +12,13 @@ func verifiedDataBody(
     <%> header("X-Signature", opt(.base64))
     <%> queryParam("timestamp", opt(.int)))
     .map(.init(apply: { ($0, $1.0, $1.1) }, unapply: { ($0, ($1, $2)) }))
-    .map(.verifySignature(date: date, secrets: secrets, sha256: sha256))
+    .map(.verifySignature(date: date, require: require, secrets: secrets, sha256: sha256))
 }
 
 extension PartialIso where A == (Data, Data?, Int?), B == Data {
   static func verifySignature(
     date: @escaping () -> Date,
+    require: Bool,
     secrets: [String],
     sha256: @escaping (Data) -> Data
   ) -> Self {
@@ -35,8 +37,10 @@ extension PartialIso where A == (Data, Data?, Int?), B == Data {
           sha256: sha256,
           timestamp: timestamp
         )
-          ? data
-          : nil
+        ? data
+        : require
+        ? nil
+        : data
       },
       unapply: { data in
         guard let firstSecret = secrets.first

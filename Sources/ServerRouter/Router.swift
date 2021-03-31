@@ -131,7 +131,11 @@ public func router(
 
     .case(ServerRoute.authenticate)
       <¢> post %> "api" %> "authenticate"
-      %> jsonBody(ServerRoute.AuthenticateRequest.self)
+      %> verifiedDataBody(date: date, require: false, secrets: secrets, sha256: sha256)
+      .map(
+        PartialIso.codableToJsonData(
+          ServerRoute.AuthenticateRequest.self, encoder: encoder, decoder: decoder
+        ).inverted)
       <% end,
 
     .case { .appSiteAssociation }
