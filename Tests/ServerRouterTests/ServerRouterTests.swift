@@ -12,16 +12,19 @@ import XCTest
 
 class ServerRouterTests: XCTestCase {
   func testAuthenticateMatching() throws {
-    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate")!)
-    request.httpMethod = "POST"
-    request.httpBody = Data(
-      """
+    let json = """
       {
         "deviceId": "deadbeef-dead-beef-dead-beefdeadbeef",
         "displayName": "Blob",
         "gameCenterLocalPlayerId": "token"
       }
-      """.utf8)
+      """
+    let signature = "\(json)----DEADBEEF----1234567860"
+
+    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate?timestamp=1234567860")!)
+    request.httpMethod = "POST"
+    request.httpBody = Data(json.utf8)
+    request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
     let route = testRouter.match(request: request)
 
     XCTAssertEqual(
@@ -38,15 +41,18 @@ class ServerRouterTests: XCTestCase {
   }
 
   func testAuthenticateMatching_NoDisplayName() throws {
-    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate")!)
-    request.httpMethod = "POST"
-    request.httpBody = Data(
-      """
+    let json = """
       {
         "deviceId": "deadbeef-dead-beef-dead-beefdeadbeef",
         "gameCenterLocalPlayerId": "token"
       }
-      """.utf8)
+      """
+    let signature = "\(json)----DEADBEEF----1234567860"
+
+    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate?timestamp=1234567860")!)
+    request.httpMethod = "POST"
+    request.httpBody = Data(json.utf8)
+    request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
     let route = testRouter.match(request: request)
 
     XCTAssertEqual(
@@ -63,15 +69,18 @@ class ServerRouterTests: XCTestCase {
   }
 
   func testAuthenticateMatching_NoGameCenterId() throws {
-    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate")!)
-    request.httpMethod = "POST"
-    request.httpBody = Data(
-      """
+    let json = """
       {
         "deviceId": "deadbeef-dead-beef-dead-beefdeadbeef",
         "displayName": "Blob"
       }
-      """.utf8)
+      """
+    let signature = "\(json)----DEADBEEF----1234567860"
+
+    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate?timestamp=1234567860")!)
+    request.httpMethod = "POST"
+    request.httpBody = Data(json.utf8)
+    request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
     let route = testRouter.match(request: request)
 
     XCTAssertEqual(
@@ -88,14 +97,17 @@ class ServerRouterTests: XCTestCase {
   }
 
   func testAuthenticateMatching_NoDisplayName_NoGameCenterId() throws {
-    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate")!)
-    request.httpMethod = "POST"
-    request.httpBody = Data(
-      """
+    let json = """
       {
         "deviceId": "deadbeef-dead-beef-dead-beefdeadbeef"
       }
-      """.utf8)
+      """
+    let signature = "\(json)----DEADBEEF----1234567860"
+
+    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate?timestamp=1234567860")!)
+    request.httpMethod = "POST"
+    request.httpBody = Data(json.utf8)
+    request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
     let route = testRouter.match(request: request)
 
     XCTAssertEqual(
