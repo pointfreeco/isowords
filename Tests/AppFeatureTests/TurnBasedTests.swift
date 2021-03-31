@@ -104,6 +104,12 @@ class TurnBasedTests: XCTestCase {
     ) {
       $0.game = initialGameState
     }
+    store.environment.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
+    store.environment.userDefaults.setInteger = { int, key in
+      XCTAssertEqual(int, 1)
+      XCTAssertEqual(key, "multiplayerOpensCount")
+      return .none
+    }
     store.send(.currentGame(.game(.onAppear)))
 
     store.receive(.currentGame(.game(.gameLoaded))) {
