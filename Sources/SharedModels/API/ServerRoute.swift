@@ -1,5 +1,4 @@
 import Foundation
-import SharedModels
 import Tagged
 
 public enum ServerRoute: Equatable {
@@ -327,15 +326,5 @@ public enum ServerRoute: Equatable {
 
   public enum SharedGame: Equatable {
     case show(SharedModels.SharedGame.Code)
-  }
-}
-
-extension Dictionary {
-  func transformKeys<NewKey>(_ f: (Key) -> NewKey) -> [NewKey: Value] {
-    var result: [NewKey: Value] = [:]
-    for (key, value) in self {
-      result[f(key)] = value
-    }
-    return result
   }
 }

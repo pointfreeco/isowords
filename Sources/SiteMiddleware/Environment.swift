@@ -6,7 +6,6 @@ import Foundation
 import MailgunClient
 import Overture
 import ServerRouter
-import ServerRoutes
 import SharedModels
 import SnsClient
 import VerifyReceiptMiddleware

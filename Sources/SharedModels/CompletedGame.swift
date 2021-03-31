@@ -143,13 +143,3 @@ public struct CompletedGame: Codable, Equatable {
     self.moves.reduce(into: 0) { $0 += $1.score }
   }
 }
-
-extension Dictionary {
-  func transformKeys<NewKey>(_ f: (Key) -> NewKey) -> [NewKey: Value] {
-    var result: [NewKey: Value] = [:]
-    for (key, value) in self {
-      result[f(key)] = value
-    }
-    return result
-  }
-}

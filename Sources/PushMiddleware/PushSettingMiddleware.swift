@@ -2,7 +2,6 @@ import DatabaseClient
 import Either
 import HttpPipeline
 import Prelude
-import ServerRoutes
 import SharedModels
 
 public struct UpdatePushSettingRequest {
