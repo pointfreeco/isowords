@@ -7,6 +7,7 @@ import MiddlewareHelpers
 import Prelude
 import ServerConfig
 import ServerRouter
+import SharedModels
 import ShareGameMiddleware
 import Tagged
 
