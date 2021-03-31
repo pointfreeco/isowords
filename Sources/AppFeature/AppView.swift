@@ -233,12 +233,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     }
 
     return .merge(
-      environment.database.migrate
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
-        .fireAndForget(),
-
+      environment.database.migrate.fireAndForget(),
       environment.fileClient.loadSavedGames().map(AppAction.savedGamesLoaded),
       environment.fileClient.loadUserSettings().map(AppAction.userSettingsLoaded),
 
