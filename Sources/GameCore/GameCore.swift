@@ -967,8 +967,9 @@ extension Effect where Output == GameAction, Failure == Never {
           isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
           serverConfig: environment.serverConfig.config(),
           playedGamesCount: {
-            environment.database.playedGamesCount(
-              .init(gameContext: gameContext.completedGameContext))
+            environment.userDefaults.incrementMultiplayerOpensCount()
+              .setFailureType(to: Error.self)
+              .eraseToEffect()
           }
         )
         .filter { $0 }
