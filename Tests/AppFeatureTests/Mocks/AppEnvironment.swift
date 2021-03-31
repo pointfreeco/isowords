@@ -23,10 +23,11 @@ extension AppEnvironment {
     $0.mainRunLoop = .immediate
     $0.serverConfig.refresh = { .none }
     $0.storeKit.observer = .none
-    $0.userDefaults.override(true, forKey: "hasShownFirstLaunchOnboardingKey")
-    $0.userDefaults.override(0, forKey: "installationTimeKey")
+    $0.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")
+    $0.userDefaults.override(double: 0, forKey: "installationTimeKey")
+    let defaults = $0.userDefaults
     $0.userDefaults.setDouble = {
-      $1 == "installationTimeKey" ? .none : UserDefaultsClient.failing.setDouble($0, $1)
+      $1 == "installationTimeKey" ? .none : defaults.setDouble($0, $1)
     }
     $0.userNotifications.delegate = .none
     $0.userNotifications.getNotificationSettings = .none

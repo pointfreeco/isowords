@@ -10,7 +10,6 @@ import Overture
 import Prelude
 import PushMiddleware
 import ServerRouter
-import ServerRoutes
 import SharedModels
 import SiteMiddleware
 import SnapshotTesting

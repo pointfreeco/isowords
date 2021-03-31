@@ -5,7 +5,6 @@ import Foundation
 import HttpPipeline
 import Prelude
 import ServerRouter
-import ServerRoutes
 import SharedModels
 
 public struct SubmitGameRequest {
