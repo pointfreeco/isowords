@@ -11,6 +11,33 @@ import XCTest
 @testable import ServerRouter
 
 class ServerRouterTests: XCTestCase {
+  func testLegacyAuthenticate() throws {
+    let json = """
+      {
+        "deviceId": "deadbeef-dead-beef-dead-beefdeadbeef",
+        "displayName": "Blob",
+        "gameCenterLocalPlayerId": "token"
+      }
+      """
+
+    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate")!)
+    request.httpMethod = "POST"
+    request.httpBody = Data(json.utf8)
+    let route = testRouter.match(request: request)
+
+    XCTAssertEqual(
+      route,
+      .authenticate(
+        .init(
+          deviceId: .init(rawValue: UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")!),
+          displayName: "Blob",
+          gameCenterLocalPlayerId: "token",
+          timeZone: "America/New_York"
+        )
+      )
+    )
+  }
+
   func testAuthenticateMatching() throws {
     let json = """
       {
