@@ -37,8 +37,8 @@ extension PartialIso where A == (Data, Data?, Int?), B == Data {
           sha256: sha256,
           timestamp: timestamp
         )
-        ? data
-        : nil
+          ? data
+          : nil
       },
       unapply: { data in
         guard let firstSecret = secrets.first
