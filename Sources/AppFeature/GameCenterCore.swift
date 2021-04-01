@@ -29,7 +29,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               let context = TurnBasedContext(
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 match: match,
-                metadata: .init(playerIndexToId: [:])
+                metadata: .init(playerIndexToId: [:], wasLastMoveObserved: false)
               )
               let game = GameState(
                 cubes: environment.dictionary.randomCubes(.en),

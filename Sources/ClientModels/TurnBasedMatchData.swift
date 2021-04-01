@@ -26,11 +26,14 @@ public struct TurnBasedMatchData: Codable, Equatable {
 
   public struct Metadata: Codable, Equatable {
     public var playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id]
+    public var wasLastMoveObserved: Bool
 
     public init(
-      playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id]
+      playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id],
+      wasLastMoveObserved: Bool
     ) {
       self.playerIndexToId = playerIndexToId
+      self.wasLastMoveObserved = wasLastMoveObserved
     }
   }
 
@@ -60,6 +63,7 @@ extension Data {
 extension TurnBasedMatchData.Metadata {
   private enum CodingKeys: CaseIterable, CodingKey {
     case playerIndexToId
+    case wasLastMoveObserved
   }
 
   public init(from decoder: Decoder) throws {
@@ -70,6 +74,10 @@ extension TurnBasedMatchData.Metadata {
       forKey: .playerIndexToId
     )
     .transformKeys(Tagged.init(rawValue:))
+    
+    self.wasLastMoveObserved = try container
+      .decodeIfPresent(Bool.self, forKey: .wasLastMoveObserved)
+      ?? false
   }
 
   public func encode(to encoder: Encoder) throws {
