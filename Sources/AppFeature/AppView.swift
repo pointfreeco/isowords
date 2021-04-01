@@ -417,28 +417,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
 public struct AppView: View {
   let store: Store<AppState, AppAction>
-
-  public init(store: Store<AppState, AppAction>) {
-    self.store = store
-  }
-
-  public var body: some View {
-    IfLetStore(
-      self.store.scope(
-        state: \.firstLaunchOnboarding,
-        action: AppAction.onboarding
-      ),
-      then: { store in
-        OnboardingView(store: store)
-      },
-      else: MainAppView(store: self.store)
-    )
-    .modifier(DeviceStateModifier())
-  }
-}
-
-public struct MainAppView: View {
-  let store: Store<AppState, AppAction>
   @ObservedObject var viewStore: ViewStore<ViewState, AppAction>
   @Environment(\.deviceState) var deviceState
 
@@ -448,7 +426,7 @@ public struct MainAppView: View {
 
     init(state: AppState) {
       self.isGameActive = state.game != nil
-      self.isOnboardingPresented = state.onboarding?.presentationStyle == .help
+      self.isOnboardingPresented = state.onboarding != nil
     }
   }
 
@@ -458,50 +436,53 @@ public struct MainAppView: View {
   }
 
   public var body: some View {
-    if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
-      NavigationView {
-        HomeView(store: self.store.scope(state: \.home, action: AppAction.home))
-      }
-      .navigationViewStyle(StackNavigationViewStyle())
-      .zIndex(0)
-    } else {
-      IfLetStore(
-        self.store.scope(
-          state: { appState in
-            appState.game.map {
-              (
-                game: $0,
-                nub: nil,
-                settings: .init(
-                  enableCubeShadow: appState.home.settings.enableCubeShadow,
-                  enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
-                  showSceneStatistics: appState.home.settings.showSceneStatistics
-                )
-              )
-            }
-          }
-        ),
-        then: { gameAndSettingsStore in
-          GameFeatureView(
-            content: CubeView(
-              store: gameAndSettingsStore.scope(
-                state: CubeSceneView.ViewState.init(game:nub:settings:),
-                action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
-              )
-            ),
-            store: self.store.scope(state: \.currentGame, action: AppAction.currentGame)
-          )
+    Group {
+      if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
+        NavigationView {
+          HomeView(store: self.store.scope(state: \.home, action: AppAction.home))
         }
-      )
-      .transition(.game)
-      .zIndex(1)
+        .navigationViewStyle(StackNavigationViewStyle())
+        .zIndex(0)
+      } else {
+        IfLetStore(
+          self.store.scope(
+            state: { appState in
+              appState.game.map {
+                (
+                  game: $0,
+                  nub: nil,
+                  settings: .init(
+                    enableCubeShadow: appState.home.settings.enableCubeShadow,
+                    enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
+                    showSceneStatistics: appState.home.settings.showSceneStatistics
+                  )
+                )
+              }
+            }
+          ),
+          then: { gameAndSettingsStore in
+            GameFeatureView(
+              content: CubeView(
+                store: gameAndSettingsStore.scope(
+                  state: CubeSceneView.ViewState.init(game:nub:settings:),
+                  action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
+                )
+              ),
+              store: self.store.scope(state: \.currentGame, action: AppAction.currentGame)
+            )
+          }
+        )
+        .transition(.game)
+        .zIndex(1)
 
-      IfLetStore(
-        self.store.scope(state: \.onboarding, action: AppAction.onboarding),
-        then: OnboardingView.init(store:)
-      )
-      .zIndex(2)
+        IfLetStore(
+          self.store.scope(state: \.onboarding, action: AppAction.onboarding),
+          then: OnboardingView.init(store:)
+        )
+        .zIndex(2)
+      }
     }
+    .modifier(DeviceStateModifier())
   }
 }
 
