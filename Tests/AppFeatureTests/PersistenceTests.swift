@@ -285,4 +285,41 @@ class PersistenceTests: XCTestCase {
       $0.game = GameState(inProgressGame: .mock)
     }
   }
+
+  func testTurnBasedAbandon() {
+    let store = TestStore(
+      initialState: AppState(
+        game: update(.mock) {
+          $0.gameContext = .turnBased(
+            .init(
+              localPlayer: .mock,
+              match: .inProgress,
+              metadata: .init(playerIndexToId: [:])
+            )
+          )
+        },
+        home: HomeState(
+          savedGames: SavedGamesState(
+            dailyChallengeUnlimited: .mock,
+            unlimited: .mock
+          )
+        )
+      ),
+      reducer: appReducer,
+      environment: update(.failing) {
+        $0.audioPlayer.stop = { _ in .none }
+      }
+    )
+
+    store.send(.currentGame(.game(.endGameButtonTapped))) {
+      try XCTUnwrap(&$0.game) {
+        var gameOver = GameOverState(
+          completedGame: .init(gameState: $0),
+          isDemo: false
+        )
+        gameOver.turnBasedContext = $0.turnBasedContext
+        $0.gameOver = gameOver
+      }
+    }
+  }
 }

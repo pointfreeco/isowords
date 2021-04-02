@@ -32,7 +32,7 @@
 		</dict>
 	</dict>
 	<key>CFBundleVersion</key>
-	<string>100</string>
+	<string>102</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
