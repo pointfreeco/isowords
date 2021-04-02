@@ -26,7 +26,7 @@ public struct ServerConfig: Codable, Equatable, Hashable {
 
   public struct UpgradeInterstitial: Codable, Equatable, Hashable {
     public var dailyChallengeTriggerEvery = 1
-    public var duration = 15
+    public var duration = 10
     public var multiplayerGameTriggerEvery = 4
     public var nagBannerAfterInstallDuration = 60 * 60 * 24 * 2
     public var playedDailyChallengeGamesTriggerCount = 2

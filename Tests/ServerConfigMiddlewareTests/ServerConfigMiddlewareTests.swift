@@ -53,7 +53,7 @@ class ServerConfigMiddlewareTests: XCTestCase {
         },
         "upgradeInterstitial" : {
           "dailyChallengeTriggerEvery" : 1,
-          "duration" : 15,
+          "duration" : 10,
           "multiplayerGameTriggerEvery" : 4,
           "nagBannerAfterInstallDuration" : 172800,
           "playedDailyChallengeGamesTriggerCount" : 2,
