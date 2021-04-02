@@ -66,7 +66,7 @@ class TurnBasedTests: XCTestCase {
           return .none
         }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-        $0.gameCenter.turnBasedMatchmakerViewController._present = { _ in .none }
+        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
         $0.lowPowerMode.start = .none
         $0.serverConfig.config = { .init() }
         $0.serverConfig.refresh = { .init(value: .init()) }
