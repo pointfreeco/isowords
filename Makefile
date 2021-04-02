@@ -250,7 +250,7 @@ archive: bootstrap-client
 		|| (git checkout . && echo "  🛑 Failed to build archive" && exit 1)
 	 @git add . && git commit -m "Bumped version to $$(cd App && agvtool what-version -terse)"
 	 @git tag -a "archive-$$(cd App && agvtool what-version -terse)" -m "Archive"
-	 @git tag -a "$$(agvtool what-marketing-version -terse1)" -m "Marketing Version"
+	 @git tag -a "$$(agvtool what-marketing-version -terse1)" -f -m "Marketing Version"
 	 @git push origin main
 	 @git push origin "archive-$$(cd App && agvtool what-version -terse)"
 	 @git push origin "$$(cd App && agvtool what-markeing-version -terse)"
