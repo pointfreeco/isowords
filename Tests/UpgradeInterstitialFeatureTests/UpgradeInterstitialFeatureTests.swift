@@ -103,11 +103,6 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     store.receive(.timerTick) { $0.secondsPassedCount = 8 }
     store.receive(.timerTick) { $0.secondsPassedCount = 9 }
     store.receive(.timerTick) { $0.secondsPassedCount = 10 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 11 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 12 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 13 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 14 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 15 }
 
     self.scheduler.run()
 
