@@ -80,13 +80,13 @@ class PastGamesTests: XCTestCase {
 
     store.send(.pastGame(.init(rawValue: "id"), .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
-        $0.isLoadingRematch = true
+        $0.isRematchRequestInFlight = true
       }
     }
 
     store.receive(.pastGame(.init(rawValue: "id"), .rematchResponse(.success(match)))) {
       try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
-        $0.isLoadingRematch = false
+        $0.isRematchRequestInFlight = false
       }
     }
 
@@ -108,13 +108,13 @@ class PastGamesTests: XCTestCase {
 
     store.send(.pastGame(.init(rawValue: "id"), .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
-        $0.isLoadingRematch = true
+        $0.isRematchRequestInFlight = true
       }
     }
 
     store.receive(.pastGame(.init(rawValue: "id"), .rematchResponse(.failure(RematchFailure() as NSError)))) {
       try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
-        $0.isLoadingRematch = false
+        $0.isRematchRequestInFlight = false
         $0.alert = .init(
           title: .init("Error"),
           message: .init("We couldn’t start the rematch. Try again later."),
