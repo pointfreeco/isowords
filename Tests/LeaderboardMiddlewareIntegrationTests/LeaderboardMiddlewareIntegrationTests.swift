@@ -13,7 +13,6 @@ import Overture
 import PostgresKit
 import Prelude
 import ServerRouter
-import ServerRoutes
 import SharedModels
 import SiteMiddleware
 import SnapshotTesting

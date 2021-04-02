@@ -57,22 +57,22 @@ extension ServerConfig.UpgradeInterstitial {
       try container.decodeIfPresent(Int.self, forKey: .duration)
       ?? defaults.duration
     self.playedDailyChallengeGamesTriggerCount =
-      try container.decodeIfPresent(Int.self, forKey: .duration)
+      try container.decodeIfPresent(Int.self, forKey: .playedDailyChallengeGamesTriggerCount)
       ?? defaults.playedDailyChallengeGamesTriggerCount
     self.playedMultiplayerGamesTriggerCount =
-      try container.decodeIfPresent(Int.self, forKey: .duration)
+      try container.decodeIfPresent(Int.self, forKey: .playedMultiplayerGamesTriggerCount)
       ?? defaults.playedMultiplayerGamesTriggerCount
     self.playedSoloGamesTriggerCount =
-      try container.decodeIfPresent(Int.self, forKey: .duration)
+      try container.decodeIfPresent(Int.self, forKey: .playedSoloGamesTriggerCount)
       ?? defaults.playedSoloGamesTriggerCount
     self.dailyChallengeTriggerEvery =
-      try container.decodeIfPresent(Int.self, forKey: .duration)
+      try container.decodeIfPresent(Int.self, forKey: .dailyChallengeTriggerEvery)
       ?? defaults.dailyChallengeTriggerEvery
     self.multiplayerGameTriggerEvery =
-      try container.decodeIfPresent(Int.self, forKey: .duration)
+      try container.decodeIfPresent(Int.self, forKey: .multiplayerGameTriggerEvery)
       ?? defaults.multiplayerGameTriggerEvery
     self.soloGameTriggerEvery =
-      try container.decodeIfPresent(Int.self, forKey: .duration)
+      try container.decodeIfPresent(Int.self, forKey: .soloGameTriggerEvery)
       ?? defaults.soloGameTriggerEvery
     self.nagBannerAfterInstallDuration =
       try container.decodeIfPresent(Int.self, forKey: .nagBannerAfterInstallDuration)

@@ -7,8 +7,8 @@ import MiddlewareHelpers
 import Prelude
 import ServerConfig
 import ServerRouter
-import ServerRoutes
 import ShareGameMiddleware
+import SharedModels
 import Tagged
 
 public func siteMiddleware(

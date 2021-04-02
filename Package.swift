@@ -17,7 +17,6 @@ var package = Package(
     .library(name: "PuzzleGen", targets: ["PuzzleGen"]),
     .library(name: "ServerConfig", targets: ["ServerConfig"]),
     .library(name: "ServerRouter", targets: ["ServerRouter"]),
-    .library(name: "ServerRoutes", targets: ["ServerRoutes"]),
     .library(name: "SharedModels", targets: ["SharedModels"]),
     .library(name: "Sqlite", targets: ["Sqlite"]),
     .library(name: "TestHelpers", targets: ["TestHelpers"]),
@@ -104,16 +103,9 @@ var package = Package(
     .target(
       name: "ServerRouter",
       dependencies: [
-        "ServerRoutes",
         "SharedModels",
         .product(name: "ApplicativeRouter", package: "Web"),
         .product(name: "Tagged", package: "swift-tagged"),
-      ]
-    ),
-    .target(
-      name: "ServerRoutes",
-      dependencies: [
-        "SharedModels"
       ]
     ),
     .testTarget(
@@ -242,7 +234,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "ApiClient",
       dependencies: [
-        "ServerRoutes",
         "SharedModels",
         "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -1113,7 +1104,6 @@ package.targets.append(contentsOf: [
     dependencies: [
       "DatabaseClient",
       "MiddlewareHelpers",
-      "ServerRoutes",
       "SharedModels",
       .product(name: "HttpPipeline", package: "Web"),
     ]

@@ -4,7 +4,6 @@ import Foundation
   import FoundationNetworking
 #endif
 import Overture
-import ServerRoutes
 import SharedModels
 import TestHelpers
 import XCTest

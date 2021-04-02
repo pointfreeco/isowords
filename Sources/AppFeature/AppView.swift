@@ -218,9 +218,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     }
 
     return .merge(
-      environment.database.migrate
-        .fireAndForget(),
-
+      environment.database.migrate.fireAndForget(),
       environment.fileClient.loadSavedGames().map(AppAction.savedGamesLoaded),
 
       environment.userDefaults.installationTime <= 0
@@ -266,13 +264,13 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .currentGame(.game(.endGameButtonTapped)),
     .currentGame(.game(.gameOver(.onAppear))):
 
-    guard let game = state.game, game.gameMode == .unlimited
-    else { return .none }
-
-    if game.isDailyChallenge {
+    switch (state.game?.gameContext, state.game?.gameMode) {
+    case (.dailyChallenge, .unlimited):
       state.home.savedGames.dailyChallengeUnlimited = nil
-    } else {
+    case (.solo, .unlimited):
       state.home.savedGames.unlimited = nil
+    default:
+      break
     }
     return .none
 

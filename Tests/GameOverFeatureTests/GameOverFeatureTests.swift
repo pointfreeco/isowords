@@ -275,7 +275,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.storeKit.requestReview = {
       .fireAndForget { requestReviewCount += 1 }
     }
-    environment.userDefaults.override(0, forKey: "last-review-request-timeinterval")
+    environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
     environment.userDefaults.setDouble = { double, key in
       .fireAndForget {
         if key == "last-review-request-timeinterval" {
@@ -365,7 +365,8 @@ class GameOverFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
-      self.mainRunLoop.now.date.timeIntervalSince1970, forKey: "last-review-request-timeinterval"
+      double: self.mainRunLoop.now.date.timeIntervalSince1970,
+      forKey: "last-review-request-timeinterval"
     )
     environment.userNotifications.getNotificationSettings = .none
 
@@ -413,7 +414,8 @@ class GameOverFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
-      self.mainRunLoop.now.date.timeIntervalSince1970, forKey: "last-review-request-timeinterval"
+      double: self.mainRunLoop.now.date.timeIntervalSince1970,
+      forKey: "last-review-request-timeinterval"
     )
     environment.userNotifications.getNotificationSettings = .none
 

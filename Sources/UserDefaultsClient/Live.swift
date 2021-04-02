@@ -6,8 +6,9 @@ extension UserDefaultsClient {
   ) -> Self {
     Self(
       boolForKey: userDefaults.bool(forKey:),
-      dataForKey: { userDefaults.object(forKey: $0) as? Data },
+      dataForKey: userDefaults.data(forKey:),
       doubleForKey: userDefaults.double(forKey:),
+      integerForKey: userDefaults.integer(forKey:),
       remove: { key in
         .fireAndForget {
           userDefaults.removeObject(forKey: key)
@@ -24,6 +25,11 @@ extension UserDefaultsClient {
         }
       },
       setDouble: { value, key in
+        .fireAndForget {
+          userDefaults.set(value, forKey: key)
+        }
+      },
+      setInteger: { value, key in
         .fireAndForget {
           userDefaults.set(value, forKey: key)
         }
