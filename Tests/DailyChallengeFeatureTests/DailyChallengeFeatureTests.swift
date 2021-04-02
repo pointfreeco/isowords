@@ -10,44 +10,26 @@ class DailyChallengeFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testOnAppear() {
-    let fetchChallengeResults = [
-      FetchTodaysDailyChallengeResponse(
-        dailyChallenge: .init(
-          endsAt: .init(timeIntervalSinceReferenceDate: 1_234_567_890),
-          gameMode: .unlimited,
-          id: .init(rawValue: .deadbeef),
-          language: .en
-        ),
-        yourResult: .init(
-          outOf: 1_000,
-          rank: 20,
-          score: 3_000,
-          started: true
-        )
-      )
-    ]
-
     var environment = DailyChallengeEnvironment.failing
     environment.apiClient.override(
       route: .dailyChallenge(.today(language: .en)),
-      withResponse: .ok(fetchChallengeResults)
+      withResponse: .ok([FetchTodaysDailyChallengeResponse.played])
     )
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
     environment.userNotifications.getNotificationSettings = .init(
       value: .init(authorizationStatus: .authorized)
     )
 
     let store = TestStore(
-      initialState: DailyChallengeState(),
+      initialState: .init(),
       reducer: dailyChallengeReducer,
       environment: environment
     )
 
     store.send(.onAppear)
 
-    self.mainRunLoop.advance()
-    store.receive(.fetchTodaysDailyChallengeResponse(.success(fetchChallengeResults))) {
-      $0.dailyChallenges = fetchChallengeResults
+    store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
+      $0.dailyChallenges = [.played]
     }
 
     store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
@@ -245,4 +227,15 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
   }
+}
+
+extension DailyChallengeEnvironment {
+  static let failing = Self(
+    apiClient: .failing,
+    fileClient: .failing,
+    mainQueue: .failing,
+    mainRunLoop: .failing,
+    remoteNotifications: .failing,
+    userNotifications: .failing
+  )
 }

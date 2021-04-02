@@ -84,8 +84,8 @@ ifdef PRIVATE
 endif
 
 audio-touch:
-	touch Sources/AppAudioLibrary/Resources/empty.mp3
-	touch Sources/AppClipAudioLibrary/Resources/empty.mp3
+	@touch Sources/AppAudioLibrary/Resources/empty.mp3
+	@touch Sources/AppClipAudioLibrary/Resources/empty.mp3
 
 audio-sounds:
 ifdef PRIVATE

@@ -16,19 +16,15 @@ import SwiftUI
 import SwiftUIHelpers
 
 public struct AppState: Equatable {
-  public var appDelegate = AppDelegateState()
-  public var alert: AlertState<AppAction.AlertAction>?
   public var game: GameState?
   public var onboarding: OnboardingState?
   public var home: HomeState
 
   public init(
-    alert: AlertState<AppAction.AlertAction>? = nil,
     game: GameState? = nil,
     home: HomeState = .init(),
     onboarding: OnboardingState? = nil
   ) {
-    self.alert = alert
     self.game = game
     self.home = home
     self.onboarding = onboarding
@@ -70,24 +66,14 @@ public struct AppState: Equatable {
 
 public enum AppAction: Equatable {
   case appDelegate(AppDelegateAction)
-  case alert(AlertAction)
   case currentGame(GameFeatureAction)
   case didChangeScenePhase(ScenePhase)
-  case dismissGame
-  case dismissOnboarding
   case gameCenter(GameCenterAction)
   case home(HomeAction)
   case onboarding(OnboardingAction)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
-  case userSettingsLoaded(Result<UserSettings, NSError>)
   case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, NSError>)
-
-  public enum AlertAction: Equatable {
-    case dismissAlert
-    case noThanksButtonTapped
-    case rematchButtonTapped(TurnBasedMatch)
-  }
 }
 
 extension AppEnvironment {
@@ -144,7 +130,7 @@ extension AppEnvironment {
 public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
   appDelegateReducer
     .pullback(
-      state: \.appDelegate,
+      state: \.home.settings.userSettings,
       action: /AppAction.appDelegate,
       environment: {
         .init(
@@ -153,8 +139,10 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           backgroundQueue: $0.backgroundQueue,
           build: $0.build,
           dictionary: $0.dictionary,
+          fileClient: $0.fileClient,
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
+          setUserInterfaceStyle: $0.setUserInterfaceStyle,
           userNotifications: $0.userNotifications
         )
       }
@@ -194,7 +182,6 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
 
   appReducerCore
 )
-.sounds()
 .gameCenter()
 .storeKit()
 .persistence()
@@ -235,7 +222,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     return .merge(
       environment.database.migrate.fireAndForget(),
       environment.fileClient.loadSavedGames().map(AppAction.savedGamesLoaded),
-      environment.fileClient.loadUserSettings().map(AppAction.userSettingsLoaded),
 
       environment.userDefaults.installationTime <= 0
         ? environment.userDefaults.setInstallationTime(
@@ -276,20 +262,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case .appDelegate:
     return .none
-
-  case .alert(.dismissAlert):
-    state.alert = nil
-    return .none
-
-  case .alert(.noThanksButtonTapped):
-    state.alert = nil
-    return .none
-
-  case let .alert(.rematchButtonTapped(match)):
-    return environment.gameCenter.turnBasedMatch.rematch(match.matchId)
-      .mapError { $0 as NSError }
-      .catchToEffect()
-      .map { .gameCenter(.rematchResponse($0)) }
 
   case .currentGame(.game(.endGameButtonTapped)),
     .currentGame(.game(.gameOver(.onAppear))):
@@ -398,13 +370,6 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case .didChangeScenePhase(.active):
     return .merge(
-      environment.audioPlayer.setGlobalVolumeForMusic(
-        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
-          ? 0
-          : state.home.settings.userSettings.musicVolume
-      )
-      .fireAndForget(),
-
       Effect.registerForRemoteNotifications(
         mainQueue: environment.mainQueue,
         remoteNotifications: environment.remoteNotifications,
@@ -413,21 +378,10 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       .fireAndForget(),
 
       environment.serverConfig.refresh()
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
         .fireAndForget()
     )
 
   case .didChangeScenePhase:
-    return .none
-
-  case .dismissGame:
-    state.game = nil
-    return .none
-
-  case .dismissOnboarding:
-    state.onboarding = nil
     return .none
 
   case .gameCenter:
@@ -456,58 +410,12 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     state.home.savedGames = savedGames
     return .none
 
-  case let .userSettingsLoaded(result):
-    state.home.settings.userSettings = (try? result.get()) ?? state.home.settings.userSettings
-    return .merge(
-      environment.audioPlayer.setGlobalVolumeForSoundEffects(
-        state.home.settings.userSettings.soundEffectsVolume
-      )
-      .fireAndForget(),
-
-      environment.setUserInterfaceStyle(
-        state.home.settings.userSettings.colorScheme.userInterfaceStyle
-      )
-      // NB: Due to a bug in UIKit, if you override the user interface style too quickly it will
-      //     not stick. So, we wait for a tick of the runloop before setting it.
-      .debounce(
-        id: {
-          struct Id: Hashable {}
-          return Id()
-        }(),
-        for: 0,
-        scheduler: environment.mainQueue
-      )
-      .fireAndForget()
-    )
-
   case .verifyReceiptResponse:
     return .none
   }
 }
 
 public struct AppView: View {
-  let store: Store<AppState, AppAction>
-
-  public init(store: Store<AppState, AppAction>) {
-    self.store = store
-  }
-
-  public var body: some View {
-    IfLetStore(
-      self.store.scope(
-        state: \.firstLaunchOnboarding,
-        action: AppAction.onboarding
-      ),
-      then: { store in
-        OnboardingView(store: store)
-      },
-      else: MainAppView(store: self.store)
-    )
-    .modifier(DeviceStateModifier())
-  }
-}
-
-public struct MainAppView: View {
   let store: Store<AppState, AppAction>
   @ObservedObject var viewStore: ViewStore<ViewState, AppAction>
   @Environment(\.deviceState) var deviceState
@@ -518,7 +426,7 @@ public struct MainAppView: View {
 
     init(state: AppState) {
       self.isGameActive = state.game != nil
-      self.isOnboardingPresented = state.onboarding?.presentationStyle == .help
+      self.isOnboardingPresented = state.onboarding != nil
     }
   }
 
@@ -528,14 +436,14 @@ public struct MainAppView: View {
   }
 
   public var body: some View {
-    if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
-      NavigationView {
-        HomeView(store: self.store.scope(state: \.home, action: AppAction.home))
-      }
-      .navigationViewStyle(StackNavigationViewStyle())
-      .zIndex(0)
-    } else {
-      Group {
+    Group {
+      if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
+        NavigationView {
+          HomeView(store: self.store.scope(state: \.home, action: AppAction.home))
+        }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .zIndex(0)
+      } else {
         IfLetStore(
           self.store.scope(
             state: { appState in
@@ -574,6 +482,7 @@ public struct MainAppView: View {
         .zIndex(2)
       }
     }
+    .modifier(DeviceStateModifier())
   }
 }
 

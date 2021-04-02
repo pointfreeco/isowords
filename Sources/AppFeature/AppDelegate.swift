@@ -4,16 +4,19 @@ import Build
 import ComposableArchitecture
 import ComposableUserNotifications
 import DictionaryClient
+import FileClient
 import RemoteNotificationsClient
+import SettingsFeature
 import SharedModels
+import TcaHelpers
+import UIKit
 import UserNotifications
-
-public struct AppDelegateState: Equatable {}
 
 public enum AppDelegateAction: Equatable {
   case didFinishLaunching
   case didRegisterForRemoteNotifications(Result<Data, NSError>)
   case userNotifications(UserNotificationClient.DelegateEvent)
+  case userSettingsLoaded(Result<UserSettings, NSError>)
 }
 
 struct AppDelegateEnvironment {
@@ -22,8 +25,10 @@ struct AppDelegateEnvironment {
   var backgroundQueue: AnySchedulerOf<DispatchQueue>
   var build: Build
   var dictionary: DictionaryClient
+  var fileClient: FileClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
+  var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
   var userNotifications: UserNotificationClient
 
   #if DEBUG
@@ -33,15 +38,17 @@ struct AppDelegateEnvironment {
       backgroundQueue: .failing("backgroundQueue"),
       build: .failing,
       dictionary: .failing,
+      fileClient: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
+      setUserInterfaceStyle: { _ in .failing("setUserInterfaceStyle") },
       userNotifications: .failing
     )
   #endif
 }
 
 let appDelegateReducer = Reducer<
-  AppDelegateState, AppDelegateAction, AppDelegateEnvironment
+  UserSettings, AppDelegateAction, AppDelegateEnvironment
 > { state, action, environment in
   switch action {
   case .didFinishLaunching:
@@ -78,9 +85,13 @@ let appDelegateReducer = Reducer<
         .subscribe(on: environment.backgroundQueue)
         .fireAndForget(),
 
-      // Preload sounds
-      environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget()
+      .concatenate(
+        environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+          .fireAndForget(),
+
+        environment.fileClient.loadUserSettings()
+          .map(AppDelegateAction.userSettingsLoaded)
+      )
     )
 
   case .didRegisterForRemoteNotifications(.failure):
@@ -111,5 +122,28 @@ let appDelegateReducer = Reducer<
 
   case .userNotifications:
     return .none
+
+
+  case let .userSettingsLoaded(result):
+    state = (try? result.get()) ?? state
+    return .merge(
+      environment.audioPlayer.setGlobalVolumeForSoundEffects(
+        state.soundEffectsVolume
+      )
+      .fireAndForget(),
+
+      environment.audioPlayer.setGlobalVolumeForSoundEffects(
+        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
+          ? 0
+          : state.musicVolume
+      )
+      .fireAndForget(),
+
+      environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
+        // NB: This is necessary because UIKit needs at least one tick of the run loop before we
+        //     can set the user interface style.
+        .subscribe(on: environment.mainQueue)
+        .fireAndForget()
+    )
   }
 }

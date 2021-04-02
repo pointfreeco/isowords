@@ -97,17 +97,6 @@ public struct DailyChallengeEnvironment {
     self.remoteNotifications = remoteNotifications
     self.userNotifications = userNotifications
   }
-
-  #if DEBUG
-    static let failing = Self(
-      apiClient: .failing,
-      fileClient: .failing,
-      mainQueue: .failing,
-      mainRunLoop: .failing,
-      remoteNotifications: .failing,
-      userNotifications: .failing
-    )
-  #endif
 }
 
 public let dailyChallengeReducer = Reducer<
@@ -463,7 +452,7 @@ extension DailyChallengeView.ViewState.ButtonState {
   var inactiveText: Text? {
     switch self {
     case let .played(rank: rank, outOf: outOf):
-      return Text("Played\n(#\(rank) of \(outOf))")
+      return Text("Played\n#\(rank) of \(outOf)")
     case .resume:
       return nil
     case .playable:
@@ -522,64 +511,32 @@ private struct RingEffect: GeometryEffect {
 
   struct DailyChallengeView_Previews: PreviewProvider {
     static var previews: some View {
-      Preview {
-        NavigationView {
-          DailyChallengeView(store: .dailyChallenge)
-        }
-      }
-    }
-  }
-
-  extension Store where State == DailyChallengeState, Action == DailyChallengeAction {
-    static var dailyChallenge: Self {
-      let environment = update(
-        DailyChallengeEnvironment(
-          apiClient: .noop,
-          fileClient: .noop,
-          mainQueue: .immediate,
-          mainRunLoop: .immediate,
-          remoteNotifications: .noop,
-          userNotifications: .noop
-        )
-      ) {
-        $0.apiClient.apiRequest = { route in
-          switch route {
-          case .dailyChallenge(.today(language: _)):
-            return .ok([
-              FetchTodaysDailyChallengeResponse(
-                dailyChallenge: .init(
-                  endsAt: .distantFuture,
-                  gameMode: .timed,
-                  id: .init(rawValue: .deadbeef),
-                  language: .en
-                ),
-                yourResult: .init(outOf: 3_632, rank: 3_632, score: 2_350)
-              ),
-              FetchTodaysDailyChallengeResponse(
-                dailyChallenge: .init(
-                  endsAt: .distantFuture,
-                  gameMode: .unlimited,
-                  id: .init(rawValue: .deadbeef),
-                  language: .en
-                ),
-                yourResult: .init(outOf: 2_298, rank: nil, score: nil)
-              ),
-            ])
-          default:
-            fatalError()
-          }
-        }
-      }
-
-      return Self(
-        initialState: .init(
-          inProgressDailyChallengeUnlimited: update(.mock) {
-            $0?.moves = [.highScoringMove]
-          }
-        ),
-        reducer: dailyChallengeReducer,
-        environment: environment
+      var environment = DailyChallengeEnvironment(
+        apiClient: .noop,
+        fileClient: .noop,
+        mainQueue: .immediate,
+        mainRunLoop: .immediate,
+        remoteNotifications: .noop,
+        userNotifications: .noop
       )
+      environment.userNotifications.getNotificationSettings = .init(
+        value: .init(authorizationStatus: .notDetermined))
+
+      return Preview {
+        NavigationView {
+          DailyChallengeView(
+            store: .init(
+              initialState: .init(
+                inProgressDailyChallengeUnlimited: update(.mock) {
+                  $0?.moves = [.highScoringMove]
+                }
+              ),
+              reducer: dailyChallengeReducer,
+              environment: environment
+            )
+          )
+        }
+      }
     }
   }
 #endif

@@ -41,7 +41,7 @@ public struct OnboardingState: Equatable {
     case step2_FindWordsOnCube
     case step3_ConnectLettersTouching
     case step4_FindGame
-    case step5_Submit
+    case step5_SubmitGame
     case step6_Congrats
     case step7_BiggerCube
     case step8_FindCubes
@@ -81,7 +81,7 @@ public struct OnboardingState: Equatable {
         return true
 
       case .step4_FindGame,
-        .step5_Submit,
+        .step5_SubmitGame,
         .step6_Congrats,
         .step8_FindCubes,
         .step9_Congrats,
@@ -109,7 +109,7 @@ public struct OnboardingState: Equatable {
         .step2_FindWordsOnCube,
         .step3_ConnectLettersTouching,
         .step4_FindGame,
-        .step5_Submit,
+        .step5_SubmitGame,
         .step7_BiggerCube,
         .step8_FindCubes,
         .step10_CubeDisappear,
@@ -211,20 +211,13 @@ public struct OnboardingEnvironment {
 }
 
 public let onboardingReducer = Reducer<
-  OnboardingState, OnboardingAction, OnboardingEnvironment
+  OnboardingState,
+  OnboardingAction,
+  OnboardingEnvironment
 > { state, action, environment in
-
-  struct DelayedNextStepId: Hashable {}
-
-  let gameReducer = GameCore.gameReducer(
-    state: \.self,
-    action: /.self,
-    environment: { $0 },
-    isHapticsEnabled: { _ in true }
-  )
-
   switch action {
   case .alert(.confirmSkipButtonTapped):
+    state.alert = nil
     state.step = OnboardingState.Step.allCases.last!
     return .none
 
@@ -238,9 +231,14 @@ public let onboardingReducer = Reducer<
 
   case .alert(.skipButtonTapped):
     state.alert = nil
-    return Effect(value: .alert(.confirmSkipButtonTapped))
-      .receive(on: ImmediateScheduler.shared.animation())
-      .eraseToEffect()
+    return .merge(
+      Effect(value: .alert(.confirmSkipButtonTapped))
+        .receive(on: ImmediateScheduler.shared.animation())
+        .eraseToEffect(),
+
+      environment.audioPlayer.play(.uiSfxTap)
+        .fireAndForget()
+    )
 
   case .delayedNextStep:
     state.step.next()
@@ -251,29 +249,30 @@ public let onboardingReducer = Reducer<
       environment.userDefaults
         .setHasShownFirstLaunchOnboarding(true)
         .fireAndForget(),
+
+      environment.audioPlayer.stop(.onboardingBgMusic)
+        .fireAndForget(),
+
       .cancel(id: DelayedNextStepId())
     )
 
   case .game where state.step.isCongratsStep:
     return .none
 
-  case .game(.submitButtonTapped),
-    .game(.wordSubmitButton(.delegate(.confirmSubmit))):
+  case .game(.submitButtonTapped):
     switch state.step {
-    case .step5_Submit where state.game.selectedWordString == "GAME",
+    case .step5_SubmitGame where state.game.selectedWordString == "GAME",
       .step8_FindCubes where state.game.selectedWordString == "CUBES",
       .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
       .step16_FindAnyWord where environment.dictionary.contains(state.game.selectedWordString, .en):
 
       state.step.next()
 
-      return gameReducer.run(
-        &state.game,
-        .submitButtonTapped(nil),
-        environment.gameEnvironment
+      return onboardingGameReducer.run(
+        &state,
+        .game(.submitButtonTapped(nil)),
+        environment
       )
-      .map(OnboardingAction.game)
-      .eraseToEffect()
 
     default:
       state.game.selectedWord = []
@@ -282,13 +281,11 @@ public let onboardingReducer = Reducer<
 
   case let .game(.confirmRemoveCube(index)):
     state.step.next()
-    return gameReducer.run(
-      &state.game,
-      .confirmRemoveCube(index),
-      environment.gameEnvironment
+    return onboardingGameReducer.run(
+      &state,
+      .game(.confirmRemoveCube(index)),
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
   case let .game(.doubleTap(index: index)):
     guard state.step == .some(.step19_DoubleTapToRemove)
@@ -301,13 +298,11 @@ public let onboardingReducer = Reducer<
       ? indexedCubeFace
       : nil
 
-    return gameReducer.run(
-      &state.game,
-      .tap(gestureState, index),
-      environment.gameEnvironment
+    return onboardingGameReducer.run(
+      &state,
+      .game(.tap(gestureState, index)),
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
   case let .game(.pan(recognizerState, panData)):
     if let indexedCubeFace = panData?.cubeFaceState,
@@ -315,22 +310,18 @@ public let onboardingReducer = Reducer<
     {
       return .none
     }
-    return gameReducer.run(
-      &state.game,
-      .pan(recognizerState, panData),
-      environment.gameEnvironment
+    return onboardingGameReducer.run(
+      &state,
+      .game(.pan(recognizerState, panData)),
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
-  case let .game(action):
-    return gameReducer.run(
-      &state.game,
+  case .game:
+    return onboardingGameReducer.run(
+      &state,
       action,
-      environment.gameEnvironment
+      environment
     )
-    .map(OnboardingAction.game)
-    .eraseToEffect()
 
   case .getStartedButtonTapped:
     return .init(value: .delegate(.getStarted))
@@ -346,6 +337,9 @@ public let onboardingReducer = Reducer<
     }
 
     return .merge(
+      environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        .fireAndForget(),
+      
       Effect
         .catching { try environment.dictionary.load(.en) }
         .subscribe(on: environment.backgroundQueue)
@@ -372,13 +366,19 @@ public let onboardingReducer = Reducer<
 
   case .nextButtonTapped:
     state.step.next()
-    return .none
+    return environment.audioPlayer.play(.uiSfxTap)
+      .fireAndForget()
 
   case .skipButtonTapped:
     guard !environment.userDefaults.hasShownFirstLaunchOnboarding else {
-      return Effect(value: .delegate(.getStarted))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect()
+      return .merge(
+        Effect(value: .delegate(.getStarted))
+          .receive(on: ImmediateScheduler.shared.animation())
+          .eraseToEffect(),
+        
+        environment.audioPlayer.play(.uiSfxTap)
+          .fireAndForget()
+      )
     }
     state.alert = .init(
       title: .init("Skip tutorial?"),
@@ -392,8 +392,11 @@ public let onboardingReducer = Reducer<
       secondaryButton: .default(.init("No, resume"), send: .resumeButtonTapped),
       onDismiss: .dismiss
     )
-    return .none
+    return environment.audioPlayer.play(.uiSfxTap)
+      .fireAndForget()
   }
+
+  struct DelayedNextStepId: Hashable {}
 }
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in
   switch state.step {
@@ -401,7 +404,7 @@ public let onboardingReducer = Reducer<
     .step11_FindRemove where selectedWord.isRemove:
     state.step.next()
     return .none
-  case .step5_Submit where selectedWord != "GAME",
+  case .step5_SubmitGame where selectedWord != "GAME",
     .step12_CubeIsShaking where !selectedWord.isRemove:
     state.step.previous()
     return .none
@@ -415,7 +418,7 @@ public let onboardingReducer = Reducer<
     .step2_FindWordsOnCube,
     .step3_ConnectLettersTouching,
     .step4_FindGame,
-    .step5_Submit,
+    .step5_SubmitGame,
     .step7_BiggerCube,
     .step8_FindCubes,
     .step10_CubeDisappear,
@@ -441,28 +444,6 @@ public let onboardingReducer = Reducer<
     return Effect(value: .delayedNextStep)
       .delay(for: 2, scheduler: environment.mainQueue.animation())
       .eraseToEffect()
-  }
-}
-.sounds()
-
-extension Reducer
-where State == OnboardingState, Action == OnboardingAction, Environment == OnboardingEnvironment {
-  func sounds() -> Self {
-    self.combined(
-      with: Self { _, action, environment in
-        switch action {
-        case .delegate(.getStarted):
-          return environment.audioPlayer.stop(.onboardingBgMusic)
-            .fireAndForget()
-
-        case .nextButtonTapped, .skipButtonTapped:
-          return environment.audioPlayer.play(.uiSfxTap)
-            .fireAndForget()
-
-        default:
-          return .none
-        }
-      })
   }
 }
 
@@ -558,6 +539,19 @@ private func isVisible(
   return true
 }
 
+extension String {
+  var isRemove: Bool {
+    self == "REMOVE" || self == "REMOVES"
+  }
+}
+
+private let onboardingGameReducer = gameReducer(
+  state: \OnboardingState.game,
+  action: /OnboardingAction.game,
+  environment: { (environment: OnboardingEnvironment) in environment.gameEnvironment },
+  isHapticsEnabled: { _ in true }
+)
+
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
@@ -571,72 +565,3 @@ private func isVisible(
     }
   }
 #endif
-
-extension GameState {
-  public static let onboarding = Self.init(
-    inProgressGame: .init(
-      cubes: .onboarding,
-      gameContext: .solo,
-      gameMode: .unlimited,
-      gameStartTime: Date(),
-      language: .en,
-      moves: [],
-      secondsPlayed: 0
-    )
-  )
-}
-
-extension Puzzle {
-  static var onboarding: Self {
-    var cubes = randomCubes(for: isowordsLetter).run()
-    cubes.1.2.2.left.letter = "G"
-    cubes.2.2.2.left.letter = "A"
-    cubes.2.2.2.right.letter = "M"
-    cubes.2.2.1.right.letter = "E"
-
-    cubes.1.2.2.top.letter = "C"
-    cubes.1.2.1.top.letter = "U"
-    cubes.2.2.2.top.letter = "B"
-    cubes.2.2.1.right.letter = "E"
-    cubes.2.2.1.top.letter = "S"
-
-    cubes.1.1.2.left.letter = "R"
-    cubes.2.1.2.left.letter = "E"
-    cubes.2.2.2.right.letter = "M"
-    cubes.2.1.2.right.letter = "O"
-    cubes.2.1.1.right.letter = "V"
-    cubes.2.2.1.right.letter = "E"
-
-    cubes.1.2.1.right.letter = "A"
-    cubes.2.1.1.top.letter = "M"
-    cubes.2.2.0.left.letter = "S"
-
-    cubes.0.2.0.top.letter = "P"
-    cubes.0.2.1.top.letter = "I"
-    cubes.0.2.2.top.letter = "L"
-    cubes.0.2.2.left.letter = "L"
-    cubes.0.1.2.left.letter = "O"
-    cubes.2.0.2.right.letter = "W"
-
-    cubes.0.0.2.left.letter = "W"
-    cubes.1.0.2.left.letter = "O"
-    cubes.2.0.2.left.letter = "R"
-    cubes.2.0.2.right.letter = "D"
-    cubes.2.0.1.right.letter = "S"
-
-    cubes.0.2.0.top.letter = "P"
-    cubes.1.2.0.top.letter = "U"
-    cubes.2.2.0.top.letter = "Z"
-    cubes.2.2.0.right.letter = "Z"
-    cubes.2.1.0.right.letter = "L"
-    cubes.2.0.0.right.letter = "E"
-
-    return cubes
-  }
-}
-
-extension String {
-  var isRemove: Bool {
-    self == "REMOVE" || self == "REMOVES"
-  }
-}

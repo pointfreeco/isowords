@@ -210,19 +210,3 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 }
 
 private struct ListenerId: Hashable {}
-
-private func turnBasedMatchUnrecoverableErrorAlert(
-  context: TurnBasedContext
-) -> AlertState<AppAction.AlertAction> {
-  .init(
-    title: .init("Something went wrong 🙁"),
-    message: .init(
-      """
-      Sorry, we were unable to load your game with \
-      \(context.otherPlayer?.displayName ?? "your opponent"). Would you like to start a fresh one?
-      """),
-    primaryButton: .default(.init("Rematch"), send: .rematchButtonTapped(context.match)),
-    secondaryButton: .default(.init("No thanks"), send: .noThanksButtonTapped),
-    onDismiss: .dismissAlert
-  )
-}

@@ -1,3 +1,4 @@
+import AudioPlayerClient
 import CasePaths
 import ComposableArchitecture
 @_exported import GameCore
@@ -60,7 +61,8 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
     .init { state, action, environment in
       switch action {
       case .onDisappear:
-        return Effect.gameTearDownEffects.fireAndForget()
+        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
+            .fireAndForget()
 
       case .settings(.onDismiss):
         state.game?.isSettingsPresented = false

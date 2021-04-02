@@ -365,7 +365,7 @@ extension TurnBasedMatchClient {
 
 extension TurnBasedMatchmakerViewControllerClient {
   public static let live = Self(
-    _present: { showExistingMatches in
+    present: { showExistingMatches in
       .run { subscriber in
         class Delegate: NSObject, GKTurnBasedMatchmakerViewControllerDelegate {
           let subscriber: Effect<DelegateEvent, Never>.Subscriber

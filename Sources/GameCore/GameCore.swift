@@ -265,7 +265,7 @@ public func gameReducer<StatePath, Action, Environment>(
   isHapticsEnabled: @escaping (StatePath.Root) -> Bool
 ) -> Reducer<StatePath.Root, Action, Environment>
 where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
-  return Reducer.combine(
+  Reducer.combine(
     gameOverReducer
       .optional()
       .pullback(
@@ -348,7 +348,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
         return state.gameOver(environment: environment)
 
       case .exitButtonTapped:
-        return Effect.gameTearDownEffects.fireAndForget()
+        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
+          .fireAndForget()
 
       case .forfeitGameButtonTapped:
         state.alert = .init(
@@ -373,7 +374,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
           .map { GameAction.timerTick($0.date) }
 
       case .gameOver(.delegate(.close)):
-        return Effect.gameTearDownEffects.fireAndForget()
+        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
+          .fireAndForget()
 
       case let .gameOver(.delegate(.startGame(inProgressGame))):
         state = .init(inProgressGame: inProgressGame)
@@ -998,10 +1000,15 @@ extension UpgradeInterstitialFeature.GameContext {
 }
 
 extension Effect where Output == Never, Failure == Never {
-  public static let gameTearDownEffects = Self.merge(
-    .cancel(id: TimerId()),
-    .cancel(id: LowPowerModeId())
-  )
+  public static func gameTearDownEffects(audioPlayer: AudioPlayerClient) -> Self {
+    .merge(
+      .cancel(id: TimerId()),
+      .cancel(id: LowPowerModeId()),
+      Effect
+        .merge(AudioPlayerClient.Sound.allMusic.map(audioPlayer.stop))
+        .fireAndForget()
+    )
+  }
 }
 
 extension Reducer where State == GameState, Action == GameAction, Environment == GameEnvironment {

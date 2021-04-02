@@ -9,6 +9,7 @@ class DailyChallengeResultsViewTests: XCTestCase {
   override func setUpWithError() throws {
     try super.setUpWithError()
     try XCTSkipIf(!Styleguide.registerFonts())
+    diffTool = "ksdiff"
 //    isRecording = true
   }
 

@@ -148,7 +148,7 @@ public struct TurnBasedMatchClient {
 }
 
 public struct TurnBasedMatchmakerViewControllerClient {
-  var _present: (_ showExistingMatches: Bool) -> Effect<DelegateEvent, Never>
+  public var present: (_ showExistingMatches: Bool) -> Effect<DelegateEvent, Never>
   public var dismiss: Effect<Never, Never>
 
   public enum DelegateEvent: Equatable {
@@ -157,6 +157,6 @@ public struct TurnBasedMatchmakerViewControllerClient {
   }
 
   public func present(showExistingMatches: Bool = true) -> Effect<DelegateEvent, Never> {
-    self._present(showExistingMatches)
+    self.present(showExistingMatches)
   }
 }
