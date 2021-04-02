@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import DictionaryFileClient
 import SharedModels
 import XCTest
 
@@ -14,7 +13,10 @@ class OnboardingFeatureTests: XCTestCase {
     var environment = OnboardingEnvironment.failing
     environment.audioPlayer = .noop
     environment.backgroundQueue = .immediate
-    environment.dictionary = .file()
+    environment.dictionary.load = { _ in true }
+    environment.dictionary.contains = { word, _ in
+      ["GAME", "CUBES", "REMOVE", "WORD"].contains(word)
+    }
     environment.feedbackGenerator = .noop
     environment.mainRunLoop = .immediate
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
@@ -59,12 +61,12 @@ class OnboardingFeatureTests: XCTestCase {
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .right))
-      $0.game.selectedWordIsValid = true
     }
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
       $0.step = .step5_SubmitGame
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
+      $0.game.selectedWordIsValid = true
     }
     store.send(.game(.submitButtonTapped(nil))) {
       $0.game.cubes[.one][.two][.two].left.useCount += 1
@@ -112,7 +114,6 @@ class OnboardingFeatureTests: XCTestCase {
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .top)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .top)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .top))
-      $0.game.selectedWordIsValid = true
     }
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
@@ -121,6 +122,7 @@ class OnboardingFeatureTests: XCTestCase {
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .top)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .top)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .top))
+      $0.game.selectedWordIsValid = true
     }
     store.send(.game(.submitButtonTapped(nil))) {
       $0.game.cubes[.one][.two][.two].top.useCount += 1
@@ -170,12 +172,10 @@ class OnboardingFeatureTests: XCTestCase {
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .right))
-      $0.game.selectedWordIsValid = true
     }
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .one, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .one, z: .two), side: .right))
-      $0.game.selectedWordIsValid = false
     }
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .one), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .one, z: .one), side: .right)

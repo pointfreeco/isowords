@@ -807,7 +807,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .testTarget(
       name: "OnboardingFeatureTests",
       dependencies: [
-        "DictionaryFileClient",
         "OnboardingFeature"
       ]
     ),
