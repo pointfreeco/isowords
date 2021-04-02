@@ -774,6 +774,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    .testTarget(
+      name: "MultiplayerFeatureTests",
+      dependencies: [
+        "MultiplayerFeature",
+        "TestHelpers",
+      ]
+    ),
     .target(
       name: "NotificationHelpers",
       dependencies: [

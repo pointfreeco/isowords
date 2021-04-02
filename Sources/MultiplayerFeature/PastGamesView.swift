@@ -115,37 +115,7 @@ struct PastGamesView: View {
         NavigationView {
           PastGamesView(
             store: .init(
-              initialState: .init(
-                pastGames: [
-                  .init(
-                    challengeeDisplayName: "Blob",
-                    challengerDisplayName: "Blob Jr",
-                    challengeeScore: 1000,
-                    challengerScore: 2000,
-                    endDate: Date(),
-                    matchId: .init(rawValue: "1"),
-                    opponentDisplayName: "Blob"
-                  )
-                  //                .init(
-                  //                  challengeeDisplayName: "Blob",
-                  //                  challengerDisplayName: "Blob Jr",
-                  //                  challengeeScore: 2000,
-                  //                  challengerScore: 1000,
-                  //                  endDate: Date().addingTimeInterval(-60*60*24*3),
-                  //                  matchId: .init(rawValue: "2"),
-                  //                  opponentDisplayName: "Blob Jr"
-                  //                ),
-                  //                .init(
-                  //                  challengeeDisplayName: "Blob",
-                  //                  challengerDisplayName: "Blob Jr",
-                  //                  challengeeScore: 2000,
-                  //                  challengerScore: 2000,
-                  //                  endDate: Date().addingTimeInterval(-60*60*24*3),
-                  //                  matchId: .init(rawValue: "2"),
-                  //                  opponentDisplayName: "Blob Jr"
-                  //                )
-                ]
-              ),
+              initialState: .init(pastGames: pastGames),
               reducer: pastGamesReducer,
               environment: .init(
                 backgroundQueue: DispatchQueue.global(qos: .userInitiated).eraseToAnyScheduler(),
@@ -158,4 +128,34 @@ struct PastGamesView: View {
       }
     }
   }
+
+  let pastGames: IdentifiedArrayOf<PastGameState> = [
+    .init(
+      challengeeDisplayName: "Blob",
+      challengerDisplayName: "Blob Jr",
+      challengeeScore: 1000,
+      challengerScore: 2000,
+      endDate: Date(),
+      matchId: .init(rawValue: "1"),
+      opponentDisplayName: "Blob"
+    ),
+    .init(
+      challengeeDisplayName: "Blob",
+      challengerDisplayName: "Blob Jr",
+      challengeeScore: 2000,
+      challengerScore: 2000,
+      endDate: Date().addingTimeInterval(-300_000),
+      matchId: .init(rawValue: "2"),
+      opponentDisplayName: "Blob Jr"
+    ),
+    .init(
+      challengeeDisplayName: "Blob",
+      challengerDisplayName: "Blob Jr",
+      challengeeScore: 4000,
+      challengerScore: 2000,
+      endDate: Date().addingTimeInterval(-1_000_000),
+      matchId: .init(rawValue: "3"),
+      opponentDisplayName: "Blob Jr"
+    )
+  ]
 #endif
