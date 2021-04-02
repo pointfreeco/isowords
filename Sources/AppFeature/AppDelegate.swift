@@ -140,6 +140,8 @@ let appDelegateReducer = Reducer<
       .fireAndForget(),
 
       environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
+        // NB: This is necessary because UIKit needs at least one tick of the run loop before we
+        //     can set the user interface style.
         .subscribe(on: environment.mainQueue)
         .fireAndForget()
     )
