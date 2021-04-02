@@ -123,7 +123,6 @@ let appDelegateReducer = Reducer<
   case .userNotifications:
     return .none
 
-
   case let .userSettingsLoaded(result):
     state = (try? result.get()) ?? state
     return .merge(

@@ -339,7 +339,7 @@ public let onboardingReducer = Reducer<
     return .merge(
       environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
         .fireAndForget(),
-      
+
       Effect
         .catching { try environment.dictionary.load(.en) }
         .subscribe(on: environment.backgroundQueue)
@@ -375,7 +375,7 @@ public let onboardingReducer = Reducer<
         Effect(value: .delegate(.getStarted))
           .receive(on: ImmediateScheduler.shared.animation())
           .eraseToEffect(),
-        
+
         environment.audioPlayer.play(.uiSfxTap)
           .fireAndForget()
       )

@@ -62,7 +62,7 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
       switch action {
       case .onDisappear:
         return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
-            .fireAndForget()
+          .fireAndForget()
 
       case .settings(.onDismiss):
         state.game?.isSettingsPresented = false

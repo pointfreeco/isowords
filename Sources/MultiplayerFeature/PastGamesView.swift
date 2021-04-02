@@ -156,6 +156,6 @@ struct PastGamesView: View {
       endDate: Date().addingTimeInterval(-1_000_000),
       matchId: .init(rawValue: "3"),
       opponentDisplayName: "Blob Jr"
-    )
+    ),
   ]
 #endif
