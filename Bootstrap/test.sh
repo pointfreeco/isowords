@@ -6,7 +6,7 @@ service postgresql start
 sudo -u postgres createuser --superuser isowords
 sudo -u postgres psql -c "ALTER USER isowords PASSWORD 'isowords';"
 sudo -u postgres createdb --owner isowords isowords_test
-TEST_SERVER=1 swift test --enable-test-discovery
+TEST_SERVER=1 swift test --enable-test-discovery || exit $?
 swift build \
   --configuration=release \
   --enable-test-discovery \
