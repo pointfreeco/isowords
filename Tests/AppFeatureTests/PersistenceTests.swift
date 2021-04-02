@@ -33,6 +33,7 @@ class PersistenceTests: XCTestCase {
       reducer: appReducer,
       environment: update(.failing) {
         $0.audioPlayer.play = { _ in .none }
+        $0.audioPlayer.stop = { _ in .none }
         $0.backgroundQueue = .immediate
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }

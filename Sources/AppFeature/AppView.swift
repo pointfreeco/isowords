@@ -139,8 +139,10 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           backgroundQueue: $0.backgroundQueue,
           build: $0.build,
           dictionary: $0.dictionary,
+          fileClient: $0.fileClient,
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
+          setUserInterfaceStyle: $0.setUserInterfaceStyle,
           userNotifications: $0.userNotifications
         )
       }

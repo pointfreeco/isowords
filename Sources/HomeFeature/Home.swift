@@ -132,7 +132,6 @@ public enum HomeAction: Equatable {
   case setNavigation(tag: AppRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
-  case userSettingsLoaded(Result<UserSettings, NSError>)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
 
   public enum GameButtonAction: Equatable {
@@ -328,8 +327,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     ),
 
   .init { state, action, environment in
-    struct OnAppearPrefixId: Hashable {}
-    
     switch action {
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
       return .concatenate(
@@ -430,10 +427,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .merge(
         onAppearEffects(environment: environment),
 
-        environment.fileClient.loadUserSettings()
-          .map(HomeAction.userSettingsLoaded)
-          .prefix(id: OnAppearPrefixId(), 1),
-
         environment.gameCenter.localPlayer.listener
           .cancellable(id: ListenerId(), cancelInFlight: true)
           .filter {
@@ -502,27 +495,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case let .weekInReviewResponse(.success(response)):
       state.weekInReview = response
       return .none
-
-    case let .userSettingsLoaded(result):
-      state.settings.userSettings = (try? result.get()) ?? state.settings.userSettings
-      return .merge(
-        environment.audioPlayer.setGlobalVolumeForSoundEffects(
-          state.settings.userSettings.soundEffectsVolume
-        )
-        .fireAndForget(),
-
-        environment.setUserInterfaceStyle(
-          state.settings.userSettings.colorScheme.userInterfaceStyle
-        )
-        // NB: Due to a bug in UIKit, if you override the user interface style too quickly it will
-        //     not stick. So, we wait for a tick of the runloop before setting it.
-        .debounce(
-          id: { struct Id: Hashable {}; return Id() }(),
-          for: 0,
-          scheduler: environment.mainQueue
-        )
-        .fireAndForget()
-      )
     }
   }
 )

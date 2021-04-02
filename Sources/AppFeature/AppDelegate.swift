@@ -4,15 +4,19 @@ import Build
 import ComposableArchitecture
 import ComposableUserNotifications
 import DictionaryClient
+import FileClient
 import RemoteNotificationsClient
 import SettingsFeature
 import SharedModels
+import TcaHelpers
+import UIKit
 import UserNotifications
 
 public enum AppDelegateAction: Equatable {
   case didFinishLaunching
   case didRegisterForRemoteNotifications(Result<Data, NSError>)
   case userNotifications(UserNotificationClient.DelegateEvent)
+  case userSettingsLoaded(Result<UserSettings, NSError>)
 }
 
 struct AppDelegateEnvironment {
@@ -21,8 +25,10 @@ struct AppDelegateEnvironment {
   var backgroundQueue: AnySchedulerOf<DispatchQueue>
   var build: Build
   var dictionary: DictionaryClient
+  var fileClient: FileClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
+  var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
   var userNotifications: UserNotificationClient
 
   #if DEBUG
@@ -32,8 +38,10 @@ struct AppDelegateEnvironment {
       backgroundQueue: .failing("backgroundQueue"),
       build: .failing,
       dictionary: .failing,
+      fileClient: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
+      setUserInterfaceStyle: { _ in .failing("setUserInterfaceStyle") },
       userNotifications: .failing
     )
   #endif
@@ -77,16 +85,13 @@ let appDelegateReducer = Reducer<
         .subscribe(on: environment.backgroundQueue)
         .fireAndForget(),
 
-      // Preload sounds
-      environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget(),
+      .concatenate(
+        environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+          .fireAndForget(),
 
-      environment.audioPlayer.setGlobalVolumeForMusic(
-        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
-          ? 0
-          : state.musicVolume
+        environment.fileClient.loadUserSettings()
+          .map(AppDelegateAction.userSettingsLoaded)
       )
-      .fireAndForget()
     )
 
   case .didRegisterForRemoteNotifications(.failure):
@@ -117,5 +122,26 @@ let appDelegateReducer = Reducer<
 
   case .userNotifications:
     return .none
+
+
+  case let .userSettingsLoaded(result):
+    state = (try? result.get()) ?? state
+    return .merge(
+      environment.audioPlayer.setGlobalVolumeForSoundEffects(
+        state.soundEffectsVolume
+      )
+      .fireAndForget(),
+
+      environment.audioPlayer.setGlobalVolumeForSoundEffects(
+        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
+          ? 0
+          : state.musicVolume
+      )
+      .fireAndForget(),
+
+      environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
+        .subscribe(on: environment.mainQueue)
+        .fireAndForget()
+    )
   }
 }
