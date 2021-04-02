@@ -24,18 +24,8 @@ class PastGamesTests: XCTestCase {
 
     store.send(.onAppear)
 
-    let pastGame = PastGameState(
-      challengeeDisplayName: "Blob Jr.",
-      challengerDisplayName: "Blob",
-      challengeeScore: 0,
-      challengerScore: 1234,
-      endDate: .mock,
-      matchId: .init(rawValue: "id"),
-      opponentDisplayName: "Blob Jr."
-    )
-
-    store.receive(.matchesResponse(.success([pastGame]))) {
-      $0.pastGames = [pastGame]
+    store.receive(.matchesResponse(.success([pastGameState]))) {
+      $0.pastGames = [pastGameState]
     }
   }
 
@@ -45,26 +35,16 @@ class PastGamesTests: XCTestCase {
     environment.mainQueue = .immediate
 
     let store = TestStore(
-      initialState: PastGamesState(pastGames: [
-        .init(
-          challengeeDisplayName: "Blob Jr.",
-          challengerDisplayName: "Blob",
-          challengeeScore: 0,
-          challengerScore: 1234,
-          endDate: .mock,
-          matchId: .init(rawValue: "id"),
-          opponentDisplayName: "Blob Jr."
-        )
-      ]),
+      initialState: PastGamesState(pastGames: [pastGameState]),
       reducer: pastGamesReducer,
       environment: environment
     )
 
-    store.send(.pastGame(.init(rawValue: "id"), .tappedRow))
+    store.send(.pastGame("id", .tappedRow))
 
-    store.receive(.pastGame(.init(rawValue: "id"), .matchResponse(.success(match))))
+    store.receive(.pastGame("id", .matchResponse(.success(match))))
 
-    store.receive(.pastGame(.init(rawValue: "id"), .delegate(.openMatch(match))))
+    store.receive(.pastGame("id", .delegate(.openMatch(match))))
   }
 
   func testRematch() {
@@ -78,19 +58,19 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.pastGame(.init(rawValue: "id"), .rematchButtonTapped)) {
-      try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
+    store.send(.pastGame("id", .rematchButtonTapped)) {
+      try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = true
       }
     }
 
-    store.receive(.pastGame(.init(rawValue: "id"), .rematchResponse(.success(match)))) {
-      try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
+    store.receive(.pastGame("id", .rematchResponse(.success(match)))) {
+      try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
       }
     }
 
-    store.receive(.pastGame(.init(rawValue: "id"), .delegate(.openMatch(match))))
+    store.receive(.pastGame("id", .delegate(.openMatch(match))))
   }
 
   func testRematch_Failure() {
@@ -106,14 +86,14 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.pastGame(.init(rawValue: "id"), .rematchButtonTapped)) {
-      try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
+    store.send(.pastGame("id", .rematchButtonTapped)) {
+      try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = true
       }
     }
 
-    store.receive(.pastGame(.init(rawValue: "id"), .rematchResponse(.failure(RematchFailure() as NSError)))) {
-      try XCTUnwrap(&$0.pastGames[id: .init(rawValue: "id")]) {
+    store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure() as NSError)))) {
+      try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
         $0.alert = .init(
           title: .init("Error"),
@@ -140,12 +120,12 @@ private let pastGameState = PastGameState(
   challengeeScore: 0,
   challengerScore: 1234,
   endDate: .mock,
-  matchId: .init(rawValue: "id"),
+  matchId: "id",
   opponentDisplayName: "Blob Jr."
 )
 
 private let match = TurnBasedMatch(
-  creationDate: . mock,
+  creationDate: .mock,
   currentParticipant: .local,
   matchData: try! JSONEncoder().encode(
     TurnBasedMatchData(
@@ -165,7 +145,7 @@ private let match = TurnBasedMatch(
       ]
     )
   ),
-  matchId: .init(rawValue: "id"),
+  matchId: "id",
   participants: [.local, .remote],
   status: .ended
 )

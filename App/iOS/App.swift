@@ -71,7 +71,6 @@ extension AppEnvironment {
   static var live: Self {
     let apiClient = ApiClient.live
     let build = Build.live
-    let serverConfig = ServerConfigClient.live(apiClient: apiClient, build: build)
 
     return Self(
       apiClient: apiClient,
@@ -100,7 +99,7 @@ extension AppEnvironment {
       mainQueue: .main,
       mainRunLoop: .main,
       remoteNotifications: .live,
-      serverConfig: serverConfig,
+      serverConfig: .live(apiClient: apiClient, build: build),
       setUserInterfaceStyle: { userInterfaceStyle in
         .fireAndForget {
           UIApplication.shared.windows.first?.overrideUserInterfaceStyle = userInterfaceStyle

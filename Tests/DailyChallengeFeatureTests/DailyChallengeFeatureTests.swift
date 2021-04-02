@@ -15,7 +15,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       route: .dailyChallenge(.today(language: .en)),
       withResponse: .ok([FetchTodaysDailyChallengeResponse.played])
     )
-    environment.mainRunLoop = RunLoop.immediateScheduler.eraseToAnyScheduler()
+    environment.mainRunLoop = .immediate
     environment.userNotifications.getNotificationSettings = .init(
       value: .init(authorizationStatus: .authorized)
     )
