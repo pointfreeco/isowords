@@ -975,7 +975,7 @@ extension Effect where Output == GameAction, Failure == Never {
           }
         )
         .filter { $0 }
-        .delay(for: 3, scheduler: environment.mainRunLoop)
+        .delay(for: 3, scheduler: environment.mainRunLoop.animation())
         .map { _ in GameAction.delayedShowUpgradeInterstitial }
         .ignoreFailure()
         .eraseToEffect()
