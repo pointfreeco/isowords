@@ -16,6 +16,11 @@ private func apiRouter(
   sha256: @escaping (Data) -> Data
 ) -> Router<ServerRoute.Api.Route> {
   let routers: [Router<ServerRoute.Api.Route>] = [
+    .case(ServerRoute.Api.Route.changelog(build:))
+      <¢> get %> "changelog"
+      %> queryParam("build", .int)
+      <% end,
+
     // TODO: there appears to be a bug in the router where if the route `.config` doesn't take
     //       any arguments then it routes to "/api" instead of "/api/config".
     .case(ServerRoute.Api.Route.config(build:))

@@ -58,7 +58,7 @@ func requireCurrentPlayer(
 ) -> Middleware<StatusLineOpen, ResponseEnded, RequireCurrentPlayerInput, Data> {
   { (conn: Conn<StatusLineOpen, RequireCurrentPlayerInput>) in
 
-    return conn.data.database.fetchPlayerByAccessToken(conn.data.api.accessToken)
+    conn.data.database.fetchPlayerByAccessToken(conn.data.api.accessToken)
       .run
       .flatMap { errorOrPlayer in
         switch errorOrPlayer {
@@ -102,6 +102,11 @@ private func _apiMiddleware(
 ) -> IO<Conn<ResponseEnded, Data>> {
 
   switch conn.data.route {
+  case .changelog:
+    return conn.map(const(()))
+      |> changelog
+      >=> respondJson(envVars: conn.data.envVars)
+
   case .config:
     return conn.map(const(()))
       |> serverConfig

@@ -65,6 +65,7 @@ public enum AppRoute: Equatable {
 
 public struct HomeState: Equatable {
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
+  public var hasChangelog: Bool
   public var hasPastTurnBasedGames: Bool
   public var nagBanner: NagBannerState?
   public var route: AppRoute?
@@ -96,6 +97,7 @@ public struct HomeState: Equatable {
 
   public init(
     dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
+    hasChangelog: Bool = false,
     hasPastTurnBasedGames: Bool = false,
     nagBanner: NagBannerState? = nil,
     route: AppRoute? = nil,
@@ -105,6 +107,7 @@ public struct HomeState: Equatable {
     weekInReview: FetchWeekInReviewResponse? = nil
   ) {
     self.dailyChallenges = dailyChallenges
+    self.hasChangelog = hasChangelog
     self.hasPastTurnBasedGames = hasPastTurnBasedGames
     self.nagBanner = nagBanner
     self.route = route
@@ -129,6 +132,7 @@ public enum HomeAction: Equatable {
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
   case onDisappear
+  case serverConfigResponse(ServerConfig)
   case setNavigation(tag: AppRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
@@ -448,6 +452,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           .eraseToEffect()
       )
 
+    case let .serverConfigResponse(serverConfig):
+      state.hasChangelog = serverConfig.changelog.contains { $0.build > environment.build.number() }
+      return .none
+
     case let .setNavigation(tag: tag):
       switch tag {
       case .dailyChallenge:
@@ -659,14 +667,13 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     )
     .ignoreFailure()
     .flatMap { envelope in
-      Effect.concatenate(
-        Effect(value: .authenticationResponse(envelope)),
-        environment.serverConfig.refresh()
-          .ignoreOutput()
-          .ignoreFailure()
-          .eraseToEffect()
-          .fireAndForget()
-      )
+      Just(HomeAction.authenticationResponse(envelope))
+        .merge(with:
+          environment.serverConfig.refresh()
+            .ignoreFailure()
+            .map(HomeAction.serverConfigResponse)
+            .receive(on: environment.mainQueue.animation())
+        )
     }
     .eraseToEffect()
   }

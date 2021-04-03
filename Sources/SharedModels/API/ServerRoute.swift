@@ -46,6 +46,7 @@ public enum ServerRoute: Equatable {
     }
 
     public enum Route: Equatable {
+      case changelog(build: Int)
       case config(build: Int)
       case currentPlayer
       case dailyChallenge(DailyChallenge)
