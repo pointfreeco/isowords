@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     environment: .live
   )
   lazy var viewStore = ViewStore(
-    self.store.scope(state: { _ in () }),
+    self.store.stateless,
     removeDuplicates: ==
   )
 

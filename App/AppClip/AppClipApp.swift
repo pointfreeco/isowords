@@ -27,10 +27,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     environment: .live
   )
   lazy var viewStore = ViewStore(
-    self.store.scope(
-      state: { _ in () },
-      action: { (_: Void) in DemoAction.didFinishLaunching }
-    ),
+    self.store.stateless,
     removeDuplicates: ==
   )
 
@@ -39,13 +36,34 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     Styleguide.registerFonts()
-    self.viewStore.send(())
+    self.viewStore.send(.didFinishLaunching)
     return true
   }
 }
 
 extension DemoEnvironment {
   static var live: Self {
+    Self(
+      apiClient: .appClip,
+      applicationClient: .live,
+      audioPlayer: .live(bundles: [AppClipAudioLibrary.bundle]),
+      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
+      build: .live,
+      dictionary: .file(),
+      feedbackGenerator: .live,
+      lowPowerMode: .live,
+      mainQueue: .main,
+      mainRunLoop: .main,
+      serverConfig: .noop,
+      userDefaults: .live()
+    )
+  }
+}
+
+extension ApiClient {
+  // An instance of the API client that only supports one endpoint: submitting un-authenticated
+  // games to the leaderboards.
+  static var appClip: Self {
     var apiClient = ApiClient.noop
     apiClient.request = { route in
       switch route {
@@ -81,23 +99,6 @@ extension DemoEnvironment {
       }
     }
 
-    return Self(
-      apiClient: apiClient,
-      applicationClient: .live,
-      audioPlayer: .live(
-        bundles: [
-          AppClipAudioLibrary.bundle
-        ]
-      ),
-      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
-      build: .live,
-      dictionary: .file(),
-      feedbackGenerator: .live,
-      lowPowerMode: .live,
-      mainQueue: .main,
-      mainRunLoop: .main,
-      serverConfig: .noop,
-      userDefaults: .live()
-    )
+    return apiClient
   }
 }
