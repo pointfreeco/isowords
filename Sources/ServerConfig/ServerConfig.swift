@@ -2,20 +2,33 @@ import Foundation
 
 public struct ServerConfig: Codable, Equatable, Hashable {
   public var appId: String
+  public var changelog: Changelog
   public var forceUpgradeVersion: Int
   public var productIdentifiers: ProductIdentifiers
   public var upgradeInterstitial: UpgradeInterstitial
 
   public init(
     appId: String = "1528246952",
+    changelog: Changelog = .init(),
     forceUpgradeVersion: Int = 0,
     productIdentifiers: ProductIdentifiers = .default,
     upgradeInterstitial: UpgradeInterstitial = .default
   ) {
     self.appId = appId
+    self.changelog = changelog
     self.forceUpgradeVersion = forceUpgradeVersion
     self.productIdentifiers = productIdentifiers
     self.upgradeInterstitial = upgradeInterstitial
+  }
+
+  public struct Changelog: Codable, Hashable {
+    public var changes: [Int: String]
+
+    public init(
+      changes: [Int: String] = [:]
+    ) {
+      self.changes = changes
+    }
   }
 
   public struct ProductIdentifiers: Codable, Equatable, Hashable {
