@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import ApiClient
 import AudioPlayerClient
 import Build
+import ChangelogFeature
 import ClientModels
 import Combine
 import CombineHelpers
@@ -32,6 +33,7 @@ import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
+#warning("TODO: rename HomeRoute?")
 public enum AppRoute: Equatable {
   case dailyChallenge(DailyChallengeState)
   case leaderboard(LeaderboardState)
@@ -64,6 +66,7 @@ public enum AppRoute: Equatable {
 }
 
 public struct HomeState: Equatable {
+  public var changelog: ChangelogState?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
   public var hasChangelog: Bool
   public var hasPastTurnBasedGames: Bool
@@ -122,6 +125,8 @@ public enum HomeAction: Equatable {
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
   case binding(BindingAction<HomeState>)
+  case changelog(ChangelogAction)
+  case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
   case gameButtonTapped(GameButtonAction)
@@ -240,6 +245,22 @@ public struct HomeEnvironment {
 #endif
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine(
+  changelogReducer
+    ._pullback(
+      state: OptionalPath(\.changelog),
+      action: /HomeAction.changelog,
+      environment: {
+        ChangelogEnvironment(
+          apiClient: $0.apiClient,
+          applicationClient: $0.applicationClient,
+          build: $0.build,
+          mainQueue: $0.mainQueue,
+          serverConfig: $0.serverConfig,
+          userDefaults: $0.userDefaults
+        )
+      }
+    ),
+
   dailyChallengeReducer
     ._pullback(
       state: (\HomeState.route).appending(path: /AppRoute.dailyChallenge),
@@ -381,6 +402,13 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case .binding:
       return .none
 
+    case .changelog:
+      return .none
+
+    case .cubeButtonTapped:
+      
+      return .none
+
     case .dailyChallenge:
       return .none
 
@@ -453,7 +481,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       )
 
     case let .serverConfigResponse(serverConfig):
-      state.hasChangelog = serverConfig.changelog.contains { $0.build > environment.build.number() }
+      state.hasChangelog = serverConfig.newestBuild > environment.build.number() 
       return .none
 
     case let .setNavigation(tag: tag):
@@ -539,7 +567,9 @@ public struct HomeView: View {
         VStack(spacing: .grid(12)) {
           VStack(spacing: .grid(6)) {
             HStack {
-              Image(systemName: "cube.fill")
+              Button(action: {}) {
+                Image(systemName: "cube.fill")
+              }
 
               Spacer()
 
@@ -732,6 +762,7 @@ private func loadMatches(
       Effect.merge(
         Effect(
           value: .binding(
+            // TODO: move to .matchesLoaded?
             .set(
               \.hasPastTurnBasedGames,
               (try? result.get())?.contains { $0.status == .ended } == .some(true)

@@ -332,21 +332,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
-      name: "ChangelogFeature",
-      dependencies: [
-        "ApiClient",
-        "Build",
-        "ServerConfigClient",
-        "SharedModels",
-        "Styleguide",
-        "SwiftUIHelpers",
-        "UIApplicationClient",
-        "UserDefaultsClient",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
-      ]
-    ),
-    .target(
       name: "Bloom",
       dependencies: [
         "Styleguide",
@@ -359,6 +344,21 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "Styleguide",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
+      name: "ChangelogFeature",
+      dependencies: [
+        "ApiClient",
+        "Build",
+        "ServerConfigClient",
+        "SharedModels",
+        "Styleguide",
+        "SwiftUIHelpers",
+        "UIApplicationClient",
+        "UserDefaultsClient",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "Overture", package: "Overture"),
       ]
     ),
     .target(
@@ -691,6 +691,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "AudioPlayerClient",
         "Build",
+        "ChangelogFeature",
         "ClientModels",
         "CombineHelpers",
         "ComposableGameCenterHelpers",

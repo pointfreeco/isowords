@@ -8,26 +8,48 @@ import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
 
-struct ChangelogState: Equatable {
-  var changelog: [ChangeState] = []
+public struct ChangelogState: Equatable {
+  public var changelog: [ChangeState]
+
+  public init(
+    changelog: [ChangeState] = []
+  ) {
+    self.changelog = changelog
+  }
 }
 
-enum ChangelogAction: Equatable {
+public enum ChangelogAction: Equatable {
   case change(id: Int, action: ChangeAction)
   case changelogResponse(Result<Changelog, ApiError>)
   case onAppear
 }
 
-struct ChangelogEnvironment {
-  var apiClient: ApiClient
-  var applicationClient: UIApplicationClient
-  var build: Build
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-  var serverConfig: ServerConfigClient
-  var userDefaults: UserDefaultsClient
+public struct ChangelogEnvironment {
+  public var apiClient: ApiClient
+  public var applicationClient: UIApplicationClient
+  public var build: Build
+  public var mainQueue: AnySchedulerOf<DispatchQueue>
+  public var serverConfig: ServerConfigClient
+  public var userDefaults: UserDefaultsClient
+
+  public init(
+    apiClient: ApiClient,
+    applicationClient: UIApplicationClient,
+    build: Build,
+    mainQueue: AnySchedulerOf<DispatchQueue>,
+    serverConfig: ServerConfigClient,
+    userDefaults: UserDefaultsClient
+  ) {
+    self.apiClient = apiClient
+    self.applicationClient = applicationClient
+    self.build = build
+    self.mainQueue = mainQueue
+    self.serverConfig = serverConfig
+    self.userDefaults = userDefaults
+  }
 }
 
-let changelogReducer = Reducer<
+public let changelogReducer = Reducer<
   ChangelogState,
   ChangelogAction,
   ChangelogEnvironment
@@ -99,24 +121,24 @@ struct ChangelogView: View {
   }
 }
 
-struct ChangeState: Equatable, Identifiable {
-  var change: Changelog.Change
-  var isExpanded = false
-  var isUpdateButtonVisible = false
+public struct ChangeState: Equatable, Identifiable {
+  public var change: Changelog.Change
+  public var isExpanded = false
+  public var isUpdateButtonVisible = false
 
-  var id: Int {
+  public var id: Int {
     self.change.build
   }
 }
 
-enum ChangeAction: Equatable {
+public enum ChangeAction: Equatable {
   case showButtonTapped
   case updateButtonTapped
 }
 
-struct ChangeEnvironment {
-  var applicationClient: UIApplicationClient
-  var serverConfig: ServerConfigClient
+public struct ChangeEnvironment {
+  public var applicationClient: UIApplicationClient
+  public var serverConfig: ServerConfigClient
 }
 
 let changeReducer = Reducer<
