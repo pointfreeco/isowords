@@ -19,7 +19,7 @@ ifdef PRIVATE
 	@$(MAKE) homebrew-client
 else
 	@echo "  ⚠️  Checking for Git LFS..."
-	@command -v git-lfs >/dev/null || (echo "$$GITLFS_ERROR_INSTALL" && exit 1)
+	@command -v git-lfs >/dev/null || (echo "  🛑 'git-lfs' not installed" && echo "$$GITLFS_ERROR_INSTALL" && exit 1)
 	@echo "  ✅ Git LFS is good to go!"
 	@git lfs pull
 endif
