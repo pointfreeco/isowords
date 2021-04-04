@@ -1,5 +1,6 @@
 import Foundation
 
+#warning("TODO: move this to ApiClient?")
 public struct ApiError: Codable, Error, Equatable, LocalizedError {
   public let errorDump: String
   public let file: String

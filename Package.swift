@@ -169,6 +169,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "AudioPlayerClient", targets: ["AudioPlayerClient"]),
     .library(name: "Bloom", targets: ["Bloom"]),
     .library(name: "BottomMenu", targets: ["BottomMenu"]),
+    .library(name: "ChangelogFeature", targets: ["ChangelogFeature"]),
     .library(name: "ClientModels", targets: ["ClientModels"]),
     .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
     .library(name: "ComposableGameCenter", targets: ["ComposableGameCenter"]),
@@ -328,6 +329,21 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+      ]
+    ),
+    .target(
+      name: "ChangelogFeature",
+      dependencies: [
+        "ApiClient",
+        "Build",
+        "ServerConfigClient",
+        "SharedModels",
+        "Styleguide",
+        "SwiftUIHelpers",
+        "UIApplicationClient",
+        "UserDefaultsClient",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "Overture", package: "Overture"),
       ]
     ),
     .target(
