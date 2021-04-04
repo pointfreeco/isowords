@@ -412,11 +412,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       )
       .fireAndForget(),
 
-      environment.serverConfig.refresh()
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
-        .fireAndForget()
+      environment.serverConfig.refresh().fireAndForget()
     )
 
   case .didChangeScenePhase:

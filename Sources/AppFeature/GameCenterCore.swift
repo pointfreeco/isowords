@@ -29,7 +29,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               let context = TurnBasedContext(
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 match: match,
-                metadata: .init(playerIndexToId: [:], wasLastMoveObserved: false)
+                metadata: .init(playerIndexToId: [:], updatedAt: match.creationDate)
               )
               let game = GameState(
                 cubes: environment.dictionary.randomCubes(.en),
@@ -56,14 +56,11 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                       )
                     )
                   )
-                  .ignoreOutput()
-                  .ignoreFailure()
-                  .eraseToEffect()
                   .fireAndForget()
               )
             }
 
-            guard let turnBasedMatchData = matchData.turnBasedMatchData else {
+            guard var turnBasedMatchData = matchData.turnBasedMatchData else {
               return .none
             }
 
@@ -91,8 +88,17 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              return environment.gameCenter.turnBasedMatchmakerViewController.dismiss
+              turnBasedMatchData.metadata.updatedAt = environment.mainRunLoop.now.date
+              return .merge(
+                environment.gameCenter.turnBasedMatchmakerViewController.dismiss
+                  .fireAndForget(),
+
+                environment.gameCenter.turnBasedMatch.saveCurrentTurn(
+                  match.matchId,
+                  Data(turnBasedMatchData: turnBasedMatchData)
+                )
                 .fireAndForget()
+              )
             }
 
             let context = TurnBasedContext(
@@ -110,8 +116,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
             return environment.gameCenter
               .showNotificationBanner(.init(title: match.message, message: nil))
-              .ignoreOutput()
-              .eraseToEffect()
               .fireAndForget()
           }
 

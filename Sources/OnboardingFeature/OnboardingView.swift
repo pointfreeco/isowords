@@ -350,9 +350,6 @@ public let onboardingReducer = Reducer<
         .catching { try environment.dictionary.load(.en) }
         .subscribe(on: environment.backgroundQueue)
         .receive(on: environment.mainQueue)
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
         .fireAndForget(),
 
       state.step == OnboardingState.Step.allCases[0]
