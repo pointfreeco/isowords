@@ -74,8 +74,9 @@ extension TurnBasedMatchData.Metadata {
       forKey: .playerIndexToId
     )
     .transformKeys(Tagged.init(rawValue:))
-    
-    self.lastOpenedAt = try container
+
+    self.lastOpenedAt =
+      try container
       .decodeIfPresent(Date.self, forKey: .lastOpenedAt)
   }
 

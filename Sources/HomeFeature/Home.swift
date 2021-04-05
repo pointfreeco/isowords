@@ -658,7 +658,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     .flatMap { envelope in
       Effect.concatenate(
         Effect(value: .authenticationResponse(envelope)),
-        
+
         environment.serverConfig.refresh().fireAndForget()
       )
     }

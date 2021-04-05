@@ -1206,7 +1206,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 )
               )
               .fireAndForget(),
-            
+
             reloadMatch
           )
         }
