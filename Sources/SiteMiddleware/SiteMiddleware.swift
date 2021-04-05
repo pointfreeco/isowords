@@ -34,6 +34,7 @@ private func render(
         const(
           .init(
             api: api,
+            changelog: environment.changelog,
             database: environment.database,
             dictionary: environment.dictionary,
             envVars: environment.envVars,

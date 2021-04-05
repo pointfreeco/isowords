@@ -1312,6 +1312,7 @@ package.targets.append(contentsOf: [
       "MailgunClient",
       "MiddlewareHelpers",
       "PushMiddleware",
+      "ServerConfig",
       "ServerConfigMiddleware",
       "SharedModels",
       "ShareGameMiddleware",
@@ -1320,6 +1321,7 @@ package.targets.append(contentsOf: [
       .product(name: "ApplicativeRouterHttpPipelineSupport", package: "Web"),
       .product(name: "HttpPipeline", package: "Web"),
       .product(name: "Overture", package: "Overture"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
     ],
     resources: [.process("Resources/")]
   ),
