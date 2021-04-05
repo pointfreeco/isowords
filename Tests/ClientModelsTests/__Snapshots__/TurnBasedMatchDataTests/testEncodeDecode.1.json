@@ -406,11 +406,11 @@
   "gameMode" : "timed",
   "language" : "en",
   "metadata" : {
+    "lastOpenedAt" : 1234567890,
     "playerIndexToId" : {
       "0" : "00000000-0000-0000-0000-000000000000",
       "1" : "00000000-0000-0000-0000-000000000001"
-    },
-    "lastOpenedAt" : 1234567890
+    }
   },
   "moves" : [
     {
