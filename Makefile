@@ -20,6 +20,8 @@ ifdef PRIVATE
 else
 	@echo "  ⚠️  Checking for Git LFS..."
 	@command -v git-lfs >/dev/null || (echo "$$GITLFS_ERROR_INSTALL" && exit 1)
+	@command -v git config --get-refexp filter.lfs >/dev/null 2>&1 \
+		|| (echo "$$GITLFS_ERROR_INSTALL_2" && exit 1)
 	@echo "  ✅ Git LFS is good to go!"
 	@git lfs pull
 endif
@@ -296,15 +298,25 @@ loc:
 
 export GITLFS_ERROR_INSTALL
 define GITLFS_ERROR_INSTALL
-  🛑 Git LFS not installed! isowords stores its assets in Git LFS.
+  🛑 Git LFS is not installed! isowords stores its assets in Git LFS.
 
      Install it with your favorite package manager, e.g.:
 
        $$ \033[1mbrew\033[0m \033[38;5;66minstall git-lfs\033[0m
 
-     And run:
+     And run the following command before proceeding:
 
-       $$ \033[1mgit\033[0m \033[38;5;66mlfs pull\033[0m
+       $$ \033[1mgit\033[0m \033[38;5;66mlfs install\033[0m
+
+endef
+
+export GITLFS_ERROR_INSTALL_2
+define GITLFS_ERROR_INSTALL_2
+  🛑 Git LFS is not configured! isowords cannot fetch its assets.
+
+     Run the following command before proceeding:
+
+       $$ \033[1mgit\033[0m \033[38;5;66mlfs install\033[0m
 
 endef
 
