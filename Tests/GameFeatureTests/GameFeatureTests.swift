@@ -106,7 +106,7 @@ class GameFeatureTests: XCTestCase {
           match: update(.inProgress) {
             $0.participants = [.local, .remote]
           },
-          metadata: .init(playerIndexToId: [:], updatedAt: nil)
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
       gameCurrentTime: .mock,
@@ -145,7 +145,7 @@ class GameFeatureTests: XCTestCase {
           match: update(.inProgress) {
             $0.participants = [.local, .remote]
           },
-          metadata: .init(playerIndexToId: [:], updatedAt: nil)
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
       gameCurrentTime: .mock,
@@ -196,7 +196,7 @@ class GameFeatureTests: XCTestCase {
             $0.currentParticipant = .remote
             $0.participants = [.local, .remote]
           },
-          metadata: .init(playerIndexToId: [:], updatedAt: nil)
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
       gameCurrentTime: .mock,

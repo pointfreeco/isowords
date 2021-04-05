@@ -25,15 +25,15 @@ public struct TurnBasedMatchData: Codable, Equatable {
   }
 
   public struct Metadata: Codable, Equatable {
+    public var lastOpenedAt: Date?
     public var playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id]
-    public var updatedAt: Date?
 
     public init(
-      playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id],
-      updatedAt: Date?
+      lastOpenedAt: Date?,
+      playerIndexToId: [SharedModels.Move.PlayerIndex: SharedModels.Player.Id]
     ) {
+      self.lastOpenedAt = lastOpenedAt
       self.playerIndexToId = playerIndexToId
-      self.updatedAt = updatedAt
     }
   }
 
@@ -62,8 +62,8 @@ extension Data {
 
 extension TurnBasedMatchData.Metadata {
   private enum CodingKeys: CaseIterable, CodingKey {
+    case lastOpenedAt
     case playerIndexToId
-    case updatedAt
   }
 
   public init(from decoder: Decoder) throws {
@@ -75,15 +75,15 @@ extension TurnBasedMatchData.Metadata {
     )
     .transformKeys(Tagged.init(rawValue:))
     
-    self.updatedAt = try container
-      .decodeIfPresent(Date.self, forKey: .updatedAt)
+    self.lastOpenedAt = try container
+      .decodeIfPresent(Date.self, forKey: .lastOpenedAt)
   }
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
     try container.encode(self.playerIndexToId.transformKeys(\.rawValue), forKey: .playerIndexToId)
-    try container.encode(self.updatedAt, forKey: .updatedAt)
+    try container.encodeIfPresent(self.lastOpenedAt, forKey: .lastOpenedAt)
   }
 }
 

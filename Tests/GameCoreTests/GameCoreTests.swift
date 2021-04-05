@@ -21,7 +21,7 @@ class GameCoreTests: XCTestCase {
       TurnBasedContext(
         localPlayer: .mock,
         match: .inProgress,
-        metadata: .init(playerIndexToId: [:], updatedAt: nil)
+        metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
       )
     )
 

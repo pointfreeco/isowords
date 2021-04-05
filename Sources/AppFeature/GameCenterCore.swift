@@ -29,7 +29,10 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               let context = TurnBasedContext(
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 match: match,
-                metadata: .init(playerIndexToId: [:], updatedAt: match.creationDate)
+                metadata: .init(
+                  lastOpenedAt: environment.mainRunLoop.now.date,
+                  playerIndexToId: [:]
+                )
               )
               let game = GameState(
                 cubes: environment.dictionary.randomCubes(.en),
@@ -88,7 +91,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              turnBasedMatchData.metadata.updatedAt = environment.mainRunLoop.now.date
+              turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
               return .merge(
                 environment.gameCenter.turnBasedMatchmakerViewController.dismiss
                   .fireAndForget(),
