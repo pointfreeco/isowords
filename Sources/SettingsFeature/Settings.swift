@@ -430,8 +430,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case .leaveUsAReviewButtonTapped:
       return environment.applicationClient
         .open(environment.serverConfig.config().appStoreReviewUrl, [:])
-        .ignoreOutput()
-        .eraseToEffect()
         .fireAndForget()
 
     case .onAppear:
@@ -505,10 +503,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case .openSettingButtonTapped:
       return URL(string: environment.applicationClient.openSettingsURLString())
         .map {
-          environment.applicationClient.open($0, [:])
-            .ignoreOutput()
-            .eraseToEffect()
-            .fireAndForget()
+          environment.applicationClient.open($0, [:]).fireAndForget()
         }
         ?? .none
 
@@ -544,10 +539,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         ),
       ]
 
-      return environment.applicationClient
-        .open(components.url!, [:])
-        .ignoreOutput()
-        .eraseToEffect()
+      return environment.applicationClient.open(components.url!, [:])
         .fireAndForget()
 
     case .restoreButtonTapped:

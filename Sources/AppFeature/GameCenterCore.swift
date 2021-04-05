@@ -29,7 +29,10 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               let context = TurnBasedContext(
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 match: match,
-                metadata: .init(playerIndexToId: [:])
+                metadata: .init(
+                  lastOpenedAt: environment.mainRunLoop.now.date,
+                  playerIndexToId: [:]
+                )
               )
               let game = GameState(
                 cubes: environment.dictionary.randomCubes(.en),
@@ -56,14 +59,11 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                       )
                     )
                   )
-                  .ignoreOutput()
-                  .ignoreFailure()
-                  .eraseToEffect()
                   .fireAndForget()
               )
             }
 
-            guard let turnBasedMatchData = matchData.turnBasedMatchData else {
+            guard var turnBasedMatchData = matchData.turnBasedMatchData else {
               return .none
             }
 
@@ -91,8 +91,19 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              return environment.gameCenter.turnBasedMatchmakerViewController.dismiss
-                .fireAndForget()
+              turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
+              return .merge(
+                environment.gameCenter.turnBasedMatchmakerViewController.dismiss
+                  .fireAndForget(),
+
+                gameState.isYourTurn
+                  ? environment.gameCenter.turnBasedMatch.saveCurrentTurn(
+                    match.matchId,
+                    Data(turnBasedMatchData: turnBasedMatchData)
+                  )
+                  .fireAndForget()
+                  : .none
+              )
             }
 
             let context = TurnBasedContext(
@@ -110,8 +121,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
             return environment.gameCenter
               .showNotificationBanner(.init(title: match.message, message: nil))
-              .ignoreOutput()
-              .eraseToEffect()
               .fireAndForget()
           }
 

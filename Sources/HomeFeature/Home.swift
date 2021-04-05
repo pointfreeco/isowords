@@ -359,9 +359,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
             arguments: []
           )
         )
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
         .fireAndForget()
 
     case .activeGames:
@@ -661,11 +658,8 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     .flatMap { envelope in
       Effect.concatenate(
         Effect(value: .authenticationResponse(envelope)),
-        environment.serverConfig.refresh()
-          .ignoreOutput()
-          .ignoreFailure()
-          .eraseToEffect()
-          .fireAndForget()
+        
+        environment.serverConfig.refresh().fireAndForget()
       )
     }
     .eraseToEffect()

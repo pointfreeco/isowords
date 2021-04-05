@@ -78,12 +78,10 @@ public let multiplayerReducer = Reducer<
 
     case .startButtonTapped:
       if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
-        return environment.gameCenter.turnBasedMatchmakerViewController.present(
-          showExistingMatches: false
-        )
-        .ignoreOutput()
-        .eraseToEffect()
-        .fireAndForget()
+        return environment.gameCenter.turnBasedMatchmakerViewController
+          .present(showExistingMatches: false)
+          .fireAndForget()
+
       } else {
         return environment.gameCenter.localPlayer.presentAuthenticationViewController
           .fireAndForget()
