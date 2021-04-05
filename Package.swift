@@ -365,14 +365,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "ChangelogFeatureTests",
       dependencies: [
         "ChangelogFeature",
-//        "ClientModels",
-//        "FirstPartyMocks",
-//        "TestHelpers",
-//        .product(name: "Overture", package: "Overture"),
-//        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
-      ],
-      exclude: [
-        "__Snapshots__"
       ]
     ),
     .target(
