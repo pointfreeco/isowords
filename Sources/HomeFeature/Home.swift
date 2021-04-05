@@ -129,6 +129,7 @@ public enum HomeAction: Equatable {
   case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
@@ -397,7 +398,11 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         currentPlayerEnvelope.player.sendDailyChallengeReminder
       state.settings.sendDailyChallengeSummary =
         currentPlayerEnvelope.player.sendDailyChallengeSummary
-      return .none
+      return environment.apiClient.apiRequest(
+        route: .changelog(build: environment.build.number()),
+        as: Changelog.self
+      )
+      .fireAndForget()
 
     case .binding:
       return .none
@@ -406,7 +411,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case .cubeButtonTapped:
-      
+      state.changelog = .init()
       return .none
 
     case .dailyChallenge:
@@ -418,6 +423,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case let .dailyChallengeResponse(.failure(error)):
       state.dailyChallenges = []
+      return .none
+
+    case .dismissChangelog:
+      state.changelog = nil
       return .none
 
     case .gameButtonTapped:
@@ -481,7 +490,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       )
 
     case let .serverConfigResponse(serverConfig):
-      state.hasChangelog = serverConfig.newestBuild > environment.build.number() 
+      state.hasChangelog = serverConfig.newestBuild > environment.build.number()
+      print("state.hasChangelog", state.hasChangelog)
       return .none
 
     case let .setNavigation(tag: tag):
@@ -539,7 +549,9 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 public struct HomeView: View {
   struct ViewState: Equatable {
     let hasActiveGames: Bool
-    var isNagBannerVisible: Bool
+    let hasChangelog: Bool
+    let isChangelogVisible: Bool
+    let isNagBannerVisible: Bool
     let tag: AppRoute.Tag?
 
     init(state: HomeState) {
@@ -547,6 +559,8 @@ public struct HomeView: View {
         state.savedGames.dailyChallengeUnlimited != nil
         || state.savedGames.unlimited != nil
         || !state.turnBasedMatches.isEmpty
+      self.hasChangelog = state.hasChangelog
+      self.isChangelogVisible = state.changelog != nil
       self.isNagBannerVisible = state.nagBanner != nil
       self.tag = state.route?.tag
     }
@@ -567,8 +581,8 @@ public struct HomeView: View {
         VStack(spacing: .grid(12)) {
           VStack(spacing: .grid(6)) {
             HStack {
-              Button(action: {}) {
-                Image(systemName: "cube.fill")
+              CubeIconView(shake: self.viewStore.hasChangelog) {
+                self.viewStore.send(.cubeButtonTapped)
               }
 
               Spacer()
@@ -668,6 +682,20 @@ public struct HomeView: View {
       )
     }
     .navigationBarHidden(true)
+    .sheet(
+      isPresented: self.viewStore.binding(
+        get: \.isChangelogVisible,
+        send: HomeAction.dismissChangelog
+      )
+    ) {
+      IfLetStore(
+        self.store.scope(
+          state: \.changelog,
+          action: HomeAction.changelog
+        ),
+        then: ChangelogView.init(store:)
+      )
+    }
     .onAppear { self.viewStore.send(.onAppear) }
     .onDisappear { self.viewStore.send(.onDisappear) }
   }
@@ -698,11 +726,11 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     .ignoreFailure()
     .flatMap { envelope in
       Just(HomeAction.authenticationResponse(envelope))
-        .merge(with:
-          environment.serverConfig.refresh()
+        .merge(
+          with: environment.serverConfig.refresh()
             .ignoreFailure()
+            .receive(on: environment.mainQueue)
             .map(HomeAction.serverConfigResponse)
-            .receive(on: environment.mainQueue.animation())
         )
     }
     .eraseToEffect()
@@ -712,6 +740,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     Effect.merge(
       Effect(value: authentication),
 
+      // TODO: move this to .authenticationResponse??
       environment.apiClient
         .apiRequest(
           route: .dailyChallenge(.today(language: .en)),
@@ -791,6 +820,38 @@ private func loadMatches(
 
 private struct ListenerId: Hashable {}
 private struct AuthenticationId: Hashable {}
+
+private struct CubeIconView: View {
+  let action: () -> Void
+  let shake: Bool
+
+  init(
+    shake: Bool,
+    action: @escaping () -> Void
+  ) {
+    self.action = action
+    self.shake = shake
+  }
+
+  var body: some View {
+    Button(action: self.action) {
+      Image(systemName: "cube.fill")
+        .font(.system(size: 20))
+        .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
+        .animation(.easeInOut(duration: 1))
+    }
+  }
+}
+
+private struct RingEffect: GeometryEffect {
+  var animatableData: CGFloat
+
+  func effectValue(size: CGSize) -> ProjectionTransform {
+    ProjectionTransform(
+      CGAffineTransform(rotationAngle: -.pi / 30 * sin(animatableData * .pi * 10))
+    )
+  }
+}
 
 #if DEBUG
   @testable import ComposableGameCenter

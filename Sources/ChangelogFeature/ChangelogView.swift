@@ -85,7 +85,9 @@ public let changelogReducer = Reducer<
             isUpdateButtonVisible: offset == 0 && environment.build.number() < change.build
           )
         }
-      return .none
+
+      return environment.userDefaults.setLastInstalledBuild(environment.build.number())
+        .fireAndForget()
 
     case .changelogResponse(.failure):
       return .none
@@ -102,10 +104,16 @@ public let changelogReducer = Reducer<
   }
 )
 
-struct ChangelogView: View {
+public struct ChangelogView: View {
   let store: Store<ChangelogState, ChangelogAction>
 
-  var body: some View {
+  public init(
+    store: Store<ChangelogState, ChangelogAction>
+  ) {
+    self.store = store
+  }
+
+  public var body: some View {
     WithViewStore(self.store) { viewStore in
       List {
         ForEachStore(
