@@ -358,7 +358,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
             """
             Forfeiting will end the game and your opponent will win. Are you sure you want to forfeit?
             """),
-          primaryButton: .default(.init("Don't forfeit"), send: .dontForfeitButtonTapped),
+          primaryButton: .default(.init("Don’t forfeit"), send: .dontForfeitButtonTapped),
           secondaryButton: .destructive(.init("Yes, forfeit"), send: .forfeitButtonTapped),
           onDismiss: .dismiss
         )
@@ -1157,7 +1157,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 matchData: matchData,
                 localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
                 localPlayerMatchOutcome: completedMatch.yourOutcome,
-                message: "Game over! Let's see how you did!"
+                message: "Game over! Let’s see how you did!"
               )
             )
             .catchToEffect()
