@@ -109,7 +109,7 @@ class TurnBasedTests: XCTestCase {
       $0.game = initialGameState
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
-          $0.metadata.updatedAt = store.environment.mainRunLoop.now.date
+          $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
         }
       }
     }
@@ -195,7 +195,7 @@ class TurnBasedTests: XCTestCase {
       $0.cubes[index].right.useCount = 1
       $0.cubes[index].top.useCount = 1
       try XCTUnwrap(&$0.turnBasedContext) {
-        $0.metadata.updatedAt = store.environment.mainRunLoop.now.date
+        $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
       }
     }
     let updatedMatch = update(newMatch) {
@@ -206,8 +206,8 @@ class TurnBasedTests: XCTestCase {
             localPlayer: .mock,
             match: newMatch,
             metadata: .init(
-              playerIndexToId: [0: currentPlayer.player.id],
-              updatedAt: store.environment.mainRunLoop.now.date
+              lastOpenedAt: store.environment.mainRunLoop.now.date,
+              playerIndexToId: [0: currentPlayer.player.id]
             )
           ),
           gameState: updatedGameState,
@@ -246,8 +246,8 @@ class TurnBasedTests: XCTestCase {
           localPlayer: .mock,
           match: updatedMatch,
           metadata: .init(
-            playerIndexToId: [0: currentPlayer.player.id],
-            updatedAt: store.environment.mainRunLoop.now.date
+            lastOpenedAt: store.environment.mainRunLoop.now.date,
+            playerIndexToId: [0: currentPlayer.player.id]
           )
         )
       }
@@ -628,7 +628,7 @@ class TurnBasedTests: XCTestCase {
             .init(
               localPlayer: .mock,
               match: newMatch,
-              metadata: .init(playerIndexToId: [:], updatedAt: self.mainRunLoop.now.date)
+              metadata: .init(lastOpenedAt: self.mainRunLoop.now.date, playerIndexToId: [:])
             )
           ),
           gameCurrentTime: self.mainRunLoop.now.date,
