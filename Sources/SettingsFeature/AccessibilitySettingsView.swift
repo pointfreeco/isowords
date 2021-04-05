@@ -24,7 +24,7 @@ struct AccessibilitySettingsView: View {
           )
           .adaptiveFont(.matterMedium, size: 16)
 
-          Text("Use your device's gyroscope to apply a small amount of motion to the cube.")
+          Text("Use your device’s gyroscope to apply a small amount of motion to the cube.")
             .foregroundColor(.gray)
             .adaptiveFont(.matterMedium, size: 12)
             .transition(.opacity)

@@ -84,8 +84,8 @@ ifdef PRIVATE
 endif
 
 audio-touch:
-	touch Sources/AppAudioLibrary/Resources/empty.mp3
-	touch Sources/AppClipAudioLibrary/Resources/empty.mp3
+	@touch Sources/AppAudioLibrary/Resources/empty.mp3
+	@touch Sources/AppClipAudioLibrary/Resources/empty.mp3
 
 audio-sounds:
 ifdef PRIVATE
@@ -294,7 +294,7 @@ format:
 loc:
 	find . -name '*.swift' | xargs wc -l | sort -nr
 
-	GITLFS_ERROR_INSTALL
+export GITLFS_ERROR_INSTALL
 define GITLFS_ERROR_INSTALL
   🛑 Git LFS not installed! isowords stores its assets in Git LFS.
 
@@ -302,9 +302,9 @@ define GITLFS_ERROR_INSTALL
 
        $$ \033[1mbrew\033[0m \033[38;5;66minstall git-lfs\033[0m
 
-		 And run:
+     And run:
 
-			 $$ \033[1mgit\033[0m \033[38;5;66mlfs pull\033[0m
+       $$ \033[1mgit\033[0m \033[38;5;66mlfs pull\033[0m
 
 endef
 

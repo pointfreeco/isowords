@@ -27,6 +27,7 @@ import SharedModels
 import SoloFeature
 import Styleguide
 import SwiftUI
+import TcaHelpers
 import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
@@ -128,7 +129,6 @@ public enum HomeAction: Equatable {
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
   case onDisappear
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case setNavigation(tag: AppRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
@@ -340,7 +340,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           gameCenter: environment.gameCenter,
           backgroundQueue: environment.backgroundQueue,
           mainRunLoop: environment.mainRunLoop
-        )
+        ),
+
+        environment.audioPlayer.play(.uiSfxActionDestructive)
+          .fireAndForget()
       )
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId))):
@@ -352,7 +355,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           .init(
             for: matchId,
             to: [otherPlayerIndex.rawValue],
-            localizableMessageKey: "It's your turn now!",
+            localizableMessageKey: "It’s your turn now!",
             arguments: []
           )
         )
@@ -441,13 +444,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           }
           .eraseToEffect()
       )
-
-    case .savedGamesLoaded(.failure):
-      return .none
-
-    case let .savedGamesLoaded(.success(savedGames)):
-      state.savedGames = savedGames
-      return .none
 
     case let .setNavigation(tag: tag):
       switch tag {

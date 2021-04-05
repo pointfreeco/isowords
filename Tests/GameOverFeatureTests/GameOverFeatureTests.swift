@@ -10,36 +10,35 @@ import XCTest
 
 class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
-
+  
   func testSubmitLeaderboardScore() throws {
-    let environment = update(GameOverEnvironment.failing) {
-      $0.audioPlayer = .noop
-      $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-      $0.apiClient.override(
-        route: .games(
-          .submit(
-            .init(
-              gameContext: .solo(.init(gameMode: .timed, language: .en, puzzle: .mock)),
-              moves: [.mock]
-            )
+    var environment = GameOverEnvironment.failing
+    environment.audioPlayer = .noop
+    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.override(
+      route: .games(
+        .submit(
+          .init(
+            gameContext: .solo(.init(gameMode: .timed, language: .en, puzzle: .mock)),
+            moves: [.mock]
           )
-        ),
-        withResponse: .ok([
-          "solo": [
-            "ranks": [
-              "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
-              "lastWeek": .init(outOf: 1000, rank: 10),
-              "allTime": .init(outOf: 10000, rank: 100),
-            ]
+        )
+      ),
+      withResponse: .ok([
+        "solo": [
+          "ranks": [
+            "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
+            "lastWeek": .init(outOf: 1000, rank: 10),
+            "allTime": .init(outOf: 10000, rank: 100),
           ]
-        ])
-      )
-      $0.database.playedGamesCount = { _ in .init(value: 10) }
-      $0.mainQueue = .immediate
-      $0.mainRunLoop = .immediate
-      $0.serverConfig.config = { .init() }
-      $0.userNotifications.getNotificationSettings = .none
-    }
+        ]
+      ])
+    )
+    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
+    environment.serverConfig.config = { .init() }
+    environment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
       initialState: GameOverState(

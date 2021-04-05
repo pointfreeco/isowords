@@ -54,7 +54,9 @@ public struct MultiplayerEnvironment {
 }
 
 public let multiplayerReducer = Reducer<
-  MultiplayerState, MultiplayerAction, MultiplayerEnvironment
+  MultiplayerState,
+  MultiplayerAction,
+  MultiplayerEnvironment
 >.combine(
   pastGamesReducer
     ._pullback(

@@ -12,7 +12,7 @@ public struct PastGameState: Equatable, Identifiable {
   public var challengeeScore: Int
   public var challengerScore: Int
   public var endDate: Date
-  public var isLoadingRematch = false
+  public var isRematchRequestInFlight = false
   public var matchId: TurnBasedMatch.Id
   public var opponentDisplayName: String
 
@@ -72,13 +72,13 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
       .eraseToEffect()
 
   case let .rematchResponse(.success(match)):
-    state.isLoadingRematch = false
+    state.isRematchRequestInFlight = false
     return Effect(value: .delegate(.openMatch(match)))
       .receive(on: ImmediateScheduler.shared.animation())
       .eraseToEffect()
 
   case .rematchResponse(.failure):
-    state.isLoadingRematch = false
+    state.isRematchRequestInFlight = false
     state.alert = .init(
       title: TextState("Error"),
       message: TextState("We couldn’t start the rematch. Try again later."),
@@ -88,7 +88,7 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     return .none
 
   case .rematchButtonTapped:
-    state.isLoadingRematch = true
+    state.isRematchRequestInFlight = true
     return environment.gameCenter.turnBasedMatch.rematch(state.matchId)
       .receive(on: environment.mainQueue)
       .mapError { $0 as NSError }
@@ -167,7 +167,7 @@ struct PastGameRow: View {
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
     Button(action: { self.viewStore.send(.rematchButtonTapped, animation: .default) }) {
       HStack(spacing: .grid(1)) {
-        if self.viewStore.isLoadingRematch {
+        if self.viewStore.isRematchRequestInFlight {
           ProgressView()
             .progressViewStyle(
               CircularProgressViewStyle(

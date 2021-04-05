@@ -15,7 +15,7 @@ func privacyPolicyMiddleware(
         Personal identification information
         -----------------------------------
 
-        We collect device ID of registered Users. None of this information is sold or provided to third parties, except to provide the products and services you've requested, with your permission, or as required by law.
+        We collect device ID of registered Users. None of this information is sold or provided to third parties, except to provide the products and services you’ve requested, with your permission, or as required by law.
 
         Non-personal identification information
         ---------------------------------------
@@ -42,9 +42,9 @@ func privacyPolicyMiddleware(
         Sharing your personal information
         ---------------------------------
 
-        We do not sell, trade, or rent Users' personal identification information to others.
+        We do not sell, trade, or rent Users’ personal identification information to others.
 
-        Compliance with children's online privacy protection act
+        Compliance with children’s online privacy protection act
         --------------------------------------------------------
 
         Protecting the privacy of the very young is especially important. For that reason, we never collect or maintain information at our Site from those we actually know are under 13, and no part of our website is structured to attract anyone under 13.
@@ -64,7 +64,7 @@ func privacyPolicyMiddleware(
 
 //Privacy Policy
 //
-//Your privacy is important to us. It is Point-Free, Inc.'s policy to respect your privacy and comply with any applicable law and regulation regarding any personal information we may collect about you, including across our website, https://www.isowords.xyz, and other sites we own and operate.
+//Your privacy is important to us. It is Point-Free, Inc.’s policy to respect your privacy and comply with any applicable law and regulation regarding any personal information we may collect about you, including across our website, https://www.isowords.xyz, and other sites we own and operate.
 //
 //
 //This policy is effective as of 10 March 2021 and was last updated on 10 March 2021.

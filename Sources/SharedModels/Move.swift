@@ -126,7 +126,7 @@ extension Move {
 #if DEBUG
   extension Move {
     public static let mock = Self(
-      playedAt: .init(),
+      playedAt: .mock,
       playerIndex: nil,
       reactions: nil,
       score: 20,
@@ -138,7 +138,7 @@ extension Move {
     )
 
     public static let removeCube = Self(
-      playedAt: .init(),
+      playedAt: .mock,
       playerIndex: nil,
       reactions: nil,
       score: 0,
@@ -146,7 +146,7 @@ extension Move {
     )
 
     public static let highScoringMove = Self(
-      playedAt: .init(),
+      playedAt: .mock,
       playerIndex: nil,
       reactions: nil,
       score: 1_234,
@@ -159,7 +159,7 @@ extension Move {
 
     public static func playedWord(length: Int) -> Self {
       Self(
-        playedAt: .init(),
+        playedAt: .mock,
         playerIndex: nil,
         reactions: nil,
         score: 1_234,

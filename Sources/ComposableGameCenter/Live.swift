@@ -365,7 +365,7 @@ extension TurnBasedMatchClient {
 
 extension TurnBasedMatchmakerViewControllerClient {
   public static let live = Self(
-    _present: { showExistingMatches in
+    present: { showExistingMatches in
       .run { subscriber in
         class Delegate: NSObject, GKTurnBasedMatchmakerViewControllerDelegate {
           let subscriber: Effect<DelegateEvent, Never>.Subscriber
@@ -390,7 +390,7 @@ extension TurnBasedMatchmakerViewControllerClient {
         }
 
         let matchRequest = GKMatchRequest()
-        matchRequest.inviteMessage = "Let's play isowords!"  // TODO: Pass in/localize
+        matchRequest.inviteMessage = "Let’s play isowords!"  // TODO: Pass in/localize
         matchRequest.maxPlayers = 2
         matchRequest.minPlayers = 2
         matchRequest.recipientResponseHandler = { player, response in

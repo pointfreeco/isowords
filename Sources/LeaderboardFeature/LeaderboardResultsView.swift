@@ -403,116 +403,110 @@ extension ResultEnvelope {
   struct LeaderboardResultsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
-          ScrollView {
-            LeaderboardResultsView(
-              store: .init(
-                initialState: LeaderboardResultsState(
-                  gameMode: GameMode.timed,
-                  isLoading: false,
-                  resultEnvelope: nil,
-                  timeScope: TimeScope.lastWeek
-                ),
-                reducer: .leaderboardResultsReducer(),
-                environment: LeaderboardResultsEnvironment(
-                  loadResults: { _, _ in
-                    Effect(
-                      value: .init(
-                        outOf: 1000,
-                        results: ([1, 2, 3, 4, 5, 7]).map { index in
-                          ResultEnvelope.Result(
-                            denseRank: index,
-                            id: UUID(),
-                            isYourScore: index == 3,
-                            rank: index,
-                            score: 6000 - index * 800,
-                            subtitle: "mbrandonw",
-                            title: "Longword\(index)"
-                          )
-                        }
+        LeaderboardResultsView(
+          store: .init(
+            initialState: LeaderboardResultsState(
+              gameMode: GameMode.timed,
+              isLoading: false,
+              resultEnvelope: nil,
+              timeScope: TimeScope.lastWeek
+            ),
+            reducer: .leaderboardResultsReducer(),
+            environment: LeaderboardResultsEnvironment(
+              loadResults: { _, _ in
+                Effect(
+                  value: .init(
+                    outOf: 1000,
+                    results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
+                      ResultEnvelope.Result(
+                        denseRank: index,
+                        id: UUID(),
+                        isYourScore: index == 15,
+                        rank: index,
+                        score: 6000 - index * 300,
+                        subtitle: "mbrandonw",
+                        title: "Longword\(index)"
                       )
-                    )
-                  },
-                  mainQueue: .immediate
+                    }
+                  )
                 )
-              ),
-              title: Text("362,998 words"),
-              subtitle: nil,
-              isFilterable: true,
-              color: .isowordsRed,
-              timeScopeLabel: Text("Today"),
-              timeScopeMenu: EmptyView()
+              },
+              mainQueue: .immediate
             )
-            .padding()
+          ),
+          title: Text("362,998 words"),
+          subtitle: nil,
+          isFilterable: false,
+          color: .isowordsRed,
+          timeScopeLabel: Text("Today"),
+          timeScopeMenu: EmptyView()
+        )
+        .padding()
 
-            LeaderboardResultsView(
-              store: .init(
-                initialState: LeaderboardResultsState(
-                  gameMode: GameMode.timed,
-                  isLoading: false,
-                  resultEnvelope: nil,
-                  timeScope: TimeScope.lastWeek
-                ),
-                reducer: .leaderboardResultsReducer(),
-                environment: LeaderboardResultsEnvironment(
-                  loadResults: { _, _ in
-                    Effect(
-                      value: .init(
-                        outOf: 1000,
-                        results: (1...5).map { index in
-                          ResultEnvelope.Result(
-                            denseRank: index,
-                            id: UUID(),
-                            isYourScore: index == 3,
-                            rank: index,
-                            score: 6000 - index * 800,
-                            title: "Player \(index)"
-                          )
-                        }
+        LeaderboardResultsView(
+          store: .init(
+            initialState: LeaderboardResultsState(
+              gameMode: GameMode.timed,
+              isLoading: false,
+              resultEnvelope: nil,
+              timeScope: TimeScope.lastWeek
+            ),
+            reducer: .leaderboardResultsReducer(),
+            environment: LeaderboardResultsEnvironment(
+              loadResults: { _, _ in
+                Effect(
+                  value: .init(
+                    outOf: 1000,
+                    results: (1...5).map { index in
+                      ResultEnvelope.Result(
+                        denseRank: index,
+                        id: UUID(),
+                        isYourScore: index == 3,
+                        rank: index,
+                        score: 6000 - index * 800,
+                        title: "Player \(index)"
                       )
-                    )
-                    .delay(for: 1, scheduler: DispatchQueue.main.animation())
-                    .eraseToEffect()
-                  },
-                  mainQueue: .main
+                    }
+                  )
                 )
-              ),
-              title: Text("Daily challenge"),
-              subtitle: Text("1,234 games"),
-              isFilterable: true,
-              color: .isowordsYellow,
-              timeScopeLabel: Text("Today"),
-              timeScopeMenu: EmptyView()
+                .delay(for: 1, scheduler: DispatchQueue.main.animation())
+                .eraseToEffect()
+              },
+              mainQueue: .immediate
             )
-            .padding()
+          ),
+          title: Text("Daily challenge"),
+          subtitle: Text("1,234 games"),
+          isFilterable: true,
+          color: .isowordsYellow,
+          timeScopeLabel: Text("Today"),
+          timeScopeMenu: EmptyView()
+        )
+        .padding()
 
-            LeaderboardResultsView(
-              store: .init(
-                initialState: LeaderboardResultsState(
-                  gameMode: GameMode.timed,
-                  isLoading: false,
-                  resultEnvelope: nil,
-                  timeScope: TimeScope.lastWeek
-                ),
-                reducer: .leaderboardResultsReducer(),
-                environment: LeaderboardResultsEnvironment(
-                  loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-                  mainQueue: .main
-                )
-              ),
-              title: Text("Solo"),
-              subtitle: Text("1,234 games"),
-              isFilterable: true,
-              color: .isowordsOrange,
-              timeScopeLabel: Text("Today"),
-              timeScopeMenu: EmptyView()
+        LeaderboardResultsView(
+          store: .init(
+            initialState: LeaderboardResultsState(
+              gameMode: GameMode.timed,
+              isLoading: false,
+              resultEnvelope: nil,
+              timeScope: TimeScope.lastWeek
+            ),
+            reducer: .leaderboardResultsReducer(),
+            environment: LeaderboardResultsEnvironment(
+              loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
+              mainQueue: .immediate
             )
-            .padding()
-          }
-          .navigationStyle(title: Text("Leaderboards"))
-        }
+          ),
+          title: Text("Solo"),
+          subtitle: Text("1,234 games"),
+          isFilterable: true,
+          color: .isowordsOrange,
+          timeScopeLabel: Text("Today"),
+          timeScopeMenu: EmptyView()
+        )
+        .padding()
       }
-      .previewLayout(.fixed(width: 400, height: 2000))
     }
   }
 #endif

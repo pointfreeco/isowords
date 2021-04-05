@@ -50,7 +50,7 @@ extension TurnBasedMatchClient {
 
 extension TurnBasedMatchmakerViewControllerClient {
   public static let noop = Self(
-    _present: { _ in .none },
+    present: { _ in .none },
     dismiss: .none
   )
 }
@@ -112,7 +112,7 @@ extension TurnBasedMatchmakerViewControllerClient {
 
   extension TurnBasedMatchmakerViewControllerClient {
     public static let failing = Self(
-      _present: { _ in .failing("\(Self.self).present is unimplemented") },
+      present: { _ in .failing("\(Self.self).present is unimplemented") },
       dismiss: .failing("\(Self.self).dismiss is unimplemented")
     )
   }
