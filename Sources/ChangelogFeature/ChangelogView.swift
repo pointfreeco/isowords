@@ -11,18 +11,25 @@ import UserDefaultsClient
 
 public struct ChangelogState: Equatable {
   public var changelog: IdentifiedArrayOf<ChangeState>
+  public var isRequestInFlight: Bool
+  public var isUpdateButtonVisible: Bool
 
   public init(
-    changelog: IdentifiedArrayOf<ChangeState> = []
+    changelog: IdentifiedArrayOf<ChangeState> = [],
+    isRequestInFlight: Bool = false,
+    isUpdateButtonVisible: Bool = false
   ) {
     self.changelog = changelog
+    self.isRequestInFlight = isRequestInFlight
+    self.isUpdateButtonVisible = isUpdateButtonVisible
   }
 }
 
 public enum ChangelogAction: Equatable {
-  case change(id: Int, action: ChangeAction)
+  case change(id: Build.Number, action: ChangeAction)
   case changelogResponse(Result<Changelog, ApiError>)
   case onAppear
+  case updateButtonTapped
 }
 
 public struct ChangelogEnvironment {
@@ -57,7 +64,7 @@ public let changelogReducer = Reducer<
 >.combine(
   changeReducer
     .forEach(
-      state: \.changelog,
+      state: \ChangelogState.changelog,
       action: /ChangelogAction.change(id:action:),
       environment: {
         ChangeEnvironment(
@@ -81,31 +88,51 @@ public let changelogReducer = Reducer<
           .map { offset, change in
             ChangeState(
               change: change,
-              isExpanded: offset == 0 || environment.build.number() <= change.build,
-              isUpdateButtonVisible: offset == 0 && environment.build.number() < change.build
+              isExpanded: offset == 0 || environment.build.number() <= change.build
             )
           }
       )
+      state.isRequestInFlight = false
+      state.isUpdateButtonVisible =
+        environment.build.number() < (changelog.changes.map(\.build).max() ?? 0)
 
       return .none
 
     case .changelogResponse(.failure):
+      state.isRequestInFlight = false
       return .none
 
     case .onAppear:
+      state.isRequestInFlight = true
+
       return environment.apiClient.apiRequest(
-        route: .changelog(build: environment.build.number()),
+        route: .changelog(build: environment.build.number().rawValue),
         as: Changelog.self
       )
       .receive(on: environment.mainQueue)
       .catchToEffect()
       .map(ChangelogAction.changelogResponse)
+
+    case .updateButtonTapped:
+      return environment.applicationClient.open(
+        environment.serverConfig.config().appStoreUrl.absoluteURL,
+        [:]
+      )
+      .fireAndForget()
     }
   }
 )
 
 public struct ChangelogView: View {
   let store: Store<ChangelogState, ChangelogAction>
+
+  struct ViewState: Equatable {
+    let isUpdateButtonVisible: Bool
+
+    init(state: ChangelogState) {
+      self.isUpdateButtonVisible = state.isUpdateButtonVisible
+    }
+  }
 
   public init(
     store: Store<ChangelogState, ChangelogAction>
@@ -114,7 +141,18 @@ public struct ChangelogView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store.stateless) { viewStore in
+    WithViewStore(self.store.scope(state: ViewState.init)) { viewStore in
+
+      if viewStore.isUpdateButtonVisible {
+        HStack {
+          Spacer()
+          Button(action: { viewStore.send(.updateButtonTapped) }) {
+            Text("Update")
+          }
+          .buttonStyle(ActionButtonStyle())
+        }
+      }
+
       List {
         ForEachStore(
           self.store.scope(
@@ -136,34 +174,34 @@ import SwiftUIHelpers
 struct ChangelogPreviews: PreviewProvider {
   static var previews: some View {
     Preview {
-      ChangelogView(
-        store: .init(
-          initialState: .init(),
-          reducer: changelogReducer,
-          environment: ChangelogEnvironment(
-            apiClient: update(.noop) {
-              $0.override(
-                routeCase: /ServerRoute.Api.Route.changelog(build:),
-                withResponse: { _ in .ok(Changelog.current) }
-              )
-            },
-            applicationClient: .noop,
-            build: update(.noop) {
-              $0.number = { 99 }
-            },
-            mainQueue: .immediate,
-            serverConfig: .noop,
-            userDefaults: update(.noop) {
-              $0.integerForKey = { _ in 98 }
-            }
-          )
-        )
-      )
-      .navigationStyle(
-        title: Text("Updates"),
-        navPresentationStyle: .modal,
-        onDismiss: {}
-      )
+//      ChangelogView(
+//        store: .init(
+//          initialState: .init(),
+//          reducer: changelogReducer,
+//          environment: ChangelogEnvironment(
+//            apiClient: update(.noop) {
+//              $0.override(
+//                routeCase: /ServerRoute.Api.Route.changelog(build:),
+//                withResponse: { _ in .ok(Changelog.current) }
+//              )
+//            },
+//            applicationClient: .noop,
+//            build: update(.noop) {
+//              $0.number = { 99 }
+//            },
+//            mainQueue: .immediate,
+//            serverConfig: .noop,
+//            userDefaults: update(.noop) {
+//              $0.integerForKey = { _ in 98 }
+//            }
+//          )
+//        )
+//      )
+//      .navigationStyle(
+//        title: Text("Updates"),
+//        navPresentationStyle: .modal,
+//        onDismiss: {}
+//      )
     }
   }
 }

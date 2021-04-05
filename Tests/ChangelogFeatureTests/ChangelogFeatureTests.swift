@@ -28,20 +28,21 @@ class ChangelogFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    store.send(.onAppear) {
+      $0.isRequestInFlight = true
+    }
     store.receive(.changelogResponse(.success(changelog))) {
       $0.changelog = [
         .init(
           change: .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
-          isExpanded: true,
-          isUpdateButtonVisible: false
+          isExpanded: true
         ),
         .init(
           change: .init(version: "1.1", build: 40, log: "Bug fixes and improvements"),
-          isExpanded: false,
-          isUpdateButtonVisible: false
+          isExpanded: false
         )
       ]
+      $0.isRequestInFlight = false
     }
   }
 
@@ -68,25 +69,26 @@ class ChangelogFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    store.send(.onAppear) {
+      $0.isRequestInFlight = true
+    }
     store.receive(.changelogResponse(.success(changelog))) {
       $0.changelog = [
         .init(
           change: .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
-          isExpanded: true,
-          isUpdateButtonVisible: true
+          isExpanded: true
         ),
         .init(
           change: .init(version: "1.1", build: 40, log: "Bug fixes and improvements"),
-          isExpanded: true,
-          isUpdateButtonVisible: false
+          isExpanded: true
         ),
         .init(
           change: .init(version: "1.0", build: 38, log: "Bug fixes and improvements"),
-          isExpanded: false,
-          isUpdateButtonVisible: false
+          isExpanded: false
         )
       ]
+      $0.isRequestInFlight = false
+      $0.isUpdateButtonVisible = true
     }
   }
 }

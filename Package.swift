@@ -38,6 +38,7 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
+        .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
       ]
     ),
@@ -98,7 +99,10 @@ var package = Package(
       ]
     ),
     .target(
-      name: "ServerConfig"
+      name: "ServerConfig",
+      dependencies: [
+        "Build"
+      ]
     ),
     .target(
       name: "ServerRouter",

@@ -1,3 +1,5 @@
+import Build
+
 public struct Changelog: Codable, Hashable {
   public var changes: [Change]
 
@@ -8,13 +10,13 @@ public struct Changelog: Codable, Hashable {
   }
 
   public struct Change: Codable, Hashable {
-    public var build: Int
+    public var build: Build.Number
     public var log: String
     public var version: String
 
     public init(
       version: String,
-      build: Int,
+      build: Build.Number,
       log: String
     ) {
       self.build = build

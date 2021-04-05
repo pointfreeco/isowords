@@ -1,3 +1,4 @@
+import Build
 import ComposableArchitecture
 import ServerConfigClient
 import Styleguide
@@ -7,16 +8,14 @@ import UIApplicationClient
 public struct ChangeState: Equatable, Identifiable {
   public var change: Changelog.Change
   public var isExpanded = false
-  public var isUpdateButtonVisible = false
 
-  public var id: Int {
+  public var id: Build.Number {
     self.change.build
   }
 }
 
 public enum ChangeAction: Equatable {
   case showButtonTapped
-  case updateButtonTapped
 }
 
 public struct ChangeEnvironment {
@@ -33,13 +32,6 @@ let changeReducer = Reducer<
   case .showButtonTapped:
     state.isExpanded.toggle()
     return .none
-
-  case .updateButtonTapped:
-    return environment.applicationClient.open(
-      environment.serverConfig.config().appStoreUrl.absoluteURL,
-      [:]
-    )
-    .fireAndForget()
   }
 }
 
@@ -62,16 +54,6 @@ struct ChangeView: View {
 
         if viewStore.isExpanded {
           Text(viewStore.change.log)
-        }
-
-        if viewStore.isUpdateButtonVisible {
-          HStack {
-            Spacer()
-            Button(action: {}) {
-              Text("Update")
-            }
-            .buttonStyle(ActionButtonStyle())
-          }
         }
       }
       .adaptivePadding([.vertical])
