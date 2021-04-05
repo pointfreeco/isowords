@@ -137,7 +137,7 @@ private let match = TurnBasedMatch(
         playerIndexToId: [
           0: SharedModels.Player.blob.id,
           1: SharedModels.Player.blobJr.id,
-        ],
+        ]
       ),
       moves: [
         update(.highScoringMove) { $0.playerIndex = 0 },
