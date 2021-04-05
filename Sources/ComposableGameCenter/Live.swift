@@ -390,7 +390,7 @@ extension TurnBasedMatchmakerViewControllerClient {
         }
 
         let matchRequest = GKMatchRequest()
-        matchRequest.inviteMessage = "Let's play isowords!"  // TODO: Pass in/localize
+        matchRequest.inviteMessage = "Let’s play isowords!"  // TODO: Pass in/localize
         matchRequest.maxPlayers = 2
         matchRequest.minPlayers = 2
         matchRequest.recipientResponseHandler = { player, response in

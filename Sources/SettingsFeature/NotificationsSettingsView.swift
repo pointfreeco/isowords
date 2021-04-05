@@ -54,7 +54,7 @@ struct NotificationsSettingsView: View {
             )
             .adaptiveFont(.matterMedium, size: 16)
 
-            Text("Receive your rank for yesterday's challenge if you played.")
+            Text("Receive your rank for yesterday’s challenge if you played.")
               .foregroundColor(.gray)
               .adaptiveFont(.matterMedium, size: 12)
           }

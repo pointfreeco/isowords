@@ -153,14 +153,14 @@ public struct ActiveGamesView: View {
   @ViewBuilder
   func turnBasedMessage(match: ActiveTurnBasedMatch) -> some View {
     if match.isStale && !match.isYourTurn {
-      Text("they haven't played in awhile")
+      Text("they haven’t played in awhile")
         .foregroundColor(self.color.opacity(0.4))
     } else if let playedWord = match.playedWord {
       Text(playedWord.isYourWord ? "you played " : "they played ")
         .foregroundColor(self.color.opacity(0.4))
         + self.text(for: playedWord)
     } else if match.isYourTurn {
-      Text("you haven't played a word yet!")
+      Text("you haven’t played a word yet!")
     } else {
       Text("waiting for them to play")
     }
@@ -172,7 +172,7 @@ public struct ActiveGamesView: View {
         .foregroundColor(self.color.opacity(0.4))
         + self.text(for: lastPlayedWord)
     } else {
-      return Text("you haven't played a word yet!")
+      return Text("you haven’t played a word yet!")
     }
   }
 
