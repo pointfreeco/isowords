@@ -35,17 +35,8 @@ public struct UserDefaultsClient {
       .init(value: incremented)
     )
   }
-
-  public var lastInstalledBuild: Int {
-    self.integerForKey(lastInstalledBuildKey)
-  }
-
-  public func setLastInstalledBuild(_ build: Int) -> Effect<Never, Never> {
-    self.setInteger(build, lastInstalledBuildKey)
-  }
 }
 
 let hasShownFirstLaunchOnboardingKey = "hasShownFirstLaunchOnboardingKey"
-let lastInstalledBuildKey = "lastInstalledBuild"
 let installationTimeKey = "installationTimeKey"
 let multiplayerOpensCount = "multiplayerOpensCount"

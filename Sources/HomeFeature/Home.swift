@@ -33,8 +33,7 @@ import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-#warning("TODO: rename HomeRoute?")
-public enum AppRoute: Equatable {
+public enum HomeRoute: Equatable {
   case dailyChallenge(DailyChallengeState)
   case leaderboard(LeaderboardState)
   case multiplayer(MultiplayerState)
@@ -71,7 +70,7 @@ public struct HomeState: Equatable {
   public var hasChangelog: Bool
   public var hasPastTurnBasedGames: Bool
   public var nagBanner: NagBannerState?
-  public var route: AppRoute?
+  public var route: HomeRoute?
   public var savedGames: SavedGamesState {
     didSet {
       guard case var .dailyChallenge(dailyChallengeState) = self.route
@@ -103,7 +102,7 @@ public struct HomeState: Equatable {
     hasChangelog: Bool = false,
     hasPastTurnBasedGames: Bool = false,
     nagBanner: NagBannerState? = nil,
-    route: AppRoute? = nil,
+    route: HomeRoute? = nil,
     savedGames: SavedGamesState = SavedGamesState(),
     settings: SettingsState = SettingsState(),
     turnBasedMatches: [ActiveTurnBasedMatch] = [],
@@ -139,7 +138,7 @@ public enum HomeAction: Equatable {
   case onAppear
   case onDisappear
   case serverConfigResponse(ServerConfig)
-  case setNavigation(tag: AppRoute.Tag?)
+  case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
@@ -264,7 +263,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   dailyChallengeReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.dailyChallenge),
+      state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge),
       action: /HomeAction.dailyChallenge,
       environment: {
         .init(
@@ -280,7 +279,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   leaderboardReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.leaderboard),
+      state: (\HomeState.route).appending(path: /HomeRoute.leaderboard),
       action: /HomeAction.leaderboard,
       environment: {
         .init(
@@ -295,7 +294,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   multiplayerReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.multiplayer),
+      state: (\HomeState.route).appending(path: /HomeRoute.multiplayer),
       action: /HomeAction.multiplayer,
       environment: {
         .init(
@@ -347,7 +346,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   soloReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.solo),
+      state: (\HomeState.route).appending(path: /HomeRoute.solo),
       action: /HomeAction.solo,
       environment: { .init(fileClient: $0.fileClient) }
     ),
@@ -547,7 +546,7 @@ public struct HomeView: View {
     let hasChangelog: Bool
     let isChangelogVisible: Bool
     let isNagBannerVisible: Bool
-    let tag: AppRoute.Tag?
+    let tag: HomeRoute.Tag?
 
     init(state: HomeState) {
       self.hasActiveGames =
@@ -594,7 +593,7 @@ public struct HomeView: View {
                   ),
                   navPresentationStyle: .navigation
                 ),
-                tag: AppRoute.Tag.settings,
+                tag: HomeRoute.Tag.settings,
                 selection: viewStore.binding(get: \.tag, send: HomeAction.setNavigation(tag:))
                   .animation()
               ) {
@@ -785,7 +784,6 @@ private func loadMatches(
       Effect.merge(
         Effect(
           value: .binding(
-            // TODO: move to .matchesLoaded?
             .set(
               \.hasPastTurnBasedGames,
               (try? result.get())?.contains { $0.status == .ended } == .some(true)

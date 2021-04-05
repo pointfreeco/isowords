@@ -106,7 +106,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>102</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GitSHA</key>
 	<string></string>
 	<key>ITSAppUsesNonExemptEncryption</key>

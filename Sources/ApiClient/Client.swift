@@ -155,11 +155,10 @@ public struct ApiClient {
       routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
       withResponse response: @escaping (Value) -> Effect<(data: Data, response: URLResponse), URLError>
     ) {
-      // TODO: how to do override without expectations?
-//      let fulfill = expectation(description: "route")
+      let fulfill = expectation(description: "route")
       self.apiRequest = { [self] route in
         if let value = matchingRoute.extract(from: route) {
-//          fulfill()
+          fulfill()
           return response(value)
         } else {
           return self.apiRequest(route)

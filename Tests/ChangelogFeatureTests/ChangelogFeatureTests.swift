@@ -7,7 +7,6 @@ import XCTest
 
 class ChangelogFeatureTests: XCTestCase {
   func testOnAppear_IsUpToDate() {
-    var didSaveLastInstallBuild = false
     let changelog = Changelog(
       changes: [
         .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -22,12 +21,6 @@ class ChangelogFeatureTests: XCTestCase {
     )
     environment.build.number = { 42 }
     environment.mainQueue = .immediate
-    environment.userDefaults.override(integer: 42, forKey: lastInstalledBuildKey)
-    environment.userDefaults.setInteger = { int, key in
-      XCTAssertEqual(int, 42)
-      XCTAssertEqual(key, lastInstalledBuildKey)
-      return .fireAndForget { didSaveLastInstallBuild = true }
-    }
 
     let store = TestStore(
       initialState: ChangelogState(),
@@ -50,12 +43,9 @@ class ChangelogFeatureTests: XCTestCase {
         )
       ]
     }
-
-    XCTAssertEqual(didSaveLastInstallBuild, true)
   }
 
   func testOnAppear_IsUpBehind() {
-    var didSaveLastInstallBuild = false
     let changelog = Changelog(
       changes: [
         .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -71,12 +61,6 @@ class ChangelogFeatureTests: XCTestCase {
     )
     environment.build.number = { 40 }
     environment.mainQueue = .immediate
-    environment.userDefaults.override(integer: 40, forKey: lastInstalledBuildKey)
-    environment.userDefaults.setInteger = { int, key in
-      XCTAssertEqual(int, 40)
-      XCTAssertEqual(key, lastInstalledBuildKey)
-      return .fireAndForget { didSaveLastInstallBuild = true }
-    }
 
     let store = TestStore(
       initialState: ChangelogState(),
@@ -104,8 +88,6 @@ class ChangelogFeatureTests: XCTestCase {
         )
       ]
     }
-
-    XCTAssertEqual(didSaveLastInstallBuild, true)
   }
 }
 

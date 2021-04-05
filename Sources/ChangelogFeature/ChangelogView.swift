@@ -5,14 +5,15 @@ import ServerConfigClient
 import SharedModels
 import Styleguide
 import SwiftUI
+import TcaHelpers
 import UIApplicationClient
 import UserDefaultsClient
 
 public struct ChangelogState: Equatable {
-  public var changelog: [ChangeState]
+  public var changelog: IdentifiedArrayOf<ChangeState>
 
   public init(
-    changelog: [ChangeState] = []
+    changelog: IdentifiedArrayOf<ChangeState> = []
   ) {
     self.changelog = changelog
   }
@@ -56,7 +57,7 @@ public let changelogReducer = Reducer<
 >.combine(
   changeReducer
     .forEach(
-      state: \.changelog, // TODO: optional??
+      state: \.changelog,
       action: /ChangelogAction.change(id:action:),
       environment: {
         ChangeEnvironment(
@@ -72,22 +73,21 @@ public let changelogReducer = Reducer<
       return .none
 
     case let .changelogResponse(.success(changelog)):
-      let lastInstalledBuild = environment.userDefaults.lastInstalledBuild
+      state.changelog = IdentifiedArray(
+        changelog
+          .changes
+          .sorted(by: { $0.build > $1.build })
+          .enumerated()
+          .map { offset, change in
+            ChangeState(
+              change: change,
+              isExpanded: offset == 0 || environment.build.number() <= change.build,
+              isUpdateButtonVisible: offset == 0 && environment.build.number() < change.build
+            )
+          }
+      )
 
-      state.changelog = changelog
-        .changes
-        .sorted(by: { $0.build > $1.build })
-        .enumerated()
-        .map { offset, change in
-          ChangeState(
-            change: change,
-            isExpanded: offset == 0 || lastInstalledBuild <= change.build,
-            isUpdateButtonVisible: offset == 0 && environment.build.number() < change.build
-          )
-        }
-
-      return environment.userDefaults.setLastInstalledBuild(environment.build.number())
-        .fireAndForget()
+      return .none
 
     case .changelogResponse(.failure):
       return .none
@@ -114,7 +114,7 @@ public struct ChangelogView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store.stateless) { viewStore in
       List {
         ForEachStore(
           self.store.scope(
