@@ -398,11 +398,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         currentPlayerEnvelope.player.sendDailyChallengeReminder
       state.settings.sendDailyChallengeSummary =
         currentPlayerEnvelope.player.sendDailyChallengeSummary
-      return environment.apiClient.apiRequest(
-        route: .changelog(build: environment.build.number()),
-        as: Changelog.self
-      )
-      .fireAndForget()
+      return .none
 
     case .binding:
       return .none
@@ -491,7 +487,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case let .serverConfigResponse(serverConfig):
       state.hasChangelog = serverConfig.newestBuild > environment.build.number()
-      print("state.hasChangelog", state.hasChangelog)
       return .none
 
     case let .setNavigation(tag: tag):
@@ -740,7 +735,6 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     Effect.merge(
       Effect(value: authentication),
 
-      // TODO: move this to .authenticationResponse??
       environment.apiClient
         .apiRequest(
           route: .dailyChallenge(.today(language: .en)),
@@ -837,13 +831,13 @@ private struct CubeIconView: View {
     Button(action: self.action) {
       Image(systemName: "cube.fill")
         .font(.system(size: 24))
-        .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
+        .modifier(ShakeEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
         .animation(.easeInOut(duration: 1))
     }
   }
 }
 
-private struct RingEffect: GeometryEffect {
+private struct ShakeEffect: GeometryEffect {
   var animatableData: CGFloat
 
   func effectValue(size: CGSize) -> ProjectionTransform {
