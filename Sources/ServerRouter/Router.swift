@@ -1,4 +1,5 @@
 import ApplicativeRouter
+import Build
 import Foundation
 import Prelude
 import SharedModels
@@ -18,14 +19,14 @@ private func apiRouter(
   let routers: [Router<ServerRoute.Api.Route>] = [
     .case(ServerRoute.Api.Route.changelog(build:))
       <¢> get %> "changelog"
-      %> queryParam("build", .int)
+      %> queryParam("build", .tagged(.int))
       <% end,
 
     // TODO: there appears to be a bug in the router where if the route `.config` doesn't take
     //       any arguments then it routes to "/api" instead of "/api/config".
     .case(ServerRoute.Api.Route.config(build:))
       <¢> get %> "config"
-      %> queryParam("build", .int)
+      %> queryParam("build", .tagged(.int))
       <% end,
 
     .case(ServerRoute.Api.Route.currentPlayer)

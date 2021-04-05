@@ -110,7 +110,7 @@ public struct DeveloperSettings: Equatable {
 
 public struct SettingsState: Equatable {
   public var alert: AlertState<SettingsAction>?
-  public var buildNumber: Int?
+  public var buildNumber: Build.Number?
   public var cubeShadowRadius: CGFloat
   public var developer: DeveloperSettings
   public var enableCubeShadow: Bool
@@ -130,7 +130,7 @@ public struct SettingsState: Equatable {
 
   public init(
     alert: AlertState<SettingsAction>? = nil,
-    buildNumber: Int? = nil,
+    buildNumber: Build.Number? = nil,
     cubeShadowRadius: CGFloat = 50,
     developer: DeveloperSettings = DeveloperSettings(),
     enableCubeShadow: Bool = true,

@@ -106,7 +106,7 @@ public let changelogReducer = Reducer<
       state.isRequestInFlight = true
 
       return environment.apiClient.apiRequest(
-        route: .changelog(build: environment.build.number().rawValue),
+        route: .changelog(build: environment.build.number()),
         as: Changelog.self
       )
       .receive(on: environment.mainQueue)

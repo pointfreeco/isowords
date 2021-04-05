@@ -130,6 +130,7 @@ var package = Package(
     .target(
       name: "SharedModels",
       dependencies: [
+        "Build",
         "FirstPartyMocks",
         .product(name: "Tagged", package: "swift-tagged"),
       ]
@@ -1103,6 +1104,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "DatabaseClient",
     dependencies: [
+      "Build",
       "SharedModels",
       "SnsClient",
       .product(name: "Either", package: "Prelude"),
@@ -1191,6 +1193,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "PushMiddleware",
     dependencies: [
+      "Build",
       "DatabaseClient",
       "SharedModels",
       "SnsClient",

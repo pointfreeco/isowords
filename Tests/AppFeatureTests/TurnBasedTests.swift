@@ -48,6 +48,7 @@ class TurnBasedTests: XCTestCase {
         $0.audioPlayer.play = { _ in .none }
         $0.audioPlayer.stop = { _ in .none }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+        $0.build.number = { 42 }
         $0.database.playedGamesCount = { _ in .none }
         $0.deviceId.id = { .deviceId }
         $0.dictionary.contains = { word, _ in word == "CAB" }
@@ -78,6 +79,9 @@ class TurnBasedTests: XCTestCase {
     store.send(.home(.onAppear))
 
     store.receive(.home(.authenticationResponse(.mock)))
+    store.receive(.home(.serverConfigResponse(.init()))) {
+      $0.home.hasChangelog = true
+    }
 
     self.backgroundQueue.advance()
     store.receive(.home(.binding(.set(\.hasPastTurnBasedGames, false))))

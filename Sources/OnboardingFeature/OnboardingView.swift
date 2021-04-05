@@ -395,8 +395,6 @@ public let onboardingReducer = Reducer<
     return environment.audioPlayer.play(.uiSfxTap)
       .fireAndForget()
   }
-
-  struct DelayedNextStepId: Hashable {}
 }
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in
   switch state.step {
@@ -551,6 +549,8 @@ private let onboardingGameReducer = gameReducer(
   environment: { (environment: OnboardingEnvironment) in environment.gameEnvironment },
   isHapticsEnabled: { _ in true }
 )
+
+private struct DelayedNextStepId: Hashable {}
 
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {
