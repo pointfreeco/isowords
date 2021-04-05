@@ -836,7 +836,7 @@ private struct CubeIconView: View {
   var body: some View {
     Button(action: self.action) {
       Image(systemName: "cube.fill")
-        .font(.system(size: 20))
+        .font(.system(size: 24))
         .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
         .animation(.easeInOut(duration: 1))
     }
