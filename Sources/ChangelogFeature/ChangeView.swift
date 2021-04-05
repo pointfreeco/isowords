@@ -36,6 +36,7 @@ let changeReducer = Reducer<
 }
 
 struct ChangeView: View {
+  var currentBuild: Build.Number
   let store: Store<ChangeState, ChangeAction>
 
   var body: some View {
@@ -44,7 +45,17 @@ struct ChangeView: View {
         HStack {
           Text(viewStore.change.version)
             .font(.title)
+
+          if viewStore.change.build == self.currentBuild {
+            Text("Installed")
+              .font(.footnote)
+              .padding(.grid(1))
+              .foregroundColor(.white)
+              .background(Color.gray)
+          }
+
           Spacer()
+
           if !viewStore.isExpanded {
             Button(action: { viewStore.send(.showButtonTapped, animation: .default)}) {
               Text("Show")
