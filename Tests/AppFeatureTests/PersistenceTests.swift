@@ -294,7 +294,7 @@ class PersistenceTests: XCTestCase {
             .init(
               localPlayer: .mock,
               match: .inProgress,
-              metadata: .init(playerIndexToId: [:])
+              metadata: .init(playerIndexToId: [:], updatedAt: nil)
             )
           )
         },

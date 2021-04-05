@@ -7,6 +7,7 @@ class UpgradeInterstitialViewTests: XCTestCase {
   override func setUpWithError() throws {
     try super.setUpWithError()
     try XCTSkipIf(!Styleguide.registerFonts())
+    SnapshotTesting.diffTool = "ksdiff"
 //    isRecording = true
   }
 

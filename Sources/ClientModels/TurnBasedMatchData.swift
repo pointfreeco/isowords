@@ -83,6 +83,7 @@ extension TurnBasedMatchData.Metadata {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
     try container.encode(self.playerIndexToId.transformKeys(\.rawValue), forKey: .playerIndexToId)
+    try container.encode(self.updatedAt, forKey: .updatedAt)
   }
 }
 

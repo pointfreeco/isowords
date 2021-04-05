@@ -16,7 +16,8 @@ class TurnBasedMatchDataTests: XCTestCase {
         playerIndexToId: [
           0: .init(rawValue: uuid()),
           1: .init(rawValue: uuid()),
-        ]
+        ],
+        updatedAt: .mock
       ),
       moves: [
         .init(

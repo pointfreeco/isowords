@@ -93,11 +93,13 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 environment.gameCenter.turnBasedMatchmakerViewController.dismiss
                   .fireAndForget(),
 
-                environment.gameCenter.turnBasedMatch.saveCurrentTurn(
-                  match.matchId,
-                  Data(turnBasedMatchData: turnBasedMatchData)
-                )
-                .fireAndForget()
+                gameState.isYourTurn
+                  ? environment.gameCenter.turnBasedMatch.saveCurrentTurn(
+                    match.matchId,
+                    Data(turnBasedMatchData: turnBasedMatchData)
+                  )
+                  .fireAndForget()
+                  : .none
               )
             }
 

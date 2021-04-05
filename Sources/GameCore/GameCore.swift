@@ -763,6 +763,7 @@ extension GameState {
 
   public var isYourTurn: Bool {
     guard let turnBasedMatch = self.turnBasedContext else { return true }
+    guard turnBasedMatch.match.status == .open else { return false }
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard lastMove.playerIndex == turnBasedMatch.localPlayerIndex else { return true }

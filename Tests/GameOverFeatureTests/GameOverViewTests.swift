@@ -80,7 +80,7 @@ class GameOverViewTests: XCTestCase {
             turnBasedContext: .init(
               localPlayer: .authenticated,
               match: .mock,
-              metadata: .init(playerIndexToId: [:])
+              metadata: .init(playerIndexToId: [:], updatedAt: nil)
             )
           ),
           reducer: .empty,

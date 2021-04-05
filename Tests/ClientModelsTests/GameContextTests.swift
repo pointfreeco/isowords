@@ -72,7 +72,7 @@ class GameContextTests: XCTestCase {
 
   func testEncodeDecode_TurnBased_PresentMatchData() throws {
     let context = GameContext.turnBased(
-      .init(localPlayer: .mock, match: .mock, metadata: .init(playerIndexToId: [:]))
+      .init(localPlayer: .mock, match: .mock, metadata: .init(playerIndexToId: [:], updatedAt: nil))
     )
     XCTAssertThrowsError(try jsonEncoder.encode(context))
   }
