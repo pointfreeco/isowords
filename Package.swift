@@ -1251,6 +1251,7 @@ package.targets.append(contentsOf: [
       "DatabaseLive",
       "DictionarySqliteClient",
       "EnvVars",
+      "ServerConfig",
       "SiteMiddleware",
       "SnsClientLive",
       .product(name: "Backtrace", package: "swift-backtrace"),

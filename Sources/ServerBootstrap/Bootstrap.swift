@@ -10,6 +10,7 @@ import Overture
 import PostgresKit
 import Prelude
 import PuzzleGen
+import ServerConfig
 import ServerRouter
 import SharedModels
 import SiteMiddleware
@@ -74,6 +75,7 @@ private func loadEnvironment(eventLoopGroup: EventLoopGroup) -> (EnvVars) -> Eit
   { envVars in
     return pure(
       Environment(
+        changelog: { Changelog.current },
         database: .live(
           pool: .init(
             source: PostgresConnectionSource(
