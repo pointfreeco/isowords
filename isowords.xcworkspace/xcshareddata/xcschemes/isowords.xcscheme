@@ -20,20 +20,6 @@
                ReferencedContainer = "container:App/isowords.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "MultiplayerFeatureTests"
-               BuildableName = "MultiplayerFeatureTests"
-               BlueprintName = "MultiplayerFeatureTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -179,6 +165,16 @@
                BlueprintIdentifier = "LeaderboardFeatureTests"
                BuildableName = "LeaderboardFeatureTests"
                BlueprintName = "LeaderboardFeatureTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "MultiplayerFeatureTests"
+               BuildableName = "MultiplayerFeatureTests"
+               BlueprintName = "MultiplayerFeatureTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
