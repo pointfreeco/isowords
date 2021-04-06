@@ -2,7 +2,7 @@ import Foundation
 import SharedModels
 
 public struct InProgressGame: Codable, Equatable {
-  public var cubes: Puzzle
+  public var cubes: ArchivablePuzzle
   public var gameContext: GameContext
   public var gameMode: GameMode
   public var gameStartTime: Date
@@ -21,7 +21,7 @@ public struct InProgressGame: Codable, Equatable {
   }
 
   public init(
-    cubes: Puzzle,
+    cubes: ArchivablePuzzle,
     gameContext: GameContext,
     gameMode: GameMode,
     gameStartTime: Date,

@@ -53,7 +53,7 @@ public func startDailyChallenge(
 extension InProgressGame {
   public init(response: StartDailyChallengeResponse, date: Date) {
     self.init(
-      cubes: Puzzle(archivableCubes: response.dailyChallenge.puzzle),
+      cubes: response.dailyChallenge.puzzle,
       gameContext: .dailyChallenge(response.dailyChallenge.id),
       gameMode: response.dailyChallenge.gameMode,
       gameStartTime: date,

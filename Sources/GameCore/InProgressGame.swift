@@ -8,7 +8,7 @@ import SharedModels
 extension InProgressGame {
   public init(gameState: GameState) {
     self.init(
-      cubes: gameState.cubes,
+      cubes: ArchivablePuzzle(cubes: gameState.cubes),
       gameContext: gameState.gameContext,
       gameMode: gameState.gameMode,
       gameStartTime: gameState.gameStartTime,
@@ -22,7 +22,7 @@ extension InProgressGame {
 extension GameState {
   public init(inProgressGame: InProgressGame) {
     self.init(
-      cubes: inProgressGame.cubes,
+      cubes: Puzzle(archivableCubes: inProgressGame.cubes, moves: inProgressGame.moves),
       gameContext: inProgressGame.gameContext,
       // TODO: inject gameCurrentTime from the outside
       gameCurrentTime: inProgressGame.gameStartTime,

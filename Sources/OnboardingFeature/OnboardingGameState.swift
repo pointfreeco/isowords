@@ -17,9 +17,11 @@ extension GameState {
   )
 }
 
-extension Puzzle {
+extension ArchivablePuzzle {
   static var onboarding: Self {
-    var cubes = randomCubes(for: isowordsLetter).run()
+    var cubes = randomCubes(for: isowordsLetter)
+      .map(ArchivablePuzzle.init(cubes:))
+      .run()
     cubes.1.2.2.left.letter = "G"
     cubes.2.2.2.left.letter = "A"
     cubes.2.2.2.right.letter = "M"
