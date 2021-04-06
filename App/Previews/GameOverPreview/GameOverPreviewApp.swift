@@ -85,7 +85,7 @@ struct GameOverPreviewApp: App {
                   update(.remote) { $0.matchOutcome = .lost },
                 ]
               },
-              metadata: .init(playerIndexToId: [:])
+              metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
             )
           ),
           reducer: gameOverReducer,

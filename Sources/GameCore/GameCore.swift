@@ -358,7 +358,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
             """
             Forfeiting will end the game and your opponent will win. Are you sure you want to forfeit?
             """),
-          primaryButton: .default(.init("Don't forfeit"), send: .dontForfeitButtonTapped),
+          primaryButton: .default(.init("Don’t forfeit"), send: .dontForfeitButtonTapped),
           secondaryButton: .destructive(.init("Yes, forfeit"), send: .forfeitButtonTapped),
           onDismiss: .dismiss
         )
@@ -765,6 +765,7 @@ extension GameState {
 
   public var isYourTurn: Bool {
     guard let turnBasedMatch = self.turnBasedContext else { return true }
+    guard turnBasedMatch.match.status == .open else { return false }
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard lastMove.playerIndex == turnBasedMatch.localPlayerIndex else { return true }
@@ -1078,10 +1079,8 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         )
         return .merge(
           environment.gameCenter.turnBasedMatch.remove(match)
-            .ignoreOutput()
-            .ignoreFailure()
-            .eraseToEffect()
             .fireAndForget(),
+
           environment.feedbackGenerator
             .selectionChanged()
             .fireAndForget()
@@ -1157,19 +1156,14 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 matchData: matchData,
                 localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
                 localPlayerMatchOutcome: completedMatch.yourOutcome,
-                message: "Game over! Let's see how you did!"
+                message: "Game over! Let’s see how you did!"
               )
             )
-            .catchToEffect()
-            .ignoreOutput()
-            .eraseToEffect()
             .fireAndForget(),
+
           reloadMatch,
-          environment.database
-            .saveGame(completedGame)
-            .catchToEffect()
-            .ignoreOutput()
-            .eraseToEffect()
+
+          environment.database.saveGame(completedGame)
             .fireAndForget()
         )
       } else {
@@ -1189,16 +1183,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                     message: "\(turnBasedContext.localPlayer.displayName) removed cubes!"
                   )
                 )
-                .ignoreOutput()
-                .ignoreFailure()
-                .eraseToEffect()
                 .fireAndForget()
 
               : environment.gameCenter.turnBasedMatch
                 .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
-                .ignoreOutput()
-                .ignoreFailure()
-                .eraseToEffect()
                 .fireAndForget(),
             reloadMatch
           )
@@ -1217,10 +1205,8 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                     "\(turnBasedContext.localPlayer.displayName) played \(word)! (+\(score)\(reaction))"
                 )
               )
-              .ignoreOutput()
-              .ignoreFailure()
-              .eraseToEffect()
               .fireAndForget(),
+
             reloadMatch
           )
         }

@@ -380,13 +380,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           .init(
             for: matchId,
             to: [otherPlayerIndex.rawValue],
-            localizableMessageKey: "It's your turn now!",
+            localizableMessageKey: "It’s your turn now!",
             arguments: []
           )
         )
-        .ignoreOutput()
-        .ignoreFailure()
-        .eraseToEffect()
         .fireAndForget()
 
     case .activeGames:

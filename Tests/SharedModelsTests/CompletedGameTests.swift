@@ -97,7 +97,7 @@ class CompletedGameTests: XCTestCase {
     )
   }
 
-  func testGameContext_EncodeDecode_DefaultsToSolor() throws {
+  func testGameContext_EncodeDecode_DefaultsToSolo() throws {
     let jsonData = Data("{}".utf8)
     let decodedContext = try JSONDecoder().decode(CompletedGame.GameContext.self, from: jsonData)
 

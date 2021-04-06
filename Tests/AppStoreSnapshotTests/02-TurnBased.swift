@@ -28,7 +28,7 @@ var turnBasedAppStoreView: AnyView {
           match: update(.inProgress) {
             $0.participants[1].player?.displayName = "mbrandonw"
           },
-          metadata: .init(playerIndexToId: [:])
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
       gameCurrentTime: Date(),
