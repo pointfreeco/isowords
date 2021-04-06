@@ -190,53 +190,53 @@ public struct ChangelogView: View {
 }
 
 #if DEBUG
-import Overture
-import SwiftUIHelpers
+  import Overture
+  import SwiftUIHelpers
 
-struct ChangelogPreviews: PreviewProvider {
-  static var previews: some View {
-    Preview {
-      ChangelogView(
-        store: .init(
-          initialState: .init(),
-          reducer: changelogReducer,
-          environment: ChangelogEnvironment(
-            apiClient: update(.noop) {
-              $0.override(
-                routeCase: /ServerRoute.Api.Route.changelog(build:),
-                withResponse: { _ in
-                  .ok(
-                    update(Changelog.current) {
-                      $0.changes.append(
-                        Changelog.Change(
-                          version: "1.0",
-                          build: 60,
-                          log: "We launched!"
+  struct ChangelogPreviews: PreviewProvider {
+    static var previews: some View {
+      Preview {
+        ChangelogView(
+          store: .init(
+            initialState: .init(),
+            reducer: changelogReducer,
+            environment: ChangelogEnvironment(
+              apiClient: update(.noop) {
+                $0.override(
+                  routeCase: /ServerRoute.Api.Route.changelog(build:),
+                  withResponse: { _ in
+                    .ok(
+                      update(Changelog.current) {
+                        $0.changes.append(
+                          Changelog.Change(
+                            version: "1.0",
+                            build: 60,
+                            log: "We launched!"
+                          )
                         )
-                      )
-                    }
-                  )
-                }
-              )
-            },
-            applicationClient: .noop,
-            build: update(.noop) {
-              $0.number = { 98 }
-            },
-            mainQueue: .immediate,
-            serverConfig: .noop,
-            userDefaults: update(.noop) {
-              $0.integerForKey = { _ in 98 }
-            }
+                      }
+                    )
+                  }
+                )
+              },
+              applicationClient: .noop,
+              build: update(.noop) {
+                $0.number = { 98 }
+              },
+              mainQueue: .immediate,
+              serverConfig: .noop,
+              userDefaults: update(.noop) {
+                $0.integerForKey = { _ in 98 }
+              }
+            )
           )
         )
-      )
-      .navigationStyle(
-        title: Text("Updates"),
-        navPresentationStyle: .modal,
-        onDismiss: {}
-      )
+        .navigationStyle(
+          title: Text("Updates"),
+          navPresentationStyle: .modal,
+          onDismiss: {}
+        )
+      }
     }
   }
-}
 #endif

@@ -20,8 +20,8 @@ public struct Build {
     number: {
       .init(
         rawValue: (Bundle.main.infoDictionary?["CFBundleVersion"] as? String)
-        .flatMap(Int.init)
-        ?? 0
+          .flatMap(Int.init)
+          ?? 0
       )
     }
   )

@@ -39,7 +39,7 @@ var package = Package(
       name: "Build",
       dependencies: [
         .product(name: "Tagged", package: "swift-tagged"),
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .systemLibrary(
@@ -370,7 +370,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .testTarget(
       name: "ChangelogFeatureTests",
       dependencies: [
-        "ChangelogFeature",
+        "ChangelogFeature"
       ]
     ),
     .target(
@@ -1322,7 +1322,7 @@ package.targets.append(contentsOf: [
       .product(name: "ApplicativeRouterHttpPipelineSupport", package: "Web"),
       .product(name: "HttpPipeline", package: "Web"),
       .product(name: "Overture", package: "Overture"),
-      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ],
     resources: [.process("Resources/")]
   ),
