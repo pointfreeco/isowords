@@ -1,3 +1,4 @@
+import Build
 import ComposableArchitecture
 import ComposableStoreKit
 import ServerConfigClient
@@ -15,7 +16,7 @@ public struct SettingsView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, SettingsAction>
 
   struct ViewState: Equatable {
-    let buildNumber: Int?
+    let buildNumber: Build.Number?
     let fullGameProduct: Result<StoreKitClient.Product, SettingsState.ProductError>?
     let isFullGamePurchased: Bool
     let isPurchasing: Bool
@@ -156,7 +157,7 @@ public struct SettingsView: View {
 
       VStack(spacing: 6) {
         if let buildNumber = self.viewStore.buildNumber {
-          Text("Build \(buildNumber)")
+          Text("Build \(buildNumber.rawValue)")
         }
         Button(action: { self.viewStore.send(.reportABugButtonTapped) }) {
           Text("Report a bug")

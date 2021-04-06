@@ -5,12 +5,14 @@ import EnvVars
 import Foundation
 import MailgunClient
 import Overture
+import ServerConfig
 import ServerRouter
 import SharedModels
 import SnsClient
 import VerifyReceiptMiddleware
 
 public struct Environment {
+  public var changelog: () -> Changelog
   public var database: DatabaseClient
   public var date: () -> Date
   public var dictionary: DictionaryClient
@@ -22,6 +24,7 @@ public struct Environment {
   public var snsClient: SnsClient
 
   public init(
+    changelog: @escaping () -> Changelog,
     database: DatabaseClient,
     date: @escaping () -> Date,
     dictionary: DictionaryClient,
@@ -32,6 +35,7 @@ public struct Environment {
     router: Router<ServerRoute>,
     snsClient: SnsClient
   ) {
+    self.changelog = changelog
     self.database = database
     self.date = date
     self.dictionary = dictionary
@@ -45,15 +49,27 @@ public struct Environment {
 }
 
 #if DEBUG
+import XCTestDynamicOverlay
+
   extension Environment {
     public static let unimplemented = Self(
+      changelog: {
+        XCTFail("changelog is unimplemented.")
+        return .current
+      },
       database: .failing,
-      date: { fatalError() },
+      date: {
+        XCTFail("date is unimplemented.")
+        return .init()
+      },
       dictionary: .failing,
       envVars: EnvVars(appEnv: .testing),
       itunes: .unimplemented,
       mailgun: .unimplemented,
-      randomCubes: { fatalError() },
+      randomCubes: {
+        XCTFail("randomCubes is unimplemented.")
+        return .mock
+      },
       router: .unimplemented,
       snsClient: .unimplemented
     )

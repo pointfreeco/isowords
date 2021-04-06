@@ -1,3 +1,4 @@
+import Build
 import Foundation
 import Tagged
 
@@ -46,7 +47,8 @@ public enum ServerRoute: Equatable {
     }
 
     public enum Route: Equatable {
-      case config(build: Int)
+      case changelog(build: Build.Number)
+      case config(build: Build.Number)
       case currentPlayer
       case dailyChallenge(DailyChallenge)
       case games(Games)
@@ -252,12 +254,12 @@ public enum ServerRoute: Equatable {
 
         public struct Register: Codable, Equatable {
           public let authorizationStatus: PushAuthorizationStatus
-          public let build: Int
+          public let build: Build.Number
           public let token: String
 
           public init(
             authorizationStatus: PushAuthorizationStatus,
-            build: Int,
+            build: Build.Number,
             token: String
           ) {
             self.authorizationStatus = authorizationStatus
@@ -270,7 +272,7 @@ public enum ServerRoute: Equatable {
             self.authorizationStatus =
               (try? container.decode(PushAuthorizationStatus.self, forKey: .authorizationStatus))
               ?? .provisional
-            self.build = (try? container.decode(Int.self, forKey: .build)) ?? 0
+            self.build = (try? container.decode(Build.Number.self, forKey: .build)) ?? 0
             self.token = try container.decode(String.self, forKey: .token)
           }
         }

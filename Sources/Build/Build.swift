@@ -1,12 +1,15 @@
 import Foundation
+import Tagged
 
 public struct Build {
   public var gitSha: () -> String
-  public var number: () -> Int
+  public var number: () -> Number
+
+  public typealias Number = Tagged<((), number: ()), Int>
 
   public init(
     gitSha: @escaping () -> String,
-    number: @escaping () -> Int
+    number: @escaping () -> Number
   ) {
     self.gitSha = gitSha
     self.number = number
@@ -15,9 +18,11 @@ public struct Build {
   public static let live = Self(
     gitSha: { Bundle.main.infoDictionary?["GitSHA"] as? String ?? "" },
     number: {
-      (Bundle.main.infoDictionary?["CFBundleVersion"] as? String)
+      .init(
+        rawValue: (Bundle.main.infoDictionary?["CFBundleVersion"] as? String)
         .flatMap(Int.init)
         ?? 0
+      )
     }
   )
 

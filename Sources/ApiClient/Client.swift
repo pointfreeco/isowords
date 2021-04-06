@@ -150,6 +150,21 @@ public struct ApiClient {
         }
       }
     }
+
+    public mutating func override<Value>(
+      routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
+      withResponse response: @escaping (Value) -> Effect<(data: Data, response: URLResponse), URLError>
+    ) {
+      let fulfill = expectation(description: "route")
+      self.apiRequest = { [self] route in
+        if let value = matchingRoute.extract(from: route) {
+          fulfill()
+          return response(value)
+        } else {
+          return self.apiRequest(route)
+        }
+      }
+    }
   }
 #endif
 

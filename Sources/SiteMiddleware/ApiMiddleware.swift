@@ -12,6 +12,7 @@ import MiddlewareHelpers
 import Overture
 import Prelude
 import PushMiddleware
+import ServerConfig
 import ServerConfigMiddleware
 import ServerRouter
 import ShareGameMiddleware
@@ -26,6 +27,7 @@ let apiMiddleware: Middleware<StatusLineOpen, ResponseEnded, RequireCurrentPlaye
 
 struct RequireCurrentPlayerInput {
   var api: ServerRoute.Api
+  var changelog: () -> Changelog
   var database: DatabaseClient
   var dictionary: DictionaryClient
   var envVars: EnvVars
@@ -38,6 +40,7 @@ struct RequireCurrentPlayerInput {
 }
 
 struct RequireCurrentPlayerOutput {
+  var changelog: () -> Changelog
   var database: DatabaseClient
   var dictionary: DictionaryClient
   var envVars: EnvVars
@@ -58,7 +61,7 @@ func requireCurrentPlayer(
 ) -> Middleware<StatusLineOpen, ResponseEnded, RequireCurrentPlayerInput, Data> {
   { (conn: Conn<StatusLineOpen, RequireCurrentPlayerInput>) in
 
-    return conn.data.database.fetchPlayerByAccessToken(conn.data.api.accessToken)
+    conn.data.database.fetchPlayerByAccessToken(conn.data.api.accessToken)
       .run
       .flatMap { errorOrPlayer in
         switch errorOrPlayer {
@@ -77,6 +80,7 @@ func requireCurrentPlayer(
           return conn.map(
             const(
               .init(
+                changelog: conn.data.changelog,
                 database: conn.data.database,
                 dictionary: conn.data.dictionary,
                 envVars: conn.data.envVars,
@@ -102,6 +106,11 @@ private func _apiMiddleware(
 ) -> IO<Conn<ResponseEnded, Data>> {
 
   switch conn.data.route {
+  case .changelog:
+    return conn.map(const(conn.data.changelog()))
+      |> writeStatus(.ok)
+      >=> respondJson(envVars: conn.data.envVars)
+
   case .config:
     return conn.map(const(()))
       |> serverConfig

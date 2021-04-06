@@ -1,3 +1,4 @@
+import Build
 import Either
 import Foundation
 import SharedModels
@@ -313,14 +314,14 @@ public struct DatabaseClient {
   public struct InsertPushTokenRequest: Equatable {
     public let arn: String
     public let authorizationStatus: PushAuthorizationStatus
-    public let build: Int
+    public let build: Build.Number
     public let player: Player
     public let token: String
 
     public init(
       arn: String,
       authorizationStatus: PushAuthorizationStatus,
-      build: Int,
+      build: Build.Number,
       player: Player,
       token: String
     ) {

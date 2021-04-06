@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import ApiClient
 import AudioPlayerClient
 import Build
+import ChangelogFeature
 import ClientModels
 import Combine
 import CombineHelpers
@@ -32,7 +33,7 @@ import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-public enum AppRoute: Equatable {
+public enum HomeRoute: Equatable {
   case dailyChallenge(DailyChallengeState)
   case leaderboard(LeaderboardState)
   case multiplayer(MultiplayerState)
@@ -64,10 +65,12 @@ public enum AppRoute: Equatable {
 }
 
 public struct HomeState: Equatable {
+  public var changelog: ChangelogState?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
+  public var hasChangelog: Bool
   public var hasPastTurnBasedGames: Bool
   public var nagBanner: NagBannerState?
-  public var route: AppRoute?
+  public var route: HomeRoute?
   public var savedGames: SavedGamesState {
     didSet {
       guard case var .dailyChallenge(dailyChallengeState) = self.route
@@ -96,15 +99,17 @@ public struct HomeState: Equatable {
 
   public init(
     dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
+    hasChangelog: Bool = false,
     hasPastTurnBasedGames: Bool = false,
     nagBanner: NagBannerState? = nil,
-    route: AppRoute? = nil,
+    route: HomeRoute? = nil,
     savedGames: SavedGamesState = SavedGamesState(),
     settings: SettingsState = SettingsState(),
     turnBasedMatches: [ActiveTurnBasedMatch] = [],
     weekInReview: FetchWeekInReviewResponse? = nil
   ) {
     self.dailyChallenges = dailyChallenges
+    self.hasChangelog = hasChangelog
     self.hasPastTurnBasedGames = hasPastTurnBasedGames
     self.nagBanner = nagBanner
     self.route = route
@@ -119,8 +124,11 @@ public enum HomeAction: Equatable {
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
   case binding(BindingAction<HomeState>)
+  case changelog(ChangelogAction)
+  case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
@@ -129,7 +137,8 @@ public enum HomeAction: Equatable {
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
   case onDisappear
-  case setNavigation(tag: AppRoute.Tag?)
+  case serverConfigResponse(ServerConfig)
+  case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
@@ -236,9 +245,25 @@ public struct HomeEnvironment {
 #endif
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine(
+  changelogReducer
+    ._pullback(
+      state: OptionalPath(\.changelog),
+      action: /HomeAction.changelog,
+      environment: {
+        ChangelogEnvironment(
+          apiClient: $0.apiClient,
+          applicationClient: $0.applicationClient,
+          build: $0.build,
+          mainQueue: $0.mainQueue,
+          serverConfig: $0.serverConfig,
+          userDefaults: $0.userDefaults
+        )
+      }
+    ),
+
   dailyChallengeReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.dailyChallenge),
+      state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge),
       action: /HomeAction.dailyChallenge,
       environment: {
         .init(
@@ -254,7 +279,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   leaderboardReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.leaderboard),
+      state: (\HomeState.route).appending(path: /HomeRoute.leaderboard),
       action: /HomeAction.leaderboard,
       environment: {
         .init(
@@ -269,7 +294,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   multiplayerReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.multiplayer),
+      state: (\HomeState.route).appending(path: /HomeRoute.multiplayer),
       action: /HomeAction.multiplayer,
       environment: {
         .init(
@@ -321,7 +346,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   soloReducer
     ._pullback(
-      state: (\HomeState.route).appending(path: /AppRoute.solo),
+      state: (\HomeState.route).appending(path: /HomeRoute.solo),
       action: /HomeAction.solo,
       environment: { .init(fileClient: $0.fileClient) }
     ),
@@ -374,6 +399,13 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case .binding:
       return .none
 
+    case .changelog:
+      return .none
+
+    case .cubeButtonTapped:
+      state.changelog = .init()
+      return .none
+
     case .dailyChallenge:
       return .none
 
@@ -383,6 +415,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case let .dailyChallengeResponse(.failure(error)):
       state.dailyChallenges = []
+      return .none
+
+    case .dismissChangelog:
+      state.changelog = nil
       return .none
 
     case .gameButtonTapped:
@@ -445,6 +481,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           .eraseToEffect()
       )
 
+    case let .serverConfigResponse(serverConfig):
+      state.hasChangelog = serverConfig.newestBuild > environment.build.number()
+      return .none
+
     case let .setNavigation(tag: tag):
       switch tag {
       case .dailyChallenge:
@@ -500,14 +540,18 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 public struct HomeView: View {
   struct ViewState: Equatable {
     let hasActiveGames: Bool
-    var isNagBannerVisible: Bool
-    let tag: AppRoute.Tag?
+    let hasChangelog: Bool
+    let isChangelogVisible: Bool
+    let isNagBannerVisible: Bool
+    let tag: HomeRoute.Tag?
 
     init(state: HomeState) {
       self.hasActiveGames =
         state.savedGames.dailyChallengeUnlimited != nil
         || state.savedGames.unlimited != nil
         || !state.turnBasedMatches.isEmpty
+      self.hasChangelog = state.hasChangelog
+      self.isChangelogVisible = state.changelog != nil
       self.isNagBannerVisible = state.nagBanner != nil
       self.tag = state.route?.tag
     }
@@ -528,7 +572,9 @@ public struct HomeView: View {
         VStack(spacing: .grid(12)) {
           VStack(spacing: .grid(6)) {
             HStack {
-              Image(systemName: "cube.fill")
+              CubeIconView(shake: self.viewStore.hasChangelog) {
+                self.viewStore.send(.cubeButtonTapped)
+              }
 
               Spacer()
 
@@ -544,7 +590,7 @@ public struct HomeView: View {
                   ),
                   navPresentationStyle: .navigation
                 ),
-                tag: AppRoute.Tag.settings,
+                tag: HomeRoute.Tag.settings,
                 selection: viewStore.binding(get: \.tag, send: HomeAction.setNavigation(tag:))
                   .animation()
               ) {
@@ -627,6 +673,20 @@ public struct HomeView: View {
       )
     }
     .navigationBarHidden(true)
+    .sheet(
+      isPresented: self.viewStore.binding(
+        get: \.isChangelogVisible,
+        send: HomeAction.dismissChangelog
+      )
+    ) {
+      IfLetStore(
+        self.store.scope(
+          state: \.changelog,
+          action: HomeAction.changelog
+        ),
+        then: ChangelogView.init(store:)
+      )
+    }
     .onAppear { self.viewStore.send(.onAppear) }
     .onDisappear { self.viewStore.send(.onDisappear) }
   }
@@ -656,11 +716,13 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     )
     .ignoreFailure()
     .flatMap { envelope in
-      Effect.concatenate(
-        Effect(value: .authenticationResponse(envelope)),
-
-        environment.serverConfig.refresh().fireAndForget()
-      )
+      Just(HomeAction.authenticationResponse(envelope))
+        .merge(
+          with: environment.serverConfig.refresh()
+            .ignoreFailure()
+            .receive(on: environment.mainQueue)
+            .map(HomeAction.serverConfigResponse)
+        )
     }
     .eraseToEffect()
   }
@@ -747,6 +809,38 @@ private func loadMatches(
 
 private struct ListenerId: Hashable {}
 private struct AuthenticationId: Hashable {}
+
+private struct CubeIconView: View {
+  let action: () -> Void
+  let shake: Bool
+
+  init(
+    shake: Bool,
+    action: @escaping () -> Void
+  ) {
+    self.action = action
+    self.shake = shake
+  }
+
+  var body: some View {
+    Button(action: self.action) {
+      Image(systemName: "cube.fill")
+        .font(.system(size: 24))
+        .modifier(ShakeEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
+        .animation(.easeInOut(duration: 1))
+    }
+  }
+}
+
+private struct ShakeEffect: GeometryEffect {
+  var animatableData: CGFloat
+
+  func effectValue(size: CGSize) -> ProjectionTransform {
+    ProjectionTransform(
+      CGAffineTransform(rotationAngle: -.pi / 30 * sin(animatableData * .pi * 10))
+    )
+  }
+}
 
 #if DEBUG
   @testable import ComposableGameCenter
