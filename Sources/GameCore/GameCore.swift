@@ -168,7 +168,7 @@ public enum GameAction: Equatable {
   case pan(UIGestureRecognizer.State, PanData?)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case settingsButtonTapped
-  case submitButtonTapped(Move.Reaction?)
+  case submitButtonTapped(reaction: Move.Reaction?)
   case tap(UIGestureRecognizer.State, IndexedCubeFace?)
   case timerTick(Date)
   case trayButtonTapped
@@ -445,8 +445,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
         state.isSettingsPresented = true
         return .none
 
-      case let .submitButtonTapped(reaction),
-        let .wordSubmitButton(.delegate(.confirmSubmit(reaction))):
+      case let .submitButtonTapped(reaction: reaction),
+           let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
         return state.playSelectedWord(
           with: reaction,
           environment: environment

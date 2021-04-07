@@ -270,7 +270,7 @@ public let onboardingReducer = Reducer<
 
       return onboardingGameReducer.run(
         &state,
-        .game(.submitButtonTapped(nil)),
+        .game(.submitButtonTapped(reaction: nil)),
         environment
       )
 

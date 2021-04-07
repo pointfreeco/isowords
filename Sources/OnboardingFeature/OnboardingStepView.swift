@@ -272,7 +272,7 @@ struct OnboardingStepView: View {
             if self.viewStore.isSubmitButtonVisible {
               Button(
                 action: {
-                  self.viewStore.send(.game(.submitButtonTapped(nil)), animation: .default)
+                  self.viewStore.send(.game(.submitButtonTapped(reaction: nil)), animation: .default)
                 }
               ) {
                 Image(systemName: "hand.thumbsup")

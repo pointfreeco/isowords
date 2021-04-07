@@ -175,7 +175,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
         )
         // Submit the word after waiting a small amout of time
         effects.append(
-          Effect(value: .game(.submitButtonTapped(nil)))
+          Effect(value: .game(.submitButtonTapped(reaction: nil)))
             .delay(
               for: .seconds(
                 .random(

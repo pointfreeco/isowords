@@ -68,7 +68,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
       $0.game.selectedWordIsValid = true
     }
-    store.send(.game(.submitButtonTapped(nil))) {
+    store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubes[.one][.two][.two].left.useCount += 1
       $0.game.cubes[.two][.two][.two].left.useCount += 1
       $0.game.cubes[.two][.two][.two].right.useCount += 1
@@ -124,7 +124,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .top))
       $0.game.selectedWordIsValid = true
     }
-    store.send(.game(.submitButtonTapped(nil))) {
+    store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubes[.one][.two][.two].top.useCount += 1
       $0.game.cubes[.one][.two][.one].top.useCount += 1
       $0.game.cubes[.two][.two][.two].top.useCount += 1
@@ -188,7 +188,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
       $0.step = .step12_CubeIsShaking
     }
-    store.send(.game(.submitButtonTapped(nil))) {
+    store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubeStartedShakingAt = nil
       $0.game.cubes[.one][.one][.two].left.useCount += 1
       $0.game.cubes[.two][.one][.two].left.useCount += 1
@@ -247,7 +247,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .zero, z: .two), side: .right))
       $0.game.selectedWordIsValid = true
     }
-    store.send(.game(.submitButtonTapped(nil))) {
+    store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubes[.zero][.zero][.two].left.useCount += 1
       $0.game.cubes[.one][.zero][.two].left.useCount += 1
       $0.game.cubes[.two][.zero][.two].left.useCount += 1

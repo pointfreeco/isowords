@@ -55,7 +55,7 @@ public enum WordSubmitButtonAction: Equatable {
   case submitButtonTapped
 
   public enum DelegateAction: Equatable {
-    case confirmSubmit(Move.Reaction?)
+    case confirmSubmit(reaction: Move.Reaction?)
   }
 }
 
@@ -102,7 +102,7 @@ let wordSubmitReducer = Reducer<
       environment.audioPlayer.play(.uiSfxEmojiSend)
         .fireAndForget(),
 
-      Effect(value: .delegate(.confirmSubmit(reaction)))
+      Effect(value: .delegate(.confirmSubmit(reaction: reaction)))
     )
 
   case .submitButtonPressed:
@@ -151,14 +151,14 @@ let wordSubmitReducer = Reducer<
 
       wasClosing || state.wordSubmitButton.areReactionsOpen
         ? .none
-        : Effect(value: .delegate(.confirmSubmit(nil)))
+        : Effect(value: .delegate(.confirmSubmit(reaction: nil)))
     )
 
   case .submitButtonTapped:
     guard !state.isTurnBasedMatch
     else { return .none }
 
-    return Effect(value: .delegate(.confirmSubmit(nil)))
+    return Effect(value: .delegate(.confirmSubmit(reaction: nil)))
   }
 }
 
