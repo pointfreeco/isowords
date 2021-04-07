@@ -9,7 +9,7 @@ import GameCore
 import GameOverFeature
 import LowPowerModeClient
 import OnboardingFeature
-import ServerConfigClient
+import ServerConfig
 import SharedModels
 import StoreKit
 import Styleguide
@@ -52,10 +52,10 @@ public struct DemoState: Equatable {
 
 public enum DemoAction: Equatable {
   case appStoreOverlay(isPresented: Bool)
-  case didFinishLaunching
   case fullVersionButtonTapped
   case game(GameAction)
   case gameOverDelay
+  case onAppear
   case onboarding(OnboardingAction)
 }
 
@@ -70,7 +70,6 @@ public struct DemoEnvironment {
   var lowPowerMode: LowPowerModeClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var mainRunLoop: AnySchedulerOf<RunLoop>
-  var serverConfig: ServerConfigClient
   var userDefaults: UserDefaultsClient
 
   public init(
@@ -84,7 +83,6 @@ public struct DemoEnvironment {
     lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
     mainRunLoop: AnySchedulerOf<RunLoop>,
-    serverConfig: ServerConfigClient,
     userDefaults: UserDefaultsClient
   ) {
     self.apiClient = apiClient
@@ -97,7 +95,6 @@ public struct DemoEnvironment {
     self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
     self.mainRunLoop = mainRunLoop
-    self.serverConfig = serverConfig
     self.userDefaults = userDefaults
   }
 }
@@ -140,7 +137,7 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
         mainQueue: $0.mainQueue,
         mainRunLoop: $0.mainRunLoop,
         remoteNotifications: .noop,
-        serverConfig: $0.serverConfig,
+        serverConfig: .noop,
         setUserInterfaceStyle: { _ in .none },
         storeKit: .noop,
         userDefaults: .noop,
@@ -156,13 +153,9 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
       state.appStoreOverlayIsPresented = isPresented
       return .none
 
-    case .didFinishLaunching:
-      return environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget()
-
     case .fullVersionButtonTapped:
       return environment.applicationClient.open(
-        environment.serverConfig.config().appStoreUrl,
+        ServerConfig().appStoreUrl,
         [:]
       )
       .fireAndForget()
@@ -177,6 +170,10 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
     case .gameOverDelay:
       state.appStoreOverlayIsPresented = true
       return .none
+
+    case .onAppear:
+      return environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        .fireAndForget()
 
     case .onboarding(.delegate(.getStarted)):
       state.step = .game(
@@ -231,6 +228,7 @@ public struct DemoView: View {
       ),
       then: OnboardingView.init(store:)
     )
+    .onAppear { self.viewStore.send(.onAppear) }
 
     IfLetStore(
       self.store.scope(

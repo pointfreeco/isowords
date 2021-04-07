@@ -510,7 +510,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "ApiClient",
         "Build",
-        "CubeCore",
         "GameCore",
         "DictionaryClient",
         "FeedbackGeneratorClient",

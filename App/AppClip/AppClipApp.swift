@@ -9,35 +9,20 @@ import SwiftUI
 
 @main
 struct AppClipApp: App {
-  @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+  init() {
+    Styleguide.registerFonts()
+  }
 
   var body: some Scene {
     WindowGroup {
       DemoView(
-        store: appDelegate.store
+        store: Store(
+          initialState: DemoState(),
+          reducer: demoReducer,
+          environment: .live
+        )
       )
     }
-  }
-}
-
-final class AppDelegate: NSObject, UIApplicationDelegate {
-  let store = Store(
-    initialState: DemoState(),
-    reducer: demoReducer,
-    environment: .live
-  )
-  lazy var viewStore = ViewStore(
-    self.store.stateless,
-    removeDuplicates: ==
-  )
-
-  func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-  ) -> Bool {
-    Styleguide.registerFonts()
-    self.viewStore.send(.didFinishLaunching)
-    return true
   }
 }
 
@@ -54,7 +39,6 @@ extension DemoEnvironment {
       lowPowerMode: .live,
       mainQueue: .main,
       mainRunLoop: .main,
-      serverConfig: .noop,
       userDefaults: .live()
     )
   }
