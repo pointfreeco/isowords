@@ -305,6 +305,106 @@ class OnboardingFeatureTests: XCTestCase {
 
     XCTAssertEqual(isFirstLaunchOnboardingKeySet, true)
   }
+
+  func testSkip_HasSeenOnboardingBefore() {
+    var isFirstLaunchOnboardingKeySet = false
+
+    var environment = OnboardingEnvironment.failing
+    environment.audioPlayer = .noop
+    environment.backgroundQueue = .immediate
+    environment.dictionary.load = { _ in true }
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    environment.userDefaults.boolForKey = { key in
+      XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
+      return true
+    }
+    environment.userDefaults.setBool = { value, key in
+      .fireAndForget {
+        XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertEqual(value, true)
+        isFirstLaunchOnboardingKeySet = true
+      }
+    }
+
+    let store = TestStore(
+      initialState: OnboardingState(presentationStyle: .help),
+      reducer: onboardingReducer,
+      environment: environment
+    )
+
+    store.send(.onAppear)
+
+    self.mainQueue.advance(by: .seconds(4))
+    store.receive(.delayedNextStep) {
+      $0.step = .step2_FindWordsOnCube
+    }
+
+    store.send(.skipButtonTapped)
+
+    store.receive(.delegate(.getStarted))
+
+    XCTAssertEqual(isFirstLaunchOnboardingKeySet, true)
+  }
+
+  func testSkip_HasNotSeenOnboardingBefore() {
+    var isFirstLaunchOnboardingKeySet = false
+
+    var environment = OnboardingEnvironment.failing
+    environment.audioPlayer = .noop
+    environment.backgroundQueue = .immediate
+    environment.dictionary.load = { _ in true }
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    environment.userDefaults.boolForKey = { key in
+      XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
+      return false
+    }
+    environment.userDefaults.setBool = { value, key in
+      .fireAndForget {
+        XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertEqual(value, true)
+        isFirstLaunchOnboardingKeySet = true
+      }
+    }
+
+    let store = TestStore(
+      initialState: OnboardingState(presentationStyle: .firstLaunch),
+      reducer: onboardingReducer,
+      environment: environment
+    )
+
+    store.send(.onAppear)
+
+    self.mainQueue.advance(by: .seconds(4))
+    store.receive(.delayedNextStep) {
+      $0.step = .step2_FindWordsOnCube
+    }
+
+    store.send(.skipButtonTapped) {
+      $0.alert = .init(
+        title: .init("Skip tutorial?"),
+        message: .init("""
+          Are you sure you want to skip the tutorial? It only takes about a minute to complete.
+
+          You can always view it again later in settings.
+          """),
+        primaryButton: .default(.init("Yes, skip"), send: .skipButtonTapped),
+        secondaryButton: .default(.init("No, resume"), send: .resumeButtonTapped)
+      )
+    }
+
+    store.send(.alert(.skipButtonTapped)) {
+      $0.alert = nil
+    }
+
+    store.receive(.alert(.confirmSkipButtonTapped)) {
+      $0.step = .step21_PlayAGameYourself
+    }
+
+    store.send(.getStartedButtonTapped)
+    store.receive(.delegate(.getStarted))
+
+    XCTAssertEqual(isFirstLaunchOnboardingKeySet, true)
+  }
 }
 
 extension OnboardingEnvironment {
