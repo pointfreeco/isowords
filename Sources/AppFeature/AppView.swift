@@ -322,7 +322,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
     .home(.solo(.gameButtonTapped(.timed))):
     state.game = .init(
-      cubes: environment.dictionary.randomCubes(.en),
+      archivableCubes: .init(cubes: environment.dictionary.randomCubes(.en)),
       gameContext: .solo,
       gameCurrentTime: environment.mainRunLoop.now.date,
       gameMode: .timed,
@@ -337,7 +337,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       state.home.savedGames.unlimited
       .map { GameState(inProgressGame: $0) }
       ?? GameState(
-        cubes: environment.dictionary.randomCubes(.en),
+        archivableCubes: .init(cubes: environment.dictionary.randomCubes(.en)),
         gameContext: .solo,
         gameCurrentTime: environment.mainRunLoop.now.date,
         gameMode: .unlimited,

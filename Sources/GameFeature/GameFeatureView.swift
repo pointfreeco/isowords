@@ -74,8 +74,10 @@ public struct GameFeatureView<Content>: View where Content: View {
           store: Store(
             initialState: GameFeatureState(
               game: GameState(
-                cubes: update(randomCubes(for: isowordsLetter).run()) {
-                  $0.2.2.2 = Cube(
+                archivableCubes: update(
+                  randomCubes(for: isowordsLetter).map(ArchivablePuzzle.init(cubes:)).run()
+                ) {
+                  $0.2.2.2 = ArchivableCube(
                     left: .init(letter: "C", side: .left),
                     right: .init(letter: "A", side: .right),
                     top: .init(letter: "B", side: .top)

@@ -181,7 +181,7 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
     case .onboarding(.delegate(.getStarted)):
       state.step = .game(
         .init(
-          cubes: environment.dictionary.randomCubes(.en),
+          archivableCubes: ArchivablePuzzle(cubes: environment.dictionary.randomCubes(.en)),
           gameContext: .solo,
           gameCurrentTime: environment.mainRunLoop.now.date,
           gameMode: .timed,

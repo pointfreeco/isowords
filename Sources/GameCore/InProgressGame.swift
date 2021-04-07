@@ -22,7 +22,7 @@ extension InProgressGame {
 extension GameState {
   public init(inProgressGame: InProgressGame) {
     self.init(
-      cubes: Puzzle(archivableCubes: inProgressGame.cubes, moves: inProgressGame.moves),
+      archivableCubes: inProgressGame.cubes,
       gameContext: inProgressGame.gameContext,
       // TODO: inject gameCurrentTime from the outside
       gameCurrentTime: inProgressGame.gameStartTime,
@@ -41,7 +41,7 @@ extension GameState {
     gameStartTime: Date
   ) {
     self.init(
-      cubes: .init(archivableCubes: completedGame.cubes),
+      archivableCubes: completedGame.cubes,
       gameContext: .solo,
       gameCurrentTime: gameCurrentTime,
       gameMode: completedGame.gameMode,

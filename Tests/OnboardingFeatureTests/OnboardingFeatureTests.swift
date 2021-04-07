@@ -69,10 +69,6 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     store.send(.game(.submitButtonTapped(nil))) {
-      $0.game.cubes[.one][.two][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: environment.mainRunLoop.now.date,
@@ -90,6 +86,11 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord = []
       $0.game.selectedWordIsValid = false
       $0.step = .step6_Congrats
+
+      XCTAssertEqual(1, $0.game.cubes[.one][.two][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.two][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.two][.two].right.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.two][.one].right.useCount)
     }
 
     // Wait a moment to automatically go to the next step
@@ -125,11 +126,6 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     store.send(.game(.submitButtonTapped(nil))) {
-      $0.game.cubes[.one][.two][.two].top.useCount += 1
-      $0.game.cubes[.one][.two][.one].top.useCount += 1
-      $0.game.cubes[.two][.two][.two].top.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].top.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: environment.mainRunLoop.now.date,
@@ -148,6 +144,12 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord = []
       $0.game.selectedWordIsValid = false
       $0.step = .step9_Congrats
+
+      XCTAssertEqual($0.game.cubes[.one][.two][.two].top.useCount, 1)
+      XCTAssertEqual($0.game.cubes[.one][.two][.one].top.useCount, 1)
+      XCTAssertEqual($0.game.cubes[.two][.two][.two].top.useCount, 1)
+      XCTAssertEqual($0.game.cubes[.two][.two][.one].right.useCount, 1)
+      XCTAssertEqual($0.game.cubes[.two][.two][.one].top.useCount, 1)
     }
 
     // Wait a moment to automatically go to the next step
@@ -190,12 +192,6 @@ class OnboardingFeatureTests: XCTestCase {
     }
     store.send(.game(.submitButtonTapped(nil))) {
       $0.game.cubeStartedShakingAt = nil
-      $0.game.cubes[.one][.one][.two].left.useCount += 1
-      $0.game.cubes[.two][.one][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].right.useCount += 1
-      $0.game.cubes[.two][.one][.two].right.useCount += 1
-      $0.game.cubes[.two][.one][.one].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: environment.mainRunLoop.now.date,
@@ -215,6 +211,13 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord = []
       $0.game.selectedWordIsValid = false
       $0.step = .step13_Congrats
+
+      XCTAssertEqual(1, $0.game.cubes[.one][.one][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.one][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.two][.two].right.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.one][.two].right.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.one][.one].right.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.two][.one].right.useCount)
     }
 
     self.mainQueue.advance(by: .seconds(3))
@@ -248,10 +251,6 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     store.send(.game(.submitButtonTapped(nil))) {
-      $0.game.cubes[.zero][.zero][.two].left.useCount += 1
-      $0.game.cubes[.one][.zero][.two].left.useCount += 1
-      $0.game.cubes[.two][.zero][.two].left.useCount += 1
-      $0.game.cubes[.two][.zero][.two].right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: environment.mainRunLoop.now.date,
@@ -269,6 +268,11 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord = []
       $0.game.selectedWordIsValid = false
       $0.step = .step17_Congrats
+
+      XCTAssertEqual(1, $0.game.cubes[.zero][.zero][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.one][.zero][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.zero][.two].left.useCount)
+      XCTAssertEqual(1, $0.game.cubes[.two][.zero][.two].right.useCount)
     }
 
     self.mainQueue.advance(by: .seconds(2))
@@ -282,7 +286,6 @@ class OnboardingFeatureTests: XCTestCase {
 
     store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
     store.receive(.game(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))) {
-      $0.game.cubes[.two][.two][.two].wasRemoved = true
       $0.game.moves.append(
         .init(
           playedAt: environment.mainRunLoop.now.date,
@@ -293,6 +296,8 @@ class OnboardingFeatureTests: XCTestCase {
         )
       )
       $0.step = .step20_Congrats
+
+      XCTAssertTrue($0.game.cubes[.two][.two][.two].wasRemoved)
     }
 
     self.mainQueue.advance(by: .seconds(2))

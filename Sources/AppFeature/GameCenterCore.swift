@@ -35,7 +35,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 )
               )
               let game = GameState(
-                cubes: environment.dictionary.randomCubes(.en),
+                archivableCubes: ArchivablePuzzle(cubes: environment.dictionary.randomCubes(.en)),
                 gameContext: .turnBased(context),
                 gameCurrentTime: environment.mainRunLoop.now.date,
                 gameMode: .unlimited,

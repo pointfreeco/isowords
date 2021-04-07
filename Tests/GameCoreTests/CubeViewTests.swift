@@ -532,13 +532,13 @@ class CubeViewTests: XCTestCase {
         ]
       ]
       """
-    let cubes = try JSONDecoder().decode(Puzzle.self, from: Data(json.utf8))
+    let cubes = try JSONDecoder().decode(ArchivablePuzzle.self, from: Data(json.utf8))
 
     let view = CubeView(
       store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>(
         initialState: .init(
           game: .init(
-            cubes: cubes,
+            archivableCubes: cubes,
             gameContext: .solo,
             gameCurrentTime: .mock,
             gameMode: .unlimited,

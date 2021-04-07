@@ -32,8 +32,8 @@ import UserDefaultsClient
 public struct GameState: Equatable {
   public var activeGames: ActiveGamesState
   public var alert: AlertState<GameAction.AlertAction>?
+  public var archivableCubes: ArchivablePuzzle
   public var bottomMenu: BottomMenuState<GameAction>?
-  public var cubes: Puzzle
   public var cubeStartedShakingAt: Date?
   public var gameContext: ClientModels.GameContext
   public var gameCurrentTime: Date
@@ -58,8 +58,8 @@ public struct GameState: Equatable {
   public init(
     activeGames: ActiveGamesState = .init(),
     alert: AlertState<GameAction.AlertAction>? = nil,
+    archivableCubes: ArchivablePuzzle,
     bottomMenu: BottomMenuState<GameAction>? = nil,
-    cubes: Puzzle,
     cubeStartedShakingAt: Date? = nil,
     gameContext: ClientModels.GameContext,
     gameCurrentTime: Date,
@@ -84,7 +84,7 @@ public struct GameState: Equatable {
     self.activeGames = activeGames
     self.alert = alert
     self.bottomMenu = bottomMenu
-    self.cubes = cubes
+    self.archivableCubes = archivableCubes
     self.cubeStartedShakingAt = cubeStartedShakingAt
     self.gameContext = gameContext
     self.gameCurrentTime = gameCurrentTime
@@ -105,6 +105,10 @@ public struct GameState: Equatable {
     self.selectedWordIsValid = selectedWordIsValid
     self.upgradeInterstitial = upgradeInterstitial
     self.wordSubmitButton = wordSubmit
+  }
+
+  public var cubes: Puzzle {
+    Puzzle(archivableCubes: self.archivableCubes, moves: self.moves)
   }
 
   public var dailyChallengeId: DailyChallenge.Id? {
@@ -666,7 +670,6 @@ extension GameState {
     guard self.cubes[index].isInPlay
     else { return }
 
-    self.cubes[index].wasRemoved = true
     self.moves.append(
       Move(
         playedAt: playedAt,
@@ -699,7 +702,6 @@ extension GameState {
       var removedCubes: [LatticePoint] = []
       self.selectedWord.forEach { cube in
         let wasInPlay = self.cubes[cube.index].isInPlay
-        self.cubes[cube.index][cube.side].useCount += 1
         if wasInPlay && !self.cubes[cube.index].isInPlay {
           removedCubes.append(cube.index)
         }
@@ -789,7 +791,7 @@ extension GameState {
     turnBasedMatchData: TurnBasedMatchData
   ) {
     self.init(
-      cubes: Puzzle(archivableCubes: turnBasedMatchData.cubes, moves: turnBasedMatchData.moves),
+      archivableCubes: turnBasedMatchData.cubes,
       gameContext: .turnBased(
         .init(
           localPlayer: localPlayer,

@@ -216,7 +216,7 @@ class GameFeatureTests: XCTestCase {
   }
 
   func testGameStateInProgressGameRoundtrip() {
-    for _ in 1...500 {
+    for _ in 1...1{//500 {
       let game = Gen.gameState.run()
       let roundTrippedGame = GameState(
         inProgressGame: InProgressGame(gameState: game)
