@@ -1,3 +1,4 @@
+import Build
 import DatabaseClient
 import Either
 import HttpPipeline
@@ -8,7 +9,7 @@ import SnsClient
 public struct RegisterPushTokenRequest {
   public let authorizationStatus: PushAuthorizationStatus
   public let awsPlatformApplicationArn: PlatformArn
-  public let build: Int
+  public let build: Build.Number
   public let currentPlayer: Player
   public let database: DatabaseClient
   public let snsClient: SnsClient
@@ -17,7 +18,7 @@ public struct RegisterPushTokenRequest {
   public init(
     authorizationStatus: PushAuthorizationStatus,
     awsPlatformApplicationArn: PlatformArn,
-    build: Int,
+    build: Build.Number,
     currentPlayer: Player,
     database: DatabaseClient,
     snsClient: SnsClient,

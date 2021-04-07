@@ -38,7 +38,8 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+        .product(name: "Tagged", package: "swift-tagged"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .systemLibrary(
@@ -98,7 +99,10 @@ var package = Package(
       ]
     ),
     .target(
-      name: "ServerConfig"
+      name: "ServerConfig",
+      dependencies: [
+        "Build"
+      ]
     ),
     .target(
       name: "ServerRouter",
@@ -126,6 +130,7 @@ var package = Package(
     .target(
       name: "SharedModels",
       dependencies: [
+        "Build",
         "FirstPartyMocks",
         .product(name: "Tagged", package: "swift-tagged"),
       ]
@@ -169,6 +174,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "AudioPlayerClient", targets: ["AudioPlayerClient"]),
     .library(name: "Bloom", targets: ["Bloom"]),
     .library(name: "BottomMenu", targets: ["BottomMenu"]),
+    .library(name: "ChangelogFeature", targets: ["ChangelogFeature"]),
     .library(name: "ClientModels", targets: ["ClientModels"]),
     .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
     .library(name: "ComposableGameCenter", targets: ["ComposableGameCenter"]),
@@ -343,6 +349,28 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "Styleguide",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
+      name: "ChangelogFeature",
+      dependencies: [
+        "ApiClient",
+        "Build",
+        "ServerConfigClient",
+        "SharedModels",
+        "Styleguide",
+        "SwiftUIHelpers",
+        "TcaHelpers",
+        "UIApplicationClient",
+        "UserDefaultsClient",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "Overture", package: "Overture"),
+      ]
+    ),
+    .testTarget(
+      name: "ChangelogFeatureTests",
+      dependencies: [
+        "ChangelogFeature"
       ]
     ),
     .target(
@@ -675,6 +703,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "AudioPlayerClient",
         "Build",
+        "ChangelogFeature",
         "ClientModels",
         "CombineHelpers",
         "ComposableGameCenterHelpers",
@@ -1075,6 +1104,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "DatabaseClient",
     dependencies: [
+      "Build",
       "SharedModels",
       "SnsClient",
       .product(name: "Either", package: "Prelude"),
@@ -1163,6 +1193,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "PushMiddleware",
     dependencies: [
+      "Build",
       "DatabaseClient",
       "SharedModels",
       "SnsClient",
@@ -1220,6 +1251,7 @@ package.targets.append(contentsOf: [
       "DatabaseLive",
       "DictionarySqliteClient",
       "EnvVars",
+      "ServerConfig",
       "SiteMiddleware",
       "SnsClientLive",
       .product(name: "Backtrace", package: "swift-backtrace"),
@@ -1281,6 +1313,7 @@ package.targets.append(contentsOf: [
       "MailgunClient",
       "MiddlewareHelpers",
       "PushMiddleware",
+      "ServerConfig",
       "ServerConfigMiddleware",
       "SharedModels",
       "ShareGameMiddleware",
@@ -1289,6 +1322,7 @@ package.targets.append(contentsOf: [
       .product(name: "ApplicativeRouterHttpPipelineSupport", package: "Web"),
       .product(name: "HttpPipeline", package: "Web"),
       .product(name: "Overture", package: "Overture"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ],
     resources: [.process("Resources/")]
   ),

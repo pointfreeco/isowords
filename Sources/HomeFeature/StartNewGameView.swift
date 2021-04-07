@@ -23,12 +23,12 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /AppRoute.solo).extract(from:),
+              state: (\HomeState.route).appending(path: /HomeRoute.solo).extract(from:),
               action: HomeAction.solo
             ),
             then: SoloView.init(store:)
           ),
-          tag: AppRoute.Tag.solo,
+          tag: HomeRoute.Tag.solo,
           selection: viewStore.binding(
             send: HomeAction.setNavigation(tag:)
           )
@@ -50,12 +50,12 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /AppRoute.multiplayer).extract(from:),
+              state: (\HomeState.route).appending(path: /HomeRoute.multiplayer).extract(from:),
               action: HomeAction.multiplayer
             ),
             then: MultiplayerView.init(store:)
           ),
-          tag: AppRoute.Tag.multiplayer,
+          tag: HomeRoute.Tag.multiplayer,
           selection:
             viewStore
             .binding(send: HomeAction.setNavigation(tag:))

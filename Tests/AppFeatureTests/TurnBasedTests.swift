@@ -25,7 +25,7 @@ class TurnBasedTests: XCTestCase {
   let mainQueue = DispatchQueue.test
   let mainRunLoop = RunLoop.test
 
-  func testNewGame() {
+  func testNewGame() throws {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
     var didSaveCurrentTurn = false
     let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
@@ -48,6 +48,7 @@ class TurnBasedTests: XCTestCase {
         $0.audioPlayer.play = { _ in .none }
         $0.audioPlayer.stop = { _ in .none }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+        $0.build.number = { 42 }
         $0.database.playedGamesCount = { _ in .none }
         $0.deviceId.id = { .deviceId }
         $0.dictionary.contains = { word, _ in word == "CAB" }
@@ -78,6 +79,9 @@ class TurnBasedTests: XCTestCase {
     store.send(.home(.onAppear))
 
     store.receive(.home(.authenticationResponse(.mock)))
+    store.receive(.home(.serverConfigResponse(.init()))) {
+      $0.home.hasChangelog = true
+    }
 
     self.backgroundQueue.advance()
     store.receive(.home(.binding(.set(\.hasPastTurnBasedGames, false))))
@@ -91,7 +95,11 @@ class TurnBasedTests: XCTestCase {
       inProgressGame: InProgressGame(
         cubes: .mock,
         gameContext: .turnBased(
-          .init(localPlayer: .mock, match: newMatch, metadata: .init(playerIndexToId: [:]))
+          .init(
+            localPlayer: .mock,
+            match: newMatch,
+            metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+          )
         ),
         gameMode: .unlimited,
         gameStartTime: newMatch.creationDate,
@@ -103,6 +111,11 @@ class TurnBasedTests: XCTestCase {
       .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true))))
     ) {
       $0.game = initialGameState
+      try XCTUnwrap(&$0.game) {
+        try XCTUnwrap(&$0.turnBasedContext) {
+          $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
+        }
+      }
     }
     store.environment.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
     store.environment.userDefaults.setInteger = { int, key in
@@ -169,7 +182,7 @@ class TurnBasedTests: XCTestCase {
       }
     }
 
-    let updatedGameState = update(initialGameState) {
+    let updatedGameState = try update(initialGameState) {
       $0.isGameLoaded = true
       $0.moves = [
         .init(
@@ -185,6 +198,9 @@ class TurnBasedTests: XCTestCase {
       $0.cubes[index].left.useCount = 1
       $0.cubes[index].right.useCount = 1
       $0.cubes[index].top.useCount = 1
+      try XCTUnwrap(&$0.turnBasedContext) {
+        $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
+      }
     }
     let updatedMatch = update(newMatch) {
       $0.currentParticipant = .remote
@@ -193,7 +209,10 @@ class TurnBasedTests: XCTestCase {
           context: TurnBasedContext(
             localPlayer: .mock,
             match: newMatch,
-            metadata: .init(playerIndexToId: [0: currentPlayer.player.id])
+            metadata: .init(
+              lastOpenedAt: store.environment.mainRunLoop.now.date,
+              playerIndexToId: [0: currentPlayer.player.id]
+            )
           ),
           gameState: updatedGameState,
           playerId: currentPlayer.player.id
@@ -230,7 +249,10 @@ class TurnBasedTests: XCTestCase {
         $0.turnBasedContext = .init(
           localPlayer: .mock,
           match: updatedMatch,
-          metadata: .init(playerIndexToId: [0: currentPlayer.player.id])
+          metadata: .init(
+            lastOpenedAt: store.environment.mainRunLoop.now.date,
+            playerIndexToId: [0: currentPlayer.player.id]
+          )
         )
       }
     }
@@ -255,6 +277,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.authenticate = .init(value: nil)
         $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
         $0.gameCenter.localPlayer.localPlayer = { .mock }
+        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.serverConfig.config = { .init() }
@@ -286,7 +309,11 @@ class TurnBasedTests: XCTestCase {
           inProgressGame: InProgressGame(
             cubes: .mock,
             gameContext: .turnBased(
-              .init(localPlayer: .mock, match: .inProgress, metadata: .init(playerIndexToId: [:]))
+              .init(
+                localPlayer: .mock,
+                match: .inProgress,
+                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+              )
             ),
             gameMode: .unlimited,
             gameStartTime: .mock,
@@ -350,7 +377,11 @@ class TurnBasedTests: XCTestCase {
         inProgressGame: InProgressGame(
           cubes: .mock,
           gameContext: .turnBased(
-            .init(localPlayer: .mock, match: .forfeited, metadata: .init(playerIndexToId: [:]))
+            .init(
+              localPlayer: .mock,
+              match: .forfeited,
+              metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+            )
           ),
           gameMode: .unlimited,
           gameStartTime: .mock,
@@ -363,7 +394,9 @@ class TurnBasedTests: XCTestCase {
         completedGame: CompletedGame(gameState: gameState),
         isDemo: false,
         turnBasedContext: .init(
-          localPlayer: .mock, match: .forfeited, metadata: .init(playerIndexToId: [:])
+          localPlayer: .mock,
+          match: .forfeited,
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       )
       $0.game = gameState
@@ -398,7 +431,11 @@ class TurnBasedTests: XCTestCase {
     let initialGameState = GameState(
       cubes: .mock,
       gameContext: .turnBased(
-        .init(localPlayer: .mock, match: match, metadata: .init(playerIndexToId: [:]))
+        .init(
+          localPlayer: .mock,
+          match: match,
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+        )
       ),
       gameCurrentTime: self.mainRunLoop.now.date,
       gameMode: .unlimited,
@@ -436,7 +473,7 @@ class TurnBasedTests: XCTestCase {
           context: TurnBasedContext(
             localPlayer: .mock,
             match: match,
-            metadata: .init(playerIndexToId: [:])
+            metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
           ),
           gameState: updatedGameState,
           playerId: nil
@@ -488,7 +525,7 @@ class TurnBasedTests: XCTestCase {
           context: TurnBasedContext(
             localPlayer: .mock,
             match: updatedMatch,
-            metadata: .init(playerIndexToId: [:])
+            metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
           ),
           gameState: updatedGameState,
           playerId: nil
@@ -560,7 +597,11 @@ class TurnBasedTests: XCTestCase {
           GameState(
             cubes: .mock,
             gameContext: .turnBased(
-              .init(localPlayer: .mock, match: match, metadata: .init(playerIndexToId: [:]))
+              .init(
+                localPlayer: .mock,
+                match: match,
+                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+              )
             ),
             gameCurrentTime: .mock,
             gameMode: .unlimited,
@@ -588,7 +629,11 @@ class TurnBasedTests: XCTestCase {
         game: GameState(
           cubes: .mock,
           gameContext: .turnBased(
-            .init(localPlayer: .mock, match: newMatch, metadata: .init(playerIndexToId: [:]))
+            .init(
+              localPlayer: .mock,
+              match: newMatch,
+              metadata: .init(lastOpenedAt: self.mainRunLoop.now.date, playerIndexToId: [:])
+            )
           ),
           gameCurrentTime: self.mainRunLoop.now.date,
           gameMode: .unlimited,
@@ -615,7 +660,7 @@ class TurnBasedTests: XCTestCase {
           cubes: .mock,
           gameMode: .unlimited,
           language: .en,
-          metadata: .init(playerIndexToId: [:]),
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
           moves: [
             .init(
               playedAt: remoteParticipant.lastTurnDate!,
@@ -686,7 +731,7 @@ class TurnBasedTests: XCTestCase {
           cubes: .mock,
           gameMode: .unlimited,
           language: .en,
-          metadata: .init(playerIndexToId: [:]),
+          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
           moves: [
             .init(
               playedAt: remoteParticipant.lastTurnDate!,

@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import ServerConfig
+@_exported import ServerConfig
 
 public struct ServerConfigClient {
   public var config: () -> ServerConfig

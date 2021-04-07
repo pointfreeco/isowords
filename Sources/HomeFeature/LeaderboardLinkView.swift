@@ -10,7 +10,7 @@ struct LeaderboardLinkView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, HomeAction>
 
   struct ViewState: Equatable {
-    var tag: AppRoute.Tag?
+    var tag: HomeRoute.Tag?
     var weekInReview: FetchWeekInReviewResponse?
 
     init(state: HomeState) {
@@ -69,12 +69,12 @@ struct LeaderboardLinkView: View {
     }
   }
 
-  var tag: AppRoute.Tag { .leaderboard }
+  var tag: HomeRoute.Tag { .leaderboard }
 
   var destination: some View {
     IfLetStore(
       self.store.scope(
-        state: (\HomeState.route).appending(path: /AppRoute.leaderboard).extract(from:),
+        state: (\HomeState.route).appending(path: /HomeRoute.leaderboard).extract(from:),
         action: HomeAction.leaderboard
       ),
       then: LeaderboardView.init(store:)

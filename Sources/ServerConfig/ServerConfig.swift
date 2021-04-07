@@ -1,7 +1,10 @@
+import Build
 import Foundation
+import Tagged
 
 public struct ServerConfig: Codable, Equatable, Hashable {
   public var appId: String
+  public var newestBuild: Build.Number
   public var forceUpgradeVersion: Int
   public var productIdentifiers: ProductIdentifiers
   public var upgradeInterstitial: UpgradeInterstitial
@@ -9,11 +12,13 @@ public struct ServerConfig: Codable, Equatable, Hashable {
   public init(
     appId: String = "1528246952",
     forceUpgradeVersion: Int = 0,
+    newestBuild: Build.Number = Changelog.current.changes.map(\.build).max() ?? 0,
     productIdentifiers: ProductIdentifiers = .default,
     upgradeInterstitial: UpgradeInterstitial = .default
   ) {
     self.appId = appId
     self.forceUpgradeVersion = forceUpgradeVersion
+    self.newestBuild = newestBuild
     self.productIdentifiers = productIdentifiers
     self.upgradeInterstitial = upgradeInterstitial
   }

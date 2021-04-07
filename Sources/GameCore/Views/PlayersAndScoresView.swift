@@ -165,7 +165,7 @@ private struct PlayerView: View {
                 cubes: .mock,
                 gameMode: .unlimited,
                 language: .en,
-                metadata: .init(playerIndexToId: [:]),
+                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
                 moves: []
               )
             ),
@@ -189,7 +189,7 @@ private struct PlayerView: View {
                 cubes: .mock,
                 gameMode: .unlimited,
                 language: .en,
-                metadata: .init(playerIndexToId: [:]),
+                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
                 moves: [
                   .init(
                     playedAt: .mock,

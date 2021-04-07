@@ -13,6 +13,7 @@ class TurnBasedMatchDataTests: XCTestCase {
       gameMode: .timed,
       language: .en,
       metadata: .init(
+        lastOpenedAt: .mock,
         playerIndexToId: [
           0: .init(rawValue: uuid()),
           1: .init(rawValue: uuid()),
