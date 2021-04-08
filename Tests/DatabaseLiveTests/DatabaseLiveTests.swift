@@ -418,10 +418,10 @@ class DatabaseLiveTests: DatabaseTestCase {
     XCTAssertEqual(
       results,
       [
-        .init(outOf: 3, rank: 3, score: 1_000),
-        .init(outOf: 3, rank: 2, score: 2_000),
-        .init(outOf: 3, rank: 1, score: 3_000),
-        .init(outOf: 3, rank: 2, score: 2_000),
+        .init(outOf: 4, rank: 3, score: 1_000),
+        .init(outOf: 4, rank: 2, score: 2_000),
+        .init(outOf: 4, rank: 1, score: 3_000),
+        .init(outOf: 4, rank: 2, score: 2_000),
       ]
     )
   }
