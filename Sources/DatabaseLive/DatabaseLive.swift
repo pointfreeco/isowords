@@ -191,7 +191,7 @@ extension DatabaseClient {
             WHERE "leaderboardScores"."dailyChallengeId" = \(bind: request.dailyChallengeId)
           ),
           "filteredDailyChallengeScoresCount" AS (
-            SELECT count(DISTINCT "score") AS "outOf"
+            SELECT count("playerId") AS "outOf"
             FROM "filteredDailyChallengeScores"
           ),
           "playerDailyChallengeResult" AS (
@@ -238,7 +238,7 @@ extension DatabaseClient {
             AND "dailyChallenges"."language" = \(bind: request.language)
           ),
           "rankedChallengeResultsCount" AS (
-            SELECT count(DISTINCT "score") AS "outOf"
+            SELECT count("playerId") AS "outOf"
             FROM "rankedChallengeResults"
           )
           SELECT
