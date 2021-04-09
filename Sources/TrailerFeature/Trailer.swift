@@ -112,16 +112,11 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
       ]
 
       // Play each word
-      for (wordIndex, word) in replayableWords.enumerated() {
-        // Wait a long time before playing first word to allow for scene opacity to
-        // animate in, and wait a small about of time before each following word
+      for word in replayableWords {
+        // Wait a small about of time before each word
         effects.append(
           Effect.none
-            .delay(
-              for: wordIndex == 0
-                ? firstWordDelay
-                : firstCharacterDelay, scheduler: environment.mainQueue
-            )
+            .delay(for: firstCharacterDelay, scheduler: environment.mainQueue)
             .eraseToEffect()
         )
 
@@ -173,7 +168,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             )
             .eraseToEffect()
         )
-        // Submit the word after waiting a small amout of time
+        // Submit the word after waiting a small amount of time
         effects.append(
           Effect(value: .game(.submitButtonTapped(nil)))
             .delay(
@@ -181,7 +176,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
                 .random(
                   in:
                     moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration
-                    + submitHestitationDuration)
+                    + submitHesitationDuration)
                 )
               ),
               scheduler: environment.mainQueue.animation()
@@ -222,7 +217,11 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           .eraseToEffect()
       )
 
-      return .concatenate(effects)
+      return Effect.concatenate(effects)
+        // Wait a long time before playing first word to allow for scene opacity to
+        // animate in
+        .delay(for: firstWordDelay, scheduler: environment.mainQueue)
+        .eraseToEffect()
 
     case .game:
       return .none
@@ -368,11 +367,11 @@ public struct TrailerView: View {
 }
 
 private let firstCharacterDelay: DispatchQueue.SchedulerTimeType.Stride = 0.3
-private let firstWordDelay: DispatchQueue.SchedulerTimeType.Stride = 1.5
+private let firstWordDelay: DispatchQueue.SchedulerTimeType.Stride = 1.2
 private let moveNubToFaceDuration = 0.45
 private let moveNubToSubmitButtonDuration = 0.4
 private let moveNubOffScreenDuration = 0.5
 private let fadeInDuration = 0.3
 private let fadeOutDuration = 0.3
 private let submitPressDuration = 0.05
-private let submitHestitationDuration = 0.15
+private let submitHesitationDuration = 0.15

@@ -17,22 +17,29 @@ import SwiftUIHelpers
 
 public struct AppState: Equatable {
   public var game: GameState?
+  public var gameReplay: GameFeatureState.ReplayState
   public var onboarding: OnboardingState?
   public var home: HomeState
 
   public init(
     game: GameState? = nil,
+    gameReplay: GameFeatureState.ReplayState = .init(),
     home: HomeState = .init(),
     onboarding: OnboardingState? = nil
   ) {
     self.game = game
+    self.gameReplay = gameReplay
     self.home = home
     self.onboarding = onboarding
   }
 
   public var currentGame: GameFeatureState {
     get {
-      GameFeatureState(game: self.game, settings: self.home.settings)
+      GameFeatureState(
+        game: self.game,
+        replay: self.gameReplay,
+        settings: self.home.settings
+      )
     }
     set {
       let oldValue = self
@@ -45,6 +52,8 @@ public struct AppState: Equatable {
       self.game = newValue.game
       self.game?.activeGames = activeGames ?? .init()
       self.game?.isGameLoaded = isGameLoaded
+      self.gameReplay.isReplaying = newValue.isReplaying
+      self.gameReplay.nub = newValue.nub
       self.home.settings = newValue.settings
     }
   }
@@ -190,7 +199,10 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
   func persistence() -> Self {
     self
       .onChange(of: \.game?.moves) { moves, state, _, environment in
-        guard let game = state.game, game.isSavable
+        guard
+          !state.currentGame.isReplaying,
+          let game = state.currentGame.game,
+          game.isSavable
         else { return .none }
 
         switch (game.gameContext, game.gameMode) {
@@ -450,7 +462,7 @@ public struct AppView: View {
               appState.game.map {
                 (
                   game: $0,
-                  nub: nil,
+                  nub: appState.gameReplay.nub,
                   settings: .init(
                     enableCubeShadow: appState.home.settings.enableCubeShadow,
                     enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,

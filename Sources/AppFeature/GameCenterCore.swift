@@ -102,7 +102,9 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                     Data(turnBasedMatchData: turnBasedMatchData)
                   )
                   .fireAndForget()
-                  : .none
+                  : .none,
+
+                Effect(value: .currentGame(.replay(.lastTurnMoves)))
               )
             }
 

@@ -68,8 +68,8 @@ public struct GameState: Equatable {
     gameStartTime: Date,
     isDemo: Bool = false,
     isGameLoaded: Bool = false,
-    isPanning: Bool = false,
     isOnLowPowerMode: Bool = false,
+    isPanning: Bool = false,
     isSettingsPresented: Bool = false,
     isTrayVisible: Bool = false,
     language: Language = .en,
@@ -1077,19 +1077,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           isDemo: state.isDemo,
           turnBasedContext: state.turnBasedContext
         )
-        return .merge(
-          environment.gameCenter.turnBasedMatch.remove(match)
-            .fireAndForget(),
-
-          environment.feedbackGenerator
-            .selectionChanged()
-            .fireAndForget()
-        )
+        return environment.gameCenter.turnBasedMatch.remove(match)
+          .fireAndForget()
       }
-
-      return environment.feedbackGenerator
-        .selectionChanged()
-        .fireAndForget()
+      return .none
 
     case let .gameCenter(.turnBasedMatchResponse(.success(match))):
       guard

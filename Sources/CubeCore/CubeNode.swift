@@ -105,7 +105,7 @@ public class CubeNode: SCNNode {
     }
 
     self.viewStore.publisher
-      .prefix(while: \.isInPlay)
+//      .prefix(while: \.isInPlay)
       .map { ($0.isCriticallySelected, $0.index, $0.cubeShakeStartedAt) }
       .removeDuplicates(by: ==)
       .sink { [weak self] isCriticallySelected, index, cubeShakeStartedAt in

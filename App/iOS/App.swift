@@ -75,12 +75,13 @@ extension AppEnvironment {
     return Self(
       apiClient: apiClient,
       applicationClient: .live,
-      audioPlayer: .live(
-        bundles: [
-          AppAudioLibrary.bundle,
-          AppClipAudioLibrary.bundle,
-        ]
-      ),
+      audioPlayer: .noop,
+//      audioPlayer: .live(
+//        bundles: [
+//          AppAudioLibrary.bundle,
+//          AppClipAudioLibrary.bundle,
+//        ]
+//      ),
       backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
       build: build,
       database: .live(
