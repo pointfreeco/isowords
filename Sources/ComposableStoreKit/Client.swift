@@ -15,7 +15,7 @@ public struct StoreKitClient {
   public enum PaymentTransactionObserverEvent: Equatable {
     case removedTransactions([PaymentTransaction])
     case restoreCompletedTransactionsFailed(NSError)
-    case restoreCompletedTransactionsFinished
+    case restoreCompletedTransactionsFinished(transactionCount: Int)
     case updatedTransactions([PaymentTransaction])
   }
 
