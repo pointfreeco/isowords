@@ -269,7 +269,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     case .dailyChallenge:
       return Effect(value: .home(.setNavigation(tag: .dailyChallenge)))
     case .none:
-      return .none // No-op on unknown Quick Actions.
+      return .none  // No-op on unknown Quick Actions.
     }
 
   case .appDelegate:
