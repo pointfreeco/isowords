@@ -1,4 +1,4 @@
-public struct VerifiedPuzzleResult {
+public struct VerifiedPuzzleResult: Equatable {
   public var totalScore = 0
   public var verifiedMoves: [VerifiedMoveResult] = []
 }
@@ -15,6 +15,7 @@ public func verify(
   isValidWord: (String) -> Bool
 ) -> VerifiedPuzzleResult? {
   var puzzle = Puzzle(archivableCubes: puzzle)
+  var playedWords: Set<String> = []
 
   var result = VerifiedPuzzleResult()
   for index in moves.indices {
@@ -22,7 +23,8 @@ public func verify(
       moveIndex: index,
       moves: moves,
       playedOn: &puzzle,
-      isValidWord: isValidWord
+      isValidWord: isValidWord,
+      playedWords: &playedWords
     ) {
       result.totalScore += moveResult.score
       result.verifiedMoves.append(moveResult)
@@ -38,7 +40,8 @@ public func verify(
   moveIndex: Int,
   moves: Moves,
   playedOn puzzle: inout Puzzle,
-  isValidWord: (String) -> Bool
+  isValidWord: (String) -> Bool,
+  playedWords: inout Set<String>
 ) -> VerifiedMoveResult? {
   let move = moves[moveIndex]
 
@@ -53,6 +56,7 @@ public func verify(
 
     let isValidMove =
       foundWord.count >= 3
+      && !playedWords.contains(foundWord)
       && isValidWord(foundWord)
       && score(foundWord) == move.score
       && zip(cubeFaces.dropFirst(), cubeFaces)
@@ -66,6 +70,7 @@ public func verify(
         }
 
     if isValidMove {
+      playedWords.insert(foundWord)
       apply(move: move, to: &puzzle)
       return .init(
         cubeFaces: cubeFaces,

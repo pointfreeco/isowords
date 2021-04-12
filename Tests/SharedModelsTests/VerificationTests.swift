@@ -4,12 +4,11 @@ import XCTest
 
 class VerificationTests: XCTestCase {
   func testWordLength() {
-    var puzzle = Puzzle.mock
+    var puzzle = ArchivablePuzzle.mock
     puzzle.2.2.2.left.letter = "QU"
     puzzle.2.2.2.right.letter = "A"
 
     let result = verify(
-      moveIndex: 0,
       moves: [
         .init(
           playedAt: .init(),
@@ -22,30 +21,34 @@ class VerificationTests: XCTestCase {
           ])
         )
       ],
-      playedOn: &puzzle,
+      playedOn: puzzle,
       isValidWord: { _ in true }
     )
 
     XCTAssertEqual(
       result,
       .init(
-        cubeFaces: [
-          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-        ],
-        foundWord: "QUA",
-        score: 42
+        totalScore: 42,
+        verifiedMoves: [
+          .init(
+            cubeFaces: [
+              .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+              .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+            ],
+            foundWord: "QUA",
+            score: 42
+          )
+        ]
       )
     )
   }
 
-  func testDuplicatesNotAllowed() {
-    var puzzle = Puzzle.mock
+  func testDuplicateCubeFacesNotAllowed() {
+    var puzzle = ArchivablePuzzle.mock
     puzzle.2.2.2.left.letter = "T"
     puzzle.2.2.2.right.letter = "O"
 
     let result = verify(
-      moveIndex: 0,
       moves: [
         .init(
           playedAt: .init(),
@@ -59,7 +62,7 @@ class VerificationTests: XCTestCase {
           ])
         )
       ],
-      playedOn: &puzzle,
+      playedOn: puzzle,
       isValidWord: { _ in true }
     )
 
@@ -70,13 +73,12 @@ class VerificationTests: XCTestCase {
   }
 
   func testWordNotInDictionary() {
-    var puzzle = Puzzle.mock
+    var puzzle = ArchivablePuzzle.mock
     puzzle.2.2.2.left.letter = "C"
     puzzle.2.2.2.right.letter = "A"
     puzzle.2.2.2.top.letter = "B"
 
     let result = verify(
-      moveIndex: 0,
       moves: [
         .init(
           playedAt: .init(),
@@ -90,7 +92,7 @@ class VerificationTests: XCTestCase {
           ])
         )
       ],
-      playedOn: &puzzle,
+      playedOn: puzzle,
       isValidWord: { _ in false }
     )
 
@@ -125,5 +127,40 @@ class VerificationTests: XCTestCase {
     )
 
     XCTAssertNotNil(result)
+  }
+
+  func testUseSameWordTwiceIsNotAllowed() {
+    let puzzle = ArchivablePuzzle.mock
+
+    let result = verify(
+      moves: [
+        .init(
+          playedAt: . mock,
+          playerIndex: nil,
+          reactions: nil,
+          score: score("CAB"),
+          type: .playedWord([
+            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+          ])
+        ),
+        .init(
+          playedAt: . mock,
+          playerIndex: nil,
+          reactions: nil,
+          score: score("CAB"),
+          type: .playedWord([
+            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+          ])
+        )
+      ],
+      playedOn: puzzle,
+      isValidWord: { _ in true }
+    )
+
+    XCTAssertEqual(result, nil)
   }
 }
