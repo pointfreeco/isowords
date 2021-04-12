@@ -961,7 +961,7 @@ extension Effect where Output == GameAction, Failure == Never {
         .cancellable(id: LowPowerModeId()),
 
       Effect(value: .gameLoaded)
-        .delay(for: 0.5, scheduler: environment.mainQueue)
+        .delay(for: 0.3, scheduler: environment.mainQueue)
         .eraseToEffect(),
 
       gameContext.isTurnBased

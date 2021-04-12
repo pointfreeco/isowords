@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import Bloom
 import BottomMenu
 import ComposableArchitecture
+import CubeCore
 import GameOverFeature
 import Overture
 import SharedModels
@@ -52,6 +53,7 @@ public struct GameView<Content>: View where Content: View {
   }
 
   public var body: some View {
+    let delay = CubeSceneView.isWarm ? 0.3 : 1.5
     GeometryReader { proxy in
       ZStack {
         ZStack(alignment: .top) {
@@ -61,7 +63,7 @@ public struct GameView<Content>: View where Content: View {
               .ignoresSafeArea()
               .transition(
                 .asymmetric(
-                  insertion: AnyTransition.opacity.animation(Animation.default.delay(1.5)),
+                  insertion: AnyTransition.opacity.animation(Animation.default.delay(delay)),
                   removal: .game
                 )
               )
@@ -70,7 +72,7 @@ public struct GameView<Content>: View where Content: View {
             ProgressView()
               .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveBlack))
               .frame(maxWidth: .infinity, maxHeight: .infinity)
-              .transition(AnyTransition.opacity.animation(Animation.default.delay(1.5)))
+              .transition(AnyTransition.opacity.animation(Animation.default.delay(delay)))
           }
 
           VStack {

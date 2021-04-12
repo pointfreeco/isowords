@@ -8,6 +8,8 @@ import Styleguide
 import SwiftUI
 
 public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
+  public private(set) static var isWarm = false
+
   public struct ViewState: Equatable {
     public typealias ViewPuzzle = Three<Three<Three<CubeNode.ViewState>>>
 
@@ -287,6 +289,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
           let rootPosition = self.scene!.rootNode.convertPosition(.init(), from: faceNode)
           let screenPosition = self.projectPoint(rootPosition)
+          #warning("FIXME: this is wrong in sheets")
           self.nub.transform = .init(
             translationX: CGFloat(screenPosition.x) - self.nub.bounds.midX,
             y: CGFloat(screenPosition.y) - self.nub.bounds.midY
@@ -303,6 +306,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
           let rootPosition = self.scene!.rootNode.convertPosition(.init(), from: cubeNode)
           let screenPosition = self.projectPoint(rootPosition)
+          #warning("FIXME: this is wrong in sheets")
           self.nub.transform = .init(
             translationX: CGFloat(screenPosition.x) - self.nub.bounds.midX,
             y: CGFloat(screenPosition.y) - self.nub.bounds.midY
@@ -321,6 +325,11 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   deinit {
     self.nub.removeFromSuperview()
     self.stopMotionManager()
+  }
+
+  public override func didMoveToWindow() {
+    super.didMoveToWindow()
+    Self.isWarm = true
   }
 
   @objc private func doubleTap(recognizer: UIGestureRecognizer) {
