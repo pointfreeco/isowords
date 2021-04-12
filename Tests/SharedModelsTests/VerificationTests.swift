@@ -15,7 +15,7 @@ class VerificationTests: XCTestCase {
           playedAt: .init(),
           playerIndex: nil,
           reactions: nil,
-          score: 10,
+          score: 42,
           type: .playedWord([
             .init(index: .init(x: .two, y: .two, z: .two), side: .left),
             .init(index: .init(x: .two, y: .two, z: .two), side: .right),
@@ -34,7 +34,7 @@ class VerificationTests: XCTestCase {
           .init(index: .init(x: .two, y: .two, z: .two), side: .right),
         ],
         foundWord: "QUA",
-        score: 10
+        score: 42
       )
     )
   }

@@ -31,7 +31,6 @@ public func verify(
     }
   }
 
-  // TODO: validate score passed to API
   return result
 }
 
@@ -54,6 +53,8 @@ public func verify(
 
     let isValidMove =
       foundWord.count >= 3
+      && isValidWord(foundWord)
+      && score(foundWord) == move.score
       && zip(cubeFaces.dropFirst(), cubeFaces)
         .reduce(true) { accum, faces in
           let (next, previous) = faces
@@ -64,15 +65,17 @@ public func verify(
             && puzzle[previous.index].isInPlay
         }
 
-    if isValidMove && isValidWord(foundWord) {
+    if isValidMove {
       apply(move: move, to: &puzzle)
-      // TODO: this score should be computed from the string rather than using what is handed us.
-      //       in fact maybe we need an ArchivableMove to remove that info?
-      return .init(cubeFaces: cubeFaces, foundWord: foundWord, score: move.score)
+      return .init(
+        cubeFaces: cubeFaces,
+        foundWord: foundWord,
+        score: move.score
+      )
     } else {
       return nil
     }
-
+    
   case let .removedCube(point):
     if puzzle[point].isInPlay
       // NB: Allow "removing" an out of play cube if it was removed in the previous move. This

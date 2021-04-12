@@ -13,9 +13,9 @@ struct CubeCorePreviewApp: App {
             isOnLowPowerMode: false,
             nub: nil,
             playedWords: [],
-            selectedFaceCount: 6,
+            selectedFaceCount: 0,
             selectedWordIsValid: false,
-            selectedWordString: "QUICKLY",
+            selectedWordString: "",
             settings: .init(showSceneStatistics: true)
           ),
           reducer: .empty,
@@ -72,7 +72,7 @@ extension CubeSceneView.ViewState.ViewPuzzle {
       .init(
         .mock(x: .one, y: .one, z: .two),
         .mock(x: .zero, y: .two, z: .one),
-        .mock(x: .zero, y: .one, z: .two)
+        .mock(x: .zero, y: .zero, z: .zero)
       ),
       .init(
         .mock(x: .one, y: .two, z: .zero),
@@ -98,45 +98,4 @@ extension CubeSceneView.ViewState.ViewPuzzle {
       )
     )
   )
-}
-
-struct Preview: PreviewProvider {
-  static var previews: some View {
-    ZStack {
-      Circle()
-        .fill(
-          RadialGradient(
-            gradient: Gradient(colors: [.blue, .init(white: 1, opacity: 0)]),
-            center: .center,
-            startRadius: 1,
-            endRadius: 400
-          )
-        )
-        .frame(width: 800, height: 800)
-
-      Circle()
-        .fill(
-          RadialGradient(
-            gradient: Gradient(colors: [.red, .init(white: 1, opacity: 0)]),
-            center: .center,
-            startRadius: 1,
-            endRadius: 400
-          )
-        )
-        .frame(width: 800, height: 800)
-        .offset(x: 100, y: 100)
-
-      Circle()
-        .fill(
-          RadialGradient(
-            gradient: Gradient(colors: [.green, .init(white: 1, opacity: 0)]),
-            center: .center,
-            startRadius: 1,
-            endRadius: 400
-          )
-        )
-        .frame(width: 800, height: 800)
-        .offset(x: -100, y: -100)
-    }
-  }
 }

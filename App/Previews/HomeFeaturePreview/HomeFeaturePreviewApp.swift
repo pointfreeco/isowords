@@ -1,4 +1,6 @@
 import ComposableArchitecture
+import Overture
+import SharedModels
 import Styleguide
 import SwiftUI
 
@@ -18,7 +20,29 @@ struct HomeFeaturePreviewApp: App {
             initialState: .init(),
             reducer: homeReducer,
             environment: HomeEnvironment(
-              apiClient: .noop,
+              apiClient: update(.noop) {
+                $0.authenticate = { _ in
+                  .init(value: .init(appleReceipt: nil, player: .blob))
+                }
+                $0.override(
+                  route: .dailyChallenge(.today(language: .en)),
+                  withResponse: .ok([
+                    FetchTodaysDailyChallengeResponse(
+                      dailyChallenge: .init(
+                        endsAt: .init(),
+                        gameMode: .timed,
+                        id: .init(rawValue: UUID()),
+                        language: .en
+                      ),
+                      yourResult: .init(
+                        outOf: .random(in: 2000...4000),
+                        rank: 10,
+                        score: 3_000
+                      )
+                    )
+                  ])
+                )
+              },
               applicationClient: .noop,
               audioPlayer: .noop,
               backgroundQueue: DispatchQueue.global(qos: .background).eraseToAnyScheduler(),
@@ -27,7 +51,9 @@ struct HomeFeaturePreviewApp: App {
               deviceId: .noop,
               feedbackGenerator: .live,
               fileClient: .live,
-              gameCenter: .noop,
+              gameCenter: update(.noop) {
+                $0.localPlayer.authenticate = .init(value: nil)
+              },
               lowPowerMode: .live,
               mainQueue: .main,
               mainRunLoop: .main,

@@ -2,7 +2,7 @@ import Foundation
 import ServerRouter
 import SharedModels
 
-let r = router(
+let router = ServerRouter.router(
   date: Date.init,
   decoder: JSONDecoder(),
   encoder: JSONEncoder(),
@@ -10,13 +10,5 @@ let r = router(
   sha256: { $0 }
 )
 
-r.absoluteString(
-  for: .api(
-    .init(
-      accessToken: .init(rawValue: UUID()),
-      isDebug: false,
-      route: .changelog(build: 1))
-  )
-)
-
-r.match(string: "/api/changelog?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&build=1")
+router
+  .request(for: .home)

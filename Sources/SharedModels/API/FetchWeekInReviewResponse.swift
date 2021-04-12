@@ -1,13 +1,16 @@
 public struct FetchWeekInReviewResponse: Codable, Equatable {
   public let ranks: [Rank]
   public let word: Word?
+  public let foo: Bool
 
   public init(
     ranks: [Rank],
-    word: Word?
+    word: Word?,
+    foo: Bool
   ) {
     self.ranks = ranks
     self.word = word
+    self.foo = foo
   }
 
   public var timedRank: Rank? {

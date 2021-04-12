@@ -3,6 +3,7 @@
 import Foundation
 import PackageDescription
 
+// MARK: - shared
 var package = Package(
   name: "isowords",
   platforms: [
@@ -1010,6 +1011,16 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
 }
 
 // MARK: - server
+package.dependencies.append(contentsOf: [
+  .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
+  .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
+  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
+  .package(
+    name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
+  ),
+  .package(
+    name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
+])
 package.products.append(contentsOf: [
   .executable(name: "daily-challenge-reports", targets: ["daily-challenge-reports"]),
   .executable(name: "runner", targets: ["runner"]),
@@ -1033,16 +1044,6 @@ package.products.append(contentsOf: [
   .library(name: "SnsClient", targets: ["SnsClient"]),
   .library(name: "SnsClientLive", targets: ["SnsClientLive"]),
   .library(name: "VerifyReceiptMiddleware", targets: ["VerifyReceiptMiddleware"]),
-])
-package.dependencies.append(contentsOf: [
-  .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
-  .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
-  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
-  .package(
-    name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
-  ),
-  .package(
-    name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
 ])
 package.targets.append(contentsOf: [
   .target(

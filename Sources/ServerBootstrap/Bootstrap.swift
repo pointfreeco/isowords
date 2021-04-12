@@ -19,7 +19,7 @@ import SnsClientLive
 public func bootstrap(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, Environment> {
   Backtrace.install()
 
-  return EitherIO.debug(prefix: "⚠️ Bootstrapping isowords...")
+  return EitherIO.debug(prefix: "⏳ Bootstrapping isowords...")
     .flatMap(
       const(prepareEnvironment(eventLoopGroup: eventLoopGroup))
     )
@@ -28,7 +28,7 @@ public func bootstrap(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, Environ
 }
 
 private func prepareEnvironment(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, Environment> {
-  EitherIO.debug(prefix: "  ⚠️ Loading environment...")
+  EitherIO.debug(prefix: "  ⏳ Loading environment...")
     .flatMap(loadEnvVars)
     .flatMap(loadEnvironment(eventLoopGroup: eventLoopGroup))
     .flatMap(bootstrapDictionary(environment:))
@@ -134,7 +134,7 @@ private func connectToPostgres(
   eventLoopGroup: EventLoopGroup
 ) -> (Environment) -> EitherIO<Error, Void> {
   { environment in
-    EitherIO.debug(prefix: "  ⚠️ Connecting to PostgreSQL")
+    EitherIO.debug(prefix: "  ⏳ Connecting to PostgreSQL")
       .flatMap { _ -> EitherIO<Error, Void> in
         #if DEBUG
           if environment.envVars.appEnv == .staging || environment.envVars.appEnv == .production {

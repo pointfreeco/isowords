@@ -20,7 +20,6 @@ import HapticsCore
 import LocalDatabaseClient
 import LowPowerModeClient
 import Overture
-import PuzzleGen
 import RemoteNotificationsClient
 import ServerConfigClient
 import SharedModels
@@ -1192,7 +1191,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           )
         case let .playedWord(cubeFaces):
           let word = state.cubes.string(from: cubeFaces)
-          let score = PuzzleGen.score(word)
+          let score = SharedModels.score(word)
           let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
 
           return .concatenate(

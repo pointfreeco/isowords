@@ -280,7 +280,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         .map(SubmitGameResponse.solo)
         .catchToEffect()
         .map(GameOverAction.submitGameResponse)
-      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest.init(
         completedGame: state.completedGame)
       {
         submitGameEffect = environment.apiClient.apiRequest(
@@ -1280,12 +1280,12 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
   }
 
   extension GameOverEnvironment {
-    static let preview = Self(
+    public static let preview = Self(
       apiClient: .noop,
       audioPlayer: .noop,
       database: .noop,
       fileClient: .noop,
-      mainQueue: .main,
+      mainQueue: .immediate,
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
