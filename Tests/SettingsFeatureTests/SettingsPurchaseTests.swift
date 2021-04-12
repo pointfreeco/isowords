@@ -121,7 +121,7 @@ class SettingsPurchaseTests: XCTestCase {
     XCTAssertEqual(didRestoreCompletedTransactions, true)
     storeKitObserver.send(.updatedTransactions([.restored]))
     storeKitObserver.send(.removedTransactions([.restored]))
-    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactionCount: 1))
+    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: [.restored]))
 
     store.receive(SettingsAction.paymentTransaction(.updatedTransactions([.restored])))
     store.receive(SettingsAction.paymentTransaction(.removedTransactions([.restored])))
@@ -129,7 +129,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = false
       $0.fullGamePurchasedAt = .mock
     }
-    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactionCount: 1)))
+    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored])))
     store.send(.onDismiss)
   }
 
@@ -175,9 +175,9 @@ class SettingsPurchaseTests: XCTestCase {
     }
 
     XCTAssertEqual(didRestoreCompletedTransactions, true)
-    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactionCount: 0))
+    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: []))
 
-    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactionCount: 0))) {
+    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: []))) {
       $0.isRestoring = false
       $0.alert = .noRestoredPurchases
     }

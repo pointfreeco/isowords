@@ -497,9 +497,9 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         .catchToEffect()
         .map(SettingsAction.currentPlayerRefreshed)
 
-    case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactionCount)):
+    case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
       state.isRestoring = false
-      state.alert = transactionCount == 0 ? .noRestoredPurchases : nil
+      state.alert = transactions.isEmpty ? .noRestoredPurchases : nil
       return .none
 
     case .paymentTransaction(.restoreCompletedTransactionsFailed):

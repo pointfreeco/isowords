@@ -113,7 +113,11 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   }
 
   func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-    self.subscriber.send(.restoreCompletedTransactionsFinished(transactionCount: queue.transactions.count))
+    self.subscriber.send(
+      .restoreCompletedTransactionsFinished(
+        transactions: queue.transactions.map(StoreKitClient.PaymentTransaction.init)
+      )
+    )
   }
 
   func paymentQueue(
