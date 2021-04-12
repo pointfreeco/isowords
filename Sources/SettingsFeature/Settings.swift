@@ -497,6 +497,16 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         .catchToEffect()
         .map(SettingsAction.currentPlayerRefreshed)
 
+    case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
+      state.isRestoring = false
+      state.alert = transactions.isEmpty ? .noRestoredPurchases : nil
+      return .none
+
+    case .paymentTransaction(.restoreCompletedTransactionsFailed):
+      state.isRestoring = false
+      state.alert = .restoredPurchasesFailed
+      return .none
+
     case .paymentTransaction:
       return .none
 
@@ -594,6 +604,28 @@ extension AlertState where Action == SettingsAction {
       """),
     primaryButton: .default(.init("Ok"), send: .binding(.set(\.alert, nil))),
     secondaryButton: .default(.init("Open Settings"), send: .openSettingButtonTapped),
+    onDismiss: .binding(.set(\.alert, nil))
+  )
+
+  static let restoredPurchasesFailed = Self(
+    title: .init("Error"),
+    message: .init(
+      """
+      We couldn’t restore purchases, please try again.
+      """),
+    primaryButton: .default(.init("Ok"), send: .binding(.set(\.alert, nil))),
+    secondaryButton: nil,
+    onDismiss: .binding(.set(\.alert, nil))
+  )
+
+  static let noRestoredPurchases = Self(
+    title: .init("No Purchases"),
+    message: .init(
+      """
+      No purchases were found to restore.
+      """),
+    primaryButton: .default(.init("Ok"), send: .binding(.set(\.alert, nil))),
+    secondaryButton: nil,
     onDismiss: .binding(.set(\.alert, nil))
   )
 }
