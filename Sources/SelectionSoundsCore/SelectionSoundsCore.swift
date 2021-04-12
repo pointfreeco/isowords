@@ -1,13 +1,14 @@
 import AudioPlayerClient
 import ComposableArchitecture
+import NonEmpty
 import SharedModels
 import TcaHelpers
 
 extension Reducer {
   public func selectionSounds(
     audioPlayer: @escaping (Environment) -> AudioPlayerClient,
-    contains: @escaping (State, Environment, String) -> Bool,
-    hasBeenPlayed: @escaping (State, String) -> Bool,
+    contains: @escaping (State, Environment, NonEmptyString) -> Bool,
+    hasBeenPlayed: @escaping (State, NonEmptyString) -> Bool,
     puzzle: @escaping (State) -> Puzzle,
     selectedWord: @escaping (State) -> [IndexedCubeFace]
   ) -> Reducer {
@@ -26,6 +27,9 @@ extension Reducer {
           )
         }
 
+        guard let selectedWord = NonEmptyArray(selectedWord)
+        else { return .none }
+
         let selectedWordString = puzzle(state).string(from: selectedWord)
         if !hasBeenPlayed(state, selectedWordString)
           && contains(state, environment, selectedWordString)
@@ -36,7 +40,8 @@ extension Reducer {
             .dropFirst(2)
             .reduce(into: 0) { count, index in
               count +=
-                contains(state, environment, String(selectedWordString[...index]))
+                NonEmptyString(selectedWordString[...index])
+                .map { contains(state, environment, $0) } == .some(true)
                 ? 1
                 : 0
             }

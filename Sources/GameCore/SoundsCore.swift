@@ -1,5 +1,6 @@
 import AudioPlayerClient
 import ComposableArchitecture
+import NonEmpty
 import SelectionSoundsCore
 import SharedModels
 
@@ -67,7 +68,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           // Deselecting a word
           !previousSelection.isEmpty && selectedWord.isEmpty,
           // Previous selected word wasn't just played
-          state.playedWords.last?.word != state.cubes.string(from: previousSelection)
+          state.playedWords.last?.word != previousSelection.map(state.cubes.string(from:))
         else { return .none }
 
         switch action {
@@ -152,7 +153,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 private struct CubeShakingId: Hashable {}
 
 extension GameState {
-  func hasBeenPlayed(word: String) -> Bool {
+  func hasBeenPlayed(word: NonEmptyString) -> Bool {
     self.moves.contains {
       guard case let .playedWord(faces) = $0.type else { return false }
       return self.cubes.string(from: faces) == word

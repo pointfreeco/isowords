@@ -1,4 +1,5 @@
 import Foundation
+import NonEmpty
 import Tagged
 
 public struct Move: Codable, Equatable {
@@ -25,7 +26,7 @@ public struct Move: Codable, Equatable {
   }
 
   public enum MoveType: Codable, Equatable {
-    case playedWord([IndexedCubeFace])
+    case playedWord(NonEmptyArray<IndexedCubeFace>)
     case removedCube(LatticePoint)
 
     public var isRemovedCube: Bool {
@@ -36,7 +37,8 @@ public struct Move: Codable, Equatable {
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       if container.contains(.playedWord) {
-        let playedWord = try container.decode([IndexedCubeFace].self, forKey: .playedWord)
+        let playedWord = try container
+          .decode(NonEmptyArray<IndexedCubeFace>.self, forKey: .playedWord)
         self = .playedWord(playedWord)
       } else if container.contains(.removedCube) {
         let removedCube = try container.decode(LatticePoint.self, forKey: .removedCube)
@@ -130,11 +132,13 @@ extension Move {
       playerIndex: nil,
       reactions: nil,
       score: 20,
-      type: .playedWord([
-        .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-        .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-        .init(index: .init(x: .two, y: .two, z: .two), side: .top),
-      ])
+      type: .playedWord(
+        .init(
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .top)
+        )
+      )
     )
 
     public static let removeCube = Self(
@@ -150,11 +154,13 @@ extension Move {
       playerIndex: nil,
       reactions: nil,
       score: 1_234,
-      type: .playedWord([
-        .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-        .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-        .init(index: .init(x: .two, y: .two, z: .two), side: .top),
-      ])
+      type: .playedWord(
+        .init(
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .top)
+        )
+      )
     )
 
     public static func playedWord(length: Int) -> Self {
@@ -164,7 +170,7 @@ extension Move {
         reactions: nil,
         score: 1_234,
         type: .playedWord(
-          (1...length).map { _ in
+          NonEmptyArray(1...length).map { _ in
             .init(index: .init(x: .two, y: .two, z: .two), side: .left)
           }
         )

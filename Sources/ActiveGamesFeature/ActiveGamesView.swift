@@ -181,7 +181,7 @@ public struct ActiveGamesView: View {
   }
 
   func text(for playedWord: PlayedWord) -> Text {
-    Text(playedWord.word.lowercased()).fontWeight(.medium)
+    Text(playedWord.word.rawValue.lowercased()).fontWeight(.medium)
       + Text("\(playedWord.score)")
       .baselineOffset(6)
       .font(.custom(.matterMedium, size: 16))

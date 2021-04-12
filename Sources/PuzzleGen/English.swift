@@ -1,4 +1,5 @@
 import Gen
+import NonEmpty
 import SharedModels
 
 extension Gen {
@@ -7,7 +8,7 @@ extension Gen {
   }
 }
 
-public func randomCubes(for letter: Gen<String>) -> Gen<Puzzle> {
+public func randomCubes(for letter: Gen<NonEmptyString>) -> Gen<Puzzle> {
   zip(letter, letter, letter)
     .map { left, right, top in
       Cube(
@@ -25,7 +26,7 @@ public func randomCubes(for letter: Gen<String>) -> Gen<Puzzle> {
 
 // https://boardgamegeek.com/geeklist/182883/letter-distributions-word-games/page/1
 public let isowordsLetter = Gen.frequency(
-  (16, .always("A")),
+  (16, .always(NonEmptyString("A"))),
   (4, .always("B")),
   (6, .always("C")),
   (8, .always("D")),
@@ -56,10 +57,11 @@ public let isowordsLetter = Gen.frequency(
 // MARK: - Scoring
 
 public func score(
-  _ word: String,
+  _ word: NonEmptyString,
   with scoring: [Character: Int] = scoring
 ) -> Int {
-  word.uppercased().reduce(into: 0) { $0 += scoring[$1] ?? 0 }
+  (word.uppercased() as NonEmptyString)
+    .reduce(into: 0) { $0 += scoring[$1] ?? 0 }
     * word.count
     * max(1, word.count - 3)
 }

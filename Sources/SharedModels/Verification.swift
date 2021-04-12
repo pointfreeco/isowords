@@ -1,10 +1,12 @@
+import NonEmpty
+
 public struct VerifiedPuzzleResult {
   public var totalScore = 0
   public var verifiedMoves: [VerifiedMoveResult] = []
 }
 
 public struct VerifiedMoveResult: Equatable {
-  public let cubeFaces: [IndexedCubeFace]
+  public let cubeFaces: NonEmptyArray<IndexedCubeFace>?
   public let foundWord: String?
   public let score: Int
 }
@@ -81,7 +83,7 @@ public func verify(
       || (moveIndex > 0 && moves[moveIndex - 1].type == move.type)
     {
       apply(move: move, to: &puzzle)
-      return .init(cubeFaces: [], foundWord: nil, score: 0)
+      return .init(cubeFaces: nil, foundWord: nil, score: 0)
     } else {
       return nil
     }

@@ -1,9 +1,11 @@
+import NonEmpty
+
 public struct ArchivableCubeFace: Codable, Equatable {
-  public var letter: String
+  public var letter: NonEmptyString
   public var side: CubeFace.Side
 
   public init(
-    letter: String,
+    letter: NonEmptyString,
     side: CubeFace.Side
   ) {
     self.letter = letter
@@ -119,9 +121,7 @@ extension ArchivablePuzzle {
     }
   }
 
-  public func string(from indices: [IndexedCubeFace]) -> String {
-    indices.reduce(into: "") { str, letter in
-      str.append(self[letter.index][letter.side].letter)
-    }
+  public func string(from indices: NonEmptyArray<IndexedCubeFace>) -> NonEmptyString {
+    indices.map { self[$0.index][$0.side].letter }.joined()
   }
 }

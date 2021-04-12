@@ -271,7 +271,7 @@ extension Sqlite {
       switch move.type {
       case let .playedWord(selectedFaces):
         type = "playedWord"
-        playedWord = game.cubes.string(from: selectedFaces)
+        playedWord = game.cubes.string(from: selectedFaces).rawValue
         removedCube = nil
       case let .removedCube(index):
         type = "removedCube"

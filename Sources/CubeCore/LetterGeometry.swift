@@ -52,7 +52,7 @@ private func lettersBitmap(
         [cubeViewState.left, cubeViewState.right, cubeViewState.top].forEach { faceViewState in
           defer { index += 1 }
 
-          UIImage(named: faceViewState.cubeFace.letter, in: Bundle.module, with: nil)!
+          UIImage(named: faceViewState.cubeFace.letter.rawValue, in: Bundle.module, with: nil)!
             .draw(
               in: .init(
                 x: (index % columnCount) * letterTileSize,

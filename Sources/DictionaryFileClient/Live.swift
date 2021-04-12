@@ -1,6 +1,7 @@
 import DictionaryClient
 import Foundation
 import Gzip
+import NonEmpty
 import PuzzleGen
 import SharedModels
 
@@ -23,7 +24,7 @@ extension DictionaryClient {
         words[language] = Set(
           String(decoding: try Data(contentsOf: zipFilePath).gunzipped(), as: UTF8.self)
             .split(separator: "\n")
-            .map(String.init)
+            .compactMap(NonEmptyString.init)
         )
 
         return words[language] != nil
@@ -37,4 +38,4 @@ extension DictionaryClient {
   }
 }
 
-private var words: [Language: Set<String>] = [:]
+private var words: [Language: Set<NonEmptyString>] = [:]

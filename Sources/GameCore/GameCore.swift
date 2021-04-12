@@ -19,6 +19,7 @@ import Gen
 import HapticsCore
 import LocalDatabaseClient
 import LowPowerModeClient
+import NonEmpty
 import Overture
 import PuzzleGen
 import RemoteNotificationsClient
@@ -555,7 +556,9 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
   .onChange(of: \.selectedWord) { selectedWord, state, _, environment in
     state.selectedWordIsValid =
       !state.selectedWordHasAlreadyBeenPlayed
-      && environment.dictionary.contains(state.selectedWordString, state.language)
+      && NonEmptyString(state.selectedWordString)
+      .map { environment.dictionary.contains($0, state.language) }
+      ?? false
     return .none
   }
   .combined(with: .removingCubesWithDoubleTap)
@@ -625,11 +628,11 @@ extension GameState {
   }
 
   public var selectedWordScore: Int {
-    score(self.selectedWordString)
+    self.selectedWordString.map { score($0) } ?? 0
   }
 
-  public var selectedWordString: String {
-    self.cubes.string(from: self.selectedWord)
+  public var selectedWordString: NonEmptyString? {
+    NonEmpty(self.selectedWord).map(self.cubes.string(from:))
   }
 
   public var selectedWordHasAlreadyBeenPlayed: Bool {

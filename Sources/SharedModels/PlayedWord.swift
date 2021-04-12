@@ -1,14 +1,16 @@
+import NonEmpty
+
 public struct PlayedWord: Equatable {
   public var isYourWord: Bool
   public var reactions: [Move.PlayerIndex: Move.Reaction]?
   public var score: Int
-  public var word: String
+  public var word: NonEmptyString
 
   public init(
     isYourWord: Bool,
     reactions: [Move.PlayerIndex: Move.Reaction]?,
     score: Int,
-    word: String
+    word: NonEmptyString
   ) {
     self.isYourWord = isYourWord
     self.reactions = reactions

@@ -1,3 +1,4 @@
+import NonEmpty
 import SharedModels
 
 extension Puzzle {
@@ -12,7 +13,7 @@ extension Puzzle {
 
     func hasPlayableWord(
       from face: IndexedCubeFace,
-      selected: [IndexedCubeFace] = []
+      selected: NonEmptyArray<IndexedCubeFace>
     ) -> Bool {
       let selected = selected + [face]
       let nextPlayableFaces = playableFaces.subtracting(selected).filter(face.isTouching)
@@ -21,7 +22,7 @@ extension Puzzle {
         case .some(.word):
           return true
         case .some(.prefix):
-          if hasPlayableWord(from: nextFace, selected: selected) {
+          if hasPlayableWord(from: nextFace, selected: selected + [nextFace]) {
             return true
           }
         case .none:
@@ -32,7 +33,7 @@ extension Puzzle {
     }
 
     for face in playableFaces {
-      if hasPlayableWord(from: face) { return true }
+      if hasPlayableWord(from: face, selected: .init(face)) { return true }
     }
 
     return false

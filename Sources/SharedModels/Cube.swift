@@ -1,3 +1,5 @@
+import NonEmpty
+
 public struct Cube: Codable, Equatable {
   public var left: CubeFace
   public var right: CubeFace
@@ -56,10 +58,8 @@ public struct Cube: Codable, Equatable {
 }
 
 extension Puzzle {
-  public func string(from indices: [IndexedCubeFace]) -> String {
-    indices.reduce(into: "") { str, letter in
-      str.append(self[letter.index][letter.side].letter)
-    }
+  public func string(from indices: NonEmptyArray<IndexedCubeFace>) -> NonEmptyString {
+    indices.map { self[$0.index][$0.side].letter }.joined()
   }
 
   public func isPlayable(

@@ -1,16 +1,17 @@
+import NonEmpty
 import SharedModels
 
 public struct DictionaryClient {
-  public var contains: (String, Language) -> Bool
+  public var contains: (NonEmptyString, Language) -> Bool
   public var load: (Language) throws -> Bool
-  public var lookup: ((String, Language) -> Lookup?)?
+  public var lookup: ((NonEmptyString, Language) -> Lookup?)?
   public var randomCubes: (Language) -> Puzzle
   public var unload: (Language) -> Void
 
   public init(
-    contains: @escaping (String, Language) -> Bool,
+    contains: @escaping (NonEmptyString, Language) -> Bool,
     load: @escaping (Language) throws -> Bool,
-    lookup: ((String, Language) -> Lookup?)?,
+    lookup: ((NonEmptyString, Language) -> Lookup?)?,
     randomCubes: @escaping (Language) -> Puzzle,
     unload: @escaping (Language) -> Void
   ) {

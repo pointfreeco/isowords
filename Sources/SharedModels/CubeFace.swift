@@ -1,10 +1,12 @@
+import NonEmpty
+
 public struct CubeFace: Codable, Equatable {
-  public var letter: String
+  public var letter: NonEmptyString
   public var side: Side
   public var useCount: Int
 
   public init(
-    letter: String,
+    letter: NonEmptyString,
     side: Side,
     useCount: Int = 0
   ) {

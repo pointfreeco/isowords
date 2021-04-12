@@ -2,6 +2,7 @@ import ClientModels
 import Combine
 import ComposableArchitecture
 import CoreMotion
+import NonEmpty
 import SceneKit
 import SharedModels
 import Styleguide
@@ -17,7 +18,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     public var playedWords: [PlayedWord]
     public var selectedFaceCount: Int
     public var selectedWordIsValid: Bool
-    public var selectedWordString: String
+    public var selectedWordString: NonEmptyString
     public var settings: Settings
 
     public init(
@@ -424,7 +425,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 }
 
 extension CubeSceneView.ViewState.ViewPuzzle {
-  fileprivate var letters: [String] {
+  fileprivate var letters: [NonEmptyString] {
     self.flatMap {
       $0.flatMap {
         $0.flatMap {

@@ -26,6 +26,7 @@ var package = Package(
     .package(url: "https://github.com/apple/swift-crypto.git", from: "1.1.2"),
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.1.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen.git", .exact("0.3.0")),
+    .package(url: "https://github.com/pointfreeco/swift-nonempty.git", .branch("cleanup")),
     .package(url: "https://github.com/pointfreeco/swift-tagged.git", .branch("iso")),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.1.0"),
     .package(
@@ -53,6 +54,7 @@ var package = Package(
       name: "DictionaryClient",
       dependencies: [
         "SharedModels",
+        .product(name: "NonEmpty", package: "swift-nonempty"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -96,6 +98,7 @@ var package = Package(
       dependencies: [
         "SharedModels",
         .product(name: "Gen", package: "swift-gen"),
+        .product(name: "NonEmpty", package: "swift-nonempty"),
       ]
     ),
     .target(
@@ -132,6 +135,7 @@ var package = Package(
       dependencies: [
         "Build",
         "FirstPartyMocks",
+        .product(name: "NonEmpty", package: "swift-nonempty"),
         .product(name: "Tagged", package: "swift-tagged"),
       ]
     ),
@@ -589,6 +593,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "NonEmpty", package: "swift-nonempty"),
       ],
       resources: [.process("Resources/")]
     ),
@@ -907,6 +912,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SharedModels",
         "Styleguide",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "NonEmpty", package: "swift-nonempty"),
       ]
     ),
     .target(
