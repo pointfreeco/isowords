@@ -78,7 +78,7 @@ public func verify(
       // NB: Allow "removing" an out of play cube if it was removed in the previous move. This
       //     is to work around a race condition in the client where quickly tapping multiple times
       //     can accidentally remove a single cube twice.
-        || previousMoves.last?.type == move.type
+      || previousMoves.last?.type == move.type
     {
       apply(move: move, to: &puzzle)
       return .init(cubeFaces: [], foundWord: nil, score: 0)
