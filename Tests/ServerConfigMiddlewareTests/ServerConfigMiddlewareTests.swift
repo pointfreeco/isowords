@@ -25,7 +25,7 @@ class ServerConfigMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database = .failing
     environment.changelog = {
       .init(changes: [.init(version: "2.0", build: 42, log: "")])
@@ -79,7 +79,7 @@ class ServerConfigMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database = .failing
     environment.changelog = {
       .init(changes: [.init(version: "2.0", build: 42, log: "")])

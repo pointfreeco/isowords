@@ -22,7 +22,7 @@ class PushMiddlewareTests: XCTestCase {
     var createPlatformRequest: SnsClient.CreatePlatformRequest?
     var insertPushTokenRequest: DatabaseClient.InsertPushTokenRequest?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.insertPushToken = { request in
         insertPushTokenRequest = request
@@ -86,7 +86,7 @@ class PushMiddlewareTests: XCTestCase {
     var createPlatformRequest: SnsClient.CreatePlatformRequest?
     var insertPushTokenRequest: DatabaseClient.InsertPushTokenRequest?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.insertPushToken = { request in
         insertPushTokenRequest = request
@@ -150,7 +150,7 @@ class PushMiddlewareTests: XCTestCase {
     var createPlatformRequest: SnsClient.CreatePlatformRequest?
     var insertPushTokenRequest: DatabaseClient.InsertPushTokenRequest?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.insertPushToken = { request in
         insertPushTokenRequest = request
@@ -214,7 +214,7 @@ class PushMiddlewareTests: XCTestCase {
     var createPlatformRequest: SnsClient.CreatePlatformRequest?
     var insertPushTokenRequest: DatabaseClient.InsertPushTokenRequest?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.insertPushToken = { request in
         insertPushTokenRequest = request
@@ -281,7 +281,7 @@ class PushMiddlewareTests: XCTestCase {
     var notificationType: PushNotificationContent.CodingKeys?
     var sendNotifications: Bool?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.updatePushSetting = {
         (playerId, notificationType, sendNotifications) = ($0, $1, $2)

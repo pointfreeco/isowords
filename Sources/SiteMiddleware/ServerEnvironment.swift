@@ -11,7 +11,7 @@ import SharedModels
 import SnsClient
 import VerifyReceiptMiddleware
 
-public struct Environment {
+public struct ServerEnvironment {
   public var changelog: () -> Changelog
   public var database: DatabaseClient
   public var date: () -> Date
@@ -51,7 +51,7 @@ public struct Environment {
 #if DEBUG
   import XCTestDynamicOverlay
 
-  extension Environment {
+  extension ServerEnvironment {
     public static let unimplemented = Self(
       changelog: {
         XCTFail("changelog is unimplemented.")

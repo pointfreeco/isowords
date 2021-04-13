@@ -53,7 +53,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       ).base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.submitLeaderboardScore = { score in
       XCTAssertEqual(
@@ -177,7 +177,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       ).base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.completeDailyChallenge = { _, _ in
       pure(
         DailyChallengePlay(
@@ -305,7 +305,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       ).base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.fetchSharedGame = { request in
       pure(
@@ -819,7 +819,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     ]
 
     var scores: [DatabaseClient.SubmitLeaderboardScore] = []
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.submitLeaderboardScore = { score in
       scores.append(score)

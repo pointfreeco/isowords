@@ -16,7 +16,7 @@ final class RunnerTests: XCTestCase {
     var targetArn: String?
     var payload: AnyEncodable?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchActiveDailyChallengeArns = {
         pure([DatabaseClient.DailyChallengeArn(arn: "arn-deadbeef", endsAt: now + 60 * 60)])
       }

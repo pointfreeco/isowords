@@ -12,7 +12,7 @@ import SharedModels
 import Tagged
 
 public func siteMiddleware(
-  environment: Environment
+  environment: ServerEnvironment
 ) -> Middleware<StatusLineOpen, ResponseEnded, Prelude.Unit, Data> {
   requireHerokuHttps(allowedInsecureHosts: allowedInsecureHosts)
     <<< route(
@@ -23,7 +23,7 @@ public func siteMiddleware(
 }
 
 private func render(
-  environment: Environment
+  environment: ServerEnvironment
 ) -> Middleware<StatusLineOpen, ResponseEnded, ServerRoute, Data> {
   { conn in
     let route = conn.data

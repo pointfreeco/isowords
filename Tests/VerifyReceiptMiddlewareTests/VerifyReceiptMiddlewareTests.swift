@@ -28,7 +28,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     var updatedPlayerId: Player.Id?
     var updatedAppleResponse: AppleVerifyReceiptResponse?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in
         pure(.blob)
       }
@@ -115,7 +115,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     var updatedPlayerId: Player.Id?
     var updatedData: AppleVerifyReceiptResponse?
 
-    let environment = update(Environment.unimplemented) {
+    let environment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in
         pure(.blob)
       }

@@ -182,7 +182,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       .base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.completeDailyChallenge = {
       pure(
         DailyChallengePlay(
@@ -356,7 +356,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
        .base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchDailyChallengeById = { _ in
       pure(
@@ -455,7 +455,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.unimplemented
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchDailyChallengeResults = { request in
       pure(
