@@ -19,10 +19,10 @@ public func verify(
   var result = VerifiedPuzzleResult()
   for index in moves.indices {
     if let moveResult = verify(
-      moveIndex: index,
-      moves: moves,
-      playedOn: &puzzle,
-      isValidWord: isValidWord
+      move: moves[index],
+      on: &puzzle,
+      isValidWord: isValidWord,
+      previousMoves: .init(moves[..<index])
     ) {
       result.totalScore += moveResult.score
       result.verifiedMoves.append(moveResult)
@@ -36,24 +36,24 @@ public func verify(
 }
 
 public func verify(
-  moveIndex: Int,
-  moves: Moves,
-  playedOn puzzle: inout Puzzle,
-  isValidWord: (String) -> Bool
+  move: Move,
+  on puzzle: inout Puzzle,
+  isValidWord: (String) -> Bool,
+  previousMoves: Moves
 ) -> VerifiedMoveResult? {
-  let move = moves[moveIndex]
-
   switch move.type {
   case let .playedWord(cubeFaces):
     guard cubeFaces.count == Set(cubeFaces).count
     else { return nil }
 
-    let foundWord = cubeFaces.reduce(into: "") { word, cubeFace in
-      word += puzzle[cubeFace.index][cubeFace.side].letter
-    }
+    let foundWord = puzzle.string(from: cubeFaces)
 
     let isValidMove =
       foundWord.count >= 3
+      && previousMoves.allSatisfy {
+        guard case let .playedWord(faces) = $0.type else { return true }
+        return puzzle.string(from: faces) != foundWord
+      }
       && zip(cubeFaces.dropFirst(), cubeFaces)
         .reduce(true) { accum, faces in
           let (next, previous) = faces
@@ -78,7 +78,7 @@ public func verify(
       // NB: Allow "removing" an out of play cube if it was removed in the previous move. This
       //     is to work around a race condition in the client where quickly tapping multiple times
       //     can accidentally remove a single cube twice.
-      || (moveIndex > 0 && moves[moveIndex - 1].type == move.type)
+        || previousMoves.last?.type == move.type
     {
       apply(move: move, to: &puzzle)
       return .init(cubeFaces: [], foundWord: nil, score: 0)

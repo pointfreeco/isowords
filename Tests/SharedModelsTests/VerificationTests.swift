@@ -9,21 +9,19 @@ class VerificationTests: XCTestCase {
     puzzle.2.2.2.right.letter = "A"
 
     let result = verify(
-      moveIndex: 0,
-      moves: [
-        .init(
-          playedAt: .init(),
-          playerIndex: nil,
-          reactions: nil,
-          score: 10,
-          type: .playedWord([
-            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-          ])
-        )
-      ],
-      playedOn: &puzzle,
-      isValidWord: { _ in true }
+      move: .init(
+        playedAt: .init(),
+        playerIndex: nil,
+        reactions: nil,
+        score: 10,
+        type: .playedWord([
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+        ])
+      ),
+      on: &puzzle,
+      isValidWord: { _ in true },
+      previousMoves: []
     )
 
     XCTAssertEqual(
@@ -45,22 +43,20 @@ class VerificationTests: XCTestCase {
     puzzle.2.2.2.right.letter = "O"
 
     let result = verify(
-      moveIndex: 0,
-      moves: [
-        .init(
-          playedAt: .init(),
-          playerIndex: nil,
-          reactions: nil,
-          score: 10,
-          type: .playedWord([
-            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-          ])
-        )
-      ],
-      playedOn: &puzzle,
-      isValidWord: { _ in true }
+      move: .init(
+        playedAt: .init(),
+        playerIndex: nil,
+        reactions: nil,
+        score: 10,
+        type: .playedWord([
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+        ])
+      ),
+      on: &puzzle,
+      isValidWord: { _ in true },
+      previousMoves: []
     )
 
     XCTAssertEqual(
@@ -76,22 +72,20 @@ class VerificationTests: XCTestCase {
     puzzle.2.2.2.top.letter = "B"
 
     let result = verify(
-      moveIndex: 0,
-      moves: [
-        .init(
-          playedAt: .init(),
-          playerIndex: nil,
-          reactions: nil,
-          score: 10,
-          type: .playedWord([
-            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
-          ])
-        )
-      ],
-      playedOn: &puzzle,
-      isValidWord: { _ in false }
+      move: .init(
+        playedAt: .init(),
+        playerIndex: nil,
+        reactions: nil,
+        score: 10,
+        type: .playedWord([
+          .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+          .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+        ])
+      ),
+      on: &puzzle,
+      isValidWord: { _ in false },
+      previousMoves: []
     )
 
     XCTAssertEqual(
@@ -126,4 +120,40 @@ class VerificationTests: XCTestCase {
 
     XCTAssertNotNil(result)
   }
+
+  func testDuplicateWord() {
+    let puzzle = ArchivablePuzzle.mock
+
+    let result = verify(
+      moves: [
+        .init(
+          playedAt: .init(),
+          playerIndex: nil,
+          reactions: nil,
+          score: 10,
+          type: .playedWord([
+            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+          ])
+        ),
+        .init(
+          playedAt: .init(),
+          playerIndex: nil,
+          reactions: nil,
+          score: 10,
+          type: .playedWord([
+            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+          ])
+        ),
+      ],
+      playedOn: puzzle,
+      isValidWord: { _ in false }
+    )
+
+    XCTAssertNil(result)
+  }
+
 }
