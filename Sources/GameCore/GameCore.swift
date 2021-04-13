@@ -662,19 +662,25 @@ extension GameState {
   }
 
   mutating func removeCube(at index: LatticePoint, playedAt: Date) {
-    guard self.cubes[index].isInPlay
+    let move = Move(
+      playedAt: playedAt,
+      playerIndex: self.turnBasedContext?.localPlayerIndex,
+      reactions: nil,
+      score: 0,
+      type: .removedCube(index)
+    )
+
+    let result = verify(
+      move: move,
+      on: &self.cubes,
+      isValidWord: { _ in false },
+      previousMoves: self.moves
+    )
+
+    guard result != nil
     else { return }
 
-    self.cubes[index].wasRemoved = true
-    self.moves.append(
-      Move(
-        playedAt: playedAt,
-        playerIndex: self.turnBasedContext?.localPlayerIndex,
-        reactions: nil,
-        score: 0,
-        type: .removedCube(index)
-      )
-    )
+    self.moves.append(move)
   }
 
   mutating func playSelectedWord(
@@ -700,6 +706,7 @@ extension GameState {
     )
 
     if result != nil {
+      self.moves.append(move)
       soundEffects = .merge(
         self
           .selectedWord.compactMap { !self.cubes[$0.index].isInPlay ? $0.index : nil }
