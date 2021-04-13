@@ -7,10 +7,18 @@ extension EitherIO where E == Error {
     .init(
       run: .init {
         XCTFail("\(title): EitherIO is unimplemented")
-        return .left(AnError())
+        return .left(AnError(message: "\(title): EitherIO is unimplemented"))
       })
   }
 }
 
-public struct AnError: Error {}
+public struct AnError: Error {
+  let message: String
+}
+
+extension EitherIO {
+  public init(value: A) {
+    self = .init(run: .init { .right(value) })
+  }
+}
 #endif
