@@ -48,7 +48,9 @@ public func verify(
   switch move.type {
   case let .playedWord(cubeFaces):
     guard cubeFaces.count == Set(cubeFaces).count
-    else { return nil }
+    else {
+      return nil
+    }
 
     let foundWord = cubeFaces.reduce(into: "") { word, cubeFace in
       word += puzzle[cubeFace.index][cubeFace.side].letter
