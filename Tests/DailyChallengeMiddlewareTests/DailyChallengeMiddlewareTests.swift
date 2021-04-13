@@ -35,7 +35,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.createTodaysDailyChallenge = { request in
           pure(
@@ -70,7 +70,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.createTodaysDailyChallenge = { request in
           pure(
@@ -109,7 +109,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     let player = Player.blob
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(player) }
         $0.database.fetchTodaysDailyChallenges = { language in
           pure(
@@ -182,7 +182,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       .base64EncodedString()
     ]
 
-    var environment = ServerEnvironment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.completeDailyChallenge = {
       pure(
         DailyChallengePlay(
@@ -356,7 +356,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
        .base64EncodedString()
     ]
 
-    var environment = ServerEnvironment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchDailyChallengeById = { _ in
       pure(
@@ -455,7 +455,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = ServerEnvironment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchDailyChallengeResults = { request in
       pure(

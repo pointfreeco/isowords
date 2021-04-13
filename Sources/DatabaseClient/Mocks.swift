@@ -1,4 +1,5 @@
 import Either
+import ServerTestHelpers
 import XCTestDynamicOverlay
 
 #if DEBUG
@@ -74,16 +75,4 @@ import XCTestDynamicOverlay
       updatePushSetting: { _, _, _ in .failing("\(Self.self).updatePushSetting is unimplemented") }
     )
   }
-
-  extension EitherIO where E == Error {
-    static func failing(_ title: String) -> Self {
-      .init(
-        run: .init {
-          XCTFail("\(title): EitherIO is unimplemented")
-          return .left(AnError())
-        })
-    }
-  }
-
-  struct AnError: Error {}
 #endif

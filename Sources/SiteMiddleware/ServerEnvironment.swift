@@ -52,7 +52,7 @@ public struct ServerEnvironment {
   import XCTestDynamicOverlay
 
   extension ServerEnvironment {
-    public static let unimplemented = Self(
+    public static let failing = Self(
       changelog: {
         XCTFail("changelog is unimplemented.")
         return .current
@@ -64,14 +64,14 @@ public struct ServerEnvironment {
       },
       dictionary: .failing,
       envVars: EnvVars(appEnv: .testing),
-      itunes: .unimplemented,
-      mailgun: .unimplemented,
+      itunes: .failing,
+      mailgun: .failing,
       randomCubes: {
         XCTFail("randomCubes is unimplemented.")
         return .mock
       },
-      router: .unimplemented,
-      snsClient: .unimplemented
+      router: .failing,
+      snsClient: .failing
     )
   }
 #endif

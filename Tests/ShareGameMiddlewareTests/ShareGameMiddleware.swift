@@ -57,7 +57,7 @@ class ShareGameMiddlewareTests: XCTestCase {
       puzzle: .mock
     )
 
-    let environment = update(ServerEnvironment.unimplemented) {
+    let environment = update(ServerEnvironment.failing) {
       $0.database.fetchSharedGame = { _ in pure(sharedGame) }
     }
 
@@ -114,7 +114,7 @@ class ShareGameMiddlewareTests: XCTestCase {
       puzzle: .mock
     )
 
-    let environment = update(ServerEnvironment.unimplemented) {
+    let environment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchSharedGame = { _ in pure(sharedGame) }
     }
@@ -190,7 +190,7 @@ class ShareGameMiddlewareTests: XCTestCase {
       puzzle: .mock
     )
 
-    let environment = update(ServerEnvironment.unimplemented) {
+    let environment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.insertSharedGame = { completedGame, player in pure(sharedGame) }
     }

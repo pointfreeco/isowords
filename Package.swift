@@ -111,6 +111,7 @@ var package = Package(
         "SharedModels",
         .product(name: "ApplicativeRouter", package: "Web"),
         .product(name: "Tagged", package: "swift-tagged"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .testTarget(
@@ -1039,6 +1040,7 @@ package.products.append(contentsOf: [
   .library(name: "RunnerTasks", targets: ["RunnerTasks"]),
   .library(name: "ServerBootstrap", targets: ["ServerBootstrap"]),
   .library(name: "ServerConfigMiddleware", targets: ["ServerConfigMiddleware"]),
+  .library(name: "ServerTestHelpers", targets: ["ServerTestHelpers"]),
   .library(name: "ShareGameMiddleware", targets: ["ShareGameMiddleware"]),
   .library(name: "SiteMiddleware", targets: ["SiteMiddleware"]),
   .library(name: "SnsClient", targets: ["SnsClient"]),
@@ -1105,6 +1107,7 @@ package.targets.append(contentsOf: [
     name: "DatabaseClient",
     dependencies: [
       "Build",
+      "ServerTestHelpers",
       "SharedModels",
       "SnsClient",
       .product(name: "Either", package: "Prelude"),
@@ -1178,6 +1181,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "MailgunClient",
     dependencies: [
+      "ServerTestHelpers",
       .product(name: "Either", package: "Prelude"),
       .product(name: "Tagged", package: "swift-tagged"),
       .product(name: "UrlFormEncoding", package: "Web"),
@@ -1266,6 +1270,13 @@ package.targets.append(contentsOf: [
       .product(name: "HttpPipeline", package: "Web"),
     ]
   ),
+  .target(
+    name: "ServerTestHelpers",
+    dependencies: [
+      .product(name: "Either", package: "Prelude"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+    ]
+  ),
   .testTarget(
     name: "ServerConfigMiddlewareTests",
     dependencies: [
@@ -1340,8 +1351,10 @@ package.targets.append(contentsOf: [
   .target(
     name: "SnsClient",
     dependencies: [
+      "ServerTestHelpers",
       .product(name: "Either", package: "Prelude"),
       .product(name: "Tagged", package: "swift-tagged"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ]
   ),
   .testTarget(
@@ -1364,6 +1377,7 @@ package.targets.append(contentsOf: [
       "DatabaseClient",
       "MiddlewareHelpers",
       "ServerRouter",
+      "ServerTestHelpers",
       "SharedModels",
       .product(name: "HttpPipeline", package: "Web"),
       .product(name: "Overture", package: "Overture"),

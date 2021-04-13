@@ -1,7 +1,11 @@
+import ServerTestHelpers
+
 #if DEBUG
   extension MailgunClient {
-    public static let unimplemented = Self(
-      sendEmail: { _ in fatalError() }
+    public static let failing = Self(
+      sendEmail: { _ in
+        .failing("\(Self.self).sendEmail is unimplemented")
+      }
     )
   }
 #endif

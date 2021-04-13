@@ -87,7 +87,7 @@ class LeaderboardFeatureTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(ServerEnvironment.unimplemented) {
+    let siteEnvironment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure([vocabEntry])

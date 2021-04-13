@@ -1,5 +1,6 @@
 import Either
 import Foundation
+import ServerTestHelpers
 import SharedModels
 
 #if canImport(FoundationNetworking)
@@ -57,9 +58,15 @@ extension ItunesClient {
 
 #if DEBUG
   extension ItunesClient {
-    public static let unimplemented = Self(verify: { _, _ in fatalError() })
+    public static let failing = Self(
+      verify: { _, _ in
+        .failing("\(Self.self).verify is unimplemented")
+      }
+    )
   }
 #endif
+
+import XCTestDynamicOverlay
 
 private let decoder = JSONDecoder()
 private let encoder = JSONEncoder()

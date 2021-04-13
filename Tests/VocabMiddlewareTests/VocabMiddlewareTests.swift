@@ -32,7 +32,7 @@ class VocabMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchVocabLeaderboardWord = { wordId in
       XCTAssertEqual(

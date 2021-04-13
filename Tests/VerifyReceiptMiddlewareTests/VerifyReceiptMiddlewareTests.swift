@@ -28,7 +28,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     var updatedPlayerId: Player.Id?
     var updatedAppleResponse: AppleVerifyReceiptResponse?
 
-    let environment = update(ServerEnvironment.unimplemented) {
+    let environment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in
         pure(.blob)
       }
@@ -115,7 +115,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     var updatedPlayerId: Player.Id?
     var updatedData: AppleVerifyReceiptResponse?
 
-    let environment = update(ServerEnvironment.unimplemented) {
+    let environment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in
         pure(.blob)
       }
@@ -202,7 +202,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     var updatedData: AppleVerifyReceiptResponse?
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.itunes.verify = { data, environment in
           environment == .sandbox
