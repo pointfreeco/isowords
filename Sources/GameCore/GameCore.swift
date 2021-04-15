@@ -25,6 +25,7 @@ import RemoteNotificationsClient
 import ServerConfigClient
 import SharedModels
 import SwiftUI
+import TcaHelpers
 import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
@@ -713,8 +714,7 @@ extension GameState {
           .map { index in
             environment.audioPlayer
               .play(.cubeRemove)
-              .debounce(
-                id: index,
+              .deferred(
                 for: .milliseconds(removeCubeDelay(index: index)),
                 scheduler: environment.mainQueue
               )
