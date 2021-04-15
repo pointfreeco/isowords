@@ -1,5 +1,5 @@
-import ComposableArchitecture
 import Combine
+import ComposableArchitecture
 
 extension Effect {
   public func deferred<S: Scheduler>(
