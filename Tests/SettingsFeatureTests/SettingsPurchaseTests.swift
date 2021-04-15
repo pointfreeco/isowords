@@ -121,7 +121,7 @@ class SettingsPurchaseTests: XCTestCase {
     XCTAssertEqual(didRestoreCompletedTransactions, true)
     storeKitObserver.send(.updatedTransactions([.restored]))
     storeKitObserver.send(.removedTransactions([.restored]))
-    storeKitObserver.send(.restoreCompletedTransactionsFinished)
+    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: [.restored]))
 
     store.receive(SettingsAction.paymentTransaction(.updatedTransactions([.restored])))
     store.receive(SettingsAction.paymentTransaction(.removedTransactions([.restored])))
@@ -129,7 +129,113 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = false
       $0.fullGamePurchasedAt = .mock
     }
-    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished))
+    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored])))
+    store.send(.onDismiss)
+  }
+
+  func testRestore_NoPurchasesPath() throws {
+    var didRestoreCompletedTransactions = false
+    let storeKitObserver = PassthroughSubject<
+      StoreKitClient.PaymentTransactionObserverEvent, Never
+    >()
+
+    var environment = self.defaultEnvironment
+    environment.serverConfig.config = {
+      .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
+    }
+    environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
+    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
+    environment.storeKit.restoreCompletedTransactions = {
+      .fireAndForget {
+        didRestoreCompletedTransactions = true
+      }
+    }
+    environment.storeKit.fetchProducts = { _ in
+      .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
+    }
+    environment.storeKit.observer = storeKitObserver.eraseToEffect()
+
+    let store = TestStore(
+      initialState: SettingsState(),
+      reducer: settingsReducer,
+      environment: environment
+    )
+
+    store.send(.onAppear) {
+      $0.buildNumber = 42
+      $0.developer.currentBaseUrl = .localhost
+    }
+    store.receive(
+      .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
+    ) {
+      $0.fullGameProduct = .success(.fullGame)
+    }
+    store.send(.restoreButtonTapped) {
+      $0.isRestoring = true
+    }
+
+    XCTAssertEqual(didRestoreCompletedTransactions, true)
+    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: []))
+
+    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: []))) {
+      $0.isRestoring = false
+      $0.alert = .noRestoredPurchases
+    }
+
+    store.send(.onDismiss)
+  }
+
+  func testRestore_ErrorPath() throws {
+    var didRestoreCompletedTransactions = false
+    let storeKitObserver = PassthroughSubject<
+      StoreKitClient.PaymentTransactionObserverEvent, Never
+    >()
+
+    var environment = self.defaultEnvironment
+    environment.serverConfig.config = {
+      .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
+    }
+    environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
+    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
+    environment.storeKit.restoreCompletedTransactions = {
+      .fireAndForget {
+        didRestoreCompletedTransactions = true
+      }
+    }
+    environment.storeKit.fetchProducts = { _ in
+      .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
+    }
+    environment.storeKit.observer = storeKitObserver.eraseToEffect()
+
+    let store = TestStore(
+      initialState: SettingsState(),
+      reducer: settingsReducer,
+      environment: environment
+    )
+
+    store.send(.onAppear) {
+      $0.buildNumber = 42
+      $0.developer.currentBaseUrl = .localhost
+    }
+    store.receive(
+      .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
+    ) {
+      $0.fullGameProduct = .success(.fullGame)
+    }
+    store.send(.restoreButtonTapped) {
+      $0.isRestoring = true
+    }
+
+    XCTAssertEqual(didRestoreCompletedTransactions, true)
+
+    let restoreCompletedTransactionsError = NSError(domain: "", code: 1)
+    storeKitObserver.send(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
+
+    store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))) {
+      $0.isRestoring = false
+      $0.alert = .restoredPurchasesFailed
+    }
+
     store.send(.onDismiss)
   }
 }

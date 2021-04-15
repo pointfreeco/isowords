@@ -272,6 +272,18 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
     return effect
 
+  case let .appDelegate(.scene(.quickAction(type: type))):
+    enum QuickAction: String {
+      case dailyChallenge
+    }
+
+    switch QuickAction(rawValue: type) {
+    case .dailyChallenge:
+      return Effect(value: .home(.setNavigation(tag: .dailyChallenge)))
+    case .none:
+      return .none  // No-op on unknown Quick Actions.
+    }
+
   case .appDelegate:
     return .none
 

@@ -25,6 +25,7 @@ import RemoteNotificationsClient
 import ServerConfigClient
 import SharedModels
 import SwiftUI
+import TcaHelpers
 import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
@@ -137,7 +138,6 @@ public struct GameState: Equatable {
         isSelectedWordValid: self.selectedWordIsValid,
         isTurnBasedMatch: self.turnBasedContext != nil,
         isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
-        selectedWordIsValid: self.selectedWordIsValid,
         wordSubmitButton: self.wordSubmitButton
       )
     }
@@ -663,19 +663,25 @@ extension GameState {
   }
 
   mutating func removeCube(at index: LatticePoint, playedAt: Date) {
-    guard self.cubes[index].isInPlay
+    let move = Move(
+      playedAt: playedAt,
+      playerIndex: self.turnBasedContext?.localPlayerIndex,
+      reactions: nil,
+      score: 0,
+      type: .removedCube(index)
+    )
+
+    let result = verify(
+      move: move,
+      on: &self.cubes,
+      isValidWord: { _ in false },
+      previousMoves: self.moves
+    )
+
+    guard result != nil
     else { return }
 
-    self.cubes[index].wasRemoved = true
-    self.moves.append(
-      Move(
-        playedAt: playedAt,
-        playerIndex: self.turnBasedContext?.localPlayerIndex,
-        reactions: nil,
-        score: 0,
-        type: .removedCube(index)
-      )
-    )
+    self.moves.append(move)
   }
 
   mutating func playSelectedWord(
@@ -684,38 +690,36 @@ extension GameState {
   ) -> Effect<GameAction, Never> {
     let soundEffects: Effect<Never, Never>
 
-    if self.selectedWordIsValid {
-      self.moves.append(
-        Move(
-          playedAt: environment.mainRunLoop.now.date,
-          playerIndex: self.turnBasedContext?.localPlayerIndex,
-          reactions: zip(self.turnBasedContext?.localPlayerIndex, reaction)
-            .map { [$0: $1] },
-          score: self.selectedWordScore,
-          type: .playedWord(self.selectedWord)
-        )
-      )
+    let move = Move(
+      playedAt: environment.mainRunLoop.now.date,
+      playerIndex: self.turnBasedContext?.localPlayerIndex,
+      reactions: zip(self.turnBasedContext?.localPlayerIndex, reaction)
+        .map { [$0: $1] },
+      score: self.selectedWordScore,
+      type: .playedWord(self.selectedWord)
+    )
 
-      var removedCubes: [LatticePoint] = []
-      self.selectedWord.forEach { cube in
-        let wasInPlay = self.cubes[cube.index].isInPlay
-        self.cubes[cube.index][cube.side].useCount += 1
-        if wasInPlay && !self.cubes[cube.index].isInPlay {
-          removedCubes.append(cube.index)
-        }
-      }
+    let result = verify(
+      move: move,
+      on: &self.cubes,
+      isValidWord: { environment.dictionary.contains($0, self.language) },
+      previousMoves: self.moves
+    )
 
+    if result != nil {
+      self.moves.append(move)
       soundEffects = .merge(
-        removedCubes.map { index in
-          environment.audioPlayer
-            .play(.cubeRemove)
-            .debounce(
-              id: index,
-              for: .milliseconds(removeCubeDelay(index: index)),
-              scheduler: environment.mainQueue
-            )
-            .fireAndForget()
-        }
+        self
+          .selectedWord.compactMap { !self.cubes[$0.index].isInPlay ? $0.index : nil }
+          .map { index in
+            environment.audioPlayer
+              .play(.cubeRemove)
+              .deferred(
+                for: .milliseconds(removeCubeDelay(index: index)),
+                scheduler: environment.mainQueue
+              )
+              .fireAndForget()
+          }
       )
     } else {
       soundEffects = .none

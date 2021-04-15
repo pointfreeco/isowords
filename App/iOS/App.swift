@@ -6,6 +6,7 @@ import Build
 import ComposableArchitecture
 import CryptoKit
 import DictionarySqliteClient
+import Overture
 import ServerConfig
 import ServerConfigClient
 import Styleguide
@@ -18,10 +19,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     reducer: appReducer,
     environment: .live
   )
-  lazy var viewStore = ViewStore(
-    self.store.scope(state: { _ in () }),
-    removeDuplicates: ==
-  )
+  private(set) lazy var viewStore = ViewStore(self.store.stateless)
 
   func application(
     _ application: UIApplication,
@@ -45,6 +43,35 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     self.viewStore.send(
       .appDelegate(.didRegisterForRemoteNotifications(.failure(error as NSError)))
     )
+  }
+
+  func application(
+    _ application: UIApplication,
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    updateObject(
+      .init(
+        name: "isowords Configuration",
+        sessionRole: connectingSceneSession.role
+      )
+    ) {
+      $0.delegateClass = SceneDelegate.self
+    }
+  }
+
+  final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
+    func windowScene(
+      _ windowScene: UIWindowScene,
+      performActionFor shortcutItem: UIApplicationShortcutItem,
+      completionHandler: @escaping (Bool) -> Void
+    ) {
+      self.appDelegate.viewStore.send(
+        .appDelegate(.scene(.quickAction(type: shortcutItem.type)))
+      )
+    }
   }
 }
 
