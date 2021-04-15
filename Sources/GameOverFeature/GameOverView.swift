@@ -280,7 +280,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         .map(SubmitGameResponse.solo)
         .catchToEffect()
         .map(GameOverAction.submitGameResponse)
-      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest.init(
+      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
         completedGame: state.completedGame)
       {
         submitGameEffect = environment.apiClient.apiRequest(

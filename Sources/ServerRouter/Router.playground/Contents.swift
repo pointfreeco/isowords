@@ -11,18 +11,28 @@ let router = ServerRouter.router(
 )
 
 router
-  .match(string: "https://www.isowords.xyz/") // .home
+  .match(string: "https://www.isowords.xyz/")
 
 router
-  .match(string: "https://www.isowords.xyz/privacy-policy") // .privacyPolicy
-
-router.request(for: .api(.init(accessToken: .init(rawValue: UUID()), isDebug: false, route: .dailyChallenge(.today(language: .en)))))
+  .match(string: "https://www.isowords.xyz/privacy-policy")
 
 router
-  .match(string: "api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en")
+  .request(
+    for: .api(
+      .init(
+        accessToken: .init(rawValue: UUID()),
+        isDebug: false,
+        route: .dailyChallenge(.today(language: .en))
+      )
+    )
+  )
+
+router
+  .match(
+    string: "api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en"
+  )
 router
   .match(string: "api/daily-challenges")
-
 
 router
   .request(
@@ -60,5 +70,3 @@ router.request(
     )
   )
 )
-
-//api/daily-challenges/today?accessToken=3EE1B177-CCCD-4E75-838B-B5F6AF5068F5&language=en
