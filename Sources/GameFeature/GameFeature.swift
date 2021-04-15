@@ -96,7 +96,6 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
 
       switch action {
       case .game(.gameCenter(.listener(.turnBased(.receivedTurnEventForMatch)))):
-        print(1)
         guard
           let game = state.game,
           let turnBasedContext = game.turnBasedContext
@@ -115,7 +114,6 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
           .fireAndForget()
 
       case let .replay(.begin(startIndex)):
-        print(2)
         guard
           let game = state.game,
           startIndex <= game.moves.endIndex
@@ -279,11 +277,15 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
             .eraseToEffect()
         )
 
-        return .concatenate(
+        return Effect.concatenate(
           Effect.concatenate(effects)
             .cancellable(id: ReplayId()),
 
           .init(value: .replay(.end(finalCubes: finalCubes)))
+        )
+        .cancellable(
+          id: { struct Id: Hashable {}; return Id() }(),
+          cancelInFlight: true
         )
 
       case .replay(.deselectLastFace):
