@@ -16,7 +16,7 @@ import XCTest
 @testable import LocalDatabaseClient
 @testable import UserDefaultsClient
 
-class GameOverFeatureIntegrationTests123: XCTestCase {
+class GameOverFeatureIntegrationTests: XCTestCase {
   func testBasics() {
     let ranks: [TimeScope: LeaderboardScoreResult.Rank] = [
       .allTime: .init(outOf: 100, rank: 10000),
