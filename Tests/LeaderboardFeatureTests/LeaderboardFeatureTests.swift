@@ -100,7 +100,7 @@ class LeaderboardFeatureTests: XCTestCase {
     let middleware = siteMiddleware(environment: siteEnvironment)
 
     let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
-      $0.apiClient = ApiClient(middleware: middleware)
+      $0.apiClient = ApiClient(middleware: middleware, router: .mock)
       $0.mainQueue = .immediate
     }
 

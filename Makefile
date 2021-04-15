@@ -52,6 +52,10 @@ build-client-preview-apps:
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
 		-workspace isowords.xcworkspace \
+		-scheme LeaderboardsPreview \
+		-destination platform="$(PLATFORM_IOS)"
+	@xcodebuild \
+		-workspace isowords.xcworkspace \
 		-scheme OnboardingPreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
