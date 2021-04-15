@@ -50,31 +50,6 @@ struct LeaderboardsPreviewApp: App {
         )
       )
     )
-//      route: .leaderboard(
-//        .fetch(
-//          gameMode: .timed,
-//          language: .en,
-//          timeScope: .lastWeek
-//        )
-//      ),
-//      withResponse: Effect.ok(
-//        FetchLeaderboardResponse(
-//          entries: (1...20).map { index in
-//            .init(
-//              id: .init(rawValue: UUID()),
-//              isSupporter: false,
-//              isYourScore: false,
-//              outOf: 2_000,
-//              playerDisplayName: "Blob \(index)",
-//              rank: index,
-//              score: 4_000 - index * 100
-//            )
-//          }
-//        )
-//      )
-//      .delay(for: 1, scheduler: DispatchQueue.main)
-//      .eraseToEffect()
-//    )
 
     return WindowGroup {
       LeaderboardView(
