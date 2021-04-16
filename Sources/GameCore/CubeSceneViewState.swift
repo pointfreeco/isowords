@@ -22,23 +22,26 @@ extension CubeSceneView.ViewState {
 
     let cubes = game.replay?.cubes ?? game.cubes
 
+    print("game.replay != nil", game.replay != nil)
+    print("game.replay?.nub", game.replay?.nub)
+
     self.init(
-      cubes: cubes.enumerated().map { x, cubes in
-        cubes.enumerated().map { y, cubes in
-          cubes.enumerated().map { z, _ in
+      cubes: cubes.enumerated().map { x, xCubes in
+        xCubes.enumerated().map { y, yCubes in
+          yCubes.enumerated().map { z, _ in
             CubeNode.ViewState(
-              viewState: game,
-              index: .init(x: x, y: y, z: z)
+              cubes: cubes,
+              cubeStartedShakingAt: game.cubeStartedShakingAt, // TODO: replay state?
+              index: .init(x: x, y: y, z: z),
+              selectedWord: game.replay?.selectedWord ?? game.selectedWord,
+              selectedWordIsValid: game.replay?.selectedWordIsValid ?? game.selectedWordIsValid
             )
           }
         }
       },
       isOnLowPowerMode: game.isOnLowPowerMode,
       nub: nub ?? game.replay?.nub,
-      playedWords: game.playedWords,
-      selectedFaceCount: game.replay?.selectedWord.count ?? game.selectedWord.count,
-      selectedWordIsValid: game.replay?.selectedWordIsValid ?? game.selectedWordIsValid,
-      selectedWordString: game.replay?.selectedWordString ?? game.selectedWordString,
+      playedWordsCount: game.playedWords.count,
       settings: settings
     )
   }
@@ -58,16 +61,22 @@ extension CubeSceneView.ViewAction {
 }
 
 extension CubeNode.ViewState {
-  init(viewState: GameState, index: LatticePoint) {
-    let isInPlay = viewState.cubes[index].isInPlay
+  init(
+    cubes: Puzzle,
+    cubeStartedShakingAt: Date?,
+    index: LatticePoint,
+    selectedWord: [IndexedCubeFace],
+    selectedWordIsValid: Bool
+  ) {
+    let isInPlay = cubes[index].isInPlay
 
     let leftIndex = IndexedCubeFace(index: index, side: .left)
     let left = CubeFaceNode.ViewState(
-      cubeFace: viewState.cubes[index].left,
-      status: viewState.selectedWord.contains(leftIndex)
+      cubeFace: cubes[index].left,
+      status: selectedWord.contains(leftIndex)
         ? .selected
-        : viewState.selectedWord.last.map {
-          $0.isTouching(leftIndex) && viewState.cubes.isPlayable(side: .left, index: index)
+        : selectedWord.last.map {
+          $0.isTouching(leftIndex) && cubes.isPlayable(side: .left, index: index)
             ? .selectable
             : .deselected
         }
@@ -76,11 +85,11 @@ extension CubeNode.ViewState {
 
     let rightIndex = IndexedCubeFace(index: index, side: .right)
     let right = CubeFaceNode.ViewState(
-      cubeFace: viewState.cubes[index].right,
-      status: viewState.selectedWord.contains(rightIndex)
+      cubeFace: cubes[index].right,
+      status: selectedWord.contains(rightIndex)
         ? .selected
-        : viewState.selectedWord.last.map {
-          $0.isTouching(rightIndex) && viewState.cubes.isPlayable(side: .right, index: index)
+        : selectedWord.last.map {
+          $0.isTouching(rightIndex) && cubes.isPlayable(side: .right, index: index)
             ? .selectable
             : .deselected
         }
@@ -89,11 +98,11 @@ extension CubeNode.ViewState {
 
     let topIndex = IndexedCubeFace(index: index, side: .top)
     let top = CubeFaceNode.ViewState(
-      cubeFace: viewState.cubes[index].top,
-      status: viewState.selectedWord.contains(topIndex)
+      cubeFace: cubes[index].top,
+      status: selectedWord.contains(topIndex)
         ? .selected
-        : viewState.selectedWord.last.map {
-          $0.isTouching(topIndex) && viewState.cubes.isPlayable(side: .top, index: index)
+        : selectedWord.last.map {
+          $0.isTouching(topIndex) && cubes.isPlayable(side: .top, index: index)
             ? .selectable
             : .deselected
         }
@@ -101,13 +110,13 @@ extension CubeNode.ViewState {
     )
 
     let isCriticallySelected =
-      viewState.selectedWordIsValid
+      selectedWordIsValid
       && (left.status == .selected && left.cubeFace.useCount == 2
         || right.status == .selected && right.cubeFace.useCount == 2
         || top.status == .selected && top.cubeFace.useCount == 2)
 
     self = .init(
-      cubeShakeStartedAt: viewState.cubeStartedShakingAt,
+      cubeShakeStartedAt: cubeStartedShakingAt,
       index: index,
       isCriticallySelected: isCriticallySelected,
       isInPlay: isInPlay,

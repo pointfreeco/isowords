@@ -14,29 +14,20 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     public var cubes: ViewPuzzle
     public var isOnLowPowerMode: Bool
     public var nub: NubState?
-    public var playedWords: [PlayedWord]
-    public var selectedFaceCount: Int
-    public var selectedWordIsValid: Bool
-    public var selectedWordString: String
+    public var playedWordsCount: Int
     public var settings: Settings
 
     public init(
       cubes: ViewPuzzle,
       isOnLowPowerMode: Bool,
       nub: NubState?,
-      playedWords: [PlayedWord],
-      selectedFaceCount: Int,
-      selectedWordIsValid: Bool,
-      selectedWordString: String,
+      playedWordsCount: Int,
       settings: Settings
     ) {
       self.cubes = cubes
       self.isOnLowPowerMode = isOnLowPowerMode
       self.nub = nub
-      self.playedWords = playedWords
-      self.selectedFaceCount = selectedFaceCount
-      self.selectedWordIsValid = selectedWordIsValid
-      self.selectedWordString = selectedWordString
+      self.playedWordsCount = playedWordsCount
       self.settings = settings
     }
 
@@ -220,7 +211,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       }
       .store(in: &self.cancellables)
 
-    self.viewStore.publisher.playedWords // TODO: playedWordsCount
+    self.viewStore.publisher.playedWordsCount 
       .sink { [weak self] _ in self?.startingAttitude = nil }
       .store(in: &self.cancellables)
 
@@ -258,6 +249,8 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       .removeDuplicates()
       .sink { [weak self] location in
         guard let self = self else { return }
+
+        print("self.viewStore.publisher.nub", location)
 
         nub.isHidden = false
 

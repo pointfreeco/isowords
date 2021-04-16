@@ -19,7 +19,7 @@ public enum ReplayAction: Equatable {
   case begin(moveIndex: Int)
   case deselectLastFace
   case enableSubmitButton
-  case end(finalCubes: Puzzle)
+  case end
   case lastTurnMoves
   case nub(BindingAction<CubeSceneView.ViewState.NubState>)
   case playMove(Move)
@@ -185,29 +185,27 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
               }
             }
 //
-//            // Move the nub off screen once all words have been played
-//            effects.append(
-//              Effect(value: .nub(.set(\.location, .offScreenBottom)))
-//                .delay(for: .seconds(0.3), scheduler: environment.mainQueue)
-//                .receive(
-//                  on: environment.mainQueue
-//                    .animate(withDuration: moveNubOffScreenDuration, options: .curveEaseInOut)
-//                )
-//                .eraseToEffect()
-//            )
-//
-//            return Effect.concatenate(
-//              Effect.concatenate(effects)
+            // Move the nub off screen once all words have been played
+            effects.append(
+              Effect(value: .replay(.nub(.set(\.location, .offScreenBottom))))
+                .delay(for: .seconds(0.3), scheduler: environment.mainQueue)
+                .receive(
+                  on: environment.mainQueue
+                    .animate(withDuration: moveNubOffScreenDuration, options: .curveEaseInOut)
+                )
+                .eraseToEffect()
+            )
+
+            return Effect.concatenate(
+              Effect.concatenate(effects),
 //                .cancellable(id: ReplayId()),
-//
-//              .init(value: .replay(.end(finalCubes: finalCubes)))
-//            )
+
+              .init(value: .replay(.end))
+            )
 //            .cancellable(
 //              id: { struct Id: Hashable {}; return Id() }(),
 //              cancelInFlight: true
 //            )
-
-            return .none
 
 
 
@@ -222,7 +220,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             state.replay?.selectedWordIsValid = true
             return .none
 
-          case let .replay(.end(cubes)):
+          case let .replay(.end):
             state.replay = nil
             return .none
 
@@ -285,6 +283,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         hasBeenPlayed: { _, _ in false },
         puzzle: { $0.replay?.cubes ?? .mock },
         selectedWord: { $0.replay?.selectedWord ?? [] }
+      )
+      ._binding(
+        state: OptionalPath(\.replay).appending(path: \.nub),
+        action: (/GameAction.replay).appending(path: /ReplayAction.nub)
       )
   }
 }

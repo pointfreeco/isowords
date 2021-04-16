@@ -329,10 +329,7 @@ extension CubeSceneView.ViewState {
       },
       isOnLowPowerMode: state.isOnLowPowerMode,
       nub: state.nub,
-      playedWords: [],
-      selectedFaceCount: state.selectedCubeFaces.count,
-      selectedWordIsValid: selectedWordString == state.finalWordString,
-      selectedWordString: selectedWordString,
+      playedWordsCount: 0,
       settings: state.settings
     )
   }
