@@ -43,10 +43,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             )
             let replayMoves = state.moves.suffix(1)
 
+            guard !replayMoves.isEmpty else { return .none }
+
             state.replay = .init(
               cubes: cubes,
               moves: previousMoves,
-              nub: .init(duration: 0, location: .offScreenRight, isPressed: false),
+              nub: .init(location: .offScreenRight, isPressed: false),
               selectedWord: [],
               selectedWordIsValid: false
             )
@@ -149,42 +151,41 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 effects.append(tap)
 
               case let .removedCube(latticePoint):
-                break
-//                let side = CubeFace.Side(rawValue: index % CubeFace.Side.allCases.count)!
-//
-//                effects.append(contentsOf: [
-//                  // Move the nub to the cube
-//                  Effect(value: .replay(.nub(.set(\.location, .latticePoint(latticePoint)))))
-//                    .delay(
-//                      for: 0.2,
-//                      scheduler: environment.mainQueue
-//                        .animate(withDuration: moveNubToSubmitButtonDuration, options: .curveEaseInOut)
-//                    )
-//                    .eraseToEffect(),
-//
-//                  // Double-tap
-//                  tap
-//                    .delay(for: 0.65, scheduler: environment.mainQueue)
-//                    .eraseToEffect(),
-//
-//                  Effect(value: .replay(.selectFace(IndexedCubeFace(index: latticePoint, side: side)))),
-//
-//                  tap
-//                    .delay(for: 0.2, scheduler: environment.mainQueue)
-//                    .eraseToEffect(),
-//
-//                  Effect(value: .replay(.deselectLastFace)),
-//                ])
-//
-//                // Remove the cube
-//                effects.append(
-//                  Effect(value: .replay(.playMove(move)))
-//                    .delay(for: 0.2, scheduler: environment.mainQueue)
-//                    .eraseToEffect()
-//                )
+                let side = CubeFace.Side(rawValue: index % CubeFace.Side.allCases.count)!
+
+                effects.append(contentsOf: [
+                  // Move the nub to the cube
+                  Effect(value: .replay(.nub(.set(\.location, .latticePoint(latticePoint)))))
+                    .delay(
+                      for: 0.2,
+                      scheduler: environment.mainQueue
+                        .animate(withDuration: moveNubToSubmitButtonDuration, options: .curveEaseInOut)
+                    )
+                    .eraseToEffect(),
+
+                  // Double-tap
+                  tap
+                    .delay(for: 0.65, scheduler: environment.mainQueue)
+                    .eraseToEffect(),
+
+                  Effect(value: .replay(.selectFace(IndexedCubeFace(index: latticePoint, side: side)))),
+
+                  tap
+                    .delay(for: 0.2, scheduler: environment.mainQueue)
+                    .eraseToEffect(),
+
+                  Effect(value: .replay(.deselectLastFace)),
+                ])
+
+                // Remove the cube
+                effects.append(
+                  Effect(value: .replay(.playMove(move)))
+                    .delay(for: 0.2, scheduler: environment.mainQueue)
+                    .eraseToEffect()
+                )
               }
             }
-//
+
             // Move the nub off screen once all words have been played
             effects.append(
               Effect(value: .replay(.nub(.set(\.location, .offScreenBottom))))
@@ -199,16 +200,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             return Effect.concatenate(
               Effect.concatenate(effects),
 //                .cancellable(id: ReplayId()),
-
               .init(value: .replay(.end))
             )
 //            .cancellable(
 //              id: { struct Id: Hashable {}; return Id() }(),
 //              cancelInFlight: true
 //            )
-
-
-
 
           case .replay(.deselectLastFace):
             guard state.replay?.selectedWord.isEmpty == false else { return .none }
@@ -220,7 +217,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             state.replay?.selectedWordIsValid = true
             return .none
 
-          case let .replay(.end):
+          case .replay(.end):
             state.replay = nil
             return .none
 

@@ -19,12 +19,7 @@ extension CubeSceneView.ViewState {
     nub: CubeSceneView.ViewState.NubState?,
     settings: Settings
   ) {
-
     let cubes = game.replay?.cubes ?? game.cubes
-
-    print("game.replay != nil", game.replay != nil)
-    print("game.replay?.nub", game.replay?.nub)
-
     self.init(
       cubes: cubes.enumerated().map { x, xCubes in
         xCubes.enumerated().map { y, yCubes in

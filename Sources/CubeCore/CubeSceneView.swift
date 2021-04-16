@@ -32,22 +32,20 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     }
 
     public struct NubState: Equatable {
-      public var duration: TimeInterval
       public var location: Location
       public var isPressed: Bool
 
       public init(
-        duration: TimeInterval = 0,
         location: Location = .offScreenRight,
         isPressed: Bool = false
       ) {
-        self.duration = duration
         self.location = location
         self.isPressed = isPressed
       }
 
       public enum Location: Equatable {
         case face(IndexedCubeFace)
+        case latticePoint(LatticePoint)
         case offScreenBottom
         case offScreenRight
         case submitButton
@@ -250,11 +248,33 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       .sink { [weak self] location in
         guard let self = self else { return }
 
-        print("self.viewStore.publisher.nub", location)
-
         nub.isHidden = false
 
+        func move(to index: LatticePoint, side: CubeFace.Side? = nil) {
+          let linearIndex =
+            3 * 3 * index.x.rawValue
+            + 3 * index.y.rawValue
+            + index.z.rawValue
+
+          let node = side
+            .map { self.gameCubeNode.childNodes[linearIndex].childNodes[$0.rawValue] }
+            ?? self.gameCubeNode.childNodes[linearIndex]
+
+          let rootPosition = self.scene!.rootNode.convertPosition(.init(), from: node)
+          let screenPosition = self.projectPoint(rootPosition)
+          nub.transform = .init(
+            translationX: CGFloat(screenPosition.x) - nub.bounds.midX,
+            y: CGFloat(screenPosition.y) - nub.bounds.midY
+          )
+        }
+
         switch location {
+        case let .face(face):
+          move(to: face.index, side: face.side)
+
+        case let .latticePoint(index):
+          move(to: index)
+
         case .offScreenBottom:
           nub.transform = .init(
             translationX: UIScreen.main.bounds.width / 2,
@@ -264,23 +284,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
           nub.transform = .init(
             translationX: UIScreen.main.bounds.width + 10,
             y: UIScreen.main.bounds.height / 2
-          )
-
-        case let .face(face):
-          let linearIndex =
-            3 * 3 * face.index.x.rawValue
-            + 3 * face.index.y.rawValue
-            + face.index.z.rawValue
-
-          let faceNode = self.gameCubeNode
-            .childNodes[linearIndex]
-            .childNodes[face.side.rawValue]
-
-          let rootPosition = self.scene!.rootNode.convertPosition(.init(), from: faceNode)
-          let screenPosition = self.projectPoint(rootPosition)
-          nub.transform = .init(
-            translationX: CGFloat(screenPosition.x) - nub.bounds.midX,
-            y: CGFloat(screenPosition.y) - nub.bounds.midY
           )
 
         case .submitButton:
