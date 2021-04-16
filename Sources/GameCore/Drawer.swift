@@ -40,6 +40,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .gameOver,
       .lowPowerModeChanged,
       .matchesLoaded(.failure),
+      .replay,
       .savedGamesLoaded(.failure),
       .settingsButtonTapped,
       .timerTick,

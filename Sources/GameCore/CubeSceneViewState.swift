@@ -19,8 +19,11 @@ extension CubeSceneView.ViewState {
     nub: CubeSceneView.ViewState.NubState?,
     settings: Settings
   ) {
+
+    let cubes = game.replay?.cubes ?? game.cubes
+
     self.init(
-      cubes: game.cubes.enumerated().map { x, cubes in
+      cubes: cubes.enumerated().map { x, cubes in
         cubes.enumerated().map { y, cubes in
           cubes.enumerated().map { z, _ in
             CubeNode.ViewState(
@@ -31,11 +34,11 @@ extension CubeSceneView.ViewState {
         }
       },
       isOnLowPowerMode: game.isOnLowPowerMode,
-      nub: nub,
+      nub: nub ?? game.replay?.nub,
       playedWords: game.playedWords,
-      selectedFaceCount: game.selectedWord.count,
-      selectedWordIsValid: game.selectedWordIsValid,
-      selectedWordString: game.selectedWordString,
+      selectedFaceCount: game.replay?.selectedWord.count ?? game.selectedWord.count,
+      selectedWordIsValid: game.replay?.selectedWordIsValid ?? game.selectedWordIsValid,
+      selectedWordString: game.replay?.selectedWordString ?? game.selectedWordString,
       settings: settings
     )
   }

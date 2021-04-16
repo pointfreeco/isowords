@@ -220,7 +220,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       }
       .store(in: &self.cancellables)
 
-    self.viewStore.publisher.playedWords
+    self.viewStore.publisher.playedWords // TODO: playedWordsCount
       .sink { [weak self] _ in self?.startingAttitude = nil }
       .store(in: &self.cancellables)
 

@@ -27,6 +27,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         .matchesLoaded,
         .menuButtonTapped,
         .onAppear,
+        .replay,
         .savedGamesLoaded,
         .settingsButtonTapped,
         .timerTick,

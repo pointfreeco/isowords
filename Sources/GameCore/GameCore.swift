@@ -50,6 +50,7 @@ public struct GameState: Equatable {
   public var language: Language
   public var moves: Moves
   public var optimisticallySelectedFace: IndexedCubeFace?
+  public var replay: ReplayState?
   public var secondsPlayed: Int
   public var selectedWord: [IndexedCubeFace]
   public var selectedWordIsValid: Bool
@@ -76,6 +77,7 @@ public struct GameState: Equatable {
     language: Language = .en,
     moves: Moves = [],
     optimisticallySelectedFace: IndexedCubeFace? = nil,
+    replay: ReplayState? = nil,
     secondsPlayed: Int = 0,
     selectedWord: [IndexedCubeFace] = [],
     selectedWordIsValid: Bool = false,
@@ -101,6 +103,7 @@ public struct GameState: Equatable {
     self.language = language
     self.moves = moves
     self.optimisticallySelectedFace = optimisticallySelectedFace
+    self.replay = replay
     self.secondsPlayed = secondsPlayed
     self.selectedWord = selectedWord
     self.selectedWordIsValid = selectedWordIsValid
@@ -166,6 +169,7 @@ public enum GameAction: Equatable {
   case menuButtonTapped
   case onAppear
   case pan(UIGestureRecognizer.State, PanData?)
+  case replay(ReplayAction)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case settingsButtonTapped
   case submitButtonTapped(Move.Reaction?)
@@ -398,6 +402,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
       case .onAppear:
         guard !state.isGameOver else { return .none }
         state.gameCurrentTime = environment.date()
+
         return .onAppearEffects(
           environment: environment,
           gameContext: state.gameContext
@@ -436,6 +441,9 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
 
       case .pan:
         state.isPanning = false
+        return .none
+
+      case .replay:
         return .none
 
       case .savedGamesLoaded:
@@ -564,6 +572,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
   .combined(with: .turnBasedMatch)
   .combined(with: .activeGamesTray)
   .sounds()
+  .replay()
   .filterActionsForYourTurn()
   ._pullback(state: state, action: action, environment: environment)
   .haptics(
