@@ -17,11 +17,11 @@ extension WordListState {
   }
 
   init(replayState state: ReplayState) {
-    self.isTurnBasedGame = true // TODO: shoudl be in replay state?
+    self.isTurnBasedGame = state.localPlayerIndex != nil
     self.selectedWordIsEmpty = state.selectedWord.isEmpty
     self.words = state.moves.playedWords(
       cubes: state.cubes,
-      localPlayerIndex: nil // TODO: should be in replay state?
+      localPlayerIndex: state.localPlayerIndex
     )
   }
 }

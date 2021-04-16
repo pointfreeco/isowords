@@ -7,21 +7,17 @@ import SwiftUI
 public struct WordSubmitButtonFeatureState: Equatable {
   public var isSelectedWordValid: Bool
   public let isTurnBasedMatch: Bool
-  #warning("TODO: can we remove this?")
-  public let isYourTurn: Bool
   public var selectedWordIsEmpty: Bool
   public var wordSubmitButton: WordSubmitButtonState
 
   public init(
     isSelectedWordValid: Bool,
     isTurnBasedMatch: Bool,
-    isYourTurn: Bool,
     selectedWordIsEmpty: Bool,
     wordSubmitButton: WordSubmitButtonState
   ) {
     self.isSelectedWordValid = isSelectedWordValid
     self.isTurnBasedMatch = isTurnBasedMatch
-    self.isYourTurn = isYourTurn
     self.selectedWordIsEmpty = selectedWordIsEmpty
     self.wordSubmitButton = wordSubmitButton
   }
@@ -71,9 +67,6 @@ let wordSubmitReducer = Reducer<
 > { state, action, environment in
 
   struct SubmitButtonPressedDelayId: Hashable {}
-
-  guard state.isYourTurn
-  else { return .none }
 
   switch action {
   case .backgroundTapped:
@@ -310,7 +303,6 @@ struct ReactionsView: View {
             initialState: WordSubmitButtonFeatureState(
               isSelectedWordValid: true,
               isTurnBasedMatch: true,
-              isYourTurn: true,
               selectedWordIsEmpty: false,
               wordSubmitButton: .init()
             ),

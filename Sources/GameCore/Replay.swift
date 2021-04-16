@@ -1,3 +1,4 @@
+import ClientModels
 import ComposableArchitecture
 import CubeCore
 import SelectionSoundsCore
@@ -5,6 +6,9 @@ import SharedModels
 
 public struct ReplayState: Equatable {
   var cubes: Puzzle
+  var gameContext: GameContext
+  var isYourTurn: Bool
+  var localPlayerIndex: Move.PlayerIndex?
   var moves: Moves
   var nub: CubeSceneView.ViewState.NubState
   var selectedWord: [IndexedCubeFace]
@@ -62,6 +66,9 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
             state.replay = .init(
               cubes: cubes,
+              gameContext: state.gameContext,
+              isYourTurn: replayMoves.first?.playerIndex == state.turnBasedContext?.localPlayerIndex,
+              localPlayerIndex: state.turnBasedContext?.localPlayerIndex,
               moves: previousMoves,
               nub: .init(location: .offScreenRight, isPressed: false),
               selectedWord: [],

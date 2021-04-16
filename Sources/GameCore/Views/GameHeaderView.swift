@@ -23,7 +23,6 @@ public struct GameHeaderState: Equatable {
   let you: ComposableGameCenter.Player?
   let yourScore: Int
 
-
   init(gameState state: GameState) {
     self.isTurnBasedGame = state.turnBasedContext != nil
     self.selectedWordString = state.selectedWordString
@@ -50,20 +49,23 @@ public struct GameHeaderState: Equatable {
   }
 
   init(replayState state: ReplayState) {
-    self.isTurnBasedGame = false // TODO: replay state
+    let turnBasedContext = (/GameContext.turnBased).extract(from: state.gameContext)
+    self.isTurnBasedGame = turnBasedContext != nil
     self.selectedWordString = state.selectedWordString
-    self.currentScore = 0 // TODO: replay state
-    self.gameContext = .solo // TODO: replay state
-    self.gameMode = .unlimited // TODO: replay state
-    self.secondsRemaining = 100 // TODO: replay state
+    self.currentScore = state.moves.reduce(into: 0) { $0 += $1.score }
+    self.gameContext = state.gameContext
+    self.gameMode = .unlimited
+    self.secondsRemaining = 0
     self.selectedWordHasAlreadyBeenPlayed = false
     self.selectedWordIsValid = state.selectedWordIsValid
     self.selectedWordScore = score(state.selectedWordString)
-    self.isYourTurn = false // todo: replay state
-    self.opponent = nil // todo: replay state
-    self.you = nil // todo: replay state
-    self.yourScore = 0 // todo: replay state
-    self.opponentScore = 0 // todo: replay state
+    self.isYourTurn = state.isYourTurn
+    self.opponent = turnBasedContext?.otherPlayer
+    self.opponentScore = state.moves
+      .reduce(into: 0) { $0 += $1.playerIndex == turnBasedContext?.localPlayerIndex ? 0 : $1.score }
+    self.you = turnBasedContext?.localPlayer.player
+    self.yourScore = state.moves
+      .reduce(into: 0) { $0 += $1.playerIndex == turnBasedContext?.localPlayerIndex ? $1.score : 0 }
   }
 }
 

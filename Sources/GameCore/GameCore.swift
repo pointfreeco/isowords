@@ -141,7 +141,6 @@ public struct GameState: Equatable {
         ?? .init(
           isSelectedWordValid: self.selectedWordIsValid,
           isTurnBasedMatch: self.turnBasedContext != nil,
-          isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
           selectedWordIsEmpty: self.selectedWord.isEmpty,
           wordSubmitButton: self.wordSubmitButton
         )
@@ -160,7 +159,6 @@ extension ReplayState {
       .init(
         isSelectedWordValid: self.selectedWordIsValid,
         isTurnBasedMatch: false, // TODO: replay state
-        isYourTurn: false, // TODO: replay state
         selectedWordIsEmpty: self.selectedWord.isEmpty,
         wordSubmitButton: .init(
           areReactionsOpen: false,
