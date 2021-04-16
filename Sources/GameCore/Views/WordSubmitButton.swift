@@ -7,18 +7,22 @@ import SwiftUI
 public struct WordSubmitButtonFeatureState: Equatable {
   public var isSelectedWordValid: Bool
   public let isTurnBasedMatch: Bool
+  #warning("TODO: can we remove this?")
   public let isYourTurn: Bool
+  public var selectedWordIsEmpty: Bool
   public var wordSubmitButton: WordSubmitButtonState
 
   public init(
     isSelectedWordValid: Bool,
     isTurnBasedMatch: Bool,
     isYourTurn: Bool,
+    selectedWordIsEmpty: Bool,
     wordSubmitButton: WordSubmitButtonState
   ) {
     self.isSelectedWordValid = isSelectedWordValid
     self.isTurnBasedMatch = isTurnBasedMatch
     self.isYourTurn = isYourTurn
+    self.selectedWordIsEmpty = selectedWordIsEmpty
     self.wordSubmitButton = wordSubmitButton
   }
 }
@@ -164,81 +168,93 @@ public struct WordSubmitButton: View {
   let store: Store<WordSubmitButtonFeatureState, WordSubmitButtonAction>
   @ObservedObject var viewStore: ViewStore<WordSubmitButtonFeatureState, WordSubmitButtonAction>
   @State var isTouchDown = false
+  let isAnimationReduced: Bool
 
   public init(
+    isAnimationReduced: Bool,
     store: Store<WordSubmitButtonFeatureState, WordSubmitButtonAction>
   ) {
+    self.isAnimationReduced = isAnimationReduced
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
 
   public var body: some View {
-    ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
-      if self.viewStore.wordSubmitButton.areReactionsOpen {
-        RadialGradient(
-          gradient: Gradient(colors: [.white, Color.white.opacity(0)]),
-          center: .bottom,
-          startRadius: 0,
-          endRadius: 350
-        )
-        .transition(.opacity)
-      }
-
-      VStack {
-        Spacer()
-
-        ZStack {
-          ReactionsView(store: self.store.scope(state: \.wordSubmitButton))
-
-          Button(action: {
-            self.viewStore.send(.submitButtonTapped, animation: .default)
-          }) {
-            Group {
-              if !self.viewStore.wordSubmitButton.areReactionsOpen {
-                Image(systemName: "hand.thumbsup")
-              } else {
-                Image(systemName: "xmark")
-              }
-            }
-            .frame(
-              width: self.deviceState.idiom == .pad ? 100 : 80,
-              height: self.deviceState.idiom == .pad ? 100 : 80
-            )
-            .background(Circle().fill(Color.adaptiveBlack))
-            .foregroundColor(.adaptiveWhite)
-            .opacity(self.viewStore.isSelectedWordValid ? 1 : 0.5)
-            .font(.system(size: self.deviceState.isPad ? 40 : 30))
-            .adaptivePadding([.all], .grid(4))
-            // NB: Expand the tappable radius of the button.
-            .background(Color.black.opacity(0.0001))
-          }
-          .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-              .onChanged { touch in
-                if !self.isTouchDown {
-                  self.viewStore.send(.submitButtonPressed, animation: .default)
-                }
-                self.isTouchDown = true
-              }
-              .onEnded { _ in
-                self.viewStore.send(.submitButtonReleased, animation: .default)
-                self.isTouchDown = false
-              }
+    if !self.viewStore.selectedWordIsEmpty {
+      ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
+        if self.viewStore.wordSubmitButton.areReactionsOpen {
+          RadialGradient(
+            gradient: Gradient(colors: [.white, Color.white.opacity(0)]),
+            center: .bottom,
+            startRadius: 0,
+            endRadius: 350
           )
+          .transition(.opacity)
         }
-        .padding()
-      }
 
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(
-      self.viewStore.wordSubmitButton.areReactionsOpen
-        ? Color.isowordsBlack.opacity(0.4)
-        : nil
-    )
-    .animation(.default)
-    .onTapGesture {
-      self.viewStore.send(.backgroundTapped, animation: .default)
+        VStack {
+          Spacer()
+
+          ZStack {
+            ReactionsView(store: self.store.scope(state: \.wordSubmitButton))
+
+            Button(action: {
+              self.viewStore.send(.submitButtonTapped, animation: .default)
+            }) {
+              Group {
+                if !self.viewStore.wordSubmitButton.areReactionsOpen {
+                  Image(systemName: "hand.thumbsup")
+                } else {
+                  Image(systemName: "xmark")
+                }
+              }
+              .frame(
+                width: self.deviceState.idiom == .pad ? 100 : 80,
+                height: self.deviceState.idiom == .pad ? 100 : 80
+              )
+              .background(Circle().fill(Color.adaptiveBlack))
+              .foregroundColor(.adaptiveWhite)
+              .opacity(self.viewStore.isSelectedWordValid ? 1 : 0.5)
+              .font(.system(size: self.deviceState.isPad ? 40 : 30))
+              .adaptivePadding([.all], .grid(4))
+              // NB: Expand the tappable radius of the button.
+              .background(Color.black.opacity(0.0001))
+            }
+            .simultaneousGesture(
+              DragGesture(minimumDistance: 0)
+                .onChanged { touch in
+                  if !self.isTouchDown {
+                    self.viewStore.send(.submitButtonPressed, animation: .default)
+                  }
+                  self.isTouchDown = true
+                }
+                .onEnded { _ in
+                  self.viewStore.send(.submitButtonReleased, animation: .default)
+                  self.isTouchDown = false
+                }
+            )
+          }
+          .padding()
+        }
+
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .background(
+        self.viewStore.wordSubmitButton.areReactionsOpen
+          ? Color.isowordsBlack.opacity(0.4)
+          : nil
+      )
+      .animation(.default)
+      .onTapGesture {
+        self.viewStore.send(.backgroundTapped, animation: .default)
+      }
+      .transition(
+        self.isAnimationReduced
+          ? .opacity
+          : AnyTransition
+          .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
+          .combined(with: .opacity)
+      )
     }
   }
 }
@@ -289,11 +305,13 @@ struct ReactionsView: View {
     static var previews: some View {
       NavigationView {
         WordSubmitButton(
+          isAnimationReduced: false,
           store: .init(
             initialState: WordSubmitButtonFeatureState(
               isSelectedWordValid: true,
               isTurnBasedMatch: true,
               isYourTurn: true,
+              selectedWordIsEmpty: false,
               wordSubmitButton: .init()
             ),
             reducer: wordSubmitReducer,

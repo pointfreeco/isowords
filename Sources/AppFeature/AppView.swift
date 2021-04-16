@@ -462,6 +462,7 @@ public struct AppView: View {
           ),
           then: { gameAndSettingsStore in
             GameFeatureView(
+              // TODO: move this to GameFeatureView.init
               content: CubeView(
                 store: gameAndSettingsStore.scope(
                   state: CubeSceneView.ViewState.init(game:nub:settings:),

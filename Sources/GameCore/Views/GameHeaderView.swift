@@ -1,88 +1,133 @@
 import ClientModels
 import ComposableArchitecture
+import ComposableGameCenter
+import PuzzleGen
 import SharedModels
 import SwiftUI
 
-struct GameHeaderView: View {
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+public struct GameHeaderState: Equatable {
+  let isTurnBasedGame: Bool
+  let selectedWordString: String
 
-  struct ViewState: Equatable {
-    let isTurnBasedGame: Bool
-    let selectedWordString: String
+  let currentScore: Int
+  let gameContext: GameContext
+  let gameMode: GameMode
+  let secondsRemaining: Int
+  let selectedWordHasAlreadyBeenPlayed: Bool
+  let selectedWordIsValid: Bool
+  let selectedWordScore: Int
 
-    init(state: GameState) {
-      self.isTurnBasedGame = state.turnBasedContext != nil
-      self.selectedWordString = state.selectedWordString
-    }
+  let isYourTurn: Bool
+  let opponent: ComposableGameCenter.Player?
+  let opponentScore: Int
+  let you: ComposableGameCenter.Player?
+  let yourScore: Int
+
+
+  init(gameState state: GameState) {
+    self.isTurnBasedGame = state.turnBasedContext != nil
+    self.selectedWordString = state.selectedWordString
+
+    self.currentScore = state.currentScore
+    self.gameContext = state.gameContext
+    self.gameMode = state.gameMode
+    self.secondsRemaining = max(0, state.gameMode.seconds - state.secondsPlayed)
+    self.selectedWordHasAlreadyBeenPlayed = state.selectedWordHasAlreadyBeenPlayed
+    self.selectedWordIsValid = state.selectedWordIsValid
+    self.selectedWordScore = state.selectedWordScore
+
+    self.isYourTurn = state.isYourTurn
+    self.opponent = state.turnBasedContext?.otherParticipant?.player
+    self.you = state.turnBasedContext?.localPlayer.player
+    self.yourScore =
+      state.turnBasedContext?.localPlayerIndex
+      .flatMap { state.turnBasedScores[$0] }
+      ?? (state.turnBasedContext == nil ? state.currentScore : 0)
+    self.opponentScore =
+      state.turnBasedContext?.otherPlayerIndex
+      .flatMap { state.turnBasedScores[$0] } ?? 0
+
   }
 
+  init(replayState state: ReplayState) {
+    self.isTurnBasedGame = false // TODO: replay state
+    self.selectedWordString = state.selectedWordString
+    self.currentScore = 0 // TODO: replay state
+    self.gameContext = .solo // TODO: replay state
+    self.gameMode = .unlimited // TODO: replay state
+    self.secondsRemaining = 100 // TODO: replay state
+    self.selectedWordHasAlreadyBeenPlayed = false
+    self.selectedWordIsValid = state.selectedWordIsValid
+    self.selectedWordScore = score(state.selectedWordString)
+    self.isYourTurn = false // todo: replay state
+    self.opponent = nil // todo: replay state
+    self.you = nil // todo: replay state
+    self.yourScore = 0 // todo: replay state
+    self.opponentScore = 0 // todo: replay state
+  }
+}
+
+struct GameHeaderView: View {
+  let store: Store<GameHeaderState, Never>
+  @ObservedObject var viewStore: ViewStore<GameHeaderState, Never>
+
   public init(
-    store: Store<GameState, GameAction>
+    store: Store<GameHeaderState, Never>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store)
   }
 
   var body: some View {
     if self.viewStore.isTurnBasedGame, self.viewStore.selectedWordString.isEmpty {
-      PlayersAndScoresView(store: self.store)
+      PlayersAndScoresView(
+        isYourTurn: self.viewStore.isYourTurn,
+        opponent: self.viewStore.opponent,
+        opponentScore: self.viewStore.opponentScore,
+        you: self.viewStore.you,
+        yourScore: self.viewStore.yourScore
+      )
         .transition(.opacity)
     } else {
-      ScoreView(store: self.store)
+      ScoreView(
+        currentScore: self.viewStore.currentScore,
+        gameContext: self.viewStore.gameContext,
+        gameMode: self.viewStore.gameMode,
+        secondsRemaining: self.viewStore.secondsRemaining,
+        selectedWordHasAlreadyBeenPlayed: self.viewStore.selectedWordHasAlreadyBeenPlayed,
+        selectedWordIsValid: self.viewStore.selectedWordIsValid,
+        selectedWordScore: self.viewStore.selectedWordScore,
+        selectedWordString: self.viewStore.selectedWordString
+      )
     }
   }
 }
 
 struct ScoreView: View {
   @Environment(\.deviceState) var deviceState
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
-
   @State var isTimeAccented = false
-
-  struct ViewState: Equatable {
-    let currentScore: Int
-    let gameContext: GameContext
-    let gameMode: GameMode
-    let secondsRemaining: Int
-    let selectedWordHasAlreadyBeenPlayed: Bool
-    let selectedWordIsValid: Bool
-    let selectedWordScore: Int
-    let selectedWordString: String
-
-    init(state: GameState) {
-      self.currentScore = state.currentScore
-      self.gameContext = state.gameContext
-      self.gameMode = state.gameMode
-      self.secondsRemaining = max(0, state.gameMode.seconds - state.secondsPlayed)
-      self.selectedWordHasAlreadyBeenPlayed = state.selectedWordHasAlreadyBeenPlayed
-      self.selectedWordIsValid = state.selectedWordIsValid
-      self.selectedWordScore = state.selectedWordScore
-      self.selectedWordString = state.selectedWordString
-    }
-  }
-
-  public init(
-    store: Store<GameState, GameAction>
-  ) {
-    self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
-  }
+  let currentScore: Int
+  let gameContext: GameContext
+  let gameMode: GameMode
+  let secondsRemaining: Int
+  let selectedWordHasAlreadyBeenPlayed: Bool
+  let selectedWordIsValid: Bool
+  let selectedWordScore: Int
+  let selectedWordString: String
 
   var body: some View {
     HStack {
-      if self.viewStore.selectedWordString.isEmpty {
-        if !self.viewStore.gameContext.isTurnBased {
-          Text("\(self.viewStore.currentScore)")
+      if self.selectedWordString.isEmpty {
+        if !self.gameContext.isTurnBased {
+          Text("\(self.currentScore)")
         }
       } else {
-        Text(self.viewStore.selectedWordString)
+        Text(self.selectedWordString)
           .overlay(
             Text(
-              self.viewStore.selectedWordIsValid
-                ? "\(self.viewStore.selectedWordScore)"
-                : self.viewStore.selectedWordHasAlreadyBeenPlayed
+              self.selectedWordIsValid
+                ? "\(self.selectedWordScore)"
+                : self.selectedWordHasAlreadyBeenPlayed
                   ? "(used)"
                   : ""
             )
@@ -91,27 +136,27 @@ struct ScoreView: View {
             .alignmentGuide(.trailing) { _ in 0 },
             alignment: .topTrailing
           )
-          .opacity(self.viewStore.selectedWordIsValid ? 1 : 0.5)
+          .opacity(self.selectedWordIsValid ? 1 : 0.5)
           .allowsTightening(true)
           .minimumScaleFactor(0.2)
           .lineLimit(1)
           .transition(.opacity)
-          .animation(nil, value: self.viewStore.selectedWordString)
+          .animation(nil, value: self.selectedWordString)
       }
 
       Spacer()
 
-      if !self.viewStore.gameContext.isTurnBased {
+      if !self.gameContext.isTurnBased {
         Text(
           displayTime(
-            gameMode: self.viewStore.gameMode,
-            secondsRemaining: self.viewStore.secondsRemaining
+            gameMode: self.gameMode,
+            secondsRemaining: self.secondsRemaining
           )
         )
         .foregroundColor(.white)
         .colorMultiply(self.isTimeAccented ? .red : .adaptiveBlack)
         .scaleEffect(self.isTimeAccented ? 1.5 : 1)
-        .onChange(of: self.viewStore.secondsRemaining) { secondsRemaining in
+        .onChange(of: self.secondsRemaining) { secondsRemaining in
           guard secondsRemaining == 10 || (secondsRemaining <= 5 && secondsRemaining > 0)
           else { return }
 

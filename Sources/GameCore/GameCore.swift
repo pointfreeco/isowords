@@ -137,15 +137,38 @@ public struct GameState: Equatable {
 
   public var wordSubmitButtonFeature: WordSubmitButtonFeatureState {
     get {
-      .init(
-        isSelectedWordValid: self.selectedWordIsValid,
-        isTurnBasedMatch: self.turnBasedContext != nil,
-        isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
-        wordSubmitButton: self.wordSubmitButton
-      )
+      self.replay?.wordSubmitButtonFeature
+        ?? .init(
+          isSelectedWordValid: self.selectedWordIsValid,
+          isTurnBasedMatch: self.turnBasedContext != nil,
+          isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
+          selectedWordIsEmpty: self.selectedWord.isEmpty,
+          wordSubmitButton: self.wordSubmitButton
+        )
     }
     set {
+      guard self.replay == nil
+      else { return }
       self.wordSubmitButton = newValue.wordSubmitButton
+    }
+  }
+}
+
+extension ReplayState {
+  var wordSubmitButtonFeature: WordSubmitButtonFeatureState {
+    get {
+      .init(
+        isSelectedWordValid: self.selectedWordIsValid,
+        isTurnBasedMatch: false, // TODO: replay state
+        isYourTurn: false, // TODO: replay state
+        selectedWordIsEmpty: self.selectedWord.isEmpty,
+        wordSubmitButton: .init(
+          areReactionsOpen: false,
+          favoriteReactions: [],
+          isClosing: false,
+          isSubmitButtonPressed: false // TODO: if WordSubmitView used this value then we could make the nub press more fancy
+        )
+      )
     }
   }
 }
@@ -618,6 +641,8 @@ extension GameState {
       && (/GameContext.turnBased).isNotMatching(self.gameContext)
   }
 
+  #warning("TODO: update these")
+  @available(*, deprecated, message: "Use Moves.playedWords")
   public var playedWords: [PlayedWord] {
     self.moves
       .reduce(into: [PlayedWord]()) {

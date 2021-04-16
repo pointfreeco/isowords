@@ -54,4 +54,21 @@ public struct Moves:
   public func encode(to encoder: Encoder) throws {
     try self.rawValue.encode(to: encoder)
   }
+
+  public func playedWords(
+    cubes: Puzzle,
+    localPlayerIndex: Move.PlayerIndex?
+  ) -> [PlayedWord] {
+    self.reduce(into: [PlayedWord]()) {
+      guard case let .playedWord(word) = $1.type else { return }
+      $0.append(
+        .init(
+          isYourWord: $1.playerIndex == localPlayerIndex,
+          reactions: $1.reactions,
+          score: $1.score,
+          word: cubes.string(from: word)
+        )
+      )
+    }
+  }
 }

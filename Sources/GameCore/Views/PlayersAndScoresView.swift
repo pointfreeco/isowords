@@ -8,71 +8,46 @@ struct PlayersAndScoresView: View {
   @Environment(\.opponentImage) var defaultOpponentImage
   @Environment(\.yourImage) var defaultYourImage
   @State var opponentImage: UIImage?
-  let store: Store<GameState, GameAction>
   @State var yourImage: UIImage?
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
-
-  struct ViewState: Equatable {
-    let isYourTurn: Bool
-    let opponent: ComposableGameCenter.Player?
-    let opponentScore: Int
-    let you: ComposableGameCenter.Player?
-    let yourScore: Int
-
-    init(state: GameState) {
-      self.isYourTurn = state.isYourTurn
-      self.opponent = state.turnBasedContext?.otherParticipant?.player
-      self.you = state.turnBasedContext?.localPlayer.player
-      self.yourScore =
-        state.turnBasedContext?.localPlayerIndex
-        .flatMap { state.turnBasedScores[$0] }
-        ?? (state.turnBasedContext == nil ? state.currentScore : 0)
-      self.opponentScore =
-        state.turnBasedContext?.otherPlayerIndex
-        .flatMap { state.turnBasedScores[$0] } ?? 0
-    }
-  }
-
-  public init(
-    store: Store<GameState, GameAction>
-  ) {
-    self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
-  }
+  let isYourTurn: Bool
+  let opponent: ComposableGameCenter.Player?
+  let opponentScore: Int
+  let you: ComposableGameCenter.Player?
+  let yourScore: Int
 
   var body: some View {
     HStack(spacing: 0) {
       PlayerView(
-        displayName: (self.viewStore.you?.displayName).map { LocalizedStringKey($0) } ?? "You",
+        displayName: (self.you?.displayName).map { LocalizedStringKey($0) } ?? "You",
         image: self.defaultYourImage ?? self.yourImage,
-        isPlayerTurn: self.viewStore.isYourTurn,
+        isPlayerTurn: self.isYourTurn,
         isYou: true,
-        score: self.viewStore.yourScore
+        score: self.yourScore
       )
 
       PlayerView(
-        displayName: (self.viewStore.opponent?.displayName).map { LocalizedStringKey($0) }
+        displayName: (self.opponent?.displayName).map { LocalizedStringKey($0) }
           ?? "Your opponent",
         image: self.defaultOpponentImage ?? self.opponentImage,
-        isPlayerTurn: !self.viewStore.isYourTurn,
+        isPlayerTurn: !self.isYourTurn,
         isYou: false,
-        score: self.viewStore.opponentScore
+        score: self.opponentScore
       )
     }
     .onAppear {
-      self.viewStore.opponent?.rawValue?.loadPhoto(for: .small) { image, _ in
+      self.opponent?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.opponentImage = image
       }
-      self.viewStore.you?.rawValue?.loadPhoto(for: .small) { image, _ in
+      self.you?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.yourImage = image
       }
     }
-    .onChange(of: self.viewStore.opponent) { player in
+    .onChange(of: self.opponent) { player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.opponentImage = image
       }
     }
-    .onChange(of: self.viewStore.you) { player in
+    .onChange(of: self.you) { player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.yourImage = image
       }
@@ -154,62 +129,24 @@ private struct PlayerView: View {
     static var previews: some View {
       Group {
         PlayersAndScoresView(
-          store: .init(
-            initialState: .init(
-              gameCurrentTime: Date(),
-              localPlayer: .authenticated,
-              turnBasedMatch: update(.inProgress) {
-                $0.currentParticipant = $0.participants[1]
-              },
-              turnBasedMatchData: .init(
-                cubes: .mock,
-                gameMode: .unlimited,
-                language: .en,
-                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
-                moves: []
-              )
-            ),
-            reducer: .empty,
-            environment: ()
-          )
+          isYourTurn: false,
+          opponent: Player.remote,
+          opponentScore: 1000,
+          you: .local,
+          yourScore: 2000
         )
         .previewLayout(.fixed(width: 320, height: 100))
 
         PlayersAndScoresView(
-          store: .init(
-            initialState: .init(
-              gameCurrentTime: Date(),
-              localPlayer: update(.authenticated) {
-                $0.displayName = "Incredible Guide of Huge Abbey"
-              },
-              turnBasedMatch: update(.inProgress) {
-                $0.participants[0].player!.displayName = "Incredible Guide of Huge Abbey"
-              },
-              turnBasedMatchData: TurnBasedMatchData(
-                cubes: .mock,
-                gameMode: .unlimited,
-                language: .en,
-                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
-                moves: [
-                  .init(
-                    playedAt: .mock,
-                    playerIndex: 1,
-                    reactions: [1: .smirk],
-                    score: 666,
-                    type: .playedWord(
-                      [
-                        .init(index: .init(x: .two, y: .two, z: .two), side: .top),
-                        .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-                        .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-                      ]
-                    )
-                  )
-                ]
-              )
-            ),
-            reducer: .empty,
-            environment: ()
-          )
+          isYourTurn: true,
+          opponent: .init(
+            alias: "Incredible Guide of Huge Abbey",
+            displayName: "Incredible Guide of Huge Abbey",
+            gamePlayerId: "1"
+          ),
+          opponentScore: 2000,
+          you: .local,
+          yourScore: 2000
         )
         .previewLayout(.fixed(width: 320, height: 100))
       }

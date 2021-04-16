@@ -28,6 +28,7 @@ public struct GameView<Content>: View where Content: View {
     let isDailyChallenge: Bool
     let isGameLoaded: Bool
     let isNavVisible: Bool
+    let isReplaying: Bool
     let isTrayVisible: Bool
     let selectedWordString: String
 
@@ -35,6 +36,7 @@ public struct GameView<Content>: View where Content: View {
       self.isDailyChallenge = state.dailyChallengeId != nil
       self.isGameLoaded = state.isGameLoaded
       self.isNavVisible = state.isNavVisible
+      self.isReplaying = state.replay != nil
       self.isTrayVisible = state.isTrayVisible
       self.selectedWordString = state.selectedWordString
     }
@@ -66,6 +68,7 @@ public struct GameView<Content>: View where Content: View {
                 )
               )
               .adaptivePadding(self.deviceState.isPad ? .horizontal : [], .grid(30))
+              .zIndex(self.viewStore.isReplaying ? 1 : 0)
           } else {
             ProgressView()
               .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveBlack))
@@ -81,31 +84,38 @@ public struct GameView<Content>: View where Content: View {
                 GameNavView(store: self.store)
                   .hidden()
               }
-              GameHeaderView(store: self.store)
+              GameHeaderView(
+                store: self.store.actionless.scope(
+                  state: { game in
+                    game.replay.map(GameHeaderState.init(replayState:))
+                      ?? GameHeaderState(gameState: game)
+                  }
+                )
+              )
             }
             .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
             Spacer()
-            GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
+            WordListView(
+              isAnimationReduced: self.isAnimationReduced,
+              store: self.store.actionless.scope(
+                state: { game in
+                  game.replay.map(WordListState.init(replayState:))
+                    ?? WordListState(gameState: game)
+                }
+              )
+            )
               .padding(.bottom)
           }
           .ignoresSafeArea(.keyboard)
 
-          if !self.viewStore.selectedWordString.isEmpty {
-            WordSubmitButton(
-              store: self.store.scope(
-                state: \.wordSubmitButtonFeature,
-                action: GameAction.wordSubmitButton
-              )
+          WordSubmitButton(
+            isAnimationReduced: self.isAnimationReduced,
+            store: self.store.scope(
+              state: \.wordSubmitButtonFeature,
+              action: GameAction.wordSubmitButton
             )
-            .ignoresSafeArea()
-            .transition(
-              self.isAnimationReduced
-                ? .opacity
-                : AnyTransition
-                  .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
-                  .combined(with: .opacity)
-            )
-          }
+          )
+          .ignoresSafeArea()
 
           ActiveGamesView(
             store: self.store.scope(state: \.activeGames, action: GameAction.activeGames),
