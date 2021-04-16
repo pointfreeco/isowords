@@ -16,14 +16,17 @@ public struct ReplayState: Equatable {
 }
 
 public enum ReplayAction: Equatable {
-  case begin(moveIndex: Int)
+  case begin(startIndex: Moves.Index, endIndex: Moves.Index)
   case deselectLastFace
   case enableSubmitButton
   case end
-  case lastTurnMoves
   case nub(BindingAction<CubeSceneView.ViewState.NubState>)
   case playMove(Move)
   case selectFace(IndexedCubeFace)
+
+  public static func begin(index: Moves.Index) -> Self {
+    .begin(startIndex: index, endIndex: index + 1)
+  }
 }
 
 extension Reducer where State == GameState, Action == GameAction, Environment == GameEnvironment {
@@ -33,15 +36,27 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         with: .init { state, action, environment in
           switch action {
           case .onAppear:
-//            guard state.gameContext.isTurnBased
-//            else { return .none }
+            guard
+              let startIndex = state.moves
+                .index(state.moves.endIndex, offsetBy: -1, limitedBy: state.moves.startIndex)
+            else { return .none }
 
-            let previousMoves = Moves(state.moves.dropLast())
+            return Effect(
+              value: .replay(.begin(startIndex: startIndex, endIndex: state.moves.endIndex))
+            )
+
+          case let .replay(.begin(startIndex, endIndex)):
+            guard
+              state.moves.indices.contains(startIndex),
+              endIndex <= state.moves.endIndex
+            else { return .none }
+
+            let previousMoves = Moves(state.moves[..<startIndex])
             let cubes = Puzzle(
               archivableCubes: .init(cubes: state.cubes),
               moves: previousMoves
             )
-            let replayMoves = state.moves.suffix(1)
+            let replayMoves = state.moves[startIndex..<endIndex]
 
             guard !replayMoves.isEmpty else { return .none }
 
@@ -220,35 +235,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           case .replay(.end):
             state.replay = nil
             return .none
-
-          case .replay(.lastTurnMoves):
-            return .none
-//            let game = state
-//            guard
-//              !game.isGameOver,
-//              let turnBasedContext = game.turnBasedContext,
-//    //          let lastOpenedAt = turnBasedContext.metadata.lastOpenedAt,
-//    //          lastOpenedAt < turnBasedContext.lastPlayedAt,
-//              let localPlayerIndex = turnBasedContext.localPlayerIndex,
-//              let replayStartIndex = game.moves.index(
-//                game.moves
-//                  .lastIndex(where: { $0.playerIndex == turnBasedContext.localPlayerIndex }) ?? -1,
-//                offsetBy: 1, limitedBy: game.moves.endIndex
-//              )
-//            else { return .none }
-//
-//            guard turnBasedContext.currentParticipantIsLocalPlayer
-//            else {
-//              let previousMoves = Moves(game.moves[..<replayStartIndex])
-//              state.replay?.moves = previousMoves
-//              state.replay?.cubes = Puzzle(
-//                archivableCubes: .init(cubes: game.cubes),
-//                moves: previousMoves
-//              )
-//              return .none
-//            }
-//
-//            return Effect(value: .replay(.begin(moveIndex: replayStartIndex)))
 
           case let .replay(.playMove(move)):
             state.replay?.moves.append(move)
