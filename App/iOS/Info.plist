@@ -230,16 +230,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UIApplicationShortcutItems</key>
-	<array>
-		<dict>
-			<key>UIApplicationShortcutItemType</key>
-			<string>dailyChallenge</string>
-			<key>UIApplicationShortcutItemIconType</key>
-			<string>UIApplicationShortcutIconTypeDate</string>
-			<key>UIApplicationShortcutItemTitle</key>
-			<string>Daily Challenge</string>
-		</dict>
-	</array>
 </dict>
 </plist>
