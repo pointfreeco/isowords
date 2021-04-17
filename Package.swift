@@ -1136,6 +1136,7 @@ package.targets.append(contentsOf: [
     name: "DemoMiddleware",
     dependencies: [
       "DatabaseClient",
+      "DictionaryClient",
       "MiddlewareHelpers",
       "SharedModels",
       .product(name: "HttpPipeline", package: "Web"),
