@@ -163,4 +163,39 @@ class VerificationTests: XCTestCase {
 
     XCTAssertEqual(result, nil)
   }
+
+  func testDuplicateWord() {
+    let puzzle = ArchivablePuzzle.mock
+
+    let result = verify(
+      moves: [
+        .init(
+          playedAt: .init(),
+          playerIndex: nil,
+          reactions: nil,
+          score: 10,
+          type: .playedWord([
+            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+          ])
+        ),
+        .init(
+          playedAt: .init(),
+          playerIndex: nil,
+          reactions: nil,
+          score: 10,
+          type: .playedWord([
+            .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+            .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+          ])
+        ),
+      ],
+      playedOn: puzzle,
+      isValidWord: { _ in false }
+    )
+
+    XCTAssertNil(result)
+  }
 }

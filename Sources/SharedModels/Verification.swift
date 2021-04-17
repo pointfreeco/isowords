@@ -15,16 +15,13 @@ public func verify(
   isValidWord: (String) -> Bool
 ) -> VerifiedPuzzleResult? {
   var puzzle = Puzzle(archivableCubes: puzzle)
-  var playedWords: Set<String> = []
-
   var result = VerifiedPuzzleResult()
   for index in moves.indices {
     if let moveResult = verify(
-      moveIndex: index,
-      moves: moves,
-      playedOn: &puzzle,
+      move: moves[index],
+      on: &puzzle,
       isValidWord: isValidWord,
-      playedWords: &playedWords
+      previousMoves: .init(moves[..<index])
     ) {
       result.totalScore += moveResult.score
       result.verifiedMoves.append(moveResult)
@@ -37,14 +34,11 @@ public func verify(
 }
 
 public func verify(
-  moveIndex: Int,
-  moves: Moves,
-  playedOn puzzle: inout Puzzle,
+  move: Move,
+  on puzzle: inout Puzzle,
   isValidWord: (String) -> Bool,
-  playedWords: inout Set<String>
+  previousMoves: Moves
 ) -> VerifiedMoveResult? {
-  let move = moves[moveIndex]
-
   switch move.type {
   case let .playedWord(cubeFaces):
     guard cubeFaces.count == Set(cubeFaces).count
@@ -52,13 +46,14 @@ public func verify(
       return nil
     }
 
-    let foundWord = cubeFaces.reduce(into: "") { word, cubeFace in
-      word += puzzle[cubeFace.index][cubeFace.side].letter
-    }
+    let foundWord = puzzle.string(from: cubeFaces)
 
     let isValidMove =
       foundWord.count >= 3
-      && !playedWords.contains(foundWord)
+      && previousMoves.allSatisfy {
+        guard case let .playedWord(faces) = $0.type else { return true }
+        return puzzle.string(from: faces) != foundWord
+      }
       && isValidWord(foundWord)
       && score(foundWord) == move.score
       && zip(cubeFaces.dropFirst(), cubeFaces)
@@ -72,7 +67,6 @@ public func verify(
         }
 
     if isValidMove {
-      playedWords.insert(foundWord)
       apply(move: move, to: &puzzle)
       return .init(
         cubeFaces: cubeFaces,
@@ -88,7 +82,7 @@ public func verify(
       // NB: Allow "removing" an out of play cube if it was removed in the previous move. This
       //     is to work around a race condition in the client where quickly tapping multiple times
       //     can accidentally remove a single cube twice.
-      || (moveIndex > 0 && moves[moveIndex - 1].type == move.type)
+      || previousMoves.last?.type == move.type
     {
       apply(move: move, to: &puzzle)
       return .init(cubeFaces: [], foundWord: nil, score: 0)

@@ -8,20 +8,17 @@ public struct WordSubmitButtonFeatureState: Equatable {
   public var isSelectedWordValid: Bool
   public let isTurnBasedMatch: Bool
   public let isYourTurn: Bool
-  public let selectedWordIsValid: Bool
   public var wordSubmitButton: WordSubmitButtonState
 
   public init(
     isSelectedWordValid: Bool,
     isTurnBasedMatch: Bool,
     isYourTurn: Bool,
-    selectedWordIsValid: Bool,
     wordSubmitButton: WordSubmitButtonState
   ) {
     self.isSelectedWordValid = isSelectedWordValid
     self.isTurnBasedMatch = isTurnBasedMatch
     self.isYourTurn = isYourTurn
-    self.selectedWordIsValid = selectedWordIsValid
     self.wordSubmitButton = wordSubmitButton
   }
 }
@@ -209,7 +206,7 @@ public struct WordSubmitButton: View {
             )
             .background(Circle().fill(Color.adaptiveBlack))
             .foregroundColor(.adaptiveWhite)
-            .opacity(self.viewStore.selectedWordIsValid ? 1 : 0.5)
+            .opacity(self.viewStore.isSelectedWordValid ? 1 : 0.5)
             .font(.system(size: self.deviceState.isPad ? 40 : 30))
             .adaptivePadding([.all], .grid(4))
             // NB: Expand the tappable radius of the button.
@@ -297,7 +294,6 @@ struct ReactionsView: View {
               isSelectedWordValid: true,
               isTurnBasedMatch: true,
               isYourTurn: true,
-              selectedWordIsValid: true,
               wordSubmitButton: .init()
             ),
             reducer: wordSubmitReducer,
