@@ -57,6 +57,22 @@ public struct SubmitGameResponse: Codable, Equatable {
       case turnBased
     }
   }
+
+  public init(from decoder: Decoder) throws {
+    self.context = try Context(from: decoder)
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.message = try container.decode(String.self, forKey: .message)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try self.context.encode(to: encoder)
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(self.message, forKey: .message)
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case message
+  }
 }
 
 public struct LeaderboardScoreResult: Codable, Equatable {

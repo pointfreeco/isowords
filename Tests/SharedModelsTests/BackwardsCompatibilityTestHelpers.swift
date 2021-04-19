@@ -26,8 +26,8 @@ func assertBackwardsCompatibleCodable<A>(
   let reSerializedJson = try JSONSerialization.jsonObject(with: encodedDecodedValue)
 
   XCTAssertTrue(
-    `is`(json, subsetOf: reSerializedJson),
-    "Reserialization of encoded value is not a superset of json provided.",
+    `is`(reSerializedJson, subsetOf: json),
+    "Reserialization of encoded value is not a subset of json provided.",
     file: file,
     line: line
   )

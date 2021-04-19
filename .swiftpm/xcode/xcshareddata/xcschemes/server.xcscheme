@@ -166,6 +166,16 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SharedModelsTests"
+               BuildableName = "SharedModelsTests"
+               BlueprintName = "SharedModelsTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "ShareGameMiddlewareTests"
                BuildableName = "ShareGameMiddlewareTests"
                BlueprintName = "ShareGameMiddlewareTests"

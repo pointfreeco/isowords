@@ -153,22 +153,30 @@ public func submitGameMiddleware(
                 playerId: request.currentPlayer.id
               )
             )
-            .map(SubmitGameResponse.dailyChallenge)
+            .map {
+              SubmitGameResponse(
+                context: .dailyChallenge($0),
+                message: praise(rank: $0.rank ?? 0, outOf: $0.outOf)
+              )
+            }
           }
 
       case let .shared(code):
         return request.database
           .fetchSharedGame(code)
           .map {
-            .shared(
-              SharedGameResponse(
-                code: $0.code,
-                id: $0.id,
-                gameMode: $0.gameMode,
-                language: $0.language,
-                moves: $0.moves,
-                puzzle: $0.puzzle
-              )
+            SubmitGameResponse(
+              context: .shared(
+                SharedGameResponse(
+                  code: $0.code,
+                  id: $0.id,
+                  gameMode: $0.gameMode,
+                  language: $0.language,
+                  moves: $0.moves,
+                  puzzle: $0.puzzle
+                )
+              ),
+              message: ""
             )
           }
 
@@ -189,10 +197,15 @@ public func submitGameMiddleware(
               .map { rank in (timeScope, rank) }
             }
         )
-        .map { .solo(.init(ranks: Dictionary($0, uniquingKeysWith: { $1 }))) }
+        .map {
+          SubmitGameResponse(
+            context: .solo(.init(ranks: Dictionary($0, uniquingKeysWith: { $1 }))),
+            message: praise(mode: leaderboardScore.gameMode, score: leaderboardScore.score)
+          )
+        }
 
       case .turnBased:
-        return pure(.turnBased)
+        return pure(.init(context: .turnBased, message: ""))
       }
     }
     .run
@@ -211,3 +224,49 @@ public func submitGameMiddleware(
 
 struct AbsurdError: Error {}
 struct VerificationFailed: Error {}
+
+private func praise(rank: Int, outOf: Int) -> String {
+  switch (rank, Double(rank) / Double(outOf)) {
+  case (1, _):
+    return "Numero uno!"
+  case (2, _):
+    return "Silver!"
+  case (3, _):
+    return "Bronze!"
+  case (...10, _):
+    return "Top ten!"
+  case (_, ..<0.001):
+    return "Amazing!"
+  case (_, ..<0.01):
+    return "Great job!"
+  case (_, ..<0.10):
+    return "Not bad!"
+  case (_, ..<0.50):
+    return "Keep it up!"
+  default:
+    return "You can do it!"
+  }
+}
+
+private func praise(mode: GameMode, score: Int) -> String {
+  switch (score, mode) {
+  case (0, _):
+    return "You there?"
+  case (..<250, _):
+    return "You can do it!"
+  case (..<500, .timed), (..<1_000, .unlimited):
+    return "Keep it up!"
+  case (..<1_000, .timed), (..<3_000, .unlimited):
+    return "Not bad!"
+  case (..<2_000, .timed), (..<5_000, .unlimited):
+    return "Great job!"
+  case (..<3_000, .timed), (..<7_000, .unlimited):
+    return "Amazing!"
+  case (..<4_000, .timed), (..<9_000, .unlimited):
+    return "Outstanding!"
+  case (4_000..., .timed), (9_000..., .unlimited):
+    return "Unbelievable!"
+  default:
+    return "Nice job!"
+  }
+}
