@@ -184,12 +184,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
   Reducer { state, action, environment in
 
-    //    var showConfetti: Effect<GameOverAction, Never> {
-    //      Effect(value: .showConfetti)
-    //        .delay(for: 1, scheduler: environment.mainQueue)
-    //        .eraseToEffect()
-    //    }
-
     switch action {
     case .closeButtonTapped:
       guard
@@ -247,8 +241,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             .map(GameOverAction.startDailyChallengeResponse)
           }
           ?? .none
-      case .shared:
-        return .none
       case .solo:
         return Effect(value: .delegate(.startSoloGame(gameMode)))
       case .turnBased:
@@ -294,18 +286,12 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         submitGameEffect = .none
       }
 
-      //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won
-      //        ? showConfetti
-      //        : .none
-
       return .merge(
         Effect(value: .enableView)
           .delay(for: 2, scheduler: environment.mainQueue)
           .eraseToEffect(),
 
         submitGameEffect,
-
-        //        turnBasedConfettiEffect,
 
         Effect.showUpgradeInterstitial(
           gameContext: .init(gameContext: state.completedGame.gameContext),
@@ -361,9 +347,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .showConfetti:
       return .none
-    //      state.showConfetti = true
-    //      return environment.audioPlayer.play(.highScoreCelebration)
-    //        .fireAndForget()
 
     case .startDailyChallengeResponse(.failure):
       state.gameModeIsLoading = nil
@@ -377,9 +360,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       state.summary = .dailyChallenge(result)
 
       return .merge(
-        //        result.rank.map { $0 <= 10 } == true
-        //          ? showConfetti
-        //          : .none,
         environment.apiClient
           .apiRequest(
             route: .dailyChallenge(.today(language: .en)),
@@ -403,9 +383,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         )
       )
       return .none
-    //      return result.ranks.values.contains(where: { $0.rank <= 10 })
-    //        ? showConfetti
-    //        : .none
 
     case .submitGameResponse(.success(.turnBased)):
       return .none
@@ -467,8 +444,6 @@ public struct GameOverView: View {
       switch state.completedGame.gameContext {
       case .dailyChallenge:
         self.completedMatch = nil
-      case .shared:
-        self.completedMatch = nil
       case .solo:
         self.completedMatch = nil
       case .turnBased:
@@ -524,8 +499,6 @@ public struct GameOverView: View {
           switch self.viewStore.gameContext {
           case .dailyChallenge:
             self.dailyChallengeResults
-          case .shared:
-            EmptyView()
           case .solo:
             self.soloResults
           case .turnBased:
@@ -948,7 +921,7 @@ public struct GameOverView: View {
     switch self.viewStore.gameContext {
     case .dailyChallenge:
       return .dailyChallenge
-    case .shared, .solo:
+    case .solo:
       return .solo
     case .turnBased:
       return .multiplayer
@@ -1082,8 +1055,6 @@ extension UpgradeInterstitialFeature.GameContext {
     switch gameContext {
     case .dailyChallenge:
       self = .dailyChallenge
-    case .shared:
-      self = .shared
     case .solo:
       self = .solo
     case .turnBased:
@@ -1097,8 +1068,6 @@ extension LocalDatabaseClient.GameContext {
     switch gameContext {
     case .dailyChallenge:
       self = .dailyChallenge
-    case .shared:
-      self = .shared
     case .solo:
       self = .solo
     case .turnBased:

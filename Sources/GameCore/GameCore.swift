@@ -578,7 +578,7 @@ extension GameState {
     switch self.gameContext {
     case .dailyChallenge:
       return "Daily challenge"
-    case .shared, .solo:
+    case .solo:
       return "Solo"
     case let .turnBased(context):
       return context.otherPlayer
@@ -745,7 +745,7 @@ extension GameState {
       .fireAndForget()
 
     switch self.gameContext {
-    case .dailyChallenge, .shared, .solo:
+    case .dailyChallenge, .solo:
       return saveGameEffect
 
     case let .turnBased(turnBasedMatch):
@@ -994,8 +994,6 @@ extension UpgradeInterstitialFeature.GameContext {
     switch gameContext {
     case .dailyChallenge:
       self = .dailyChallenge
-    case .shared:
-      self = .shared
     case .solo:
       self = .solo
     case .turnBased:

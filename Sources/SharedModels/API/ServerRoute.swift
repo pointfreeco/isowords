@@ -92,9 +92,6 @@ public enum ServerRoute: Equatable {
             case let .dailyChallenge(id):
               self.init(gameContext: .dailyChallenge(id), moves: completedGame.moves)
 
-            case let .shared(code):
-              self.init(gameContext: .shared(code), moves: completedGame.moves)
-
             case .solo:
               self.init(
                 gameContext: .solo(
@@ -124,7 +121,6 @@ public enum ServerRoute: Equatable {
 
           public enum GameContext: Codable, Equatable {
             case dailyChallenge(SharedModels.DailyChallenge.Id)
-            case shared(SharedModels.SharedGame.Code)
             case solo(Solo)
             case turnBased(TurnBased)
 
@@ -136,9 +132,6 @@ public enum ServerRoute: Equatable {
                   try container.decode(
                     SharedModels.DailyChallenge.Id.self, forKey: .dailyChallengeId)
                 )
-              } else if container.contains(.sharedGameCode) {
-                self = .shared(
-                  try container.decode(SharedModels.SharedGame.Code.self, forKey: .sharedGameCode))
               } else if container.contains(.solo) {
                 self = .solo(try container.decode(Solo.self, forKey: .solo))
               } else if container.contains(.turnBased) {
@@ -156,8 +149,6 @@ public enum ServerRoute: Equatable {
               switch self {
               case let .dailyChallenge(id):
                 try container.encode(id, forKey: .dailyChallengeId)
-              case let .shared(code):
-                try container.encode(code, forKey: .sharedGameCode)
               case let .solo(solo):
                 try container.encode(solo, forKey: .solo)
               case let .turnBased(turnBased):

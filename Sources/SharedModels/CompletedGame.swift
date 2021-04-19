@@ -24,13 +24,11 @@ public struct CompletedGame: Codable, Equatable {
 
   public enum GameContext: Codable, Equatable {
     case dailyChallenge(DailyChallenge.Id)
-    case shared(SharedGame.Code)
     case solo
     case turnBased(playerIndexToId: [Move.PlayerIndex: Player.Id])
 
     private enum CodingKeys: CaseIterable, CodingKey {
       case dailyChallengeId
-      case sharedGameCode
       case solo
       case turnBased
     }
@@ -44,9 +42,6 @@ public struct CompletedGame: Codable, Equatable {
           self = .dailyChallenge(
             try container.decode(DailyChallenge.Id.self, forKey: .dailyChallengeId))
           return
-        case .sharedGameCode where container.contains(key):
-          self = .shared(try container.decode(SharedGame.Code.self, forKey: .sharedGameCode))
-          return
         case .turnBased where container.contains(key):
           self = .turnBased(
             playerIndexToId: (try container.decode([Int: Player.Id].self, forKey: .turnBased))
@@ -56,7 +51,7 @@ public struct CompletedGame: Codable, Equatable {
         case .solo where container.contains(key):
           self = .solo
           return
-        case .dailyChallengeId, .sharedGameCode, .solo, .turnBased:
+        case .dailyChallengeId, .solo, .turnBased:
           break
         }
       }
@@ -71,8 +66,6 @@ public struct CompletedGame: Codable, Equatable {
       switch self {
       case let .dailyChallenge(id):
         try container.encode(id, forKey: .dailyChallengeId)
-      case let .shared(code):
-        try container.encode(code, forKey: .sharedGameCode)
       case .solo:
         try container.encode(true, forKey: .solo)
       case let .turnBased(playerIndexToId):

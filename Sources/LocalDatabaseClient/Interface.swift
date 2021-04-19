@@ -45,7 +45,6 @@ public struct LocalDatabaseClient {
 
   public enum GameContext: String, Codable {
     case dailyChallenge
-    case shared
     case solo
     case turnBased
 
@@ -53,8 +52,6 @@ public struct LocalDatabaseClient {
       switch gameContext {
       case .dailyChallenge:
         self = .dailyChallenge
-      case .shared:
-        self = .shared
       case .solo:
         self = .solo
       case .turnBased:

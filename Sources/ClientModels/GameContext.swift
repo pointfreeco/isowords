@@ -2,7 +2,6 @@ import SharedModels
 
 public enum GameContext: Codable, Equatable {
   case dailyChallenge(DailyChallenge.Id)
-  case shared(SharedGame.Code)
   case solo
   case turnBased(TurnBasedContext)
 
@@ -10,8 +9,6 @@ public enum GameContext: Codable, Equatable {
     switch self {
     case let .dailyChallenge(id):
       return .dailyChallenge(id)
-    case let .shared(code):
-      return .shared(code)
     case .solo:
       return .solo
     case let .turnBased(context):
@@ -29,9 +26,6 @@ public enum GameContext: Codable, Equatable {
           container.decode(DailyChallenge.Id.self, forKey: .dailyChallengeId)
         )
         return
-      case .sharedGameCode where container.contains(key):
-        self = try .shared(container.decode(SharedGame.Code.self, forKey: .sharedGameCode))
-        return
       case .turnBased where container.contains(key):
         assertionFailure("Can't decode GameContext.turnBasedGame")
         throw DecodingError.dataCorruptedError(
@@ -42,7 +36,7 @@ public enum GameContext: Codable, Equatable {
       case .solo where container.contains(key):
         self = .solo
         return
-      case .dailyChallengeId, .sharedGameCode, .solo, .turnBased:
+      case .dailyChallengeId, .solo, .turnBased:
         break
       }
     }
@@ -57,8 +51,6 @@ public enum GameContext: Codable, Equatable {
     switch self {
     case let .dailyChallenge(id):
       try container.encode(id, forKey: .dailyChallengeId)
-    case let .shared(code):
-      try container.encode(code, forKey: .sharedGameCode)
     case .solo:
       try container.encode(true, forKey: .solo)
     case .turnBased:
@@ -79,7 +71,6 @@ public enum GameContext: Codable, Equatable {
 
   private enum CodingKeys: CaseIterable, CodingKey {
     case dailyChallengeId
-    case sharedGameCode
     case solo
     case turnBased
   }

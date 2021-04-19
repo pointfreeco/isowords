@@ -196,7 +196,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
         switch (game.gameContext, game.gameMode) {
         case (.dailyChallenge, .unlimited):
           state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
-        case (.shared, .unlimited), (.solo, .unlimited):
+        case (.solo, .unlimited):
           state.home.savedGames.unlimited = InProgressGame(gameState: game)
         case (.turnBased, _), (_, .timed):
           return .none

@@ -59,9 +59,6 @@ public func submitGameMiddleware(
       ]
     }
 
-  case .shared:
-    unverifiedArchiveData = pure([])
-
   case let .solo(solo):
     unverifiedArchiveData = pure([
       UnverifiedArchiveData(
@@ -154,22 +151,6 @@ public func submitGameMiddleware(
               )
             )
             .map(SubmitGameResponse.dailyChallenge)
-          }
-
-      case let .shared(code):
-        return request.database
-          .fetchSharedGame(code)
-          .map {
-            .shared(
-              SharedGameResponse(
-                code: $0.code,
-                id: $0.id,
-                gameMode: $0.gameMode,
-                language: $0.language,
-                moves: $0.moves,
-                puzzle: $0.puzzle
-              )
-            )
           }
 
       case .solo:
