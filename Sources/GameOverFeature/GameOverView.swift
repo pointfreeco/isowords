@@ -184,12 +184,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
   Reducer { state, action, environment in
 
-    //    var showConfetti: Effect<GameOverAction, Never> {
-    //      Effect(value: .showConfetti)
-    //        .delay(for: 1, scheduler: environment.mainQueue)
-    //        .eraseToEffect()
-    //    }
-
     switch action {
     case .closeButtonTapped:
       guard
@@ -294,18 +288,12 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         submitGameEffect = .none
       }
 
-      //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won
-      //        ? showConfetti
-      //        : .none
-
       return .merge(
         Effect(value: .enableView)
           .delay(for: 2, scheduler: environment.mainQueue)
           .eraseToEffect(),
 
         submitGameEffect,
-
-        //        turnBasedConfettiEffect,
 
         Effect.showUpgradeInterstitial(
           gameContext: .init(gameContext: state.completedGame.gameContext),
@@ -361,9 +349,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .showConfetti:
       return .none
-    //      state.showConfetti = true
-    //      return environment.audioPlayer.play(.highScoreCelebration)
-    //        .fireAndForget()
 
     case .startDailyChallengeResponse(.failure):
       state.gameModeIsLoading = nil
@@ -401,11 +386,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           },
           uniquingKeysWith: { $1 }
         )
-      )
-      return .none
-    //      return result.ranks.values.contains(where: { $0.rank <= 10 })
-    //        ? showConfetti
-    //        : .none
+        return .none
 
     case .submitGameResponse(.success(.turnBased)):
       return .none
