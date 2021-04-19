@@ -36,6 +36,7 @@ public struct GameOverState: Equatable {
   public var notificationsAuthAlert: NotificationsAuthAlertState?
   public var showConfetti: Bool
   public var summary: RankSummary?
+  public var title: String
   public var turnBasedContext: TurnBasedContext?
   public var upgradeInterstitial: UpgradeInterstitialState?
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
@@ -50,6 +51,7 @@ public struct GameOverState: Equatable {
     notificationsAuthAlert: NotificationsAuthAlertState? = nil,
     showConfetti: Bool = false,
     summary: RankSummary? = nil,
+    title: String = "",
     turnBasedContext: TurnBasedContext? = nil,
     upgradeInterstitial: UpgradeInterstitialState? = nil,
     userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
@@ -63,6 +65,7 @@ public struct GameOverState: Equatable {
     self.notificationsAuthAlert = notificationsAuthAlert
     self.showConfetti = showConfetti
     self.summary = summary
+    self.title = title
     self.turnBasedContext = turnBasedContext
     self.upgradeInterstitial = upgradeInterstitial
     self.userNotificationSettings = userNotificationSettings
@@ -271,7 +274,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           as: LeaderboardScoreResult.self
         )
         .receive(on: environment.mainRunLoop.animation(.default))
-        .map(SubmitGameResponse.solo)
+        .map { SubmitGameResponse(context: .solo($0), message: "Nice job!") } // TODO: server?
         .catchToEffect()
         .map(GameOverAction.submitGameResponse)
       } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
@@ -358,38 +361,31 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       state.gameModeIsLoading = nil
       return .init(value: .delegate(.startGame(inProgressGame)))
 
-    case let .submitGameResponse(.success(.dailyChallenge(result))):
-      state.summary = .dailyChallenge(result)
+    case let .submitGameResponse(.success(response)):
+      state.title = response.message
 
-      return .merge(
-        //        result.rank.map { $0 <= 10 } == true
-        //          ? showConfetti
-        //          : .none,
-        environment.apiClient
-          .apiRequest(
-            route: .dailyChallenge(.today(language: .en)),
-            as: [FetchTodaysDailyChallengeResponse].self
+      switch response.context {
+      case let .dailyChallenge(result):
+        state.summary = .dailyChallenge(result)
+        return .none
+
+      case .shared:
+        return .none
+
+      case let .solo(result):
+        state.summary = .leaderboard(
+          Dictionary(
+            result.ranks.compactMap { key, value in
+              TimeScope(rawValue: key).map { ($0, value) }
+            },
+            uniquingKeysWith: { $1 }
           )
-          .receive(on: environment.mainRunLoop.animation(.default))
-          .catchToEffect()
-          .map(GameOverAction.dailyChallengeResponse)
-      )
-
-    case let .submitGameResponse(.success(.shared(result))):
-      return .none
-
-    case let .submitGameResponse(.success(.solo(result))):
-      state.summary = .leaderboard(
-        Dictionary(
-          result.ranks.compactMap { key, value in
-            TimeScope(rawValue: key).map { ($0, value) }
-          },
-          uniquingKeysWith: { $1 }
         )
         return .none
 
-    case .submitGameResponse(.success(.turnBased)):
-      return .none
+      case .turnBased:
+        return .none
+      }
 
     case .submitGameResponse(.failure):
       return .none
@@ -430,6 +426,7 @@ public struct GameOverView: View {
     let isViewEnabled: Bool
     let showConfetti: Bool
     let summary: GameOverState.RankSummary?
+    let title: String
     let unplayedDaily: GameMode?
     let words: [PlayedWord]
     let you: ComposableGameCenter.Player?
@@ -462,6 +459,7 @@ public struct GameOverView: View {
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
+      self.title = state.title
       self.unplayedDaily =
         state.dailyChallenges
         .first(where: { $0.yourResult.rank == nil })?.dailyChallenge.gameMode
@@ -672,7 +670,7 @@ public struct GameOverView: View {
     VStack(spacing: -8) {
       Text("\(self.viewStore.yourScore).").fontWeight(.medium)
         + Text("\n")
-        + Text(praise(mode: self.viewStore.gameMode, score: self.viewStore.yourScore))
+        + Text(self.viewStore.title)
     }
     .adaptiveFont(.matter, size: 52)
     .adaptivePadding([.leading, .trailing])
