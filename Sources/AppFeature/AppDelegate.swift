@@ -26,7 +26,7 @@ struct AppDelegateEnvironment {
   var build: Build
   var dictionary: DictionaryClient
   var fileClient: FileClient
-  var mainRunLoop: AnySchedulerOf<RunLoop>
+  var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
   var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
   var userNotifications: UserNotificationClient
@@ -39,7 +39,7 @@ struct AppDelegateEnvironment {
       build: .failing,
       dictionary: .failing,
       fileClient: .failing,
-      mainRunLoop: .failing,
+      mainQueue: .failing,
       remoteNotifications: .failing,
       setUserInterfaceStyle: { _ in .failing("setUserInterfaceStyle") },
       userNotifications: .failing
@@ -58,7 +58,7 @@ let appDelegateReducer = Reducer<
         .map(AppDelegateAction.userNotifications),
 
       environment.userNotifications.getNotificationSettings
-        .receive(on: environment.mainRunLoop)
+        .receive(on: environment.mainQueue)
         .flatMap { settings in
           [.notDetermined, .provisional].contains(settings.authorizationStatus)
             ? environment.userNotifications.requestAuthorization(.provisional)
@@ -70,8 +70,8 @@ let appDelegateReducer = Reducer<
         .flatMap { successful in
           successful
             ? Effect.registerForRemoteNotifications(
-              mainRunLoop: environment.mainRunLoop,
               remoteNotifications: environment.remoteNotifications,
+              scheduler: environment.mainQueue,
               userNotifications: environment.userNotifications
             )
             : .none
@@ -141,7 +141,7 @@ let appDelegateReducer = Reducer<
       environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
         // NB: This is necessary because UIKit needs at least one tick of the run loop before we
         //     can set the user interface style.
-        .subscribe(on: environment.mainRunLoop)
+        .subscribe(on: environment.mainQueue)
         .fireAndForget()
     )
   }

@@ -59,8 +59,8 @@ public let notificationsAuthAlertReducer = Reducer<
         .flatMap { successful in
           successful
             ? Effect.registerForRemoteNotifications(
-              mainRunLoop: environment.mainRunLoop,
               remoteNotifications: environment.remoteNotifications,
+              scheduler: environment.mainRunLoop,
               userNotifications: environment.userNotifications
             )
             : .none
