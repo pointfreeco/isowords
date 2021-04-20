@@ -56,19 +56,20 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         sessionRole: connectingSceneSession.role
       )
     ) {
+      SceneDelegate.appDelegate = self
       $0.delegateClass = SceneDelegate.self
     }
   }
 
-  final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+  private final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    static fileprivate(set) weak var appDelegate: AppDelegate?
 
     func windowScene(
       _ windowScene: UIWindowScene,
       performActionFor shortcutItem: UIApplicationShortcutItem,
       completionHandler: @escaping (Bool) -> Void
     ) {
-      self.appDelegate.viewStore.send(
+      Self.appDelegate?.viewStore.send(
         .appDelegate(.scene(.quickAction(type: shortcutItem.type)))
       )
     }
