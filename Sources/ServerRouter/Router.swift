@@ -185,7 +185,7 @@ public func router(
 #if DEBUG
   extension Router where A == ServerRoute {
     public static let mock = router(
-      date: { Date(timeIntervalSince1970: 1_234_567_890) },
+      date: { .mock },
       decoder: decoder,
       encoder: encoder,
       secrets: ["SECRET_DEADBEEF"],

@@ -1,3 +1,4 @@
+import CasePaths
 import ComposableArchitecture
 import GameOverFeature
 import Overture
@@ -10,7 +11,7 @@ import XCTest
 
 class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
-  
+
   func testSubmitLeaderboardScore() throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
@@ -36,7 +37,6 @@ class GameOverFeatureTests: XCTestCase {
     )
     environment.database.playedGamesCount = { _ in .init(value: 10) }
     environment.mainRunLoop = .immediate
-    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -58,7 +58,9 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView) { $0.isViewEnabled = true }
+    store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
+    }
     store.receive(
       .submitGameResponse(
         .success(
@@ -143,7 +145,6 @@ class GameOverFeatureTests: XCTestCase {
     )
     environment.database.playedGamesCount = { _ in .init(value: 10) }
     environment.mainRunLoop = .immediate
-    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -165,7 +166,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView) { $0.isViewEnabled = true }
+    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     store.receive(
       .submitGameResponse(
         .success(
@@ -218,7 +219,6 @@ class GameOverFeatureTests: XCTestCase {
       )
     )
     environment.mainRunLoop = .immediate
-    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -241,7 +241,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView) { $0.isViewEnabled = true }
+    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     store.receive(.submitGameResponse(.success(.turnBased)))
   }
 
@@ -350,19 +350,15 @@ class GameOverFeatureTests: XCTestCase {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequest = { route in
-      switch route {
-      case .games(.submit):
-        return .none
-      default:
-        XCTFail("Unhandled route: \(route)")
-        return .none
+    environment.apiClient.override(
+      routeCase: /ServerRoute.Api.Route.games .. /ServerRoute.Api.Route.Games.submit,
+      withResponse: { _ in
+        .none
       }
-    }
+    )
     environment.database.playedGamesCount = { _ in .init(value: 6) }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
       double: self.mainRunLoop.now.date.timeIntervalSince1970,
@@ -388,11 +384,12 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView) { $0.isViewEnabled = true }
     self.mainRunLoop.advance(by: .seconds(1))
     store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
     }
+    self.mainRunLoop.advance(by: .seconds(1))
+    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
   }
 
   func testSkipUpgradeIfLessThan10GamesPlayed() {
@@ -411,7 +408,6 @@ class GameOverFeatureTests: XCTestCase {
     environment.database.playedGamesCount = { _ in .init(value: 5) }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = .immediate
-    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
       double: self.mainRunLoop.now.date.timeIntervalSince1970,
@@ -437,6 +433,6 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView) { $0.isViewEnabled = true }
+    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
   }
 }

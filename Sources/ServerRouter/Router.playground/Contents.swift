@@ -35,6 +35,9 @@ router
   .match(string: "api/daily-challenges")
 
 router
+  .request(for: .appSiteAssociation)
+
+router
   .request(
     for: .api(
       .init(

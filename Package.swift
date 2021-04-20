@@ -76,6 +76,14 @@ var package = Package(
       name: "FirstPartyMocks"
     ),
     .testTarget(
+      name: "GameOverFeatureIntegrationTests",
+      dependencies: [
+        "GameOverFeature",
+        "IntegrationTestHelpers",
+        "SiteMiddleware",
+      ]
+    ),
+    .testTarget(
       name: "LeaderboardMiddlewareIntegrationTests",
       dependencies: [
         "DatabaseLive",
@@ -674,14 +682,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ],
       exclude: ["__Snapshots__"],
       resources: [.process("Resources/")]
-    ),
-    .testTarget(
-      name: "GameOverFeatureIntegrationTests",
-      dependencies: [
-        "GameOverFeature",
-        "IntegrationTestHelpers",
-        "SiteMiddleware",
-      ]
     ),
     .target(
       name: "Gzip",

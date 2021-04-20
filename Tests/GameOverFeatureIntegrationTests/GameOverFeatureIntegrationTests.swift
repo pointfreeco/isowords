@@ -1,22 +1,79 @@
-import ApplicativeRouter
-import ApiClient
-import Combine
 import ComposableArchitecture
-import Either
+import DatabaseClient
 import GameOverFeature
-import HttpPipeline
 import IntegrationTestHelpers
-import Overture
-import ServerRouter
 import SharedModels
 import SiteMiddleware
-import TestHelpers
 import XCTest
 
-@testable import LocalDatabaseClient
-@testable import UserDefaultsClient
-
 class GameOverFeatureIntegrationTests: XCTestCase {
+  let mainRunLoop = RunLoop.test
+
+  func testSubmitSoloScore() {
+    let ranks: [TimeScope: LeaderboardScoreResult.Rank] = [
+      .allTime: .init(outOf: 100, rank: 10000),
+      .lastWeek: .init(outOf: 10, rank: 1000),
+      .lastDay: .init(outOf: 1, rank: 100),
+    ]
+
+    var serverEnvironment = ServerEnvironment.failing
+    serverEnvironment.database.fetchPlayerByAccessToken = { _ in
+      .init(value: .blob)
+    }
+    serverEnvironment.database.fetchLeaderboardSummary = {
+      .init(value: ranks[$0.timeScope]!)
+    }
+    serverEnvironment.database.submitLeaderboardScore = {
+      .init(
+        value: .init(
+          createdAt: .mock,
+          dailyChallengeId: $0.dailyChallengeId,
+          gameContext: .solo,
+          gameMode: $0.gameMode,
+          id: .init(rawValue: UUID()),
+          language: $0.language,
+          moves: $0.moves,
+          playerId: $0.playerId,
+          puzzle: $0.puzzle,
+          score: $0.score
+        )
+      )
+    }
+
+
+    serverEnvironment.dictionary.contains = { _, _ in true }
+    serverEnvironment.router = .mock
+
+    var environment = GameOverEnvironment.failing
+    environment.audioPlayer = .noop
+    environment.apiClient = .init(
+      middleware: siteMiddleware(environment: serverEnvironment),
+      router: .mock
+    )
+    environment.database.playedGamesCount = { _ in .init(value: 0) }
+    environment.mainRunLoop = .immediate
+    environment.serverConfig.config = { .init() }
+    environment.userNotifications.getNotificationSettings = .none
+
+    let store = TestStore(
+      initialState: GameOverState(
+        completedGame: .mock,
+        isDemo: false
+      ),
+      reducer: gameOverReducer,
+      environment: environment
+    )
+
+    store.send(.onAppear)
+
+    store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
+    }
+    store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
+      $0.summary = .leaderboard(ranks)
+    }
+  }
+
   func testBasics() {
     let ranks: [TimeScope: LeaderboardScoreResult.Rank] = [
       .allTime: .init(outOf: 100, rank: 10000),
@@ -48,18 +105,16 @@ class GameOverFeatureIntegrationTests: XCTestCase {
         )
       )
     }
-    serverEnvironment.router = .test
-    let middleware = siteMiddleware(environment: serverEnvironment)
+    serverEnvironment.router = .mock
 
     var gameOverEnvironment = GameOverEnvironment.failing
     gameOverEnvironment.audioPlayer = .noop
     gameOverEnvironment.apiClient = .init(
-      middleware: middleware,
-      router: .test
+      middleware: siteMiddleware(environment: serverEnvironment),
+      router: .mock
     )
     gameOverEnvironment.database.playedGamesCount = { _ in .init(value: 0) }
-    gameOverEnvironment.mainQueue = .immediate
-    gameOverEnvironment.mainRunLoop = .immediate
+    gameOverEnvironment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     gameOverEnvironment.serverConfig.config = { .init() }
     gameOverEnvironment.userNotifications = .noop
 
@@ -73,47 +128,15 @@ class GameOverFeatureIntegrationTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    store.receive(.enableView) {
-      $0.isViewEnabled = true
-    }
+
+    self.mainRunLoop.advance()
     store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
       $0.summary = .leaderboard(ranks)
     }
+
+    self.mainRunLoop.advance(by: .seconds(2))
+    store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
+    }
   }
-}
-
-extension CompletedGame {
-  static let mock = Self(
-    cubes: .mock,
-    gameContext: .solo,
-    gameMode: .timed,
-    gameStartTime: .mock,
-    language: .en,
-    moves: [.cab],
-    secondsPlayed: 10
-  )
-}
-
-extension Move {
-  static let cab = Self(
-    playedAt: .mock,
-    playerIndex: nil,
-    reactions: nil,
-    score: SharedModels.score("CAB"),
-    type: .playedWord([
-      .init(index: .init(x: .two, y: .two, z: .two), side: .top),
-      .init(index: .init(x: .two, y: .two, z: .two), side: .left),
-      .init(index: .init(x: .two, y: .two, z: .two), side: .right),
-    ])
-  )
-}
-
-extension Router where A == ServerRoute {
-  static let test = ServerRouter.router(
-    date: { .mock },
-    decoder: JSONDecoder(),
-    encoder: JSONEncoder(),
-    secrets: ["deadbeef"],
-    sha256: { $0 }
-  )
 }

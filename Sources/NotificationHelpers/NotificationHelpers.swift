@@ -5,12 +5,12 @@ import RemoteNotificationsClient
 
 extension Effect where Output == Never, Failure == Never {
   public static func registerForRemoteNotifications(
-    mainQueue: AnySchedulerOf<DispatchQueue>,
+    mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     userNotifications: UserNotificationClient
   ) -> Self {
     userNotifications.getNotificationSettings
-      .receive(on: mainQueue)
+      .receive(on: mainRunLoop)
       .flatMap { settings in
         settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
           ? remoteNotifications.register()
