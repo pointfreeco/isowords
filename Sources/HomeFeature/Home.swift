@@ -395,16 +395,14 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       state.settings.sendDailyChallengeSummary =
         currentPlayerEnvelope.player.sendDailyChallengeSummary
 
-      let shouldNag =
-        Int(
-          environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
-            - environment.userDefaults.installationTime)
+      let now = environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+      let itsNagTime = Int(now - environment.userDefaults.installationTime)
         >= environment.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
       let isFullGamePurchased =
         currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
 
       state.nagBanner =
-        !isFullGamePurchased && shouldNag
+        !isFullGamePurchased && itsNagTime
         ? .init()
         : nil
 

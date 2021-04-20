@@ -3,11 +3,11 @@ import Either
 import XCTestDynamicOverlay
 
 extension EitherIO where E == Error {
-  public static func failing(_ title: String) -> Self {
+  public static func failing(_ message: String) -> Self {
     .init(
       run: .init {
-        XCTFail("\(title): EitherIO is unimplemented")
-        return .left(AnError(message: "\(title): EitherIO is unimplemented"))
+        XCTFail(message)
+        return .left(AnError(message: message))
       })
   }
 }
