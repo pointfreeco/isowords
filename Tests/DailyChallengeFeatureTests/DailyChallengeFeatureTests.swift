@@ -170,7 +170,7 @@ class DailyChallengeFeatureTests: XCTestCase {
         didRegisterForRemoteNotifications = true
       }
     }
-    environment.mainQueue = .immediate
+    environment.mainRunLoop = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(),
@@ -204,7 +204,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     environment.userNotifications.requestAuthorization = { options in
       .init(value: false)
     }
-    environment.mainQueue = .immediate
+    environment.mainRunLoop = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(),

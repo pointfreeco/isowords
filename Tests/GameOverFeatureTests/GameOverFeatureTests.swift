@@ -352,9 +352,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.override(
       routeCase: /ServerRoute.Api.Route.games .. /ServerRoute.Api.Route.Games.submit,
-      withResponse: { _ in
-        .none
-      }
+      withResponse: { _ in .none }
     )
     environment.database.playedGamesCount = { _ in .init(value: 6) }
     environment.database.fetchStats = .init(value: .init())

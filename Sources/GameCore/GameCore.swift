@@ -276,7 +276,6 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
             audioPlayer: $0.audioPlayer,
             database: $0.database,
             fileClient: $0.fileClient,
-            mainQueue: $0.mainQueue,
             mainRunLoop: $0.mainRunLoop,
             remoteNotifications: $0.remoteNotifications,
             serverConfig: $0.serverConfig,

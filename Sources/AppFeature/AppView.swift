@@ -140,7 +140,7 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           build: $0.build,
           dictionary: $0.dictionary,
           fileClient: $0.fileClient,
-          mainQueue: $0.mainQueue,
+          mainRunLoop: $0.mainRunLoop,
           remoteNotifications: $0.remoteNotifications,
           setUserInterfaceStyle: $0.setUserInterfaceStyle,
           userNotifications: $0.userNotifications
@@ -371,7 +371,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .didChangeScenePhase(.active):
     return .merge(
       Effect.registerForRemoteNotifications(
-        mainQueue: environment.mainQueue,
+        mainRunLoop: environment.mainRunLoop,
         remoteNotifications: environment.remoteNotifications,
         userNotifications: environment.userNotifications
       )
