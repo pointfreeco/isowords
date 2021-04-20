@@ -39,7 +39,7 @@ struct AppDelegateEnvironment {
       build: .failing,
       dictionary: .failing,
       fileClient: .failing,
-      mainQueue: .failing,
+      mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       setUserInterfaceStyle: { _ in .failing("setUserInterfaceStyle") },
       userNotifications: .failing

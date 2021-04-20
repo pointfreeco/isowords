@@ -69,7 +69,7 @@ class LeaderboardMiddlewareIntegrationTests: XCTestCase {
     var environment = ServerEnvironment.failing
     environment.database = self.database
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let player = try self.database.insertPlayer(
       .init(

@@ -38,13 +38,13 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       )
     }
     serverEnvironment.dictionary.contains = { _, _ in true }
-    serverEnvironment.router = .mock
+    serverEnvironment.router = .test
 
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient = .init(
       middleware: siteMiddleware(environment: serverEnvironment),
-      router: .mock
+      router: .test
     )
     environment.database.playedGamesCount = { _ in .init(value: 0) }
     environment.mainRunLoop = .immediate

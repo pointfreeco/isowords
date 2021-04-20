@@ -230,7 +230,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       return pure(.init(outOf: 100, rank: 1, score: 1_000))
     }
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
@@ -373,7 +373,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     }
     environment.dictionary.contains = { _, _ in false }
     environment.mailgun.sendEmail = MailgunClient.noop.sendEmail
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()

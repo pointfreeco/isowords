@@ -98,7 +98,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       }
     }
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
@@ -237,7 +237,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       pure(DailyChallengeResult(outOf: 100, rank: 42, score: nil))
     }
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
@@ -321,7 +321,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
         )
       )
     }
-    environment.router = .mock
+    environment.router = .test
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
@@ -839,7 +839,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       )
     }
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
