@@ -11,7 +11,7 @@ import SharedModels
 import SnsClient
 import VerifyReceiptMiddleware
 
-public struct Environment {
+public struct ServerEnvironment {
   public var changelog: () -> Changelog
   public var database: DatabaseClient
   public var date: () -> Date
@@ -51,8 +51,8 @@ public struct Environment {
 #if DEBUG
   import XCTestDynamicOverlay
 
-  extension Environment {
-    public static let unimplemented = Self(
+  extension ServerEnvironment {
+    public static let failing = Self(
       changelog: {
         XCTFail("changelog is unimplemented.")
         return .current
@@ -64,14 +64,14 @@ public struct Environment {
       },
       dictionary: .failing,
       envVars: EnvVars(appEnv: .testing),
-      itunes: .unimplemented,
-      mailgun: .unimplemented,
+      itunes: .failing,
+      mailgun: .failing,
       randomCubes: {
         XCTFail("randomCubes is unimplemented.")
         return .mock
       },
-      router: .unimplemented,
-      snsClient: .unimplemented
+      router: .failing,
+      snsClient: .failing
     )
   }
 #endif

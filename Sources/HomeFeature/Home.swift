@@ -394,6 +394,18 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         currentPlayerEnvelope.player.sendDailyChallengeReminder
       state.settings.sendDailyChallengeSummary =
         currentPlayerEnvelope.player.sendDailyChallengeSummary
+
+      let now = environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+      let itsNagTime = Int(now - environment.userDefaults.installationTime)
+        >= environment.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
+      let isFullGamePurchased =
+        currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
+
+      state.nagBanner =
+        !isFullGamePurchased && itsNagTime
+        ? .init()
+        : nil
+
       return .none
 
     case .binding:
@@ -444,19 +456,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .cancel(id: ListenerId())
 
     case .onAppear:
-      let shouldNag =
-        Int(
-          environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
-            - environment.userDefaults.installationTime)
-        >= environment.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
-      let isFullGamePurchased =
-        environment.apiClient.currentPlayer()?.appleReceipt?.receipt.originalPurchaseDate != nil
-
-      state.nagBanner =
-        !isFullGamePurchased && shouldNag
-        ? .init()
-        : nil
-
       return .merge(
         onAppearEffects(environment: environment),
 
@@ -673,20 +672,26 @@ public struct HomeView: View {
       )
     }
     .navigationBarHidden(true)
-    .sheet(
-      isPresented: self.viewStore.binding(
-        get: \.isChangelogVisible,
-        send: HomeAction.dismissChangelog
-      )
-    ) {
-      IfLetStore(
-        self.store.scope(
-          state: \.changelog,
-          action: HomeAction.changelog
-        ),
-        then: ChangelogView.init(store:)
-      )
-    }
+    .background(
+      // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
+      // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
+      // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
+      EmptyView()
+        .sheet(
+          isPresented: self.viewStore.binding(
+            get: \.isChangelogVisible,
+            send: HomeAction.dismissChangelog
+          )
+        ) {
+          IfLetStore(
+            self.store.scope(
+              state: \.changelog,
+              action: HomeAction.changelog
+            ),
+            then: ChangelogView.init(store:)
+          )
+        }
+    )
     .onAppear { self.viewStore.send(.onAppear) }
     .onDisappear { self.viewStore.send(.onDisappear) }
   }

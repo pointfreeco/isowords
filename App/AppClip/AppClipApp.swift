@@ -9,43 +9,45 @@ import SwiftUI
 
 @main
 struct AppClipApp: App {
-  @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+  init() {
+    Styleguide.registerFonts()
+  }
 
   var body: some Scene {
     WindowGroup {
       DemoView(
-        store: appDelegate.store
+        store: Store(
+          initialState: DemoState(),
+          reducer: demoReducer,
+          environment: .live
+        )
       )
     }
   }
 }
 
-final class AppDelegate: NSObject, UIApplicationDelegate {
-  let store = Store(
-    initialState: DemoState(),
-    reducer: demoReducer,
-    environment: .live
-  )
-  lazy var viewStore = ViewStore(
-    self.store.scope(
-      state: { _ in () },
-      action: { (_: Void) in DemoAction.didFinishLaunching }
-    ),
-    removeDuplicates: ==
-  )
-
-  func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-  ) -> Bool {
-    Styleguide.registerFonts()
-    self.viewStore.send(())
-    return true
+extension DemoEnvironment {
+  static var live: Self {
+    Self(
+      apiClient: .appClip,
+      applicationClient: .live,
+      audioPlayer: .live(bundles: [AppClipAudioLibrary.bundle]),
+      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
+      build: .live,
+      dictionary: .file(),
+      feedbackGenerator: .live,
+      lowPowerMode: .live,
+      mainQueue: .main,
+      mainRunLoop: .main,
+      userDefaults: .live()
+    )
   }
 }
 
-extension DemoEnvironment {
-  static var live: Self {
+extension ApiClient {
+  // An instance of the API client that only supports one endpoint: submitting un-authenticated
+  // games to the leaderboards.
+  static var appClip: Self {
     var apiClient = ApiClient.noop
     apiClient.request = { route in
       switch route {
@@ -81,23 +83,6 @@ extension DemoEnvironment {
       }
     }
 
-    return Self(
-      apiClient: apiClient,
-      applicationClient: .live,
-      audioPlayer: .live(
-        bundles: [
-          AppClipAudioLibrary.bundle
-        ]
-      ),
-      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
-      build: .live,
-      dictionary: .file(),
-      feedbackGenerator: .live,
-      lowPowerMode: .live,
-      mainQueue: .main,
-      mainRunLoop: .main,
-      serverConfig: .noop,
-      userDefaults: .live()
-    )
+    return apiClient
   }
 }

@@ -116,7 +116,7 @@ public let dailyChallengeReducer = Reducer<
       action: /DailyChallengeAction.notificationsAuthAlert,
       environment: {
         NotificationsAuthAlertEnvironment(
-          mainQueue: $0.mainQueue,
+          mainRunLoop: $0.mainRunLoop,
           remoteNotifications: $0.remoteNotifications,
           userNotifications: $0.userNotifications
         )

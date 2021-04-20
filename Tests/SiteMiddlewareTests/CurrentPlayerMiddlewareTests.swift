@@ -24,7 +24,7 @@ class CurrentPlayerMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.fetchAppleReceipt = { _ in pure(.mock) }
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
 

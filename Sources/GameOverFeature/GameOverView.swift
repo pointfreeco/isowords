@@ -77,9 +77,9 @@ public struct GameOverState: Equatable {
 public enum GameOverAction: Equatable {
   case closeButtonTapped
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case delayedOnAppear
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
-  case enableView
   case gameButtonTapped(GameMode)
   case onAppear
   case notificationsAuthAlert(NotificationsAuthAlertAction)
@@ -102,7 +102,6 @@ public struct GameOverEnvironment {
   public var audioPlayer: AudioPlayerClient
   public var database: LocalDatabaseClient
   public var fileClient: FileClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
@@ -115,7 +114,6 @@ public struct GameOverEnvironment {
     audioPlayer: AudioPlayerClient,
     database: LocalDatabaseClient,
     fileClient: FileClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>,
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
@@ -128,7 +126,6 @@ public struct GameOverEnvironment {
     self.database = database
     self.fileClient = fileClient
     self.mainRunLoop = mainRunLoop
-    self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.storeKit = storeKit
@@ -142,7 +139,6 @@ public struct GameOverEnvironment {
       audioPlayer: .failing,
       database: .failing,
       fileClient: .failing,
-      mainQueue: .failing,
       mainRunLoop: .failing,
       remoteNotifications: .failing,
       serverConfig: .failing,
@@ -161,7 +157,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       action: /GameOverAction.notificationsAuthAlert,
       environment: {
         NotificationsAuthAlertEnvironment(
-          mainQueue: $0.mainQueue,
+          mainRunLoop: $0.mainRunLoop,
           remoteNotifications: $0.remoteNotifications,
           userNotifications: $0.userNotifications
         )
@@ -213,6 +209,10 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       state.dailyChallenges = dailyChallenges
       return .none
 
+    case .delayedOnAppear:
+      state.isViewEnabled = true
+      return .none
+
     case .delayedShowUpgradeInterstitial:
       state.upgradeInterstitial = .init()
       return .none
@@ -221,10 +221,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       return .none
 
     case .delegate:
-      return .none
-
-    case .enableView:
-      state.isViewEnabled = true
       return .none
 
     case let .gameButtonTapped(gameMode):
@@ -299,8 +295,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       //        : .none
 
       return .merge(
-        Effect(value: .enableView)
-          .delay(for: 2, scheduler: environment.mainQueue)
+        Effect(value: .delayedOnAppear)
+          .delay(for: 2, scheduler: environment.mainRunLoop)
           .eraseToEffect(),
 
         submitGameEffect,
@@ -328,7 +324,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         .eraseToEffect(),
 
         environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainQueue)
+          .receive(on: environment.mainRunLoop)
           .map(GameOverAction.userNotificationSettingsResponse)
           .eraseToEffect(),
 
@@ -1280,12 +1276,11 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
   }
 
   extension GameOverEnvironment {
-    static let preview = Self(
+    public static let preview = Self(
       apiClient: .noop,
       audioPlayer: .noop,
       database: .noop,
       fileClient: .noop,
-      mainQueue: .main,
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,

@@ -113,18 +113,6 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
 
       // Play each word
       for (wordIndex, word) in replayableWords.enumerated() {
-        // Wait a long time before playing first word to allow for scene opacity to
-        // animate in, and wait a small about of time before each following word
-        effects.append(
-          Effect.none
-            .delay(
-              for: wordIndex == 0
-                ? firstWordDelay
-                : firstCharacterDelay, scheduler: environment.mainQueue
-            )
-            .eraseToEffect()
-        )
-
         // Play each character in the word
         for (characterIndex, character) in word.enumerated() {
           let face = IndexedCubeFace(index: character.index, side: character.side)
@@ -132,8 +120,9 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           // Move the nub to the face being played
           effects.append(
             Effect(value: .binding(.set(\.nub.location, .face(face))))
-              .receive(
-                on: environment.mainQueue
+              .delay(
+                for: moveNubDelay(wordIndex: wordIndex, characterIndex: characterIndex),
+                scheduler: environment.mainQueue
                   .animate(withDuration: moveNubToFaceDuration, options: .curveEaseInOut)
               )
               .eraseToEffect()
@@ -173,9 +162,9 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             )
             .eraseToEffect()
         )
-        // Submit the word after waiting a small amout of time
+        // Press the nub 
         effects.append(
-          Effect(value: .game(.submitButtonTapped(nil)))
+          Effect(value: .binding(.set(\.nub.isPressed, true)))
             .delay(
               for: .seconds(
                 .random(
@@ -188,11 +177,9 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             )
             .eraseToEffect()
         )
-        // Press the nub
+        // Submit the word
         effects.append(
-          Effect(value: .binding(.set(\.nub.isPressed, true)))
-            .receive(on: environment.mainQueue.animate(withDuration: submitPressDuration))
-            .eraseToEffect()
+          Effect(value: .game(.submitButtonTapped(reaction: nil)))
         )
         // Release the nub
         effects.append(
@@ -364,6 +351,19 @@ public struct TrailerView: View {
     self.viewStore.selectedWordScore.map {
       Text(" \($0)")
     } ?? Text("")
+  }
+}
+
+private func moveNubDelay(
+  wordIndex: Int,
+  characterIndex: Int
+) -> DispatchQueue.SchedulerTimeType.Stride {
+  if wordIndex == 0 && characterIndex == 0 {
+    return firstWordDelay
+  } else if characterIndex == 0 {
+    return firstCharacterDelay
+  } else {
+    return 0
   }
 }
 

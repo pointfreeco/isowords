@@ -1,4 +1,4 @@
-public struct VerifiedPuzzleResult {
+public struct VerifiedPuzzleResult: Equatable {
   public var totalScore = 0
   public var verifiedMoves: [VerifiedMoveResult] = []
 }
@@ -15,7 +15,6 @@ public func verify(
   isValidWord: (String) -> Bool
 ) -> VerifiedPuzzleResult? {
   var puzzle = Puzzle(archivableCubes: puzzle)
-
   var result = VerifiedPuzzleResult()
   for index in moves.indices {
     if let moveResult = verify(
@@ -31,7 +30,6 @@ public func verify(
     }
   }
 
-  // TODO: validate score passed to API
   return result
 }
 
@@ -54,6 +52,8 @@ public func verify(
         guard case let .playedWord(faces) = $0.type else { return true }
         return puzzle.string(from: faces) != foundWord
       }
+      && isValidWord(foundWord)
+      && score(foundWord) == move.score
       && zip(cubeFaces.dropFirst(), cubeFaces)
         .reduce(true) { accum, faces in
           let (next, previous) = faces
@@ -64,15 +64,17 @@ public func verify(
             && puzzle[previous.index].isInPlay
         }
 
-    if isValidMove && isValidWord(foundWord) {
+    if isValidMove {
       apply(move: move, to: &puzzle)
-      // TODO: this score should be computed from the string rather than using what is handed us.
-      //       in fact maybe we need an ArchivableMove to remove that info?
-      return .init(cubeFaces: cubeFaces, foundWord: foundWord, score: move.score)
+      return .init(
+        cubeFaces: cubeFaces,
+        foundWord: foundWord,
+        score: move.score
+      )
     } else {
       return nil
     }
-
+    
   case let .removedCube(point):
     if puzzle[point].isInPlay
       // NB: Allow "removing" an out of play cube if it was removed in the previous move. This

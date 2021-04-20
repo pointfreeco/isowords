@@ -4,13 +4,13 @@ import ComposableUserNotifications
 import RemoteNotificationsClient
 
 extension Effect where Output == Never, Failure == Never {
-  public static func registerForRemoteNotifications(
-    mainQueue: AnySchedulerOf<DispatchQueue>,
+  public static func registerForRemoteNotifications<S: Scheduler>(
     remoteNotifications: RemoteNotificationsClient,
+    scheduler: S,
     userNotifications: UserNotificationClient
   ) -> Self {
     userNotifications.getNotificationSettings
-      .receive(on: mainQueue)
+      .receive(on: scheduler)
       .flatMap { settings in
         settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
           ? remoteNotifications.register()

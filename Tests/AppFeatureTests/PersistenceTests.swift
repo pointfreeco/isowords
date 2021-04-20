@@ -95,7 +95,7 @@ class PersistenceTests: XCTestCase {
         $0.optimisticallySelectedFace = nil
       }
     }
-    store.send(.currentGame(.game(.submitButtonTapped(nil)))) {
+    store.send(.currentGame(.game(.submitButtonTapped(reaction: nil)))) {
       try XCTUnwrap(&$0.game) {
         $0.moves = [
           .init(

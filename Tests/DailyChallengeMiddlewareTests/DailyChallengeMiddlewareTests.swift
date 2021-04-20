@@ -35,7 +35,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.createTodaysDailyChallenge = { request in
           pure(
@@ -70,7 +70,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.createTodaysDailyChallenge = { request in
           pure(
@@ -109,7 +109,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     let player = Player.blob
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.failing) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(player) }
         $0.database.fetchTodaysDailyChallenges = { language in
           pure(
@@ -156,11 +156,11 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       playedAt: Date(timeIntervalSince1970: 1_234_567_890),
       playerIndex: nil,
       reactions: nil,
-      score: 1_000,
+      score: 27,
       type: .playedWord([
+        .init(index: index, side: .top),
         .init(index: index, side: .left),
         .init(index: index, side: .right),
-        .init(index: index, side: .top),
       ])
     )
 
@@ -182,7 +182,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       .base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.completeDailyChallenge = {
       pure(
         DailyChallengePlay(
@@ -230,14 +230,14 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       return pure(.init(outOf: 100, rank: 1, score: 1_000))
     }
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
     _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
-      X-Signature: ewogICJnYW1lQ29udGV4dCIgOiB7CiAgICAiZGFpbHlDaGFsbGVuZ2VJZCIgOiAiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIgogIH0sCiAgIm1vdmVzIiA6IFsKICAgIHsKICAgICAgInBsYXllZEF0IiA6IDEyMzQ1Njc4OTAsCiAgICAgICJzY29yZSIgOiAxMDAwLAogICAgICAidHlwZSIgOiB7CiAgICAgICAgInBsYXllZFdvcmQiIDogWwogICAgICAgICAgewogICAgICAgICAgICAiaW5kZXgiIDogewogICAgICAgICAgICAgICJ4IiA6IDIsCiAgICAgICAgICAgICAgInkiIDogMiwKICAgICAgICAgICAgICAieiIgOiAyCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJzaWRlIiA6IDEKICAgICAgICAgIH0sCiAgICAgICAgICB7CiAgICAgICAgICAgICJpbmRleCIgOiB7CiAgICAgICAgICAgICAgIngiIDogMiwKICAgICAgICAgICAgICAieSIgOiAyLAogICAgICAgICAgICAgICJ6IiA6IDIKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInNpZGUiIDogMgogICAgICAgICAgfSwKICAgICAgICAgIHsKICAgICAgICAgICAgImluZGV4IiA6IHsKICAgICAgICAgICAgICAieCIgOiAyLAogICAgICAgICAgICAgICJ5IiA6IDIsCiAgICAgICAgICAgICAgInoiIDogMgogICAgICAgICAgICB9LAogICAgICAgICAgICAic2lkZSIgOiAwCiAgICAgICAgICB9CiAgICAgICAgXQogICAgICB9CiAgICB9CiAgXQp9LS0tLVNFQ1JFVF9ERUFEQkVFRi0tLS0xMjM0NTY3ODkw
+      X-Signature: ewogICJnYW1lQ29udGV4dCIgOiB7CiAgICAiZGFpbHlDaGFsbGVuZ2VJZCIgOiAiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIgogIH0sCiAgIm1vdmVzIiA6IFsKICAgIHsKICAgICAgInBsYXllZEF0IiA6IDEyMzQ1Njc4OTAsCiAgICAgICJzY29yZSIgOiAyNywKICAgICAgInR5cGUiIDogewogICAgICAgICJwbGF5ZWRXb3JkIiA6IFsKICAgICAgICAgIHsKICAgICAgICAgICAgImluZGV4IiA6IHsKICAgICAgICAgICAgICAieCIgOiAyLAogICAgICAgICAgICAgICJ5IiA6IDIsCiAgICAgICAgICAgICAgInoiIDogMgogICAgICAgICAgICB9LAogICAgICAgICAgICAic2lkZSIgOiAwCiAgICAgICAgICB9LAogICAgICAgICAgewogICAgICAgICAgICAiaW5kZXgiIDogewogICAgICAgICAgICAgICJ4IiA6IDIsCiAgICAgICAgICAgICAgInkiIDogMiwKICAgICAgICAgICAgICAieiIgOiAyCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJzaWRlIiA6IDEKICAgICAgICAgIH0sCiAgICAgICAgICB7CiAgICAgICAgICAgICJpbmRleCIgOiB7CiAgICAgICAgICAgICAgIngiIDogMiwKICAgICAgICAgICAgICAieSIgOiAyLAogICAgICAgICAgICAgICJ6IiA6IDIKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInNpZGUiIDogMgogICAgICAgICAgfQogICAgICAgIF0KICAgICAgfQogICAgfQogIF0KfS0tLS1TRUNSRVRfREVBREJFRUYtLS0tMTIzNDU2Nzg5MA==
       
       {
         "gameContext" : {
@@ -246,9 +246,17 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         "moves" : [
           {
             "playedAt" : 1234567890,
-            "score" : 1000,
+            "score" : 27,
             "type" : {
               "playedWord" : [
+                {
+                  "index" : {
+                    "x" : 2,
+                    "y" : 2,
+                    "z" : 2
+                  },
+                  "side" : 0
+                },
                 {
                   "index" : {
                     "x" : 2,
@@ -264,14 +272,6 @@ class DailyChallengeMiddlewareTests: XCTestCase {
                     "z" : 2
                   },
                   "side" : 2
-                },
-                {
-                  "index" : {
-                    "x" : 2,
-                    "y" : 2,
-                    "z" : 2
-                  },
-                  "side" : 0
                 }
               ]
             }
@@ -310,8 +310,8 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         moves: [move],
         playerId: player.id,
         puzzle: puzzle,
-        score: 1_000,
-        words: [.init(moveIndex: 0, score: 1_000, word: "ABC")]
+        score: 27,
+        words: [.init(moveIndex: 0, score: 27, word: "CAB")]
       )
     )
     XCTAssertEqual(
@@ -356,7 +356,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
        .base64EncodedString()
     ]
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchDailyChallengeById = { _ in
       pure(
@@ -371,8 +371,9 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         )
       )
     }
+    environment.dictionary.contains = { _, _ in false }
     environment.mailgun.sendEmail = MailgunClient.noop.sendEmail
-    environment.router = .mock
+    environment.router = .test
 
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
@@ -455,7 +456,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       )!
     )
 
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchDailyChallengeResults = { request in
       pure(

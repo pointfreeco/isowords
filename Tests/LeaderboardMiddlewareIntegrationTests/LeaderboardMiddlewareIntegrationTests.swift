@@ -58,18 +58,18 @@ class LeaderboardMiddlewareIntegrationTests: XCTestCase {
         playedAt: Date(timeIntervalSince1970: 1_234_567_890),
         playerIndex: nil,
         reactions: nil,
-        score: 100,
+        score: 27,
         type: .playedWord([
+          .init(index: index, side: .top),
           .init(index: index, side: .left),
           .init(index: index, side: .right),
-          .init(index: index, side: .top),
         ])
       )
     ]
-    var environment = Environment.unimplemented
+    var environment = ServerEnvironment.failing
     environment.database = self.database
     environment.dictionary = .everyString
-    environment.router = .mock
+    environment.router = .test
 
     let player = try self.database.insertPlayer(
       .init(

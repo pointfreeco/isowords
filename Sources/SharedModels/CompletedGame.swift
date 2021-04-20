@@ -143,3 +143,17 @@ public struct CompletedGame: Codable, Equatable {
     self.moves.reduce(into: 0) { $0 += $1.score }
   }
 }
+
+#if DEBUG
+extension CompletedGame {
+  public static let mock = Self(
+    cubes: .mock,
+    gameContext: .solo,
+    gameMode: .timed,
+    gameStartTime: .mock,
+    language: .en,
+    moves: [.cab],
+    secondsPlayed: 10
+  )
+}
+#endif

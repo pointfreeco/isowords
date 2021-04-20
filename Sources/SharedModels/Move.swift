@@ -137,6 +137,18 @@ extension Move {
       ])
     )
 
+    public static let cab = Self(
+      playedAt: .mock,
+      playerIndex: nil,
+      reactions: nil,
+      score: SharedModels.score("CAB"),
+      type: .playedWord([
+        .init(index: .init(x: .two, y: .two, z: .two), side: .top),
+        .init(index: .init(x: .two, y: .two, z: .two), side: .left),
+        .init(index: .init(x: .two, y: .two, z: .two), side: .right),
+      ])
+    )
+
     public static let removeCube = Self(
       playedAt: .mock,
       playerIndex: nil,

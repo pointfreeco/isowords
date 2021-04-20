@@ -56,7 +56,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       rank: 1
     )
 
-    let serverEnvironment = update(Environment.unimplemented) {
+    let serverEnvironment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(currentPlayer) }
       $0.database.fetchDailyChallengeResults = { request in
         switch request.gameMode {
@@ -72,7 +72,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
 
     let clientEnvironment = DailyChallengeResultsEnvironment(
-      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment)),
+      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment), router: .test),
       mainQueue: .immediate
     )
 

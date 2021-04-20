@@ -6,7 +6,7 @@ import SiteMiddleware
 import SnsClient
 
 public func sendDailyChallengeEndsSoonNotifications(
-  environment: Environment
+  environment: ServerEnvironment
 ) -> EitherIO<Error, [Either<Error, PublishResponse>]> {
   environment.database.fetchActiveDailyChallengeArns()
     .flatMap { arns in

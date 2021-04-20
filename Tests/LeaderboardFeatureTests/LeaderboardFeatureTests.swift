@@ -87,7 +87,7 @@ class LeaderboardFeatureTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(Environment.unimplemented) {
+    let siteEnvironment = update(ServerEnvironment.failing) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure([vocabEntry])
@@ -100,7 +100,7 @@ class LeaderboardFeatureTests: XCTestCase {
     let middleware = siteMiddleware(environment: siteEnvironment)
 
     let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
-      $0.apiClient = ApiClient(middleware: middleware)
+      $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }
 

@@ -3,6 +3,7 @@
 import Foundation
 import PackageDescription
 
+// MARK: - shared
 var package = Package(
   name: "isowords",
   platforms: [
@@ -110,6 +111,7 @@ var package = Package(
         "SharedModels",
         .product(name: "ApplicativeRouter", package: "Web"),
         .product(name: "Tagged", package: "swift-tagged"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .testTarget(
@@ -510,7 +512,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "ApiClient",
         "Build",
-        "CubeCore",
         "GameCore",
         "DictionaryClient",
         "FeedbackGeneratorClient",
@@ -1011,6 +1012,16 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
 }
 
 // MARK: - server
+package.dependencies.append(contentsOf: [
+  .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
+  .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
+  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
+  .package(
+    name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
+  ),
+  .package(
+    name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
+])
 package.products.append(contentsOf: [
   .executable(name: "daily-challenge-reports", targets: ["daily-challenge-reports"]),
   .executable(name: "runner", targets: ["runner"]),
@@ -1029,21 +1040,12 @@ package.products.append(contentsOf: [
   .library(name: "RunnerTasks", targets: ["RunnerTasks"]),
   .library(name: "ServerBootstrap", targets: ["ServerBootstrap"]),
   .library(name: "ServerConfigMiddleware", targets: ["ServerConfigMiddleware"]),
+  .library(name: "ServerTestHelpers", targets: ["ServerTestHelpers"]),
   .library(name: "ShareGameMiddleware", targets: ["ShareGameMiddleware"]),
   .library(name: "SiteMiddleware", targets: ["SiteMiddleware"]),
   .library(name: "SnsClient", targets: ["SnsClient"]),
   .library(name: "SnsClientLive", targets: ["SnsClientLive"]),
   .library(name: "VerifyReceiptMiddleware", targets: ["VerifyReceiptMiddleware"]),
-])
-package.dependencies.append(contentsOf: [
-  .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
-  .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
-  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
-  .package(
-    name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
-  ),
-  .package(
-    name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
 ])
 package.targets.append(contentsOf: [
   .target(
@@ -1105,6 +1107,7 @@ package.targets.append(contentsOf: [
     name: "DatabaseClient",
     dependencies: [
       "Build",
+      "ServerTestHelpers",
       "SharedModels",
       "SnsClient",
       .product(name: "Either", package: "Prelude"),
@@ -1133,6 +1136,7 @@ package.targets.append(contentsOf: [
     name: "DemoMiddleware",
     dependencies: [
       "DatabaseClient",
+      "DictionaryClient",
       "MiddlewareHelpers",
       "SharedModels",
       .product(name: "HttpPipeline", package: "Web"),
@@ -1178,6 +1182,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "MailgunClient",
     dependencies: [
+      "ServerTestHelpers",
       .product(name: "Either", package: "Prelude"),
       .product(name: "Tagged", package: "swift-tagged"),
       .product(name: "UrlFormEncoding", package: "Web"),
@@ -1266,6 +1271,13 @@ package.targets.append(contentsOf: [
       .product(name: "HttpPipeline", package: "Web"),
     ]
   ),
+  .target(
+    name: "ServerTestHelpers",
+    dependencies: [
+      .product(name: "Either", package: "Prelude"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+    ]
+  ),
   .testTarget(
     name: "ServerConfigMiddlewareTests",
     dependencies: [
@@ -1340,8 +1352,10 @@ package.targets.append(contentsOf: [
   .target(
     name: "SnsClient",
     dependencies: [
+      "ServerTestHelpers",
       .product(name: "Either", package: "Prelude"),
       .product(name: "Tagged", package: "swift-tagged"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ]
   ),
   .testTarget(
@@ -1364,6 +1378,7 @@ package.targets.append(contentsOf: [
       "DatabaseClient",
       "MiddlewareHelpers",
       "ServerRouter",
+      "ServerTestHelpers",
       "SharedModels",
       .product(name: "HttpPipeline", package: "Web"),
       .product(name: "Overture", package: "Overture"),

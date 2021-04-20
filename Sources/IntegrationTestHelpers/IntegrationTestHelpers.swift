@@ -1,4 +1,5 @@
 import ApiClient
+import ApplicativeRouter
 import Combine
 import ComposableArchitecture
 import FirstPartyMocks
@@ -11,20 +12,10 @@ import TestHelpers
 
 extension ApiClient {
   public init(
-    date: @escaping () -> Date = { Date(timeIntervalSince1970: 1_234_567_890) },
     middleware: @escaping Middleware<StatusLineOpen, ResponseEnded, Prelude.Unit, Data>,
-    secrets: [String] = ["SECRET_DEADBEEF"],
-    sha256: @escaping (Data) -> Data = { $0 }
+    router: Router<ServerRoute>
   ) {
     var currentPlayer: CurrentPlayerEnvelope?
-
-    let router = ServerRouter.router(
-      date: date,
-      decoder: decoder,
-      encoder: encoder,
-      secrets: secrets,
-      sha256: sha256
-    )
 
     var baseUrl = URL(string: "/")!
 

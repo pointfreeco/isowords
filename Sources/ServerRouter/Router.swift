@@ -4,6 +4,7 @@ import Foundation
 import Prelude
 import SharedModels
 import Tagged
+import XCTestDynamicOverlay
 
 #if canImport(FoundationNetworking)
   import FoundationNetworking
@@ -183,7 +184,7 @@ public func router(
 
 #if DEBUG
   extension Router where A == ServerRoute {
-    public static let mock = router(
+    public static let test = router(
       date: { Date(timeIntervalSince1970: 1_234_567_890) },
       decoder: decoder,
       encoder: encoder,
@@ -191,12 +192,18 @@ public func router(
       sha256: { $0 }
     )
 
-    public static let unimplemented = router(
-      date: { fatalError() },
+    public static let failing = router(
+      date: {
+        XCTFail("\(Self.self).date is unimplemented")
+        return .init()
+      },
       decoder: decoder,
       encoder: encoder,
       secrets: ["SECRET_DEADBEEF"],
-      sha256: { _ in fatalError() }
+      sha256: {
+        XCTFail("\(Self.self).sha256 is unimplemented")
+        return $0
+      }
     )
   }
 

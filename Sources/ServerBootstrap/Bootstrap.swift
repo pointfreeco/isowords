@@ -16,10 +16,10 @@ import SharedModels
 import SiteMiddleware
 import SnsClientLive
 
-public func bootstrap(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, Environment> {
+public func bootstrap(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, ServerEnvironment> {
   Backtrace.install()
 
-  return EitherIO.debug(prefix: "⚠️ Bootstrapping isowords...")
+  return EitherIO.debug(prefix: "⏳ Bootstrapping isowords...")
     .flatMap(
       const(prepareEnvironment(eventLoopGroup: eventLoopGroup))
     )
@@ -27,8 +27,8 @@ public func bootstrap(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, Environ
     .flatMap(fireAndForget(.debug(prefix: "✅ isowords Bootstrapped!")))
 }
 
-private func prepareEnvironment(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, Environment> {
-  EitherIO.debug(prefix: "  ⚠️ Loading environment...")
+private func prepareEnvironment(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, ServerEnvironment> {
+  EitherIO.debug(prefix: "  ⏳ Loading environment...")
     .flatMap(loadEnvVars)
     .flatMap(loadEnvironment(eventLoopGroup: eventLoopGroup))
     .flatMap(bootstrapDictionary(environment:))
@@ -70,11 +70,11 @@ private let loadEnvVars = { () -> EitherIO<Error, EnvVars> in
 }
 
 private func loadEnvironment(eventLoopGroup: EventLoopGroup) -> (EnvVars) -> EitherIO<
-  Error, Environment
+  Error, ServerEnvironment
 > {
   { envVars in
     return pure(
-      Environment(
+      ServerEnvironment(
         changelog: { Changelog.current },
         database: .live(
           pool: .init(
@@ -115,7 +115,7 @@ private func loadEnvironment(eventLoopGroup: EventLoopGroup) -> (EnvVars) -> Eit
   }
 }
 
-private func bootstrapDictionary(environment: Environment) -> EitherIO<Error, Environment> {
+private func bootstrapDictionary(environment: ServerEnvironment) -> EitherIO<Error, ServerEnvironment> {
   .init(
     run: .init {
       do {
@@ -132,9 +132,9 @@ private func bootstrapDictionary(environment: Environment) -> EitherIO<Error, En
 
 private func connectToPostgres(
   eventLoopGroup: EventLoopGroup
-) -> (Environment) -> EitherIO<Error, Void> {
+) -> (ServerEnvironment) -> EitherIO<Error, Void> {
   { environment in
-    EitherIO.debug(prefix: "  ⚠️ Connecting to PostgreSQL")
+    EitherIO.debug(prefix: "  ⏳ Connecting to PostgreSQL")
       .flatMap { _ -> EitherIO<Error, Void> in
         #if DEBUG
           if environment.envVars.appEnv == .staging || environment.envVars.appEnv == .production {

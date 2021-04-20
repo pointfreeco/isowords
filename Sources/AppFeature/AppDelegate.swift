@@ -70,8 +70,8 @@ let appDelegateReducer = Reducer<
         .flatMap { successful in
           successful
             ? Effect.registerForRemoteNotifications(
-              mainQueue: environment.mainQueue,
               remoteNotifications: environment.remoteNotifications,
+              scheduler: environment.mainQueue,
               userNotifications: environment.userNotifications
             )
             : .none

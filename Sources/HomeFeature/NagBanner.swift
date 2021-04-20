@@ -96,20 +96,26 @@ struct NagBannerFeature: View {
         self.store.scope(state: { $0 }, action: NagBannerFeatureAction.nagBanner),
         then: NagBanner.init(store:)
       )
-      .sheet(
-        isPresented: viewStore.binding(
-          get: { $0?.upgradeInterstitial != nil },
-          send: NagBannerFeatureAction.dismissUpgradeInterstitial
-        )
-      ) {
-        IfLetStore(
-          self.store.scope(
-            state: { $0?.upgradeInterstitial },
-            action: { .nagBanner(.upgradeInterstitial($0)) }
-          ),
-          then: UpgradeInterstitialView.init(store:)
-        )
-      }
+      .background(
+        // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
+        // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
+        // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
+        EmptyView()
+          .sheet(
+            isPresented: viewStore.binding(
+              get: { $0?.upgradeInterstitial != nil },
+              send: NagBannerFeatureAction.dismissUpgradeInterstitial
+            )
+          ) {
+            IfLetStore(
+              self.store.scope(
+                state: { $0?.upgradeInterstitial },
+                action: { .nagBanner(.upgradeInterstitial($0)) }
+              ),
+              then: UpgradeInterstitialView.init(store:)
+            )
+          }
+      )
     }
   }
 }

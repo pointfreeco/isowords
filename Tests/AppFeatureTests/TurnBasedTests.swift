@@ -223,7 +223,7 @@ class TurnBasedTests: XCTestCase {
       .init(value: updatedMatch)
     }
 
-    store.send(.currentGame(.game(.submitButtonTapped(.angel)))) {
+    store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
 
       XCTAssertEqual(

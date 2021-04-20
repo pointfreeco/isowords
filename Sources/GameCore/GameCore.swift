@@ -20,7 +20,6 @@ import HapticsCore
 import LocalDatabaseClient
 import LowPowerModeClient
 import Overture
-import PuzzleGen
 import RemoteNotificationsClient
 import ServerConfigClient
 import SharedModels
@@ -168,7 +167,7 @@ public enum GameAction: Equatable {
   case pan(UIGestureRecognizer.State, PanData?)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case settingsButtonTapped
-  case submitButtonTapped(Move.Reaction?)
+  case submitButtonTapped(reaction: Move.Reaction?)
   case tap(UIGestureRecognizer.State, IndexedCubeFace?)
   case timerTick(Date)
   case trayButtonTapped
@@ -277,7 +276,6 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
             audioPlayer: $0.audioPlayer,
             database: $0.database,
             fileClient: $0.fileClient,
-            mainQueue: $0.mainQueue,
             mainRunLoop: $0.mainRunLoop,
             remoteNotifications: $0.remoteNotifications,
             serverConfig: $0.serverConfig,
@@ -445,8 +443,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
         state.isSettingsPresented = true
         return .none
 
-      case let .submitButtonTapped(reaction),
-        let .wordSubmitButton(.delegate(.confirmSubmit(reaction))):
+      case let .submitButtonTapped(reaction: reaction),
+           let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
         return state.playSelectedWord(
           with: reaction,
           environment: environment
@@ -1196,7 +1194,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           )
         case let .playedWord(cubeFaces):
           let word = state.cubes.string(from: cubeFaces)
-          let score = PuzzleGen.score(word)
+          let score = SharedModels.score(word)
           let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
 
           return .concatenate(

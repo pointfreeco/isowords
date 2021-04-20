@@ -53,7 +53,7 @@ class DailyChallengeReportsTests: XCTestCase {
           }
         }
       },
-      sns: update(.unimplemented) {
+      sns: update(.failing) {
         $0._publish = {
           pushes.append(($0, $1))
           return pure(.init(response: .init(result: .init(messageId: "message-deadbeef"))))
