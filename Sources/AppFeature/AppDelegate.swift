@@ -13,8 +13,13 @@ import UIKit
 import UserNotifications
 
 public enum AppDelegateAction: Equatable {
+  public enum SceneAction: Equatable {
+    case quickAction(type: String)
+  }
+
   case didFinishLaunching
   case didRegisterForRemoteNotifications(Result<Data, NSError>)
+  case scene(SceneAction)
   case userNotifications(UserNotificationClient.DelegateEvent)
   case userSettingsLoaded(Result<UserSettings, NSError>)
 }
@@ -144,5 +149,7 @@ let appDelegateReducer = Reducer<
         .subscribe(on: environment.mainQueue)
         .fireAndForget()
     )
+  case .scene:
+    return .none
   }
 }
