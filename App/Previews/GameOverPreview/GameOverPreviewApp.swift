@@ -68,7 +68,6 @@ extension Store where State == GameOverState, Action == GameOverAction {
             .appendingPathComponent("Isowords.sqlite3")
         ),
         fileClient: .noop,
-        mainQueue: .main,
         mainRunLoop: .main,
         remoteNotifications: .noop,
         serverConfig: .noop,
