@@ -12,7 +12,7 @@ struct LeaderboardsPreviewApp: App {
   init() {
     Styleguide.registerFonts()
   }
-  
+
   var body: some Scene {
     var apiClient = ApiClient.noop
     apiClient.override(
@@ -36,17 +36,17 @@ struct LeaderboardsPreviewApp: App {
               score: 4_000 - index * 100
             )
           }
-          + [
-            .init(
-              id: .init(rawValue: UUID()),
-              isSupporter: false,
-              isYourScore: true,
-              outOf: 2_000,
-              playerDisplayName: "Blob Sr.",
-              rank: 100,
-              score: 1_000
-            )
-          ]
+            + [
+              .init(
+                id: .init(rawValue: UUID()),
+                isSupporter: false,
+                isYourScore: true,
+                outOf: 2_000,
+                playerDisplayName: "Blob Sr.",
+                rank: 100,
+                score: 1_000
+              )
+            ]
         )
       )
     )

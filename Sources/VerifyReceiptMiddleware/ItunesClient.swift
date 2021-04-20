@@ -2,6 +2,7 @@ import Either
 import Foundation
 import ServerTestHelpers
 import SharedModels
+import XCTestDynamicOverlay
 
 #if canImport(FoundationNetworking)
   import FoundationNetworking
@@ -65,8 +66,6 @@ extension ItunesClient {
     )
   }
 #endif
-
-import XCTestDynamicOverlay
 
 private let decoder = JSONDecoder()
 private let encoder = JSONEncoder()

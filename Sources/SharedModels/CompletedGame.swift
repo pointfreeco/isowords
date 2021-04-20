@@ -145,15 +145,15 @@ public struct CompletedGame: Codable, Equatable {
 }
 
 #if DEBUG
-extension CompletedGame {
-  public static let mock = Self(
-    cubes: .mock,
-    gameContext: .solo,
-    gameMode: .timed,
-    gameStartTime: .mock,
-    language: .en,
-    moves: [.cab],
-    secondsPlayed: 10
-  )
-}
+  extension CompletedGame {
+    public static let mock = Self(
+      cubes: .mock,
+      gameContext: .solo,
+      gameMode: .timed,
+      gameStartTime: .mock,
+      language: .en,
+      moves: [.cab],
+      secondsPlayed: 10
+    )
+  }
 #endif

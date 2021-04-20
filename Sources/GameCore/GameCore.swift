@@ -444,7 +444,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
         return .none
 
       case let .submitButtonTapped(reaction: reaction),
-           let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
+        let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
         return state.playSelectedWord(
           with: reaction,
           environment: environment

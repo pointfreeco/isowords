@@ -27,7 +27,9 @@ public func bootstrap(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, ServerE
     .flatMap(fireAndForget(.debug(prefix: "✅ isowords Bootstrapped!")))
 }
 
-private func prepareEnvironment(eventLoopGroup: EventLoopGroup) -> EitherIO<Error, ServerEnvironment> {
+private func prepareEnvironment(eventLoopGroup: EventLoopGroup) -> EitherIO<
+  Error, ServerEnvironment
+> {
   EitherIO.debug(prefix: "  ⏳ Loading environment...")
     .flatMap(loadEnvVars)
     .flatMap(loadEnvironment(eventLoopGroup: eventLoopGroup))
@@ -115,7 +117,9 @@ private func loadEnvironment(eventLoopGroup: EventLoopGroup) -> (EnvVars) -> Eit
   }
 }
 
-private func bootstrapDictionary(environment: ServerEnvironment) -> EitherIO<Error, ServerEnvironment> {
+private func bootstrapDictionary(environment: ServerEnvironment) -> EitherIO<
+  Error, ServerEnvironment
+> {
   .init(
     run: .init {
       do {

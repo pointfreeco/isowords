@@ -74,7 +74,7 @@ public func verify(
     } else {
       return nil
     }
-    
+
   case let .removedCube(point):
     if puzzle[point].isInPlay
       // NB: Allow "removing" an out of play cube if it was removed in the previous move. This

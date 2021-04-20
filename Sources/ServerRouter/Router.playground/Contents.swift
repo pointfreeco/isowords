@@ -29,7 +29,8 @@ router
 
 router
   .match(
-    string: "api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en"
+    string:
+      "api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en"
   )
 router
   .match(string: "api/daily-challenges")
@@ -65,7 +66,7 @@ router.request(
             ),
             moves: [
               .highScoringMove,
-              .removeCube
+              .removeCube,
             ]
           )
         )

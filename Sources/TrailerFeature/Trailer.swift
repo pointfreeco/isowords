@@ -162,7 +162,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             )
             .eraseToEffect()
         )
-        // Press the nub 
+        // Press the nub
         effects.append(
           Effect(value: .binding(.set(\.nub.isPressed, true)))
             .delay(
