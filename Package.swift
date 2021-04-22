@@ -163,7 +163,7 @@ var package = Package(
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
     .package(
-      url: "https://github.com/pointfreeco/swift-composable-architecture.git", .branch("iso"))
+      url: "https://github.com/pointfreeco/swift-composable-architecture.git", .branch("iso-store-refactor"))
   ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
