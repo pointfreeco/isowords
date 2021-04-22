@@ -67,7 +67,11 @@ extension ApiClient {
         )
         .map { data, _ in data }
         .apiDecode(as: CurrentPlayerEnvelope.self)
-        .handleEvents(receiveOutput: { currentPlayer = $0 })
+        .handleEvents(
+          receiveOutput: { newPlayer in
+            DispatchQueue.main.async { currentPlayer = newPlayer }
+          }
+        )
         .eraseToEffect()
       },
       baseUrl: { baseUrl },
@@ -84,7 +88,11 @@ extension ApiClient {
         )
         .map { data, _ in data }
         .apiDecode(as: CurrentPlayerEnvelope.self)
-        .handleEvents(receiveOutput: { currentPlayer = $0 })
+        .handleEvents(
+          receiveOutput: { newPlayer in
+            DispatchQueue.main.async { currentPlayer = newPlayer }
+          }
+        )
         .eraseToEffect()
       },
       request: { route in
