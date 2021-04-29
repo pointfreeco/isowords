@@ -8,11 +8,8 @@ extension Reducer {
     >
   ) -> Self where LocalState: Equatable {
     .init { state, action, environment in
-      var previousLocalState = toLocalState(state)
-      defer { previousLocalState = localState }
-
+      let previousLocalState = toLocalState(state)
       let effects = self.run(&state, action, environment)
-
       let localState = toLocalState(state)
 
       return previousLocalState != localState
@@ -27,11 +24,8 @@ extension Reducer {
       -> Effect<Action, Never>
   ) -> Self where LocalState: Equatable {
     .init { state, action, environment in
-      var previousLocalState = toLocalState(state)
-      defer { previousLocalState = localState }
-
+      let previousLocalState = toLocalState(state)
       let effects = self.run(&state, action, environment)
-
       let localState = toLocalState(state)
 
       return previousLocalState != localState
