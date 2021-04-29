@@ -40,12 +40,10 @@ class GameOverFeatureIntegrationTests: XCTestCase {
 
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-
     environment.apiClient = .init(
       middleware: siteMiddleware(environment: serverEnvironment),
       router: .test
     )
-
     environment.database.playedGamesCount = { _ in .init(value: 0) }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
