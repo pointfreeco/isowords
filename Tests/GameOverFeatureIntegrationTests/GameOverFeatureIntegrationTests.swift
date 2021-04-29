@@ -1,8 +1,8 @@
 import ComposableArchitecture
 import GameOverFeature
 import IntegrationTestHelpers
-import SiteMiddleware
 import SharedModels
+import SiteMiddleware
 import XCTest
 
 class GameOverFeatureIntegrationTests: XCTestCase {
