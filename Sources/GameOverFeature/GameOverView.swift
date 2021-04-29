@@ -1224,35 +1224,34 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
   }
 
   extension CompletedGame {
-    public static let solo = mock
-//    Self(
-//      cubes: update(.mock) {
-//        $0.0.0.0 = .init(
-//          left: .init(letter: "A", side: .left),
-//          right: .init(letter: "B", side: .right),
-//          top: .init(letter: "C", side: .top)
-//        )
-//      },
-//      gameContext: .solo,
-//      gameMode: .timed,
-//      gameStartTime: Date(),
-//      language: .en,
-//      moves: .init(
-//        (0...10).map { _ in
-//          .init(
-//            playedAt: Date(),
-//            playerIndex: nil,
-//            reactions: nil,
-//            score: 10,
-//            type: .playedWord([
-//              .init(index: .zero, side: .left),
-//              .init(index: .zero, side: .right),
-//              .init(index: .zero, side: .top),
-//            ])
-//          )
-//        }),
-//      secondsPlayed: 0
-//    )
+    public static let solo = Self(
+      cubes: update(.mock) {
+        $0.0.0.0 = .init(
+          left: .init(letter: "A", side: .left),
+          right: .init(letter: "B", side: .right),
+          top: .init(letter: "C", side: .top)
+        )
+      },
+      gameContext: .solo,
+      gameMode: .timed,
+      gameStartTime: Date(),
+      language: .en,
+      moves: .init(
+        (0...10).map { _ in
+          .init(
+            playedAt: Date(),
+            playerIndex: nil,
+            reactions: nil,
+            score: 10,
+            type: .playedWord([
+              .init(index: .zero, side: .left),
+              .init(index: .zero, side: .right),
+              .init(index: .zero, side: .top),
+            ])
+          )
+        }),
+      secondsPlayed: 0
+    )
 
     public static let fetchedResponse = update(Self.solo) {
       $0.gameContext = .dailyChallenge(.init(rawValue: UUID()))

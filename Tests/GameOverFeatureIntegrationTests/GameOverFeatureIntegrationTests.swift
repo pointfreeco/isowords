@@ -28,7 +28,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
           gameMode: .timed,
           id: .init(rawValue: UUID()),
           language: .en,
-          moves: CompletedGame.solo.moves,
+          moves: CompletedGame.mock.moves,
           playerId: Player.blob.id,
           puzzle: .mock,
           score: score("CAB")
@@ -53,7 +53,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
 
     let store = TestStore(
       initialState: GameOverState(
-        completedGame: .solo,
+        completedGame: .mock,
         isDemo: false
       ),
       reducer: gameOverReducer,
