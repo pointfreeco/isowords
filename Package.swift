@@ -664,6 +664,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .testTarget(
+      name: "GameOverFeatureIntegrationTests",
+      dependencies: [
+        "GameOverFeature",
+        "IntegrationTestHelpers",
+        "SiteMiddleware",
+      ]
+    ),
+    .testTarget(
       name: "GameOverFeatureTests",
       dependencies: [
         "FirstPartyMocks",
@@ -674,14 +682,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ],
       exclude: ["__Snapshots__"],
       resources: [.process("Resources/")]
-    ),
-    .testTarget(
-      name: "GameOverFeatureIntegrationTests",
-      dependencies: [
-        "GameOverFeature",
-        "IntegrationTestHelpers",
-        "SiteMiddleware",
-      ]
     ),
     .target(
       name: "Gzip",

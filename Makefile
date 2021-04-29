@@ -169,7 +169,7 @@ endif
 
 # server
 
-bootstrap-server: check-dependencies-server db
+bootstrap-server: check-dependencies-server
 
 check-dependencies-server:
 ifdef PRIVATE

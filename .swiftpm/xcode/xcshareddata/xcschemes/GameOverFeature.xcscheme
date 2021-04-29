@@ -60,16 +60,6 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
-               BuildableName = "GameOverFeatureIntegrationTests"
-               BlueprintName = "GameOverFeatureIntegrationTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "GameOverFeatureTests"
                BuildableName = "GameOverFeatureTests"
                BlueprintName = "GameOverFeatureTests"
