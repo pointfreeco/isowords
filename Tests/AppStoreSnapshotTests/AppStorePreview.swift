@@ -49,19 +49,25 @@ where
           Snapshot(self.snapshotting) {
             ZStack(alignment: .top) {
               self.snapshotContent()
-
-              ZStack(alignment: .top) {
+              ZStack(alignment: .bottom) {
                 HStack {
                   Text("9:41")
+                    .frame(width: 85)
                   Spacer()
-                  Text("\(Image(systemName: "wifi")) \(Image(systemName: "battery.100"))")
+                  HStack(spacing: 2) {
+                    CellularBars()
+                      .frame(height: 10)
+                    Image(systemName: "wifi")
+                    Image(systemName: "battery.100")
+                  }
+                  .frame(width: 85)
                 }
                 .font(Font.system(size: 14).monospacedDigit().bold())
                 .foregroundColor(self.colorScheme == .dark ? .white : .black)
+                .offset(x: 0, y: 2)
                 .padding(.top, .grid(2))
-                .padding(.leading, .grid(6))
-                .padding(.trailing, .grid(3))
-
+                .padding(.horizontal, .grid(3))
+                
                 Notch()
                   .fill(Color.black)
                   .frame(height: 25)
@@ -71,13 +77,17 @@ where
           }
         }
       }
-      .cornerRadius(.grid(self.deviceState.idiom == .pad ? 4 : 10))
+      .clipShape(
+        RoundedRectangle(cornerRadius: .grid(self.deviceState.idiom == .pad ? 4 : 10), style: .continuous)
+      )
       .clipped()
       .padding(.grid(self.deviceState.idiom == .pad ? 10 : 4))
       .background(Color.black)
-      .cornerRadius(.grid(12))
+      .clipShape(
+        RoundedRectangle(cornerRadius: .grid(14), style: .continuous)
+      )
       .overlay(
-        RoundedRectangle(cornerRadius: .grid(12))
+        RoundedRectangle(cornerRadius: .grid(14), style: .continuous)
           .stroke(Color.gray, style: StrokeStyle(lineWidth: .grid(1) / 2))
       )
       .scaleEffect(self.deviceState.idiom == .pad ? 0.8 : 0.9)
@@ -165,5 +175,27 @@ struct Notch: Shape {
       $0.addLine(to: .init(x: rect.width, y: 0))
       $0.closeSubpath()
     }
+  }
+}
+struct CellularBars: View {
+  let barsCount = 4
+  let minimumHeightRatio = CGFloat(0.5)
+  
+  var body: some View {
+    GeometryReader { proxy in
+      HStack(alignment: .bottom, spacing: 1) {
+        ForEach(0...barsCount-1, id: \.self) { index in
+          RoundedRectangle(cornerRadius: 1, style: .continuous)
+            .frame(height: proxy.size.height * heightRatio(at: index))
+        }
+      }
+    }
+    .aspectRatio(1.71, contentMode: .fit)
+  }
+  
+  private func heightRatio(at index: Int) -> CGFloat {
+    let leftover = 1.0 - minimumHeightRatio
+    let step = leftover / CGFloat(barsCount - 1)
+    return minimumHeightRatio + CGFloat(index) * step
   }
 }

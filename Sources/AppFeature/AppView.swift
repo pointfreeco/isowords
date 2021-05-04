@@ -450,8 +450,8 @@ public struct AppView: View {
               appState.game.map {
                 (
                   game: $0,
-                  nub: nil,
-                  settings: .init(
+                  nub: CubeSceneView.ViewState.NubState?.none,
+                  settings: CubeSceneView.ViewState.Settings(
                     enableCubeShadow: appState.home.settings.enableCubeShadow,
                     enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
                     showSceneStatistics: appState.home.settings.showSceneStatistics
