@@ -133,7 +133,7 @@ public enum HomeAction: Equatable {
   case howToPlayButtonTapped
   case leaderboard(NavigationAction<LeaderboardAction>)
   case matchesLoaded(Result<[ActiveTurnBasedMatch], NSError>)
-  case multiplayer(MultiplayerAction)
+  case multiplayer(NavigationAction<MultiplayerAction>)
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
   case onDisappear
@@ -257,19 +257,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           mainQueue: $0.mainQueue,
           serverConfig: $0.serverConfig,
           userDefaults: $0.userDefaults
-        )
-      }
-    ),
-
-  multiplayerReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.multiplayer),
-      action: /HomeAction.multiplayer,
-      environment: {
-        .init(
-          backgroundQueue: $0.backgroundQueue,
-          gameCenter: $0.gameCenter,
-          mainQueue: $0.mainQueue
         )
       }
     ),
@@ -442,6 +429,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       state.turnBasedMatches = matches
       return .none
 
+    case .multiplayer(.setNavigation(isActive: true)):
+      state.route = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
+      return .none
+
     case .multiplayer:
       return .none
 
@@ -484,7 +475,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       case .leaderboard:
         break
       case .multiplayer:
-        state.route = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
+        break
       case .settings:
         state.route = .settings
       case .solo:
@@ -539,6 +530,19 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       audioPlayer: $0.audioPlayer,
       feedbackGenerator: $0.feedbackGenerator,
       lowPowerMode: $0.lowPowerMode,
+      mainQueue: $0.mainQueue
+    )
+  }
+)
+.navigates(
+  multiplayerReducer,
+  tag: /HomeRoute.multiplayer,
+  selection: \.route,
+  action: /HomeAction.multiplayer,
+  environment: {
+    .init(
+      backgroundQueue: $0.backgroundQueue,
+      gameCenter: $0.gameCenter,
       mainQueue: $0.mainQueue
     )
   }

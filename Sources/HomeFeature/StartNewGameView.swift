@@ -47,19 +47,10 @@ struct StartNewGameView: View {
           )
         )
 
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.multiplayer).extract(from:),
-              action: HomeAction.multiplayer
-            ),
-            then: MultiplayerView.init(store:)
-          ),
-          tag: HomeRoute.Tag.multiplayer,
-          selection:
-            viewStore
-            .binding(send: HomeAction.setNavigation(tag:))
-            .animation()
+        NavigationLinkStore(
+          destination: MultiplayerView.init(store:),
+          tag: /HomeRoute.multiplayer,
+          selection: self.store.scope(state: \.route, action: HomeAction.multiplayer)
         ) {
           HStack {
             Text("Multiplayer")
