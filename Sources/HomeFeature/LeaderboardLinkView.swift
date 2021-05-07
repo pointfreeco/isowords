@@ -10,11 +10,9 @@ struct LeaderboardLinkView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, HomeAction>
 
   struct ViewState: Equatable {
-    var tag: HomeRoute.Tag?
     var weekInReview: FetchWeekInReviewResponse?
 
     init(state: HomeState) {
-      self.tag = state.route?.tag
       self.weekInReview = state.weekInReview
     }
   }
@@ -34,7 +32,7 @@ struct LeaderboardLinkView: View {
         Spacer()
 
         Button("View all") {
-          self.viewStore.send(.setNavigation(tag: self.tag))
+          self.viewStore.send(.leaderboard(.setNavigation(isActive: true)))
         }
         .adaptiveFont(.matterMedium, size: 12)
       }
@@ -64,8 +62,6 @@ struct LeaderboardLinkView: View {
       )
     }
   }
-
-  var tag: HomeRoute.Tag { .leaderboard }
 
   func weekInReview(_ weekInReview: FetchWeekInReviewResponse?) -> some View {
     VStack(spacing: .grid(1)) {

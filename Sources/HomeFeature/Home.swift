@@ -39,29 +39,6 @@ public enum HomeRoute: Equatable {
   case multiplayer(MultiplayerState)
   case settings
   case solo(SoloState)
-
-  public enum Tag: Int {
-    case dailyChallenge
-    case leaderboard
-    case multiplayer
-    case settings
-    case solo
-  }
-
-  var tag: Tag {
-    switch self {
-    case .dailyChallenge:
-      return .dailyChallenge
-    case .leaderboard:
-      return .leaderboard
-    case .multiplayer:
-      return .multiplayer
-    case .settings:
-      return .settings
-    case .solo:
-      return .solo
-    }
-  }
 }
 
 public struct HomeState: Equatable {
@@ -138,7 +115,6 @@ public enum HomeAction: Equatable {
   case onAppear
   case onDisappear
   case serverConfigResponse(ServerConfig)
-  case setNavigation(tag: HomeRoute.Tag?)
   case settings(NavigationAction<SettingsAction>)
   case solo(NavigationAction<SoloAction>)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
@@ -435,23 +411,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       state.hasChangelog = serverConfig.newestBuild > environment.build.number()
       return .none
 
-    case let .setNavigation(tag: tag):
-      switch tag {
-      case .dailyChallenge:
-        break
-      case .leaderboard:
-        break
-      case .multiplayer:
-        break
-      case .settings:
-        break
-      case .solo:
-        break
-      case .none:
-        state.route = .none
-      }
-      return .none
-
     case .nagBannerFeature:
       return .none
 
@@ -564,7 +523,6 @@ public struct HomeView: View {
     let hasChangelog: Bool
     let isChangelogVisible: Bool
     let isNagBannerVisible: Bool
-    let tag: HomeRoute.Tag?
 
     init(state: HomeState) {
       self.hasActiveGames =
@@ -574,7 +532,6 @@ public struct HomeView: View {
       self.hasChangelog = state.hasChangelog
       self.isChangelogVisible = state.changelog != nil
       self.isNagBannerVisible = state.nagBanner != nil
-      self.tag = state.route?.tag
     }
   }
 

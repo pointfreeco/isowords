@@ -13,11 +13,9 @@ struct DailyChallengeHeaderView: View {
 
   struct ViewState: Equatable {
     let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    let routeTag: HomeRoute.Tag?
 
     init(homeState: HomeState) {
       self.dailyChallenges = homeState.dailyChallenges
-      self.routeTag = homeState.route?.tag
     }
   }
 
