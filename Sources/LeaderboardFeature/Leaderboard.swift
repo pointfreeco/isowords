@@ -41,8 +41,6 @@ public struct LeaderboardState: Equatable {
   public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
   public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
 
-  public var isCubePreviewPresented: Bool { self.cubePreview != nil }
-
   public init(
     cubePreview: CubePreviewState? = nil,
     isAnimationReduced: Bool = false,
@@ -63,8 +61,7 @@ public struct LeaderboardState: Equatable {
 }
 
 public enum LeaderboardAction: Equatable {
-  case cubePreview(CubePreviewAction)
-  case dismissCubePreview
+  case cubePreview(PresentationAction<CubePreviewAction>)
   case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
   case scopeTapped(LeaderboardScope)
   case solo(LeaderboardResultsAction<TimeScope>)
@@ -109,20 +106,6 @@ public let leaderboardReducer = Reducer<
   LeaderboardState, LeaderboardAction, LeaderboardEnvironment
 >.combine(
 
-  cubePreviewReducer
-    ._pullback(
-      state: OptionalPath(\.cubePreview),
-      action: /LeaderboardAction.cubePreview,
-      environment: {
-        CubePreviewEnvironment(
-          audioPlayer: $0.audioPlayer,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
   Reducer.leaderboardResultsReducer()
     .pullback(
       state: \LeaderboardState.solo,
@@ -150,10 +133,6 @@ public let leaderboardReducer = Reducer<
   .init { state, action, environment in
     switch action {
     case .cubePreview:
-      return .none
-
-    case .dismissCubePreview:
-      state.cubePreview = nil
       return .none
 
     case .fetchWordResponse(.failure):
@@ -205,6 +184,19 @@ public let leaderboardReducer = Reducer<
     case .vocab:
       return .none
     }
+  }
+)
+.presents(
+  cubePreviewReducer,
+  state: \.cubePreview,
+  action: /LeaderboardAction.cubePreview,
+  environment: {
+    CubePreviewEnvironment(
+      audioPlayer: $0.audioPlayer,
+      feedbackGenerator: $0.feedbackGenerator,
+      lowPowerMode: $0.lowPowerMode,
+      mainQueue: $0.mainQueue
+    )
   }
 )
 
@@ -302,13 +294,9 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      isPresented: self.viewStore.binding(get: \.isCubePreviewPresented, send: .dismissCubePreview)
-    ) {
-      IfLetStore(
-        self.store.scope(state: \.cubePreview, action: LeaderboardAction.cubePreview),
-        then: CubePreviewView.init(store:)
-      )
-    }
+      ifLet: self.store.scope(state: \.cubePreview, action: LeaderboardAction.cubePreview),
+      then: CubePreviewView.init(store:)
+    )
   }
 }
 
