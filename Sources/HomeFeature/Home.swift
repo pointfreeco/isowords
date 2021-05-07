@@ -139,7 +139,7 @@ public enum HomeAction: Equatable {
   case onDisappear
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
-  case settings(SettingsAction)
+  case settings(NavigationAction<SettingsAction>)
   case solo(SoloAction)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
 
@@ -270,32 +270,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           mainRunLoop: $0.mainRunLoop,
           serverConfig: $0.serverConfig,
           storeKit: $0.storeKit
-        )
-      }
-    ),
-
-  settingsReducer
-    .pullback(
-      state: \HomeState.settings,
-      action: /HomeAction.settings,
-      environment: {
-        SettingsEnvironment(
-          apiClient: $0.apiClient,
-          applicationClient: $0.applicationClient,
-          audioPlayer: $0.audioPlayer,
-          backgroundQueue: $0.backgroundQueue,
-          build: $0.build,
-          database: $0.database,
-          feedbackGenerator: $0.feedbackGenerator,
-          fileClient: $0.fileClient,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue,
-          remoteNotifications: $0.remoteNotifications,
-          serverConfig: $0.serverConfig,
-          setUserInterfaceStyle: $0.setUserInterfaceStyle,
-          storeKit: $0.storeKit,
-          userDefaults: $0.userDefaults,
-          userNotifications: $0.userNotifications
         )
       }
     ),
@@ -477,7 +451,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       case .multiplayer:
         break
       case .settings:
-        state.route = .settings
+        break
       case .solo:
         state.route = .solo(.init(inProgressGame: state.savedGames.unlimited))
       case .none:
@@ -486,6 +460,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case .nagBannerFeature:
+      return .none
+
+    case .settings(.setNavigation(isActive: true)):
+      state.route = .settings
       return .none
 
     case .settings:
@@ -547,6 +525,33 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     )
   }
 )
+.navigates(
+  settingsReducer,
+  tag: /HomeRoute.settings,
+  selection: \.route,
+  state: \.settings,
+  action: /HomeAction.settings,
+  environment: {
+    SettingsEnvironment(
+      apiClient: $0.apiClient,
+      applicationClient: $0.applicationClient,
+      audioPlayer: $0.audioPlayer,
+      backgroundQueue: $0.backgroundQueue,
+      build: $0.build,
+      database: $0.database,
+      feedbackGenerator: $0.feedbackGenerator,
+      fileClient: $0.fileClient,
+      lowPowerMode: $0.lowPowerMode,
+      mainQueue: $0.mainQueue,
+      remoteNotifications: $0.remoteNotifications,
+      serverConfig: $0.serverConfig,
+      setUserInterfaceStyle: $0.setUserInterfaceStyle,
+      storeKit: $0.storeKit,
+      userDefaults: $0.userDefaults,
+      userNotifications: $0.userNotifications
+    )
+  }
+)
 .binding(action: /HomeAction.binding)
 
 public struct HomeView: View {
@@ -594,17 +599,13 @@ public struct HomeView: View {
                 Image(systemName: "questionmark.circle")
               }
 
-              NavigationLink(
+              NavigationLinkStore(
                 destination: SettingsView(
-                  store: self.store.scope(
-                    state: \.settings,
-                    action: HomeAction.settings
-                  ),
+                  store: self.store.scope(state: \.settings, action: { .settings(.isActive($0)) }),
                   navPresentationStyle: .navigation
                 ),
-                tag: HomeRoute.Tag.settings,
-                selection: viewStore.binding(get: \.tag, send: HomeAction.setNavigation(tag:))
-                  .animation()
+                tag: /HomeRoute.settings,
+                selection: self.store.scope(state: \.route, action: HomeAction.settings)
               ) {
                 Image(systemName: "gear")
               }
