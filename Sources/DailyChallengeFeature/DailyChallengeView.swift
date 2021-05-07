@@ -24,17 +24,6 @@ public struct DailyChallengeState: Equatable {
 
   public enum Route: Equatable {
     case results(DailyChallengeResultsState)
-
-    public enum Tag: Int {
-      case results
-    }
-
-    var tag: Tag {
-      switch self {
-      case .results:
-        return .results
-      }
-    }
   }
 
   public init(
@@ -57,7 +46,7 @@ public struct DailyChallengeState: Equatable {
 }
 
 public enum DailyChallengeAction: Equatable {
-  case dailyChallengeResults(DailyChallengeResultsAction)
+  case dailyChallengeResults(NavigationAction<DailyChallengeResultsAction>)
   case delegate(DelegateAction)
   case dismissAlert
   case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
@@ -65,7 +54,6 @@ public enum DailyChallengeAction: Equatable {
   case onAppear
   case notificationButtonTapped
   case notificationsAuthAlert(NotificationsAuthAlertAction)
-  case setNavigation(tag: DailyChallengeState.Route.Tag?)
   case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
@@ -102,13 +90,6 @@ public struct DailyChallengeEnvironment {
 public let dailyChallengeReducer = Reducer<
   DailyChallengeState, DailyChallengeAction, DailyChallengeEnvironment
 >.combine(
-  dailyChallengeResultsReducer
-    ._pullback(
-      state: (\DailyChallengeState.route).appending(path: /DailyChallengeState.Route.results),
-      action: /DailyChallengeAction.dailyChallengeResults,
-      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
-    ),
-
   notificationsAuthAlertReducer
     .optional()
     .pullback(
@@ -125,6 +106,10 @@ public let dailyChallengeReducer = Reducer<
 
   .init { state, action, environment in
     switch action {
+    case .dailyChallengeResults(.setNavigation(isActive: true)):
+      state.route = .results(.init())
+      return .none
+
     case .dailyChallengeResults:
       return .none
 
@@ -206,14 +191,6 @@ public let dailyChallengeReducer = Reducer<
     case .notificationsAuthAlert:
       return .none
 
-    case .setNavigation(tag: .results):
-      state.route = .results(.init())
-      return .none
-
-    case .setNavigation(tag: .none):
-      state.route = nil
-      return .none
-
     case let .startDailyChallengeResponse(.failure(.alreadyPlayed(endsAt))):
       state.alert = .alreadyPlayed(nextStartsAt: endsAt)
       state.gameModeIsLoading = nil
@@ -233,6 +210,13 @@ public let dailyChallengeReducer = Reducer<
       return .none
     }
   }
+)
+.navigates(
+  dailyChallengeResultsReducer,
+  tag: /DailyChallengeState.Route.results,
+  selection: \.route,
+  action: /DailyChallengeAction.dailyChallengeResults,
+  environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
 )
 
 extension AlertState where Action == DailyChallengeAction {
@@ -276,7 +260,6 @@ public struct DailyChallengeView: View {
     let gameModeIsLoading: GameMode?
     let isNotificationStatusDetermined: Bool
     let numberOfPlayers: Int
-    let routeTag: DailyChallengeState.Route.Tag?
     let timedState: ButtonState
     let unlimitedState: ButtonState
 
@@ -292,7 +275,6 @@ public struct DailyChallengeView: View {
       self.isNotificationStatusDetermined = ![.notDetermined, .provisional]
         .contains(state.userNotificationSettings?.authorizationStatus)
       self.numberOfPlayers = state.dailyChallenges.numberOfPlayers
-      self.routeTag = state.route?.tag
       self.timedState = .init(
         fetchedResponse: state.dailyChallenges.timed,
         inProgressGame: nil
@@ -370,20 +352,11 @@ public struct DailyChallengeView: View {
         .adaptivePadding([.vertical])
         .screenEdgePadding(.horizontal)
 
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\DailyChallengeState.route)
-                .appending(path: /DailyChallengeState.Route.results)
-                .extract(from:),
-              action: DailyChallengeAction.dailyChallengeResults
-            ),
-            then: DailyChallengeResultsView.init(store:)
-          ),
-          tag: DailyChallengeState.Route.Tag.results,
-          selection: viewStore.binding(
-            get: \.routeTag,
-            send: DailyChallengeAction.setNavigation(tag:)
+        NavigationLinkStore(
+          destination: DailyChallengeResultsView.init(store:),
+          tag: /DailyChallengeState.Route.results,
+          selection: self.store.scope(
+            state: \.route, action: DailyChallengeAction.dailyChallengeResults
           )
         ) {
           HStack {
