@@ -195,7 +195,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             return .none
 
           case let .gameCenter(.rematchResponse(.success(turnBasedMatch))),
-            let .home(.multiplayer(.isActive(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch))))))):
+            let .home(.multiplayer(.isActive(.pastGames(.isActive(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))))):
             return handleTurnBasedMatch(turnBasedMatch, didBecomeActive: true)
 
           case let .gameCenter(.turnBasedMatchReloaded(.success(turnBasedMatch))):

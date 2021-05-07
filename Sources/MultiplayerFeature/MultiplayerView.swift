@@ -9,17 +9,6 @@ public struct MultiplayerState: Equatable {
 
   public enum Route: Equatable {
     case pastGames(PastGamesState)
-
-    public enum Tag: Int {
-      case pastGames
-    }
-
-    var tag: Tag {
-      switch self {
-      case .pastGames:
-        return .pastGames
-      }
-    }
   }
 
   public init(
@@ -32,8 +21,7 @@ public struct MultiplayerState: Equatable {
 }
 
 public enum MultiplayerAction: Equatable {
-  case pastGames(PastGamesAction)
-  case setNavigation(tag: MultiplayerState.Route.Tag?)
+  case pastGames(NavigationAction<PastGamesAction>)
   case startButtonTapped
 }
 
@@ -58,21 +46,12 @@ public let multiplayerReducer = Reducer<
   MultiplayerAction,
   MultiplayerEnvironment
 >.combine(
-  pastGamesReducer
-    ._pullback(
-      state: (\MultiplayerState.route).appending(path: /MultiplayerState.Route.pastGames),
-      action: /MultiplayerAction.pastGames,
-      environment: {
-        PastGamesEnvironment(
-          backgroundQueue: $0.backgroundQueue,
-          gameCenter: $0.gameCenter,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
   .init { state, action, environment in
     switch action {
+    case .pastGames(.setNavigation(isActive: true)):
+      state.route = .pastGames(.init())
+      return .none
+
     case .pastGames:
       return .none
 
@@ -86,15 +65,20 @@ public let multiplayerReducer = Reducer<
         return environment.gameCenter.localPlayer.presentAuthenticationViewController
           .fireAndForget()
       }
-
-    case .setNavigation(tag: .pastGames):
-      state.route = .pastGames(.init())
-      return .none
-
-    case .setNavigation(tag: .none):
-      state.route = nil
-      return .none
     }
+  }
+)
+.navigates(
+  pastGamesReducer,
+  tag: /MultiplayerState.Route.pastGames,
+  selection: \.route,
+  action: /MultiplayerAction.pastGames,
+  environment: {
+    PastGamesEnvironment(
+      backgroundQueue: $0.backgroundQueue,
+      gameCenter: $0.gameCenter,
+      mainQueue: $0.mainQueue
+    )
   }
 )
 
@@ -111,11 +95,9 @@ public struct MultiplayerView: View {
 
   struct ViewState: Equatable {
     let hasPastGames: Bool
-    let routeTag: MultiplayerState.Route.Tag?
 
     init(state: MultiplayerState) {
       self.hasPastGames = state.hasPastGames
-      self.routeTag = state.route?.tag
     }
   }
 
@@ -157,21 +139,10 @@ public struct MultiplayerView: View {
         .adaptivePadding(.bottom, .grid(self.viewStore.hasPastGames ? 0 : 8))
 
         if self.viewStore.hasPastGames {
-          NavigationLink(
-            destination: IfLetStore(
-              self.store.scope(
-                state: (\MultiplayerState.route)
-                  .appending(path: /MultiplayerState.Route.pastGames)
-                  .extract(from:),
-                action: MultiplayerAction.pastGames
-              ),
-              then: { PastGamesView(store: $0) }
-            ),
-            tag: MultiplayerState.Route.Tag.pastGames,
-            selection: viewStore.binding(
-              get: \.routeTag,
-              send: MultiplayerAction.setNavigation
-            )
+          NavigationLinkStore(
+            destination: PastGamesView.init(store:),
+            tag: /MultiplayerState.Route.pastGames,
+            selection: self.store.scope(state: \.route, action: MultiplayerAction.pastGames)
           ) {
             HStack {
               Text("View past games")
