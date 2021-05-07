@@ -134,7 +134,7 @@ class LeaderboardFeatureTests: XCTestCase {
         settings: .init()
       )
     }
-    store.send(.dismissCubePreview) {
+    store.send(.cubePreview(.onDismiss)) {
       $0.cubePreview = nil
     }
   }

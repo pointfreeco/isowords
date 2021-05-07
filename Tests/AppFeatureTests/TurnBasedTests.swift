@@ -87,7 +87,7 @@ class TurnBasedTests: XCTestCase {
     store.receive(.home(.binding(.set(\.hasPastTurnBasedGames, false))))
     store.receive(.home(.matchesLoaded(.success([]))))
 
-    store.send(.home(.multiplayer(.startButtonTapped)))
+    store.send(.home(.multiplayer(.isActive(.startButtonTapped))))
 
     listener.send(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
 

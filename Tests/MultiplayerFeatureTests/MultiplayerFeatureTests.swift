@@ -53,10 +53,10 @@ class MultiplayerFeatureTests: XCTestCase {
       environment: .failing
     )
 
-    store.send(.setNavigation(tag: .pastGames)) {
+    store.send(.pastGames(.setNavigation(isActive: true))) {
       $0.route = .pastGames(.init(pastGames: []))
     }
-    store.send(.setNavigation(tag: nil)) {
+    store.send(.pastGames(.setNavigation(isActive: false))) {
       $0.route = nil
     }
   }

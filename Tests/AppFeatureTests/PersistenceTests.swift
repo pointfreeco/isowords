@@ -51,7 +51,7 @@ class PersistenceTests: XCTestCase {
     let A = IndexedCubeFace(index: index, side: .left)
     let B = IndexedCubeFace(index: index, side: .right)
 
-    store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
+    store.send(.home(.solo(.isActive(.gameButtonTapped(.unlimited))))) {
       $0.game = GameState(
         cubes: .mock,
         gameContext: .solo,
@@ -279,10 +279,10 @@ class PersistenceTests: XCTestCase {
     store.receive(.savedGamesLoaded(.success(savedGames))) {
       $0.home.savedGames = savedGames
     }
-    store.send(.home(.setNavigation(tag: .solo))) {
+    store.send(.home(.solo(.setNavigation(isActive: true)))) {
       $0.home.route = .solo(.init(inProgressGame: .mock))
     }
-    store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
+    store.send(.home(.solo(.isActive(.gameButtonTapped(.unlimited))))) {
       $0.game = GameState(inProgressGame: .mock)
     }
   }
