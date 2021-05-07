@@ -126,7 +126,7 @@ public enum HomeAction: Equatable {
   case binding(BindingAction<HomeState>)
   case changelog(ChangelogAction)
   case cubeButtonTapped
-  case dailyChallenge(DailyChallengeAction)
+  case dailyChallenge(NavigationAction<DailyChallengeAction>)
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
   case dismissChangelog
   case gameButtonTapped(GameButtonAction)
@@ -257,22 +257,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           mainQueue: $0.mainQueue,
           serverConfig: $0.serverConfig,
           userDefaults: $0.userDefaults
-        )
-      }
-    ),
-
-  dailyChallengeReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge),
-      action: /HomeAction.dailyChallenge,
-      environment: {
-        .init(
-          apiClient: $0.apiClient,
-          fileClient: $0.fileClient,
-          mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
-          remoteNotifications: $0.remoteNotifications,
-          userNotifications: $0.userNotifications
         )
       }
     ),
@@ -419,6 +403,15 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       state.changelog = .init()
       return .none
 
+    case .dailyChallenge(.setNavigation(isActive: true)):
+      state.route = .dailyChallenge(
+        .init(
+          dailyChallenges: state.dailyChallenges ?? [],
+          inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
+        )
+      )
+      return .none
+
     case .dailyChallenge:
       return .none
 
@@ -488,12 +481,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case let .setNavigation(tag: tag):
       switch tag {
       case .dailyChallenge:
-        state.route = .dailyChallenge(
-          .init(
-            dailyChallenges: state.dailyChallenges ?? [],
-            inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
-          )
-        )
+        break
+
       case .leaderboard:
         state.route = .leaderboard(
           .init(
@@ -533,6 +522,22 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       state.weekInReview = response
       return .none
     }
+  }
+)
+.navigates(
+  dailyChallengeReducer,
+  tag: /HomeRoute.dailyChallenge,
+  selection: \.route,
+  action: /HomeAction.dailyChallenge,
+  environment: {
+    .init(
+      apiClient: $0.apiClient,
+      fileClient: $0.fileClient,
+      mainQueue: $0.mainQueue,
+      mainRunLoop: $0.mainRunLoop,
+      remoteNotifications: $0.remoteNotifications,
+      userNotifications: $0.userNotifications
+    )
   }
 )
 .binding(action: /HomeAction.binding)

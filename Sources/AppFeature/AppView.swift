@@ -349,7 +349,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .currentGame:
     return .none
 
-  case let .home(.dailyChallenge(.delegate(.startGame(inProgressGame)))):
+  case let .home(.dailyChallenge(.isActive(.delegate(.startGame(inProgressGame))))):
     state.game = .init(inProgressGame: inProgressGame)
     return .none
 

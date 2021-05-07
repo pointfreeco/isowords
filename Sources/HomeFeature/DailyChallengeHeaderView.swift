@@ -61,20 +61,10 @@ struct DailyChallengeHeaderView: View {
       .frame(maxWidth: .infinity)
 
       VStack {
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge).extract(from:),
-              action: HomeAction.dailyChallenge
-            ),
-            then: DailyChallengeView.init(store:)
-          ),
-          tag: HomeRoute.Tag.dailyChallenge,
-          selection: viewStore.binding(
-            get: \.routeTag,
-            send: HomeAction.setNavigation(tag:)
-          )
-          .animation()
+        NavigationLinkStore(
+          destination: DailyChallengeView.init(store:),
+          tag: /HomeRoute.dailyChallenge,
+          selection: self.store.scope(state: \.route, action: HomeAction.dailyChallenge)
         ) {
           HStack {
             Group {
