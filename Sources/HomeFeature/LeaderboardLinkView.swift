@@ -40,14 +40,10 @@ struct LeaderboardLinkView: View {
       }
       .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
 
-      NavigationLink(
-        destination: self.destination,
-        tag: self.tag,
-        selection: self.viewStore.binding(
-          get: \.tag,
-          send: HomeAction.setNavigation(tag:)
-        )
-        .animation()
+      NavigationLinkStore(
+        destination: LeaderboardView.init(store:),
+        tag: /HomeRoute.leaderboard,
+        selection: self.store.scope(state: \.route, action: HomeAction.leaderboard)
       ) {
         VStack(alignment: .leading, spacing: .grid(4)) {
           Text("Week in review")
@@ -70,16 +66,6 @@ struct LeaderboardLinkView: View {
   }
 
   var tag: HomeRoute.Tag { .leaderboard }
-
-  var destination: some View {
-    IfLetStore(
-      self.store.scope(
-        state: (\HomeState.route).appending(path: /HomeRoute.leaderboard).extract(from:),
-        action: HomeAction.leaderboard
-      ),
-      then: LeaderboardView.init(store:)
-    )
-  }
 
   func weekInReview(_ weekInReview: FetchWeekInReviewResponse?) -> some View {
     VStack(spacing: .grid(1)) {

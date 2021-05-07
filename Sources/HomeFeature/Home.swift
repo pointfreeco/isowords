@@ -131,7 +131,7 @@ public enum HomeAction: Equatable {
   case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
-  case leaderboard(LeaderboardAction)
+  case leaderboard(NavigationAction<LeaderboardAction>)
   case matchesLoaded(Result<[ActiveTurnBasedMatch], NSError>)
   case multiplayer(MultiplayerAction)
   case nagBannerFeature(NagBannerFeatureAction)
@@ -257,21 +257,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           mainQueue: $0.mainQueue,
           serverConfig: $0.serverConfig,
           userDefaults: $0.userDefaults
-        )
-      }
-    ),
-
-  leaderboardReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.leaderboard),
-      action: /HomeAction.leaderboard,
-      environment: {
-        .init(
-          apiClient: $0.apiClient,
-          audioPlayer: $0.audioPlayer,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
         )
       }
     ),
@@ -433,6 +418,20 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case .howToPlayButtonTapped:
       return .none
 
+    case .leaderboard(.setNavigation(isActive: true)):
+      state.route = .leaderboard(
+        .init(
+          isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
+          isHapticsEnabled: state.settings.userSettings.enableHaptics,
+          settings: .init(
+            enableCubeShadow: state.settings.enableCubeShadow,
+            enableGyroMotion: state.settings.userSettings.enableGyroMotion,
+            showSceneStatistics: state.settings.showSceneStatistics
+          )
+        )
+      )
+      return .none
+
     case .leaderboard:
       return .none
 
@@ -482,19 +481,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       switch tag {
       case .dailyChallenge:
         break
-
       case .leaderboard:
-        state.route = .leaderboard(
-          .init(
-            isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
-            isHapticsEnabled: state.settings.userSettings.enableHaptics,
-            settings: .init(
-              enableCubeShadow: state.settings.enableCubeShadow,
-              enableGyroMotion: state.settings.userSettings.enableGyroMotion,
-              showSceneStatistics: state.settings.showSceneStatistics
-            )
-          )
-        )
+        break
       case .multiplayer:
         state.route = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
       case .settings:
@@ -537,6 +525,21 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       mainRunLoop: $0.mainRunLoop,
       remoteNotifications: $0.remoteNotifications,
       userNotifications: $0.userNotifications
+    )
+  }
+)
+.navigates(
+  leaderboardReducer,
+  tag: /HomeRoute.leaderboard,
+  selection: \.route,
+  action: /HomeAction.leaderboard,
+  environment: {
+    .init(
+      apiClient: $0.apiClient,
+      audioPlayer: $0.audioPlayer,
+      feedbackGenerator: $0.feedbackGenerator,
+      lowPowerMode: $0.lowPowerMode,
+      mainQueue: $0.mainQueue
     )
   }
 )
