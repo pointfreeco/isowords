@@ -20,19 +20,10 @@ struct StartNewGameView: View {
           .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
           .padding([.bottom, .top])
 
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.solo).extract(from:),
-              action: HomeAction.solo
-            ),
-            then: SoloView.init(store:)
-          ),
-          tag: HomeRoute.Tag.solo,
-          selection: viewStore.binding(
-            send: HomeAction.setNavigation(tag:)
-          )
-          .animation()
+        NavigationLinkStore(
+          destination: SoloView.init(store:),
+          tag: /HomeRoute.solo,
+          selection: self.store.scope(state: \.route, action: HomeAction.solo)
         ) {
           HStack {
             Text("Solo")

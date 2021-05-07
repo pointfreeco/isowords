@@ -140,7 +140,7 @@ public enum HomeAction: Equatable {
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
   case settings(NavigationAction<SettingsAction>)
-  case solo(SoloAction)
+  case solo(NavigationAction<SoloAction>)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
 
   public enum GameButtonAction: Equatable {
@@ -272,13 +272,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           storeKit: $0.storeKit
         )
       }
-    ),
-
-  soloReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.solo),
-      action: /HomeAction.solo,
-      environment: { .init(fileClient: $0.fileClient) }
     ),
 
   .init { state, action, environment in
@@ -453,7 +446,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       case .settings:
         break
       case .solo:
-        state.route = .solo(.init(inProgressGame: state.savedGames.unlimited))
+        break
       case .none:
         state.route = .none
       }
@@ -467,6 +460,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case .settings:
+      return .none
+
+    case .solo(.setNavigation(isActive: true)):
+      state.route = .solo(.init(inProgressGame: state.savedGames.unlimited))
       return .none
 
     case .solo:
@@ -551,6 +548,13 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       userNotifications: $0.userNotifications
     )
   }
+)
+.navigates(
+  soloReducer,
+  tag: /HomeRoute.solo,
+  selection: \.route,
+  action: /HomeAction.solo,
+  environment: { .init(fileClient: $0.fileClient) }
 )
 .binding(action: /HomeAction.binding)
 
