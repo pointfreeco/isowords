@@ -41,33 +41,28 @@ public struct MultiplayerEnvironment {
   }
 }
 
-public let multiplayerReducer = Reducer<
-  MultiplayerState,
-  MultiplayerAction,
-  MultiplayerEnvironment
->.combine(
-  .init { state, action, environment in
-    switch action {
-    case .pastGames(.setNavigation(isActive: true)):
-      state.route = .pastGames(.init())
-      return .none
+public let multiplayerReducer = Reducer<MultiplayerState, MultiplayerAction, MultiplayerEnvironment>
+{ state, action, environment in
+  switch action {
+  case .pastGames(.setNavigation(isActive: true)):
+    state.route = .pastGames(.init())
+    return .none
 
-    case .pastGames:
-      return .none
+  case .pastGames:
+    return .none
 
-    case .startButtonTapped:
-      if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
-        return environment.gameCenter.turnBasedMatchmakerViewController
-          .present(showExistingMatches: false)
-          .fireAndForget()
+  case .startButtonTapped:
+    if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
+      return environment.gameCenter.turnBasedMatchmakerViewController
+        .present(showExistingMatches: false)
+        .fireAndForget()
 
-      } else {
-        return environment.gameCenter.localPlayer.presentAuthenticationViewController
-          .fireAndForget()
-      }
+    } else {
+      return environment.gameCenter.localPlayer.presentAuthenticationViewController
+        .fireAndForget()
     }
   }
-)
+}
 .navigates(
   pastGamesReducer,
   tag: /MultiplayerState.Route.pastGames,

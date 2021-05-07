@@ -23,17 +23,6 @@ public struct StatsState: Equatable {
 
   public enum Route: Equatable {
     case vocab(VocabState)
-
-    public enum Tag: Int {
-      case vocab
-    }
-
-    var tag: Tag {
-      switch self {
-      case .vocab:
-        return .vocab
-      }
-    }
   }
 
   public init(
@@ -66,9 +55,8 @@ public struct StatsState: Equatable {
 public enum StatsAction: Equatable {
   case backButtonTapped
   case onAppear
-  case setNavigation(tag: StatsState.Route.Tag?)
   case statsResponse(Result<LocalDatabaseClient.Stats, NSError>)
-  case vocab(VocabAction)
+  case vocab(NavigationAction<VocabAction>)
 }
 
 public struct StatsEnvironment {
@@ -93,65 +81,60 @@ public struct StatsEnvironment {
   }
 }
 
-public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .combine(
-  vocabReducer
-    ._pullback(
-      state: (\StatsState.route).appending(path: /StatsState.Route.vocab),
-      action: /StatsAction.vocab,
-      environment: {
-        VocabEnvironment(
-          audioPlayer: $0.audioPlayer,
-          database: $0.database,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
+public let statsReducer = Reducer<StatsState, StatsAction, StatsEnvironment>
+{ state, action, environment in
+  switch action {
+  case .backButtonTapped:
+    return .none
 
-  .init { state, action, environment in
-    switch action {
-    case .backButtonTapped:
-      return .none
+  case .onAppear:
+    // TODO: should we do this work on background thread?
+    return environment.database.fetchStats
+      .mapError { $0 as NSError }
+      .catchToEffect()
+      .map(StatsAction.statsResponse)
 
-    case .onAppear:
-      // TODO: should we do this work on background thread?
-      return environment.database.fetchStats
-        .mapError { $0 as NSError }
-        .catchToEffect()
-        .map(StatsAction.statsResponse)
+  case let .statsResponse(.failure(error)):
+    // TODO
+    return .none
 
-    case let .statsResponse(.failure(error)):
-      // TODO
-      return .none
+  case let .statsResponse(.success(stats)):
+    state.averageWordLength = stats.averageWordLength
+    state.gamesPlayed = stats.gamesPlayed
+    state.highestScoringWord = stats.highestScoringWord
+    state.highScoreTimed = stats.highScoreTimed
+    state.highScoreUnlimited = stats.highScoreUnlimited
+    state.longestWord = stats.longestWord
+    state.secondsPlayed = stats.secondsPlayed
+    state.wordsFound = stats.wordsFound
+    return .none
 
-    case let .statsResponse(.success(stats)):
-      state.averageWordLength = stats.averageWordLength
-      state.gamesPlayed = stats.gamesPlayed
-      state.highestScoringWord = stats.highestScoringWord
-      state.highScoreTimed = stats.highScoreTimed
-      state.highScoreUnlimited = stats.highScoreUnlimited
-      state.longestWord = stats.longestWord
-      state.secondsPlayed = stats.secondsPlayed
-      state.wordsFound = stats.wordsFound
-      return .none
-
-    case .setNavigation(tag: .vocab):
-      state.route = .vocab(
-        .init(
-          isAnimationReduced: state.isAnimationReduced,
-          isHapticsEnabled: state.isHapticsEnabled
-        )
+  case .vocab(.setNavigation(isActive: true)):
+    state.route = .vocab(
+      .init(
+        isAnimationReduced: state.isAnimationReduced,
+        isHapticsEnabled: state.isHapticsEnabled
       )
-      return .none
+    )
+    return .none
 
-    case .setNavigation(tag: .none):
-      state.route = nil
-      return .none
-
-    case .vocab:
-      return .none
-    }
+  case .vocab:
+    return .none
+  }
+}
+.navigates(
+  vocabReducer,
+  tag: /StatsState.Route.vocab,
+  selection: \.route,
+  action: /StatsAction.vocab,
+  environment: {
+    VocabEnvironment(
+      audioPlayer: $0.audioPlayer,
+      database: $0.database,
+      feedbackGenerator: $0.feedbackGenerator,
+      lowPowerMode: $0.lowPowerMode,
+      mainQueue: $0.mainQueue
+    )
   }
 )
 
@@ -214,19 +197,10 @@ public struct StatsView: View {
       }
 
       SettingsRow {
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\StatsState.route).appending(path: /StatsState.Route.vocab).extract(from:),
-              action: StatsAction.vocab
-            ),
-            then: VocabView.init(store:)
-          ),
-          tag: StatsState.Route.Tag.vocab,
-          selection: self.viewStore.binding(
-            get: \.route?.tag,
-            send: StatsAction.setNavigation(tag:)
-          )
+        NavigationLinkStore(
+          destination: VocabView.init(store:),
+          tag: /StatsState.Route.vocab,
+          selection: self.store.scope(state: \.route, action: StatsAction.vocab)
         ) {
           HStack {
             Text("Words found")
