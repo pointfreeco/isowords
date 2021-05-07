@@ -101,11 +101,9 @@ public enum HomeAction: Equatable {
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
   case binding(BindingAction<HomeState>)
-  case changelog(ChangelogAction)
-  case cubeButtonTapped
+  case changelog(PresentationAction<ChangelogAction>)
   case dailyChallenge(NavigationAction<DailyChallengeAction>)
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
-  case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(NavigationAction<LeaderboardAction>)
@@ -221,22 +219,6 @@ public struct HomeEnvironment {
 #endif
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine(
-  changelogReducer
-    ._pullback(
-      state: OptionalPath(\.changelog),
-      action: /HomeAction.changelog,
-      environment: {
-        ChangelogEnvironment(
-          apiClient: $0.apiClient,
-          applicationClient: $0.applicationClient,
-          build: $0.build,
-          mainQueue: $0.mainQueue,
-          serverConfig: $0.serverConfig,
-          userDefaults: $0.userDefaults
-        )
-      }
-    ),
-
   nagBannerFeatureReducer
     .pullback(
       state: \HomeState.nagBanner,
@@ -311,11 +293,11 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case .binding:
       return .none
 
-    case .changelog:
+    case .changelog(.present):
+      state.changelog = .init()
       return .none
 
-    case .cubeButtonTapped:
-      state.changelog = .init()
+    case .changelog:
       return .none
 
     case .dailyChallenge(.setNavigation(isActive: true)):
@@ -336,10 +318,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case let .dailyChallengeResponse(.failure(error)):
       state.dailyChallenges = []
-      return .none
-
-    case .dismissChangelog:
-      state.changelog = nil
       return .none
 
     case .gameButtonTapped:
@@ -515,6 +493,21 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
   action: /HomeAction.solo,
   environment: { .init(fileClient: $0.fileClient) }
 )
+.presents(
+  changelogReducer,
+  state: \.changelog,
+  action: /HomeAction.changelog,
+  environment: {
+    ChangelogEnvironment(
+      apiClient: $0.apiClient,
+      applicationClient: $0.applicationClient,
+      build: $0.build,
+      mainQueue: $0.mainQueue,
+      serverConfig: $0.serverConfig,
+      userDefaults: $0.userDefaults
+    )
+  }
+)
 .binding(action: /HomeAction.binding)
 
 public struct HomeView: View {
@@ -551,7 +544,7 @@ public struct HomeView: View {
           VStack(spacing: .grid(6)) {
             HStack {
               CubeIconView(shake: self.viewStore.hasChangelog) {
-                self.viewStore.send(.cubeButtonTapped)
+                self.viewStore.send(.changelog(.present))
               }
 
               Spacer()
@@ -653,19 +646,9 @@ public struct HomeView: View {
       // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
       EmptyView()
         .sheet(
-          isPresented: self.viewStore.binding(
-            get: \.isChangelogVisible,
-            send: HomeAction.dismissChangelog
-          )
-        ) {
-          IfLetStore(
-            self.store.scope(
-              state: \.changelog,
-              action: HomeAction.changelog
-            ),
-            then: ChangelogView.init(store:)
-          )
-        }
+          ifLet: self.store.scope(state: \.changelog, action: HomeAction.changelog),
+          then: ChangelogView.init(store:)
+        )
     )
     .onAppear { self.viewStore.send(.onAppear) }
     .onDisappear { self.viewStore.send(.onDisappear) }
