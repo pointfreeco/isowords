@@ -5,6 +5,7 @@ import BottomMenu
 import Build
 import CasePaths
 import ClientModels
+import CombineHelpers
 import ComposableArchitecture
 import ComposableGameCenter
 import ComposableGameCenterHelpers
@@ -198,8 +199,7 @@ public struct GameEnvironment {
   public var fileClient: FileClient
   public var gameCenter: GameCenterClient
   public var lowPowerMode: LowPowerModeClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
   public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
@@ -220,7 +220,6 @@ public struct GameEnvironment {
     gameCenter: GameCenterClient,
     lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
     setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
@@ -240,17 +239,12 @@ public struct GameEnvironment {
     self.gameCenter = gameCenter
     self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.setUserInterfaceStyle = setUserInterfaceStyle
     self.storeKit = storeKit
     self.userDefaults = userDefaults
     self.userNotifications = userNotifications
-  }
-
-  func date() -> Date {
-    self.mainRunLoop.now.date
   }
 }
 
@@ -276,7 +270,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
             audioPlayer: $0.audioPlayer,
             database: $0.database,
             fileClient: $0.fileClient,
-            mainRunLoop: $0.mainRunLoop,
+            mainQueue: $0.mainQueue,
             remoteNotifications: $0.remoteNotifications,
             serverConfig: $0.serverConfig,
             storeKit: $0.storeKit,
@@ -293,7 +287,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
         action: /GameAction.upgradeInterstitial,
         environment: {
           UpgradeInterstitialEnvironment(
-            mainRunLoop: $0.mainRunLoop,
+            mainQueue: $0.mainQueue,
             serverConfig: $0.serverConfig,
             storeKit: $0.storeKit
           )
@@ -327,7 +321,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
 
       case let .confirmRemoveCube(index):
         state.bottomMenu = nil
-        state.removeCube(at: index, playedAt: environment.date())
+        state.removeCube(at: index, playedAt: environment.$mainQueue.now)
         state.selectedWord = []
         return .none
 
@@ -367,9 +361,9 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
 
       case .gameLoaded:
         state.isGameLoaded = true
-        return Effect<RunLoop.SchedulerTimeType, Never>
-          .timer(id: TimerId(), every: 1, on: environment.mainRunLoop)
-          .map { GameAction.timerTick($0.date) }
+        return Effect
+          .timer(id: TimerId(), every: 1, on: environment.mainQueue)
+          .map { _ in GameAction.timerTick(environment.$mainQueue.now) }
 
       case .gameOver(.delegate(.close)):
         return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
@@ -395,7 +389,7 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
 
       case .onAppear:
         guard !state.isGameOver else { return .none }
-        state.gameCurrentTime = environment.date()
+        state.gameCurrentTime = environment.$mainQueue.now
         return .onAppearEffects(
           environment: environment,
           gameContext: state.gameContext
@@ -689,7 +683,7 @@ extension GameState {
     let soundEffects: Effect<Never, Never>
 
     let move = Move(
-      playedAt: environment.mainRunLoop.now.date,
+      playedAt: environment.$mainQueue.now,
       playerIndex: self.turnBasedContext?.localPlayerIndex,
       reactions: zip(self.turnBasedContext?.localPlayerIndex, reaction)
         .map { [$0: $1] },
@@ -916,7 +910,6 @@ func menuTitle(state: GameState) -> TextState {
       gameCenter: .failing,
       lowPowerMode: .failing,
       mainQueue: .failing("mainQueue"),
-      mainRunLoop: .failing("mainRunLoop"),
       remoteNotifications: .failing,
       serverConfig: .failing,
       setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
@@ -939,7 +932,6 @@ func menuTitle(state: GameState) -> TextState {
       gameCenter: .noop,
       lowPowerMode: .false,
       mainQueue: .immediate,
-      mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
       setUserInterfaceStyle: { _ in .none },
@@ -978,7 +970,7 @@ extension Effect where Output == GameAction, Failure == Never {
           }
         )
         .filter { $0 }
-        .delay(for: 3, scheduler: environment.mainRunLoop.animation())
+        .delay(for: 3, scheduler: environment.mainQueue.animation())
         .map { _ in GameAction.delayedShowUpgradeInterstitial }
         .ignoreFailure()
         .eraseToEffect()
@@ -1063,7 +1055,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       else { return .none }
 
       state = GameState(
-        gameCurrentTime: environment.mainRunLoop.now.date,
+        gameCurrentTime: environment.$mainQueue.now,
         localPlayer: turnBasedContext.localPlayer,
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
@@ -1099,7 +1091,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       else { return .none }
 
       var gameState = GameState(
-        gameCurrentTime: environment.mainRunLoop.now.date,
+        gameCurrentTime: environment.$mainQueue.now,
         localPlayer: environment.gameCenter.localPlayer.localPlayer(),
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData

@@ -10,7 +10,7 @@ import XCTest
 @testable import ServerConfigClient
 
 class UpgradeInterstitialFeatureTests: XCTestCase {
-  let scheduler = RunLoop.test
+  let scheduler = DispatchQueue.test
 
   func testUpgrade() {
     var paymentAdded: SKPayment?
@@ -36,7 +36,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     ]
 
     var environment = UpgradeInterstitialEnvironment.failing
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.addPayment = { payment in
       paymentAdded = payment
@@ -77,7 +77,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
   func testWaitAndDismiss() {
     var environment = UpgradeInterstitialEnvironment.failing
-    environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
+    environment.mainQueue = self.scheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = .none
     environment.storeKit.fetchProducts = { _ in .none }
@@ -112,7 +112,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
   func testMaybeLater_Dismissable() {
     var environment = UpgradeInterstitialEnvironment.failing
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = .none
     environment.storeKit.fetchProducts = { _ in .none }
@@ -142,7 +142,7 @@ let fullGameProduct = StoreKitClient.Product(
 
 extension UpgradeInterstitialEnvironment {
   static let failing = Self(
-    mainRunLoop: .failing("mainRunLoop"),
+    mainQueue: .failing,
     serverConfig: .failing,
     storeKit: .failing
   )

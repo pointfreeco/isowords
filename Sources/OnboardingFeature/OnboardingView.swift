@@ -1,5 +1,6 @@
 import AudioPlayerClient
 import Combine
+import CombineHelpers
 import ComposableArchitecture
 import CubeCore
 import DictionaryClient
@@ -159,8 +160,7 @@ public struct OnboardingEnvironment {
   var dictionary: DictionaryClient
   var feedbackGenerator: FeedbackGeneratorClient
   var lowPowerMode: LowPowerModeClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-  var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler var mainQueue: AnySchedulerOf<DispatchQueue>
   var userDefaults: UserDefaultsClient
 
   public init(
@@ -170,7 +170,6 @@ public struct OnboardingEnvironment {
     feedbackGenerator: FeedbackGeneratorClient,
     lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
     userDefaults: UserDefaultsClient
   ) {
     self.audioPlayer = audioPlayer.filteredSounds(
@@ -181,7 +180,6 @@ public struct OnboardingEnvironment {
     self.feedbackGenerator = feedbackGenerator
     self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
     self.userDefaults = userDefaults
   }
 
@@ -199,7 +197,6 @@ public struct OnboardingEnvironment {
       gameCenter: .noop,
       lowPowerMode: self.lowPowerMode,
       mainQueue: self.mainQueue,
-      mainRunLoop: self.mainRunLoop,
       remoteNotifications: .noop,
       serverConfig: .noop,
       setUserInterfaceStyle: { _ in .none },

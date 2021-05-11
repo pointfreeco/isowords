@@ -162,8 +162,7 @@ public struct HomeEnvironment {
   public var fileClient: FileClient
   public var gameCenter: GameCenterClient
   public var lowPowerMode: LowPowerModeClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
   public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
@@ -185,7 +184,6 @@ public struct HomeEnvironment {
     gameCenter: GameCenterClient,
     lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
     setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
@@ -206,7 +204,6 @@ public struct HomeEnvironment {
     self.gameCenter = gameCenter
     self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.setUserInterfaceStyle = setUserInterfaceStyle
@@ -232,7 +229,6 @@ public struct HomeEnvironment {
       gameCenter: .noop,
       lowPowerMode: .false,
       mainQueue: .immediate,
-      mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
       setUserInterfaceStyle: { _ in .none },
@@ -270,7 +266,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           apiClient: $0.apiClient,
           fileClient: $0.fileClient,
           mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
           remoteNotifications: $0.remoteNotifications,
           userNotifications: $0.userNotifications
         )
@@ -311,7 +306,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       action: /HomeAction.nagBannerFeature,
       environment: {
         NagBannerEnvironment(
-          mainRunLoop: $0.mainRunLoop,
+          mainQueue: $0.mainQueue,
           serverConfig: $0.serverConfig,
           storeKit: $0.storeKit
         )
@@ -364,7 +359,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         loadMatches(
           gameCenter: environment.gameCenter,
           backgroundQueue: environment.backgroundQueue,
-          mainRunLoop: environment.mainRunLoop
+          mainQueue: environment.$mainQueue
         ),
 
         environment.audioPlayer.play(.uiSfxActionDestructive)
@@ -395,7 +390,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       state.settings.sendDailyChallengeSummary =
         currentPlayerEnvelope.player.sendDailyChallengeSummary
 
-      let now = environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+      let now = environment.$mainQueue.now.timeIntervalSinceReferenceDate
       let itsNagTime =
         Int(now - environment.userDefaults.installationTime)
         >= environment.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
@@ -475,7 +470,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
             loadMatches(
               gameCenter: environment.gameCenter,
               backgroundQueue: environment.backgroundQueue,
-              mainRunLoop: environment.mainRunLoop
+              mainQueue: environment.$mainQueue
             )
           }
           .eraseToEffect()
@@ -764,7 +759,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
         loadMatches(
           gameCenter: environment.gameCenter,
           backgroundQueue: environment.backgroundQueue,
-          mainRunLoop: environment.mainRunLoop
+          mainQueue: environment.$mainQueue
         )
       )
     }
@@ -776,7 +771,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
 private func loadMatches(
   gameCenter: GameCenterClient,
   backgroundQueue: AnySchedulerOf<DispatchQueue>,
-  mainRunLoop: AnySchedulerOf<RunLoop>
+  mainQueue: DateScheduler
 ) -> Effect<HomeAction, Never> {
 
   return gameCenter.turnBasedMatch.loadMatches()
@@ -793,7 +788,7 @@ private func loadMatches(
             )
           )
         )
-        .receive(on: mainRunLoop)
+        .receive(on: mainQueue.wrappedValue)
         .eraseToEffect(),
 
         Effect(
@@ -801,12 +796,12 @@ private func loadMatches(
             result.map {
               $0.activeMatches(
                 for: gameCenter.localPlayer.localPlayer(),
-                at: mainRunLoop.now.date
+                at: mainQueue.now
               )
             }
           )
         )
-        .receive(on: mainRunLoop.animation())
+        .receive(on: mainQueue.wrappedValue.animation())
         .eraseToEffect()
       )
     }
@@ -951,7 +946,6 @@ private struct ShakeEffect: GeometryEffect {
         gameCenter: .noop,
         lowPowerMode: .false,
         mainQueue: .main,
-        mainRunLoop: .main,
         remoteNotifications: .noop,
         serverConfig: .noop,
         setUserInterfaceStyle: { _ in .none },

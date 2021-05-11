@@ -99,7 +99,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           && selectedWord.contains { state.cubes[$0].useCount == 2 }
 
         if cubeIsShaking {
-          state.cubeStartedShakingAt = state.cubeStartedShakingAt ?? environment.date()
+          state.cubeStartedShakingAt = state.cubeStartedShakingAt ?? environment.$mainQueue.now
 
           return cubeWasShaking
             ? .none

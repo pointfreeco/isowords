@@ -20,7 +20,6 @@ extension AppEnvironment {
     $0.fileClient.override(load: userSettingsFileName, Effect<UserSettings, Error>.none)
     $0.gameCenter.localPlayer.authenticate = .none
     $0.mainQueue = .immediate
-    $0.mainRunLoop = .immediate
     $0.serverConfig.refresh = { .none }
     $0.storeKit.observer = .none
     $0.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")

@@ -1,5 +1,6 @@
 import ClientModels
 import Combine
+import CombineHelpers
 import ComposableArchitecture
 import GameOverFeature
 import Gen
@@ -13,14 +14,14 @@ import XCTest
 @testable import GameFeature
 
 class GameFeatureTests: XCTestCase {
-  let mainRunLoop = RunLoop.test
+  let mainQueue = DispatchQueue.test
 
   func testRemoveCubeMove() {
     let environment = update(GameEnvironment.failing) {
       $0.audioPlayer.play = { _ in .none }
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
     }
 
     let store = TestStore(
@@ -56,7 +57,7 @@ class GameFeatureTests: XCTestCase {
       $0.game?.cubes.0.0.0.wasRemoved = true
       $0.game?.moves = [
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: nil,
           reactions: nil,
           score: 0,
@@ -70,7 +71,7 @@ class GameFeatureTests: XCTestCase {
     let environment = update(GameEnvironment.failing) {
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
     }
 
     let store = TestStore(

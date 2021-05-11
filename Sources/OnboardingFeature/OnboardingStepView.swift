@@ -399,7 +399,6 @@ extension OnboardingState.Step {
               feedbackGenerator: .live,
               lowPowerMode: .false,
               mainQueue: .main,
-              mainRunLoop: .main,
               userDefaults: .noop
             )
           )

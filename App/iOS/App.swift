@@ -97,7 +97,6 @@ extension AppEnvironment {
       gameCenter: .live,
       lowPowerMode: .live,
       mainQueue: .main,
-      mainRunLoop: .main,
       remoteNotifications: .live,
       serverConfig: .live(apiClient: apiClient, build: build),
       setUserInterfaceStyle: { userInterfaceStyle in

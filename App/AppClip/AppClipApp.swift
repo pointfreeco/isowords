@@ -38,7 +38,6 @@ extension DemoEnvironment {
       feedbackGenerator: .live,
       lowPowerMode: .live,
       mainQueue: .main,
-      mainRunLoop: .main,
       userDefaults: .live()
     )
   }

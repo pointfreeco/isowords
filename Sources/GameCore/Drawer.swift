@@ -49,7 +49,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     case let .matchesLoaded(.success(matches)):
       state.activeGames.turnBasedMatches = matches.activeMatches(
         for: environment.gameCenter.localPlayer.localPlayer(),
-        at: environment.mainRunLoop.now.date
+        at: environment.$mainQueue.now
       )
       return .none
 

@@ -16,7 +16,7 @@ public func startDailyChallenge(
   apiClient: ApiClient,
   date: @escaping () -> Date,
   fileClient: FileClient,
-  mainRunLoop: AnySchedulerOf<RunLoop>
+  mainQueue: AnySchedulerOf<DispatchQueue>
 ) -> Effect<InProgressGame, DailyChallengeError> {
   guard challenge.yourResult.rank == nil else {
     return Effect(error: .alreadyPlayed(endsAt: challenge.dailyChallenge.endsAt))
@@ -41,7 +41,7 @@ public func startDailyChallenge(
         ),
         as: StartDailyChallengeResponse.self
       )
-      .receive(on: mainRunLoop)
+      .receive(on: mainQueue)
       .map { InProgressGame(response: $0, date: date()) }
       .mapError { err in .couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt) }
       .eraseToEffect()

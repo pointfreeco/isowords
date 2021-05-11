@@ -18,7 +18,6 @@ class OnboardingFeatureTests: XCTestCase {
       ["GAME", "CUBES", "REMOVE", "WORD"].contains(word)
     }
     environment.feedbackGenerator = .noop
-    environment.mainRunLoop = .immediate
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.userDefaults.setBool = { value, key in
       .fireAndForget {
@@ -75,7 +74,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.one].right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: nil,
           reactions: nil,
           score: 36,
@@ -132,7 +131,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.one].top.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: nil,
           reactions: nil,
           score: 110,
@@ -182,7 +181,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .one, z: .one), side: .right))
     }
     store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
-      $0.game.cubeStartedShakingAt = environment.mainRunLoop.now.date
+      $0.game.cubeStartedShakingAt = environment.$mainQueue.now
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
       $0.game.selectedWordIsValid = true
@@ -198,7 +197,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.one].right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: nil,
           reactions: nil,
           score: 252,
@@ -254,7 +253,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.zero][.two].right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: nil,
           reactions: nil,
           score: 44,
@@ -285,7 +284,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.two].wasRemoved = true
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: nil,
           reactions: nil,
           score: 0,
@@ -415,7 +414,6 @@ extension OnboardingEnvironment {
     feedbackGenerator: .failing,
     lowPowerMode: .failing,
     mainQueue: .failing("mainQueue"),
-    mainRunLoop: .failing,
     userDefaults: .failing
   )
 }

@@ -11,7 +11,7 @@ import SwiftUIHelpers
 
 var homeAppStoreView: AnyView {
   let environment = update(HomeEnvironment.noop) {
-    $0.mainRunLoop = RunLoop.test.eraseToAnyScheduler()
+    $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
   }
   let view = HomeView(
     store: Store(
@@ -19,7 +19,7 @@ var homeAppStoreView: AnyView {
         dailyChallenges: [
           FetchTodaysDailyChallengeResponse(
             dailyChallenge: FetchTodaysDailyChallengeResponse.DailyChallenge(
-              endsAt: environment.mainRunLoop.now.advanced(by: .seconds(60 * 60 * 2.5)).date,
+              endsAt: environment.$mainQueue.now + 60 * 60 * 2.5,
               gameMode: .timed,
               id: .init(rawValue: .dailyChallengeId),
               language: .en
@@ -33,7 +33,7 @@ var homeAppStoreView: AnyView {
           ),
           FetchTodaysDailyChallengeResponse(
             dailyChallenge: FetchTodaysDailyChallengeResponse.DailyChallenge(
-              endsAt: environment.mainRunLoop.now.advanced(by: .seconds(60 * 60 * 2.5)).date,
+              endsAt: environment.$mainQueue.now + 60 * 60 * 2.5,
               gameMode: .unlimited,
               id: .init(rawValue: .dailyChallengeId),
               language: .en
@@ -54,7 +54,7 @@ var homeAppStoreView: AnyView {
             cubes: .mock,
             gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
             gameMode: .unlimited,
-            gameStartTime: environment.mainRunLoop.now.date,
+            gameStartTime: environment.$mainQueue.now,
             language: .en,
             moves: Moves(),
             secondsPlayed: 0
@@ -66,8 +66,8 @@ var homeAppStoreView: AnyView {
           ActiveTurnBasedMatch(
             id: "deadbeef",
             isYourTurn: true,
-            lastPlayedAt: environment.mainRunLoop.now.advanced(by: -60 * 60 * 4).date,
-            now: environment.mainRunLoop.now.date,
+            lastPlayedAt: environment.$mainQueue.now - 60 * 60 * 4,
+            now: environment.$mainQueue.now,
             playedWord: PlayedWord(
               isYourWord: false,
               reactions: [0: .angel],
@@ -94,6 +94,6 @@ var homeAppStoreView: AnyView {
       environment: ()
     )
   )
-  .environment(\.date) { environment.mainRunLoop.now.advanced(by: -60 * 60 * 2).date }
+  .environment(\.date) { environment.$mainQueue.now - 60 * 60 * 2 }
   return AnyView(view)
 }

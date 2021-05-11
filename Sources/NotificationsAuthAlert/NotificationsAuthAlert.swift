@@ -23,16 +23,16 @@ public enum NotificationsAuthAlertAction: Equatable {
 }
 
 public struct NotificationsAuthAlertEnvironment {
-  var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
   var userNotifications: UserNotificationClient
 
   public init(
-    mainRunLoop: AnySchedulerOf<RunLoop>,
+    mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     userNotifications: UserNotificationClient
   ) {
-    self.mainRunLoop = mainRunLoop
+    self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.userNotifications = userNotifications
   }
@@ -60,7 +60,7 @@ public let notificationsAuthAlertReducer = Reducer<
           successful
             ? Effect.registerForRemoteNotifications(
               remoteNotifications: environment.remoteNotifications,
-              scheduler: environment.mainRunLoop,
+              scheduler: environment.mainQueue,
               userNotifications: environment.userNotifications
             )
             : .none
@@ -71,7 +71,7 @@ public let notificationsAuthAlertReducer = Reducer<
       environment.userNotifications.getNotificationSettings
         .flatMap { settings in
           Effect(value: .delegate(.didChooseNotificationSettings(settings)))
-            .receive(on: environment.mainRunLoop.animation())
+            .receive(on: environment.mainQueue.animation())
         }
         .eraseToEffect()
     )
@@ -147,7 +147,7 @@ struct NotificationMenu_Previews: PreviewProvider {
         initialState: NotificationsAuthAlertState(),
         reducer: notificationsAuthAlertReducer,
         environment: NotificationsAuthAlertEnvironment(
-          mainRunLoop: .main,
+          mainQueue: .main,
           remoteNotifications: .noop,
           userNotifications: .noop
         )

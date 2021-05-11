@@ -45,7 +45,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       router: .test
     )
     environment.database.playedGamesCount = { _ in .init(value: 0) }
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 

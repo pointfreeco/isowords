@@ -30,14 +30,14 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 match: match,
                 metadata: .init(
-                  lastOpenedAt: environment.mainRunLoop.now.date,
+                  lastOpenedAt: environment.$mainQueue.now,
                   playerIndexToId: [:]
                 )
               )
               let game = GameState(
                 cubes: environment.dictionary.randomCubes(.en),
                 gameContext: .turnBased(context),
-                gameCurrentTime: environment.mainRunLoop.now.date,
+                gameCurrentTime: environment.$mainQueue.now,
                 gameMode: .unlimited,
                 gameStartTime: match.creationDate
               )
@@ -69,7 +69,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
             if didBecomeActive {
               var gameState = GameState(
-                gameCurrentTime: environment.mainRunLoop.now.date,
+                gameCurrentTime: environment.$mainQueue.now,
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 turnBasedMatch: match,
                 turnBasedMatchData: turnBasedMatchData
@@ -91,7 +91,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
+              turnBasedMatchData.metadata.lastOpenedAt = environment.$mainQueue.now
               return .merge(
                 environment.gameCenter.turnBasedMatchmakerViewController.dismiss
                   .fireAndForget(),
@@ -116,7 +116,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               context.currentParticipantIsLocalPlayer,
               match.participants.allSatisfy({ $0.matchOutcome == .none }),
               let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),
-              lastTurnDate > environment.mainRunLoop.now.date.addingTimeInterval(-60)
+              lastTurnDate > environment.$mainQueue.now.addingTimeInterval(-60)
             else { return .none }
 
             return environment.gameCenter
@@ -162,7 +162,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             }
 
             let newGame = GameState(
-              gameCurrentTime: environment.mainRunLoop.now.date,
+              gameCurrentTime: environment.$mainQueue.now,
               localPlayer: environment.gameCenter.localPlayer.localPlayer(),
               turnBasedMatch: match,
               turnBasedMatchData: turnBasedMatchData

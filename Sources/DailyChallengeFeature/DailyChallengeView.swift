@@ -1,5 +1,6 @@
 import ApiClient
 import ClientModels
+import CombineHelpers
 import ComposableArchitecture
 import ComposableUserNotifications
 import DailyChallengeHelpers
@@ -77,8 +78,7 @@ public enum DailyChallengeAction: Equatable {
 public struct DailyChallengeEnvironment {
   var apiClient: ApiClient
   var fileClient: FileClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-  var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
   var userNotifications: UserNotificationClient
 
@@ -86,14 +86,12 @@ public struct DailyChallengeEnvironment {
     apiClient: ApiClient,
     fileClient: FileClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     userNotifications: UserNotificationClient
   ) {
     self.apiClient = apiClient
     self.fileClient = fileClient
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.userNotifications = userNotifications
   }
@@ -116,7 +114,7 @@ public let dailyChallengeReducer = Reducer<
       action: /DailyChallengeAction.notificationsAuthAlert,
       environment: {
         NotificationsAuthAlertEnvironment(
-          mainRunLoop: $0.mainRunLoop,
+          mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
           userNotifications: $0.userNotifications
         )
@@ -167,9 +165,9 @@ public let dailyChallengeReducer = Reducer<
       return startDailyChallenge(
         challenge,
         apiClient: environment.apiClient,
-        date: { environment.mainRunLoop.now.date },
+        date: { environment.$mainQueue.now },
         fileClient: environment.fileClient,
-        mainRunLoop: environment.mainRunLoop
+        mainQueue: environment.mainQueue
       )
       .catchToEffect()
       .map(DailyChallengeAction.startDailyChallengeResponse)
@@ -180,12 +178,12 @@ public let dailyChallengeReducer = Reducer<
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
         )
-        .receive(on: environment.mainRunLoop.animation())
+        .receive(on: environment.mainQueue.animation())
         .catchToEffect()
         .map(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
 
         environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
+          .receive(on: environment.mainQueue)
           .map(DailyChallengeAction.userNotificationSettingsResponse)
           .eraseToEffect()
       )
@@ -515,7 +513,6 @@ private struct RingEffect: GeometryEffect {
         apiClient: .noop,
         fileClient: .noop,
         mainQueue: .immediate,
-        mainRunLoop: .immediate,
         remoteNotifications: .noop,
         userNotifications: .noop
       )

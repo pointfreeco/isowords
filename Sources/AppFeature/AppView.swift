@@ -91,7 +91,6 @@ extension AppEnvironment {
       gameCenter: self.gameCenter,
       lowPowerMode: self.lowPowerMode,
       mainQueue: self.mainQueue,
-      mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
       setUserInterfaceStyle: self.setUserInterfaceStyle,
@@ -115,7 +114,6 @@ extension AppEnvironment {
       gameCenter: self.gameCenter,
       lowPowerMode: self.lowPowerMode,
       mainQueue: self.mainQueue,
-      mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
       setUserInterfaceStyle: self.setUserInterfaceStyle,
@@ -175,7 +173,6 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           feedbackGenerator: $0.feedbackGenerator,
           lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
           userDefaults: $0.userDefaults
         )
       }),
@@ -225,7 +222,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
       environment.userDefaults.installationTime <= 0
         ? environment.userDefaults.setInstallationTime(
-          environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+          environment.$mainQueue.now.timeIntervalSinceReferenceDate
         )
         .fireAndForget()
         : .none
@@ -324,9 +321,9 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     state.game = .init(
       cubes: environment.dictionary.randomCubes(.en),
       gameContext: .solo,
-      gameCurrentTime: environment.mainRunLoop.now.date,
+      gameCurrentTime: environment.$mainQueue.now,
       gameMode: .timed,
-      gameStartTime: environment.mainRunLoop.now.date,
+      gameStartTime: environment.$mainQueue.now,
       isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
     )
     return .none
@@ -339,9 +336,9 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       ?? GameState(
         cubes: environment.dictionary.randomCubes(.en),
         gameContext: .solo,
-        gameCurrentTime: environment.mainRunLoop.now.date,
+        gameCurrentTime: environment.$mainQueue.now,
         gameMode: .unlimited,
-        gameStartTime: environment.mainRunLoop.now.date,
+        gameStartTime: environment.$mainQueue.now,
         isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
       )
     return .none

@@ -20,7 +20,7 @@ public enum NagBannerFeatureAction: Equatable {
 }
 
 public struct NagBannerEnvironment {
-  var mainRunLoop: AnySchedulerOf<RunLoop>
+  var mainQueue: AnySchedulerOf<DispatchQueue>
   var serverConfig: ServerConfigClient
   var storeKit: StoreKitClient
 }
@@ -60,7 +60,7 @@ private let nagBannerReducer = Reducer<NagBannerState, NagBannerAction, NagBanne
         action: /NagBannerAction.upgradeInterstitial,
         environment: {
           UpgradeInterstitialEnvironment(
-            mainRunLoop: $0.mainRunLoop,
+            mainQueue: $0.mainQueue,
             serverConfig: $0.serverConfig,
             storeKit: $0.storeKit
           )
@@ -159,7 +159,7 @@ let messages = [
               initialState: NagBannerState(),
               reducer: nagBannerReducer,
               environment: NagBannerEnvironment(
-                mainRunLoop: .main,
+                mainQueue: .main,
                 serverConfig: .noop,
                 storeKit: .noop
               )

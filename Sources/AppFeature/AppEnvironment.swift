@@ -1,6 +1,7 @@
 import ApiClient
 import AudioPlayerClient
 import Build
+import CombineHelpers
 import ComposableArchitecture
 import ComposableGameCenter
 import ComposableStoreKit
@@ -32,8 +33,7 @@ public struct AppEnvironment {
   public var fileClient: FileClient
   public var gameCenter: GameCenterClient
   public var lowPowerMode: LowPowerModeClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
   public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
@@ -56,7 +56,6 @@ public struct AppEnvironment {
     gameCenter: GameCenterClient,
     lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
     setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
@@ -78,7 +77,6 @@ public struct AppEnvironment {
     self.gameCenter = gameCenter
     self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.setUserInterfaceStyle = setUserInterfaceStyle
@@ -103,7 +101,6 @@ public struct AppEnvironment {
       gameCenter: .failing,
       lowPowerMode: .failing,
       mainQueue: .failing("mainQueue"),
-      mainRunLoop: .failing("mainRunLoop"),
       remoteNotifications: .failing,
       serverConfig: .failing,
       setUserInterfaceStyle: { _ in
@@ -132,7 +129,6 @@ public struct AppEnvironment {
       gameCenter: .noop,
       lowPowerMode: .false,
       mainQueue: .immediate,
-      mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
       setUserInterfaceStyle: { _ in .none },

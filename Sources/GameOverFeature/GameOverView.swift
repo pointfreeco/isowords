@@ -102,7 +102,7 @@ public struct GameOverEnvironment {
   public var audioPlayer: AudioPlayerClient
   public var database: LocalDatabaseClient
   public var fileClient: FileClient
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
   public var storeKit: StoreKitClient
@@ -114,7 +114,7 @@ public struct GameOverEnvironment {
     audioPlayer: AudioPlayerClient,
     database: LocalDatabaseClient,
     fileClient: FileClient,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
+    mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
     storeKit: StoreKitClient,
@@ -125,7 +125,7 @@ public struct GameOverEnvironment {
     self.audioPlayer = audioPlayer
     self.database = database
     self.fileClient = fileClient
-    self.mainRunLoop = mainRunLoop
+    self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.storeKit = storeKit
@@ -139,7 +139,7 @@ public struct GameOverEnvironment {
       audioPlayer: .failing,
       database: .failing,
       fileClient: .failing,
-      mainRunLoop: .failing,
+      mainQueue: .failing,
       remoteNotifications: .failing,
       serverConfig: .failing,
       storeKit: .failing,
@@ -157,7 +157,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       action: /GameOverAction.notificationsAuthAlert,
       environment: {
         NotificationsAuthAlertEnvironment(
-          mainRunLoop: $0.mainRunLoop,
+          mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
           userNotifications: $0.userNotifications
         )
@@ -171,7 +171,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       action: /GameOverAction.upgradeInterstitial,
       environment: {
         UpgradeInterstitialEnvironment(
-          mainRunLoop: $0.mainRunLoop,
+          mainQueue: $0.mainQueue,
           serverConfig: $0.serverConfig,
           storeKit: $0.storeKit
         )
@@ -235,9 +235,9 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             startDailyChallenge(
               $0,
               apiClient: environment.apiClient,
-              date: { environment.mainRunLoop.now.date },
+              date: { environment.$mainQueue.now },
               fileClient: environment.fileClient,
-              mainRunLoop: environment.mainRunLoop
+              mainQueue: environment.mainQueue
             )
             .catchToEffect()
             .map(GameOverAction.startDailyChallengeResponse)
@@ -272,7 +272,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           ),
           as: LeaderboardScoreResult.self
         )
-        .receive(on: environment.mainRunLoop.animation(.default))
+        .receive(on: environment.mainQueue.animation(.default))
         .map(SubmitGameResponse.solo)
         .catchToEffect()
         .map(GameOverAction.submitGameResponse)
@@ -283,7 +283,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           route: .games(.submit(request)),
           as: SubmitGameResponse.self
         )
-        .receive(on: environment.mainRunLoop.animation(.default))
+        .receive(on: environment.mainQueue.animation(.default))
         .catchToEffect()
         .map(GameOverAction.submitGameResponse)
       } else {
@@ -296,7 +296,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
       return .merge(
         Effect(value: .delayedOnAppear)
-          .delay(for: 2, scheduler: environment.mainRunLoop)
+          .delay(for: 2, scheduler: environment.mainQueue)
           .eraseToEffect(),
 
         submitGameEffect,
@@ -316,7 +316,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         .flatMap { showUpgrade in
           showUpgrade
             ? Effect(value: GameOverAction.delayedShowUpgradeInterstitial)
-              .delay(for: 1, scheduler: environment.mainRunLoop.animation(.easeIn))
+              .delay(for: 1, scheduler: environment.mainQueue.animation(.easeIn))
               .eraseToEffect()
             : Effect<GameOverAction, Never>.none
         }
@@ -324,7 +324,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         .eraseToEffect(),
 
         environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
+          .receive(on: environment.mainQueue)
           .map(GameOverAction.userNotificationSettingsResponse)
           .eraseToEffect(),
 
@@ -381,7 +381,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             route: .dailyChallenge(.today(language: .en)),
             as: [FetchTodaysDailyChallengeResponse].self
           )
-          .receive(on: environment.mainRunLoop.animation(.default))
+          .receive(on: environment.mainQueue.animation(.default))
           .catchToEffect()
           .map(GameOverAction.dailyChallengeResponse)
       )
@@ -1050,7 +1050,7 @@ extension Effect where Output == GameOverAction, Failure == Never {
       environment.userDefaults
       .doubleForKey(lastReviewRequestTimeIntervalKey) != 0
     let timeSinceLastReviewRequest =
-      environment.mainRunLoop.now.date.timeIntervalSince1970
+      environment.$mainQueue.now.timeIntervalSince1970
       - environment.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
     let weekInSeconds: Double = 60 * 60 * 24 * 7
 
@@ -1061,7 +1061,7 @@ extension Effect where Output == GameOverAction, Failure == Never {
           && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
           ? Effect.merge(
             environment.userDefaults.setDouble(
-              environment.mainRunLoop.now.date.timeIntervalSince1970,
+              environment.$mainQueue.now.timeIntervalSince1970,
               lastReviewRequestTimeIntervalKey
             )
             .fireAndForget(),
@@ -1281,7 +1281,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
       audioPlayer: .noop,
       database: .noop,
       fileClient: .noop,
-      mainRunLoop: .immediate,
+      mainQueue: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
       storeKit: .noop,

@@ -54,16 +54,16 @@ public enum UpgradeInterstitialAction: Equatable {
 }
 
 public struct UpgradeInterstitialEnvironment {
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var serverConfig: ServerConfigClient
   public var storeKit: StoreKitClient
 
   public init(
-    mainRunLoop: AnySchedulerOf<RunLoop>,
+    mainQueue: AnySchedulerOf<DispatchQueue>,
     serverConfig: ServerConfigClient,
     storeKit: StoreKitClient
   ) {
-    self.mainRunLoop = mainRunLoop
+    self.mainQueue = mainQueue
     self.serverConfig = serverConfig
     self.storeKit = storeKit
   }
@@ -121,7 +121,7 @@ public let upgradeInterstitialReducer = Reducer<
 
     return .merge(
       environment.storeKit.observer
-        .receive(on: environment.mainRunLoop.animation())
+        .receive(on: environment.mainQueue.animation())
         .map(UpgradeInterstitialAction.paymentTransaction)
         .eraseToEffect()
         .cancellable(id: StoreKitObserverId()),
@@ -135,12 +135,12 @@ public let upgradeInterstitialReducer = Reducer<
           product.productIdentifier == environment.serverConfig.config().productIdentifiers.fullGame
         }
       }
-      .receive(on: environment.mainRunLoop.animation())
+      .receive(on: environment.mainQueue.animation())
       .map(UpgradeInterstitialAction.fullGameProductResponse)
       .eraseToEffect(),
 
       !state.isDismissable
-        ? Effect.timer(id: TimerId(), every: 1, on: environment.mainRunLoop.animation())
+        ? Effect.timer(id: TimerId(), every: 1, on: environment.mainQueue.animation())
           .map { _ in UpgradeInterstitialAction.timerTick }
           .eraseToEffect()
           .cancellable(id: TimerId())
@@ -397,7 +397,7 @@ struct UpgradeInterstitialPreviews: PreviewProvider {
             ),
             reducer: upgradeInterstitialReducer,
             environment: .init(
-              mainRunLoop: .main,
+              mainQueue: .main,
               serverConfig: .noop,
               storeKit: .live()
             )

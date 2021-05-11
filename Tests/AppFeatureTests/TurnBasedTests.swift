@@ -23,60 +23,61 @@ import XCTest
 class TurnBasedTests: XCTestCase {
   let backgroundQueue = DispatchQueue.test
   let mainQueue = DispatchQueue.test
-  let mainRunLoop = RunLoop.test
 
   func testNewGame() throws {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
     var didSaveCurrentTurn = false
     let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
 
-    let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
-
+    var environment = AppEnvironment.didFinishLaunching
+    environment.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
+    environment.apiClient
+      .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
+    environment.apiClient.authenticate = { _ in .init(value: .mock) }
     let currentPlayer = CurrentPlayerEnvelope.mock
+    environment.apiClient.currentPlayer = { currentPlayer }
+    environment.audioPlayer.loop = { _ in .none }
+    environment.audioPlayer.play = { _ in .none }
+    environment.audioPlayer.stop = { _ in .none }
+    environment.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+    environment.build.number = { 42 }
+    environment.database.playedGamesCount = { _ in .none }
+    environment.deviceId.id = { .deviceId }
+    environment.dictionary.contains = { word, _ in word == "CAB" }
+    environment.dictionary.randomCubes = { _ in .mock }
+    environment.feedbackGenerator = .noop
+    environment.gameCenter.localPlayer.authenticate = .init(value: nil)
+    environment.gameCenter.localPlayer.listener = listener.eraseToEffect()
+    environment.gameCenter.localPlayer.localPlayer = { .mock }
+    environment.gameCenter.turnBasedMatch.endTurn = {
+      didEndTurnWithRequest = $0
+      return .none
+    }
+    environment.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
+    environment.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
+      didSaveCurrentTurn = true
+      return .none
+    }
+    environment.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
+    environment.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
+    environment.lowPowerMode.start = .none
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    environment.serverConfig.config = { .init() }
+    environment.serverConfig.refresh = { .init(value: .init()) }
+    environment.timeZone = { .newYork }
+
     let store = TestStore(
       initialState: .init(
         home: .init(route: .multiplayer(.init(hasPastGames: false)))
       ),
       reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
-        $0.apiClient
-          .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
-        $0.apiClient.authenticate = { _ in .init(value: .mock) }
-        $0.apiClient.currentPlayer = { currentPlayer }
-        $0.audioPlayer.loop = { _ in .none }
-        $0.audioPlayer.play = { _ in .none }
-        $0.audioPlayer.stop = { _ in .none }
-        $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
-        $0.build.number = { 42 }
-        $0.database.playedGamesCount = { _ in .none }
-        $0.deviceId.id = { .deviceId }
-        $0.dictionary.contains = { word, _ in word == "CAB" }
-        $0.dictionary.randomCubes = { _ in .mock }
-        $0.feedbackGenerator = .noop
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.endTurn = {
-          didEndTurnWithRequest = $0
-          return .none
-        }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
-          didSaveCurrentTurn = true
-          return .none
-        }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
-        $0.lowPowerMode.start = .none
-        $0.serverConfig.config = { .init() }
-        $0.serverConfig.refresh = { .init(value: .init()) }
-        $0.timeZone = { .newYork }
-      }
+      environment: environment
     )
 
     store.send(.appDelegate(.didFinishLaunching))
     store.send(.home(.onAppear))
+
+    self.mainQueue.advance()
 
     store.receive(.home(.authenticationResponse(.mock)))
     store.receive(.home(.serverConfigResponse(.init()))) {
@@ -84,10 +85,14 @@ class TurnBasedTests: XCTestCase {
     }
 
     self.backgroundQueue.advance()
+    self.mainQueue.advance()
+
     store.receive(.home(.binding(.set(\.hasPastTurnBasedGames, false))))
     store.receive(.home(.matchesLoaded(.success([]))))
 
     store.send(.home(.multiplayer(.startButtonTapped)))
+
+    let newMatch = update(TurnBasedMatch.new) { $0.creationDate = environment.$mainQueue.now }
 
     listener.send(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
 
@@ -113,7 +118,7 @@ class TurnBasedTests: XCTestCase {
       $0.game = initialGameState
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
-          $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
+          $0.metadata.lastOpenedAt = store.environment.$mainQueue.now
         }
       }
     }
@@ -125,18 +130,17 @@ class TurnBasedTests: XCTestCase {
     }
     store.send(.currentGame(.game(.onAppear)))
 
+    self.mainQueue.advance(by: 0.5)
+
+    store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
     store.receive(.currentGame(.game(.gameLoaded))) {
-      try XCTUnwrap(&$0.game) {
-        $0.isGameLoaded = true
-      }
-    }
-    store.receive(.currentGame(.game(.matchesLoaded(.success([]))))) {
       try XCTUnwrap(&$0.game) {
         $0.isGameLoaded = true
       }
     }
 
     self.backgroundQueue.advance()
+    self.mainQueue.advance()
     store.receive(.home(.binding(.set(\.hasPastTurnBasedGames, false))))
     store.receive(.home(.matchesLoaded(.success([]))))
 
@@ -186,7 +190,7 @@ class TurnBasedTests: XCTestCase {
       $0.isGameLoaded = true
       $0.moves = [
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: 0,
           reactions: [0: .angel],
           score: 27,
@@ -199,7 +203,7 @@ class TurnBasedTests: XCTestCase {
       $0.cubes[index].right.useCount = 1
       $0.cubes[index].top.useCount = 1
       try XCTUnwrap(&$0.turnBasedContext) {
-        $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
+        $0.metadata.lastOpenedAt = store.environment.$mainQueue.now
       }
     }
     let updatedMatch = update(newMatch) {
@@ -210,7 +214,7 @@ class TurnBasedTests: XCTestCase {
             localPlayer: .mock,
             match: newMatch,
             metadata: .init(
-              lastOpenedAt: store.environment.mainRunLoop.now.date,
+              lastOpenedAt: store.environment.$mainQueue.now,
               playerIndexToId: [0: currentPlayer.player.id]
             )
           ),
@@ -225,6 +229,7 @@ class TurnBasedTests: XCTestCase {
 
     store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
+      $0.game?.gameCurrentTime = environment.$mainQueue.now
 
       XCTAssertEqual(
         didEndTurnWithRequest,
@@ -250,7 +255,7 @@ class TurnBasedTests: XCTestCase {
           localPlayer: .mock,
           match: updatedMatch,
           metadata: .init(
-            lastOpenedAt: store.environment.mainRunLoop.now.date,
+            lastOpenedAt: store.environment.$mainQueue.now,
             playerIndexToId: [0: currentPlayer.player.id]
           )
         )
@@ -263,26 +268,28 @@ class TurnBasedTests: XCTestCase {
 
   func testResumeGame() {
     let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
+
+    var environment = AppEnvironment.didFinishLaunching
+    environment.apiClient.authenticate = { _ in .init(value: .mock) }
+    environment.apiClient.currentPlayer = { nil }
+    environment.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
+    environment.apiClient
+        .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
+    environment.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+    environment.deviceId.id = { .deviceId }
+    environment.gameCenter.localPlayer.authenticate = .init(value: nil)
+    environment.gameCenter.localPlayer.listener = listener.eraseToEffect()
+    environment.gameCenter.localPlayer.localPlayer = { .mock }
+    environment.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
+    environment.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
+    environment.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
+    environment.serverConfig.config = { .init() }
+    environment.timeZone = { .newYork }
+
     let store = TestStore(
       initialState: .init(),
       reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.apiClient.authenticate = { _ in .init(value: .mock) }
-        $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
-        $0.apiClient
-          .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
-        $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
-        $0.deviceId.id = { .deviceId }
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-        $0.serverConfig.config = { .init() }
-        $0.timeZone = { .newYork }
-      }
+      environment: environment
     )
 
     store.send(.appDelegate(.didFinishLaunching))
@@ -321,7 +328,7 @@ class TurnBasedTests: XCTestCase {
             secondsPlayed: 0
           )
         )
-      ) { $0.gameCurrentTime = self.mainRunLoop.now.date }
+      ) { $0.gameCurrentTime = environment.$mainQueue.now }
     }
 
     self.backgroundQueue.advance()
@@ -333,25 +340,27 @@ class TurnBasedTests: XCTestCase {
 
   func testResumeForfeitedGame() {
     let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
+
+    var environment = AppEnvironment.didFinishLaunching
+    environment.apiClient.authenticate = { _ in .init(value: .mock) }
+    environment.apiClient.currentPlayer = { nil }
+    environment.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
+    environment.apiClient
+      .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
+    environment.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+    environment.deviceId.id = { .deviceId }
+    environment.gameCenter.localPlayer.authenticate = .init(value: nil)
+    environment.gameCenter.localPlayer.listener = listener.eraseToEffect()
+    environment.gameCenter.localPlayer.localPlayer = { .mock }
+    environment.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
+    environment.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
+    environment.serverConfig.config = { .init() }
+    environment.timeZone = { .newYork }
+
     let store = TestStore(
       initialState: .init(),
       reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.apiClient.authenticate = { _ in .init(value: .mock) }
-        $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
-        $0.apiClient
-          .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
-        $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
-        $0.deviceId.id = { .deviceId }
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-        $0.serverConfig.config = { .init() }
-        $0.timeZone = { .newYork }
-      }
+      environment: environment
     )
 
     store.send(.appDelegate(.didFinishLaunching))
@@ -389,7 +398,7 @@ class TurnBasedTests: XCTestCase {
           secondsPlayed: 0
         )
       )
-      gameState.gameCurrentTime = self.mainRunLoop.now.date
+      gameState.gameCurrentTime = environment.$mainQueue.now
       gameState.gameOver = GameOverState(
         completedGame: CompletedGame(gameState: gameState),
         isDemo: false,
@@ -411,10 +420,6 @@ class TurnBasedTests: XCTestCase {
 
   func testRemovingCubes() {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
-    let match = update(TurnBasedMatch.inProgress) {
-      $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
-      $0.participants = [.local, .remote]
-    }
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
@@ -425,7 +430,12 @@ class TurnBasedTests: XCTestCase {
         didEndTurnWithRequest = $0
         return .init(value: ())
       }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    }
+
+    let match = update(TurnBasedMatch.inProgress) {
+      $0.creationDate = environment.$mainQueue.now.addingTimeInterval(-60*5)
+      $0.participants = [.local, .remote]
     }
 
     let initialGameState = GameState(
@@ -437,7 +447,7 @@ class TurnBasedTests: XCTestCase {
           metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
-      gameCurrentTime: self.mainRunLoop.now.date,
+      gameCurrentTime: environment.$mainQueue.now,
       gameMode: .unlimited,
       gameStartTime: match.creationDate,
       secondsPlayed: 0
@@ -459,7 +469,7 @@ class TurnBasedTests: XCTestCase {
       $0.cubes.0.0.0.wasRemoved = true
       $0.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: 0,
           reactions: nil,
           score: 0,
@@ -507,7 +517,7 @@ class TurnBasedTests: XCTestCase {
     updatedGameState = update(updatedGameState) {
       $0.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: environment.$mainQueue.now,
           playerIndex: 0,
           reactions: nil,
           score: 0,
@@ -564,31 +574,29 @@ class TurnBasedTests: XCTestCase {
 
   func testRematch() {
     let localParticipant = TurnBasedParticipant.local
-    let match = update(TurnBasedMatch.inProgress) {
-      $0.currentParticipant = localParticipant
-      $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
-      $0.participants = [localParticipant, .remote]
-    }
     var didRematchWithId: TurnBasedMatch.Id?
 
-    let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
+    var environment = AppEnvironment.failing
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    environment.apiClient.currentPlayer = { nil }
+    environment.dictionary.randomCubes = { _ in .mock }
+    environment.fileClient.load = { _ in .none }
+    environment.gameCenter.localPlayer.localPlayer = {
+      update(.authenticated) { $0.player = localParticipant.player! }
+    }
+    environment.gameCenter.turnBasedMatch.loadMatches = { .none }
+    let newMatch = update(TurnBasedMatch.new) { $0.creationDate = environment.$mainQueue.now }
+    environment.gameCenter.turnBasedMatch.rematch = {
+      didRematchWithId = $0
+      return .init(value: newMatch)
+    }
+    environment.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
+    environment.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
 
-    let environment = update(AppEnvironment.failing) {
-      $0.apiClient.currentPlayer = { nil }
-      $0.dictionary.randomCubes = { _ in .mock }
-      $0.fileClient.load = { _ in .none }
-      $0.gameCenter.localPlayer.localPlayer = {
-        update(.authenticated) { $0.player = localParticipant.player! }
-      }
-      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
-      $0.gameCenter.turnBasedMatch.rematch = {
-        didRematchWithId = $0
-        return .init(value: newMatch)
-      }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
-      $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    let match = update(TurnBasedMatch.inProgress) {
+      $0.currentParticipant = localParticipant
+      $0.creationDate = environment.$mainQueue.now.addingTimeInterval(-60*5)
+      $0.participants = [localParticipant, .remote]
     }
 
     let store = TestStore(
@@ -632,10 +640,10 @@ class TurnBasedTests: XCTestCase {
             .init(
               localPlayer: .mock,
               match: newMatch,
-              metadata: .init(lastOpenedAt: self.mainRunLoop.now.date, playerIndexToId: [:])
+              metadata: .init(lastOpenedAt: environment.$mainQueue.now, playerIndexToId: [:])
             )
           ),
-          gameCurrentTime: self.mainRunLoop.now.date,
+          gameCurrentTime: environment.$mainQueue.now,
           gameMode: .unlimited,
           gameStartTime: newMatch.creationDate
         ),
@@ -645,9 +653,26 @@ class TurnBasedTests: XCTestCase {
   }
 
   func testGameCenterNotification_ShowsRecentTurn() {
+    var notificationBannerRequest: GameCenterClient.NotificationBannerRequest?
+    let environment = update(AppEnvironment.failing) {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.showNotificationBanner = {
+        notificationBannerRequest = $0
+        return .none
+      }
+      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    }
+
+    let store = TestStore(
+      initialState: AppState(),
+      reducer: appReducer,
+      environment: environment
+    )
+
     let localParticipant = TurnBasedParticipant.local
     let remoteParticipant = update(TurnBasedParticipant.remote) {
-      $0.lastTurnDate = self.mainRunLoop.now.date - 10
+      $0.lastTurnDate = environment.$mainQueue.now - 10
     }
     let match = update(TurnBasedMatch.inProgress) {
       $0.currentParticipant = localParticipant
@@ -681,24 +706,6 @@ class TurnBasedTests: XCTestCase {
       $0.message = "Blob played ABC!"
     }
 
-    var notificationBannerRequest: GameCenterClient.NotificationBannerRequest?
-    let environment = update(AppEnvironment.failing) {
-      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.gameCenter.showNotificationBanner = {
-        notificationBannerRequest = $0
-        return .none
-      }
-      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
-    let store = TestStore(
-      initialState: AppState(),
-      reducer: appReducer,
-      environment: environment
-    )
-
     store.send(
       .gameCenter(
         .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: false)))
@@ -716,9 +723,21 @@ class TurnBasedTests: XCTestCase {
   }
 
   func testGameCenterNotification_DoesNotShow() {
+    let environment = update(AppEnvironment.failing) {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    }
+
+    let store = TestStore(
+      initialState: AppState(),
+      reducer: appReducer,
+      environment: environment
+    )
+
     let localParticipant = TurnBasedParticipant.local
     let remoteParticipant = update(TurnBasedParticipant.remote) {
-      $0.lastTurnDate = self.mainRunLoop.now.date - 10
+      $0.lastTurnDate = environment.$mainQueue.now - 10
     }
     let match = update(TurnBasedMatch.inProgress) {
       $0.currentParticipant = remoteParticipant
@@ -745,19 +764,6 @@ class TurnBasedTests: XCTestCase {
       )
       $0.message = "Let's play!"
     }
-
-    let environment = update(AppEnvironment.failing) {
-      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
-    let store = TestStore(
-      initialState: AppState(),
-      reducer: appReducer,
-      environment: environment
-    )
 
     store.send(
       .gameCenter(

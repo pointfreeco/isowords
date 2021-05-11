@@ -10,7 +10,7 @@ import XCTest
 @testable import UserDefaultsClient
 
 class GameOverFeatureTests: XCTestCase {
-  let mainRunLoop = RunLoop.test
+  let mainQueue = DispatchQueue.test
 
   func testSubmitLeaderboardScore() throws {
     var environment = GameOverEnvironment.failing
@@ -36,7 +36,7 @@ class GameOverFeatureTests: XCTestCase {
       ])
     )
     environment.database.playedGamesCount = { _ in .init(value: 10) }
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -144,7 +144,7 @@ class GameOverFeatureTests: XCTestCase {
       ])
     )
     environment.database.playedGamesCount = { _ in .init(value: 10) }
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -218,7 +218,7 @@ class GameOverFeatureTests: XCTestCase {
         wordsFound: 1
       )
     )
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = .none
 
@@ -271,7 +271,7 @@ class GameOverFeatureTests: XCTestCase {
         wordsFound: 1
       )
     )
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.storeKit.requestReview = {
       .fireAndForget { requestReviewCount += 1 }
     }
@@ -294,7 +294,7 @@ class GameOverFeatureTests: XCTestCase {
     // Assert that the first time game over appears we do not request review
     store.send(.closeButtonTapped)
     store.receive(.delegate(.close))
-    self.mainRunLoop.advance()
+    self.mainQueue.advance()
     XCTAssertEqual(requestReviewCount, 0)
     XCTAssertEqual(lastReviewRequestTimeIntervalSet, nil)
 
@@ -311,15 +311,15 @@ class GameOverFeatureTests: XCTestCase {
     )
     store.send(.closeButtonTapped)
     store.receive(.delegate(.close))
-    self.mainRunLoop.advance()
+    self.mainQueue.advance()
     XCTAssertEqual(requestReviewCount, 1)
     XCTAssertEqual(lastReviewRequestTimeIntervalSet, 0)
 
     // Assert that when more than a week of time passes we again request review
-    self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
+    self.mainQueue.advance(by: .seconds(60 * 60 * 24 * 7))
     store.send(.closeButtonTapped)
     store.receive(.delegate(.close))
-    self.mainRunLoop.advance()
+    self.mainQueue.advance()
     XCTAssertEqual(requestReviewCount, 2)
     XCTAssertEqual(lastReviewRequestTimeIntervalSet, 60 * 60 * 24 * 7)
   }
@@ -356,10 +356,10 @@ class GameOverFeatureTests: XCTestCase {
     )
     environment.database.playedGamesCount = { _ in .init(value: 6) }
     environment.database.fetchStats = .init(value: .init())
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
+      double: environment.$mainQueue.now.timeIntervalSince1970,
       forKey: "last-review-request-timeinterval"
     )
     environment.userNotifications.getNotificationSettings = .none
@@ -382,11 +382,11 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    self.mainRunLoop.advance(by: .seconds(1))
+    self.mainQueue.advance(by: .seconds(1))
     store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
     }
-    self.mainRunLoop.advance(by: .seconds(1))
+    self.mainQueue.advance(by: .seconds(1))
     store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
   }
 
@@ -405,10 +405,10 @@ class GameOverFeatureTests: XCTestCase {
     }
     environment.database.playedGamesCount = { _ in .init(value: 5) }
     environment.database.fetchStats = .init(value: .init())
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
+      double: environment.$mainQueue.now.timeIntervalSince1970,
       forKey: "last-review-request-timeinterval"
     )
     environment.userNotifications.getNotificationSettings = .none

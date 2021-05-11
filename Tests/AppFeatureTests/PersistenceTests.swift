@@ -23,27 +23,30 @@ import XCTest
 @testable import UserDefaultsClient
 
 class PersistenceTests: XCTestCase {
+  let mainQueue = DispatchQueue.test
+
   func testUnlimitedSaveAndQuit() {
     var saves: [Data] = []
+
+    var environment = AppEnvironment.failing
+    environment.audioPlayer.play = { _ in .none }
+    environment.audioPlayer.stop = { _ in .none }
+    environment.backgroundQueue = .immediate
+    environment.dictionary.contains = { word, _ in word == "CAB" }
+    environment.dictionary.randomCubes = { _ in .mock }
+    environment.feedbackGenerator = .noop
+    environment.fileClient.save = { _, data in
+      saves.append(data)
+      return .none
+    }
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
 
     let store = TestStore(
       initialState: .init(
         home: .init(route: .solo(.init()))
       ),
       reducer: appReducer,
-      environment: update(.failing) {
-        $0.audioPlayer.play = { _ in .none }
-        $0.audioPlayer.stop = { _ in .none }
-        $0.backgroundQueue = .immediate
-        $0.dictionary.contains = { word, _ in word == "CAB" }
-        $0.dictionary.randomCubes = { _ in .mock }
-        $0.feedbackGenerator = .noop
-        $0.fileClient.save = { _, data in
-          saves.append(data)
-          return .none
-        }
-        $0.mainRunLoop = .immediate
-      }
+      environment: environment
     )
 
     let index = LatticePoint(x: .two, y: .two, z: .two)
@@ -55,9 +58,9 @@ class PersistenceTests: XCTestCase {
       $0.game = GameState(
         cubes: .mock,
         gameContext: .solo,
-        gameCurrentTime: RunLoop.immediate.now.date,
+        gameCurrentTime: environment.$mainQueue.now,
         gameMode: .unlimited,
-        gameStartTime: RunLoop.immediate.now.date
+        gameStartTime: environment.$mainQueue.now
       )
       $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
     }
@@ -99,7 +102,7 @@ class PersistenceTests: XCTestCase {
       try XCTUnwrap(&$0.game) {
         $0.moves = [
           .init(
-            playedAt: RunLoop.immediate.now.date,
+            playedAt: environment.$mainQueue.now,
             playerIndex: nil,
             reactions: nil,
             score: 27,

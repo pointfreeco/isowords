@@ -7,7 +7,6 @@ import XCTest
 
 class DailyChallengeFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
-  let mainRunLoop = RunLoop.test
 
   func testOnAppear() {
     var environment = DailyChallengeEnvironment.failing
@@ -15,7 +14,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       route: .dailyChallenge(.today(language: .en)),
       withResponse: .ok([FetchTodaysDailyChallengeResponse.played])
     )
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
     environment.userNotifications.getNotificationSettings = .init(
       value: .init(authorizationStatus: .authorized)
     )
@@ -60,12 +59,8 @@ class DailyChallengeFeatureTests: XCTestCase {
   }
 
   func testTapGameThatWasNotStarted() {
-    var inProgressGame = InProgressGame.mock
-    inProgressGame.gameStartTime = self.mainRunLoop.now.date
-    inProgressGame.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
-
     var environment = DailyChallengeEnvironment.failing
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.apiClient.override(
       route: .dailyChallenge(.start(gameMode: .unlimited, language: .en)),
       withResponse: .ok(
@@ -96,7 +91,11 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.gameModeIsLoading = .unlimited
     }
 
-    self.mainRunLoop.advance()
+    var inProgressGame = InProgressGame.mock
+    inProgressGame.gameStartTime = environment.$mainQueue.now
+    inProgressGame.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
+
+    self.mainQueue.advance()
     store.receive(.startDailyChallengeResponse(.success(inProgressGame))) {
       $0.gameModeIsLoading = nil
     }
@@ -170,7 +169,7 @@ class DailyChallengeFeatureTests: XCTestCase {
         didRegisterForRemoteNotifications = true
       }
     }
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(),
@@ -204,7 +203,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     environment.userNotifications.requestAuthorization = { options in
       .init(value: false)
     }
-    environment.mainRunLoop = .immediate
+    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(),
@@ -234,7 +233,6 @@ extension DailyChallengeEnvironment {
     apiClient: .failing,
     fileClient: .failing,
     mainQueue: .failing,
-    mainRunLoop: .failing,
     remoteNotifications: .failing,
     userNotifications: .failing
   )

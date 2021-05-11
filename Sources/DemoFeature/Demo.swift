@@ -1,6 +1,7 @@
 import ApiClient
 import AudioPlayerClient
 import Build
+import CombineHelpers
 import ComposableArchitecture
 import CubeCore
 import DictionaryClient
@@ -68,8 +69,7 @@ public struct DemoEnvironment {
   var dictionary: DictionaryClient
   var feedbackGenerator: FeedbackGeneratorClient
   var lowPowerMode: LowPowerModeClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-  var mainRunLoop: AnySchedulerOf<RunLoop>
+  @DateScheduler var mainQueue: AnySchedulerOf<DispatchQueue>
   var userDefaults: UserDefaultsClient
 
   public init(
@@ -82,7 +82,6 @@ public struct DemoEnvironment {
     feedbackGenerator: FeedbackGeneratorClient,
     lowPowerMode: LowPowerModeClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
     userDefaults: UserDefaultsClient
   ) {
     self.apiClient = apiClient
@@ -94,7 +93,6 @@ public struct DemoEnvironment {
     self.feedbackGenerator = feedbackGenerator
     self.lowPowerMode = lowPowerMode
     self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
     self.userDefaults = userDefaults
   }
 }
@@ -112,7 +110,6 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
           feedbackGenerator: $0.feedbackGenerator,
           lowPowerMode: $0.lowPowerMode,
           mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
           userDefaults: $0.userDefaults
         )
       }
@@ -135,7 +132,6 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
         gameCenter: .noop,
         lowPowerMode: $0.lowPowerMode,
         mainQueue: $0.mainQueue,
-        mainRunLoop: $0.mainRunLoop,
         remoteNotifications: .noop,
         serverConfig: .noop,
         setUserInterfaceStyle: { _ in .none },
@@ -180,9 +176,9 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
         .init(
           cubes: environment.dictionary.randomCubes(.en),
           gameContext: .solo,
-          gameCurrentTime: environment.mainRunLoop.now.date,
+          gameCurrentTime: environment.$mainQueue.now,
           gameMode: .timed,
-          gameStartTime: environment.mainRunLoop.now.date,
+          gameStartTime: environment.$mainQueue.now,
           isDemo: true
         )
       )

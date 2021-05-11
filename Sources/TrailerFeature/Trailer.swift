@@ -49,14 +49,12 @@ public struct TrailerEnvironment {
   var backgroundQueue: AnySchedulerOf<DispatchQueue>
   var dictionary: DictionaryClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
-  var mainRunLoop: AnySchedulerOf<RunLoop>
 
   public init(
     audioPlayer: AudioPlayerClient,
     backgroundQueue: AnySchedulerOf<DispatchQueue>,
     dictionary: DictionaryClient,
     mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>
   ) {
     self.audioPlayer = audioPlayer.filteredSounds(
       doNotInclude: AudioPlayerClient.Sound.allValidWords

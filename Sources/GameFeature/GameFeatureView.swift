@@ -121,7 +121,6 @@ public struct GameFeatureView<Content>: View where Content: View {
               gameCenter: .live,
               lowPowerMode: .live,
               mainQueue: .main,
-              mainRunLoop: .main,
               remoteNotifications: .noop,
               serverConfig: .noop,
               setUserInterfaceStyle: { _ in .none },
