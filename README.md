@@ -28,7 +28,7 @@ We published a [4-part series of videos](https://www.pointfree.co/collections/to
   <img alt="video poster image" src="https://i.vimeocdn.com/video/1127151635.jpg" width="600">
 </a>
 
-<br>
+<br><br>
 
 Some things you might find interesting:
 
