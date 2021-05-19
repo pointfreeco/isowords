@@ -22,6 +22,14 @@ Available on the [App Store](https://www.isowords.xyz/app-store) now!
 
 [isowords](https://www.isowords.xyz) is a large, complex application built entirely in Swift. The iOS client's logic is built in the [Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture) and the UI is built mostly in SwiftUI with a little bit in SceneKit. The server is also built in Swift using our experimental web server libraries.
 
+We published a [4-part series of videos](https://www.pointfree.co/collections/tours/isowords) covering these topics and more on [Point-Free](https://www.pointfree.co), a video series exploring functional programming and the Swift language, hosted by [Brandon Williams](https://twitter.com/mbrandonw) and [Stephen Celis](https://twitter.com/stephencelis).
+
+<a href="https://www.pointfree.co/collections/tours/isowords">
+  <img alt="video poster image" src="https://i.vimeocdn.com/video/1127151635.jpg" width="600">
+</a>
+
+<br>
+
 Some things you might find interesting:
 
 ### The Composable Architecture
