@@ -14,53 +14,53 @@ import SharedModels
 import Styleguide
 import SwiftUI
 import SwiftUIHelpers
+import TcaHelpers
 
 public struct AppState: Equatable {
-  public var game: GameState?
-  public var onboarding: OnboardingState?
   public var home: HomeState
+  public var route: Route
+
+  public enum Route: Equatable {
+    case game(GameState)
+    case onboarding(OnboardingState)
+    case home
+  }
 
   public init(
-    game: GameState? = nil,
     home: HomeState = .init(),
-    onboarding: OnboardingState? = nil
+    route: Route = .home
   ) {
-    self.game = game
     self.home = home
-    self.onboarding = onboarding
+    self.route = route
   }
 
   public var currentGame: GameFeatureState {
     get {
-      GameFeatureState(game: self.game, settings: self.home.settings)
+      GameFeatureState(
+        game: (/AppState.Route.game).extract(from: self.route),
+        settings: self.home.settings
+      )
     }
     set {
-      let oldValue = self
+      let oldValue = self.currentGame
       let isGameLoaded =
         newValue.game?.isGameLoaded == .some(true) || oldValue.game?.isGameLoaded == .some(true)
       let activeGames =
         newValue.game?.activeGames.isEmpty == .some(false)
         ? newValue.game?.activeGames
         : oldValue.game?.activeGames
-      self.game = newValue.game
-      self.game?.activeGames = activeGames ?? .init()
-      self.game?.isGameLoaded = isGameLoaded
+
+      guard var game = newValue.game else { return }
+      game.activeGames = activeGames ?? .init()
+      game.isGameLoaded = isGameLoaded
+      self.route = .game(game)
+
       self.home.settings = newValue.settings
     }
   }
 
   var isGameInActive: Bool {
-    self.game == nil
-  }
-
-  var firstLaunchOnboarding: OnboardingState? {
-    switch self.onboarding?.presentationStyle {
-    case .some(.demo), .some(.help), .none:
-      return nil
-
-    case .some(.firstLaunch):
-      return self.onboarding
-    }
+    self.currentGame.game == nil
   }
 }
 
@@ -163,9 +163,8 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
     ),
 
   onboardingReducer
-    .optional()
-    .pullback(
-      state: \.onboarding,
+    ._pullback(
+      state: (\AppState.route).appending(path: /AppState.Route.onboarding),
       action: /AppAction.onboarding,
       environment: {
         OnboardingEnvironment(
@@ -189,8 +188,8 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
 extension Reducer where State == AppState, Action == AppAction, Environment == AppEnvironment {
   func persistence() -> Self {
     self
-      .onChange(of: \.game?.moves) { moves, state, _, environment in
-        guard let game = state.game, game.isSavable
+      .onChange(of: \.currentGame.game?.moves) { moves, state, _, environment in
+        guard let game = state.currentGame.game, game.isSavable
         else { return .none }
 
         switch (game.gameContext, game.gameMode) {
@@ -216,7 +215,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   switch action {
   case .appDelegate(.didFinishLaunching):
     if !environment.userDefaults.hasShownFirstLaunchOnboarding {
-      state.onboarding = .init(presentationStyle: .firstLaunch)
+      state.route = .onboarding(.init(presentationStyle: .firstLaunch))
     }
 
     return .merge(
@@ -254,7 +253,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       }
 
     case .dailyChallengeReport:
-      state.game = nil
+      state.route = .home
       state.home.route = .dailyChallenge(.init())
     }
 
@@ -266,7 +265,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .currentGame(.game(.endGameButtonTapped)),
     .currentGame(.game(.gameOver(.onAppear))):
 
-    switch (state.game?.gameContext, state.game?.gameMode) {
+    switch (state.currentGame.game?.gameContext, state.currentGame.game?.gameMode) {
     case (.dailyChallenge, .unlimited):
       state.home.savedGames.dailyChallengeUnlimited = nil
     case (.solo, .unlimited):
@@ -316,24 +315,26 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case .currentGame(.game(.exitButtonTapped)),
     .currentGame(.game(.gameOver(.delegate(.close)))):
-    state.game = nil
+    state.route = .home
     return .none
 
   case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
     .home(.solo(.isActive(.gameButtonTapped(.timed)))):
-    state.game = .init(
-      cubes: environment.dictionary.randomCubes(.en),
-      gameContext: .solo,
-      gameCurrentTime: environment.mainRunLoop.now.date,
-      gameMode: .timed,
-      gameStartTime: environment.mainRunLoop.now.date,
-      isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
+    state.route = .game(
+      .init(
+        cubes: environment.dictionary.randomCubes(.en),
+        gameContext: .solo,
+        gameCurrentTime: environment.mainRunLoop.now.date,
+        gameMode: .timed,
+        gameStartTime: environment.mainRunLoop.now.date,
+        isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
+      )
     )
     return .none
 
   case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.unlimited))))),
     .home(.solo(.isActive(.gameButtonTapped(.unlimited)))):
-    state.game =
+    state.route = .game(
       state.home.savedGames.unlimited
       .map { GameState(inProgressGame: $0) }
       ?? GameState(
@@ -344,13 +345,14 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
         gameStartTime: environment.mainRunLoop.now.date,
         isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
       )
+    )
     return .none
 
   case .currentGame:
     return .none
 
   case let .home(.dailyChallenge(.isActive(.delegate(.startGame(inProgressGame))))):
-    state.game = .init(inProgressGame: inProgressGame)
+    state.route = .game(.init(inProgressGame: inProgressGame))
     return .none
 
   case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
@@ -365,7 +367,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     return .none
 
   case .home(.howToPlayButtonTapped):
-    state.onboarding = .init(presentationStyle: .help)
+    state.route = .onboarding(.init(presentationStyle: .help))
     return .none
 
   case .didChangeScenePhase(.active):
@@ -393,7 +395,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case let .onboarding(.delegate(action)):
     switch action {
     case .getStarted:
-      state.onboarding = nil
+      state.route = .home
       return .none
     }
 
@@ -425,8 +427,8 @@ public struct AppView: View {
     let isOnboardingPresented: Bool
 
     init(state: AppState) {
-      self.isGameActive = state.game != nil
-      self.isOnboardingPresented = state.onboarding != nil
+      self.isGameActive = state.currentGame.game != nil
+      self.isOnboardingPresented = /AppState.Route.onboarding ~= state.route
     }
   }
 
@@ -436,50 +438,49 @@ public struct AppView: View {
   }
 
   public var body: some View {
-    Group {
-      if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
+    SwitchStore(self.store.scope(state: \.route)) {
+      CaseLet(state: /AppState.Route.game, action: AppAction.currentGame) { store in
+//        IfLetStore(
+//          self.store.scope(
+//            state: { appState in
+//              appState.game.map {
+//                (
+//                  game: $0,
+//                  nub: CubeSceneView.ViewState.NubState?.none,
+//                  settings: CubeSceneView.ViewState.Settings(
+//                    enableCubeShadow: appState.home.settings.enableCubeShadow,
+//                    enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
+//                    showSceneStatistics: appState.home.settings.showSceneStatistics
+//                  )
+//                )
+//              }
+//            }
+//          ),
+//          then: { gameAndSettingsStore in
+//            GameFeatureView(
+//              content: CubeView(
+//                store: gameAndSettingsStore.scope(
+//                  state: CubeSceneView.ViewState.init(game:nub:settings:),
+//                  action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
+//                )
+//              ),
+//              store: self.store.scope(state: \.currentGame, action: AppAction.currentGame)
+//            )
+//          }
+//        )
+//        .transition(.game)
+//        .zIndex(1)
+      }
+      CaseLet(state: /AppState.Route.home, action: AppAction.home) { store in
         NavigationView {
           HomeView(store: self.store.scope(state: \.home, action: AppAction.home))
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .zIndex(0)
-      } else {
-        IfLetStore(
-          self.store.scope(
-            state: { appState in
-              appState.game.map {
-                (
-                  game: $0,
-                  nub: CubeSceneView.ViewState.NubState?.none,
-                  settings: CubeSceneView.ViewState.Settings(
-                    enableCubeShadow: appState.home.settings.enableCubeShadow,
-                    enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion,
-                    showSceneStatistics: appState.home.settings.showSceneStatistics
-                  )
-                )
-              }
-            }
-          ),
-          then: { gameAndSettingsStore in
-            GameFeatureView(
-              content: CubeView(
-                store: gameAndSettingsStore.scope(
-                  state: CubeSceneView.ViewState.init(game:nub:settings:),
-                  action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
-                )
-              ),
-              store: self.store.scope(state: \.currentGame, action: AppAction.currentGame)
-            )
-          }
-        )
-        .transition(.game)
-        .zIndex(1)
-
-        IfLetStore(
-          self.store.scope(state: \.onboarding, action: AppAction.onboarding),
-          then: OnboardingView.init(store:)
-        )
-        .zIndex(2)
+      }
+      CaseLet(state: /AppState.Route.onboarding, action: AppAction.onboarding) { store in
+        OnboardingView(store: store)
+          .zIndex(2)
       }
     }
     .modifier(DeviceStateModifier())

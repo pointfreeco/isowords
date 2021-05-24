@@ -75,7 +75,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 turnBasedMatchData: turnBasedMatchData
               )
               gameState.activeGames = state.currentGame.game?.activeGames ?? .init()
-              gameState.isGameLoaded = state.game != nil
+              gameState.isGameLoaded = state.currentGame.game != nil
               // TODO: Reuse game logic
               var isGameOver: Bool {
                 match.participants.contains(where: { $0.matchOutcome != .none })
@@ -112,7 +112,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               metadata: turnBasedMatchData.metadata
             )
             guard
-              state.game?.turnBasedContext?.match.matchId != match.matchId,
+              state.currentGame.game?.turnBasedContext?.match.matchId != match.matchId,
               context.currentParticipantIsLocalPlayer,
               match.participants.allSatisfy({ $0.matchOutcome == .none }),
               let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),
@@ -139,11 +139,11 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
           case .currentGame(.game(.gameOver(.rematchButtonTapped))):
             guard
-              let game = state.game,
+              let game = state.currentGame.game,
               let turnBasedMatch = game.turnBasedContext
             else { return .none }
 
-            state.game = nil
+            state.route = .home
 
             return environment.gameCenter.turnBasedMatch
               .rematch(turnBasedMatch.match.matchId)
@@ -153,7 +153,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               .map { .gameCenter(.rematchResponse($0)) }
 
           case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
-            guard state.game?.turnBasedContext?.match.matchId == match.matchId
+            guard state.currentGame.game?.turnBasedContext?.match.matchId == match.matchId
             else { return .none }
 
             guard let turnBasedMatchData = match.matchData?.turnBasedMatchData
@@ -167,7 +167,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               turnBasedMatch: match,
               turnBasedMatchData: turnBasedMatchData
             )
-            state.game = newGame
+            state.route = .game(newGame)
 
             return environment.database
               .saveGame(.init(gameState: newGame))
@@ -199,8 +199,8 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             return handleTurnBasedMatch(turnBasedMatch, didBecomeActive: true)
 
           case let .gameCenter(.turnBasedMatchReloaded(.success(turnBasedMatch))):
-            if state.game?.turnBasedContext?.match.matchId == turnBasedMatch.matchId {
-              state.game?.turnBasedContext?.match = turnBasedMatch
+            if state.currentGame.game?.turnBasedContext?.match.matchId == turnBasedMatch.matchId {
+              state.currentGame.game?.turnBasedContext?.match = turnBasedMatch
             }
             return .none
 
