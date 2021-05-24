@@ -11,7 +11,6 @@ extension ApiClient {
   private static let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
 
   public static func live(
-    accessToken defaultAccessToken: AccessToken? = nil,
     baseUrl defaultBaseUrl: URL = URL(string: "http://localhost:9876")!,
     sha256: @escaping (Data) -> Data
   ) -> Self {
