@@ -25,7 +25,7 @@ public struct GameFeatureView<Content>: View where Content: View {
           GameView(
             content: self.content,
             isAnimationReduced: viewStore.state,
-            store: store.scope(state: { $0 }, action: GameFeatureAction.game)
+            store: store.scope(state: { $0 }, action: { .game(.isPresented($0)) })
           )
           .onDisappear { viewStore.send(.onDisappear) }
         }

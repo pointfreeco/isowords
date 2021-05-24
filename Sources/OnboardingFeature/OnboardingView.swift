@@ -540,6 +540,10 @@ extension String {
   }
 }
 
+// settings -> removed from gamefeaturestate (use environment)
+// gameFeature -> go away
+// gameReducer split into a presentable version, and version that can be combined with onboarding
+
 private let onboardingGameReducer = gameReducer(
   state: \OnboardingState.game,
   action: /OnboardingAction.game,

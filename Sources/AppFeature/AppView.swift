@@ -471,7 +471,7 @@ public struct AppView: View {
 //        .transition(.game)
 //        .zIndex(1)
       }
-      CaseLet(state: /AppState.Route.home, action: AppAction.home) { store in
+      CaseLet(state: /AppState.Route.home, action: AppAction.home) { _ in
         NavigationView {
           HomeView(store: self.store.scope(state: \.home, action: AppAction.home))
         }
