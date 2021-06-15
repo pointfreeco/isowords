@@ -101,8 +101,8 @@ public struct DemoEnvironment {
 
 public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine(
   onboardingReducer
-    ._pullback(
-      state: (\DemoState.step).appending(path: /DemoState.Step.onboarding),
+    .pullback(
+      state: /DemoState.Step.onboarding,
       action: /DemoAction.onboarding,
       environment: {
         OnboardingEnvironment(
@@ -116,6 +116,11 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
           userDefaults: $0.userDefaults
         )
       }
+    )
+    .pullback(
+      state: \DemoState.step,
+      action: /.self,
+      environment: { $0 }
     ),
 
   gameReducer(
@@ -221,39 +226,39 @@ public struct DemoView: View {
   }
 
   public var body: some View {
-    IfLetStore(
-      self.store.scope(
-        state: (\DemoState.step).appending(path: /DemoState.Step.onboarding).extract(from:),
-        action: DemoAction.onboarding
-      ),
-      then: OnboardingView.init(store:)
-    )
-    .onAppear { self.viewStore.send(.onAppear) }
+    SwitchStore(self.store.scope(state: \.step)) {
+      CaseLet(
+        state: /DemoState.Step.onboarding,
+        action: DemoAction.onboarding,
+        then: {
+          OnboardingView(store: $0)
+            .onAppear { self.viewStore.send(.onAppear) }
+        }
+      )
 
-    IfLetStore(
-      self.store.scope(
-        state: OptionalPath(\DemoState.game).extract(from:),
-        action: DemoAction.game
-      ),
-      then: { store in
-        GameWrapper(
-          content: GameView(
-            content: CubeView(
-              store: store.scope(
-                state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
-                action: { CubeSceneView.ViewAction.to(gameAction: $0) }
-              )
+      CaseLet(
+        state: /DemoState.Step.game,
+        action: DemoAction.game,
+        then: { store in
+          GameWrapper(
+            content: GameView(
+              content: CubeView(
+                store: store.scope(
+                  state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
+                  action: { CubeSceneView.ViewAction.to(gameAction: $0) }
+                )
+              ),
+              isAnimationReduced: false,
+              store: store
             ),
-            isAnimationReduced: false,
-            store: store
-          ),
-          isGameOver: self.viewStore.isGameOver,
-          bannerAction: {
-            self.viewStore.send(.fullVersionButtonTapped)
-          }
-        )
-      }
-    )
+            isGameOver: self.viewStore.isGameOver,
+            bannerAction: {
+              self.viewStore.send(.fullVersionButtonTapped)
+            }
+          )
+        }
+      )
+    }
     .appStoreOverlay(
       isPresented: self.viewStore.binding(
         get: \.appStoreOverlayIsPresented,
