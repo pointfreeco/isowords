@@ -3,6 +3,7 @@ import CombineHelpers
 import ComposableArchitecture
 import GameKit
 
+@available(iOSApplicationExtension, unavailable)
 extension GameCenterClient {
   public static var live: Self {
     return Self(
@@ -28,6 +29,7 @@ extension GameCenterClient {
   }
 }
 
+@available(iOSApplicationExtension, unavailable)
 extension GameCenterViewControllerClient {
   public static let live = Self(
     present: .run { subscriber in
@@ -67,6 +69,7 @@ extension GameCenterViewControllerClient {
   private static var viewController: GKGameCenterViewController?
 }
 
+@available(iOSApplicationExtension, unavailable)
 extension LocalPlayerClient {
   public static var live: Self {
     var localPlayer: GKLocalPlayer { .local }
@@ -363,6 +366,7 @@ extension TurnBasedMatchClient {
   )
 }
 
+@available(iOSApplicationExtension, unavailable)
 extension TurnBasedMatchmakerViewControllerClient {
   public static let live = Self(
     present: { showExistingMatches in
