@@ -36,7 +36,7 @@ let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnviron
   .init { state, action, environment in
     switch action {
     case let .matchesResponse(.success(matches)):
-      state.pastGames = IdentifiedArray(matches)
+      state.pastGames = IdentifiedArray(uniqueElements: matches)
       return .none
 
     case .matchesResponse(.failure):
