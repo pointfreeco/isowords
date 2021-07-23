@@ -29,41 +29,41 @@ endif
 PLATFORM_IOS = iOS Simulator,name=iPhone 12 Pro,OS=14.4
 test-client:
 	@xcodebuild test \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme isowords \
 		-destination platform="$(PLATFORM_IOS)"
 
 build-client-preview-apps:
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme CubeCorePreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme CubePreviewPreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme GameOverPreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme HomeFeaturePreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme LeaderboardsPreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme OnboardingPreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme SettingsPreview \
 		-destination platform="$(PLATFORM_IOS)"
 	@xcodebuild \
-		-workspace isowords.xcworkspace \
+		-project App/isowords.xcodeproj \
 		-scheme UpgradeInterstitialPreview \
 		-destination platform="$(PLATFORM_IOS)"
 
@@ -252,7 +252,7 @@ archive-marketing: check-porcelain set-marketing-version archive
 
 archive: bootstrap-client
 	 @$(MAKE) bump-build
-	 @cd App && xcodebuild -workspace ../isowords.xcworkspace -scheme "isowords" archive \
+	 @cd App && xcodebuild -project isowords.xcodeproj -scheme "isowords" archive \
 		|| (git checkout . && echo "  🛑 Failed to build archive" && exit 1)
 	 @git add . && git commit -m "Bumped version to $$(cd App && agvtool what-version -terse)"
 	 @git tag -a "archive-$$(cd App && agvtool what-version -terse)" -m "Archive"

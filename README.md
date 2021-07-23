@@ -99,7 +99,7 @@ This repo contains both the client and server code for running the entire [isowo
         ```sh
         make bootstrap
         ```
-1. Open the Xcode workspace `isowords.xcworkspace`.
+1. Open the Xcode project `App/isowords.xcodeproj`.
 1. To run the client locally, select the `isowords` target in Xcode and run (`⌘R`).
 1. To run the server locally, select the `server` target in Xcode and run (`⌘R`).
 
