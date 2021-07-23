@@ -20,6 +20,132 @@
                ReferencedContainer = "container:isowords.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AppFeatureTests"
+               BuildableName = "AppFeatureTests"
+               BlueprintName = "AppFeatureTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AppStoreSnapshotTests"
+               BuildableName = "AppStoreSnapshotTests"
+               BlueprintName = "AppStoreSnapshotTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ChangelogFeatureTests"
+               BuildableName = "ChangelogFeatureTests"
+               BlueprintName = "ChangelogFeatureTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ClientModelsTests"
+               BuildableName = "ClientModelsTests"
+               BlueprintName = "ClientModelsTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DailyChallengeFeatureIntegrationTests"
+               BuildableName = "DailyChallengeFeatureIntegrationTests"
+               BlueprintName = "DailyChallengeFeatureIntegrationTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
+               BuildableName = "GameOverFeatureIntegrationTests"
+               BlueprintName = "GameOverFeatureIntegrationTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "LeaderboardMiddlewareIntegrationTests"
+               BuildableName = "LeaderboardMiddlewareIntegrationTests"
+               BlueprintName = "LeaderboardMiddlewareIntegrationTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SharedModelsTests"
+               BuildableName = "SharedModelsTests"
+               BlueprintName = "SharedModelsTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "UpgradeInterstitialFeatureTests"
+               BuildableName = "UpgradeInterstitialFeatureTests"
+               BlueprintName = "UpgradeInterstitialFeatureTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -32,59 +158,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AppFeatureTests"
-               BuildableName = "AppFeatureTests"
-               BlueprintName = "AppFeatureTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AppStoreSnapshotTests"
-               BuildableName = "AppStoreSnapshotTests"
-               BlueprintName = "AppStoreSnapshotTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ChangelogFeatureTests"
-               BuildableName = "ChangelogFeatureTests"
-               BlueprintName = "ChangelogFeatureTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ClientModelsTests"
-               BuildableName = "ClientModelsTests"
-               BlueprintName = "ClientModelsTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "CubePreviewTests"
                BuildableName = "CubePreviewTests"
                BlueprintName = "CubePreviewTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "DailyChallengeFeatureIntegrationTests"
-               BuildableName = "DailyChallengeFeatureIntegrationTests"
-               BlueprintName = "DailyChallengeFeatureIntegrationTests"
                ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
@@ -142,16 +218,6 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
-               BuildableName = "GameOverFeatureIntegrationTests"
-               BlueprintName = "GameOverFeatureIntegrationTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "GameOverFeatureTests"
                BuildableName = "GameOverFeatureTests"
                BlueprintName = "GameOverFeatureTests"
@@ -175,16 +241,6 @@
                BlueprintIdentifier = "LeaderboardFeatureTests"
                BuildableName = "LeaderboardFeatureTests"
                BlueprintName = "LeaderboardFeatureTests"
-               ReferencedContainer = "container:..">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "LeaderboardMiddlewareIntegrationTests"
-               BuildableName = "LeaderboardMiddlewareIntegrationTests"
-               BlueprintName = "LeaderboardMiddlewareIntegrationTests"
                ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
@@ -222,9 +278,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SharedModelsTests"
-               BuildableName = "SharedModelsTests"
-               BlueprintName = "SharedModelsTests"
+               BlueprintIdentifier = "DailyChallengeFeatureIntegrationTests"
+               BuildableName = "DailyChallengeFeatureIntegrationTests"
+               BlueprintName = "DailyChallengeFeatureIntegrationTests"
                ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
@@ -232,9 +288,19 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "UpgradeInterstitialFeatureTests"
-               BuildableName = "UpgradeInterstitialFeatureTests"
-               BlueprintName = "UpgradeInterstitialFeatureTests"
+               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
+               BuildableName = "GameOverFeatureIntegrationTests"
+               BlueprintName = "GameOverFeatureIntegrationTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "LeaderboardMiddlewareIntegrationTests"
+               BuildableName = "LeaderboardMiddlewareIntegrationTests"
+               BlueprintName = "LeaderboardMiddlewareIntegrationTests"
                ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
