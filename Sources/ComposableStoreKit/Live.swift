@@ -2,6 +2,7 @@ import Combine
 import ComposableArchitecture
 import StoreKit
 
+@available(iOSApplicationExtension, unavailable)
 extension StoreKitClient {
   public static func live() -> Self {
     return Self(

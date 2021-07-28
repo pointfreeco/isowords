@@ -26,6 +26,7 @@
 
   public typealias ViewController = UIViewController
 
+  @available(iOSApplicationExtension, unavailable)
   extension ViewController {
     public func present() {
       UIApplication.shared.windows

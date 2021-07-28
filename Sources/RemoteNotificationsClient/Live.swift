@@ -1,6 +1,7 @@
 #if canImport(UIKit)
   import UIKit
 
+  @available(iOSApplicationExtension, unavailable)
   extension RemoteNotificationsClient {
     public static let live = Self(
       isRegistered: { UIApplication.shared.isRegisteredForRemoteNotifications },

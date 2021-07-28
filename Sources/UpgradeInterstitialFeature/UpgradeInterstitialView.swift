@@ -375,6 +375,7 @@ extension View {
   }
 }
 
+@available(iOSApplicationExtension, unavailable)
 struct UpgradeInterstitialPreviews: PreviewProvider {
   static var previews: some View {
     Preview {
