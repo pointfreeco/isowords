@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1200"
+   LastUpgradeVersion = "1250"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -17,7 +17,119 @@
                BlueprintIdentifier = "DC9D468B24CF8DC20052B234"
                BuildableName = "isowords.app"
                BlueprintName = "isowords"
-               ReferencedContainer = "container:App/isowords.xcodeproj">
+               ReferencedContainer = "container:isowords.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AppFeatureTests"
+               BuildableName = "AppFeatureTests"
+               BlueprintName = "AppFeatureTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AppStoreSnapshotTests"
+               BuildableName = "AppStoreSnapshotTests"
+               BlueprintName = "AppStoreSnapshotTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ChangelogFeatureTests"
+               BuildableName = "ChangelogFeatureTests"
+               BlueprintName = "ChangelogFeatureTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ClientModelsTests"
+               BuildableName = "ClientModelsTests"
+               BlueprintName = "ClientModelsTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DailyChallengeFeatureIntegrationTests"
+               BuildableName = "DailyChallengeFeatureIntegrationTests"
+               BlueprintName = "DailyChallengeFeatureIntegrationTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
+               BuildableName = "GameOverFeatureIntegrationTests"
+               BlueprintName = "GameOverFeatureIntegrationTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SharedModelsTests"
+               BuildableName = "SharedModelsTests"
+               BlueprintName = "SharedModelsTests"
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "UpgradeInterstitialFeatureTests"
+               BuildableName = "UpgradeInterstitialFeatureTests"
+               BlueprintName = "UpgradeInterstitialFeatureTests"
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -32,50 +144,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AppFeatureTests"
-               BuildableName = "AppFeatureTests"
-               BlueprintName = "AppFeatureTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AppStoreSnapshotTests"
-               BuildableName = "AppStoreSnapshotTests"
-               BlueprintName = "AppStoreSnapshotTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ClientModelsTests"
-               BuildableName = "ClientModelsTests"
-               BlueprintName = "ClientModelsTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "CubePreviewTests"
                BuildableName = "CubePreviewTests"
                BlueprintName = "CubePreviewTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "DailyChallengeFeatureIntegrationTests"
-               BuildableName = "DailyChallengeFeatureIntegrationTests"
-               BlueprintName = "DailyChallengeFeatureIntegrationTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -85,7 +157,7 @@
                BlueprintIdentifier = "DailyChallengeFeatureTests"
                BuildableName = "DailyChallengeFeatureTests"
                BlueprintName = "DailyChallengeFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -95,7 +167,7 @@
                BlueprintIdentifier = "DictionaryFileClientTests"
                BuildableName = "DictionaryFileClientTests"
                BlueprintName = "DictionaryFileClientTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -105,7 +177,7 @@
                BlueprintIdentifier = "DictionarySqliteClientTests"
                BuildableName = "DictionarySqliteClientTests"
                BlueprintName = "DictionarySqliteClientTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -115,7 +187,7 @@
                BlueprintIdentifier = "GameCoreTests"
                BuildableName = "GameCoreTests"
                BlueprintName = "GameCoreTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -125,17 +197,7 @@
                BlueprintIdentifier = "GameFeatureTests"
                BuildableName = "GameFeatureTests"
                BlueprintName = "GameFeatureTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
-               BuildableName = "GameOverFeatureIntegrationTests"
-               BlueprintName = "GameOverFeatureIntegrationTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -145,7 +207,7 @@
                BlueprintIdentifier = "GameOverFeatureTests"
                BuildableName = "GameOverFeatureTests"
                BlueprintName = "GameOverFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -155,7 +217,7 @@
                BlueprintIdentifier = "HomeFeatureTests"
                BuildableName = "HomeFeatureTests"
                BlueprintName = "HomeFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -165,7 +227,7 @@
                BlueprintIdentifier = "LeaderboardFeatureTests"
                BuildableName = "LeaderboardFeatureTests"
                BlueprintName = "LeaderboardFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -175,7 +237,7 @@
                BlueprintIdentifier = "MultiplayerFeatureTests"
                BuildableName = "MultiplayerFeatureTests"
                BlueprintName = "MultiplayerFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -185,17 +247,7 @@
                BlueprintIdentifier = "OnboardingFeatureTests"
                BuildableName = "OnboardingFeatureTests"
                BlueprintName = "OnboardingFeatureTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ServerRouterTests"
-               BuildableName = "ServerRouterTests"
-               BlueprintName = "ServerRouterTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -205,7 +257,17 @@
                BlueprintIdentifier = "SettingsFeatureTests"
                BuildableName = "SettingsFeatureTests"
                BlueprintName = "SettingsFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ServerRouterTests"
+               BuildableName = "ServerRouterTests"
+               BlueprintName = "ServerRouterTests"
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -215,7 +277,7 @@
                BlueprintIdentifier = "SharedModelsTests"
                BuildableName = "SharedModelsTests"
                BlueprintName = "SharedModelsTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -225,7 +287,7 @@
                BlueprintIdentifier = "UpgradeInterstitialFeatureTests"
                BuildableName = "UpgradeInterstitialFeatureTests"
                BlueprintName = "UpgradeInterstitialFeatureTests"
-               ReferencedContainer = "container:">
+               ReferencedContainer = "container:..">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -247,7 +309,7 @@
             BlueprintIdentifier = "DC9D468B24CF8DC20052B234"
             BuildableName = "isowords.app"
             BlueprintName = "isowords"
-            ReferencedContainer = "container:App/isowords.xcodeproj">
+            ReferencedContainer = "container:isowords.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -264,7 +326,7 @@
             BlueprintIdentifier = "DC9D468B24CF8DC20052B234"
             BuildableName = "isowords.app"
             BlueprintName = "isowords"
-            ReferencedContainer = "container:App/isowords.xcodeproj">
+            ReferencedContainer = "container:isowords.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

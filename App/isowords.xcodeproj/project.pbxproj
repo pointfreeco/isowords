@@ -149,6 +149,7 @@
 		CA97087425D5B2EE0027EABE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA97087925D5B2EF0027EABE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CA97087A25D5B2EF0027EABE /* AppClip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppClip.entitlements; sourceTree = "<group>"; };
+		CA9BA0C926AB2E1E0061168A /* isowords */ = {isa = PBXFileReference; lastKnownFileType = folder; name = isowords; path = ..; sourceTree = "<group>"; };
 		CAB8861425730C1B00F15956 /* CubeCorePreview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CubeCorePreview.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CAB8861625730C1B00F15956 /* CubeCorePreviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeCorePreviewApp.swift; sourceTree = "<group>"; };
 		CAB8861A25730C1C00F15956 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -441,6 +442,7 @@
 		DC9D467F24CF8DC00052B234 = {
 			isa = PBXGroup;
 			children = (
+				CA9BA0C926AB2E1E0061168A /* isowords */,
 				CA97086F25D5B2EE0027EABE /* AppClip */,
 				DC0C367024D1F72C00CAE21F /* Config */,
 				DC0C369024D1F84B00CAE21F /* Frameworks */,

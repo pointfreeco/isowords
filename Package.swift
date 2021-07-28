@@ -25,7 +25,7 @@ var package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto.git", from: "1.1.2"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.1.1"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.6.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen.git", .exact("0.3.0")),
     .package(url: "https://github.com/pointfreeco/swift-tagged.git", .branch("iso")),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.1.0"),

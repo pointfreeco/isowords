@@ -11,7 +11,7 @@ Assets/.swiftpm
 Bootstrap/.swiftpm
 Assets/Audio/*
 Audio.zip
-Package.resolved
+/Package.resolved
 Sources/ApiClientLive/Secrets.swift
 Sources/AppAudioLibrary/Resources/**/*.caf
 Sources/AppAudioLibrary/Resources/**/*.mp3

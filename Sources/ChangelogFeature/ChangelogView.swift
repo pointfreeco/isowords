@@ -84,7 +84,8 @@ public let changelogReducer = Reducer<
 
     case let .changelogResponse(.success(changelog)):
       state.changelog = IdentifiedArray(
-        changelog
+        uniqueElements:
+          changelog
           .changes
           .sorted(by: { $0.build > $1.build })
           .enumerated()
