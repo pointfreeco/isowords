@@ -356,8 +356,8 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
             """
             Forfeiting will end the game and your opponent will win. Are you sure you want to forfeit?
             """),
-          primaryButton: .default(.init("Don’t forfeit"), send: .dontForfeitButtonTapped),
-          secondaryButton: .destructive(.init("Yes, forfeit"), send: .forfeitButtonTapped),
+          primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
+          secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped)),
           onDismiss: .dismiss
         )
         return .none

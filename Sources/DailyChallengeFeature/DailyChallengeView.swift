@@ -244,7 +244,7 @@ extension AlertState where Action == DailyChallengeAction {
         You already played today’s daily challenge. You can play the next one in \
         \(nextStartsAt, formatter: relativeFormatter).
         """),
-      primaryButton: .default(.init("OK"), send: .dismissAlert),
+      primaryButton: .default(.init("OK"), action: .send(.dismissAlert)),
       secondaryButton: nil,
       onDismiss: .dismissAlert
     )
@@ -258,7 +258,7 @@ extension AlertState where Action == DailyChallengeAction {
         We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
         """),
-      primaryButton: .default(.init("OK"), send: .dismissAlert),
+      primaryButton: .default(.init("OK"), action: .send(.dismissAlert)),
       secondaryButton: nil,
       onDismiss: .dismissAlert
     )

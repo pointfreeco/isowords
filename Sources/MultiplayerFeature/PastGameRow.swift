@@ -82,7 +82,7 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     state.alert = .init(
       title: TextState("Error"),
       message: TextState("We couldn’t start the rematch. Try again later."),
-      dismissButton: .default(TextState("Ok"), send: .dismissAlert),
+      dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert)),
       onDismiss: .dismissAlert
     )
     return .none
