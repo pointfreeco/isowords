@@ -95,6 +95,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private var startingAttitude: Attitude?
   private let store: Store<ViewState, ViewAction>
   private let viewStore: ViewStore<ViewState, ViewAction>
+  private var worldScale: Float = 1.0
 
   public init(
     size: CGSize,
@@ -120,8 +121,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     self.scene?.rootNode.addChildNode(self.cameraNode)
 
     self.gameCubeNode.name = "gameCube"
-    let aspectRatio = Float(size.width / size.height)
-    let worldScale: Float = min(aspectRatio * 1.3, 0.8)
+    worldScale = self.worldScale(for: size)
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
     self.scene?.rootNode.addChildNode(self.gameCubeNode)
 
@@ -138,7 +138,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         guard let self = self else { return }
 
         let letterGeometry = LetterGeometry(width: 1, height: 1)
-        letterGeometry.loadShaders(puzzle: cubes, worldScale: worldScale)
+        letterGeometry.loadShaders(puzzle: cubes, worldScale: self.worldScale)
 
         self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
 
@@ -304,6 +304,19 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     self.stopMotionManager()
   }
 
+  private func worldScale(for size: CGSize) -> Float {
+    let aspectRatio = Float(size.width / size.height)
+    let scale = min(aspectRatio * 1.3, 0.8)
+    return scale
+  }
+  
+  public override func layoutSubviews() {
+    super.layoutSubviews()
+    guard self.bounds.size.height != 0 else { return }
+    worldScale = self.worldScale(for: self.bounds.size)
+    gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
+  }
+  
   @objc private func doubleTap(recognizer: UIGestureRecognizer) {
     guard recognizer.state == .ended else { return }
 
