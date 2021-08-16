@@ -4,45 +4,51 @@ public struct DeviceState {
   public var idiom: UIUserInterfaceIdiom
   public var orientation: UIDeviceOrientation
   public var previousOrientation: UIDeviceOrientation
+  public var horizontalSizeClass: UserInterfaceSizeClass?
 
   public static let `default` = Self(
     idiom: UIDevice.current.userInterfaceIdiom,
     orientation: UIDevice.current.orientation,
-    previousOrientation: UIDevice.current.orientation
+    previousOrientation: UIDevice.current.orientation,
+    horizontalSizeClass: .init(UITraitCollection.current.horizontalSizeClass)
   )
 
-  public var isPad: Bool {
-    self.idiom == .pad
-  }
-
-  public var isPhone: Bool {
-    self.idiom == .phone
+  public var isUsingPadMetrics: Bool {
+      self.idiom == .pad && self.horizontalSizeClass != .compact
   }
 
   #if DEBUG
     public static let phone = Self(
       idiom: .phone,
       orientation: .portrait,
-      previousOrientation: .portrait
+        previousOrientation: .portrait,
+        horizontalSizeClass: .compact
     )
 
     public static let pad = Self(
       idiom: .pad,
       orientation: .portrait,
-      previousOrientation: .portrait
+        previousOrientation: .portrait,
+        horizontalSizeClass: .regular
     )
   #endif
 }
 
 public struct DeviceStateModifier: ViewModifier {
   @State var state: DeviceState = .default
+  @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
   public init() {
   }
 
   public func body(content: Content) -> some View {
     content
-      .onAppear()
+      .onAppear {
+        self.state.horizontalSizeClass = self.horizontalSizeClass
+      }
+      .onChange(of: self.horizontalSizeClass, perform: { value in
+        self.state.horizontalSizeClass = value
+      })
       .onReceive(
         NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
       ) { _ in

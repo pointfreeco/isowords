@@ -86,7 +86,7 @@ struct ScoreView: View {
                   ? "(used)"
                   : ""
             )
-            .adaptiveFont(.matterMedium, size: self.deviceState.isPad ? 18 : 14)
+            .adaptiveFont(.matterMedium, size: self.deviceState.isUsingPadMetrics ? 18 : 14)
             .alignmentGuide(.top) { _ in 0 }
             .alignmentGuide(.trailing) { _ in 0 },
             alignment: .topTrailing
@@ -126,7 +126,7 @@ struct ScoreView: View {
         }
       }
     }
-    .adaptiveFont(.matterSemiBold, size: self.deviceState.isPad ? 40 : 32)
+    .adaptiveFont(.matterSemiBold, size: self.deviceState.isUsingPadMetrics ? 40 : 32)
     .adaptivePadding(.horizontal)
   }
 }

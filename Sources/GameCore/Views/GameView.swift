@@ -65,7 +65,7 @@ public struct GameView<Content>: View where Content: View {
                   removal: .game
                 )
               )
-              .adaptivePadding(self.deviceState.isPad ? .horizontal : [], .grid(30))
+              .adaptivePadding(self.deviceState.isUsingPadMetrics ? .horizontal : [], .grid(30))
           } else {
             ProgressView()
               .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveBlack))
@@ -83,7 +83,7 @@ public struct GameView<Content>: View where Content: View {
               }
               GameHeaderView(store: self.store)
             }
-            .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
+            .screenEdgePadding(self.deviceState.isUsingPadMetrics ? .horizontal : [])
             Spacer()
             GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
               .padding(.bottom)
