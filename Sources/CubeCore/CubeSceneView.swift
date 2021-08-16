@@ -309,14 +309,14 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     let scale = min(aspectRatio * 1.3, 0.8)
     return scale
   }
-  
+
   public override func layoutSubviews() {
     super.layoutSubviews()
     guard self.bounds.size.height != 0 else { return }
     worldScale = self.worldScale(for: self.bounds.size)
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
   }
-  
+
   @objc private func doubleTap(recognizer: UIGestureRecognizer) {
     guard recognizer.state == .ended else { return }
 
