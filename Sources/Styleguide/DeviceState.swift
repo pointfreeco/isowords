@@ -10,7 +10,7 @@ public struct DeviceState {
     idiom: UIDevice.current.userInterfaceIdiom,
     orientation: UIDevice.current.orientation,
     previousOrientation: UIDevice.current.orientation,
-    horizontalSizeClass: .init(UITraitCollection.current.horizontalSizeClass)
+    horizontalSizeClass: .init(UITraitCollection.current.horizontalSizeClass) ?? nil
   )
 
   public var isUsingPadMetrics: Bool {
