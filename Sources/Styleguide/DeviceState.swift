@@ -21,15 +21,15 @@ public struct DeviceState {
     public static let phone = Self(
       idiom: .phone,
       orientation: .portrait,
-        previousOrientation: .portrait,
-        horizontalSizeClass: .compact
+      previousOrientation: .portrait,
+      horizontalSizeClass: .compact
     )
 
     public static let pad = Self(
       idiom: .pad,
       orientation: .portrait,
-        previousOrientation: .portrait,
-        horizontalSizeClass: .regular
+      previousOrientation: .portrait,
+      horizontalSizeClass: .regular
     )
   #endif
 }
