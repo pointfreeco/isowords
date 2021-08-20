@@ -185,6 +185,7 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
 .gameCenter()
 .storeKit()
 .persistence()
+.debug()
 
 extension Reducer where State == AppState, Action == AppAction, Environment == AppEnvironment {
   func persistence() -> Self {
