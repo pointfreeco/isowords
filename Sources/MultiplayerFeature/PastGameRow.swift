@@ -82,8 +82,7 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     state.alert = .init(
       title: TextState("Error"),
       message: TextState("We couldn’t start the rematch. Try again later."),
-      dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert)),
-      onDismiss: .dismissAlert
+      dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert))
     )
     return .none
 
@@ -161,7 +160,7 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(self.store.scope(state: \.alert))
+    .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {

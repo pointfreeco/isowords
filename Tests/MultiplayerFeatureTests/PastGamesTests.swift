@@ -98,8 +98,7 @@ class PastGamesTests: XCTestCase {
         $0.alert = .init(
           title: .init("Error"),
           message: .init("We couldn’t start the rematch. Try again later."),
-          primaryButton: .default(.init("Ok"), send: .dismissAlert),
-          secondaryButton: nil
+          dismissButton: .default(.init("Ok"), action: .send(.dismissAlert))
         )
       }
     }

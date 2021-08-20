@@ -179,7 +179,10 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(self.store.scope(state: \.bottomMenu))
-      .alert(self.store.scope(state: \.alert, action: GameAction.alert))
+      .alert(
+        self.store.scope(state: \.alert, action: GameAction.alert),
+        dismiss: .dismiss
+      )
     }
     .onAppear { self.viewStore.send(.onAppear) }
   }

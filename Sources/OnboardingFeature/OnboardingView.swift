@@ -221,11 +221,7 @@ public let onboardingReducer = Reducer<
     state.step = OnboardingState.Step.allCases.last!
     return .none
 
-  case .alert(.dismiss):
-    state.alert = nil
-    return .none
-
-  case .alert(.resumeButtonTapped):
+  case .alert(.dismiss), .alert(.resumeButtonTapped):
     state.alert = nil
     return .none
 
@@ -385,9 +381,10 @@ public let onboardingReducer = Reducer<
 
         You can always view it again later in settings.
         """),
-      primaryButton: .default(.init("Yes, skip"), action: .send(.skipButtonTapped)),
-      secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped)),
-      onDismiss: .dismiss
+      primaryButton: .default(
+        .init("Yes, skip"), action: .send(.skipButtonTapped, animation: .default)
+      ),
+      secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
     )
     return environment.audioPlayer.play(.uiSfxTap)
       .fireAndForget()
