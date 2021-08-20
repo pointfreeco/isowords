@@ -1353,6 +1353,7 @@ package.targets.append(contentsOf: [
     name: "SnsClientTests",
     dependencies: [
       "SnsClient",
+      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
   .target(
