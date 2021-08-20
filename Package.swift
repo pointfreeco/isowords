@@ -27,6 +27,7 @@ var package = Package(
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.7.0"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
+    .package(url: "https://github.com/pointfreeco/swift-custom-dump", .branch("main")),
     .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
     .package(
@@ -135,6 +136,7 @@ var package = Package(
       dependencies: [
         "Build",
         "FirstPartyMocks",
+        .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Tagged", package: "swift-tagged"),
       ]
     ),
