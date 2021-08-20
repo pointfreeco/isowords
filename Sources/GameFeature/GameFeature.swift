@@ -1,10 +1,9 @@
 import AudioPlayerClient
 import CasePaths
 import ComposableArchitecture
+@_exported import GameCore
 import SettingsFeature
 import TcaHelpers
-
-@_exported import GameCore
 
 public struct GameFeatureState: Equatable {
   public var game: GameState?
