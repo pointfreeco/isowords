@@ -1,3 +1,5 @@
+import CustomDump
+
 public struct LatticePoint: Codable, Equatable, Hashable {
   public enum Index: Int, CaseIterable, Codable, Comparable {
     case zero = 0
@@ -27,6 +29,12 @@ public struct LatticePoint: Codable, Equatable, Hashable {
         LatticePoint(x: xIndex, y: yIndex, z: zIndex)
       }
     }
+  }
+}
+
+extension LatticePoint: CustomDumpStringConvertible {
+  public var customDumpDescription: String {
+    "\(self.x.rawValue).\(self.y.rawValue).\(self.z.rawValue)"
   }
 }
 

@@ -1,3 +1,5 @@
+import CustomDump
+
 @dynamicMemberLookup
 public struct Three<Element>: Sequence {
   public var first: Element {
@@ -78,3 +80,13 @@ extension Three: Encodable where Element: Encodable {
 
 extension Three: Equatable where Element: Equatable {}
 extension Three: Hashable where Element: Hashable {}
+
+extension Three: CustomDumpReflectable {
+  public var customDumpMirror: Mirror {
+    .init(
+      self,
+      children: ["0": self.first, "1": self.second, "2": self.third],
+      displayStyle: .collection
+    )
+  }
+}
