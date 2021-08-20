@@ -9,6 +9,7 @@ import HttpPipeline
 import HttpPipelineTestSupport
 import Overture
 import SharedModels
+import SnapshotTesting
 import XCTest
 
 @testable import SiteMiddleware
