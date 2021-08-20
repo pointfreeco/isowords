@@ -314,7 +314,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "AppFeature",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
       ]
     ),
     .testTarget(
@@ -634,7 +633,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "AppFeature",
         "TestHelpers",
         .product(name: "Gen", package: "swift-gen"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
       ]
     ),
     .target(
@@ -1282,7 +1280,6 @@ package.targets.append(contentsOf: [
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "Prelude", package: "swift-prelude"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
   .target(
@@ -1356,7 +1353,6 @@ package.targets.append(contentsOf: [
     name: "SnsClientTests",
     dependencies: [
       "SnsClient",
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
   .target(
@@ -1384,7 +1380,6 @@ package.targets.append(contentsOf: [
       "VerifyReceiptMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
 ])

@@ -381,7 +381,9 @@ public let onboardingReducer = Reducer<
 
         You can always view it again later in settings.
         """),
-      primaryButton: .default(.init("Yes, skip"), action: .send(.skipButtonTapped)),
+      primaryButton: .default(
+        .init("Yes, skip"), action: .send(.skipButtonTapped, animation: .default)
+      ),
       secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
     )
     return environment.audioPlayer.play(.uiSfxTap)

@@ -1,4 +1,3 @@
-import SnapshotTesting
 import SnsClient
 import XCTest
 
