@@ -1381,6 +1381,7 @@ package.targets.append(contentsOf: [
       "VerifyReceiptMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
 ])
