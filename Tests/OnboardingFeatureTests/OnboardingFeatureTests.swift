@@ -387,8 +387,8 @@ class OnboardingFeatureTests: XCTestCase {
 
           You can always view it again later in settings.
           """),
-        primaryButton: .default(.init("Yes, skip"), send: .skipButtonTapped),
-        secondaryButton: .default(.init("No, resume"), send: .resumeButtonTapped)
+        primaryButton: .default(.init("Yes, skip"), action: .send(.skipButtonTapped)),
+        secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
       )
     }
 
