@@ -57,7 +57,7 @@
       },
       {
         "package": "swift-backtrace",
-        "repositoryURL": "https://github.com/swift-server/swift-backtrace.git",
+        "repositoryURL": "https://github.com/swift-server/swift-backtrace",
         "state": {
           "branch": null,
           "revision": "f2fd8c4845a123419c348e0bc4b3839c414077d5",
@@ -84,16 +84,16 @@
       },
       {
         "package": "swift-composable-architecture",
-        "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture.git",
+        "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
-          "branch": "iso",
-          "revision": "0eda246143247f3c1c64ee771968c9c7e288a48a",
-          "version": null
+          "branch": null,
+          "revision": "96cdc7e38e2d1d89b95b0ad80c914eb369476c4b",
+          "version": "0.24.0"
         }
       },
       {
         "package": "swift-crypto",
-        "repositoryURL": "https://github.com/apple/swift-crypto.git",
+        "repositoryURL": "https://github.com/apple/swift-crypto",
         "state": {
           "branch": null,
           "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
@@ -102,7 +102,7 @@
       },
       {
         "package": "swift-gen",
-        "repositoryURL": "https://github.com/pointfreeco/swift-gen.git",
+        "repositoryURL": "https://github.com/pointfreeco/swift-gen",
         "state": {
           "branch": null,
           "revision": "fa11f64f5473d6f37f5f477f2c7929e527589634",
@@ -110,12 +110,12 @@
         }
       },
       {
-        "package": "Html",
+        "package": "swift-html",
         "repositoryURL": "https://github.com/pointfreeco/swift-html",
         "state": {
-          "branch": "3a1b7e4",
-          "revision": "3a1b7e4d50f4474b50b1e0a0d34fdf0ec9fa6cd2",
-          "version": null
+          "branch": null,
+          "revision": "f53c38c4b841841f36afa1866093c908cadaa736",
+          "version": "0.4.0"
         }
       },
       {
@@ -174,7 +174,7 @@
       },
       {
         "package": "Overture",
-        "repositoryURL": "https://github.com/pointfreeco/swift-overture.git",
+        "repositoryURL": "https://github.com/pointfreeco/swift-overture",
         "state": {
           "branch": null,
           "revision": "7977acd7597f413717058acc1e080731249a1d7e",
@@ -182,38 +182,38 @@
         }
       },
       {
-        "package": "Prelude",
-        "repositoryURL": "https://github.com/pointfreeco/swift-prelude.git",
+        "package": "swift-prelude",
+        "repositoryURL": "https://github.com/pointfreeco/swift-prelude",
         "state": {
-          "branch": "9240a1f",
-          "revision": "9240a1f951c382e1c7387762c6cd94042baba531",
+          "branch": "7ff9911",
+          "revision": "7ff9911580b2f9b7ead5375099781f28b8aad6a8",
           "version": null
         }
       },
       {
         "package": "SnapshotTesting",
-        "repositoryURL": "https://github.com/pointfreeco/swift-snapshot-testing.git",
+        "repositoryURL": "https://github.com/pointfreeco/swift-snapshot-testing",
         "state": {
           "branch": null,
-          "revision": "c466812aa2e22898f27557e2e780d3aad7a27203",
-          "version": "1.8.2"
+          "revision": "f8a9c997c3c1dab4e216a8ec9014e23144cbab37",
+          "version": "1.9.0"
         }
       },
       {
         "package": "swift-tagged",
-        "repositoryURL": "https://github.com/pointfreeco/swift-tagged.git",
+        "repositoryURL": "https://github.com/pointfreeco/swift-tagged",
         "state": {
-          "branch": "iso",
-          "revision": "7be7d22976e4eb79c6f31715b03a56f0aa47423f",
-          "version": null
+          "branch": null,
+          "revision": "6c36cf66f58553d0481a2628e3e27177f698a897",
+          "version": "0.6.0"
         }
       },
       {
-        "package": "Web",
-        "repositoryURL": "https://github.com/pointfreeco/swift-web.git",
+        "package": "swift-web",
+        "repositoryURL": "https://github.com/pointfreeco/swift-web",
         "state": {
-          "branch": "616f365",
-          "revision": "616f365ac7c94e1d9adbec3799afeeebea63913a",
+          "branch": "d6236a3",
+          "revision": "d6236a3d3243c2e3237816218499b410cfebd1b1",
           "version": null
         }
       },

@@ -46,8 +46,7 @@ class GameCoreTests: XCTestCase {
           """
         ),
         primaryButton: .default(.init("Don’t forfeit"), send: .dontForfeitButtonTapped),
-        secondaryButton: .destructive(.init("Yes, forfeit"), send: .forfeitButtonTapped),
-        onDismiss: .dismiss
+        secondaryButton: .destructive(.init("Yes, forfeit"), send: .forfeitButtonTapped)
       )
     }
 

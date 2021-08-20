@@ -263,7 +263,7 @@ public func gameReducer<StatePath, Action, Environment>(
   environment: @escaping (Environment) -> GameEnvironment,
   isHapticsEnabled: @escaping (StatePath.Root) -> Bool
 ) -> Reducer<StatePath.Root, Action, Environment>
-where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
+where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
   Reducer.combine(
     gameOverReducer
       .optional()
@@ -354,11 +354,11 @@ where StatePath: ComposableArchitecture.Path, StatePath.Value == GameState {
           title: .init("Are you sure?"),
           message: .init(
             """
-            Forfeiting will end the game and your opponent will win. Are you sure you want to forfeit?
+            Forfeiting will end the game and your opponent will win. Are you sure you want to \
+            forfeit?
             """),
           primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
-          secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped)),
-          onDismiss: .dismiss
+          secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
         )
         return .none
 

@@ -603,8 +603,7 @@ extension AlertState where Action == SettingsAction {
       Turn on notifications in iOS settings.
       """),
     primaryButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil)))),
-    secondaryButton: .default(.init("Open Settings"), action: .send(.openSettingButtonTapped)),
-    onDismiss: .binding(.set(\.alert, nil))
+    secondaryButton: .default(.init("Open Settings"), action: .send(.openSettingButtonTapped))
   )
 
   static let restoredPurchasesFailed = Self(
@@ -613,9 +612,7 @@ extension AlertState where Action == SettingsAction {
       """
       We couldn’t restore purchases, please try again.
       """),
-    primaryButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil)))),
-    secondaryButton: nil,
-    onDismiss: .binding(.set(\.alert, nil))
+    dismissButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil))))
   )
 
   static let noRestoredPurchases = Self(
@@ -624,8 +621,6 @@ extension AlertState where Action == SettingsAction {
       """
       No purchases were found to restore.
       """),
-    primaryButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil)))),
-    secondaryButton: nil,
-    onDismiss: .binding(.set(\.alert, nil))
+    dismissButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil))))
   )
 }

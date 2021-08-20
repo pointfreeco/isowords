@@ -24,16 +24,17 @@ var package = Package(
     .library(name: "XCTestDebugSupport", targets: ["XCTestDebugSupport"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-crypto.git", from: "1.1.2"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.6.1"),
-    .package(url: "https://github.com/pointfreeco/swift-gen.git", .exact("0.3.0")),
-    .package(url: "https://github.com/pointfreeco/swift-tagged.git", .branch("iso")),
-    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.1.0"),
+    .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.7.0"),
+    .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
+    .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
+    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
     .package(
-      name: "Overture", url: "https://github.com/pointfreeco/swift-overture.git", .exact("0.5.0")),
+      name: "Overture", url: "https://github.com/pointfreeco/swift-overture", from: "0.5.0"),
     .package(
-      name: "SnapshotTesting", url: "https://github.com/pointfreeco/swift-snapshot-testing.git",
-      .exact("1.8.2")),
+      name: "SnapshotTesting", url: "https://github.com/pointfreeco/swift-snapshot-testing",
+      from: "1.9.0"
+    ),
   ],
   targets: [
     .target(
@@ -83,9 +84,9 @@ var package = Package(
         "SharedModels",
         "ServerRouter",
         "SiteMiddleware",
-        .product(name: "HttpPipeline", package: "Web"),
-        .product(name: "HttpPipelineTestSupport", package: "Web"),
-        .product(name: "Prelude", package: "Prelude"),
+        .product(name: "HttpPipeline", package: "swift-web"),
+        .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+        .product(name: "Prelude", package: "swift-prelude"),
         .product(name: "SnapshotTesting", package: "SnapshotTesting"),
       ],
       exclude: [
@@ -109,7 +110,7 @@ var package = Package(
       name: "ServerRouter",
       dependencies: [
         "SharedModels",
-        .product(name: "ApplicativeRouter", package: "Web"),
+        .product(name: "ApplicativeRouter", package: "swift-web"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -162,8 +163,7 @@ var package = Package(
 // MARK: - client
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
-    .package(
-      url: "https://github.com/pointfreeco/swift-composable-architecture.git", .branch("iso"))
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.23.0")
   ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
@@ -743,7 +743,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "ServerRouter",
         "TestHelpers",
-        .product(name: "HttpPipeline", package: "Web"),
+        .product(name: "HttpPipeline", package: "swift-web"),
       ]
     ),
     .target(
@@ -1011,13 +1011,10 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
 // MARK: - server
 package.dependencies.append(contentsOf: [
   .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
-  .package(url: "https://github.com/swift-server/swift-backtrace.git", .exact("1.2.0")),
+  .package(url: "https://github.com/swift-server/swift-backtrace", .exact("1.2.0")),
   .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
-  .package(
-    name: "Prelude", url: "https://github.com/pointfreeco/swift-prelude.git", .revision("9240a1f")
-  ),
-  .package(
-    name: "Web", url: "https://github.com/pointfreeco/swift-web.git", .revision("616f365")),
+  .package(url: "https://github.com/pointfreeco/swift-prelude", .revision("7ff9911")),
+  .package(url: "https://github.com/pointfreeco/swift-web", .revision("d6236a3")),
 ])
 package.products.append(contentsOf: [
   .executable(name: "daily-challenge-reports", targets: ["daily-challenge-reports"]),
@@ -1048,7 +1045,7 @@ package.targets.append(contentsOf: [
   .target(
     name: "AppSiteAssociationMiddleware",
     dependencies: [
-      .product(name: "HttpPipeline", package: "Web")
+      .product(name: "HttpPipeline", package: "swift-web")
     ]
   ),
   .testTarget(
@@ -1056,7 +1053,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "AppSiteAssociationMiddleware",
       "SiteMiddleware",
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
@@ -1072,7 +1069,7 @@ package.targets.append(contentsOf: [
       "DatabaseClient",
       "MiddlewareHelpers",
       "SharedModels",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .testTarget(
@@ -1082,8 +1079,8 @@ package.targets.append(contentsOf: [
       "DailyChallengeMiddleware",
       "SharedModels",
       "SiteMiddleware",
-      .product(name: "HttpPipeline", package: "Web"),
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
     exclude: ["__Snapshots__"]
@@ -1107,7 +1104,7 @@ package.targets.append(contentsOf: [
       "ServerTestHelpers",
       "SharedModels",
       "SnsClient",
-      .product(name: "Either", package: "Prelude"),
+      .product(name: "Either", package: "swift-prelude"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ]
   ),
@@ -1117,7 +1114,7 @@ package.targets.append(contentsOf: [
       "DatabaseClient",
       .product(name: "CasePaths", package: "swift-case-paths"),
       .product(name: "Overture", package: "Overture"),
-      .product(name: "Prelude", package: "Prelude"),
+      .product(name: "Prelude", package: "swift-prelude"),
       .product(name: "PostgresKit", package: "postgres-kit"),
     ]
   ),
@@ -1136,7 +1133,7 @@ package.targets.append(contentsOf: [
       "DictionaryClient",
       "MiddlewareHelpers",
       "SharedModels",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .testTarget(
@@ -1144,7 +1141,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "DemoMiddleware",
       "SiteMiddleware",
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
@@ -1163,7 +1160,7 @@ package.targets.append(contentsOf: [
       "MiddlewareHelpers",
       "ServerRouter",
       .product(name: "CasePaths", package: "swift-case-paths"),
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .testTarget(
@@ -1171,7 +1168,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "LeaderboardMiddleware",
       "SiteMiddleware",
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
     exclude: ["__Snapshots__"]
@@ -1180,16 +1177,16 @@ package.targets.append(contentsOf: [
     name: "MailgunClient",
     dependencies: [
       "ServerTestHelpers",
-      .product(name: "Either", package: "Prelude"),
+      .product(name: "Either", package: "swift-prelude"),
       .product(name: "Tagged", package: "swift-tagged"),
-      .product(name: "UrlFormEncoding", package: "Web"),
+      .product(name: "UrlFormEncoding", package: "swift-web"),
     ]
   ),
   .target(
     name: "MiddlewareHelpers",
     dependencies: [
       "EnvVars",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .target(
@@ -1199,9 +1196,9 @@ package.targets.append(contentsOf: [
       "DatabaseClient",
       "SharedModels",
       "SnsClient",
-      .product(name: "Either", package: "Prelude"),
-      .product(name: "HttpPipeline", package: "Web"),
-      .product(name: "Prelude", package: "Prelude"),
+      .product(name: "Either", package: "swift-prelude"),
+      .product(name: "HttpPipeline", package: "swift-web"),
+      .product(name: "Prelude", package: "swift-prelude"),
     ]
   ),
   .testTarget(
@@ -1212,11 +1209,11 @@ package.targets.append(contentsOf: [
       "ServerRouter",
       "SharedModels",
       "SiteMiddleware",
-      .product(name: "Either", package: "Prelude"),
-      .product(name: "HttpPipeline", package: "Web"),
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "Either", package: "swift-prelude"),
+      .product(name: "HttpPipeline", package: "swift-web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "Overture", package: "Overture"),
-      .product(name: "Prelude", package: "Prelude"),
+      .product(name: "Prelude", package: "swift-prelude"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
@@ -1244,7 +1241,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "ServerBootstrap",
       "SiteMiddleware",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .target(
@@ -1265,13 +1262,13 @@ package.targets.append(contentsOf: [
     dependencies: [
       "ServerConfig",
       "SharedModels",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .target(
     name: "ServerTestHelpers",
     dependencies: [
-      .product(name: "Either", package: "Prelude"),
+      .product(name: "Either", package: "swift-prelude"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ]
   ),
@@ -1280,10 +1277,10 @@ package.targets.append(contentsOf: [
     dependencies: [
       "ServerConfigMiddleware",
       "SiteMiddleware",
-      .product(name: "Either", package: "Prelude"),
-      .product(name: "HttpPipeline", package: "Web"),
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
-      .product(name: "Prelude", package: "Prelude"),
+      .product(name: "Either", package: "swift-prelude"),
+      .product(name: "HttpPipeline", package: "swift-web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "Prelude", package: "swift-prelude"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
@@ -1295,7 +1292,7 @@ package.targets.append(contentsOf: [
       "MiddlewareHelpers",
       "ServerRouter",
       "SharedModels",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
   .testTarget(
@@ -1304,7 +1301,7 @@ package.targets.append(contentsOf: [
       "ShareGameMiddleware",
       "SiteMiddleware",
       "TestHelpers",
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
     exclude: ["__Snapshots__"]
@@ -1327,8 +1324,8 @@ package.targets.append(contentsOf: [
       "ShareGameMiddleware",
       "SnsClient",
       "VerifyReceiptMiddleware",
-      .product(name: "ApplicativeRouterHttpPipelineSupport", package: "Web"),
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "ApplicativeRouterHttpPipelineSupport", package: "swift-web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "Overture", package: "Overture"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ],
@@ -1340,7 +1337,7 @@ package.targets.append(contentsOf: [
       "FirstPartyMocks",
       "SiteMiddleware",
       "TestHelpers",
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
     exclude: ["__Snapshots__"]
@@ -1349,7 +1346,7 @@ package.targets.append(contentsOf: [
     name: "SnsClient",
     dependencies: [
       "ServerTestHelpers",
-      .product(name: "Either", package: "Prelude"),
+      .product(name: "Either", package: "swift-prelude"),
       .product(name: "Tagged", package: "swift-tagged"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ]
@@ -1376,7 +1373,7 @@ package.targets.append(contentsOf: [
       "ServerRouter",
       "ServerTestHelpers",
       "SharedModels",
-      .product(name: "HttpPipeline", package: "Web"),
+      .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "Overture", package: "Overture"),
     ]
   ),
@@ -1385,7 +1382,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "VerifyReceiptMiddleware",
       "SiteMiddleware",
-      .product(name: "HttpPipelineTestSupport", package: "Web"),
+      .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),

@@ -244,9 +244,7 @@ extension AlertState where Action == DailyChallengeAction {
         You already played today’s daily challenge. You can play the next one in \
         \(nextStartsAt, formatter: relativeFormatter).
         """),
-      primaryButton: .default(.init("OK"), action: .send(.dismissAlert)),
-      secondaryButton: nil,
-      onDismiss: .dismissAlert
+      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
     )
   }
 
@@ -258,9 +256,7 @@ extension AlertState where Action == DailyChallengeAction {
         We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
         """),
-      primaryButton: .default(.init("OK"), action: .send(.dismissAlert)),
-      secondaryButton: nil,
-      onDismiss: .dismissAlert
+      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
     )
   }
 }
@@ -402,7 +398,7 @@ public struct DailyChallengeView: View {
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .onAppear { self.viewStore.send(.onAppear) }
-      .alert(self.store.scope(state: \.alert))
+      .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,

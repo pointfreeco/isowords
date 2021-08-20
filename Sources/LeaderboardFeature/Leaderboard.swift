@@ -8,6 +8,7 @@ import LowPowerModeClient
 import SharedModels
 import Styleguide
 import SwiftUI
+import TcaHelpers
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games
