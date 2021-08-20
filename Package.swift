@@ -246,8 +246,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ],
-      exclude: ["Secrets.swift.example"]
+      ]
     ),
     .target(
       name: "ApiClientLive",
@@ -636,9 +635,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TestHelpers",
         .product(name: "Gen", package: "swift-gen"),
         .product(name: "SnapshotTesting", package: "SnapshotTesting"),
-      ],
-      exclude: ["__Snapshots__"],
-      resources: [.process("Resources/")]
+      ]
     ),
     .target(
       name: "GameOverFeature",
@@ -1288,8 +1285,7 @@ package.targets.append(contentsOf: [
       .product(name: "HttpPipelineTestSupport", package: "Web"),
       .product(name: "Prelude", package: "Prelude"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
-    ],
-    exclude: ["__Snapshots__"]
+    ]
   ),
   .target(
     name: "ShareGameMiddleware",
@@ -1391,7 +1387,6 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "Web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
-    ],
-    exclude: ["__Snapshots__"]
+    ]
   ),
 ])

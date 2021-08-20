@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
         "state": {
           "branch": null,
-          "revision": "c37e5ae8012fb654af776cc556ff8ae64398c841",
-          "version": "0.5.0"
+          "revision": "6dcc7c034d28fe7ac652453faeae07656f723909",
+          "version": "0.5.1"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/vapor/postgres-nio.git",
         "state": {
           "branch": null,
-          "revision": "33eea144f465a48b17f4c63573c40d33824fdde4",
-          "version": "1.5.2"
+          "revision": "6a9eb6f15235e844c95382959a88253442168a42",
+          "version": "1.6.1"
         }
       },
       {
@@ -69,8 +69,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-case-paths",
         "state": {
           "branch": null,
-          "revision": "40072a9f7600ea453fafde88d08f16481f6712a0",
-          "version": "0.6.2"
+          "revision": "d226d167bd4a68b51e352af5655c92bce8ee0463",
+          "version": "0.7.0"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/apple/swift-collections",
         "state": {
           "branch": null,
-          "revision": "3426dba9ee5c9f8e4981b0fc9d39a818d36eec28",
-          "version": "0.0.4"
+          "revision": "0959ba76a1d4a98fd11163aa83fd49c25b93bfae",
+          "version": "0.0.5"
         }
       },
       {
@@ -87,7 +87,7 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture.git",
         "state": {
           "branch": "iso",
-          "revision": "3cc41eb6f30f94ae4f0fddec849b22df6aa5a71e",
+          "revision": "0eda246143247f3c1c64ee771968c9c7e288a48a",
           "version": null
         }
       },
@@ -141,8 +141,8 @@
         "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
           "branch": null,
-          "revision": "e382458581b05839a571c578e90060fff499f101",
-          "version": "2.1.1"
+          "revision": "3edd2f57afc4e68e23c3e4956bc8b65ca6b5b2ff",
+          "version": "2.2.0"
         }
       },
       {
@@ -150,8 +150,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "d79e33308b0ac83326b0ead0ea6446e604b8162d",
-          "version": "2.30.0"
+          "revision": "94f41c4121a82fae5c7b1cb03e630e9f9e5e20f1",
+          "version": "2.32.1"
         }
       },
       {
@@ -168,8 +168,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "9db7cee4b62c39160a6bd513a47a1ecdcceac18a",
-          "version": "2.14.0"
+          "revision": "4829979d9f5ed9a2f4c6efd9c1ed51d1ab4d0394",
+          "version": "2.14.1"
         }
       },
       {
@@ -231,8 +231,8 @@
         "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
         "state": {
           "branch": null,
-          "revision": "152390e9e78ebbf0d767ee52971d41e7f44f39bc",
-          "version": "0.1.1"
+          "revision": "b9eeb1a7ea3fd6fea54ce57dee2f5794b667c8df",
+          "version": "0.2.0"
         }
       }
     ]
