@@ -57,7 +57,7 @@ public struct Cube: Codable, Equatable {
   }
 }
 
-extension Cube: CustomDebugOutputConvertible {
+extension Cube: CustomDumpStringConvertible {
   public var debugOutput: String {
     return """
       \(self.top.letter)\(self.top.useCount)|\
