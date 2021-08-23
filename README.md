@@ -117,6 +117,7 @@ This application makes use of a number of open source projects built by us and d
 * [Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 * [Custom Dump](https://github.com/pointfreeco/swift-custom-dump)
 * [Gen](https://github.com/pointfreeco/swift-gen)
+* [Identified Collections](https://github.com/pointfreeco/swift-identified-collections)
 * [Overture](https://github.com/pointfreeco/swift-overture)
 * [Tagged](https://github.com/pointfreeco/swift-tagged)
 * [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing)
