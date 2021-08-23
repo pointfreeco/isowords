@@ -58,7 +58,7 @@ public struct Cube: Codable, Equatable {
 }
 
 extension Cube: CustomDumpStringConvertible {
-  public var debugOutput: String {
+  public var customDumpDescription: String {
     return """
       \(self.top.letter)\(self.top.useCount)|\
       \(self.left.letter)\(self.left.useCount)|\
