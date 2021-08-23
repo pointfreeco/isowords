@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/apple/swift-collections",
         "state": {
           "branch": null,
-          "revision": "0959ba76a1d4a98fd11163aa83fd49c25b93bfae",
-          "version": "0.0.5"
+          "revision": "9d8719c8bebdc79740b6969c912ac706eb721d7a",
+          "version": "0.0.7"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
           "branch": null,
-          "revision": "96cdc7e38e2d1d89b95b0ad80c914eb369476c4b",
-          "version": "0.24.0"
+          "revision": "575d7c0d59517af9fe3025b00aa28746223d53c3",
+          "version": "0.25.0"
         }
       },
       {
@@ -98,6 +98,15 @@
           "branch": null,
           "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
           "version": "1.1.6"
+        }
+      },
+      {
+        "package": "swift-custom-dump",
+        "repositoryURL": "https://github.com/pointfreeco/swift-custom-dump",
+        "state": {
+          "branch": null,
+          "revision": "340068d1f6cd19a93b3ddb2118060d84c5c6109a",
+          "version": "0.1.1"
         }
       },
       {

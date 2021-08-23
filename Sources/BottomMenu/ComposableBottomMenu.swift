@@ -42,19 +42,9 @@ public struct BottomMenuState<Action> {
     public let action: Action
     fileprivate let animation: Animation
 
-    fileprivate enum Animation: CustomDebugOutputConvertible, Equatable {
+    fileprivate enum Animation: Equatable {
       case inherited
       case explicit(SwiftUI.Animation?)
-
-      var debugOutput: String {
-        switch self {
-
-        case .inherited:
-          return "<inherited>"
-        case let .explicit(animation):
-          return String(describing: animation)
-        }
-      }
     }
 
     public init(

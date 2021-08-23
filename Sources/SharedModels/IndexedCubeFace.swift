@@ -1,3 +1,5 @@
+import CustomDump
+
 public struct IndexedCubeFace: Codable, Equatable, Hashable {
   public var index: LatticePoint
   public var side: CubeFace.Side
@@ -44,6 +46,12 @@ public struct IndexedCubeFace: Codable, Equatable, Hashable {
     let loop = result + [result[0]]
     return zip(loop, loop.dropFirst())
       .map(Edge.init(start:end:))
+  }
+}
+
+extension IndexedCubeFace: CustomDumpStringConvertible {
+  public var customDumpDescription: String {
+    "\(self.index.customDumpDescription)@\(self.side)"
   }
 }
 
