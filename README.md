@@ -114,11 +114,12 @@ Most of the concepts discussed in this README are covered in-depth on [Point-Fre
 This application makes use of a number of open source projects built by us and discussed on [Point-Free](https://www.pointfree.co), including:
 
 * [Case Paths](https://github.com/pointfreeco/swift-case-paths)
-* [Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture.git)
-* [Gen](https://github.com/pointfreeco/swift-gen.git)
-* [Overture](https://github.com/pointfreeco/swift-overture.git)
-* [Tagged](https://github.com/pointfreeco/swift-tagged.git)
-* [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing.git)
+* [Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
+* [Custom Dump](https://github.com/pointfreeco/swift-custom-dump)
+* [Gen](https://github.com/pointfreeco/swift-gen)
+* [Overture](https://github.com/pointfreeco/swift-overture)
+* [Tagged](https://github.com/pointfreeco/swift-tagged)
+* [SnapshotTesting](https://github.com/pointfreeco/swift-snapshot-testing)
 
 # License
 
