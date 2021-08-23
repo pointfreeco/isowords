@@ -15,7 +15,7 @@ import UIApplicationClient
 final class AppDelegate: NSObject, UIApplicationDelegate {
   let store = Store(
     initialState: .init(),
-    reducer: appReducer.debug(),
+    reducer: appReducer,
     environment: .live
   )
   lazy var viewStore = ViewStore(
