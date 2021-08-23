@@ -1,3 +1,5 @@
+import CustomDump
+
 public struct Cube: Codable, Equatable {
   public var left: CubeFace
   public var right: CubeFace
@@ -52,6 +54,16 @@ public struct Cube: Codable, Equatable {
         self.top = newValue
       }
     }
+  }
+}
+
+extension Cube: CustomDebugOutputConvertible {
+  public var debugOutput: String {
+    return """
+      \(self.top.letter)\(self.top.useCount)|\
+      \(self.left.letter)\(self.left.useCount)|\
+      \(self.right.letter)\(self.right.useCount)
+      """
   }
 }
 
