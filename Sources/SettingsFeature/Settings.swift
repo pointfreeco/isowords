@@ -109,22 +109,22 @@ public struct DeveloperSettings: Equatable {
 }
 
 public struct SettingsState: Equatable {
-  public var alert: AlertState<SettingsAction>?
+  @BindableState public var alert: AlertState<SettingsAction>?
   public var buildNumber: Build.Number?
-  public var cubeShadowRadius: CGFloat
-  public var developer: DeveloperSettings
-  public var enableCubeShadow: Bool
-  public var enableNotifications: Bool
+  @BindableState public var cubeShadowRadius: CGFloat
+  @BindableState public var developer: DeveloperSettings
+  @BindableState public var enableCubeShadow: Bool
+  @BindableState public var enableNotifications: Bool
   public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
   public var fullGamePurchasedAt: Date?
   public var isPurchasing: Bool
   public var isRestoring: Bool
-  public var sendDailyChallengeReminder: Bool
-  public var sendDailyChallengeSummary: Bool
-  public var showSceneStatistics: Bool
+  @BindableState public var sendDailyChallengeReminder: Bool
+  @BindableState public var sendDailyChallengeSummary: Bool
+  @BindableState public var showSceneStatistics: Bool
   public var stats: StatsState
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-  public var userSettings: UserSettings
+  @BindableState public var userSettings: UserSettings
 
   public struct ProductError: Error, Equatable {}
 
@@ -169,7 +169,7 @@ public struct SettingsState: Equatable {
   }
 }
 
-public enum SettingsAction: Equatable {
+public enum SettingsAction: BindableAction, Equatable {
   case binding(BindingAction<SettingsState>)
   case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, ApiError>)
   case didBecomeActive
@@ -584,7 +584,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       return .none
     }
   }
-  .binding(action: /SettingsAction.binding)
+  .binding()
 )
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
   struct SaveDebounceId: Hashable {}
@@ -602,7 +602,7 @@ extension AlertState where Action == SettingsAction {
       """
       Turn on notifications in iOS settings.
       """),
-    primaryButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil)))),
+    primaryButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil))),
     secondaryButton: .default(.init("Open Settings"), action: .send(.openSettingButtonTapped))
   )
 
@@ -612,7 +612,7 @@ extension AlertState where Action == SettingsAction {
       """
       We couldn’t restore purchases, please try again.
       """),
-    dismissButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil))))
+    dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
   )
 
   static let noRestoredPurchases = Self(
@@ -621,6 +621,6 @@ extension AlertState where Action == SettingsAction {
       """
       No purchases were found to restore.
       """),
-    dismissButton: .default(.init("Ok"), action: .send(.binding(.set(\.alert, nil))))
+    dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
   )
 }

@@ -86,9 +86,9 @@
         "package": "swift-composable-architecture",
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
-          "branch": null,
-          "revision": "575d7c0d59517af9fe3025b00aa28746223d53c3",
-          "version": "0.25.0"
+          "branch": "better-bindings",
+          "revision": "56610c090d7873e7ab67eb34521a325fb710d471",
+          "version": null
         }
       },
       {
