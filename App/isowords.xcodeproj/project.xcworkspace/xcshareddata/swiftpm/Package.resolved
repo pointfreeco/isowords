@@ -87,7 +87,7 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
           "branch": "better-bindings",
-          "revision": "56610c090d7873e7ab67eb34521a325fb710d471",
+          "revision": "321c726412baba56515585967252c4b3eb0fcd18",
           "version": null
         }
       },
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-custom-dump",
         "state": {
           "branch": null,
-          "revision": "340068d1f6cd19a93b3ddb2118060d84c5c6109a",
-          "version": "0.1.1"
+          "revision": "8655495733d8c712db8d9078f47d17f3555db79f",
+          "version": "0.1.2"
         }
       },
       {
@@ -240,8 +240,8 @@
         "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
         "state": {
           "branch": null,
-          "revision": "b9eeb1a7ea3fd6fea54ce57dee2f5794b667c8df",
-          "version": "0.2.0"
+          "revision": "50a70a9d3583fe228ce672e8923010c8df2deddd",
+          "version": "0.2.1"
         }
       }
     ]

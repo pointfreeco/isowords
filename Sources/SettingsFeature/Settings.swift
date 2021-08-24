@@ -309,13 +309,13 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     struct UpdateRemoteSettingsId: Hashable {}
 
     switch action {
-    case .binding(\.developer.currentBaseUrl):
+    case .binding(\.$developer.currentBaseUrl):
       return .merge(
         environment.apiClient.setBaseUrl(state.developer.currentBaseUrl.url).fireAndForget(),
         environment.apiClient.logout().fireAndForget()
       )
 
-    case .binding(\.enableNotifications):
+    case .binding(\.$enableNotifications):
       guard
         state.enableNotifications,
         let userNotificationSettings = state.userNotificationSettings
@@ -351,7 +351,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         return .none
       }
 
-    case .binding(\.sendDailyChallengeReminder):
+    case .binding(\.$sendDailyChallengeReminder):
       return Effect.concatenate(
         environment.apiClient.apiRequest(
           route: .push(
@@ -370,7 +370,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       )
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
-    case .binding(\.sendDailyChallengeSummary):
+    case .binding(\.$sendDailyChallengeSummary):
       return Effect.concatenate(
         environment.apiClient.apiRequest(
           route: .push(
@@ -389,20 +389,20 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       )
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
-    case .binding(\.userSettings.appIcon):
+    case .binding(\.$userSettings.appIcon):
       return environment.applicationClient
         .setAlternateIconName(state.userSettings.appIcon?.rawValue)
         .fireAndForget()
 
-    case .binding(\.userSettings.colorScheme):
+    case .binding(\.$userSettings.colorScheme):
       return environment.setUserInterfaceStyle(state.userSettings.colorScheme.userInterfaceStyle)
         .fireAndForget()
 
-    case .binding(\.userSettings.musicVolume):
+    case .binding(\.$userSettings.musicVolume):
       return environment.audioPlayer.setGlobalVolumeForMusic(state.userSettings.musicVolume)
         .fireAndForget()
 
-    case .binding(\.userSettings.soundEffectsVolume):
+    case .binding(\.$userSettings.soundEffectsVolume):
       return environment.audioPlayer
         .setGlobalVolumeForSoundEffects(state.userSettings.soundEffectsVolume)
         .fireAndForget()
