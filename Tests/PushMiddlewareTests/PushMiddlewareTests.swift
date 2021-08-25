@@ -1,3 +1,4 @@
+import CustomDump
 import DatabaseClient
 import Either
 import Foundation
@@ -42,14 +43,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef"
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -106,14 +107,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef"
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -170,14 +171,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef"
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -235,14 +236,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS_SANDBOX/deadbeef"
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -300,9 +301,9 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertEqual(playerId, Player.blob.id)
-    XCTAssertEqual(notificationType, .dailyChallengeEndsSoon)
-    XCTAssertEqual(sendNotifications, false)
+    XCTAssertNoDifference(playerId, Player.blob.id)
+    XCTAssertNoDifference(notificationType, .dailyChallengeEndsSoon)
+    XCTAssertNoDifference(sendNotifications, false)
 
     _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/push-settings?accessToken=deadbeef-dead-beef-dead-beefdeadbeef

@@ -69,7 +69,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     }
 
     observer.send(.updatedTransactions(transactions))
-    XCTAssertEqual(paymentAdded?.productIdentifier, "co.pointfree.isowords_testing.full_game")
+    XCTAssertNoDifference(paymentAdded?.productIdentifier, "co.pointfree.isowords_testing.full_game")
 
     store.receive(.paymentTransaction(.updatedTransactions(transactions)))
     store.receive(.delegate(.fullGamePurchased))

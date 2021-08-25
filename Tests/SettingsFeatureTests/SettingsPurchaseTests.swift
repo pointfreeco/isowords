@@ -61,7 +61,7 @@ class SettingsPurchaseTests: XCTestCase {
     store.send(.tappedProduct(.fullGame)) {
       $0.isPurchasing = true
     }
-    XCTAssertEqual(didAddPaymentProductIdentifier, "xyz.isowords.full_game")
+    XCTAssertNoDifference(didAddPaymentProductIdentifier, "xyz.isowords.full_game")
     storeKitObserver.send(.updatedTransactions([.purchasing]))
     storeKitObserver.send(.updatedTransactions([.purchased]))
     storeKitObserver.send(.removedTransactions([.purchased]))
@@ -118,7 +118,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = true
     }
 
-    XCTAssertEqual(didRestoreCompletedTransactions, true)
+    XCTAssertNoDifference(didRestoreCompletedTransactions, true)
     storeKitObserver.send(.updatedTransactions([.restored]))
     storeKitObserver.send(.removedTransactions([.restored]))
     storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: [.restored]))
@@ -174,7 +174,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = true
     }
 
-    XCTAssertEqual(didRestoreCompletedTransactions, true)
+    XCTAssertNoDifference(didRestoreCompletedTransactions, true)
     storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: []))
 
     store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: []))) {
@@ -226,7 +226,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = true
     }
 
-    XCTAssertEqual(didRestoreCompletedTransactions, true)
+    XCTAssertNoDifference(didRestoreCompletedTransactions, true)
 
     let restoreCompletedTransactionsError = NSError(domain: "", code: 1)
     storeKitObserver.send(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))

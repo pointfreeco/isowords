@@ -1,3 +1,4 @@
+import CustomDump
 import DailyChallengeReports
 import Either
 import Overture
@@ -62,11 +63,11 @@ class DailyChallengeReportsTests: XCTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(pushes.count, 3)
+    XCTAssertNoDifference(pushes.count, 3)
 
     let pushMap = Dictionary(grouping: pushes, by: \.targetArn)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self,
         from: JSONEncoder().encode(
@@ -89,7 +90,7 @@ class DailyChallengeReportsTests: XCTestCase {
         content: .dailyChallengeReport
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self,
         from: JSONEncoder().encode(
@@ -115,7 +116,7 @@ class DailyChallengeReportsTests: XCTestCase {
         content: .dailyChallengeReport
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self,
         from: JSONEncoder().encode(

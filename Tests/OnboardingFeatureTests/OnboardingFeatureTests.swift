@@ -22,8 +22,8 @@ class OnboardingFeatureTests: XCTestCase {
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.userDefaults.setBool = { value, key in
       .fireAndForget {
-        XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertEqual(value, true)
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertNoDifference(value, true)
         isFirstLaunchOnboardingKeySet = true
       }
     }
@@ -303,7 +303,7 @@ class OnboardingFeatureTests: XCTestCase {
     store.send(.getStartedButtonTapped)
     store.receive(.delegate(.getStarted))
 
-    XCTAssertEqual(isFirstLaunchOnboardingKeySet, true)
+    XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
   }
 
   func testSkip_HasSeenOnboardingBefore() {
@@ -315,13 +315,13 @@ class OnboardingFeatureTests: XCTestCase {
     environment.dictionary.load = { _ in true }
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.userDefaults.boolForKey = { key in
-      XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
+      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return true
     }
     environment.userDefaults.setBool = { value, key in
       .fireAndForget {
-        XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertEqual(value, true)
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertNoDifference(value, true)
         isFirstLaunchOnboardingKeySet = true
       }
     }
@@ -343,7 +343,7 @@ class OnboardingFeatureTests: XCTestCase {
 
     store.receive(.delegate(.getStarted))
 
-    XCTAssertEqual(isFirstLaunchOnboardingKeySet, true)
+    XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
   }
 
   func testSkip_HasNotSeenOnboardingBefore() {
@@ -355,13 +355,13 @@ class OnboardingFeatureTests: XCTestCase {
     environment.dictionary.load = { _ in true }
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
     environment.userDefaults.boolForKey = { key in
-      XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
+      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return false
     }
     environment.userDefaults.setBool = { value, key in
       .fireAndForget {
-        XCTAssertEqual(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertEqual(value, true)
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertNoDifference(value, true)
         isFirstLaunchOnboardingKeySet = true
       }
     }
@@ -406,7 +406,7 @@ class OnboardingFeatureTests: XCTestCase {
     store.send(.getStartedButtonTapped)
     store.receive(.delegate(.getStarted))
 
-    XCTAssertEqual(isFirstLaunchOnboardingKeySet, true)
+    XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
   }
 }
 

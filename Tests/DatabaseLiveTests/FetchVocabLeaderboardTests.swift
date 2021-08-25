@@ -1,3 +1,4 @@
+import CustomDump
 import XCTest
 
 @testable import DatabaseLive
@@ -78,7 +79,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       entriesSortedByScore,
       [
         .init(
@@ -143,6 +144,6 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     let scores = try self.database.fetchVocabLeaderboard(.en, lastPlayer, .allTime)
       .run.perform().unwrap()
 
-    XCTAssertEqual(scores.count, 110)
+    XCTAssertNoDifference(scores.count, 110)
   }
 }

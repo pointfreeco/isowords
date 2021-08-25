@@ -1,3 +1,4 @@
+import CustomDump
 import Either
 import Foundation
 #if canImport(FoundationNetworking)
@@ -101,11 +102,11 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       """
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       updatedPlayerId,
       .init(rawValue: UUID(uuidString: "b10bb10b-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       updatedAppleResponse,
       .some(.mock)
     )
@@ -187,11 +188,11 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       """
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       updatedPlayerId,
       .init(rawValue: UUID(uuidString: "b10bb10b-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       updatedData,
       .some(.mock)
     )
@@ -271,11 +272,11 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       """
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       updatedPlayerId,
       .init(rawValue: UUID(uuidString: "b10bb10b-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       updatedData,
       .some(.mock)
     )

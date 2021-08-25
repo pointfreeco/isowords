@@ -1,3 +1,4 @@
+import CustomDump
 import Overture
 import PostgresKit
 import XCTest
@@ -11,7 +12,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
     let player = try self.database.insertPlayer(.blob)
       .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try self.database.fetchDailyChallengeResults(
         .init(gameMode: .timed, gameNumber: 1, language: .en, playerId: player.id)
       )
@@ -91,7 +92,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       results,
       [
         .init(
@@ -160,7 +161,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       results,
       scores.enumerated()
         .map { idx, score in

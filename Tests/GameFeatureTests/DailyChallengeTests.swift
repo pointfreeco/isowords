@@ -62,7 +62,7 @@ class DailyChallengeTests: XCTestCase {
       }
     }
 
-    XCTAssertEqual(didSave, true)
+    XCTAssertNoDifference(didSave, true)
   }
 
   func testLeaveUnlimitedDailyChallenge() {
@@ -115,6 +115,6 @@ class DailyChallengeTests: XCTestCase {
       }
     }
 
-    XCTAssertEqual(didSave, true)
+    XCTAssertNoDifference(didSave, true)
   }
 }

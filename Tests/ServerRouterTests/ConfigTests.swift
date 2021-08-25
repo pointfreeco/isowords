@@ -1,3 +1,4 @@
+import CustomDump
 import FirstPartyMocks
 import Foundation
 #if canImport(FoundationNetworking)
@@ -27,12 +28,12 @@ class ConfigTests: XCTestCase {
       )
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       testRouter.match(request: expectedRequest),
       expectedRoute
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       testRouter.request(
         for: .api(
           .init(

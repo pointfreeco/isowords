@@ -1,3 +1,4 @@
+import CustomDump
 import Overture
 import PostgresKit
 import XCTest
@@ -19,7 +20,7 @@ class FetchAppleReceiptTests: DatabaseTestCase {
         .run.perform().unwrap()
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       receipt,
       .init(
         createdAt: receipt.createdAt,

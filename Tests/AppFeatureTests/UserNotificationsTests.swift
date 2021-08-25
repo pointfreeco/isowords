@@ -80,7 +80,7 @@ class UserNotificationsTests: XCTestCase {
         )
       )
     ) { _ in
-      XCTAssertEqual(didCallbackWithOptions, .banner)
+      XCTAssertNoDifference(didCallbackWithOptions, .banner)
 
       delegate.send(completion: .finished)
     }

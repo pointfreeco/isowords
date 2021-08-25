@@ -23,7 +23,7 @@ class MultiplayerFeatureTests: XCTestCase {
 
     store.send(.startButtonTapped)
 
-    XCTAssertEqual(didPresentMatchmakerViewController, true)
+    XCTAssertNoDifference(didPresentMatchmakerViewController, true)
   }
 
   func testStartGame_GameCenterNotAuthenticated() {
@@ -43,7 +43,7 @@ class MultiplayerFeatureTests: XCTestCase {
 
     store.send(.startButtonTapped)
 
-    XCTAssertEqual(didPresentAuthentication, true)
+    XCTAssertNoDifference(didPresentAuthentication, true)
   }
 
   func testNavigateToPastGames() {

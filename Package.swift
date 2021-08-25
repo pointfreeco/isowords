@@ -122,6 +122,7 @@ var package = Package(
         "FirstPartyMocks",
         "ServerRouter",
         "TestHelpers",
+        .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Overture", package: "Overture"),
       ]
     ),
@@ -388,6 +389,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ClientModels",
         "FirstPartyMocks",
         "TestHelpers",
+        .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Overture", package: "Overture"),
         .product(name: "SnapshotTesting", package: "SnapshotTesting"),
       ],
@@ -1080,6 +1082,7 @@ package.targets.append(contentsOf: [
       "DailyChallengeMiddleware",
       "SharedModels",
       "SiteMiddleware",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
@@ -1095,7 +1098,8 @@ package.targets.append(contentsOf: [
   .testTarget(
     name: "DailyChallengeReportsTests",
     dependencies: [
-      "DailyChallengeReports"
+      "DailyChallengeReports",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
     ]
   ),
   .target(
@@ -1125,6 +1129,7 @@ package.targets.append(contentsOf: [
       "DatabaseLive",
       "FirstPartyMocks",
       "TestHelpers",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
     ]
   ),
   .target(
@@ -1169,6 +1174,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "LeaderboardMiddleware",
       "SiteMiddleware",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ],
@@ -1210,6 +1216,7 @@ package.targets.append(contentsOf: [
       "ServerRouter",
       "SharedModels",
       "SiteMiddleware",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "Either", package: "swift-prelude"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
@@ -1235,6 +1242,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "FirstPartyMocks",
       "RunnerTasks",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
     ]
   ),
   .target(
@@ -1382,6 +1390,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "VerifyReceiptMiddleware",
       "SiteMiddleware",
+      .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
