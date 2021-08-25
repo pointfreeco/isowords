@@ -38,7 +38,7 @@ class RemoteNotificationsTests: XCTestCase {
     // Register remote notifications on .didFinishLaunching
 
     store.send(.appDelegate(.didFinishLaunching))
-    XCTAssertEqual(requestedAuthorizationOptions, [.alert, .sound])
+    XCTAssertNoDifference(requestedAuthorizationOptions, [.alert, .sound])
     XCTAssertTrue(didRegisterForRemoteNotifications)
 
     store.environment.apiClient.override(
@@ -144,7 +144,7 @@ class RemoteNotificationsTests: XCTestCase {
         )
       )
     )
-    XCTAssertEqual(notificationPresentationOptions, .banner)
+    XCTAssertNoDifference(notificationPresentationOptions, .banner)
 
     userNotificationsDelegate.send(
       .didReceiveResponse(response, completionHandler: didReceiveResponseCompletionHandler)

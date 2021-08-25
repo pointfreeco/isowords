@@ -35,7 +35,7 @@ class VocabMiddlewareTests: XCTestCase {
     var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchVocabLeaderboardWord = { wordId in
-      XCTAssertEqual(
+      XCTAssertNoDifference(
         wordId,
         .init(rawValue: UUID(uuidString: "deadbeef-dead-beef-dead-beefdead304d")!)
       )

@@ -1,3 +1,4 @@
+import CustomDump
 import DatabaseClient
 import Either
 import Foundation
@@ -300,7 +301,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       """
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       submittedScore,
       DatabaseClient.SubmitLeaderboardScore(
         dailyChallengeId: .init(rawValue: .dailyChallengeId),
@@ -314,7 +315,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         words: [.init(moveIndex: 0, score: 27, word: "CAB")]
       )
     )
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       dailyChallengeRankRequest,
       .init(
         dailyChallengeId: .init(rawValue: .dailyChallengeId),

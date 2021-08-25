@@ -192,7 +192,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    XCTAssertEqual(didRegisterForRemoteNotifications, true)
+    XCTAssertNoDifference(didRegisterForRemoteNotifications, true)
   }
 
   func testNotifications_DenyAccess() {

@@ -1,3 +1,4 @@
+import CustomDump
 import Overture
 import SharedModels
 import SnapshotTesting
@@ -11,7 +12,7 @@ class MovesTests: XCTestCase {
 
     let moves = try JSONDecoder().decode(Moves.self, from: Data(jsonString.utf8))
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       moves,
       [
         .init(
@@ -51,7 +52,7 @@ class MovesTests: XCTestCase {
       from: encodedMove
     )
 
-    XCTAssertEqual(decodedMove, move)
+    XCTAssertNoDifference(decodedMove, move)
 
     assertSnapshot(matching: move, as: .json)
   }

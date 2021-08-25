@@ -1,3 +1,4 @@
+import CustomDump
 import Overture
 import PostgresKit
 import XCTest
@@ -94,7 +95,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       lastDayScores,
       [
         .init(
@@ -119,7 +120,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       lastWeekScores,
       [
         .init(
@@ -144,7 +145,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       allTimeScores,
       [
         .init(
@@ -227,7 +228,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       scores,
       [
         .init(
@@ -274,7 +275,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       entries,
       [
         .init(

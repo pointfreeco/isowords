@@ -59,6 +59,6 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    XCTAssertEqual(didEndMatchInTurn, true)
+    XCTAssertNoDifference(didEndMatchInTurn, true)
   }
 }

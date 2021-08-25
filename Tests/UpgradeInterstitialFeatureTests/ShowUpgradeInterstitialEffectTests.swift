@@ -24,7 +24,7 @@ class ShowUpgradeInterstitialEffectTests: XCTestCase {
       )
     }
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       shows,
       [
         false, false, false, false, false, false, false, false, false, true,

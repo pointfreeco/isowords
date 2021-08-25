@@ -1,3 +1,4 @@
+import CustomDump
 import SnapshotTesting
 import TestHelpers
 import XCTest
@@ -36,7 +37,7 @@ class TurnBasedMatchDataTests: XCTestCase {
       from: encodedTurnBasedMatchData
     )
 
-    XCTAssertEqual(decodedTurnBasedMatchData, turnBasedMatchData)
+    XCTAssertNoDifference(decodedTurnBasedMatchData, turnBasedMatchData)
 
     assertSnapshot(matching: turnBasedMatchData, as: .json)
   }

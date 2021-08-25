@@ -1,3 +1,4 @@
+import CustomDump
 import FirstPartyMocks
 import SharedModels
 import TestHelpers
@@ -171,6 +172,6 @@ class CubeCoreTests: XCTestCase {
         """
         {"playedAt":1234567890,"playerIndex":0,"score":0,"type":{"removedCube":{"x":1,"y":2,"z":1}}}
         """.utf8))
-    XCTAssertEqual(move, try jsonDecoder.decode(type(of: move), from: jsonEncoder.encode(move)))
+    XCTAssertNoDifference(move, try jsonDecoder.decode(type(of: move), from: jsonEncoder.encode(move)))
   }
 }

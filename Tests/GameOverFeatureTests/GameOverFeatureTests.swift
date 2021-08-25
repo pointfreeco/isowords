@@ -295,8 +295,8 @@ class GameOverFeatureTests: XCTestCase {
     store.send(.closeButtonTapped)
     store.receive(.delegate(.close))
     self.mainRunLoop.advance()
-    XCTAssertEqual(requestReviewCount, 0)
-    XCTAssertEqual(lastReviewRequestTimeIntervalSet, nil)
+    XCTAssertNoDifference(requestReviewCount, 0)
+    XCTAssertNoDifference(lastReviewRequestTimeIntervalSet, nil)
 
     // Assert that once the player plays enough games then a review request is made
     store.environment.database.fetchStats = .init(
@@ -312,16 +312,16 @@ class GameOverFeatureTests: XCTestCase {
     store.send(.closeButtonTapped)
     store.receive(.delegate(.close))
     self.mainRunLoop.advance()
-    XCTAssertEqual(requestReviewCount, 1)
-    XCTAssertEqual(lastReviewRequestTimeIntervalSet, 0)
+    XCTAssertNoDifference(requestReviewCount, 1)
+    XCTAssertNoDifference(lastReviewRequestTimeIntervalSet, 0)
 
     // Assert that when more than a week of time passes we again request review
     self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     store.send(.closeButtonTapped)
     store.receive(.delegate(.close))
     self.mainRunLoop.advance()
-    XCTAssertEqual(requestReviewCount, 2)
-    XCTAssertEqual(lastReviewRequestTimeIntervalSet, 60 * 60 * 24 * 7)
+    XCTAssertNoDifference(requestReviewCount, 2)
+    XCTAssertNoDifference(lastReviewRequestTimeIntervalSet, 60 * 60 * 24 * 7)
   }
 
   func testAutoCloseWhenNoWordsPlayed() throws {

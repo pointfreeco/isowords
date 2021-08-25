@@ -221,7 +221,7 @@ class GameFeatureTests: XCTestCase {
       let roundTrippedGame = GameState(
         inProgressGame: InProgressGame(gameState: game)
       )
-      XCTAssertEqual(
+      XCTAssertNoDifference(
         game,
         roundTrippedGame
       )

@@ -119,8 +119,8 @@ class TurnBasedTests: XCTestCase {
     }
     store.environment.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
     store.environment.userDefaults.setInteger = { int, key in
-      XCTAssertEqual(int, 1)
-      XCTAssertEqual(key, "multiplayerOpensCount")
+      XCTAssertNoDifference(int, 1)
+      XCTAssertNoDifference(key, "multiplayerOpensCount")
       return .none
     }
     store.send(.currentGame(.game(.onAppear)))
@@ -226,7 +226,7 @@ class TurnBasedTests: XCTestCase {
     store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
 
-      XCTAssertEqual(
+      XCTAssertNoDifference(
         didEndTurnWithRequest,
         .init(
           for: newMatch.matchId,
@@ -545,7 +545,7 @@ class TurnBasedTests: XCTestCase {
       }
     }
     store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two))))) {
-      XCTAssertEqual(
+      XCTAssertNoDifference(
         didEndTurnWithRequest,
         .init(
           for: match.matchId,
@@ -621,7 +621,7 @@ class TurnBasedTests: XCTestCase {
     store.send(.currentGame(.game(.gameOver(.rematchButtonTapped)))) {
       $0.game = nil
     }
-    XCTAssertEqual(didRematchWithId, match.matchId)
+    XCTAssertNoDifference(didRematchWithId, match.matchId)
     self.mainQueue.advance()
 
     store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
@@ -706,7 +706,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     self.mainQueue.advance()
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       notificationBannerRequest,
       GameCenterClient.NotificationBannerRequest(
         title: "Blob played ABC!",

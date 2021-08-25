@@ -1,3 +1,4 @@
+import CustomDump
 import Overture
 import PostgresKit
 import XCTest
@@ -84,7 +85,7 @@ class FetchLeaderboardSummaryTests: DatabaseTestCase {
       }
     }
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       summaries,
       [
         .lastDay: [
@@ -183,7 +184,7 @@ class FetchLeaderboardSummaryTests: DatabaseTestCase {
       }
     }
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       summaries,
       [
         .lastDay: [

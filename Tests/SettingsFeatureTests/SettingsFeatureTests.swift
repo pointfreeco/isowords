@@ -23,7 +23,7 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testUserSettingsBackwardsDecodability() {
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try JSONDecoder().decode(UserSettings.self, from: Data("{}".utf8)),
       UserSettings()
     )
@@ -38,7 +38,7 @@ class SettingsFeatureTests: XCTestCase {
         "soundEffectsVolume": 0.5,
       }
       """
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try JSONDecoder().decode(UserSettings.self, from: Data(partialJson.utf8)),
       UserSettings(
         appIcon: .icon1,
@@ -218,7 +218,7 @@ class SettingsFeatureTests: XCTestCase {
 
     store.send(.openSettingButtonTapped)
 
-    XCTAssertEqual(openedUrl, URL(string: "settings:isowords//isowords/settings")!)
+    XCTAssertNoDifference(openedUrl, URL(string: "settings:isowords//isowords/settings")!)
 
     store.send(.binding(.set(\.alert, nil))) {
       $0.alert = nil
@@ -312,7 +312,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.musicVolume = 0.5
     }
 
-    XCTAssertEqual(setMusicVolume, 0.5)
+    XCTAssertNoDifference(setMusicVolume, 0.5)
   }
 
   func testSetSoundEffectsVolume() {
@@ -335,7 +335,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
-    XCTAssertEqual(setSoundEffectsVolume, 0.5)
+    XCTAssertNoDifference(setSoundEffectsVolume, 0.5)
   }
 
   // MARK: - Appearance
@@ -359,12 +359,12 @@ class SettingsFeatureTests: XCTestCase {
     store.send(.binding(.set(\.userSettings.colorScheme, .light))) {
       $0.userSettings.colorScheme = .light
     }
-    XCTAssertEqual(overriddenUserInterfaceStyle, .light)
+    XCTAssertNoDifference(overriddenUserInterfaceStyle, .light)
 
     store.send(.binding(.set(\.userSettings.colorScheme, .system))) {
       $0.userSettings.colorScheme = .system
     }
-    XCTAssertEqual(overriddenUserInterfaceStyle, .unspecified)
+    XCTAssertNoDifference(overriddenUserInterfaceStyle, .unspecified)
   }
 
   func testSetAppIcon() {
@@ -387,7 +387,7 @@ class SettingsFeatureTests: XCTestCase {
     store.send(.binding(.set(\.userSettings.appIcon, .icon2))) {
       $0.userSettings.appIcon = .icon2
     }
-    XCTAssertEqual(overriddenIconName, "icon-2")
+    XCTAssertNoDifference(overriddenIconName, "icon-2")
   }
 
   func testUnsetAppIcon() {
@@ -423,7 +423,7 @@ class SettingsFeatureTests: XCTestCase {
     store.send(.binding(.set(\.userSettings.appIcon, nil))) {
       $0.userSettings.appIcon = nil
     }
-    XCTAssertEqual(overriddenIconName, nil)
+    XCTAssertNoDifference(overriddenIconName, nil)
 
     store.send(.onDismiss)
   }
@@ -451,8 +451,8 @@ class SettingsFeatureTests: XCTestCase {
     store.send(.binding(.set(\.developer.currentBaseUrl, .localhost))) {
       $0.developer.currentBaseUrl = .localhost
     }
-    XCTAssertEqual(setBaseUrl, URL(string: "http://localhost:9876")!)
-    XCTAssertEqual(didLogout, true)
+    XCTAssertNoDifference(setBaseUrl, URL(string: "http://localhost:9876")!)
+    XCTAssertNoDifference(didLogout, true)
   }
 
   func testToggleEnableCubeShadow() {

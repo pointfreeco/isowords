@@ -1,3 +1,4 @@
+import CustomDump
 import Overture
 import PostgresKit
 import XCTest
@@ -82,7 +83,7 @@ class FetchDailyChallengeReportTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       report,
       [
         .init(

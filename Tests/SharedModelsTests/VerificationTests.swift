@@ -1,3 +1,4 @@
+import CustomDump
 import XCTest
 
 @testable import SharedModels
@@ -25,7 +26,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in true }
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       result,
       .init(
         totalScore: 42,
@@ -66,7 +67,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in true }
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       result,
       nil
     )
@@ -96,7 +97,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in false }
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       result,
       nil
     )
@@ -161,7 +162,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in true }
     )
 
-    XCTAssertEqual(result, nil)
+    XCTAssertNoDifference(result, nil)
   }
 
   func testDuplicateWord() {

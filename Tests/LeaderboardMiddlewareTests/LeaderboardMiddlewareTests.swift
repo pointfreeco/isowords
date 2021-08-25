@@ -1,3 +1,4 @@
+import CustomDump
 import DatabaseClient
 import Either
 import EnvVars
@@ -56,7 +57,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     var environment = ServerEnvironment.failing
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.submitLeaderboardScore = { score in
-      XCTAssertEqual(
+      XCTAssertNoDifference(
         score,
         .init(
           dailyChallengeId: nil,
@@ -204,7 +205,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     }
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.submitLeaderboardScore = { score in
-      XCTAssertEqual(
+      XCTAssertNoDifference(
         score,
         .init(
           dailyChallengeId: .init(rawValue: .dailyChallengeId),
@@ -866,7 +867,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       """
     )
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       scores.sorted(by: { $0.playerId == player.id && $1.playerId != player.id }),
       [
         .init(

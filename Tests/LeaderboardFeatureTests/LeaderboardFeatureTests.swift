@@ -93,7 +93,7 @@ class LeaderboardFeatureTests: XCTestCase {
         pure([vocabEntry])
       }
       $0.database.fetchVocabLeaderboardWord = {
-        XCTAssertEqual($0, wordId)
+        XCTAssertNoDifference($0, wordId)
         return pure(fetchWordResponse)
       }
     }

@@ -1,3 +1,4 @@
+import CustomDump
 import Foundation
 import XCTest
 
@@ -60,7 +61,7 @@ class AppleVerifyReceiptResponseTests: XCTestCase {
       """
 
     let response = try JSONDecoder().decode(AppleVerifyReceiptResponse.self, from: Data(json.utf8))
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       response,
       AppleVerifyReceiptResponse(
         environment: .sandbox,
@@ -99,6 +100,6 @@ class AppleVerifyReceiptResponseTests: XCTestCase {
     let roundtripResponse = try JSONDecoder().decode(
       AppleVerifyReceiptResponse.self, from: encodedJsonData)
 
-    XCTAssertEqual(roundtripResponse, response)
+    XCTAssertNoDifference(roundtripResponse, response)
   }
 }

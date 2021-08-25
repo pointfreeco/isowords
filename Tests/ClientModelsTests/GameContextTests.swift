@@ -1,3 +1,4 @@
+import CustomDump
 import ClientModels
 import Overture
 import TestHelpers
@@ -9,7 +10,7 @@ class GameContextTests: XCTestCase {
     let jsonData = try jsonEncoder.encode(context)
     let json = String(decoding: jsonData, as: UTF8.self)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       json,
       """
       {
@@ -20,7 +21,7 @@ class GameContextTests: XCTestCase {
 
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       decodedContext,
       context
     )
@@ -31,7 +32,7 @@ class GameContextTests: XCTestCase {
     let jsonData = try jsonEncoder.encode(context)
     let json = String(decoding: jsonData, as: UTF8.self)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       json,
       """
       {
@@ -42,7 +43,7 @@ class GameContextTests: XCTestCase {
 
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       decodedContext,
       context
     )
@@ -53,7 +54,7 @@ class GameContextTests: XCTestCase {
     let jsonData = try jsonEncoder.encode(context)
     let json = String(decoding: jsonData, as: UTF8.self)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       json,
       """
       {
@@ -64,7 +65,7 @@ class GameContextTests: XCTestCase {
 
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       decodedContext,
       context
     )
@@ -81,7 +82,7 @@ class GameContextTests: XCTestCase {
     let jsonData = Data("{}".utf8)
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       decodedContext,
       .solo
     )

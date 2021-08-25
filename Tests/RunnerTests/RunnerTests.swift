@@ -1,3 +1,4 @@
+import CustomDump
 import DatabaseClient
 import Either
 import FirstPartyMocks
@@ -33,9 +34,9 @@ final class RunnerTests: XCTestCase {
       .perform()
       .unwrap()
 
-    XCTAssertEqual(targetArn, "arn-deadbeef")
+    XCTAssertNoDifference(targetArn, "arn-deadbeef")
 
-    XCTAssertEqual(
+    XCTAssertNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self, from: JSONEncoder().encode(payload)),
       ApsPayload<PushNotificationContent>(

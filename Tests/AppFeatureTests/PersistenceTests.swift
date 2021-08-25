@@ -145,8 +145,8 @@ class PersistenceTests: XCTestCase {
         appState.home.savedGames.unlimited = InProgressGame(gameState: game)
       }
       appState.game = nil
-      XCTAssertEqual(2, saves.count)
-      XCTAssertEqual(saves.last!, try JSONEncoder().encode(appState.home.savedGames))
+      XCTAssertNoDifference(2, saves.count)
+      XCTAssertNoDifference(saves.last!, try JSONEncoder().encode(appState.home.savedGames))
     }
   }
 
@@ -212,8 +212,8 @@ class PersistenceTests: XCTestCase {
       $0.home.savedGames.unlimited = nil
     }
 
-    XCTAssertEqual(didArchiveGame, true)
-    XCTAssertEqual(saves, [try JSONEncoder().encode(SavedGamesState())])
+    XCTAssertNoDifference(didArchiveGame, true)
+    XCTAssertNoDifference(saves, [try JSONEncoder().encode(SavedGamesState())])
   }
 
   func testTimedAbandon() {
@@ -262,7 +262,7 @@ class PersistenceTests: XCTestCase {
       }
     }
 
-    XCTAssertEqual(didArchiveGame, true)
+    XCTAssertNoDifference(didArchiveGame, true)
   }
 
   func testUnlimitedResume() {
