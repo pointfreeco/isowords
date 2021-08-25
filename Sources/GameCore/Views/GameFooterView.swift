@@ -123,8 +123,8 @@ public struct WordListView: View {
                 reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)
               }
             }
-            .screenEdgePadding(self.deviceState.isPad ? .leading : [])
-            .adaptivePadding(self.deviceState.isPhone ? .leading : [])
+            .screenEdgePadding(self.deviceState.isUsingPadMetrics ? .leading : [])
+            .adaptivePadding(self.deviceState.isUsingPadMetrics ? [] : .leading)
             .padding(.vertical)
           }
         }
