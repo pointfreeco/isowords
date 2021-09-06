@@ -14,28 +14,15 @@ struct NotificationsSettingsView: View {
   var body: some View {
     SettingsForm {
       SettingsRow {
-        Toggle(
-          "Enable notifications",
-          isOn: self.viewStore.binding(
-            keyPath: \.enableNotifications,
-            send: SettingsAction.binding
-          )
-          .animation()
-        )
-        .adaptiveFont(.matterMedium, size: 16)
+        Toggle("Enable notifications", isOn: self.viewStore.$enableNotifications.animation())
+          .adaptiveFont(.matterMedium, size: 16)
       }
 
       if self.viewStore.enableNotifications {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
-            Toggle(
-              "Daily challenge reminders",
-              isOn: self.viewStore.binding(
-                keyPath: \.sendDailyChallengeReminder,
-                send: SettingsAction.binding
-              )
-            )
-            .adaptiveFont(.matterMedium, size: 16)
+            Toggle("Daily challenge reminders", isOn: self.viewStore.$sendDailyChallengeReminder)
+              .adaptiveFont(.matterMedium, size: 16)
 
             Text("Get notified when a new challenge is available.")
               .foregroundColor(.gray)
@@ -45,14 +32,8 @@ struct NotificationsSettingsView: View {
 
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
-            Toggle(
-              "Daily challenge summary",
-              isOn: self.viewStore.binding(
-                keyPath: \.sendDailyChallengeSummary,
-                send: SettingsAction.binding
-              )
-            )
-            .adaptiveFont(.matterMedium, size: 16)
+            Toggle("Daily challenge summary", isOn: self.viewStore.$sendDailyChallengeSummary)
+              .adaptiveFont(.matterMedium, size: 16)
 
             Text("Receive your rank for yesterday’s challenge if you played.")
               .foregroundColor(.gray)

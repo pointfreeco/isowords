@@ -17,8 +17,8 @@ public struct CubePreviewState: Equatable {
   var isOnLowPowerMode: Bool
   var moveIndex: Int
   var moves: Moves
-  var nub: CubeSceneView.ViewState.NubState
-  var selectedCubeFaces: [IndexedCubeFace]
+  @BindableState var nub: CubeSceneView.ViewState.NubState
+  @BindableState var selectedCubeFaces: [IndexedCubeFace]
   let settings: CubeSceneView.ViewState.Settings
 
   public init(
@@ -55,7 +55,7 @@ public struct CubePreviewState: Equatable {
   }
 }
 
-public enum CubePreviewAction: Equatable {
+public enum CubePreviewAction: BindableAction, Equatable {
   case binding(BindingAction<CubePreviewState>)
   case cubeScene(CubeSceneView.ViewAction)
   case lowPowerModeResponse(Bool)
@@ -121,7 +121,7 @@ public let cubePreviewReducer = Reducer<
         let moveDuration = Double.random(in: (0.6...0.8))
 
         effects.append(
-          Effect(value: CubePreviewAction.binding(.set(\.nub.location, .face(face))))
+          Effect(value: .set(\.$nub.location, .face(face)))
             .receive(
               on: environment.mainQueue
                 .animate(withDuration: moveDuration, options: .curveEaseInOut)
@@ -132,10 +132,10 @@ public let cubePreviewReducer = Reducer<
         effects.append(
           Effect.merge(
             // Press the nub on the first character
-            faceIndex == 0 ? Effect(value: .binding(.set(\.nub.isPressed, true))) : .none,
+            faceIndex == 0 ? Effect(value: .set(\.$nub.isPressed, true)) : .none,
 
             // Select the faces that have been tapped so far
-            Effect(value: .binding(.set(\.selectedCubeFaces, accumulatedSelectedFaces)))
+            Effect(value: .set(\.$selectedCubeFaces, accumulatedSelectedFaces))
           )
           .delay(
             for: .seconds(
@@ -149,10 +149,10 @@ public let cubePreviewReducer = Reducer<
         )
       }
       effects.append(
-        Effect(value: .binding(.set(\.nub.isPressed, false)))
+        Effect(value: .set(\.$nub.isPressed, false))
       )
       effects.append(
-        Effect(value: .binding(.set(\.nub.location, .offScreenRight)))
+        Effect(value: .set(\.$nub.location, .offScreenRight))
           .receive(on: environment.mainQueue.animate(withDuration: 1))
           .eraseToEffect()
       )
@@ -175,7 +175,7 @@ public let cubePreviewReducer = Reducer<
     return .cancel(id: SelectionId())
   }
 }
-.binding(action: /CubePreviewAction.binding)
+.binding()
 .haptics(
   feedbackGenerator: \.feedbackGenerator,
   isEnabled: \.isHapticsEnabled,
