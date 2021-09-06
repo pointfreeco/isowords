@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/vapor/async-kit.git",
         "state": {
           "branch": null,
-          "revision": "c1de408100a2f2e4ab2ea06512e8635bc1a59144",
-          "version": "1.3.1"
+          "revision": "ae12394e466f7fe44725655e763f7e603ed876b5",
+          "version": "1.4.0"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
         "state": {
           "branch": null,
-          "revision": "6dcc7c034d28fe7ac652453faeae07656f723909",
-          "version": "0.5.1"
+          "revision": "6bde3b0063ba8e7537b43744948535ca7e9e0dad",
+          "version": "0.5.2"
         }
       },
       {
@@ -86,9 +86,9 @@
         "package": "swift-composable-architecture",
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
-          "branch": "better-bindings",
-          "revision": "321c726412baba56515585967252c4b3eb0fcd18",
-          "version": null
+          "branch": null,
+          "revision": "60dc8067185b3e1fb29237f5a4548bff005b0fec",
+          "version": "0.26.0"
         }
       },
       {
@@ -132,8 +132,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-identified-collections",
         "state": {
           "branch": null,
-          "revision": "edececbdb56b07e9402f2f3f5b907d220a28b4ea",
-          "version": "0.1.1"
+          "revision": "04502c882077cd838d380d05b127db9a6e48d8da",
+          "version": "0.2.0"
         }
       },
       {
