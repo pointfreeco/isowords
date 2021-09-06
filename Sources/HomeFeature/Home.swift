@@ -788,7 +788,7 @@ private func loadMatches(
         Effect(
           value: .set(
             \.$hasPastTurnBasedGames,
-             (try? result.get())?.contains { $0.status == .ended } == .some(true)
+            (try? result.get())?.contains { $0.status == .ended } == .some(true)
           )
         )
         .receive(on: mainRunLoop)
