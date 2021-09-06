@@ -259,7 +259,7 @@ archive: bootstrap-client
 	 @git tag -a "$$(cd App && agvtool what-marketing-version -terse1)" -f -m "Marketing Version"
 	 @git push origin main
 	 @git push origin "archive-$$(cd App && agvtool what-version -terse)"
-	 @git push origin "$$(cd App && agvtool what-marketing-version -terse)"
+	 @git push origin "$$(cd App && agvtool what-marketing-version -terse1)"
 
 set-marketing-version:
 	@cd App && agvtool new-marketing-version $(VERSION)
