@@ -97,7 +97,7 @@ extension DatabaseClient {
               "dailyChallenges"."id" AS "dailyChallengeId",
               "dailyChallenges"."gameNumber",
               "gameNumber" = CURRENT_DAILY_CHALLENGE_NUMBER() AS "isToday",
-              count("playerId") AS "outOf"
+              0 AS "outOf"
             FROM
               "leaderboardScores"
             INNER JOIN "dailyChallenges"
@@ -191,8 +191,7 @@ extension DatabaseClient {
             WHERE "leaderboardScores"."dailyChallengeId" = \(bind: request.dailyChallengeId)
           ),
           "filteredDailyChallengeScoresCount" AS (
-            SELECT count("playerId") AS "outOf"
-            FROM "filteredDailyChallengeScores"
+            SELECT 0 AS "outOf"
           ),
           "playerDailyChallengeResult" AS (
             SELECT *
@@ -238,8 +237,7 @@ extension DatabaseClient {
             AND "dailyChallenges"."language" = \(bind: request.language)
           ),
           "rankedChallengeResultsCount" AS (
-            SELECT count("playerId") AS "outOf"
-            FROM "rankedChallengeResults"
+            SELECT 0 AS "outOf"
           )
           SELECT
             *
@@ -304,9 +302,7 @@ extension DatabaseClient {
           ),
           "filteredScoresCount" AS (
             SELECT
-              COUNT(DISTINCT "playerId") AS "outOf"
-            FROM
-              "filteredScores"
+              0 AS "outOf"
           )
           SELECT
             "outOf" + (CASE WHEN \(bind: isAnonymous) THEN 1 ELSE 0 END) as "outOf",
@@ -347,7 +343,7 @@ extension DatabaseClient {
           ),
           "filteredScoresCount" AS (
             SELECT
-              COUNT(DISTINCT "playerId") AS "outOf",
+              0 AS "outOf",
               "gameMode"
             FROM "filteredScores"
             GROUP BY "gameMode"
@@ -457,7 +453,7 @@ extension DatabaseClient {
           "rankedScores" AS (
             SELECT
               *,
-              (SELECT COUNT("playerId") FROM distinctScores) AS "outOf",
+              0 AS "outOf",
               DENSE_RANK() OVER (ORDER BY "score" DESC) AS "rank"
             FROM
               distinctScores
@@ -523,7 +519,7 @@ extension DatabaseClient {
               DISTINCT ON ("leaderboardScores"."playerId", "words"."word")
               "appleReceipts"."id" IS NOT NULL AS "isSupporter",
               "players"."id" = \(bind: player.id) AS "isYourScore",
-              (SELECT COUNT(*) FROM "words" where "createdAt" BETWEEN NOW() - INTERVAL '\(raw: timeScope.postgresInterval)' AND NOW()) AS "outOf",
+              0 AS "outOf",
               "words"."moveIndex",
               "words"."id" AS "wordId",
               "words"."score",
