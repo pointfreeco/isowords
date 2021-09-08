@@ -35,6 +35,9 @@ test-client:
 
 build-client-preview-apps:
 	@xcodebuild \
+    -project App/isowords.xcodeproj \
+    -list
+	@xcodebuild \
 		-project App/isowords.xcodeproj \
 		-scheme CubeCorePreview \
 		-destination platform="$(PLATFORM_IOS)"
