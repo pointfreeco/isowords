@@ -10,8 +10,8 @@ import SwiftUI
 
 public struct TrailerState: Equatable {
   var game: GameState
-  var nub: CubeSceneView.ViewState.NubState
-  var opacity: Double
+  @BindableState var nub: CubeSceneView.ViewState.NubState
+  @BindableState var opacity: Double
 
   public init(
     game: GameState,
@@ -37,7 +37,7 @@ public struct TrailerState: Equatable {
   }
 }
 
-public enum TrailerAction: Equatable {
+public enum TrailerAction: BindableAction, Equatable {
   case delayedOnAppear
   case game(GameAction)
   case binding(BindingAction<TrailerState>)
@@ -119,7 +119,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
 
           // Move the nub to the face being played
           effects.append(
-            Effect(value: .binding(.set(\.nub.location, .face(face))))
+            Effect(value: .set(\.$nub.location, .face(face)))
               .delay(
                 for: moveNubDelay(wordIndex: wordIndex, characterIndex: characterIndex),
                 scheduler: environment.mainQueue
@@ -130,7 +130,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           effects.append(
             Effect.merge(
               // Press the nub on the first character
-              characterIndex == 0 ? Effect(value: .binding(.set(\.nub.isPressed, true))) : .none,
+              characterIndex == 0 ? Effect(value: .set(\.$nub.isPressed, true)) : .none,
               // Tap on each face in the word being played
               Effect(value: .game(.tap(.began, face)))
             )
@@ -148,13 +148,13 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
 
         // Release the  nub when the last character is played
         effects.append(
-          Effect(value: .binding(.set(\.nub.isPressed, false)))
+          Effect(value: .set(\.$nub.isPressed, false))
             .receive(on: environment.mainQueue.animate(withDuration: 0.3))
             .eraseToEffect()
         )
         // Move the nub to the submit button
         effects.append(
-          Effect(value: .binding(.set(\.nub.location, .submitButton)))
+          Effect(value: .set(\.$nub.location, .submitButton))
             .delay(
               for: 0.2,
               scheduler: environment.mainQueue
@@ -164,7 +164,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
         )
         // Press the nub
         effects.append(
-          Effect(value: .binding(.set(\.nub.isPressed, true)))
+          Effect(value: .set(\.$nub.isPressed, true))
             .delay(
               for: .seconds(
                 .random(
@@ -183,7 +183,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
         )
         // Release the nub
         effects.append(
-          Effect(value: .binding(.set(\.nub.isPressed, false)))
+          Effect(value: .set(\.$nub.isPressed, false))
             .delay(
               for: .seconds(submitPressDuration),
               scheduler: environment.mainQueue.animate(withDuration: 0.3)
@@ -194,7 +194,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
 
       // Move the nub off screen once all words have been played
       effects.append(
-        Effect(value: .binding(.set(\.nub.location, .offScreenBottom)))
+        Effect(value: .set(\.$nub.location, .offScreenBottom))
           .delay(for: .seconds(0.3), scheduler: environment.mainQueue)
           .receive(
             on: environment.mainQueue
@@ -204,7 +204,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
       )
       // Fade the scene out
       effects.append(
-        Effect(value: .binding(.set(\.opacity, 0)))
+        Effect(value: .set(\.$opacity, 0))
           .receive(on: environment.mainQueue.animation(.linear(duration: moveNubOffScreenDuration)))
           .eraseToEffect()
       )
@@ -228,7 +228,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
       )
     }
   }
-  .binding(action: /TrailerAction.binding)
+  .binding()
 )
 
 public struct TrailerView: View {

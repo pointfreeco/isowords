@@ -89,7 +89,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    store.send(.binding(.set(\.enableNotifications, true))) {
+    store.send(.set(\.$enableNotifications, true)) {
       $0.enableNotifications = true
     }
 
@@ -129,7 +129,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    store.send(.binding(.set(\.enableNotifications, true))) {
+    store.send(.set(\.$enableNotifications, true)) {
       $0.enableNotifications = true
     }
 
@@ -170,7 +170,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    store.send(.binding(.set(\.enableNotifications, false))) {
+    store.send(.set(\.$enableNotifications, false)) {
       $0.enableNotifications = false
     }
 
@@ -212,7 +212,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
 
-    store.send(.binding(.set(\.enableNotifications, true))) {
+    store.send(.set(\.$enableNotifications, true)) {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
@@ -220,7 +220,7 @@ class SettingsFeatureTests: XCTestCase {
 
     XCTAssertNoDifference(openedUrl, URL(string: "settings:isowords//isowords/settings")!)
 
-    store.send(.binding(.set(\.alert, nil))) {
+    store.send(.set(\.$alert, nil)) {
       $0.alert = nil
     }
 
@@ -274,12 +274,12 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    store.send(.binding(.set(\.sendDailyChallengeReminder, true))) {
+    store.send(.set(\.$sendDailyChallengeReminder, true)) {
       $0.sendDailyChallengeReminder = true
     }
     mainQueue.advance(by: 0.5)
 
-    store.send(.binding(.set(\.sendDailyChallengeSummary, true))) {
+    store.send(.set(\.$sendDailyChallengeSummary, true)) {
       $0.sendDailyChallengeSummary = true
     }
     mainQueue.advance(by: 0.5)
@@ -308,7 +308,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.binding(.set(\.userSettings.musicVolume, 0.5))) {
+    store.send(.set(\.$userSettings.musicVolume, 0.5)) {
       $0.userSettings.musicVolume = 0.5
     }
 
@@ -331,7 +331,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.binding(.set(\.userSettings.soundEffectsVolume, 0.5))) {
+    store.send(.set(\.$userSettings.soundEffectsVolume, 0.5)) {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
@@ -356,12 +356,12 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.binding(.set(\.userSettings.colorScheme, .light))) {
+    store.send(.set(\.$userSettings.colorScheme, .light)) {
       $0.userSettings.colorScheme = .light
     }
     XCTAssertNoDifference(overriddenUserInterfaceStyle, .light)
 
-    store.send(.binding(.set(\.userSettings.colorScheme, .system))) {
+    store.send(.set(\.$userSettings.colorScheme, .system)) {
       $0.userSettings.colorScheme = .system
     }
     XCTAssertNoDifference(overriddenUserInterfaceStyle, .unspecified)
@@ -384,7 +384,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.binding(.set(\.userSettings.appIcon, .icon2))) {
+    store.send(.set(\.$userSettings.appIcon, .icon2)) {
       $0.userSettings.appIcon = .icon2
     }
     XCTAssertNoDifference(overriddenIconName, "icon-2")
@@ -420,7 +420,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.appIcon = .icon2
     }
 
-    store.send(.binding(.set(\.userSettings.appIcon, nil))) {
+    store.send(.set(\.$userSettings.appIcon, nil)) {
       $0.userSettings.appIcon = nil
     }
     XCTAssertNoDifference(overriddenIconName, nil)
@@ -448,7 +448,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.binding(.set(\.developer.currentBaseUrl, .localhost))) {
+    store.send(.set(\.$developer.currentBaseUrl, .localhost)) {
       $0.developer.currentBaseUrl = .localhost
     }
     XCTAssertNoDifference(setBaseUrl, URL(string: "http://localhost:9876")!)
@@ -462,10 +462,10 @@ class SettingsFeatureTests: XCTestCase {
       environment: .failing
     )
 
-    store.send(.binding(.set(\.enableCubeShadow, false))) {
+    store.send(.set(\.$enableCubeShadow, false)) {
       $0.enableCubeShadow = false
     }
-    store.send(.binding(.set(\.enableCubeShadow, true))) {
+    store.send(.set(\.$enableCubeShadow, true)) {
       $0.enableCubeShadow = true
     }
   }
@@ -477,10 +477,10 @@ class SettingsFeatureTests: XCTestCase {
       environment: .failing
     )
 
-    store.send(.binding(.set(\.cubeShadowRadius, 20))) {
+    store.send(.set(\.$cubeShadowRadius, 20)) {
       $0.cubeShadowRadius = 20
     }
-    store.send(.binding(.set(\.cubeShadowRadius, 1.5))) {
+    store.send(.set(\.$cubeShadowRadius, 1.5)) {
       $0.cubeShadowRadius = 1.5
     }
   }
@@ -492,10 +492,10 @@ class SettingsFeatureTests: XCTestCase {
       environment: .failing
     )
 
-    store.send(.binding(.set(\.showSceneStatistics, true))) {
+    store.send(.set(\.$showSceneStatistics, true)) {
       $0.showSceneStatistics = true
     }
-    store.send(.binding(.set(\.showSceneStatistics, false))) {
+    store.send(.set(\.$showSceneStatistics, false)) {
       $0.showSceneStatistics = false
     }
   }
@@ -507,10 +507,10 @@ class SettingsFeatureTests: XCTestCase {
       environment: self.defaultEnvironment
     )
 
-    store.send(.binding(.set(\.userSettings.enableGyroMotion, false))) {
+    store.send(.set(\.$userSettings.enableGyroMotion, false)) {
       $0.userSettings.enableGyroMotion = false
     }
-    store.send(.binding(.set(\.userSettings.enableGyroMotion, true))) {
+    store.send(.set(\.$userSettings.enableGyroMotion, true)) {
       $0.userSettings.enableGyroMotion = true
     }
   }
@@ -522,10 +522,10 @@ class SettingsFeatureTests: XCTestCase {
       environment: self.defaultEnvironment
     )
 
-    store.send(.binding(.set(\.userSettings.enableHaptics, false))) {
+    store.send(.set(\.$userSettings.enableHaptics, false)) {
       $0.userSettings.enableHaptics = false
     }
-    store.send(.binding(.set(\.userSettings.enableHaptics, true))) {
+    store.send(.set(\.$userSettings.enableHaptics, true)) {
       $0.userSettings.enableHaptics = true
     }
   }

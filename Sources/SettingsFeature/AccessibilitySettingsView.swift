@@ -15,14 +15,8 @@ struct AccessibilitySettingsView: View {
     SettingsForm {
       SettingsRow {
         VStack(alignment: .leading) {
-          Toggle(
-            "Cube motion",
-            isOn: self.viewStore.binding(
-              keyPath: \.userSettings.enableGyroMotion,
-              send: SettingsAction.binding
-            )
-          )
-          .adaptiveFont(.matterMedium, size: 16)
+          Toggle("Cube motion", isOn: self.viewStore.$userSettings.enableGyroMotion)
+            .adaptiveFont(.matterMedium, size: 16)
 
           Text("Use your device’s gyroscope to apply a small amount of motion to the cube.")
             .foregroundColor(.gray)
@@ -32,26 +26,14 @@ struct AccessibilitySettingsView: View {
       }
       SettingsRow {
         VStack(alignment: .leading) {
-          Toggle(
-            "Haptics",
-            isOn: self.viewStore.binding(
-              keyPath: \.userSettings.enableHaptics,
-              send: SettingsAction.binding
-            )
-          )
-          .adaptiveFont(.matterMedium, size: 16)
+          Toggle("Haptics", isOn: self.viewStore.$userSettings.enableHaptics)
+            .adaptiveFont(.matterMedium, size: 16)
         }
       }
       SettingsRow {
         VStack(alignment: .leading) {
-          Toggle(
-            "Reduce animation",
-            isOn: self.viewStore.binding(
-              keyPath: \.userSettings.enableReducedAnimation,
-              send: SettingsAction.binding
-            )
-          )
-          .adaptiveFont(.matterMedium, size: 16)
+          Toggle("Reduce animation", isOn: self.viewStore.$userSettings.enableReducedAnimation)
+            .adaptiveFont(.matterMedium, size: 16)
         }
       }
     }

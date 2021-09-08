@@ -20,13 +20,7 @@ struct DeveloperSettingsView: View {
           Text(self.viewStore.developer.currentBaseUrl.rawValue)
             .adaptiveFont(.matter, size: 14)
 
-          Picker(
-            "",
-            selection: self.viewStore.binding(
-              keyPath: \.developer.currentBaseUrl,
-              send: SettingsAction.binding
-            )
-          ) {
+          Picker("Base URL", selection: self.viewStore.$developer.currentBaseUrl) {
             ForEach(DeveloperSettings.BaseUrl.allCases, id: \.self) {
               Text($0.description)
             }
@@ -36,13 +30,7 @@ struct DeveloperSettingsView: View {
       }
 
       SettingsRow {
-        Toggle(
-          "Shadows",
-          isOn: self.viewStore.binding(
-            keyPath: \.enableCubeShadow,
-            send: SettingsAction.binding
-          )
-        )
+        Toggle("Shadows", isOn: self.viewStore.$enableCubeShadow)
       }
 
       SettingsRow {
@@ -50,25 +38,13 @@ struct DeveloperSettingsView: View {
           Text("Shadow radius")
             .adaptiveFont(.matterMedium, size: 16)
 
-          Slider(
-            value: viewStore.binding(
-              keyPath: \.cubeShadowRadius,
-              send: SettingsAction.binding
-            ),
-            in: (0 as CGFloat)...200
-          )
-          .accentColor(.isowordsOrange)
+          Slider(value: viewStore.$cubeShadowRadius, in: 0...200)
+            .accentColor(.isowordsOrange)
         }
       }
 
       SettingsRow {
-        Toggle(
-          "Scene statistics",
-          isOn: viewStore.binding(
-            keyPath: \.showSceneStatistics,
-            send: SettingsAction.binding
-          )
-        )
+        Toggle("Scene statistics", isOn: viewStore.$showSceneStatistics)
       }
     }
     .navigationStyle(title: Text("Developer"))

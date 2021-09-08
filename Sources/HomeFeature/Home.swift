@@ -68,7 +68,7 @@ public struct HomeState: Equatable {
   public var changelog: ChangelogState?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
   public var hasChangelog: Bool
-  public var hasPastTurnBasedGames: Bool
+  @BindableState public var hasPastTurnBasedGames: Bool
   public var nagBanner: NagBannerState?
   public var route: HomeRoute?
   public var savedGames: SavedGamesState {
@@ -120,7 +120,7 @@ public struct HomeState: Equatable {
   }
 }
 
-public enum HomeAction: Equatable {
+public enum HomeAction: BindableAction, Equatable {
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
   case binding(BindingAction<HomeState>)
@@ -535,7 +535,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     }
   }
 )
-.binding(action: /HomeAction.binding)
+.binding()
 
 public struct HomeView: View {
   struct ViewState: Equatable {
@@ -786,11 +786,9 @@ private func loadMatches(
     .flatMap { result in
       Effect.merge(
         Effect(
-          value: .binding(
-            .set(
-              \.hasPastTurnBasedGames,
-              (try? result.get())?.contains { $0.status == .ended } == .some(true)
-            )
+          value: .set(
+            \.$hasPastTurnBasedGames,
+            (try? result.get())?.contains { $0.status == .ended } == .some(true)
           )
         )
         .receive(on: mainRunLoop)
