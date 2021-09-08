@@ -105,7 +105,7 @@ ifdef PRIVATE
 		do \
 		filename=`basename $$file .wav`; \
 		echo Converting $$filename...; \
-		ffmpeg -y -v 0 -i $$file -vn -ar 44100 -ac 2 -b:a 64k Sources/AppClipAudioLibrary/Resources/$${filename}.mp3; \
+		ffmpeg -y -v 0 -i $$file -vn -ar 44100 -ac 2 -b:a 32k Sources/AppClipAudioLibrary/Resources/$${filename}.mp3; \
 		done
 endif
 
@@ -121,7 +121,7 @@ ifdef PRIVATE
 		do \
 		filename=`basename $$file .wav`; \
 		echo Converting $$filename...; \
-		ffmpeg -y -v 0 -i $$file -vn -ar 44100 -ac 2 -b:a 64k Sources/AppClipAudioLibrary/Resources/$${filename}.mp3; \
+		ffmpeg -y -v 0 -i $$file -vn -ar 44100 -ac 2 -b:a 32k Sources/AppClipAudioLibrary/Resources/$${filename}.mp3; \
 		done
 endif
 
