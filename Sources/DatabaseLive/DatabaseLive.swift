@@ -191,7 +191,7 @@ extension DatabaseClient {
             WHERE "leaderboardScores"."dailyChallengeId" = \(bind: request.dailyChallengeId)
           ),
           "filteredDailyChallengeScoresCount" AS (
-            SELECT 0 AS "outOf"
+            SELECT 0 AS "outOf"LeaderboardsPreview
           ),
           "playerDailyChallengeResult" AS (
             SELECT *
