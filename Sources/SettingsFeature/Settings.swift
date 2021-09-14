@@ -581,7 +581,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   }
   .binding()
 )
-  .debug()
+.debug()
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
   struct SaveDebounceId: Hashable {}
 

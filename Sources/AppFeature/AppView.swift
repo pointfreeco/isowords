@@ -376,8 +376,8 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
         scheduler: environment.mainQueue,
         userNotifications: environment.userNotifications
       )
-        .receive(on: environment.mainQueue)
-        .fireAndForget(),
+      .receive(on: environment.mainQueue)
+      .fireAndForget(),
 
       environment.serverConfig.refresh()
         .receive(on: environment.mainQueue)
