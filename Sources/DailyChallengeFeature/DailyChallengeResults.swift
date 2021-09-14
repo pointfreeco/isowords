@@ -109,8 +109,7 @@ public let dailyChallengeResultsReducer = Reducer<
         as: DailyChallengeHistoryResponse.self
       )
       .receive(on: environment.mainQueue)
-      .catchToEffect()
-      .map(DailyChallengeResultsAction.fetchHistoryResponse)
+      .catchToEffect(DailyChallengeResultsAction.fetchHistoryResponse)
       .cancellable(id: CancelId(), cancelInFlight: true)
     }
   }

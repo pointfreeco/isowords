@@ -331,8 +331,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         return environment.userNotifications.requestAuthorization([.alert, .sound])
           .mapError { $0 as NSError }
           .receive(on: environment.mainQueue.animation())
-          .catchToEffect()
-          .map(SettingsAction.userNotificationAuthorizationResponse)
+          .catchToEffect(SettingsAction.userNotificationAuthorizationResponse)
 
       case .denied:
         state.alert = .userNotificationAuthorizationDenied
@@ -365,8 +364,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         )
         .fireAndForget(),
         environment.apiClient.refreshCurrentPlayer()
-          .catchToEffect()
-          .map(SettingsAction.currentPlayerRefreshed)
+          .catchToEffect(SettingsAction.currentPlayerRefreshed)
       )
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
@@ -384,8 +382,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         )
         .fireAndForget(),
         environment.apiClient.refreshCurrentPlayer()
-          .catchToEffect()
-          .map(SettingsAction.currentPlayerRefreshed)
+          .catchToEffect(SettingsAction.currentPlayerRefreshed)
       )
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
@@ -454,8 +451,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           ])
           .mapError { $0 as NSError }
           .receive(on: environment.mainQueue.animation())
-          .catchToEffect()
-          .map(SettingsAction.productsResponse)
+          .catchToEffect(SettingsAction.productsResponse)
       }
 
       if let baseUrl = DeveloperSettings.BaseUrl(
@@ -494,8 +490,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       state.isPurchasing = false
       return environment.apiClient.refreshCurrentPlayer()
         .receive(on: environment.mainQueue.animation())
-        .catchToEffect()
-        .map(SettingsAction.currentPlayerRefreshed)
+        .catchToEffect(SettingsAction.currentPlayerRefreshed)
 
     case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
       state.isRestoring = false
@@ -586,6 +581,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   }
   .binding()
 )
+  .debug()
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
   struct SaveDebounceId: Hashable {}
 

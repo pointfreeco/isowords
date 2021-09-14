@@ -149,8 +149,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               .rematch(turnBasedMatch.match.matchId)
               .receive(on: environment.mainQueue)
               .mapError { $0 as NSError }
-              .catchToEffect()
-              .map { .gameCenter(.rematchResponse($0)) }
+              .catchToEffect { .gameCenter(.rematchResponse($0)) }
 
           case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
             guard state.game?.turnBasedContext?.match.matchId == match.matchId
@@ -208,8 +207,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             return environment.gameCenter.turnBasedMatch.rematch(matchId)
               .receive(on: environment.mainQueue)
               .mapError { $0 as NSError }
-              .catchToEffect()
-              .map { .gameCenter(.rematchResponse($0)) }
+              .catchToEffect { .gameCenter(.rematchResponse($0)) }
 
           default:
             return .none

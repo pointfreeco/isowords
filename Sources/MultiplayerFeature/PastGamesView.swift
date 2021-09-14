@@ -56,8 +56,7 @@ let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnviron
         }
         .mapError { $0 as NSError }
         .receive(on: environment.mainQueue)
-        .catchToEffect()
-        .map(PastGamesAction.matchesResponse)
+        .catchToEffect(PastGamesAction.matchesResponse)
 
     case .pastGame:
       return .none

@@ -118,8 +118,7 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
       // TODO: should we do this work on background thread?
       return environment.database.fetchStats
         .mapError { $0 as NSError }
-        .catchToEffect()
-        .map(StatsAction.statsResponse)
+        .catchToEffect(StatsAction.statsResponse)
 
     case let .statsResponse(.failure(error)):
       // TODO
