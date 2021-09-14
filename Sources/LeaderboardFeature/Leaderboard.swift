@@ -199,8 +199,7 @@ public let leaderboardReducer = Reducer<
         as: FetchVocabWordResponse.self
       )
       .receive(on: environment.mainQueue)
-      .catchToEffect()
-      .map(LeaderboardAction.fetchWordResponse)
+      .catchToEffect(LeaderboardAction.fetchWordResponse)
       .cancellable(id: CancelId(), cancelInFlight: true)
 
     case .vocab:

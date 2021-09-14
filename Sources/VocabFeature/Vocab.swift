@@ -120,8 +120,7 @@ public let vocabReducer = Reducer<
     case .onAppear:
       return environment.database.fetchVocab
         .mapError { $0 as NSError }
-        .catchToEffect()
-        .map(VocabAction.vocabResponse)
+        .catchToEffect(VocabAction.vocabResponse)
 
     case .preview:
       return .none
@@ -137,8 +136,7 @@ public let vocabReducer = Reducer<
       return environment.database.fetchGamesForWord(word.letters)
         .map { .init(games: $0, word: word.letters) }
         .mapError { $0 as NSError }
-        .catchToEffect()
-        .map(VocabAction.gamesResponse)
+        .catchToEffect(VocabAction.gamesResponse)
     }
   }
 )

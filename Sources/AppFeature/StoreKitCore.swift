@@ -36,8 +36,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
             )
             .mapError { $0 as NSError }
             .map { ReceiptFinalizationEnvelope(transactions: transactions, verifyEnvelope: $0) }
-            .catchToEffect()
-            .map(AppAction.verifyReceiptResponse)
+            .catchToEffect(AppAction.verifyReceiptResponse)
           } else {
             // TODO: what to do if there is no receipt data?
             verifyReceiptEffect = .none

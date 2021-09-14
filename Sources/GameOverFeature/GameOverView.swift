@@ -239,8 +239,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
               fileClient: environment.fileClient,
               mainRunLoop: environment.mainRunLoop
             )
-            .catchToEffect()
-            .map(GameOverAction.startDailyChallengeResponse)
+            .catchToEffect(GameOverAction.startDailyChallengeResponse)
           }
           ?? .none
       case .shared:
@@ -274,8 +273,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         )
         .receive(on: environment.mainRunLoop.animation(.default))
         .map(SubmitGameResponse.solo)
-        .catchToEffect()
-        .map(GameOverAction.submitGameResponse)
+        .catchToEffect(GameOverAction.submitGameResponse)
       } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
         completedGame: state.completedGame)
       {
@@ -284,8 +282,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           as: SubmitGameResponse.self
         )
         .receive(on: environment.mainRunLoop.animation(.default))
-        .catchToEffect()
-        .map(GameOverAction.submitGameResponse)
+        .catchToEffect(GameOverAction.submitGameResponse)
       } else {
         submitGameEffect = .none
       }
@@ -382,8 +379,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             as: [FetchTodaysDailyChallengeResponse].self
           )
           .receive(on: environment.mainRunLoop.animation(.default))
-          .catchToEffect()
-          .map(GameOverAction.dailyChallengeResponse)
+          .catchToEffect(GameOverAction.dailyChallengeResponse)
       )
 
     case let .submitGameResponse(.success(.shared(result))):

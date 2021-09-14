@@ -91,15 +91,13 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     return environment.gameCenter.turnBasedMatch.rematch(state.matchId)
       .receive(on: environment.mainQueue)
       .mapError { $0 as NSError }
-      .catchToEffect()
-      .map(PastGameAction.rematchResponse)
+      .catchToEffect(PastGameAction.rematchResponse)
 
   case .tappedRow:
     return environment.gameCenter.turnBasedMatch.load(state.matchId)
       .receive(on: environment.mainQueue)
       .mapError { $0 as NSError }
-      .catchToEffect()
-      .map(PastGameAction.matchResponse)
+      .catchToEffect(PastGameAction.matchResponse)
   }
 }
 

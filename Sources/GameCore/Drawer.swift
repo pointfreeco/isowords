@@ -7,8 +7,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       environment.gameCenter.turnBasedMatch.loadMatches()
         .receive(on: environment.mainQueue.animation())
         .mapError { $0 as NSError }
-        .catchToEffect()
-        .map(GameAction.matchesLoaded),
+        .catchToEffect(GameAction.matchesLoaded),
       environment.fileClient.loadSavedGames()
         .subscribe(on: environment.backgroundQueue)
         .receive(on: environment.mainQueue.animation())

@@ -171,8 +171,7 @@ public let dailyChallengeReducer = Reducer<
         fileClient: environment.fileClient,
         mainRunLoop: environment.mainRunLoop
       )
-      .catchToEffect()
-      .map(DailyChallengeAction.startDailyChallengeResponse)
+      .catchToEffect(DailyChallengeAction.startDailyChallengeResponse)
 
     case .onAppear:
       return .merge(
@@ -181,8 +180,7 @@ public let dailyChallengeReducer = Reducer<
           as: [FetchTodaysDailyChallengeResponse].self
         )
         .receive(on: environment.mainRunLoop.animation())
-        .catchToEffect()
-        .map(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
+        .catchToEffect(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
 
         environment.userNotifications.getNotificationSettings
           .receive(on: environment.mainRunLoop)

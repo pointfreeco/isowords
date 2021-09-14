@@ -360,6 +360,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       state.home.savedGames.dailyChallengeUnlimited = nil
       return environment.fileClient
         .saveGames(games: state.home.savedGames, on: environment.backgroundQueue)
+        .receive(on: environment.mainQueue)
         .fireAndForget()
     }
     return .none
@@ -375,9 +376,11 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
         scheduler: environment.mainQueue,
         userNotifications: environment.userNotifications
       )
-      .fireAndForget(),
+        .receive(on: environment.mainQueue)
+        .fireAndForget(),
 
       environment.serverConfig.refresh()
+        .receive(on: environment.mainQueue)
         .fireAndForget()
     )
 

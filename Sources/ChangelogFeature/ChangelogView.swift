@@ -115,8 +115,7 @@ public let changelogReducer = Reducer<
         as: Changelog.self
       )
       .receive(on: environment.mainQueue)
-      .catchToEffect()
-      .map(ChangelogAction.changelogResponse)
+      .catchToEffect(ChangelogAction.changelogResponse)
 
     case .updateButtonTapped:
       return environment.applicationClient.open(

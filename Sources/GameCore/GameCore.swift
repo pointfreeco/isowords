@@ -1138,8 +1138,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       let matchData = Data(turnBasedMatchData: turnBasedMatchData)
       let reloadMatch = environment.gameCenter.turnBasedMatch.load(turnBasedContext.match.matchId)
         .mapError { $0 as NSError }
-        .catchToEffect()
-        .map { GameAction.gameCenter(.turnBasedMatchResponse($0)) }
+        .catchToEffect { GameAction.gameCenter(.turnBasedMatchResponse($0)) }
 
       if state.isGameOver {
         let completedGame = CompletedGame(gameState: state)

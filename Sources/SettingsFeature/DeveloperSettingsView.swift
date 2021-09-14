@@ -25,6 +25,7 @@ struct DeveloperSettingsView: View {
               Text($0.description)
             }
           }
+          .pickerStyle(InlinePickerStyle())
           .frame(height: 130)
         }
       }

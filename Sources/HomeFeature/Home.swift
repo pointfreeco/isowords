@@ -742,16 +742,14 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
         )
-        .catchToEffect()
-        .map(HomeAction.dailyChallengeResponse),
+        .catchToEffect(HomeAction.dailyChallengeResponse),
 
       environment.apiClient
         .apiRequest(
           route: .leaderboard(.weekInReview(language: .en)),
           as: FetchWeekInReviewResponse.self
         )
-        .catchToEffect()
-        .map(HomeAction.weekInReviewResponse)
+        .catchToEffect(HomeAction.weekInReviewResponse)
     )
   }
 
