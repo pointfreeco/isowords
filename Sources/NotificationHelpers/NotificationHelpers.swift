@@ -13,9 +13,10 @@ extension Effect where Output == Never, Failure == Never {
       .receive(on: scheduler)
       .flatMap { settings in
         settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
-          ? remoteNotifications.register().receive(on: scheduler)
+          ? remoteNotifications.register()
           : .none
       }
+      .receive(on: scheduler)
       .eraseToEffect()
   }
 }
