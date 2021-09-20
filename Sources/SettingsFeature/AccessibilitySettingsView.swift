@@ -32,8 +32,10 @@ struct AccessibilitySettingsView: View {
       }
       SettingsRow {
         VStack(alignment: .leading) {
-          Toggle("Reduce animation", isOn: self.viewStore.binding(\.$userSettings.enableReducedAnimation))
-            .adaptiveFont(.matterMedium, size: 16)
+          Toggle(
+            "Reduce animation", isOn: self.viewStore.binding(\.$userSettings.enableReducedAnimation)
+          )
+          .adaptiveFont(.matterMedium, size: 16)
         }
       }
     }
