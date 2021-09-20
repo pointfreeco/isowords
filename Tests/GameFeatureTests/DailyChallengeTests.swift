@@ -35,6 +35,7 @@ class DailyChallengeTests: XCTestCase {
       }
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.mainQueue = .immediate
     }
 
     let store = TestStore(
@@ -88,6 +89,7 @@ class DailyChallengeTests: XCTestCase {
       }
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.mainQueue = .immediate
     }
 
     let store = TestStore(
