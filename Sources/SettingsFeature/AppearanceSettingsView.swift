@@ -14,11 +14,11 @@ struct AppearanceSettingsView: View {
   var body: some View {
     SettingsForm {
       SettingsSection(title: "Theme") {
-        ColorSchemePicker(colorScheme: self.viewStore.$userSettings.colorScheme)
+        ColorSchemePicker(colorScheme: self.viewStore.binding(\.$userSettings.colorScheme))
       }
 
       SettingsSection(title: "App Icon", padContents: false) {
-        AppIconPicker(appIcon: self.viewStore.$userSettings.appIcon.animation())
+        AppIconPicker(appIcon: self.viewStore.binding(\.$userSettings.appIcon).animation())
       }
     }
     .navigationStyle(title: Text("Appearance"))
