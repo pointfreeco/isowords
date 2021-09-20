@@ -118,6 +118,7 @@ class DailyChallengeFeatureTests: XCTestCase {
         )
       )
     }
+    environment.mainRunLoop = .immediate
 
     let store = TestStore(
       initialState: DailyChallengeState(

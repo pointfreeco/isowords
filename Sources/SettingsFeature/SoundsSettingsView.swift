@@ -18,7 +18,7 @@ struct SoundsSettingsView: View {
           Text("Music volume")
 
           VStack {
-            Slider(value: self.viewStore.$userSettings.musicVolume.animation(), in: 0...1)
+            Slider(value: self.viewStore.binding(\.$userSettings.musicVolume).animation(), in: 0...1)
               .accentColor(.isowordsOrange)
 
             if self.viewStore.userSettings.musicVolume <= 0 {
@@ -36,7 +36,7 @@ struct SoundsSettingsView: View {
           Text("Sound FX volume")
 
           VStack {
-            Slider(value: self.viewStore.$userSettings.soundEffectsVolume.animation(), in: 0...1)
+            Slider(value: self.viewStore.binding(\.$userSettings.soundEffectsVolume).animation(), in: 0...1)
               .accentColor(.isowordsOrange)
 
             if self.viewStore.userSettings.soundEffectsVolume <= 0 {

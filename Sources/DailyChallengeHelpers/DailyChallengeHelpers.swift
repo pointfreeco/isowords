@@ -41,12 +41,12 @@ public func startDailyChallenge(
         ),
         as: StartDailyChallengeResponse.self
       )
-      .receive(on: mainRunLoop)
       .map { InProgressGame(response: $0, date: date()) }
       .mapError { err in .couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt) }
       .eraseToEffect()
   )
   .prefix(1)
+  .receive(on: mainRunLoop)
   .eraseToEffect()
 }
 
