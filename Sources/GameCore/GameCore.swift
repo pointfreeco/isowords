@@ -740,6 +740,7 @@ extension GameState {
 
     let saveGameEffect: Effect<GameAction, Never> = environment.database
       .saveGame(.init(gameState: self))
+      .receive(on: environment.mainQueue)
       .fireAndForget()
 
     switch self.gameContext {
