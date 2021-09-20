@@ -113,6 +113,7 @@ let appDelegateReducer = Reducer<
           )
         )
       }
+      .receive(on: environment.mainQueue)
       .fireAndForget()
 
   case let .userNotifications(.willPresentNotification(_, completionHandler)):
