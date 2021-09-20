@@ -207,6 +207,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
         if case .savedGamesLoaded(.success) = action { return .none }
         return environment.fileClient
           .saveGames(games: savedGames, on: environment.backgroundQueue)
+          .receive(on: environment.mainQueue)
           .fireAndForget()
       }
   }
