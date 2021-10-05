@@ -1,7 +1,8 @@
 FROM swift:5.3 as build
 
 RUN apt-get --fix-missing update
-RUN apt-get install -y cmake libpq-dev libsqlite3-dev libssl-dev libz-dev openssl
+RUN apt-get install -y cmake libpq-dev libssl-dev libz-dev openssl python
+RUN apt-get install --no-install-recommends libsqlite3-dev
 
 WORKDIR /build
 
@@ -29,7 +30,7 @@ RUN swift build \
 FROM swift:5.3-slim
 
 RUN apt-get --fix-missing update
-RUN apt-get install -y libpq-dev libsqlite3-dev libssl-dev libz-dev openssl
+RUN apt-get install -y libpq-dev libsqlite3-dev libssl-dev libz-dev openssl python
 
 WORKDIR /run
 
