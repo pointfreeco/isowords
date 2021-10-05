@@ -25,7 +25,7 @@ class ConfettiView: UIView {
         let context = UIGraphicsGetCurrentContext()!
         context.setFillColor(color.cgColor)
 
-        context.rotate(by: .random(in: 0 ... .pi/2))
+        context.rotate(by: .random(in: 0 ... .pi / 2))
         context.move(to: .zero)
         context.addLine(to: .init(x: rect.maxX, y: 0))
         context.addLine(to: .init(x: rect.midX, y: rect.maxY))
@@ -44,7 +44,7 @@ class ConfettiView: UIView {
 
     let confettiTypes: [ConfettiType] = {
       let confettiColors = [
-        foregroundColor,
+        foregroundColor
       ]
 
       return [ConfettiPosition.foreground, ConfettiPosition.background].flatMap { position in
@@ -81,7 +81,8 @@ class ConfettiView: UIView {
     func createBehavior(type: String) -> NSObject {
       let behaviorClass = NSClassFromString("CAEmitterBehavior") as! NSObject.Type
       let behaviorWithType = behaviorClass.method(for: NSSelectorFromString("behaviorWithType:"))!
-      let castedBehaviorWithType = unsafeBitCast(behaviorWithType, to:(@convention(c)(Any?, Selector, Any?) -> NSObject).self)
+      let castedBehaviorWithType = unsafeBitCast(
+        behaviorWithType, to: (@convention(c) (Any?, Selector, Any?) -> NSObject).self)
       return castedBehaviorWithType(behaviorClass, NSSelectorFromString("behaviorWithType:"), type)
     }
 
@@ -107,20 +108,23 @@ class ConfettiView: UIView {
       behavior.setValue(300, forKeyPath: "radius")
       behavior.setValue(10, forKeyPath: "stiffness")
 
-      behavior.setValue(CGPoint(x: emitterLayer.emitterPosition.x,
-                                y: emitterLayer.emitterPosition.y + 20),
-                        forKeyPath: "position")
+      behavior.setValue(
+        CGPoint(
+          x: emitterLayer.emitterPosition.x,
+          y: emitterLayer.emitterPosition.y + 20),
+        forKeyPath: "position")
       behavior.setValue(-70, forKeyPath: "zPosition")
 
       return behavior
     }
 
     func addBehaviors(to layer: CAEmitterLayer) {
-      layer.setValue([
-        horizontalWaveBehavior(),
-        verticalWaveBehavior(),
-        attractorBehavior(for: layer)
-      ], forKey: "emitterBehaviors")
+      layer.setValue(
+        [
+          horizontalWaveBehavior(),
+          verticalWaveBehavior(),
+          attractorBehavior(for: layer),
+        ], forKey: "emitterBehaviors")
     }
 
     func addAttractorAnimation(to layer: CALayer) {
@@ -162,7 +166,7 @@ class ConfettiView: UIView {
       animation.fromValue = 0
       animation.toValue = 2
 
-      layer.add(animation, forKey:  "emitterBehaviors.drag.drag")
+      layer.add(animation, forKey: "emitterBehaviors.drag.drag")
     }
 
     func addGravityAnimation(to layer: CALayer) {
