@@ -7,6 +7,8 @@ import Foundation
 import Overture
 import SharedModels
 import TestHelpers
+import Parsing
+import URLRouting
 import XCTest
 
 @testable import ServerRouter
@@ -14,17 +16,15 @@ import XCTest
 class ConfigTests: XCTestCase {
   func testConfig() throws {
     var expectedRequest = URLRequest(
-      url: URL(string: "api/config?accessToken=DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF&build=42")!
+      url: URL(string: "/api/config?accessToken=DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF")!
     )
     expectedRequest.httpMethod = "GET"
-    expectedRequest.allHTTPHeaderFields = [
-      "X-Debug": "false"
-    ]
+    expectedRequest.allHTTPHeaderFields = [:]
     let expectedRoute = ServerRoute.api(
       .init(
         accessToken: .init(rawValue: .deadbeef),
         isDebug: false,
-        route: .config(build: 42)
+        route: .config
       )
     )
 
@@ -39,7 +39,7 @@ class ConfigTests: XCTestCase {
           .init(
             accessToken: .init(rawValue: .deadbeef),
             isDebug: false,
-            route: .config(build: 42)
+            route: .config
           )
         )
       ),

@@ -191,6 +191,15 @@
         }
       },
       {
+        "package": "swift-parsing",
+        "repositoryURL": "https://github.com/pointfreeco/swift-parsing",
+        "state": {
+          "branch": "pb-pp",
+          "revision": "8b37887d43e83291416ecafd5c1e3b624e5a53db",
+          "version": null
+        }
+      },
+      {
         "package": "swift-prelude",
         "repositoryURL": "https://github.com/pointfreeco/swift-prelude",
         "state": {

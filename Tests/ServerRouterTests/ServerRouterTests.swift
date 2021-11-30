@@ -6,6 +6,8 @@ import Foundation
 #endif
 import Overture
 import SharedModels
+import Parsing
+import URLRouting
 import TestHelpers
 import XCTest
 
@@ -49,12 +51,12 @@ class ServerRouterTests: XCTestCase {
       """
     let signature = "\(json)----DEADBEEF----1234567860"
 
-    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate?timestamp=1234567860")!)
+    var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate?timestamp=1234567870")!)
     request.httpMethod = "POST"
     request.httpBody = Data(json.utf8)
     request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
     let route = testRouter.match(request: request)
-
+    
     XCTAssertNoDifference(
       route,
       .authenticate(

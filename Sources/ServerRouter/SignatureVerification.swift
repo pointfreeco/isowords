@@ -1,34 +1,84 @@
 import ApplicativeRouter
 import Foundation
 import Prelude
+import Parsing
+import URLRouting
 
-func verifiedDataBody(
+func _verifiedDataBody(
   date: @escaping () -> Date,
   require: Bool = true,
   secrets: [String],
   sha256: @escaping (Data) -> Data
-) -> Router<Data> {
-  (dataBody
-    <%> header("X-Signature", opt(.base64))
-    <%> queryParam("timestamp", opt(.int)))
-    .map(.init(apply: { ($0, $1.0, $1.1) }, unapply: { ($0, ($1, $2)) }))
-    .map(PartialIso.verifySignature(date: date, secrets: secrets, sha256: sha256))
-    <|> (require ? .empty : dataBody)
+) -> AnyParserPrinter<URLRequestData, Data> {
+  
+  OneOf {
+    Parse {
+      Body {
+        Conversion.init(
+          apply: { Data($0) },
+          unapply: ArraySlice.init
+        )
+      }
+      Headers {
+        Optionally {
+          Field("X-Signature", Base64Data())
+        }
+      }
+      Query {
+        Optionally {
+          Field("timestamp", Int.parser())
+        }
+      }
+    }
+    // TODO: should this be Routing(...) ?
+    // TODO: Or, should Pipe be a top-level parser type?
+    .pipe { PartialConversion._verifySignature(date: date, secrets: secrets, sha256: sha256) }
+    
+    if !require {
+      Body {
+        Rest().pipe {
+          Conversion.init(
+            apply: { Data($0) },
+            unapply: ArraySlice.init
+          )
+        }
+      }
+    }
+  }
+  .eraseToAnyParserPrinter()
 }
 
-extension PartialIso where A == (Data, Data?, Int?), B == Data {
-  static func verifySignature(
+struct Base64Data: ParserPrinter {
+  func parse(_ input: inout Substring) -> Data? {
+    guard let data = Data.init(base64Encoded: String(input))
+    else { return nil }
+    input = ""
+    return data
+  }
+  
+  func print(_ output: Data) -> Substring? {
+    output.base64EncodedString()[...]
+  }
+}
+
+extension PartialConversion where Input == (Data, Data?, Int?), Output == Data {
+  static func _verifySignature(
     date: @escaping () -> Date,
     secrets: [String],
     sha256: @escaping (Data) -> Data
   ) -> Self {
     Self(
       apply: { data, signature, timestamp in
+        Swift.print(data)
+        Swift.print(signature)
+        Swift.print(timestamp)
+        Swift.print("!")
+        
         guard
           let signature = signature,
           let timestamp = timestamp
         else { return nil }
-
+        
         return isValidSignature(
           data: data,
           date: date,
@@ -37,8 +87,8 @@ extension PartialIso where A == (Data, Data?, Int?), B == Data {
           sha256: sha256,
           timestamp: timestamp
         )
-          ? data
-          : nil
+        ? data
+        : nil
       },
       unapply: { data in
         guard let firstSecret = secrets.first
@@ -51,6 +101,7 @@ extension PartialIso where A == (Data, Data?, Int?), B == Data {
   }
 }
 
+
 func isValidSignature(
   data: Data,
   date: @escaping () -> Date,
@@ -59,9 +110,13 @@ func isValidSignature(
   sha256: @escaping (Data) -> Data,
   timestamp: Int
 ) -> Bool {
-  signatures(data: data, secrets: secrets, sha256: sha256, timestamp: timestamp)
-    .first(where: { $0 == signature }) != nil
-    && abs(Int(date().timeIntervalSince1970) - timestamp) <= 20
+  let sigs = signatures(data: data, secrets: secrets, sha256: sha256, timestamp: timestamp)
+  
+  let currentTime = date().timeIntervalSince1970
+  let condition = abs(Int(date().timeIntervalSince1970) - timestamp) <= 20
+  
+  return sigs.first(where: { $0 == signature }) != nil
+    && condition
 }
 
 func signatures(
