@@ -25,8 +25,8 @@ private func apiRouter(
     Routing(/ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:)) {
       Method.post
       Query {
-        Field("gameMode", String.parser().pipe { GameMode.parser() })
-        Field("language", String.parser().pipe { Language.parser() })
+        Field("gameMode", GameMode.parser(rawValue: String.parser()))
+        Field("language", Language.parser(rawValue: String.parser()))
       }
     }
     
@@ -34,7 +34,7 @@ private func apiRouter(
       Method.get
       Path { "today" }
       Query {
-        Field("language", String.parser().pipe { Language.parser() })
+        Field("language", Language.parser(rawValue: String.parser()))
       }
     }
     
@@ -45,16 +45,16 @@ private func apiRouter(
           Method.get
           Query {
             OneOf {
-              Field("gameMode", String.parser().pipe { GameMode.parser() })
-              Field("game-mode", String.parser().pipe { GameMode.parser() })
+              Field("gameMode", GameMode.parser(rawValue: String.parser()))
+              Field("game-mode", GameMode.parser(rawValue: String.parser()))
             }
             Optionally {
               OneOf {
-                Field("gameNumber", Int.parser().pipe { DailyChallenge.GameNumber.parser() })
-                Field("game-number", Int.parser().pipe { DailyChallenge.GameNumber.parser() })
+                Field("gameNumber", DailyChallenge.GameNumber.parser(rawValue: Int.parser()))
+                Field("game-number", DailyChallenge.GameNumber.parser(rawValue: Int.parser()))
               }
             }
-            Field("language", String.parser().pipe { Language.parser() })
+            Field("language", Language.parser(rawValue: String.parser()))
           }
         }
         
@@ -63,10 +63,10 @@ private func apiRouter(
           Path { "history" }
           Query {
             OneOf {
-              Field("gameMode", String.parser().pipe { GameMode.parser() })
-              Field("game-mode", String.parser().pipe { GameMode.parser() })
+              Field("gameMode", GameMode.parser(rawValue: String.parser()))
+              Field("game-mode", GameMode.parser(rawValue: String.parser()))
             }
-            Field("language", String.parser().pipe { Language.parser() })
+            Field("language", Language.parser(rawValue: String.parser()))
           }
         }
       }
@@ -75,18 +75,16 @@ private func apiRouter(
   
   let gamesRouter = Routing(/ServerRoute.Api.Route.Games.submit) {
     Method.post
-    // TODO: should _verifiedDataBody work with ArraySlice?
-    // TODO: should JSON work with Data?
+    // TODO: should verifiedDataBody work with ArraySlice?
     // TODO: should URLRequest.body be Data instead of ArraySlice?
-    _verifiedDataBody(date: date, secrets: secrets, sha256: sha256)
+    verifiedDataBody(date: date, secrets: secrets, sha256: sha256)
       .pipe {
-        Conversion.init(
-          apply: ArraySlice.init,
-          unapply: { Data($0) }
+        JSON(
+          ServerRoute.Api.Route.Games.SubmitRequest.self,
+          from: Data.self,
+          decoder: decoder,
+          encoder: encoder
         )
-      }
-      .pipe {
-        JSON(ServerRoute.Api.Route.Games.SubmitRequest.self, decoder: decoder, encoder: encoder)
       }
   }
   
@@ -94,9 +92,9 @@ private func apiRouter(
     Routing(/ServerRoute.Api.Route.Leaderboard.fetch(gameMode:language:timeScope:)) {
       Method.get
       Query {
-        Field("gameMode", String.parser().pipe { GameMode.parser() })
-        Field("language", String.parser().pipe { Language.parser() })
-        Field("timeScope", String.parser().pipe { TimeScope.parser() })
+        Field("gameMode", GameMode.parser(rawValue: String.parser()))
+        Field("language", Language.parser(rawValue: String.parser()))
+        Field("timeScope", TimeScope.parser(rawValue: String.parser()))
       }
     }
     
@@ -106,8 +104,8 @@ private func apiRouter(
         Routing(/ServerRoute.Api.Route.Leaderboard.Vocab.fetch(language:timeScope:)) {
           Method.get
           Query {
-            Field("language", String.parser().pipe { Language.parser() })
-            Field("timeScope", String.parser().pipe { TimeScope.parser() })
+            Field("language", Language.parser(rawValue: String.parser()))
+            Field("timeScope", TimeScope.parser(rawValue: String.parser()))
           }
         }
         
@@ -115,7 +113,7 @@ private func apiRouter(
           Method.get
           Path {
             "words"
-            UUID.parser().pipe { Word.Id.parser() }
+            Word.Id.parser(rawValue: UUID.parser())
           }
         }
       }
@@ -125,7 +123,7 @@ private func apiRouter(
       Method.get
       Path { "week-in-review" }
       Query {
-        Field("language", String.parser().pipe { Language.parser() })
+        Field("language", Language.parser(rawValue: String.parser()))
       }
     }
   }
@@ -152,7 +150,7 @@ private func apiRouter(
     Routing(/ServerRoute.Api.Route.SharedGame.fetch) {
       Method.get
       Path {
-        String.parser().pipe { SharedModels.SharedGame.Code.parser() }
+        SharedGame.Code.parser(rawValue: String.parser())
       }
     }
     
@@ -168,7 +166,7 @@ private func apiRouter(
     Routing(/ServerRoute.Api.Route.changelog(build:)) {
       Method.get
       Path { "changelog" }
-      Query { Field("build", Int.parser().pipe { Build.Number.parser() }) }
+      Query { Field("build", Build.Number.parser(rawValue: Int.parser())) }
     }
     
     Routing(/ServerRoute.Api.Route.config) {
@@ -237,7 +235,7 @@ public func router(
       Path { "api" }
       Parse {
         Query {
-          Field("accessToken", UUID.parser().pipe { AccessToken.parser() })
+          Field("accessToken", AccessToken.parser(rawValue: UUID.parser()))
         }
         Headers {
           Field("X-Debug", Bool.parser(), default: false)
@@ -250,15 +248,14 @@ public func router(
     Routing(/ServerRoute.authenticate) {
       Method.post
       Path { "api"; "authenticate" }
-      _verifiedDataBody(date: date, secrets: secrets, sha256: sha256)
+      verifiedDataBody(date: date, require: false, secrets: secrets, sha256: sha256)
         .pipe {
-          Conversion.init(
-            apply: ArraySlice.init,
-            unapply: { Data($0) }
+          JSON(
+            ServerRoute.AuthenticateRequest.self,
+            from: Data.self,
+            decoder: decoder,
+            encoder: encoder
           )
-        }
-        .pipe {
-          JSON(ServerRoute.AuthenticateRequest.self, decoder: decoder, encoder: encoder)
         }
     }
     
@@ -275,9 +272,7 @@ public func router(
     Routing(/ServerRoute.demo .. /ServerRoute.Demo.submitGame) {
       Method.post
       Path { "demo"; "games" }
-      Body {
-        JSON(ServerRoute.Demo.SubmitRequest.self)
-      }
+      Body { JSON(ServerRoute.Demo.SubmitRequest.self) }
     }
     
     OneOf {
@@ -305,7 +300,7 @@ public func router(
       Method.get
       Path {
         OneOf { "shared-games"; "sharedGames" }
-        String.parser().pipe { SharedModels.SharedGame.Code.parser() }
+        SharedGame.Code.parser(rawValue: String.parser())
       }
     }
   }

@@ -4,7 +4,7 @@ import Prelude
 import Parsing
 import URLRouting
 
-func _verifiedDataBody(
+func verifiedDataBody(
   date: @escaping () -> Date,
   require: Bool = true,
   secrets: [String],
@@ -69,11 +69,6 @@ extension PartialConversion where Input == (Data, Data?, Int?), Output == Data {
   ) -> Self {
     Self(
       apply: { data, signature, timestamp in
-        Swift.print(data)
-        Swift.print(signature)
-        Swift.print(timestamp)
-        Swift.print("!")
-        
         guard
           let signature = signature,
           let timestamp = timestamp
@@ -110,13 +105,9 @@ func isValidSignature(
   sha256: @escaping (Data) -> Data,
   timestamp: Int
 ) -> Bool {
-  let sigs = signatures(data: data, secrets: secrets, sha256: sha256, timestamp: timestamp)
-  
-  let currentTime = date().timeIntervalSince1970
-  let condition = abs(Int(date().timeIntervalSince1970) - timestamp) <= 20
-  
-  return sigs.first(where: { $0 == signature }) != nil
-    && condition
+  signatures(data: data, secrets: secrets, sha256: sha256, timestamp: timestamp)
+    .first(where: { $0 == signature }) != nil
+    && abs(Int(date().timeIntervalSince1970) - timestamp) <= 20
 }
 
 func signatures(
