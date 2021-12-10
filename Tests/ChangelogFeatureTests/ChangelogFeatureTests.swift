@@ -71,7 +71,7 @@ class ChangelogFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear) {
-      $0.currentBuild = 42
+      $0.currentBuild = 40
       $0.isRequestInFlight = true
     }
     store.receive(.changelogResponse(.success(changelog))) {
