@@ -43,6 +43,7 @@ class PersistenceTests: XCTestCase {
           return .none
         }
         $0.mainRunLoop = .immediate
+        $0.mainQueue = .immediate
       }
     )
 
@@ -172,6 +173,7 @@ class PersistenceTests: XCTestCase {
           saves.append(data)
           return .none
         }
+        $0.mainQueue = .immediate
       }
     )
 
@@ -228,6 +230,7 @@ class PersistenceTests: XCTestCase {
           didArchiveGame = true
           return .none
         }
+        $0.mainQueue = .immediate
       }
     )
 
