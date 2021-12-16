@@ -63,7 +63,7 @@ public struct StatsState: Equatable {
   }
 }
 
-public enum StatsAction: Equatable {
+public enum StatsAction {
   case backButtonTapped
   case onAppear
   case setNavigation(tag: StatsState.Route.Tag?)

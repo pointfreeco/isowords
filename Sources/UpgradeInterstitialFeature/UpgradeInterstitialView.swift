@@ -38,7 +38,7 @@ public struct UpgradeInterstitialState: Equatable {
   }
 }
 
-public enum UpgradeInterstitialAction: Equatable {
+public enum UpgradeInterstitialAction {
   case delegate(DelegateAction)
   case fullGameProductResponse(StoreKitClient.Product)
   case maybeLaterButtonTapped

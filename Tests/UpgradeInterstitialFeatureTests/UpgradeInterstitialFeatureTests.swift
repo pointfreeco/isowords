@@ -60,7 +60,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
     store.send(.onAppear)
 
-    store.receive(.fullGameProductResponse(fullGameProduct)) {
+    store.receive(/UpgradeInterstitialAction.fullGameProductResponse) {
       $0.fullGameProduct = fullGameProduct
     }
 
@@ -71,8 +71,14 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     observer.send(.updatedTransactions(transactions))
     XCTAssertNoDifference(paymentAdded?.productIdentifier, "co.pointfree.isowords_testing.full_game")
 
-    store.receive(.paymentTransaction(.updatedTransactions(transactions)))
-    store.receive(.delegate(.fullGamePurchased))
+    store.receive(
+      /UpgradeInterstitialAction.paymentTransaction
+        .. /StoreKitClient.PaymentTransactionObserverEvent.updatedTransactions
+    )
+    store.receive(
+      /UpgradeInterstitialAction.delegate
+        .. /UpgradeInterstitialAction.DelegateAction.fullGamePurchased
+    )
   }
 
   func testWaitAndDismiss() {
@@ -91,23 +97,23 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     store.send(.onAppear)
 
     self.scheduler.advance(by: .seconds(1))
-    store.receive(.timerTick) { $0.secondsPassedCount = 1 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 1 }
 
     self.scheduler.advance(by: .seconds(15))
-    store.receive(.timerTick) { $0.secondsPassedCount = 2 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 3 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 4 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 5 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 6 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 7 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 8 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 9 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 10 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 2 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 3 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 4 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 5 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 6 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 7 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 8 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 9 }
+    store.receive(/UpgradeInterstitialAction.timerTick) { $0.secondsPassedCount = 10 }
 
     self.scheduler.run()
 
     store.send(.maybeLaterButtonTapped)
-    store.receive(.delegate(.close))
+    store.receive(/UpgradeInterstitialAction.delegate .. /UpgradeInterstitialAction.DelegateAction.close)
   }
 
   func testMaybeLater_Dismissable() {
@@ -125,7 +131,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
     store.send(.onAppear)
     store.send(.maybeLaterButtonTapped)
-    store.receive(.delegate(.close))
+    store.receive(/UpgradeInterstitialAction.delegate .. /UpgradeInterstitialAction.DelegateAction.close)
   }
 }
 
