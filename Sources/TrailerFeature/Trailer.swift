@@ -37,7 +37,7 @@ public struct TrailerState: Equatable {
   }
 }
 
-public enum TrailerAction: BindableAction, Equatable {
+public enum TrailerAction: BindableAction {
   case delayedOnAppear
   case game(GameAction)
   case binding(BindingAction<TrailerState>)

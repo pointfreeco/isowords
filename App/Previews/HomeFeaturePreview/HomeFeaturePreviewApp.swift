@@ -52,7 +52,7 @@ struct HomeFeaturePreviewApp: App {
               feedbackGenerator: .live,
               fileClient: .live,
               gameCenter: update(.noop) {
-                $0.localPlayer.authenticate = .init(value: nil)
+                $0.localPlayer.authenticate = .init(value: ())
               },
               lowPowerMode: .live,
               mainQueue: .main,
