@@ -34,7 +34,6 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
               route: .verifyReceipt(receiptData),
               as: VerifyReceiptEnvelope.self
             )
-            .mapError { $0 as NSError }
             .map { ReceiptFinalizationEnvelope(transactions: transactions, verifyEnvelope: $0) }
             .catchToEffect(AppAction.verifyReceiptResponse)
           } else {

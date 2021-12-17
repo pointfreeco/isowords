@@ -54,7 +54,7 @@ class TurnBasedTests: XCTestCase {
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
+        $0.gameCenter.localPlayer.authenticate = .init(value: ())
         $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.turnBasedMatch.endTurn = {
@@ -274,7 +274,7 @@ class TurnBasedTests: XCTestCase {
           .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.deviceId.id = { .deviceId }
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
+        $0.gameCenter.localPlayer.authenticate = .init(value: ())
         $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
@@ -344,7 +344,7 @@ class TurnBasedTests: XCTestCase {
           .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.deviceId.id = { .deviceId }
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
+        $0.gameCenter.localPlayer.authenticate = .init(value: ())
         $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
@@ -482,7 +482,7 @@ class TurnBasedTests: XCTestCase {
     }
     store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: updatedMatch) }
 
-    store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
+    store.send(.currentGame(.game(.bottomMenu(.confirmRemoveCube(.zero))))) {
       $0.game = updatedGameState
     }
     store.receive(
@@ -534,7 +534,9 @@ class TurnBasedTests: XCTestCase {
     }
     store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: updatedMatch) }
 
-    store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
+    store.send(
+      .currentGame(.game(.bottomMenu(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one)))))
+    ) {
       $0.game = updatedGameState
     }
     store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))) {

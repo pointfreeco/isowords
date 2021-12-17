@@ -80,7 +80,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     }
   }
 
-  public enum ViewAction: Equatable {
+  public enum ViewAction {
     case doubleTap(index: LatticePoint)
     case pan(UIGestureRecognizer.State, PanData?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)

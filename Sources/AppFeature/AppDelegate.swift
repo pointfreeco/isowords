@@ -12,11 +12,11 @@ import TcaHelpers
 import UIKit
 import UserNotifications
 
-public enum AppDelegateAction: Equatable {
+public enum AppDelegateAction {
   case didFinishLaunching
-  case didRegisterForRemoteNotifications(Result<Data, NSError>)
+  case didRegisterForRemoteNotifications(Result<Data, Error>)
   case userNotifications(UserNotificationClient.DelegateEvent)
-  case userSettingsLoaded(Result<UserSettings, NSError>)
+  case userSettingsLoaded(Result<UserSettings, Error>)
 }
 
 struct AppDelegateEnvironment {

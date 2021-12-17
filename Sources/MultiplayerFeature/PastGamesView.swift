@@ -9,8 +9,8 @@ public struct PastGamesState: Equatable {
   public var pastGames: IdentifiedArrayOf<PastGameState> = []
 }
 
-public enum PastGamesAction: Equatable {
-  case matchesResponse(Result<[PastGameState], NSError>)
+public enum PastGamesAction {
+  case matchesResponse(Result<[PastGameState], Error>)
   case onAppear
   case pastGame(TurnBasedMatch.Id, PastGameAction)
 }
@@ -54,7 +54,6 @@ let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnviron
           }
           .sorted { $0.endDate > $1.endDate }
         }
-        .mapError { $0 as NSError }
         .receive(on: environment.mainQueue)
         .catchToEffect(PastGamesAction.matchesResponse)
 

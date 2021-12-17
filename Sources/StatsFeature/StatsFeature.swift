@@ -63,11 +63,11 @@ public struct StatsState: Equatable {
   }
 }
 
-public enum StatsAction: Equatable {
+public enum StatsAction {
   case backButtonTapped
   case onAppear
   case setNavigation(tag: StatsState.Route.Tag?)
-  case statsResponse(Result<LocalDatabaseClient.Stats, NSError>)
+  case statsResponse(Result<LocalDatabaseClient.Stats, Error>)
   case vocab(VocabAction)
 }
 
@@ -117,7 +117,6 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
     case .onAppear:
       // TODO: should we do this work on background thread?
       return environment.database.fetchStats
-        .mapError { $0 as NSError }
         .catchToEffect(StatsAction.statsResponse)
 
     case let .statsResponse(.failure(error)):

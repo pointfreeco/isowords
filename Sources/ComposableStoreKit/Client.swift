@@ -12,9 +12,9 @@ public struct StoreKitClient {
   public var requestReview: () -> Effect<Never, Never>
   public var restoreCompletedTransactions: () -> Effect<Never, Never>
 
-  public enum PaymentTransactionObserverEvent: Equatable {
+  public enum PaymentTransactionObserverEvent {
     case removedTransactions([PaymentTransaction])
-    case restoreCompletedTransactionsFailed(NSError)
+    case restoreCompletedTransactionsFailed(Error)
     case restoreCompletedTransactionsFinished(transactions: [PaymentTransaction])
     case updatedTransactions([PaymentTransaction])
   }
@@ -64,7 +64,7 @@ public struct StoreKitClient {
   }
 
   public struct PaymentTransaction: Equatable {
-    public var error: NSError?
+    public var error: Error?
     public var _original: () -> PaymentTransaction?
     public var payment: Payment
     public var rawValue: SKPaymentTransaction?
@@ -73,7 +73,7 @@ public struct StoreKitClient {
     public var transactionState: SKPaymentTransactionState
 
     public init(
-      error: NSError?,
+      error: Error?,
       original: @escaping @autoclosure () -> PaymentTransaction?,
       payment: Payment,
       rawValue: SKPaymentTransaction?,
@@ -93,7 +93,7 @@ public struct StoreKitClient {
     public var original: PaymentTransaction? { self._original() }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
-      lhs.error == rhs.error
+      lhs.error as NSError? == rhs.error as NSError?
         && lhs.original == rhs.original
         && lhs.payment == rhs.payment
         && lhs.transactionDate == rhs.transactionDate

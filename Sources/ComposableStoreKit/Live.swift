@@ -124,6 +124,6 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   func paymentQueue(
     _ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error
   ) {
-    self.subscriber.send(.restoreCompletedTransactionsFailed(error as NSError))
+    self.subscriber.send(.restoreCompletedTransactionsFailed(error))
   }
 }

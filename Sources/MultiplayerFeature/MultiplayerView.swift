@@ -32,7 +32,7 @@ public struct MultiplayerState: Equatable {
   }
 }
 
-public enum MultiplayerAction: Equatable {
+public enum MultiplayerAction {
   case pastGames(PastGamesAction)
   case setNavigation(tag: MultiplayerState.Route.Tag?)
   case startButtonTapped

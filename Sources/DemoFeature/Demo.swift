@@ -51,7 +51,7 @@ public struct DemoState: Equatable {
   }
 }
 
-public enum DemoAction: Equatable {
+public enum DemoAction {
   case appStoreOverlay(isPresented: Bool)
   case fullVersionButtonTapped
   case game(GameAction)

@@ -74,7 +74,7 @@ public struct GameOverState: Equatable {
   }
 }
 
-public enum GameOverAction: Equatable {
+public enum GameOverAction {
   case closeButtonTapped
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
   case delayedOnAppear
@@ -90,7 +90,7 @@ public enum GameOverAction: Equatable {
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
-  public enum DelegateAction: Equatable {
+  public enum DelegateAction {
     case close
     case startGame(InProgressGame)
     case startSoloGame(GameMode)

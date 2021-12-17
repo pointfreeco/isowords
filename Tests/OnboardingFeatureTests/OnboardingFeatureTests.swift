@@ -281,7 +281,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
-    store.receive(.game(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))) {
+    store.receive(.game(.bottomMenu(.confirmRemoveCube(.init(x: .two, y: .two, z: .two))))) {
       $0.game.cubes[.two][.two][.two].wasRemoved = true
       $0.game.moves.append(
         .init(

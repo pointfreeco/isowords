@@ -92,13 +92,13 @@ class PastGamesTests: XCTestCase {
       }
     }
 
-    store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure() as NSError)))) {
+    store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure() )))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
         $0.alert = .init(
           title: .init("Error"),
           message: .init("We couldn’t start the rematch. Try again later."),
-          dismissButton: .default(.init("Ok"), action: .send(.dismissAlert))
+          dismissButton: .default(.init("Ok"), action: .send(.dismiss))
         )
       }
     }

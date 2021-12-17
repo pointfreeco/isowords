@@ -52,7 +52,7 @@ class GameFeatureTests: XCTestCase {
     )
 
     store.send(.game(.doubleTap(index: .zero)))
-    store.receive(.game(.confirmRemoveCube(.zero))) {
+    store.receive(.game(.bottomMenu(.confirmRemoveCube(.zero)))) {
       $0.game?.cubes.0.0.0.wasRemoved = true
       $0.game?.moves = [
         .init(

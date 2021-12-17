@@ -3,7 +3,7 @@ import Combine
 import ComposableArchitecture
 
 extension FileClient {
-  public func loadSavedGames() -> Effect<Result<SavedGamesState, NSError>, Never> {
+  public func loadSavedGames() -> Effect<Result<SavedGamesState, Error>, Never> {
     self.load(SavedGamesState.self, from: savedGamesFileName)
   }
 

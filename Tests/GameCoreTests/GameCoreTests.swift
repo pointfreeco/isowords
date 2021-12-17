@@ -36,7 +36,7 @@ class GameCoreTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.forfeitGameButtonTapped) {
+    store.send(.bottomMenu(.forfeitGameButtonTapped)) {
       $0.alert = .init(
         title: .init("Are you sure?"),
         message: .init(

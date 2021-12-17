@@ -14,7 +14,7 @@ public struct ChangeState: Equatable, Identifiable {
   }
 }
 
-public enum ChangeAction: Equatable {
+public enum ChangeAction {
   case showButtonTapped
 }
 

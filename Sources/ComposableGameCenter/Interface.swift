@@ -32,7 +32,7 @@ public struct GameCenterViewControllerClient {
 }
 
 public struct LocalPlayerClient {
-  public var authenticate: Effect<NSError?, Never>
+  public var authenticate: Effect<Void, Error>
   public var listener: Effect<ListenerEvent, Never>
   public var localPlayer: () -> LocalPlayer
   public var presentAuthenticationViewController: Effect<Never, Never>
@@ -77,12 +77,8 @@ public struct TurnBasedMatchClient {
   public var endTurn: (EndTurnRequest) -> Effect<Void, Error>
   public var load: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
   public var loadMatches: () -> Effect<[TurnBasedMatch], Error>
-  public var participantQuitInTurn:
-    (TurnBasedMatch.Id, Data)
-      -> Effect<Error?, Never>
-  public var participantQuitOutOfTurn:
-    (TurnBasedMatch.Id)
-      -> Effect<Error?, Never>
+  public var participantQuitInTurn: (TurnBasedMatch.Id, Data) -> Effect<Void, Error>
+  public var participantQuitOutOfTurn: (TurnBasedMatch.Id) -> Effect<Void, Error>
   public var rematch: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
   public var remove: (TurnBasedMatch) -> Effect<Void, Error>
   public var saveCurrentTurn: (TurnBasedMatch.Id, Data) -> Effect<Void, Error>
@@ -151,9 +147,9 @@ public struct TurnBasedMatchmakerViewControllerClient {
   public var present: (_ showExistingMatches: Bool) -> Effect<DelegateEvent, Never>
   public var dismiss: Effect<Never, Never>
 
-  public enum DelegateEvent: Equatable {
+  public enum DelegateEvent {
     case wasCancelled
-    case didFailWithError(NSError)
+    case didFailWithError(Error)
   }
 
   public func present(showExistingMatches: Bool = true) -> Effect<DelegateEvent, Never> {

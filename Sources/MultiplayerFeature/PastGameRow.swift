@@ -6,7 +6,7 @@ import Styleguide
 import SwiftUI
 
 public struct PastGameState: Equatable, Identifiable {
-  public var alert: AlertState<PastGameAction>?
+  public var alert: AlertState<PastGameAction.AlertAction>?
   public var challengeeDisplayName: String
   public var challengerDisplayName: String
   public var challengeeScore: Int
@@ -35,15 +35,19 @@ public struct PastGameState: Equatable, Identifiable {
   }
 }
 
-public enum PastGameAction: Equatable {
+public enum PastGameAction {
+  case alert(AlertAction)
   case delegate(DelegateAction)
-  case dismissAlert
-  case matchResponse(Result<TurnBasedMatch, NSError>)
+  case matchResponse(Result<TurnBasedMatch, Error>)
   case rematchButtonTapped
-  case rematchResponse(Result<TurnBasedMatch, NSError>)
+  case rematchResponse(Result<TurnBasedMatch, Error>)
   case tappedRow
 
-  public enum DelegateAction: Equatable {
+  public enum AlertAction {
+    case dismiss
+  }
+
+  public enum DelegateAction {
     case openMatch(TurnBasedMatch)
   }
 }
@@ -56,11 +60,11 @@ struct PastGameEnvironment {
 let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment> {
   state, action, environment in
   switch action {
-  case .delegate:
+  case .alert(.dismiss):
+    state.alert = nil
     return .none
 
-  case .dismissAlert:
-    state.alert = nil
+  case .delegate:
     return .none
 
   case .matchResponse(.failure):
@@ -82,7 +86,7 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     state.alert = .init(
       title: TextState("Error"),
       message: TextState("We couldn’t start the rematch. Try again later."),
-      dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert))
+      dismissButton: .default(TextState("Ok"), action: .send(.dismiss))
     )
     return .none
 
@@ -90,13 +94,11 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     state.isRematchRequestInFlight = true
     return environment.gameCenter.turnBasedMatch.rematch(state.matchId)
       .receive(on: environment.mainQueue)
-      .mapError { $0 as NSError }
       .catchToEffect(PastGameAction.rematchResponse)
 
   case .tappedRow:
     return environment.gameCenter.turnBasedMatch.load(state.matchId)
       .receive(on: environment.mainQueue)
-      .mapError { $0 as NSError }
       .catchToEffect(PastGameAction.matchResponse)
   }
 }
@@ -158,7 +160,7 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
+    .alert(self.store.scope(state: \.alert, action: PastGameAction.alert), dismiss: .dismiss)
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
@@ -177,8 +179,8 @@ struct PastGameRow: View {
           .adaptiveFont(.matterMedium, size: 14)
           .foregroundColor(self.colorScheme == .light ? .multiplayer : .isowordsBlack)
       }
-      .padding([.horizontal])
-      .padding([.vertical], .grid(2))
+      .padding(.horizontal)
+      .padding(.vertical, .grid(2))
     }
     .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
     .continuousCornerRadius(999)

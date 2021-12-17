@@ -54,7 +54,7 @@ class DailyChallengeTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.endGameButtonTapped)) {
+    store.send(.game(.bottomMenu(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: CompletedGame(gameState: $0),
@@ -108,7 +108,7 @@ class DailyChallengeTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.endGameButtonTapped)) {
+    store.send(.game(.bottomMenu(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: CompletedGame(gameState: $0),

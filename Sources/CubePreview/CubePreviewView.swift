@@ -55,7 +55,7 @@ public struct CubePreviewState: Equatable {
   }
 }
 
-public enum CubePreviewAction: BindableAction, Equatable {
+public enum CubePreviewAction: BindableAction {
   case binding(BindingAction<CubePreviewState>)
   case cubeScene(CubeSceneView.ViewAction)
   case lowPowerModeResponse(Bool)

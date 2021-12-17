@@ -6,7 +6,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     let activeGameEffects = Effect<GameAction, Never>.merge(
       environment.gameCenter.turnBasedMatch.loadMatches()
         .receive(on: environment.mainQueue.animation())
-        .mapError { $0 as NSError }
         .catchToEffect(GameAction.matchesLoaded),
       environment.fileClient.loadSavedGames()
         .subscribe(on: environment.backgroundQueue)
@@ -16,11 +15,11 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     )
 
     switch action {
-    case .cancelButtonTapped,
-      .confirmRemoveCube,
+    case .bottomMenu(.confirmRemoveCube),
+      .bottomMenu(.endGameButtonTapped),
+      .bottomMenu(.forfeitGameButtonTapped),
+      .cancelButtonTapped,
       .doubleTap,
-      .endGameButtonTapped,
-      .forfeitGameButtonTapped,
       .menuButtonTapped,
       .pan,
       .submitButtonTapped,
@@ -31,16 +30,16 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
     case .activeGames,
       .alert,
+      .bottomMenu(.dismiss),
+      .bottomMenu(.exitButtonTapped),
+      .bottomMenu(.settingsButtonTapped),
       .delayedShowUpgradeInterstitial,
-      .exitButtonTapped,
-      .dismissBottomMenu,
       .gameCenter,
       .gameLoaded,
       .gameOver,
       .lowPowerModeChanged,
       .matchesLoaded(.failure),
       .savedGamesLoaded(.failure),
-      .settingsButtonTapped,
       .timerTick,
       .upgradeInterstitial:
       return .none

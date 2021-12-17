@@ -16,10 +16,10 @@ public struct SoloState: Equatable {
   }
 }
 
-public enum SoloAction: Equatable {
+public enum SoloAction {
   case gameButtonTapped(GameMode)
   case onAppear
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
+  case savedGamesLoaded(Result<SavedGamesState, Error>)
 }
 
 public struct SoloEnvironment {

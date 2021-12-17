@@ -32,7 +32,7 @@ import UserDefaultsClient
 public struct GameState: Equatable {
   public var activeGames: ActiveGamesState
   public var alert: AlertState<GameAction.AlertAction>?
-  public var bottomMenu: BottomMenuState<GameAction>?
+  public var bottomMenu: BottomMenuState<GameAction.BottomMenuAction>?
   public var cubes: Puzzle
   public var cubeStartedShakingAt: Date?
   public var gameContext: ClientModels.GameContext
@@ -58,7 +58,7 @@ public struct GameState: Equatable {
   public init(
     activeGames: ActiveGamesState = .init(),
     alert: AlertState<GameAction.AlertAction>? = nil,
-    bottomMenu: BottomMenuState<GameAction>? = nil,
+    bottomMenu: BottomMenuState<GameAction.BottomMenuAction>? = nil,
     cubes: Puzzle,
     cubeStartedShakingAt: Date? = nil,
     gameContext: ClientModels.GameContext,
@@ -146,27 +146,22 @@ public struct GameState: Equatable {
   }
 }
 
-public enum GameAction: Equatable {
+public enum GameAction {
   case activeGames(ActiveGamesAction)
   case alert(AlertAction)
+  case bottomMenu(BottomMenuAction)
   case cancelButtonTapped
-  case confirmRemoveCube(LatticePoint)
   case delayedShowUpgradeInterstitial
-  case dismissBottomMenu
   case doubleTap(index: LatticePoint)
-  case endGameButtonTapped
-  case exitButtonTapped
-  case forfeitGameButtonTapped
   case gameCenter(GameCenterAction)
   case gameLoaded
   case gameOver(GameOverAction)
   case lowPowerModeChanged(Bool)
-  case matchesLoaded(Result<[TurnBasedMatch], NSError>)
+  case matchesLoaded(Result<[TurnBasedMatch], Error>)
   case menuButtonTapped
   case onAppear
   case pan(UIGestureRecognizer.State, PanData?)
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
-  case settingsButtonTapped
+  case savedGamesLoaded(Result<SavedGamesState, Error>)
   case submitButtonTapped(reaction: Move.Reaction?)
   case tap(UIGestureRecognizer.State, IndexedCubeFace?)
   case timerTick(Date)
@@ -174,15 +169,24 @@ public enum GameAction: Equatable {
   case upgradeInterstitial(UpgradeInterstitialAction)
   case wordSubmitButton(WordSubmitButtonAction)
 
-  public enum AlertAction: Equatable {
+  public enum AlertAction {
     case dismiss
     case dontForfeitButtonTapped
     case forfeitButtonTapped
   }
 
-  public enum GameCenterAction: Equatable {
+  public enum BottomMenuAction: Equatable {
+    case dismiss
+    case confirmRemoveCube(LatticePoint)
+    case endGameButtonTapped
+    case exitButtonTapped
+    case forfeitGameButtonTapped
+    case settingsButtonTapped
+  }
+
+  public enum GameCenterAction {
     case listener(LocalPlayerClient.ListenerEvent)
-    case turnBasedMatchResponse(Result<TurnBasedMatch, NSError>)
+    case turnBasedMatchResponse(Result<TurnBasedMatch, Error>)
   }
 }
 
@@ -321,35 +325,24 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
           state.gameOver(environment: environment)
         )
 
-      case .cancelButtonTapped:
-        state.selectedWord = []
-        return .none
-
-      case let .confirmRemoveCube(index):
+      case let .bottomMenu(.confirmRemoveCube(index)):
         state.bottomMenu = nil
         state.removeCube(at: index, playedAt: environment.date())
         state.selectedWord = []
         return .none
 
-      case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
-        return .none
-
-      case .dismissBottomMenu:
+      case .bottomMenu(.dismiss):
         state.bottomMenu = nil
         return .none
 
-      case .doubleTap:
-        return .none
-
-      case .endGameButtonTapped:
+      case .bottomMenu(.endGameButtonTapped):
         return state.gameOver(environment: environment)
 
-      case .exitButtonTapped:
+      case .bottomMenu(.exitButtonTapped):
         return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
           .fireAndForget()
 
-      case .forfeitGameButtonTapped:
+      case .bottomMenu(.forfeitGameButtonTapped):
         state.alert = .init(
           title: .init("Are you sure?"),
           message: .init(
@@ -360,6 +353,21 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
           primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
           secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
         )
+        return .none
+
+      case .bottomMenu(.settingsButtonTapped):
+        state.isSettingsPresented = true
+        return .none
+        
+      case .cancelButtonTapped:
+        state.selectedWord = []
+        return .none
+
+      case .delayedShowUpgradeInterstitial:
+        state.upgradeInterstitial = .init()
+        return .none
+
+      case .doubleTap:
         return .none
 
       case .gameCenter:
@@ -437,10 +445,6 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return .none
 
       case .savedGamesLoaded:
-        return .none
-
-      case .settingsButtonTapped:
-        state.isSettingsPresented = true
         return .none
 
       case let .submitButtonTapped(reaction: reaction),
@@ -642,7 +646,7 @@ extension GameState {
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .init(value: .confirmRemoveCube(index)) }
+    else { return .init(value: .bottomMenu(.confirmRemoveCube(index))) }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.turnBasedContext,
@@ -829,7 +833,7 @@ extension TurnBasedMatchData {
   }
 }
 
-extension BottomMenuState where Action == GameAction {
+extension BottomMenuState where Action == GameAction.BottomMenuAction {
   public static func removeCube(
     index: LatticePoint,
     state: GameState,
@@ -847,13 +851,13 @@ extension BottomMenuState where Action == GameAction {
         icon: .init(systemName: "trash"),
         action: .init(action: .confirmRemoveCube(index), animation: .default)
       ),
-      onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+      onDismiss: .init(action: .dismiss, animation: .default)
     )
   }
 
   static func gameMenu(state: GameState) -> Self {
     var menu = BottomMenuState(title: menuTitle(state: state))
-    menu.onDismiss = .init(action: .dismissBottomMenu, animation: .default)
+    menu.onDismiss = .init(action: .dismiss, animation: .default)
 
     if state.isResumable {
       menu.buttons.append(
@@ -1054,6 +1058,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     else { return .none }
 
     switch action {
+    case .bottomMenu(.exitButtonTapped),
+      .gameOver(.delegate(.close)):
+      return .cancel(id: ListenerId())
+
     case let .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(match, _)))),
       let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
 
@@ -1113,18 +1121,14 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
     case .gameCenter(.turnBasedMatchResponse(.failure)):
       return .none
 
-    case .gameOver(.delegate(.close)),
-      .exitButtonTapped:
-      return .cancel(id: ListenerId())
-
     case .onAppear:
       return environment.gameCenter.localPlayer.listener
         .map { .gameCenter(.listener($0)) }
         .cancellable(id: ListenerId())
 
-    case .submitButtonTapped,
-      .wordSubmitButton(.delegate(.confirmSubmit)),
-      .confirmRemoveCube:
+    case .bottomMenu(.confirmRemoveCube),
+      .submitButtonTapped,
+      .wordSubmitButton(.delegate(.confirmSubmit)):
       guard
         let move = state.moves.last,
         let localPlayerIndex = turnBasedContext.localPlayerIndex,
@@ -1138,7 +1142,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       )
       let matchData = Data(turnBasedMatchData: turnBasedMatchData)
       let reloadMatch = environment.gameCenter.turnBasedMatch.load(turnBasedContext.match.matchId)
-        .mapError { $0 as NSError }
         .catchToEffect { GameAction.gameCenter(.turnBasedMatchResponse($0)) }
 
       if state.isGameOver {

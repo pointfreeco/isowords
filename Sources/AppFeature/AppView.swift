@@ -64,7 +64,7 @@ public struct AppState: Equatable {
   }
 }
 
-public enum AppAction: Equatable {
+public enum AppAction {
   case appDelegate(AppDelegateAction)
   case currentGame(GameFeatureAction)
   case didChangeScenePhase(ScenePhase)
@@ -72,8 +72,8 @@ public enum AppAction: Equatable {
   case home(HomeAction)
   case onboarding(OnboardingAction)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
-  case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, NSError>)
+  case savedGamesLoaded(Result<SavedGamesState, Error>)
+  case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, ApiError>)
 }
 
 extension AppEnvironment {
@@ -264,7 +264,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
   case .appDelegate:
     return .none
 
-  case .currentGame(.game(.endGameButtonTapped)),
+  case .currentGame(.game(.bottomMenu(.endGameButtonTapped))),
     .currentGame(.game(.gameOver(.onAppear))):
 
     switch (state.game?.gameContext, state.game?.gameMode) {
@@ -315,7 +315,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       .receive(on: environment.mainQueue.animation())
       .eraseToEffect()
 
-  case .currentGame(.game(.exitButtonTapped)),
+  case .currentGame(.game(.bottomMenu(.exitButtonTapped))),
     .currentGame(.game(.gameOver(.delegate(.close)))):
     state.game = nil
     return .none

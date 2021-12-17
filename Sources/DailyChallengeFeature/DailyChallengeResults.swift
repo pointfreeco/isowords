@@ -20,7 +20,7 @@ public struct DailyChallengeResultsState: Equatable {
   }
 }
 
-public enum DailyChallengeResultsAction: Equatable {
+public enum DailyChallengeResultsAction {
   case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
   case loadHistory
   case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, ApiError>)

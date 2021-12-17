@@ -9,10 +9,10 @@ import HomeFeature
 import Overture
 import SharedModels
 
-public enum GameCenterAction: Equatable {
+public enum GameCenterAction {
   case listener(LocalPlayerClient.ListenerEvent)
-  case rematchResponse(Result<TurnBasedMatch, NSError>)
-  case turnBasedMatchReloaded(Result<TurnBasedMatch, NSError>)
+  case rematchResponse(Result<TurnBasedMatch, Error>)
+  case turnBasedMatchReloaded(Result<TurnBasedMatch, Error>)
 }
 
 extension Reducer where State == AppState, Action == AppAction, Environment == AppEnvironment {
@@ -127,7 +127,8 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
           switch action {
           case .appDelegate(.didFinishLaunching):
             return environment.gameCenter.localPlayer.authenticate
-              .map { $0 == nil }
+              .catchToEffect()
+              .map { /Result.success ~= $0 }
               .removeDuplicates()
               .flatMap {
                 $0
@@ -148,7 +149,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             return environment.gameCenter.turnBasedMatch
               .rematch(turnBasedMatch.match.matchId)
               .receive(on: environment.mainQueue)
-              .mapError { $0 as NSError }
               .catchToEffect { .gameCenter(.rematchResponse($0)) }
 
           case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
@@ -206,7 +206,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
           case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
             return environment.gameCenter.turnBasedMatch.rematch(matchId)
               .receive(on: environment.mainQueue)
-              .mapError { $0 as NSError }
               .catchToEffect { .gameCenter(.rematchResponse($0)) }
 
           default:

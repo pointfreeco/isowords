@@ -120,7 +120,7 @@ public struct HomeState: Equatable {
   }
 }
 
-public enum HomeAction: BindableAction, Equatable {
+public enum HomeAction: BindableAction {
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
   case binding(BindingAction<HomeState>)
@@ -132,7 +132,7 @@ public enum HomeAction: BindableAction, Equatable {
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
-  case matchesLoaded(Result<[ActiveTurnBasedMatch], NSError>)
+  case matchesLoaded(Result<[ActiveTurnBasedMatch], Error>)
   case multiplayer(MultiplayerAction)
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
@@ -143,7 +143,7 @@ public enum HomeAction: BindableAction, Equatable {
   case solo(SoloAction)
   case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
 
-  public enum GameButtonAction: Equatable {
+  public enum GameButtonAction {
     case dailyChallenge
     case multiplayer
     case solo
@@ -755,6 +755,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
 
   return
     environment.gameCenter.localPlayer.authenticate
+    .catch { _ in Empty(completeImmediately: true) }
     .flatMap { _ in
       Publishers.Merge(
         serverAuthenticateAndLoadData,
@@ -779,7 +780,6 @@ private func loadMatches(
 
   return gameCenter.turnBasedMatch.loadMatches()
     .receive(on: backgroundQueue)
-    .mapError { $0 as NSError }
     .catchToEffect()
     .flatMap { result in
       Effect.merge(

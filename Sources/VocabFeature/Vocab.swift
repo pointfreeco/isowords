@@ -32,12 +32,12 @@ public struct VocabState: Equatable {
   }
 }
 
-public enum VocabAction: Equatable {
+public enum VocabAction {
   case dismissCubePreview
-  case gamesResponse(Result<VocabState.GamesResponse, NSError>)
+  case gamesResponse(Result<VocabState.GamesResponse, Error>)
   case onAppear
   case preview(CubePreviewAction)
-  case vocabResponse(Result<LocalDatabaseClient.Vocab, NSError>)
+  case vocabResponse(Result<LocalDatabaseClient.Vocab, Error>)
   case wordTapped(LocalDatabaseClient.Vocab.Word)
 }
 
@@ -119,7 +119,6 @@ public let vocabReducer = Reducer<
 
     case .onAppear:
       return environment.database.fetchVocab
-        .mapError { $0 as NSError }
         .catchToEffect(VocabAction.vocabResponse)
 
     case .preview:
@@ -135,7 +134,6 @@ public let vocabReducer = Reducer<
     case let .wordTapped(word):
       return environment.database.fetchGamesForWord(word.letters)
         .map { .init(games: $0, word: word.letters) }
-        .mapError { $0 as NSError }
         .catchToEffect(VocabAction.gamesResponse)
     }
   }

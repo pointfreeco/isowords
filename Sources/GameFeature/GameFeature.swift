@@ -18,7 +18,7 @@ public struct GameFeatureState: Equatable {
   }
 }
 
-public enum GameFeatureAction: Equatable {
+public enum GameFeatureAction {
   case game(GameAction)
   case settings(SettingsAction)
   case onDisappear

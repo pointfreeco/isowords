@@ -137,11 +137,11 @@ class PersistenceTests: XCTestCase {
             icon: .init(systemName: "gear"),
             action: .init(action: .settingsButtonTapped, animation: .default)
           ),
-          onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+          onDismiss: .init(action: .dismiss, animation: .default)
         )
       }
     }
-    store.send(.currentGame(.game(.exitButtonTapped))) { appState in
+    store.send(.currentGame(.game(.bottomMenu(.exitButtonTapped)))) { appState in
       try XCTUnwrap(&appState.game) { game in
         appState.home.savedGames.unlimited = InProgressGame(gameState: game)
       }
@@ -199,11 +199,11 @@ class PersistenceTests: XCTestCase {
             icon: .init(systemName: "gear"),
             action: .init(action: .settingsButtonTapped, animation: .default)
           ),
-          onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+          onDismiss: .init(action: .dismiss, animation: .default)
         )
       }
     }
-    store.send(.currentGame(.game(.endGameButtonTapped))) {
+    store.send(.currentGame(.game(.bottomMenu(.endGameButtonTapped)))) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: .init(gameState: $0),
@@ -251,11 +251,11 @@ class PersistenceTests: XCTestCase {
             icon: .init(systemName: "gear"),
             action: .init(action: .settingsButtonTapped, animation: .default)
           ),
-          onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+          onDismiss: .init(action: .dismiss, animation: .default)
         )
       }
     }
-    store.send(.currentGame(.game(.endGameButtonTapped))) {
+    store.send(.currentGame(.game(.bottomMenu(.endGameButtonTapped)))) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: .init(gameState: $0),
@@ -315,7 +315,7 @@ class PersistenceTests: XCTestCase {
       }
     )
 
-    store.send(.currentGame(.game(.endGameButtonTapped))) {
+    store.send(.currentGame(.game(.bottomMenu(.endGameButtonTapped)))) {
       try XCTUnwrap(&$0.game) {
         var gameOver = GameOverState(
           completedGame: .init(gameState: $0),

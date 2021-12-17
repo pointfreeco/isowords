@@ -26,13 +26,13 @@ public struct ActiveGamesState: Equatable {
   }
 }
 
-public enum ActiveGamesAction: Equatable {
+public enum ActiveGamesAction {
   case dailyChallengeTapped
   case soloTapped
   case turnBasedGameMenuItemTapped(TurnBasedMenuAction)
   case turnBasedGameTapped(ComposableGameCenter.TurnBasedMatch.Id)
 
-  public enum TurnBasedMenuAction: Equatable {
+  public enum TurnBasedMenuAction {
     case deleteMatch(ComposableGameCenter.TurnBasedMatch.Id)
     case rematch(ComposableGameCenter.TurnBasedMatch.Id)
     case sendReminder(ComposableGameCenter.TurnBasedMatch.Id, otherPlayerIndex: Move.PlayerIndex)

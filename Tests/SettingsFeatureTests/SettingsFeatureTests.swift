@@ -216,11 +216,11 @@ class SettingsFeatureTests: XCTestCase {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
-    store.send(.openSettingButtonTapped)
+    store.send(.alert(.openSettingButtonTapped))
 
     XCTAssertNoDifference(openedUrl, URL(string: "settings:isowords//isowords/settings")!)
 
-    store.send(.set(\.$alert, nil)) {
+    store.send(.alert(.dismiss)) {
       $0.alert = nil
     }
 

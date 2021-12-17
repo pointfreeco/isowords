@@ -42,8 +42,6 @@ public enum LeaderboardResultsAction<TimeScope> {
   case timeScopeChanged(TimeScope)
 }
 
-extension LeaderboardResultsAction: Equatable where TimeScope: Equatable {}
-
 public struct LeaderboardResultsEnvironment<TimeScope> {
   public let loadResults: (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>
   public let mainQueue: AnySchedulerOf<DispatchQueue>

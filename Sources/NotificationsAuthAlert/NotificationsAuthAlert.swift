@@ -11,12 +11,12 @@ public struct NotificationsAuthAlertState: Equatable {
   public init() {}
 }
 
-public enum NotificationsAuthAlertAction: Equatable {
+public enum NotificationsAuthAlertAction {
   case closeButtonTapped
   case delegate(DelegateAction)
   case turnOnNotificationsButtonTapped
 
-  public enum DelegateAction: Equatable {
+  public enum DelegateAction {
     case close
     case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
   }

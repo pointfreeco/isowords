@@ -131,7 +131,7 @@ public struct OnboardingState: Equatable {
   }
 }
 
-public enum OnboardingAction: Equatable {
+public enum OnboardingAction {
   case alert(AlertAction)
   case delayedNextStep
   case delegate(DelegateAction)
@@ -141,7 +141,7 @@ public enum OnboardingAction: Equatable {
   case nextButtonTapped
   case skipButtonTapped
 
-  public enum AlertAction: Equatable {
+  public enum AlertAction {
     case confirmSkipButtonTapped
     case dismiss
     case resumeButtonTapped
@@ -275,18 +275,18 @@ public let onboardingReducer = Reducer<
       return .none
     }
 
-  case let .game(.confirmRemoveCube(index)):
+  case let .game(.bottomMenu(.confirmRemoveCube(index))):
     state.step.next()
     return onboardingGameReducer.run(
       &state,
-      .game(.confirmRemoveCube(index)),
+      .game(.bottomMenu(.confirmRemoveCube(index))),
       environment
     )
 
   case let .game(.doubleTap(index: index)):
     guard state.step == .some(.step19_DoubleTapToRemove)
     else { return .none }
-    return .init(value: .game(.confirmRemoveCube(index)))
+    return .init(value: .game(.bottomMenu(.confirmRemoveCube(index))))
 
   case let .game(.tap(gestureState, .some(indexedCubeFace))):
     let index =

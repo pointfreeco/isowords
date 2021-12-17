@@ -10,12 +10,12 @@ public struct NagBannerState: Equatable {
   var upgradeInterstitial: UpgradeInterstitialState? = nil
 }
 
-public enum NagBannerAction: Equatable {
+public enum NagBannerAction {
   case tapped
   case upgradeInterstitial(UpgradeInterstitialAction)
 }
 
-public enum NagBannerFeatureAction: Equatable {
+public enum NagBannerFeatureAction {
   case dismissUpgradeInterstitial
   case nagBanner(NagBannerAction)
 }

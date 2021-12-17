@@ -9,6 +9,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .combined(
         with: .init { state, action, environment in
           switch action {
+          case .bottomMenu(.confirmRemoveCube):
+            return environment.audioPlayer.play(.cubeRemove)
+              .fireAndForget()
+
           case .onAppear:
             let soundEffect: Effect<Never, Never>
             if state.gameMode == .timed {
@@ -25,10 +29,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             }
             return
               soundEffect
-              .fireAndForget()
-
-          case .confirmRemoveCube:
-            return environment.audioPlayer.play(.cubeRemove)
               .fireAndForget()
 
           default:

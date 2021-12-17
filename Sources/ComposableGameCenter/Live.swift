@@ -79,7 +79,11 @@ extension LocalPlayerClient {
         Effect
         .run { subscriber in
           localPlayer.authenticateHandler = { viewController, error in
-            subscriber.send(error.map { $0 as NSError })
+            if let error = error {
+              subscriber.send(completion: .failure(error))
+            } else {
+              subscriber.send(())
+            }
             if viewController != nil {
               Self.viewController = viewController
             }
@@ -277,7 +281,7 @@ extension TurnBasedMatchClient {
       .future { callback in
         GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
           guard let match = match else {
-            callback(.success(error))
+            callback(error.map(Result.failure) ?? .success(()))
             return
           }
           match.participantQuitInTurn(
@@ -286,7 +290,7 @@ extension TurnBasedMatchClient {
               .filter { $0.player?.gamePlayerID != match.currentParticipant?.player?.gamePlayerID },
             turnTimeout: 0,
             match: matchData
-          ) { callback(.success($0)) }
+          ) { callback($0.map(Result.failure) ?? .success(())) }
         }
       }
     },
@@ -294,11 +298,11 @@ extension TurnBasedMatchClient {
       .future { callback in
         GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
           guard let match = match else {
-            callback(.success(error))
+            callback(error.map(Result.failure) ?? .success(()))
             return
           }
           match.participantQuitOutOfTurn(with: .quit) {
-            callback(.success($0))
+            callback($0.map(Result.failure) ?? .success(()))
           }
         }
       }
@@ -388,7 +392,7 @@ extension TurnBasedMatchmakerViewControllerClient {
           func turnBasedMatchmakerViewController(
             _ viewController: GKTurnBasedMatchmakerViewController, didFailWithError error: Error
           ) {
-            self.subscriber.send(.didFailWithError(error as NSError))
+            self.subscriber.send(.didFailWithError(error))
             self.subscriber.send(completion: .finished)
           }
         }

@@ -109,7 +109,7 @@ public struct DeveloperSettings: Equatable {
 }
 
 public struct SettingsState: Equatable {
-  @BindableState public var alert: AlertState<SettingsAction>?
+  public var alert: AlertState<SettingsAction.AlertAction>?
   public var buildNumber: Build.Number?
   @BindableState public var cubeShadowRadius: CGFloat
   @BindableState public var developer: DeveloperSettings
@@ -129,7 +129,7 @@ public struct SettingsState: Equatable {
   public struct ProductError: Error, Equatable {}
 
   public init(
-    alert: AlertState<SettingsAction>? = nil,
+    alert: AlertState<SettingsAction.AlertAction>? = nil,
     buildNumber: Build.Number? = nil,
     cubeShadowRadius: CGFloat = 50,
     developer: DeveloperSettings = DeveloperSettings(),
@@ -169,22 +169,27 @@ public struct SettingsState: Equatable {
   }
 }
 
-public enum SettingsAction: BindableAction, Equatable {
+public enum SettingsAction: BindableAction {
+  case alert(AlertAction)
   case binding(BindingAction<SettingsState>)
   case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, ApiError>)
   case didBecomeActive
   case leaveUsAReviewButtonTapped
   case onAppear
   case onDismiss
-  case openSettingButtonTapped
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-  case productsResponse(Result<StoreKitClient.ProductsResponse, NSError>)
+  case productsResponse(Result<StoreKitClient.ProductsResponse, Error>)
   case reportABugButtonTapped
   case restoreButtonTapped
   case stats(StatsAction)
   case tappedProduct(StoreKitClient.Product)
-  case userNotificationAuthorizationResponse(Result<Bool, NSError>)
+  case userNotificationAuthorizationResponse(Result<Bool, Error>)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
+
+  public enum AlertAction {
+    case dismiss
+    case openSettingButtonTapped
+  }
 }
 
 public struct SettingsEnvironment {
@@ -309,6 +314,17 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     struct UpdateRemoteSettingsId: Hashable {}
 
     switch action {
+    case .alert(.openSettingButtonTapped):
+      return URL(string: environment.applicationClient.openSettingsURLString())
+        .map {
+          environment.applicationClient.open($0, [:]).fireAndForget()
+        }
+        ?? .none
+
+    case .alert(.dismiss):
+      state.alert = nil
+      return .none
+
     case .binding(\.$developer.currentBaseUrl):
       return .merge(
         environment.apiClient.setBaseUrl(state.developer.currentBaseUrl.url).fireAndForget(),
@@ -329,7 +345,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       case .notDetermined, .provisional:
         state.enableNotifications = true
         return environment.userNotifications.requestAuthorization([.alert, .sound])
-          .mapError { $0 as NSError }
           .receive(on: environment.mainQueue.animation())
           .catchToEffect(SettingsAction.userNotificationAuthorizationResponse)
 
@@ -449,7 +464,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           .fetchProducts([
             environment.serverConfig.config().productIdentifiers.fullGame
           ])
-          .mapError { $0 as NSError }
           .receive(on: environment.mainQueue.animation())
           .catchToEffect(SettingsAction.productsResponse)
       }
@@ -504,13 +518,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .paymentTransaction:
       return .none
-
-    case .openSettingButtonTapped:
-      return URL(string: environment.applicationClient.openSettingsURLString())
-        .map {
-          environment.applicationClient.open($0, [:]).fireAndForget()
-        }
-        ?? .none
 
     case let .productsResponse(.success(response)):
       state.fullGameProduct =
@@ -591,14 +598,14 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     .debounce(id: SaveDebounceId(), for: .seconds(1), scheduler: environment.mainQueue)
 }
 
-extension AlertState where Action == SettingsAction {
+extension AlertState where Action == SettingsAction.AlertAction {
   static let userNotificationAuthorizationDenied = Self(
     title: .init("Permission Denied"),
     message: .init(
       """
       Turn on notifications in iOS settings.
       """),
-    primaryButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil))),
+    primaryButton: .default(.init("Ok"), action: .send(.dismiss)),
     secondaryButton: .default(.init("Open Settings"), action: .send(.openSettingButtonTapped))
   )
 
@@ -608,7 +615,7 @@ extension AlertState where Action == SettingsAction {
       """
       We couldn’t restore purchases, please try again.
       """),
-    dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
+    dismissButton: .default(.init("Ok"), action: .send(.dismiss))
   )
 
   static let noRestoredPurchases = Self(
@@ -617,6 +624,6 @@ extension AlertState where Action == SettingsAction {
       """
       No purchases were found to restore.
       """),
-    dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
+    dismissButton: .default(.init("Ok"), action: .send(.dismiss))
   )
 }

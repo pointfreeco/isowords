@@ -28,7 +28,7 @@ public struct ChangelogState: Equatable {
   }
 }
 
-public enum ChangelogAction: Equatable {
+public enum ChangelogAction {
   case change(id: Build.Number, action: ChangeAction)
   case changelogResponse(Result<Changelog, ApiError>)
   case onAppear

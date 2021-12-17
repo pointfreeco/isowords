@@ -10,10 +10,9 @@ public struct FileClient {
 
   public func load<A: Decodable>(
     _ type: A.Type, from fileName: String
-  ) -> Effect<Result<A, NSError>, Never> {
+  ) -> Effect<Result<A, Error>, Never> {
     self.load(fileName)
       .decode(type: A.self, decoder: JSONDecoder())
-      .mapError { $0 as NSError }
       .catchToEffect()
   }
 

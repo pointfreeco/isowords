@@ -63,7 +63,7 @@ public struct LeaderboardState: Equatable {
   }
 }
 
-public enum LeaderboardAction: Equatable {
+public enum LeaderboardAction {
   case cubePreview(CubePreviewAction)
   case dismissCubePreview
   case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
