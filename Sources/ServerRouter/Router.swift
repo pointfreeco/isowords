@@ -5,7 +5,7 @@ import Parsing
 import Prelude
 import SharedModels
 import Tagged
-import URLRouting
+import _URLRouting
 import XCTestDynamicOverlay
 
 #if canImport(FoundationNetworking)
@@ -22,183 +22,171 @@ private func apiRouter(
 ) -> AnyParserPrinter<URLRequestData, ServerRoute.Api.Route> {
   
   let dailyChallengeRouter = OneOf {
-    Routing(/ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:)) {
+    Route(/ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:)) {
       Method.post
       Query {
-        Field("gameMode", GameMode.parser(rawValue: String.parser()))
-        Field("language", Language.parser(rawValue: String.parser()))
+        Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
+        Field("language", Parse(.string.rawValue(of: Language.self)))
       }
     }
     
-    Routing(/ServerRoute.Api.Route.DailyChallenge.today(language:)) {
-      Method.get
+    Route(/ServerRoute.Api.Route.DailyChallenge.today(language:)) {
       Path { "today" }
       Query {
-        Field("language", Language.parser(rawValue: String.parser()))
+        Field("language", Parse(.string.rawValue(of: Language.self)))
       }
     }
     
-    Routing(/ServerRoute.Api.Route.DailyChallenge.results) {
+    Route(/ServerRoute.Api.Route.DailyChallenge.results) {
       Path { "results" }
       OneOf {
-        Routing(/ServerRoute.Api.Route.DailyChallenge.Results.fetch(gameMode:gameNumber:language:)) {
-          Method.get
+        Route(/ServerRoute.Api.Route.DailyChallenge.Results.fetch(gameMode:gameNumber:language:)) {
           Query {
             OneOf {
-              Field("gameMode", GameMode.parser(rawValue: String.parser()))
-              Field("game-mode", GameMode.parser(rawValue: String.parser()))
+              Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
+              Field("game-mode", Parse(.string.rawValue(of: GameMode.self)))
             }
             Optionally {
               OneOf {
-                Field("gameNumber", DailyChallenge.GameNumber.parser(rawValue: Int.parser()))
-                Field("game-number", DailyChallenge.GameNumber.parser(rawValue: Int.parser()))
+                Field("gameNumber", Int.parser().map(.rawValue(of: DailyChallenge.GameNumber.self)))
+                Field("game-number", Int.parser().map(.rawValue(of: DailyChallenge.GameNumber.self)))
               }
             }
-            Field("language", Language.parser(rawValue: String.parser()))
+            Field("language", Parse(.string.rawValue(of: Language.self)))
           }
         }
         
-        Routing(/ServerRoute.Api.Route.DailyChallenge.Results.history(gameMode:language:)) {
-          Method.get
+        Route(/ServerRoute.Api.Route.DailyChallenge.Results.history(gameMode:language:)) {
           Path { "history" }
           Query {
             OneOf {
-              Field("gameMode", GameMode.parser(rawValue: String.parser()))
-              Field("game-mode", GameMode.parser(rawValue: String.parser()))
+              Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
+              Field("game-mode", Parse(.string.rawValue(of: GameMode.self)))
             }
-            Field("language", Language.parser(rawValue: String.parser()))
+            Field("language", Parse(.string.rawValue(of: Language.self)))
           }
         }
       }
     }
   }
   
-  let gamesRouter = Routing(/ServerRoute.Api.Route.Games.submit) {
+  let gamesRouter = Route(/ServerRoute.Api.Route.Games.submit) {
     Method.post
     // TODO: should verifiedDataBody work with ArraySlice?
     // TODO: should URLRequest.body be Data instead of ArraySlice?
     verifiedDataBody(date: date, secrets: secrets, sha256: sha256)
-      .pipe {
-        JSON(
+      .map(
+        .json(
           ServerRoute.Api.Route.Games.SubmitRequest.self,
-          from: Data.self,
           decoder: decoder,
           encoder: encoder
         )
-      }
+      )
   }
   
   let leaderboardRouter = OneOf {
-    Routing(/ServerRoute.Api.Route.Leaderboard.fetch(gameMode:language:timeScope:)) {
-      Method.get
+    Route(/ServerRoute.Api.Route.Leaderboard.fetch(gameMode:language:timeScope:)) {
       Query {
-        Field("gameMode", GameMode.parser(rawValue: String.parser()))
-        Field("language", Language.parser(rawValue: String.parser()))
-        Field("timeScope", TimeScope.parser(rawValue: String.parser()))
+        Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
+        Field("language", Parse(.string.rawValue(of: Language.self)))
+        Field("timeScope", Parse(.string.rawValue(of: TimeScope.self)))
       }
     }
     
-    Routing(/ServerRoute.Api.Route.Leaderboard.vocab) {
+    Route(/ServerRoute.Api.Route.Leaderboard.vocab) {
       Path { "vocab" }
       OneOf {
-        Routing(/ServerRoute.Api.Route.Leaderboard.Vocab.fetch(language:timeScope:)) {
-          Method.get
+        Route(/ServerRoute.Api.Route.Leaderboard.Vocab.fetch(language:timeScope:)) {
           Query {
-            Field("language", Language.parser(rawValue: String.parser()))
-            Field("timeScope", TimeScope.parser(rawValue: String.parser()))
+            Field("language", Parse(.string.rawValue(of: Language.self)))
+            Field("timeScope", Parse(.string.rawValue(of: TimeScope.self)))
           }
         }
         
-        Routing(/ServerRoute.Api.Route.Leaderboard.Vocab.fetchWord(wordId:)) {
-          Method.get
+        Route(/ServerRoute.Api.Route.Leaderboard.Vocab.fetchWord(wordId:)) {
           Path {
             "words"
-            Word.Id.parser(rawValue: UUID.parser())
+            UUID.parser().map(.rawValue(of: Word.Id.self))
           }
         }
       }
     }
     
-    Routing(/ServerRoute.Api.Route.Leaderboard.weekInReview(language:)) {
-      Method.get
+    Route(/ServerRoute.Api.Route.Leaderboard.weekInReview(language:)) {
       Path { "week-in-review" }
       Query {
-        Field("language", Language.parser(rawValue: String.parser()))
+        Field("language", Parse(.string.rawValue(of: Language.self)))
       }
     }
   }
   
   let pushRouter = OneOf {
-    Routing(/ServerRoute.Api.Route.Push.register) {
+    Route(/ServerRoute.Api.Route.Push.register) {
       Method.post
       Path { "push-tokens" }
       Body {
-        JSON(ServerRoute.Api.Route.Push.Register.self)
+        Parse(.data.json(ServerRoute.Api.Route.Push.Register.self))
       }
     }
     
-    Routing(/ServerRoute.Api.Route.Push.updateSetting) {
+    Route(/ServerRoute.Api.Route.Push.updateSetting) {
       Method.post
       Path { "push-settings" }
       Body {
-        JSON(ServerRoute.Api.Route.Push.Setting.self)
+        Parse(.data.json(ServerRoute.Api.Route.Push.Setting.self))
       }
     }
   }
   
   let sharedGameRouter = OneOf {
-    Routing(/ServerRoute.Api.Route.SharedGame.fetch) {
-      Method.get
+    Route(/ServerRoute.Api.Route.SharedGame.fetch) {
       Path {
-        SharedGame.Code.parser(rawValue: String.parser())
+        Parse(.string.rawValue(of: SharedGame.Code.self))
       }
     }
     
-    Routing(/ServerRoute.Api.Route.SharedGame.share) {
+    Route(/ServerRoute.Api.Route.SharedGame.share) {
       Method.post
       Body {
-        JSON(CompletedGame.self)
+        Parse(.data.json(CompletedGame.self))
       }
     }
   }
   
   return OneOf {
-    Routing(/ServerRoute.Api.Route.changelog(build:)) {
-      Method.get
+    Route(/ServerRoute.Api.Route.changelog(build:)) {
       Path { "changelog" }
-      Query { Field("build", Build.Number.parser(rawValue: Int.parser())) }
+      Query { Field("build", Int.parser().map(.rawValue(of: Build.Number.self))) }
     }
-    
-    Routing(/ServerRoute.Api.Route.config) {
-      Method.get
+
+    Route(/ServerRoute.Api.Route.config) {
       Path { "config" }
     }
-    
-    Routing(/ServerRoute.Api.Route.currentPlayer) {
-      Method.get
+
+    Route(/ServerRoute.Api.Route.currentPlayer) {
       Path { "current-player" }
     }
-    
-    Routing(/ServerRoute.Api.Route.dailyChallenge) {
+
+    Route(/ServerRoute.Api.Route.dailyChallenge) {
       Path { "daily-challenges" }
       dailyChallengeRouter
     }
-    
-    Routing(/ServerRoute.Api.Route.games) {
+
+    Route(/ServerRoute.Api.Route.games) {
       Path { "games" }
       gamesRouter
     }
-    
-    Routing(/ServerRoute.Api.Route.leaderboard) {
+
+    Route(/ServerRoute.Api.Route.leaderboard) {
       Path { "leaderboard-scores" }
       leaderboardRouter
     }
-    
-    Routing(/ServerRoute.Api.Route.push) {
+
+    Route(/ServerRoute.Api.Route.push) {
       pushRouter
     }
-    
-    Routing(/ServerRoute.Api.Route.sharedGame) {
+
+    Route(/ServerRoute.Api.Route.sharedGame) {
       Path {
         OneOf {
           "shared-games"
@@ -207,16 +195,11 @@ private func apiRouter(
       }
       sharedGameRouter
     }
-    
-    Routing(/ServerRoute.Api.Route.verifyReceipt) {
+
+    Route(/ServerRoute.Api.Route.verifyReceipt) {
       Method.post
       Path { "verify-receipt" }
-      Body {
-        Conversion(
-          apply: { Data($0) },
-          unapply: ArraySlice.init
-        )
-      }
+      Body { Parse(.data) }
     }
   }
   .eraseToAnyParserPrinter()
@@ -231,76 +214,74 @@ public func router(
 ) -> AnyParserPrinter<URLRequestData, ServerRoute> {
 
   OneOf {
-    Routing(/ServerRoute.api) {
+    Route(/ServerRoute.api) {
       Path { "api" }
-      Parse {
+      Parse(.destructure(ServerRoute.Api.init(accessToken:isDebug:route:))) {
         Query {
-          Field("accessToken", AccessToken.parser(rawValue: UUID.parser()))
+          Field("accessToken", UUID.parser().map(.rawValue(of: AccessToken.self)))
         }
         Headers {
           Field("X-Debug", Bool.parser(), default: false)
         }
         apiRouter(date: date, decoder: decoder, encoder: encoder, secrets: secrets, sha256: sha256)
       }
-      .pipe(UnsafeBitCast(ServerRoute.Api.init(accessToken:isDebug:route:)))
     }
-    
-    Routing(/ServerRoute.authenticate) {
+
+    Route(/ServerRoute.authenticate) {
       Method.post
       Path { "api"; "authenticate" }
       verifiedDataBody(date: date, require: false, secrets: secrets, sha256: sha256)
-        .pipe {
-          JSON(
+        .map(
+          .json(
             ServerRoute.AuthenticateRequest.self,
-            from: Data.self,
             decoder: decoder,
             encoder: encoder
           )
-        }
+        )
     }
-    
-    Routing(/ServerRoute.appSiteAssociation) {
+
+    Route(/ServerRoute.appSiteAssociation) {
       Method.get
       Path { ".well-known"; "apple-app-site-association" }
     }
-    
-    Routing(/ServerRoute.appStore) {
+
+    Route(/ServerRoute.appStore) {
       Method.get
       Path { "app-store" }
     }
-    
-    Routing(/ServerRoute.demo .. /ServerRoute.Demo.submitGame) {
+
+    Route(/ServerRoute.demo .. /ServerRoute.Demo.submitGame) {
       Method.post
       Path { "demo"; "games" }
-      Body { JSON(ServerRoute.Demo.SubmitRequest.self) }
+      Body { Parse(.data.json(ServerRoute.Demo.SubmitRequest.self)) }
     }
-    
+
     OneOf {
-      Routing(/ServerRoute.download) {
+      Route(/ServerRoute.download) {
         Method.get
         Path { "download" }
       }
-      
-      Routing(/ServerRoute.home) {
+
+      Route(/ServerRoute.home) {
         Method.get
       }
-      
-      Routing(/ServerRoute.pressKit) {
+
+      Route(/ServerRoute.pressKit) {
         Method.get
         Path { "press-kit" }
       }
-      
-      Routing(/ServerRoute.privacyPolicy) {
+
+      Route(/ServerRoute.privacyPolicy) {
         Method.get
         Path { "privacy-policy" }
       }
     }
-    
-    Routing(/ServerRoute.sharedGame .. /ServerRoute.SharedGame.show) {
+
+    Route(/ServerRoute.sharedGame .. /ServerRoute.SharedGame.show) {
       Method.get
       Path {
         OneOf { "shared-games"; "sharedGames" }
-        SharedGame.Code.parser(rawValue: String.parser())
+        Parse(.string.rawValue(of: SharedGame.Code.self))
       }
     }
   }
@@ -308,7 +289,7 @@ public func router(
 }
 
 #if DEBUG
-  extension Router where A == ServerRoute {
+  extension AnyParserPrinter where Input == URLRequestData, Output == ServerRoute {
     public static let test = router(
       date: { Date(timeIntervalSince1970: 1_234_567_890) },
       decoder: decoder,

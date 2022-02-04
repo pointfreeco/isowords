@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/vapor/async-kit.git",
         "state": {
           "branch": null,
-          "revision": "ae12394e466f7fe44725655e763f7e603ed876b5",
-          "version": "1.4.0"
+          "revision": "3b1e7e9069a62295151c6c1609050cd38a0a7af5",
+          "version": "1.11.0"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
         "state": {
           "branch": null,
-          "revision": "6bde3b0063ba8e7537b43744948535ca7e9e0dad",
-          "version": "0.5.2"
+          "revision": "4cf088c29a20f52be0f2ca54992b492c54e0076b",
+          "version": "0.5.3"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/vapor/postgres-nio.git",
         "state": {
           "branch": null,
-          "revision": "6a9eb6f15235e844c95382959a88253442168a42",
-          "version": "1.6.1"
+          "revision": "780a510863bfc00b2239b649df4f403080c4bc9c",
+          "version": "1.7.2"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "b70d1fea1b544dd819c17e83d59fb9aa85c81e74",
-          "version": "3.10.0"
+          "revision": "9cc30f8cef132e91a07e36005612b37f918731fc",
+          "version": "3.16.0"
         }
       },
       {
@@ -69,8 +69,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-case-paths",
         "state": {
           "branch": null,
-          "revision": "d226d167bd4a68b51e352af5655c92bce8ee0463",
-          "version": "0.7.0"
+          "revision": "241301b67d8551c26d8f09bd2c0e52cc49f18007",
+          "version": "0.8.0"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/apple/swift-collections",
         "state": {
           "branch": null,
-          "revision": "9d8719c8bebdc79740b6969c912ac706eb721d7a",
-          "version": "0.0.7"
+          "revision": "48254824bb4248676bf7ce56014ff57b142b77eb",
+          "version": "1.0.2"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
           "branch": null,
-          "revision": "0a39f4c7a33eb71baef936fb5d6e249c49961eb8",
-          "version": "0.28.0"
+          "revision": "313dd217dcd1d0478118ec5d15225fd473c1564a",
+          "version": "0.32.0"
         }
       },
       {
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-custom-dump",
         "state": {
           "branch": null,
-          "revision": "8655495733d8c712db8d9078f47d17f3555db79f",
-          "version": "0.1.2"
+          "revision": "51698ece74ecf31959d3fa81733f0a5363ef1b4e",
+          "version": "0.3.0"
         }
       },
       {
@@ -132,8 +132,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-identified-collections",
         "state": {
           "branch": null,
-          "revision": "04502c882077cd838d380d05b127db9a6e48d8da",
-          "version": "0.2.0"
+          "revision": "680bf440178a78a627b1c2c64c0855f6523ad5b9",
+          "version": "0.3.2"
         }
       },
       {
@@ -159,8 +159,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "94f41c4121a82fae5c7b1cb03e630e9f9e5e20f1",
-          "version": "2.32.1"
+          "revision": "213eb6887e526e0dfac526a2eae559a1893ebbac",
+          "version": "2.36.0"
         }
       },
       {
@@ -168,8 +168,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
         "state": {
           "branch": null,
-          "revision": "f72c4688f89c28502105509186eadc49a49cb922",
-          "version": "1.10.0"
+          "revision": "f73ca5ee9c6806800243f1ac415fcf82de9a4c91",
+          "version": "1.10.2"
         }
       },
       {
@@ -177,8 +177,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "4829979d9f5ed9a2f4c6efd9c1ed51d1ab4d0394",
-          "version": "2.14.1"
+          "revision": "2b329e37e9dd34fb382655181a680261d58cbbf1",
+          "version": "2.17.1"
         }
       },
       {
@@ -194,8 +194,8 @@
         "package": "swift-parsing",
         "repositoryURL": "https://github.com/pointfreeco/swift-parsing",
         "state": {
-          "branch": "pb-pp",
-          "revision": "8b37887d43e83291416ecafd5c1e3b624e5a53db",
+          "branch": "printer-throws-2",
+          "revision": "e193c9bf1123ded8c6ee922d0471d7621709e493",
           "version": null
         }
       },

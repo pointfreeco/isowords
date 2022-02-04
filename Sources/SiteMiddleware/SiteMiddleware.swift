@@ -10,6 +10,7 @@ import ServerRouter
 import ShareGameMiddleware
 import SharedModels
 import Tagged
+import _URLRouting
 
 public func siteMiddleware(
   environment: ServerEnvironment
@@ -118,3 +119,21 @@ private let allowedInsecureHosts: [String] = [
   "localhost",
   "",
 ]
+
+private func route<A, Route>(
+  router: AnyParserPrinter<URLRequestData, Route>,
+  notFound: @escaping Middleware<StatusLineOpen, ResponseEnded, A, Data> = notFound(respond(text: "Not Found"))
+  )
+  -> (@escaping Middleware<StatusLineOpen, ResponseEnded, Route, Data>)
+  -> Middleware<StatusLineOpen, ResponseEnded, A, Data> {
+
+    return { middleware in
+      return { conn in
+
+        URLRequestData(request: conn.request)
+          .flatMap { try? router.parse($0) }
+          .map(const >>> conn.map >>> middleware)
+          ?? notFound(conn)
+      }
+    }
+}

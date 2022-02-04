@@ -2,7 +2,7 @@ import ApplicativeRouter
 import Foundation
 import Prelude
 import Parsing
-import URLRouting
+import _URLRouting
 
 func verifiedDataBody(
   date: @escaping () -> Date,
@@ -12,56 +12,55 @@ func verifiedDataBody(
 ) -> AnyParserPrinter<URLRequestData, Data> {
   
   OneOf {
-    Parse {
-      Body {
-        Conversion.init(
-          apply: { Data($0) },
-          unapply: ArraySlice.init
-        )
-      }
-      Headers {
-        Optionally {
-          Field("X-Signature", Base64Data())
-        }
-      }
-      Query {
-        Optionally {
-          Field("timestamp", Int.parser())
-        }
-      }
-    }
-    // TODO: should this be Routing(...) ?
-    // TODO: Or, should Pipe be a top-level parser type?
-    .pipe { PartialConversion._verifySignature(date: date, secrets: secrets, sha256: sha256) }
-    
-    if !require {
-      Body {
-        Rest().pipe {
-          Conversion.init(
-            apply: { Data($0) },
-            unapply: ArraySlice.init
-          )
-        }
-      }
-    }
+    Fail<URLRequestData, Data>()
+//    Parse {
+//      Body {
+//        Conversion.init(
+//          apply: { Data($0) },
+//          unapply: ArraySlice.init
+//        )
+//      }
+//      Headers {
+//        Optionally {
+//          Field("X-Signature", Base64Data())
+//        }
+//      }
+//      Query {
+//        Optionally {
+//          Field("timestamp", Int.parser())
+//        }
+//      }
+//    }
+//    // TODO: should this be Routing(...) ?
+//    // TODO: Or, should Pipe be a top-level parser type?
+//    .map(._verifySignature(date: date, secrets: secrets, sha256: sha256))
+//
+//    if !require {
+//      Body {
+//        Parse(.data)
+//      }
+//    }
   }
   .eraseToAnyParserPrinter()
 }
 
 struct Base64Data: ParserPrinter {
-  func parse(_ input: inout Substring) -> Data? {
+  func parse(_ input: inout Substring) throws -> Data {
     guard let data = Data.init(base64Encoded: String(input))
-    else { return nil }
+    else {
+      struct Base64Error: Error {}
+      throw Base64Error()
+    }
     input = ""
     return data
   }
   
-  func print(_ output: Data) -> Substring? {
-    output.base64EncodedString()[...]
+  func print(_ output: Data, to input: inout Substring) {
+    input.append(contentsOf: output.base64EncodedString())
   }
 }
 
-extension PartialConversion where Input == (Data, Data?, Int?), Output == Data {
+extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
   static func _verifySignature(
     date: @escaping () -> Date,
     secrets: [String],
