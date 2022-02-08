@@ -1,7 +1,7 @@
 import Foundation
 import Parsing
 import ServerRouter
-import URLRouting
+import _URLRouting
 
 extension Parser where Input == URLRequestData {
   func match(request: URLRequest) -> Output? {

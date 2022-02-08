@@ -7,7 +7,7 @@ import Foundation
 import Overture
 import SharedModels
 import Parsing
-import URLRouting
+import _URLRouting
 import TestHelpers
 import XCTest
 

@@ -25,15 +25,15 @@ private func apiRouter(
     Route(/ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:)) {
       Method.post
       Query {
-        Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
-        Field("language", Parse(.string.rawValue(of: Language.self)))
+        Field("gameMode", Parse(.string.representing(GameMode.self)))
+        Field("language", Parse(.string.representing(Language.self)))
       }
     }
     
     Route(/ServerRoute.Api.Route.DailyChallenge.today(language:)) {
       Path { "today" }
       Query {
-        Field("language", Parse(.string.rawValue(of: Language.self)))
+        Field("language", Parse(.string.representing(Language.self)))
       }
     }
     
@@ -43,16 +43,19 @@ private func apiRouter(
         Route(/ServerRoute.Api.Route.DailyChallenge.Results.fetch(gameMode:gameNumber:language:)) {
           Query {
             OneOf {
-              Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
-              Field("game-mode", Parse(.string.rawValue(of: GameMode.self)))
+              Field("gameMode", Parse(.string.representing(GameMode.self)))
+              Field("game-mode", Parse(.string.representing(GameMode.self)))
             }
             Optionally {
               OneOf {
-                Field("gameNumber", Int.parser().map(.rawValue(of: DailyChallenge.GameNumber.self)))
-                Field("game-number", Int.parser().map(.rawValue(of: DailyChallenge.GameNumber.self)))
+                // FIXME: ?
+                // Field(OneOf { "gameNumber"; "game-number" }, Int.parser())
+                //   .map(.representing(DailyChallenge.GameNumber.self))
+                Field("gameNumber", Int.parser().map(.representing(DailyChallenge.GameNumber.self)))
+                Field("game-number", Int.parser().map(.representing(DailyChallenge.GameNumber.self)))
               }
             }
-            Field("language", Parse(.string.rawValue(of: Language.self)))
+            Field("language", Parse(.string.representing(Language.self)))
           }
         }
         
@@ -60,10 +63,10 @@ private func apiRouter(
           Path { "history" }
           Query {
             OneOf {
-              Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
-              Field("game-mode", Parse(.string.rawValue(of: GameMode.self)))
+              Field("gameMode", Parse(.string.representing(GameMode.self)))
+              Field("game-mode", Parse(.string.representing(GameMode.self)))
             }
-            Field("language", Parse(.string.rawValue(of: Language.self)))
+            Field("language", Parse(.string.representing(Language.self)))
           }
         }
       }
@@ -87,9 +90,9 @@ private func apiRouter(
   let leaderboardRouter = OneOf {
     Route(/ServerRoute.Api.Route.Leaderboard.fetch(gameMode:language:timeScope:)) {
       Query {
-        Field("gameMode", Parse(.string.rawValue(of: GameMode.self)))
-        Field("language", Parse(.string.rawValue(of: Language.self)))
-        Field("timeScope", Parse(.string.rawValue(of: TimeScope.self)))
+        Field("gameMode", Parse(.string.representing(GameMode.self)))
+        Field("language", Parse(.string.representing(Language.self)))
+        Field("timeScope", Parse(.string.representing(TimeScope.self)))
       }
     }
     
@@ -98,15 +101,15 @@ private func apiRouter(
       OneOf {
         Route(/ServerRoute.Api.Route.Leaderboard.Vocab.fetch(language:timeScope:)) {
           Query {
-            Field("language", Parse(.string.rawValue(of: Language.self)))
-            Field("timeScope", Parse(.string.rawValue(of: TimeScope.self)))
+            Field("language", Parse(.string.representing(Language.self)))
+            Field("timeScope", Parse(.string.representing(TimeScope.self)))
           }
         }
         
         Route(/ServerRoute.Api.Route.Leaderboard.Vocab.fetchWord(wordId:)) {
           Path {
             "words"
-            UUID.parser().map(.rawValue(of: Word.Id.self))
+            UUID.parser().map(.representing(Word.Id.self))
           }
         }
       }
@@ -115,7 +118,7 @@ private func apiRouter(
     Route(/ServerRoute.Api.Route.Leaderboard.weekInReview(language:)) {
       Path { "week-in-review" }
       Query {
-        Field("language", Parse(.string.rawValue(of: Language.self)))
+        Field("language", Parse(.string.representing(Language.self)))
       }
     }
   }
@@ -141,7 +144,7 @@ private func apiRouter(
   let sharedGameRouter = OneOf {
     Route(/ServerRoute.Api.Route.SharedGame.fetch) {
       Path {
-        Parse(.string.rawValue(of: SharedGame.Code.self))
+        Parse(.string.representing(SharedGame.Code.self))
       }
     }
     
@@ -156,7 +159,7 @@ private func apiRouter(
   return OneOf {
     Route(/ServerRoute.Api.Route.changelog(build:)) {
       Path { "changelog" }
-      Query { Field("build", Int.parser().map(.rawValue(of: Build.Number.self))) }
+      Query { Field("build", Int.parser().map(.representing(Build.Number.self))) }
     }
 
     Route(/ServerRoute.Api.Route.config) {
@@ -216,12 +219,12 @@ public func router(
   OneOf {
     Route(/ServerRoute.api) {
       Path { "api" }
-      Parse(.destructure(ServerRoute.Api.init(accessToken:isDebug:route:))) {
+      Parse(.struct(ServerRoute.Api.init(accessToken:isDebug:route:))) {
         Query {
-          Field("accessToken", UUID.parser().map(.rawValue(of: AccessToken.self)))
+          Field("accessToken", UUID.parser().map(.representing(AccessToken.self)))
         }
         Headers {
-          Field("X-Debug", Bool.parser(), default: false)
+          Field("X-Debug", Bool.parser()).replaceError(with: false)
         }
         apiRouter(date: date, decoder: decoder, encoder: encoder, secrets: secrets, sha256: sha256)
       }
@@ -241,12 +244,10 @@ public func router(
     }
 
     Route(/ServerRoute.appSiteAssociation) {
-      Method.get
       Path { ".well-known"; "apple-app-site-association" }
     }
 
     Route(/ServerRoute.appStore) {
-      Method.get
       Path { "app-store" }
     }
 
@@ -258,30 +259,24 @@ public func router(
 
     OneOf {
       Route(/ServerRoute.download) {
-        Method.get
         Path { "download" }
       }
 
-      Route(/ServerRoute.home) {
-        Method.get
-      }
+      Route(/ServerRoute.home)
 
       Route(/ServerRoute.pressKit) {
-        Method.get
         Path { "press-kit" }
       }
 
       Route(/ServerRoute.privacyPolicy) {
-        Method.get
         Path { "privacy-policy" }
       }
     }
 
     Route(/ServerRoute.sharedGame .. /ServerRoute.SharedGame.show) {
-      Method.get
       Path {
         OneOf { "shared-games"; "sharedGames" }
-        Parse(.string.rawValue(of: SharedGame.Code.self))
+        Parse(.string.representing(SharedGame.Code.self))
       }
     }
   }
