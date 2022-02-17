@@ -26,7 +26,7 @@ else
 	@git lfs pull
 endif
 
-PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro,OS=15.3
+PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro,OS=15.2
 test-client:
 	@xcodebuild test \
 		-project App/isowords.xcodeproj \
