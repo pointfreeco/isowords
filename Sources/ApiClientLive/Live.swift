@@ -14,14 +14,6 @@ extension ApiClient {
     baseUrl defaultBaseUrl: URL = URL(string: "http://localhost:9876")!,
     sha256: @escaping (Data) -> Data
   ) -> Self {
-    let router = ServerRouter.router(
-      date: Date.init,
-      decoder: decoder,
-      encoder: encoder,
-      secrets: secrets.split(separator: ",").map(String.init),
-      sha256: sha256
-    )
-
     #if DEBUG
       var baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl {
         didSet {
@@ -31,6 +23,15 @@ extension ApiClient {
     #else
       var baseUrl = URL(string: "https://www.isowords.xyz")!
     #endif
+
+    let router = ServerRouter(
+      date: Date.init,
+      decoder: decoder,
+      encoder: encoder,
+      secrets: secrets.split(separator: ",").map(String.init),
+      sha256: sha256
+    )
+
     var currentPlayer = UserDefaults.standard.data(forKey: currentUserEnvelopeKey)
       .flatMap({ try? decoder.decode(CurrentPlayerEnvelope.self, from: $0) })
     {
@@ -111,11 +112,12 @@ extension ApiClient {
 private func request(
   baseUrl: URL,
   route: ServerRoute,
-  router: Router<ServerRoute>
+  router: ServerRouter
 ) -> Effect<(data: Data, response: URLResponse), URLError> {
   Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
-    guard let request = router.request(for: route, base: baseUrl)?.setHeaders()
+    guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
     else { return .init(error: URLError(.badURL)) }
+    request.setHeaders()
     return URLSession.shared.dataTaskPublisher(for: request)
       .eraseToEffect()
   }
@@ -126,7 +128,7 @@ private func apiRequest(
   accessToken: AccessToken?,
   baseUrl: URL,
   route: ServerRoute.Api.Route,
-  router: Router<ServerRoute>
+  router: ServerRouter
 ) -> Effect<(data: Data, response: URLResponse), URLError> {
 
   return Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
@@ -155,19 +157,16 @@ private func apiRequest(
 #endif
 
 extension URLRequest {
-  fileprivate func setHeaders() -> URLRequest {
-    guard let infoDictionary = Bundle.main.infoDictionary else { return self }
+  fileprivate mutating func setHeaders() {
+    guard let infoDictionary = Bundle.main.infoDictionary else { return }
 
     let bundleName = infoDictionary[kCFBundleNameKey as String] ?? "isowords"
     let marketingVersion = infoDictionary["CFBundleShortVersionString"].map { "/\($0)" } ?? ""
     let bundleVersion = infoDictionary[kCFBundleVersionKey as String].map { " bundle/\($0)" } ?? ""
     let gitSha = (infoDictionary["GitSHA"] as? String).map { $0.isEmpty ? "" : "git/\($0)" } ?? ""
 
-    var request = self
-    request.setValue(
+    self.setValue(
       "\(bundleName)\(marketingVersion)\(bundleVersion)\(gitSha)", forHTTPHeaderField: "User-Agent")
-
-    return request
   }
 }
 

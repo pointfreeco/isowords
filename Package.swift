@@ -1065,7 +1065,7 @@ package.targets.append(contentsOf: [
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
-  .target(
+  .executableTarget(
     name: "daily-challenge-reports",
     dependencies: [
       "DailyChallengeReports"
@@ -1230,7 +1230,7 @@ package.targets.append(contentsOf: [
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
-  .target(
+  .executableTarget(
     name: "runner",
     dependencies: [
       "RunnerTasks"
@@ -1250,7 +1250,7 @@ package.targets.append(contentsOf: [
       .product(name: "CustomDump", package: "swift-custom-dump"),
     ]
   ),
-  .target(
+  .executableTarget(
     name: "server",
     dependencies: [
       "ServerBootstrap",

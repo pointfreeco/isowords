@@ -241,8 +241,11 @@ public struct ServerRouter: ParserPrinter {
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.config)) {
+      Route(.case(ServerRoute.Api.Route.config(build:))) {
         Path { "config" }
+        Query {
+          Field("build") { Digits().map(.representing(Build.Number.self)) }
+        }
       }
 
       Route(.case(ServerRoute.Api.Route.currentPlayer)) {
