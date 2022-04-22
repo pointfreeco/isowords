@@ -24,7 +24,7 @@ class ConfigTests: XCTestCase {
       .init(
         accessToken: .init(rawValue: .deadbeef),
         isDebug: false,
-        route: .config
+        route: .config(build: 42)
       )
     )
 
@@ -39,7 +39,7 @@ class ConfigTests: XCTestCase {
           .init(
             accessToken: .init(rawValue: .deadbeef),
             isDebug: false,
-            route: .config
+            route: .config(build: 42)
           )
         )
       ),
