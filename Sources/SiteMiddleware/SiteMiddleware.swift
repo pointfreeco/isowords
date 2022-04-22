@@ -120,20 +120,18 @@ private let allowedInsecureHosts: [String] = [
   "",
 ]
 
-private func route<A, Route>(
-  router: AnyParserPrinter<URLRequestData, Route>,
+private func route<A, R: ParserPrinter>(
+  router: R,
   notFound: @escaping Middleware<StatusLineOpen, ResponseEnded, A, Data> = notFound(respond(text: "Not Found"))
-  )
-  -> (@escaping Middleware<StatusLineOpen, ResponseEnded, Route, Data>)
-  -> Middleware<StatusLineOpen, ResponseEnded, A, Data> {
+)
+-> (@escaping Middleware<StatusLineOpen, ResponseEnded, R.Output, Data>)
+-> Middleware<StatusLineOpen, ResponseEnded, A, Data>
+where R.Input == URLRequestData {
 
-    return { middleware in
-      return { conn in
-
-        URLRequestData(request: conn.request)
-          .flatMap { try? router.parse($0) }
-          .map(const >>> conn.map >>> middleware)
-          ?? notFound(conn)
-      }
+  return { middleware in
+    return { conn in
+      (try? router.match(request: conn.request)).map(const >>> conn.map >>> middleware)
+      ?? notFound(conn)
     }
+  }
 }

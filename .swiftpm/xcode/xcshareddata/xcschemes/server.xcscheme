@@ -216,59 +216,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "DailyChallengeFeatureIntegrationTests"
-               BuildableName = "DailyChallengeFeatureIntegrationTests"
-               BlueprintName = "DailyChallengeFeatureIntegrationTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "GameOverFeatureIntegrationTests"
-               BuildableName = "GameOverFeatureIntegrationTests"
-               BlueprintName = "GameOverFeatureIntegrationTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "GameOverFeatureTests"
-               BuildableName = "GameOverFeatureTests"
-               BlueprintName = "GameOverFeatureTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "LeaderboardFeatureTests"
-               BuildableName = "LeaderboardFeatureTests"
-               BlueprintName = "LeaderboardFeatureTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "SharedModelsTests"
                BuildableName = "SharedModelsTests"
                BlueprintName = "SharedModelsTests"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "UpgradeInterstitialFeatureTests"
-               BuildableName = "UpgradeInterstitialFeatureTests"
-               BlueprintName = "UpgradeInterstitialFeatureTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>

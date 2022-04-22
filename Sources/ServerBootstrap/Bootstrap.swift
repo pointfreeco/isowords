@@ -101,7 +101,7 @@ private func loadEnvironment(eventLoopGroup: EventLoopGroup) -> (EnvVars) -> Eit
           domain: envVars.mailgunDomain
         ),
         randomCubes: { .init(cubes: randomCubes(for: isowordsLetter).run()) },
-        router: ServerRouter.router(
+        router: ServerRouter(
           date: Date.init,
           decoder: decoder,
           encoder: encoder,

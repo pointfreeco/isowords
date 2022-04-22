@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 
 import Foundation
 import PackageDescription
@@ -25,10 +25,10 @@ var package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.7.0"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.8.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "0.1.0"),
-    .package(url: "https://github.com/pointfreeco/swift-parsing", .branch("printer-throws-2")),
+    .package(url: "https://github.com/pointfreeco/swift-parsing", branch: "optional-one-of-printer"),
     .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
     .package(

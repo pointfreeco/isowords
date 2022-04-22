@@ -26,7 +26,7 @@ class ServerRouterTests: XCTestCase {
     var request = URLRequest(url: URL(string: "http://localhost:9876/api/authenticate")!)
     request.httpMethod = "POST"
     request.httpBody = Data(json.utf8)
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -55,7 +55,7 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = Data(json.utf8)
     request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
     
     XCTAssertNoDifference(
       route,
@@ -83,7 +83,7 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = Data(json.utf8)
     request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -111,7 +111,7 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = Data(json.utf8)
     request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -138,7 +138,7 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = Data(json.utf8)
     request.setValue(testHash(Data(signature.utf8)).base64EncodedString(), forHTTPHeaderField: "X-Signature")
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -159,7 +159,7 @@ class ServerRouterTests: XCTestCase {
         string:
           "http://localhost:9876/api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&language=en"
       )!)
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -176,9 +176,8 @@ class ServerRouterTests: XCTestCase {
   func testTodaysDailyChallenges_WithoutAccessToken() throws {
     let request = URLRequest(
       url: URL(string: "http://localhost:9876/api/daily-challenges/today?language=en")!)
-    let route = testRouter.match(request: request)
 
-    XCTAssertNil(route)
+    XCTAssertThrowsError(try testRouter.match(request: request))
   }
 
   func testSubmitGame_Demo() throws {
@@ -193,17 +192,16 @@ class ServerRouterTests: XCTestCase {
     var request = URLRequest(url: URL(string: "http://localhost:9876/demo/games")!)
     request.httpMethod = "POST"
     request.httpBody = Data(submitRequestJson.utf8)
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
       .demo(.submitGame(.init(gameMode: .timed, score: 1_000)))
     )
 
-    let routerRequest = testRouter.request(
-      for: .demo(.submitGame(submitRequest)),
-      base: URL(string: "http://localhost:9876")!
-    )
+    let routerRequest = try testRouter
+      .baseURL("http://localhost:9876")
+      .request(for: .demo(.submitGame(submitRequest)))
 
     XCTAssertNoDifference(
       routerRequest,
@@ -229,10 +227,9 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = Data(submitRequestJson.utf8)
     request.allHTTPHeaderFields = [
-      "X-Debug": "false",
       "X-Signature": signature.base64EncodedString(),
     ]
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -245,16 +242,17 @@ class ServerRouterTests: XCTestCase {
       )
     )
 
-    let routerRequest = testRouter.request(
-      for: .api(
-        .init(
-          accessToken: .init(rawValue: .deadbeef),
-          isDebug: false,
-          route: .games(.submit(submitRequest))
+    let routerRequest = try testRouter
+      .baseURL("http://localhost:9876")
+      .request(
+        for: .api(
+          .init(
+            accessToken: .init(rawValue: .deadbeef),
+            isDebug: false,
+            route: .games(.submit(submitRequest))
+          )
         )
-      ),
-      base: URL(string: "http://localhost:9876")!
-    )
+      )
 
     XCTAssertNoDifference(
       routerRequest,
@@ -280,7 +278,7 @@ class ServerRouterTests: XCTestCase {
     request.allHTTPHeaderFields = [
       "X-Signature": testHash(Data(signature.utf8)).base64EncodedString()
     ]
-    XCTAssertNoDifference(testRouter.match(request: request), nil)
+    XCTAssertThrowsError(try testRouter.match(request: request))
 
     // NB: Retry again but with proper timestamp
     request.url = URL(
@@ -292,7 +290,7 @@ class ServerRouterTests: XCTestCase {
       "X-Signature": testHash(Data(signature.utf8)).base64EncodedString()
     ]
     XCTAssertNoDifference(
-      testRouter.match(request: request),
+      try testRouter.match(request: request),
       .api(
         .init(
           accessToken: .init(rawValue: .deadbeef),
@@ -307,7 +305,7 @@ class ServerRouterTests: XCTestCase {
 
   func testFetchLeaderboard() {
     XCTAssertNoDifference(
-      testRouter.match(
+      try testRouter.match(
         request: URLRequest(
           url: URL(
             string:
@@ -349,7 +347,7 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = Data(submitRequestJson.utf8)
     request.allHTTPHeaderFields = ["X-Signature": signature.base64EncodedString()]
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -384,14 +382,14 @@ class ServerRouterTests: XCTestCase {
     )
   }
 
-  func testVerifyReceiptMatching() {
+  func testVerifyReceiptMatching() throws {
     var request = URLRequest(
       url: URL(string: "/api/verify-receipt?accessToken=deadbeef-dead-beef-dead-beefdeadbeef")!
     )
     request.httpMethod = "POST"
     request.httpBody = Data()
 
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -447,7 +445,7 @@ class ServerRouterTests: XCTestCase {
     request.httpMethod = "POST"
     request.httpBody = try JSONEncoder().encode(completedGame)
 
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -463,15 +461,15 @@ class ServerRouterTests: XCTestCase {
 
   func testShowSharedGame() {
     XCTAssertNoDifference(
-      testRouter.match(request: URLRequest(url: URL(string: "isowords:///sharedGames/deadbeef")!)),
+      try testRouter.match(request: URLRequest(url: URL(string: "isowords:///sharedGames/deadbeef")!)),
       .sharedGame(.show("deadbeef"))
     )
   }
 
   func testFetchVocabLeaderboard() {
     XCTAssertNoDifference(
-      testRouter.match(
-        string: """
+      try testRouter.match(
+        path: """
           /api/leaderboard-scores/vocab?\
           language=en&\
           timeScope=allTime&\
@@ -490,8 +488,8 @@ class ServerRouterTests: XCTestCase {
 
   func testFetchVocabWord() {
     XCTAssertNoDifference(
-      testRouter.match(
-        string: """
+      try testRouter.match(
+        path: """
           /api/leaderboard-scores/vocab/words/\
           deadbeef-dead-beef-dead-beefdead304d?\
           accessToken=deadbeef-dead-beef-dead-beefdeadbeef
@@ -527,7 +525,7 @@ class ServerRouterTests: XCTestCase {
     )
     request.httpMethod = "POST"
     XCTAssertNoDifference(
-      testRouter.match(request: request),
+      try testRouter.match(request: request),
       .api(
         .init(
           accessToken: .init(rawValue: .deadbeef),
@@ -540,8 +538,8 @@ class ServerRouterTests: XCTestCase {
 
   func testTodayDailyChallenges() {
     XCTAssertNoDifference(
-      testRouter.match(
-        string: """
+      try testRouter.match(
+        path: """
           /api/daily-challenges/today?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&\
           language=en
           """
@@ -558,8 +556,8 @@ class ServerRouterTests: XCTestCase {
 
   func testDailyChallengesResults() {
     XCTAssertNoDifference(
-      testRouter.match(
-        string: """
+      try testRouter.match(
+        path: """
           /api/daily-challenges/results?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&\
           gameMode=unlimited&\
           game-number=42&\
@@ -586,8 +584,8 @@ class ServerRouterTests: XCTestCase {
 
   func testDailyChallengesHistory() {
     XCTAssertNoDifference(
-      testRouter.match(
-        string: """
+      try testRouter.match(
+        path: """
           /api/daily-challenges/results/history?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&\
           gameMode=unlimited&\
           language=en
@@ -618,7 +616,7 @@ class ServerRouterTests: XCTestCase {
       """#.utf8
     )
 
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -647,7 +645,7 @@ class ServerRouterTests: XCTestCase {
       """#.utf8
     )
 
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,
@@ -676,7 +674,7 @@ class ServerRouterTests: XCTestCase {
       """#.utf8
     )
 
-    let route = testRouter.match(request: request)
+    let route = try testRouter.match(request: request)
 
     XCTAssertNoDifference(
       route,

@@ -21,7 +21,7 @@ public struct ServerEnvironment {
   public var envVars: EnvVars
   public var mailgun: MailgunClient
   public var randomCubes: () -> ArchivablePuzzle
-  public var router: AnyParserPrinter<URLRequestData, ServerRoute>
+  public var router: ServerRouter
   public var snsClient: SnsClient
 
   public init(
@@ -33,7 +33,7 @@ public struct ServerEnvironment {
     itunes: ItunesClient,
     mailgun: MailgunClient,
     randomCubes: @escaping () -> ArchivablePuzzle,
-    router: AnyParserPrinter<URLRequestData, ServerRoute>,
+    router: ServerRouter,
     snsClient: SnsClient
   ) {
     self.changelog = changelog

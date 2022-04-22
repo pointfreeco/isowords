@@ -35,7 +35,7 @@ struct RequireCurrentPlayerInput {
   var itunes: ItunesClient
   var mailgun: MailgunClient
   var randomCubes: () -> ArchivablePuzzle
-  var router: Router<ServerRoute>
+  var router: ServerRouter
   var snsClient: SnsClient
 }
 
@@ -50,7 +50,7 @@ struct RequireCurrentPlayerOutput {
   var player: Player
   var randomCubes: () -> ArchivablePuzzle
   var route: ServerRoute.Api.Route
-  var router: Router<ServerRoute>
+  var router: ServerRouter
   var snsClient: SnsClient
 }
 

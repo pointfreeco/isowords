@@ -12,52 +12,25 @@ func verifiedDataBody(
 ) -> AnyParserPrinter<URLRequestData, Data> {
   
   OneOf {
-    Fail<URLRequestData, Data>()
-//    Parse {
-//      Body {
-//        Conversion.init(
-//          apply: { Data($0) },
-//          unapply: ArraySlice.init
-//        )
-//      }
-//      Headers {
-//        Optionally {
-//          Field("X-Signature", Base64Data())
-//        }
-//      }
-//      Query {
-//        Optionally {
-//          Field("timestamp", Int.parser())
-//        }
-//      }
-//    }
-//    // TODO: should this be Routing(...) ?
-//    // TODO: Or, should Pipe be a top-level parser type?
-//    .map(._verifySignature(date: date, secrets: secrets, sha256: sha256))
-//
-//    if !require {
-//      Body {
-//        Parse(.data)
-//      }
-//    }
+    Route(._verifySignature(date: date, secrets: secrets, sha256: sha256)) {
+      Body()
+      Headers {
+        Optionally {
+          Field("X-Signature", .string.base64)
+        }
+      }
+      Query {
+        Optionally {
+          Field("timestamp") { Digits() }
+        }
+      }
+    }
+
+    if !require {
+      Body()
+    }
   }
   .eraseToAnyParserPrinter()
-}
-
-struct Base64Data: ParserPrinter {
-  func parse(_ input: inout Substring) throws -> Data {
-    guard let data = Data.init(base64Encoded: String(input))
-    else {
-      struct Base64Error: Error {}
-      throw Base64Error()
-    }
-    input = ""
-    return data
-  }
-  
-  func print(_ output: Data, to input: inout Substring) {
-    input.append(contentsOf: output.base64EncodedString())
-  }
 }
 
 extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
@@ -94,7 +67,6 @@ extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
     )
   }
 }
-
 
 func isValidSignature(
   data: Data,
