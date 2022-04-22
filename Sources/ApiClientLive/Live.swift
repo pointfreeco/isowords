@@ -1,5 +1,4 @@
 @_exported import ApiClient
-import ApplicativeRouter
 import Combine
 import ComposableArchitecture
 import Foundation

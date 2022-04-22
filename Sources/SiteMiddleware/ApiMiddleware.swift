@@ -1,4 +1,3 @@
-import ApplicativeRouter
 import DailyChallengeMiddleware
 import DatabaseClient
 import DictionaryClient

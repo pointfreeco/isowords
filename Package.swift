@@ -112,7 +112,6 @@ var package = Package(
       name: "ServerRouter",
       dependencies: [
         "SharedModels",
-        .product(name: "ApplicativeRouter", package: "swift-web"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "Parsing", package: "swift-parsing"),
         .product(name: "_URLRouting", package: "swift-parsing"),
@@ -1337,7 +1336,6 @@ package.targets.append(contentsOf: [
       "ShareGameMiddleware",
       "SnsClient",
       "VerifyReceiptMiddleware",
-      .product(name: "ApplicativeRouterHttpPipelineSupport", package: "swift-web"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "Overture", package: "Overture"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),

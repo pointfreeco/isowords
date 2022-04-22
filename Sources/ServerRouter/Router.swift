@@ -1,12 +1,11 @@
-import ApplicativeRouter
 import Build
 import Foundation
 import Parsing
 import Prelude
 import SharedModels
 import Tagged
-import _URLRouting
 import XCTestDynamicOverlay
+import _URLRouting
 
 #if canImport(FoundationNetworking)
   import FoundationNetworking

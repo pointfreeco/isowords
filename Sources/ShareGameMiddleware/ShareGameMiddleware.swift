@@ -1,4 +1,3 @@
-import ApplicativeRouter
 import DatabaseClient
 import Either
 import EnvVars

@@ -1,4 +1,3 @@
-import ApplicativeRouter
 import DatabaseClient
 import DictionaryClient
 import EnvVars
