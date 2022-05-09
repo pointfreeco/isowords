@@ -205,7 +205,7 @@ public struct ChangelogView: View {
                 $0.override(
                   routeCase: /ServerRoute.Api.Route.changelog(build:),
                   withResponse: { _ in
-                    .ok(
+                    ok(
                       update(Changelog.current) {
                         $0.changes.append(
                           Changelog.Change(

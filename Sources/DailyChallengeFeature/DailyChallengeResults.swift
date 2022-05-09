@@ -178,20 +178,21 @@ extension ApiClient {
   func loadDailyChallengeResults(
     gameMode: GameMode,
     timeScope gameNumber: DailyChallenge.GameNumber?
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
-      route: .dailyChallenge(
-        .results(
-          .fetch(
-            gameMode: gameMode,
-            gameNumber: gameNumber,
-            language: .en
+  ) async throws -> ResultEnvelope {
+    .init(
+      try await self.apiRequest(
+        route: .dailyChallenge(
+          .results(
+            .fetch(
+              gameMode: gameMode,
+              gameNumber: gameNumber,
+              language: .en
+            )
           )
-        )
-      ),
-      as: FetchDailyChallengeResultsResponse.self
+        ),
+        as: FetchDailyChallengeResultsResponse.self
+      )
     )
-    .map(ResultEnvelope.init)
   }
 }
 

@@ -66,7 +66,7 @@ public struct LeaderboardState: Equatable {
 public enum LeaderboardAction: Equatable {
   case cubePreview(CubePreviewAction)
   case dismissCubePreview
-  case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
+  case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
   case scopeTapped(LeaderboardScope)
   case solo(LeaderboardResultsAction<TimeScope>)
   case vocab(LeaderboardResultsAction<TimeScope>)
@@ -194,12 +194,16 @@ public let leaderboardReducer = Reducer<
 
       guard let resultEnvelope = state.vocab.resultEnvelope
       else { return .none }
-      return environment.apiClient.apiRequest(
-        route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
-        as: FetchVocabWordResponse.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(LeaderboardAction.fetchWordResponse)
+      return .task { @MainActor in
+        await .fetchWordResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequest(
+              route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
+              as: FetchVocabWordResponse.self
+            )
+          }
+        )
+      }
       .cancellable(id: CancelId(), cancelInFlight: true)
 
     case .vocab:
@@ -316,8 +320,8 @@ extension ApiClient {
   func loadSoloResults(
     gameMode: GameMode,
     timeScope: TimeScope
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
+  ) async throws -> ResultEnvelope {
+    let response = try await self.apiRequest(
       route: .leaderboard(
         .fetch(
           gameMode: gameMode,
@@ -327,25 +331,27 @@ extension ApiClient {
       ),
       as: FetchLeaderboardResponse.self
     )
-    .compactMap { response in
-      response.entries.first.map { firstEntry in
-        ResultEnvelope(
-          outOf: firstEntry.outOf,
-          results: response.entries.map { entry in
-            ResultEnvelope.Result(
-              denseRank: entry.rank,
-              id: entry.id.rawValue,
-              isYourScore: entry.isYourScore,
-              rank: entry.rank,
-              score: entry.score,
-              subtitle: nil,
-              title: entry.playerDisplayName ?? (entry.isYourScore ? "You" : "Someone")
-            )
-          }
+
+    guard let firstEntry = response.entries.first
+    else {
+      struct NoFirstEntry: Error {}
+      throw NoFirstEntry()
+    }
+
+    return ResultEnvelope(
+      outOf: firstEntry.outOf,
+      results: response.entries.map { entry in
+        ResultEnvelope.Result(
+          denseRank: entry.rank,
+          id: entry.id.rawValue,
+          isYourScore: entry.isYourScore,
+          rank: entry.rank,
+          score: entry.score,
+          subtitle: nil,
+          title: entry.playerDisplayName ?? (entry.isYourScore ? "You" : "Someone")
         )
       }
-    }
-    .eraseToEffect()
+    )
   }
 }
 
@@ -353,8 +359,8 @@ extension ApiClient {
   func loadVocabResults(
     gameMode: GameMode,
     timeScope: TimeScope
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
+  ) async throws -> ResultEnvelope {
+    let entries = try await self.apiRequest(
       route: .leaderboard(
         .vocab(
           .fetch(
@@ -365,15 +371,17 @@ extension ApiClient {
       ),
       as: [FetchVocabLeaderboardResponse.Entry].self
     )
-    .compactMap { response in
-      response.first.map { firstEntry in
-        ResultEnvelope(
-          outOf: firstEntry.outOf,
-          results: response.map(ResultEnvelope.Result.init)
-        )
-      }
+
+    guard let firstEntry = entries.first
+    else {
+      struct NoFirstEntry: Error {}
+      throw NoFirstEntry()
     }
-    .eraseToEffect()
+
+    return ResultEnvelope(
+      outOf: firstEntry.outOf,
+      results: entries.map(ResultEnvelope.Result.init)
+    )
   }
 }
 
@@ -412,7 +420,8 @@ extension ResultEnvelope.Result {
                   $0.apiRequest = { route in
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      return Effect.ok(
+                      try? await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                      return ok(
                         FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
@@ -427,11 +436,10 @@ extension ResultEnvelope.Result {
                           }
                         )
                       )
-                      .delay(for: 1, scheduler: DispatchQueue.main)
-                      .eraseToEffect()
 
                     default:
-                      return .none
+                      struct BadRequest: Error {}
+                      throw BadRequest()
                     }
                   }
                 },

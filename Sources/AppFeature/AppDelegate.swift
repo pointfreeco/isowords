@@ -101,17 +101,19 @@ let appDelegateReducer = Reducer<
     let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
     return environment.userNotifications.getNotificationSettings
       .flatMap { settings in
-        environment.apiClient.apiRequest(
-          route: .push(
-            .register(
-              .init(
-                authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                build: environment.build.number(),
-                token: token
+          Effect<AppAction, Never>.fireAndForget {
+            try? await environment.apiClient.apiRequest(
+              route: .push(
+                .register(
+                  .init(
+                    authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
+                    build: environment.build.number(),
+                    token: token
+                  )
+                )
               )
             )
-          )
-        )
+          }
       }
       .receive(on: environment.mainQueue)
       .fireAndForget()

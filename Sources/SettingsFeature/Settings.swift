@@ -171,7 +171,7 @@ public struct SettingsState: Equatable {
 
 public enum SettingsAction: BindableAction, Equatable {
   case binding(BindingAction<SettingsState>)
-  case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, ApiError>)
+  case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
   case didBecomeActive
   case leaveUsAReviewButtonTapped
   case onAppear
@@ -311,8 +311,12 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     switch action {
     case .binding(\.$developer.currentBaseUrl):
       return .merge(
-        environment.apiClient.setBaseUrl(state.developer.currentBaseUrl.url).fireAndForget(),
-        environment.apiClient.logout().fireAndForget()
+        .fireAndForget { @MainActor [url = state.developer.currentBaseUrl.url] in
+          await environment.apiClient.setBaseUrl(url)
+        },
+        .fireAndForget { @MainActor in
+          await environment.apiClient.logout()
+        }
       )
 
     case .binding(\.$enableNotifications):
@@ -352,37 +356,49 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .binding(\.$sendDailyChallengeReminder):
       return Effect.concatenate(
-        environment.apiClient.apiRequest(
-          route: .push(
-            .updateSetting(
-              .init(
-                notificationType: .dailyChallengeEndsSoon,
-                sendNotifications: state.sendDailyChallengeReminder
+        .fireAndForget { @MainActor [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
+          try? await environment.apiClient.apiRequest(
+            route: .push(
+              .updateSetting(
+                .init(
+                  notificationType: .dailyChallengeEndsSoon,
+                  sendNotifications: sendDailyChallengeReminder
+                )
               )
             )
           )
-        )
-        .fireAndForget(),
-        environment.apiClient.refreshCurrentPlayer()
-          .catchToEffect(SettingsAction.currentPlayerRefreshed)
+        },
+        .task { @MainActor in
+          await .currentPlayerRefreshed(
+            TaskResult {
+              try await environment.apiClient.refreshCurrentPlayer()
+            }
+          )
+        }
       )
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.$sendDailyChallengeSummary):
       return Effect.concatenate(
-        environment.apiClient.apiRequest(
-          route: .push(
-            .updateSetting(
-              .init(
-                notificationType: .dailyChallengeReport,
-                sendNotifications: state.sendDailyChallengeSummary
+        .fireAndForget { @MainActor [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
+          try? await environment.apiClient.apiRequest(
+            route: .push(
+              .updateSetting(
+                .init(
+                  notificationType: .dailyChallengeReport,
+                  sendNotifications: sendDailyChallengeSummary
+                )
               )
             )
           )
-        )
-        .fireAndForget(),
-        environment.apiClient.refreshCurrentPlayer()
-          .catchToEffect(SettingsAction.currentPlayerRefreshed)
+        },
+        .task { @MainActor in
+          await .currentPlayerRefreshed(
+            TaskResult {
+              try await environment.apiClient.refreshCurrentPlayer()
+            }
+          )
+        }
       )
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
@@ -488,9 +504,14 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .paymentTransaction(.removedTransactions):
       state.isPurchasing = false
-      return environment.apiClient.refreshCurrentPlayer()
-        .receive(on: environment.mainQueue.animation())
-        .catchToEffect(SettingsAction.currentPlayerRefreshed)
+      return .task { @MainActor in
+        let result = await TaskResult { try await environment.apiClient.refreshCurrentPlayer() }
+        return await MainActor.run {
+          withAnimation {
+            .currentPlayerRefreshed(result)
+          }
+        }
+      }
 
     case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
       state.isRestoring = false

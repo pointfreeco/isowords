@@ -86,7 +86,7 @@ public enum GameOverAction: Equatable {
   case rematchButtonTapped
   case showConfetti
   case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
-  case submitGameResponse(Result<SubmitGameResponse, ApiError>)
+  case submitGameResponse(TaskResult<SubmitGameResponse>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
@@ -260,20 +260,25 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
       let submitGameEffect: Effect<GameOverAction, Never>
       if state.isDemo {
-        submitGameEffect = environment.apiClient.request(
-          route: .demo(
-            .submitGame(
-              .init(
-                gameMode: state.completedGame.gameMode,
-                score: state.completedGame.currentScore
+        submitGameEffect = .task {
+          @MainActor
+          [gameMode = state.completedGame.gameMode,
+           currentScore = state.completedGame.currentScore] in
+
+          let response = await TaskResult {
+            try await SubmitGameResponse.solo(
+              environment.apiClient.request(
+                route: .demo(.submitGame(.init(gameMode: gameMode, score: currentScore))),
+                as: LeaderboardScoreResult.self
               )
             )
-          ),
-          as: LeaderboardScoreResult.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .map(SubmitGameResponse.solo)
-        .catchToEffect(GameOverAction.submitGameResponse)
+          }
+          return await MainActor.run {
+            withAnimation {
+              .submitGameResponse(response)
+            }
+          }
+        }
       } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
         completedGame: state.completedGame)
       {

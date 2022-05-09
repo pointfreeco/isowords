@@ -5,29 +5,25 @@ import SharedModels
 
 public struct ApiClient {
   public var apiRequest:
-    (ServerRoute.Api.Route) -> Effect<(data: Data, response: URLResponse), URLError>
+    (ServerRoute.Api.Route) async throws -> (data: Data, response: URLResponse)
   public var authenticate:
-    (ServerRoute.AuthenticateRequest) -> Effect<CurrentPlayerEnvelope, ApiError>
+    (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
   public var baseUrl: () -> URL
   public var currentPlayer: () -> CurrentPlayerEnvelope?
-  public var logout: () -> Effect<Never, Never>
-  public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
-  public var request: (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>
-  public var setBaseUrl: (URL) -> Effect<Never, Never>
+  public var logout: () async -> Void
+  public var refreshCurrentPlayer: () async throws -> CurrentPlayerEnvelope
+  public var request: (ServerRoute) async throws -> (data: Data, response: URLResponse)
+  public var setBaseUrl: (URL) async -> Void
 
   public init(
-    apiRequest: @escaping (ServerRoute.Api.Route) -> Effect<
-      (data: Data, response: URLResponse), URLError
-    >,
-    authenticate: @escaping (ServerRoute.AuthenticateRequest) -> Effect<
-      CurrentPlayerEnvelope, ApiError
-    >,
+    apiRequest: @escaping (ServerRoute.Api.Route) async throws -> (data: Data, response: URLResponse),
+    authenticate: @escaping (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope,
     baseUrl: @escaping () -> URL,
     currentPlayer: @escaping () -> CurrentPlayerEnvelope?,
-    logout: @escaping () -> Effect<Never, Never>,
-    refreshCurrentPlayer: @escaping () -> Effect<CurrentPlayerEnvelope, ApiError>,
-    request: @escaping (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>,
-    setBaseUrl: @escaping (URL) -> Effect<Never, Never>
+    logout: @escaping () async -> Void,
+    refreshCurrentPlayer: @escaping () async throws -> CurrentPlayerEnvelope,
+    request: @escaping (ServerRoute) async throws -> (data: Data, response: URLResponse),
+    setBaseUrl: @escaping (URL) async -> Void
   ) {
     self.apiRequest = apiRequest
     self.authenticate = authenticate
@@ -45,8 +41,8 @@ public struct ApiClient {
     route: ServerRoute.Api.Route,
     file: StaticString = #file,
     line: UInt = #line
-  ) -> Effect<Unit, ApiError> {
-    self.apiRequest(route: route, as: Unit.self, file: file, line: line)
+  ) async throws {
+    _ = try await self.apiRequest(route: route, as: Unit.self, file: file, line: line)
   }
 
   public func apiRequest<A: Decodable>(
@@ -55,24 +51,46 @@ public struct ApiClient {
     file: StaticString = #file,
     line: UInt = #line
   ) -> Effect<A, ApiError> {
-    self.apiRequest(route)
-      .handleEvents(
-        receiveOutput: {
-          #if DEBUG
-            print(
-              """
-                API: route: \(route), \
-                status: \(($0.response as? HTTPURLResponse)?.statusCode ?? 0), \
-                receive data: \(String(decoding: $0.data, as: UTF8.self))
-              """
-            )
-          #endif
-        }
-      )
-      .map { data, _ in data }
-      .apiDecode(as: A.self, file: file, line: line)
-      .print("API")
-      .eraseToEffect()
+    Effect.task {
+      try await self.apiRequest(route: route, as: A.self, file: file, line: line)
+    }
+    .mapError { $0 as! ApiError }
+    .eraseToEffect()
+  }
+
+  public func apiRequest<A: Decodable>(
+    route: ServerRoute.Api.Route,
+    as: A.Type,
+    file: StaticString = #file,
+    line: UInt = #line
+  ) async throws -> A {
+    let (data, response): (Data, URLResponse)
+    do {
+      (data, response) = try await self.apiRequest(route)
+    } catch {
+      throw ApiError(error: error)
+    }
+#if DEBUG
+    print(
+      """
+        API: route: \(route), \
+        status: \((response as? HTTPURLResponse)?.statusCode ?? 0), \
+        receive data: \(String(decoding: data, as: UTF8.self))
+      """
+    )
+#endif
+    let value: A
+    do {
+      value = try jsonDecoder.decode(A.self, from: data)
+    } catch let decodingError {
+      do {
+        throw try jsonDecoder.decode(ApiError.self, from: data)
+      } catch {
+        throw ApiError(error: decodingError)
+      }
+    }
+
+    return value
   }
 
   public func request<A: Decodable>(
@@ -80,25 +98,34 @@ public struct ApiClient {
     as: A.Type,
     file: StaticString = #file,
     line: UInt = #line
-  ) -> Effect<A, ApiError> {
-    self.request(route)
-      .handleEvents(
-        receiveOutput: {
-          #if DEBUG
-            print(
-              """
-                API: route: \(route), \
-                status: \(($0.response as? HTTPURLResponse)?.statusCode ?? 0), \
-                receive data: \(String(decoding: $0.data, as: UTF8.self))
-              """
-            )
-          #endif
-        }
-      )
-      .map { data, _ in data }
-      .apiDecode(as: A.self, file: file, line: line)
-      .print("API")
-      .eraseToEffect()
+  ) async throws -> A {
+    let (data, response): (Data, URLResponse)
+    do {
+      (data, response) = try await self.request(route)
+    } catch {
+      throw ApiError(error: error)
+    }
+#if DEBUG
+    print(
+      """
+        API: route: \(route), \
+        status: \((response as? HTTPURLResponse)?.statusCode ?? 0), \
+        receive data: \(String(decoding: data, as: UTF8.self))
+      """
+    )
+#endif
+    let value: A
+    do {
+      value = try jsonDecoder.decode(A.self, from: data)
+    } catch let decodingError {
+      do {
+        throw try jsonDecoder.decode(ApiError.self, from: data)
+      } catch {
+        throw ApiError(error: decodingError)
+      }
+    }
+    
+    return value
   }
 
   public struct LeaderboardEnvelope: Codable, Equatable {
@@ -120,8 +147,14 @@ public struct ApiClient {
 
   extension ApiClient {
     public static let failing = Self(
-      apiRequest: { route in .failing("\(Self.self).apiRequest(\(route)) is unimplemented") },
-      authenticate: { _ in .failing("\(Self.self).authenticate is unimplemented") },
+      apiRequest: { route in
+        XCTFail("\(Self.self).apiRequest(\(route)) is unimplemented")
+        return (Data(), URLResponse())
+      },
+      authenticate: { _ in
+        XCTFail("\(Self.self).authenticate is unimplemented")
+        return .init(appleReceipt: .mock, player: .blob)
+      },
       baseUrl: {
         XCTFail("\(Self.self).baseUrl is unimplemented")
         return URL(string: "/")!
@@ -130,40 +163,48 @@ public struct ApiClient {
         XCTFail("\(Self.self).currentPlayer is unimplemented")
         return nil
       },
-      logout: { .failing("\(Self.self).logout is unimplemented") },
-      refreshCurrentPlayer: { .failing("\(Self.self).refreshCurrentPlayer is unimplemented") },
-      request: { route in .failing("\(Self.self).request(\(route)) is unimplemented") },
-      setBaseUrl: { _ in .failing("ApiClient.setBaseUrl is unimplemented") }
+      logout: {
+        XCTFail("\(Self.self).logout is unimplemented")
+      },
+      refreshCurrentPlayer: {
+        XCTFail("\(Self.self).refreshCurrentPlayer is unimplemented")
+        return .init(appleReceipt: .mock, player: .blob)
+      },
+      request: { route in
+        XCTFail("\(Self.self).request(\(route)) is unimplemented")
+        return (Data(), URLResponse())
+      },
+      setBaseUrl: { _ in
+        XCTFail("ApiClient.setBaseUrl is unimplemented")
+      }
     )
 
     public mutating func override(
       route matchingRoute: ServerRoute.Api.Route,
-      withResponse response: Effect<(data: Data, response: URLResponse), URLError>
+      withResponse response: @escaping () async throws -> (data: Data, response: URLResponse)
     ) {
       let fulfill = expectation(description: "route")
       self.apiRequest = { [self] route in
         if route == matchingRoute {
           fulfill()
-          return response
+          return try await response()
         } else {
-          return self.apiRequest(route)
+          return try await self.apiRequest(route)
         }
       }
     }
 
     public mutating func override<Value>(
       routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
-      withResponse response: @escaping (Value) -> Effect<
-        (data: Data, response: URLResponse), URLError
-      >
+      withResponse response: @escaping (Value) async throws -> (data: Data, response: URLResponse)
     ) {
       let fulfill = expectation(description: "route")
       self.apiRequest = { [self] route in
         if let value = matchingRoute.extract(from: route) {
           fulfill()
-          return response(value)
+          return try await response(value)
         } else {
-          return self.apiRequest(route)
+          return try await self.apiRequest(route)
         }
       }
     }
@@ -172,14 +213,22 @@ public struct ApiClient {
 
 extension ApiClient {
   public static let noop = Self(
-    apiRequest: { _ in .none },
-    authenticate: { _ in .none },
+    apiRequest: { _ in
+      (Data(), URLResponse())
+    },
+    authenticate: { _ in
+      .init(appleReceipt: .mock, player: .blob)
+    },
     baseUrl: { URL(string: "/")! },
     currentPlayer: { nil },
-    logout: { .none },
-    refreshCurrentPlayer: { .none },
-    request: { _ in .none },
-    setBaseUrl: { _ in .none }
+    logout: { },
+    refreshCurrentPlayer: {
+      .init(appleReceipt: .mock, player: .blob)
+    },
+    request: { _ in
+      (Data(), URLResponse())
+    },
+    setBaseUrl: { _ in }
   )
 }
 

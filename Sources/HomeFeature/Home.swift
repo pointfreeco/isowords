@@ -127,7 +127,7 @@ public enum HomeAction: BindableAction, Equatable {
   case changelog(ChangelogAction)
   case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
-  case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
@@ -141,7 +141,7 @@ public enum HomeAction: BindableAction, Equatable {
   case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
-  case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
+  case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
 
   public enum GameButtonAction: Equatable {
     case dailyChallenge
@@ -708,18 +708,21 @@ extension HomeState {
 
 func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> {
   var serverAuthentication: Effect<HomeAction, Never> {
-    environment.apiClient.authenticate(
-      .init(
-        deviceId: .init(rawValue: environment.deviceId.id()),
-        displayName: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
+
+    Effect.task { @MainActor in
+      try await environment.apiClient.authenticate(
+        .init(
+          deviceId: .init(rawValue: environment.deviceId.id()),
+          displayName: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
           ? environment.gameCenter.localPlayer.localPlayer().displayName
           : nil,
-        gameCenterLocalPlayerId: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
+          gameCenterLocalPlayerId: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
           ? .init(rawValue: environment.gameCenter.localPlayer.localPlayer().gamePlayerId.rawValue)
           : nil,
-        timeZone: environment.timeZone().identifier
+          timeZone: environment.timeZone().identifier
+        )
       )
-    )
+    }
     .ignoreFailure()
     .flatMap { envelope in
       Just(HomeAction.authenticationResponse(envelope))
@@ -733,24 +736,36 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     .eraseToEffect()
   }
 
-  let serverAuthenticateAndLoadData = serverAuthentication.flatMap { authentication in
-    Effect.merge(
-      Effect(value: authentication),
+  let serverAuthenticateAndLoadData = serverAuthentication.flatMap { authentication -> Effect<HomeAction, Never>in
+    .run { send in
+      send(authentication)
 
-      environment.apiClient
-        .apiRequest(
-          route: .dailyChallenge(.today(language: .en)),
-          as: [FetchTodaysDailyChallengeResponse].self
+      await send(
+        .dailyChallengeResponse(
+          TaskResult {
+            try await environment.apiClient
+              .apiRequest(
+                route: .dailyChallenge(.today(language: .en)),
+                as: [FetchTodaysDailyChallengeResponse].self
+              )
+          }
         )
-        .catchToEffect(HomeAction.dailyChallengeResponse),
+      )
 
-      environment.apiClient
-        .apiRequest(
-          route: .leaderboard(.weekInReview(language: .en)),
-          as: FetchWeekInReviewResponse.self
+      await send(
+        .weekInReviewResponse(
+          TaskResult {
+            try await environment.apiClient
+              .apiRequest(
+                route: .leaderboard(.weekInReview(language: .en)),
+                as: FetchWeekInReviewResponse.self
+              )
+          }
         )
-        .catchToEffect(HomeAction.weekInReviewResponse)
-    )
+      )
+
+      // TODO: how to merge the above two?
+    }
   }
 
   return

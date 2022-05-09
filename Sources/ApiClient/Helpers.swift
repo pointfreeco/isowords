@@ -28,4 +28,15 @@
       )
     }
   }
+
+  public func ok<A: Encodable>(
+    _ value: A,
+    encoder: JSONEncoder = .init()
+  ) -> (data: Data, response: URLResponse) {
+    (
+      try! encoder.encode(value),
+      HTTPURLResponse(
+        url: URL(string: "/")!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+    )
+  }
 #endif
