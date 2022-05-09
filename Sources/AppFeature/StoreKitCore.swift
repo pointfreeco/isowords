@@ -30,13 +30,19 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
           } else if let appStoreReceiptURL = environment.storeKit.appStoreReceiptURL(),
             let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
           {
-            verifyReceiptEffect = environment.apiClient.apiRequest(
-              route: .verifyReceipt(receiptData),
-              as: VerifyReceiptEnvelope.self
-            )
-            .mapError { $0 as NSError }
-            .map { ReceiptFinalizationEnvelope(transactions: transactions, verifyEnvelope: $0) }
-            .catchToEffect(AppAction.verifyReceiptResponse)
+            verifyReceiptEffect = .task { @MainActor in
+              await .verifyReceiptResponse(
+                TaskResult {
+                  ReceiptFinalizationEnvelope(
+                    transactions: transactions,
+                    verifyEnvelope: try await environment.apiClient.apiRequest(
+                      route: .verifyReceipt(receiptData),
+                      as: VerifyReceiptEnvelope.self
+                    )
+                  )
+                }
+              )
+            }
           } else {
             // TODO: what to do if there is no receipt data?
             verifyReceiptEffect = .none

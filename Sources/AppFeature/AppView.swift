@@ -73,7 +73,7 @@ public enum AppAction: Equatable {
   case onboarding(OnboardingAction)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
-  case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, NSError>)
+  case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
 }
 
 extension AppEnvironment {

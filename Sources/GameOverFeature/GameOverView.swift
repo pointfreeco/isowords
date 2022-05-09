@@ -76,7 +76,7 @@ public struct GameOverState: Equatable {
 
 public enum GameOverAction: Equatable {
   case closeButtonTapped
-  case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case delayedOnAppear
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
@@ -260,10 +260,11 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
       let submitGameEffect: Effect<GameOverAction, Never>
       if state.isDemo {
-        submitGameEffect = .task {
+        submitGameEffect = .run {
           @MainActor
           [gameMode = state.completedGame.gameMode,
-           currentScore = state.completedGame.currentScore] in
+           currentScore = state.completedGame.currentScore]
+          send in
 
           let response = await TaskResult {
             try await SubmitGameResponse.solo(
@@ -273,21 +274,28 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
               )
             )
           }
-          return await MainActor.run {
+          await MainActor.run {
             withAnimation {
-              .submitGameResponse(response)
+              send(.submitGameResponse(response))
             }
           }
         }
       } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
         completedGame: state.completedGame)
       {
-        submitGameEffect = environment.apiClient.apiRequest(
-          route: .games(.submit(request)),
-          as: SubmitGameResponse.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .catchToEffect(GameOverAction.submitGameResponse)
+        submitGameEffect = .run { @MainActor send in
+          let response = await TaskResult {
+            try await environment.apiClient.apiRequest(
+              route: .games(.submit(request)),
+              as: SubmitGameResponse.self
+            )
+          }
+          await MainActor.run {
+            withAnimation {
+              send(.submitGameResponse(response))
+            }
+          }
+        }
       } else {
         submitGameEffect = .none
       }
@@ -378,13 +386,21 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         //        result.rank.map { $0 <= 10 } == true
         //          ? showConfetti
         //          : .none,
-        environment.apiClient
-          .apiRequest(
-            route: .dailyChallenge(.today(language: .en)),
-            as: [FetchTodaysDailyChallengeResponse].self
-          )
-          .receive(on: environment.mainRunLoop.animation(.default))
-          .catchToEffect(GameOverAction.dailyChallengeResponse)
+
+        .run { @MainActor send in
+          let response = await TaskResult {
+            try await environment.apiClient
+              .apiRequest(
+                route: .dailyChallenge(.today(language: .en)),
+                as: [FetchTodaysDailyChallengeResponse].self
+              )
+          }
+          await MainActor.run {
+            withAnimation {
+              send(.dailyChallengeResponse(response))
+            }
+          }
+        }
       )
 
     case let .submitGameResponse(.success(.shared(result))):

@@ -31,17 +31,21 @@ public func startDailyChallenge(
         .compactMap(\.dailyChallengeUnlimited)
         .eraseToEffect()
       : .none,
-    apiClient
-      .apiRequest(
-        route: .dailyChallenge(
-          .start(
-            gameMode: challenge.dailyChallenge.gameMode,
-            language: challenge.dailyChallenge.language
-          )
-        ),
-        as: StartDailyChallengeResponse.self
+    Effect.task {
+      InProgressGame(
+        response: try await apiClient
+          .apiRequest(
+            route: .dailyChallenge(
+              .start(
+                gameMode: challenge.dailyChallenge.gameMode,
+                language: challenge.dailyChallenge.language
+              )
+            ),
+            as: StartDailyChallengeResponse.self
+          ),
+        date: date()
       )
-      .map { InProgressGame(response: $0, date: date()) }
+    }
       .mapError { err in .couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt) }
       .eraseToEffect()
   )

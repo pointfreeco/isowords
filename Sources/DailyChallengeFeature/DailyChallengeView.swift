@@ -60,7 +60,7 @@ public enum DailyChallengeAction: Equatable {
   case dailyChallengeResults(DailyChallengeResultsAction)
   case delegate(DelegateAction)
   case dismissAlert
-  case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case gameButtonTapped(GameMode)
   case onAppear
   case notificationButtonTapped
@@ -175,12 +175,21 @@ public let dailyChallengeReducer = Reducer<
 
     case .onAppear:
       return .merge(
-        environment.apiClient.apiRequest(
-          route: .dailyChallenge(.today(language: .en)),
-          as: [FetchTodaysDailyChallengeResponse].self
-        )
-        .receive(on: environment.mainRunLoop.animation())
-        .catchToEffect(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
+        .run { @MainActor send in
+          let response = DailyChallengeAction.fetchTodaysDailyChallengeResponse(
+            await TaskResult {
+              try await environment.apiClient.apiRequest(
+                route: .dailyChallenge(.today(language: .en)),
+                as: [FetchTodaysDailyChallengeResponse].self
+              )
+            }
+          )
+          await MainActor.run {
+            withAnimation {
+              send(response)
+            }
+          }
+        },
 
         environment.userNotifications.getNotificationSettings
           .receive(on: environment.mainRunLoop)

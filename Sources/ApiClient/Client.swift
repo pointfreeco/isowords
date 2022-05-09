@@ -1,5 +1,4 @@
-import Combine
-import ComposableArchitecture
+import CasePaths
 import Foundation
 import SharedModels
 
@@ -43,19 +42,6 @@ public struct ApiClient {
     line: UInt = #line
   ) async throws {
     _ = try await self.apiRequest(route: route, as: Unit.self, file: file, line: line)
-  }
-
-  public func apiRequest<A: Decodable>(
-    route: ServerRoute.Api.Route,
-    as: A.Type,
-    file: StaticString = #file,
-    line: UInt = #line
-  ) -> Effect<A, ApiError> {
-    Effect.task {
-      try await self.apiRequest(route: route, as: A.self, file: file, line: line)
-    }
-    .mapError { $0 as! ApiError }
-    .eraseToEffect()
   }
 
   public func apiRequest<A: Decodable>(
