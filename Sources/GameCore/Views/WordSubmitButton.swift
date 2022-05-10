@@ -80,39 +80,32 @@ let wordSubmitReducer = Reducer<
 
   case .delayedSubmitButtonPressed:
     state.wordSubmitButton.areReactionsOpen = true
-    return .merge(
-      environment.feedbackGenerator.selectionChanged()
-        .fireAndForget(),
-
-      .fireAndForget { @MainActor in await environment.audioPlayer.play(.uiSfxEmojiOpen) }
-    )
+    return .fireAndForget { @MainActor in
+      await environment.feedbackGenerator.selectionChanged()
+      await environment.audioPlayer.play(.uiSfxEmojiOpen)
+    }
 
   case .delegate:
     return .none
 
   case let .reactionButtonTapped(reaction):
     state.wordSubmitButton.areReactionsOpen = false
-    return .merge(
-      environment.feedbackGenerator.selectionChanged()
-        .fireAndForget(),
-
-      .fireAndForget { @MainActor in await environment.audioPlayer.play(.uiSfxEmojiSend) },
-
-      Effect(value: .delegate(.confirmSubmit(reaction: reaction)))
-    )
+    return .task { @MainActor in
+      await environment.feedbackGenerator.selectionChanged()
+      await environment.audioPlayer.play(.uiSfxEmojiSend)
+      return .delegate(.confirmSubmit(reaction: reaction))
+    }
 
   case .submitButtonPressed:
     guard state.isTurnBasedMatch
     else { return .none }
 
-    let closeSound: Effect<Never, Never>
+    let closeSound: AudioPlayerClient.Sound?
     if state.wordSubmitButton.areReactionsOpen {
       state.wordSubmitButton.isClosing = true
-      closeSound = .fireAndForget { @MainActor in
-        await environment.audioPlayer.play(.uiSfxEmojiClose)
-      }
+      closeSound = .uiSfxEmojiClose
     } else {
-      closeSound = .none
+      closeSound = nil
     }
     state.wordSubmitButton.areReactionsOpen = false
     state.wordSubmitButton.isSubmitButtonPressed = true
@@ -129,12 +122,12 @@ let wordSubmitReducer = Reducer<
 
     return .merge(
       longPressEffect,
-
-      closeSound
-        .fireAndForget(),
-
-      environment.feedbackGenerator.selectionChanged()
-        .fireAndForget()
+      .fireAndForget { @MainActor in
+        if let closeSound = closeSound {
+          await environment.audioPlayer.play(closeSound)
+        }
+        await environment.feedbackGenerator.selectionChanged()
+      }
     )
 
   case .submitButtonReleased:

@@ -13,22 +13,19 @@ extension FeedbackGeneratorClient {
       let generator = UISelectionFeedbackGenerator()
       return Self(
         prepare: {
-          .fireAndForget { generator.prepare() }
+          generator.prepare()
         },
         selectionChanged: {
-          .fireAndForget { generator.selectionChanged() }
+          generator.selectionChanged() 
         }
       )
     #else
       let generator = NSHapticFeedbackManager.defaultPerformer
       return Self(
         prepare: {
-          .fireAndForget {}
         },
         selectionChanged: {
-          .fireAndForget {
-            generator.perform(.levelChange, performanceTime: .default)
-          }
+          generator.perform(.levelChange, performanceTime: .default)
         }
       )
     #endif

@@ -11,8 +11,12 @@ extension Reducer {
     self.onChange(
       of: trigger,
       perform: { _, state, _, environment in
-        guard isEnabled(state) else { return .none }
-        return feedbackGenerator(environment).selectionChanged().fireAndForget()
-      })
+        .fireAndForget { @MainActor [state] in
+          guard isEnabled(state)
+          else { return }
+          await feedbackGenerator(environment).selectionChanged()
+        }
+      }
+    )
   }
 }
