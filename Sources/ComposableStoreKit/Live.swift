@@ -7,26 +7,34 @@ extension StoreKitClient {
   public static func live() -> Self {
     return Self(
       addPayment: { payment in
-        SKPaymentQueue.default().add(payment)
+        .fireAndForget {
+          SKPaymentQueue.default().add(payment)
+        }
       },
       appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
       isAuthorizedForPayments: SKPaymentQueue.canMakePayments,
       fetchProducts: { products in
-        try await withUnsafeThrowingContinuation { continuation in
+        .run { subscriber in
           let request = SKProductsRequest(productIdentifiers: products)
-          let delegate = ProductRequest {
-            continuation.resume(with: $0)
-          }
+          var delegate: ProductRequest? = ProductRequest(subscriber: subscriber)
           request.delegate = delegate
           request.start()
+
+          return AnyCancellable {
+            request.cancel()
+            request.delegate = nil
+            delegate = nil
+          }
         }
       },
       finishTransaction: { transaction in
-        guard let skTransaction = transaction.rawValue else {
-          assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
-          return
+        .fireAndForget {
+          guard let skTransaction = transaction.rawValue else {
+            assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
+            return
+          }
+          SKPaymentQueue.default().finishTransaction(skTransaction)
         }
-        SKPaymentQueue.default().finishTransaction(skTransaction)
       },
       observer: Effect.run { subscriber in
         let observer = Observer(subscriber: subscriber)
@@ -38,40 +46,43 @@ extension StoreKitClient {
       .share()
       .eraseToEffect(),
       requestReview: {
-        #if canImport(UIKit)
-          guard let windowScene = await UIApplication.shared.windows.first?.windowScene
-          else { return }
+        .fireAndForget {
+          #if canImport(UIKit)
+            guard let windowScene = UIApplication.shared.windows.first?.windowScene
+            else { return }
 
-          SKStoreReviewController.requestReview(in: windowScene)
-        #endif
+            SKStoreReviewController.requestReview(in: windowScene)
+          #endif
+        }
       },
       restoreCompletedTransactions: {
-        SKPaymentQueue.default().restoreCompletedTransactions()
+        .fireAndForget {
+          SKPaymentQueue.default().restoreCompletedTransactions()
+        }
       }
     )
   }
 }
 
 private class ProductRequest: NSObject, SKProductsRequestDelegate {
-  let completion: (Result<StoreKitClient.ProductsResponse, Error>) -> Void
+  let subscriber: Effect<StoreKitClient.ProductsResponse, Error>.Subscriber
 
-  init(completion: @escaping (Result<StoreKitClient.ProductsResponse, Error>) -> Void) {
-    self.completion = completion
+  init(subscriber: Effect<StoreKitClient.ProductsResponse, Error>.Subscriber) {
+    self.subscriber = subscriber
   }
 
   func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-    self.completion(
-        .success(
-          .init(
-            invalidProductIdentifiers: response.invalidProductIdentifiers,
-            products: response.products.map(StoreKitClient.Product.init(rawValue:))
-          )
-        )
+    self.subscriber.send(
+      .init(
+        invalidProductIdentifiers: response.invalidProductIdentifiers,
+        products: response.products.map(StoreKitClient.Product.init(rawValue:))
+      )
     )
+    self.subscriber.send(completion: .finished)
   }
 
   func request(_ request: SKRequest, didFailWithError error: Error) {
-    self.completion(.failure(error))
+    self.subscriber.send(completion: .failure(error))
   }
 }
 

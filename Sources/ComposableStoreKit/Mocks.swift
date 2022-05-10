@@ -2,14 +2,14 @@ import ComposableArchitecture
 
 extension StoreKitClient {
   public static let noop = Self(
-    addPayment: { _ in },
+    addPayment: { _ in .none },
     appStoreReceiptURL: { nil },
     isAuthorizedForPayments: { false },
-    fetchProducts: { _ in .init(invalidProductIdentifiers: [], products: []) },
-    finishTransaction: { _ in },
+    fetchProducts: { _ in .none },
+    finishTransaction: { _ in .none },
     observer: .none,
-    requestReview: { },
-    restoreCompletedTransactions: { }
+    requestReview: { .none },
+    restoreCompletedTransactions: { .none }
   )
 }
 
@@ -18,7 +18,7 @@ extension StoreKitClient {
 
   extension StoreKitClient {
     public static let failing = Self(
-      addPayment: { _ in XCTFail("\(Self.self).addPayment is unimplemented") },
+      addPayment: { _ in .failing("\(Self.self).addPayment is unimplemented") },
       appStoreReceiptURL: {
         XCTFail("\(Self.self).appStoreReceiptURL is unimplemented")
         return nil
@@ -27,15 +27,11 @@ extension StoreKitClient {
         XCTFail("\(Self.self).isAuthorizedForPayments is unimplemented")
         return false
       },
-      fetchProducts: { _ in
-        XCTFail("\(Self.self).fetchProducts is unimplemented")
-        struct Unimplemented: Error {}
-        throw Unimplemented()
-      },
-      finishTransaction: { _ in XCTFail("\(Self.self).finishTransaction is unimplemented") },
+      fetchProducts: { _ in .failing("\(Self.self).fetchProducts is unimplemented") },
+      finishTransaction: { _ in .failing("\(Self.self).finishTransaction is unimplemented") },
       observer: .failing("\(Self.self).observer is unimplemented"),
-      requestReview: { XCTFail("\(Self.self).requestReview is unimplemented") },
-      restoreCompletedTransactions: { XCTFail("\(Self.self).fireAndForget is unimplemented") }
+      requestReview: { .failing("\(Self.self).requestReview is unimplemented") },
+      restoreCompletedTransactions: { .failing("\(Self.self).fireAndForget is unimplemented") }
     )
   }
 #endif

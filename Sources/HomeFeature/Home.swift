@@ -711,62 +711,36 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
   var serverAuthentication: Effect<HomeAction, Never> {
     .run { @MainActor send in
       do {
-        try await send(
-          .authenticationResponse(
-            environment.apiClient.authenticate(
-              .init(
-                deviceId: .init(rawValue: environment.deviceId.id()),
-                displayName: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
-                ? environment.gameCenter.localPlayer.localPlayer().displayName
-                : nil,
-                gameCenterLocalPlayerId: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
-                ? .init(rawValue: environment.gameCenter.localPlayer.localPlayer().gamePlayerId.rawValue)
-                : nil,
-                timeZone: environment.timeZone().identifier
+        try await send(.authenticationResponse(authenticate(environment: environment)))
+        try await send(.serverConfigResponse(environment.serverConfig.refresh()))
+
+        await withTaskGroup(of: Void.self) { group in
+          _ = group.addTaskUnlessCancelled {
+            await send(
+              .dailyChallengeResponse(
+                TaskResult {
+                  try await environment.apiClient.apiRequest(
+                    route: .dailyChallenge(.today(language: .en)),
+                    as: [FetchTodaysDailyChallengeResponse].self
+                  )
+                }
               )
             )
-          )
-        )
-      } catch {
-        return
-      }
-
-      do {
-        try await send(
-          .serverConfigResponse(
-            environment.serverConfig.refresh()
-          )
-        )
-      } catch {
-        return
-      }
-
-      async let r1 =
-        HomeAction.dailyChallengeResponse(
-          TaskResult {
-            try await environment.apiClient
-              .apiRequest(
-                route: .dailyChallenge(.today(language: .en)),
-                as: [FetchTodaysDailyChallengeResponse].self
-              )
           }
-        )
-
-
-      async let r2 =
-      HomeAction.weekInReviewResponse(
-          TaskResult {
-            try await environment.apiClient
-              .apiRequest(
-                route: .leaderboard(.weekInReview(language: .en)),
-                as: FetchWeekInReviewResponse.self
+          _ = group.addTaskUnlessCancelled {
+            await send(
+              .weekInReviewResponse(
+                TaskResult {
+                  try await environment.apiClient.apiRequest(
+                    route: .leaderboard(.weekInReview(language: .en)),
+                    as: FetchWeekInReviewResponse.self
+                  )
+                }
               )
+            )
           }
-        )
-
-      _ = await (send(r1), send(r2))
-
-      // TODO: how to merge the above two?
+        }
+      } catch {}
     }
   }
 
@@ -824,6 +798,20 @@ private func loadMatches(
       )
     }
     .eraseToEffect()
+}
+
+private func authenticate(environment: HomeEnvironment) async throws -> CurrentPlayerEnvelope {
+  let localPlayer = environment.gameCenter.localPlayer.localPlayer()
+  return try await environment.apiClient.authenticate(
+    .init(
+      deviceId: .init(rawValue: environment.deviceId.id()),
+      displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
+      gameCenterLocalPlayerId: localPlayer.isAuthenticated
+      ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+      : nil,
+      timeZone: environment.timeZone().identifier
+    )
+  )
 }
 
 private struct ListenerId: Hashable {}

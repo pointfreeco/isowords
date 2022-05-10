@@ -258,15 +258,17 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           .eraseToEffect()
       }
 
-      let submitGameEffect: Effect<GameOverAction, Never>
-      if state.isDemo {
-        submitGameEffect = .run {
-          @MainActor
-          [gameMode = state.completedGame.gameMode,
-           currentScore = state.completedGame.currentScore]
-          send in
+      let submitGameEffect = Effect<GameOverAction, Never>.run {
+        @MainActor
+        [isDemo = state.isDemo,
+         completedGame = state.completedGame,
+         gameMode = state.completedGame.gameMode,
+         currentScore = state.completedGame.currentScore]
+        send in
 
-          let response = await TaskResult {
+        let response: TaskResult<SubmitGameResponse>
+        if isDemo {
+          response = await TaskResult {
             try await SubmitGameResponse.solo(
               environment.apiClient.request(
                 route: .demo(.submitGame(.init(gameMode: gameMode, score: currentScore))),
@@ -274,30 +276,22 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
               )
             )
           }
-          await MainActor.run {
-            withAnimation {
-              send(.submitGameResponse(response))
-            }
-          }
-        }
-      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-        completedGame: state.completedGame)
-      {
-        submitGameEffect = .run { @MainActor send in
-          let response = await TaskResult {
+        } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+          completedGame: completedGame)
+        {
+          response = await TaskResult {
             try await environment.apiClient.apiRequest(
               route: .games(.submit(request)),
               as: SubmitGameResponse.self
             )
           }
-          await MainActor.run {
-            withAnimation {
-              send(.submitGameResponse(response))
-            }
-          }
+        } else {
+          return
         }
-      } else {
-        submitGameEffect = .none
+
+        await MainActor.run {
+          withAnimation { send(.submitGameResponse(response)) }
+        }
       }
 
       //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won
@@ -334,14 +328,11 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         .eraseToEffect(),
 
         .task { @MainActor in
-          .userNotificationSettingsResponse(
-            await environment.userNotifications.getNotificationSettings()
-          )
-        },
-        
-        .fireAndForget { @MainActor in
           await environment.audioPlayer.loop(.gameOverMusicLoop)
           await environment.audioPlayer.play(.transitionIn)
+          return .userNotificationSettingsResponse(
+            await environment.userNotifications.getNotificationSettings()
+          )
         }
       )
 

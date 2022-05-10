@@ -10,25 +10,22 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         with: .init { state, action, environment in
           switch action {
           case .onAppear:
-            let soundEffect: Effect<Never, Never>
-            if state.gameMode == .timed {
-              soundEffect = .fireAndForget { @MainActor [isDemo = state.isDemo] in
+            return .fireAndForget {
+              @MainActor
+              [isDemo = state.isDemo, gameMode = state.gameMode] in
+
+              if gameMode == .timed {
                 await environment.audioPlayer.play(
                   isDemo
                   ? .timedGameBgLoop1
                   : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
                 )
-              }
-            } else {
-              soundEffect = .fireAndForget { @MainActor in
+              } else {
                 await environment.audioPlayer.loop(
                   [.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!
                 )
               }
             }
-            return
-              soundEffect
-              .fireAndForget()
 
           case .confirmRemoveCube:
             return .fireAndForget { @MainActor in await environment.audioPlayer.play(.cubeRemove) }
@@ -50,18 +47,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         )
       }
       .onChange(of: \.secondsPlayed) { secondsPlayed, state, _, environment in
-        if secondsPlayed == state.gameMode.seconds - 10 {
-          return .fireAndForget { @MainActor in
+        .fireAndForget { @MainActor [gameMode = state.gameMode] in
+          if secondsPlayed == gameMode.seconds - 10 {
             await environment.audioPlayer.play(.timed10SecWarning)
-          }
-        } else if secondsPlayed >= state.gameMode.seconds - 5
-          && secondsPlayed <= state.gameMode.seconds
-        {
-          return .fireAndForget { @MainActor in
+          } else if secondsPlayed >= gameMode.seconds - 5 && secondsPlayed <= gameMode.seconds {
             await environment.audioPlayer.play(.timedCountdownTone)
           }
-        } else {
-          return .none
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, action, environment in
