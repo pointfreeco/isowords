@@ -1,22 +1,17 @@
 import Combine
-import ComposableArchitecture
 import ComposableUserNotifications
 import RemoteNotificationsClient
 
-extension Effect where Output == Never, Failure == Never {
-  public static func registerForRemoteNotifications<S: Scheduler>(
-    remoteNotifications: RemoteNotificationsClient,
-    scheduler: S,
-    userNotifications: UserNotificationClient
-  ) -> Self {
-    userNotifications.getNotificationSettings
-      .receive(on: scheduler)
-      .flatMap { settings in
-        settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
-          ? remoteNotifications.register()
-          : .none
-      }
-      .receive(on: scheduler)
-      .eraseToEffect()
+public func registerForRemoteNotifications(
+  remoteNotifications: RemoteNotificationsClient,
+  userNotifications: UserNotificationClient
+) async {
+  switch await userNotifications.getNotificationSettings().authorizationStatus {
+  case .notDetermined, .denied, .ephemeral:
+    return
+  case .authorized, .provisional:
+    await remoteNotifications.register()
+  @unknown default:
+    return
   }
 }

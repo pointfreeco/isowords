@@ -5,6 +5,7 @@ import ComposableArchitecture
 import ComposableUserNotifications
 import DictionaryClient
 import FileClient
+import NotificationHelpers
 import RemoteNotificationsClient
 import SettingsFeature
 import SharedModels
@@ -57,27 +58,23 @@ let appDelegateReducer = Reducer<
       environment.userNotifications.delegate
         .map(AppDelegateAction.userNotifications),
 
-      environment.userNotifications.getNotificationSettings
-        .receive(on: environment.mainQueue)
-        .flatMap { settings in
-          [.notDetermined, .provisional].contains(settings.authorizationStatus)
-            ? environment.userNotifications.requestAuthorization(.provisional)
-            : settings.authorizationStatus == .authorized
-              ? environment.userNotifications.requestAuthorization([.alert, .sound])
-              : .none
+      .fireAndForget { @MainActor in
+        switch await environment.userNotifications.getNotificationSettings().authorizationStatus {
+        case .notDetermined, .provisional:
+          _ = try? await environment.userNotifications.requestAuthorization(.provisional)
+        case .authorized:
+          _ = try? await environment.userNotifications.requestAuthorization([.alert, .sound])
+        case .denied, .ephemeral:
+          return
+        @unknown default:
+          return
         }
-        .ignoreFailure()
-        .flatMap { successful in
-          successful
-            ? Effect.registerForRemoteNotifications(
-              remoteNotifications: environment.remoteNotifications,
-              scheduler: environment.mainQueue,
-              userNotifications: environment.userNotifications
-            )
-            : .none
-        }
-        .eraseToEffect()
-        .fireAndForget(),
+
+        await registerForRemoteNotifications(
+          remoteNotifications: environment.remoteNotifications,
+          userNotifications: environment.userNotifications
+        )
+      },
 
       // Preload dictionary
       Effect
@@ -99,24 +96,24 @@ let appDelegateReducer = Reducer<
 
   case let .didRegisterForRemoteNotifications(.success(tokenData)):
     let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-    return environment.userNotifications.getNotificationSettings
-      .flatMap { settings in
-          Effect<AppAction, Never>.fireAndForget {
-            try? await environment.apiClient.apiRequest(
-              route: .push(
-                .register(
-                  .init(
-                    authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                    build: environment.build.number(),
-                    token: token
-                  )
-                )
-              )
+    return .fireAndForget { @MainActor in
+      try? await environment.apiClient.apiRequest(
+        route: .push(
+          .register(
+            .init(
+              authorizationStatus: .init(
+                rawValue: environment.userNotifications
+                  .getNotificationSettings()
+                  .authorizationStatus
+                  .rawValue
+              ),
+              build: environment.build.number(),
+              token: token
             )
-          }
-      }
-      .receive(on: environment.mainQueue)
-      .fireAndForget()
+          )
+        )
+      )
+    }
 
   case let .userNotifications(.willPresentNotification(_, completionHandler)):
     return .fireAndForget {

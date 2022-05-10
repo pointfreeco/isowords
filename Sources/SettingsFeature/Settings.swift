@@ -183,7 +183,7 @@ public enum SettingsAction: BindableAction, Equatable {
   case restoreButtonTapped
   case stats(StatsAction)
   case tappedProduct(StoreKitClient.Product)
-  case userNotificationAuthorizationResponse(Result<Bool, NSError>)
+  case userNotificationAuthorizationResponse(TaskResult<Bool>)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 }
 
@@ -332,10 +332,17 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       switch userNotificationSettings.authorizationStatus {
       case .notDetermined, .provisional:
         state.enableNotifications = true
-        return environment.userNotifications.requestAuthorization([.alert, .sound])
-          .mapError { $0 as NSError }
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(SettingsAction.userNotificationAuthorizationResponse)
+        return .run { @MainActor send in
+          let response = await TaskResult {
+            try await environment.userNotifications.requestAuthorization([.alert, .sound])
+          }
+
+          await MainActor.run {
+            withAnimation {
+              send(.userNotificationAuthorizationResponse(response))
+            }
+          }
+        }
 
       case .denied:
         state.alert = .userNotificationAuthorizationDenied
@@ -435,10 +442,11 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       return .none
 
     case .didBecomeActive:
-      return environment.userNotifications.getNotificationSettings
-        .receive(on: environment.mainQueue)
-        .eraseToEffect()
-        .map(SettingsAction.userNotificationSettingsResponse)
+      return .task { @MainActor in
+        .userNotificationSettingsResponse(
+          await environment.userNotifications.getNotificationSettings()
+        )
+      }
 
     case .leaveUsAReviewButtonTapped:
       return environment.applicationClient
@@ -485,10 +493,14 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           .eraseToEffect()
           .cancellable(id: PaymentObserverId()),
 
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainQueue.animation())
-          .eraseToEffect()
-          .map(SettingsAction.userNotificationSettingsResponse),
+        .run { @MainActor send in
+          let settings = await environment.userNotifications.getNotificationSettings()
+          await MainActor.run {
+            withAnimation {
+              send(.userNotificationSettingsResponse(settings))
+            }
+          }
+        },
 
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
           .map { _ in .didBecomeActive }
@@ -587,8 +599,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case let .userNotificationAuthorizationResponse(.success(granted)):
       state.enableNotifications = granted
       return granted
-        ? environment.remoteNotifications.register()
-          .fireAndForget()
+        ? .fireAndForget { await environment.remoteNotifications.register() }
         : .none
 
     case .userNotificationAuthorizationResponse:

@@ -5,15 +5,7 @@ import UserNotifications
 extension UserNotificationClient {
   public static let live = Self(
     add: { request in
-      .future { callback in
-        UNUserNotificationCenter.current().add(request) { error in
-          if let error = error {
-            callback(.failure(error))
-          } else {
-            callback(.success(()))
-          }
-        }
-      }
+      try await UNUserNotificationCenter.current().add(request)
     },
     delegate:
       Effect
@@ -26,34 +18,23 @@ extension UserNotificationClient {
       }
       .share()
       .eraseToEffect(),
-    getNotificationSettings: .future { callback in
-      UNUserNotificationCenter.current().getNotificationSettings { settings in
-        callback(.success(.init(rawValue: settings)))
+    getNotificationSettings: {
+      await withUnsafeContinuation { continuation in
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+          continuation.resume(returning: .init(rawValue: settings))
+        }
       }
     },
     removeDeliveredNotificationsWithIdentifiers: { identifiers in
-      .fireAndForget {
-        UNUserNotificationCenter.current()
-          .removeDeliveredNotifications(withIdentifiers: identifiers)
-      }
+      UNUserNotificationCenter.current()
+        .removeDeliveredNotifications(withIdentifiers: identifiers)
     },
     removePendingNotificationRequestsWithIdentifiers: { identifiers in
-      .fireAndForget {
-        UNUserNotificationCenter.current()
-          .removePendingNotificationRequests(withIdentifiers: identifiers)
-      }
+      UNUserNotificationCenter.current()
+        .removePendingNotificationRequests(withIdentifiers: identifiers)
     },
     requestAuthorization: { options in
-      .future { callback in
-        UNUserNotificationCenter.current()
-          .requestAuthorization(options: options) { granted, error in
-            if let error = error {
-              callback(.failure(error))
-            } else {
-              callback(.success(granted))
-            }
-          }
-      }
+      try await UNUserNotificationCenter.current().requestAuthorization(options: options)
     }
   )
 }

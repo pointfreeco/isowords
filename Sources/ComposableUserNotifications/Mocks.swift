@@ -1,11 +1,11 @@
 extension UserNotificationClient {
   public static let noop = Self(
-    add: { _ in .none },
+    add: { _ in },
     delegate: .none,
-    getNotificationSettings: .none,
-    removeDeliveredNotificationsWithIdentifiers: { _ in .none },
-    removePendingNotificationRequestsWithIdentifiers: { _ in .none },
-    requestAuthorization: { _ in .none }
+    getNotificationSettings: { .init(authorizationStatus: .authorized) },
+    removeDeliveredNotificationsWithIdentifiers: { _ in },
+    removePendingNotificationRequestsWithIdentifiers: { _ in },
+    requestAuthorization: { _ in true }
   )
 }
 
@@ -14,16 +14,23 @@ extension UserNotificationClient {
 
   extension UserNotificationClient {
     public static let failing = Self(
-      add: { _ in .failing("\(Self.self).add is not implemented") },
+      add: { _ in
+        XCTFail("\(Self.self).add is not implemented")
+      },
       delegate: .failing("\(Self.self).delegate is not implemented"),
-      getNotificationSettings: .failing("\(Self.self).getNotificationSettings is not implemented"),
+      getNotificationSettings: {
+        XCTFail("\(Self.self).getNotificationSettings is not implemented")
+        return .init(authorizationStatus: .authorized)
+      },
       removeDeliveredNotificationsWithIdentifiers: { _ in
-        .failing("\(Self.self).removeDeliveredNotificationsWithIdentifiers is not implemented")
+        XCTFail("\(Self.self).removeDeliveredNotificationsWithIdentifiers is not implemented")
       },
       removePendingNotificationRequestsWithIdentifiers: { _ in
-        .failing("\(Self.self).removePendingNotificationRequestsWithIdentifiers is not implemented")
+        XCTFail("\(Self.self).removePendingNotificationRequestsWithIdentifiers is not implemented")
       },
-      requestAuthorization: { _ in .failing("\(Self.self).requestAuthorization is not implemented")
+      requestAuthorization: { _ in
+        XCTFail("\(Self.self).requestAuthorization is not implemented")
+        return false
       }
     )
   }

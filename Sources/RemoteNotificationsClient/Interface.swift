@@ -1,16 +1,14 @@
-import ComposableArchitecture
-
 public struct RemoteNotificationsClient {
   public var isRegistered: () -> Bool
-  public var register: () -> Effect<Never, Never>
-  public var unregister: () -> Effect<Never, Never>
+  public var register: () async -> Void
+  public var unregister: () async -> Void
 }
 
 extension RemoteNotificationsClient {
   public static let noop = Self(
     isRegistered: { true },
-    register: { .none },
-    unregister: { .none }
+    register: { },
+    unregister: { }
   )
 }
 
@@ -23,8 +21,8 @@ extension RemoteNotificationsClient {
         XCTFail("\(Self.self).isRegistered is unimplemented")
         return false
       },
-      register: { .failing("\(Self.self).register is unimplemented") },
-      unregister: { .failing("\(Self.self).unregister is unimplemented") }
+      register: { XCTFail("\(Self.self).register is unimplemented") },
+      unregister: { XCTFail("\(Self.self).unregister is unimplemented") }
     )
   }
 #endif

@@ -54,26 +54,23 @@ public let notificationsAuthAlertReducer = Reducer<
 
   case .turnOnNotificationsButtonTapped:
     return .concatenate(
-      environment.userNotifications.requestAuthorization([.alert, .sound])
-        .ignoreFailure()
-        .flatMap { successful in
-          successful
-            ? Effect.registerForRemoteNotifications(
-              remoteNotifications: environment.remoteNotifications,
-              scheduler: environment.mainRunLoop,
-              userNotifications: environment.userNotifications
-            )
-            : .none
-        }
-        .eraseToEffect()
-        .fireAndForget(),
+      .run { @MainActor send in
+        guard
+          (try? await environment.userNotifications.requestAuthorization([.alert, .sound])) == true
+        else { return }
 
-      environment.userNotifications.getNotificationSettings
-        .flatMap { settings in
-          Effect(value: .delegate(.didChooseNotificationSettings(settings)))
-            .receive(on: environment.mainRunLoop.animation())
+        await registerForRemoteNotifications(
+          remoteNotifications: environment.remoteNotifications,
+          userNotifications: environment.userNotifications
+        )
+
+        let settings = await environment.userNotifications.getNotificationSettings()
+        await MainActor.run {
+          withAnimation {
+            send(.delegate(.didChooseNotificationSettings(settings)))
+          }
         }
-        .eraseToEffect()
+      }
     )
   }
 }

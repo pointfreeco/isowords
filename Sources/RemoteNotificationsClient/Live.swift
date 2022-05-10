@@ -6,14 +6,11 @@
     public static let live = Self(
       isRegistered: { UIApplication.shared.isRegisteredForRemoteNotifications },
       register: {
-        .fireAndForget {
-          UIApplication.shared.registerForRemoteNotifications()
-        }
+        // TODO: why does this need await?
+        await UIApplication.shared.registerForRemoteNotifications()
       },
       unregister: {
-        .fireAndForget {
-          UIApplication.shared.unregisterForRemoteNotifications()
-        }
+        await UIApplication.shared.unregisterForRemoteNotifications()
       }
     )
   }

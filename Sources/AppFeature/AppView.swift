@@ -6,6 +6,7 @@ import ComposableUserNotifications
 import CubeCore
 import GameFeature
 import HomeFeature
+import NotificationHelpers
 import OnboardingFeature
 import ServerConfig
 import ServerRouter
@@ -372,12 +373,12 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case .didChangeScenePhase(.active):
     return .merge(
-      Effect.registerForRemoteNotifications(
-        remoteNotifications: environment.remoteNotifications,
-        scheduler: environment.mainQueue,
-        userNotifications: environment.userNotifications
-      )
-      .fireAndForget(),
+      .fireAndForget { @MainActor in
+        await registerForRemoteNotifications(
+          remoteNotifications: environment.remoteNotifications,
+          userNotifications: environment.userNotifications
+        )
+      },
 
       environment.serverConfig.refresh()
         .receive(on: environment.mainQueue)
