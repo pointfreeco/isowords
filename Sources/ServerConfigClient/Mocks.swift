@@ -3,7 +3,7 @@ import ServerConfig
 extension ServerConfigClient {
   public static let noop = Self(
     config: { .init() },
-    refresh: { .none }
+    refresh: { .init() }
   )
 }
 
@@ -16,7 +16,11 @@ extension ServerConfigClient {
         XCTFail("\(Self.self).config is unimplemented")
         return .init()
       },
-      refresh: { .failing("\(Self.self).refresh is unimplemented") }
+      refresh: {
+        XCTFail("\(Self.self).refresh is unimplemented")
+        struct Unimplemented: Error {}
+        throw Unimplemented()
+      }
     )
   }
 #endif

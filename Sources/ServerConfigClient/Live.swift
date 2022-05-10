@@ -3,7 +3,7 @@ import ServerConfig
 
 extension ServerConfigClient {
   public static func live(
-    fetch: @escaping () -> Effect<ServerConfig, Error>
+    fetch: @escaping () async throws -> ServerConfig
   ) -> Self {
     var currentConfig =
       (UserDefaults.standard.object(forKey: serverConfigKey) as? Data)
@@ -13,22 +13,17 @@ extension ServerConfigClient {
     return Self(
       config: { currentConfig },
       refresh: {
-        fetch()
-          .handleEvents(
-            receiveOutput: {
-              currentConfig = $0
-              guard let data = try? jsonEncoder.encode(currentConfig)
-              else { return }
-              UserDefaults.standard.set(data, forKey: serverConfigKey)
-            }
-          )
-          .eraseToEffect()
+        currentConfig = try await fetch()
+        if let data = try? jsonEncoder.encode(currentConfig) {
+          UserDefaults.standard.set(data, forKey: serverConfigKey)
+        }
+        return currentConfig
       }
     )
   }
 }
 
-let jsonDecoder = JSONDecoder()
-let jsonEncoder = JSONEncoder()
+private let jsonDecoder = JSONDecoder()
+private let jsonEncoder = JSONEncoder()
 
 private let serverConfigKey = "co.pointfree.serverConfigKey"

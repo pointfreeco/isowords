@@ -709,37 +709,37 @@ extension HomeState {
 
 func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> {
   var serverAuthentication: Effect<HomeAction, Never> {
-
-    Effect.task { @MainActor in
-      try await environment.apiClient.authenticate(
-        .init(
-          deviceId: .init(rawValue: environment.deviceId.id()),
-          displayName: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
-          ? environment.gameCenter.localPlayer.localPlayer().displayName
-          : nil,
-          gameCenterLocalPlayerId: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
-          ? .init(rawValue: environment.gameCenter.localPlayer.localPlayer().gamePlayerId.rawValue)
-          : nil,
-          timeZone: environment.timeZone().identifier
+    .run { @MainActor send in
+      do {
+        try await send(
+          .authenticationResponse(
+            environment.apiClient.authenticate(
+              .init(
+                deviceId: .init(rawValue: environment.deviceId.id()),
+                displayName: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
+                ? environment.gameCenter.localPlayer.localPlayer().displayName
+                : nil,
+                gameCenterLocalPlayerId: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
+                ? .init(rawValue: environment.gameCenter.localPlayer.localPlayer().gamePlayerId.rawValue)
+                : nil,
+                timeZone: environment.timeZone().identifier
+              )
+            )
+          )
         )
-      )
-    }
-    .ignoreFailure()
-    .flatMap { envelope in
-      Just(HomeAction.authenticationResponse(envelope))
-        .merge(
-          with: environment.serverConfig.refresh()
-            .ignoreFailure()
-            .receive(on: environment.mainQueue)
-            .map(HomeAction.serverConfigResponse)
-        )
-    }
-    .eraseToEffect()
-  }
+      } catch {
+        return
+      }
 
-  let serverAuthenticateAndLoadData = serverAuthentication.flatMap { authentication -> Effect<HomeAction, Never>in
-    .run { send in
-      send(authentication)
+      do {
+        try await send(
+          .serverConfigResponse(
+            environment.serverConfig.refresh()
+          )
+        )
+      } catch {
+        return
+      }
 
       await send(
         .dailyChallengeResponse(
@@ -773,7 +773,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     environment.gameCenter.localPlayer.authenticate
     .flatMap { _ in
       Publishers.Merge(
-        serverAuthenticateAndLoadData,
+        serverAuthentication,
 
         loadMatches(
           gameCenter: environment.gameCenter,

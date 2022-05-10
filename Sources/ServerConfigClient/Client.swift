@@ -3,5 +3,5 @@ import ComposableArchitecture
 
 public struct ServerConfigClient {
   public var config: () -> ServerConfig
-  public var refresh: () -> Effect<ServerConfig, Error>
+  public var refresh: () async throws -> ServerConfig
 }

@@ -380,9 +380,9 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
         )
       },
 
-      environment.serverConfig.refresh()
-        .receive(on: environment.mainQueue)
-        .fireAndForget()
+      .fireAndForget { @MainActor in
+        _ = try? await environment.serverConfig.refresh()
+      }
     )
 
   case .didChangeScenePhase:
