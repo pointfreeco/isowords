@@ -12,24 +12,26 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           case .onAppear:
             let soundEffect: Effect<Never, Never>
             if state.gameMode == .timed {
-              soundEffect = environment.audioPlayer
-                .play(
-                  state.isDemo
-                    ? .timedGameBgLoop1
-                    : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
+              soundEffect = .fireAndForget { @MainActor [isDemo = state.isDemo] in
+                await environment.audioPlayer.play(
+                  isDemo
+                  ? .timedGameBgLoop1
+                  : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
                 )
-
+              }
             } else {
-              soundEffect = environment.audioPlayer
-                .loop([.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!)
+              soundEffect = .fireAndForget { @MainActor in
+                await environment.audioPlayer.loop(
+                  [.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!
+                )
+              }
             }
             return
               soundEffect
               .fireAndForget()
 
           case .confirmRemoveCube:
-            return environment.audioPlayer.play(.cubeRemove)
-              .fireAndForget()
+            return .fireAndForget { @MainActor in await environment.audioPlayer.play(.cubeRemove) }
 
           default:
             return .none
@@ -38,26 +40,26 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       )
       .onChange(of: { $0.gameOver == nil }) { _, _, _, environment in
         .merge(
-          Effect
-            .merge(
-              AudioPlayerClient.Sound.allMusic
-                .filter { $0 != .gameOverMusicLoop }
-                .map(environment.audioPlayer.stop)
-            )
-            .fireAndForget(),
+          .fireAndForget {
+            for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
+              await environment.audioPlayer.stop(music)
+            }
+          },
 
           .cancel(id: CubeShakingId())
         )
       }
       .onChange(of: \.secondsPlayed) { secondsPlayed, state, _, environment in
         if secondsPlayed == state.gameMode.seconds - 10 {
-          return environment.audioPlayer.play(.timed10SecWarning)
-            .fireAndForget()
+          return .fireAndForget { @MainActor in
+            await environment.audioPlayer.play(.timed10SecWarning)
+          }
         } else if secondsPlayed >= state.gameMode.seconds - 5
           && secondsPlayed <= state.gameMode.seconds
         {
-          return environment.audioPlayer.play(.timedCountdownTone)
-            .fireAndForget()
+          return .fireAndForget { @MainActor in
+            await environment.audioPlayer.play(.timedCountdownTone)
+          }
         } else {
           return .none
         }
@@ -72,12 +74,14 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
         switch action {
         case .submitButtonTapped, .wordSubmitButton(.delegate(.confirmSubmit)):
-          return environment.audioPlayer.play(.invalidWord)
-            .fireAndForget()
+          return .fireAndForget { @MainActor in
+            await environment.audioPlayer.play(.invalidWord)
+          }
 
         default:
-          return environment.audioPlayer.play(.cubeDeselect)
-            .fireAndForget()
+          return .fireAndForget { @MainActor in
+            await environment.audioPlayer.play(.cubeDeselect)
+          }
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, _, environment in
@@ -108,8 +112,16 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
               every: .seconds(2),
               on: environment.mainQueue
             )
-            .flatMap { _ in environment.audioPlayer.play(.cubeShake) }
-            .merge(with: environment.audioPlayer.play(.cubeShake))
+            .flatMap { _ in
+              Effect.fireAndForget { @MainActor in
+                await environment.audioPlayer.play(.cubeShake)
+              }
+            }
+            .merge(
+              with: Effect<GameAction, Never>.fireAndForget { @MainActor in
+                await environment.audioPlayer.play(.cubeShake)
+              }
+            )
             .eraseToEffect()
             .fireAndForget()
 
@@ -132,8 +144,9 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             .remainder
         )
 
-        return environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
-          .fireAndForget()
+        return .fireAndForget { @MainActor in
+          await environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
+        }
       }
       .selectionSounds(
         audioPlayer: \.audioPlayer,

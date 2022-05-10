@@ -83,8 +83,9 @@ let appDelegateReducer = Reducer<
         .fireAndForget(),
 
       .concatenate(
-        environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-          .fireAndForget(),
+        .fireAndForget { @MainActor in
+          await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        },
 
         environment.fileClient.loadUserSettings()
           .map(AppDelegateAction.userSettingsLoaded)
@@ -126,17 +127,20 @@ let appDelegateReducer = Reducer<
   case let .userSettingsLoaded(result):
     state = (try? result.get()) ?? state
     return .merge(
-      environment.audioPlayer.setGlobalVolumeForSoundEffects(
-        state.soundEffectsVolume
-      )
-      .fireAndForget(),
+      .fireAndForget { 
+        @MainActor
+        [soundEffectsVolume = state.soundEffectsVolume,
+         musicVolume = state.musicVolume] in
 
-      environment.audioPlayer.setGlobalVolumeForSoundEffects(
-        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
+        await environment.audioPlayer.setGlobalVolumeForSoundEffects(
+          soundEffectsVolume
+        )
+        await environment.audioPlayer.setGlobalVolumeForSoundEffects(
+          environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
           ? 0
-          : state.musicVolume
-      )
-      .fireAndForget(),
+          : musicVolume
+        )
+      },
 
       environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
         // NB: This is necessary because UIKit needs at least one tick of the run loop before we

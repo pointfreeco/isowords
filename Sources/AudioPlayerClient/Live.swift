@@ -4,87 +4,89 @@ extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {
     Self(
       load: { sounds in
-        .fireAndForget {
-          queue.async {
-            let soundsToLoad = sounds.filter { !files.keys.contains($0) }
-
-            try? AVAudioSession.sharedInstance().setCategory(.ambient)
-            try? AVAudioSession.sharedInstance().setActive(true, options: [])
-            for sound in soundsToLoad {
-              for bundle in bundles {
-                guard let url = bundle.url(forResource: sound.name, withExtension: "mp3")
-                else { continue }
-                files[sound] = AudioPlayer(category: sound.category, url: url)
-              }
-            }
-            guard !files.isEmpty else { return }
-            try? audioEngine.start()
-          }
-        }
+        await Engine.shared.load(sounds: sounds, bundles: bundles)
       },
       loop: { sound in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.play(loop: true)
-          }
-        }
+        await Engine.shared.files[sound]?.play(loop: true)
       },
       play: { sound in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.play()
-          }
-        }
+        await Engine.shared.files[sound]?.play()
       },
       secondaryAudioShouldBeSilencedHint: {
         AVAudioSession.sharedInstance().secondaryAudioShouldBeSilencedHint
       },
       setGlobalVolumeForMusic: { volume in
-        .fireAndForget {
-          queue.async {
-            musicVolume = volume
-          }
-        }
+        await Engine.shared.setMusicVolume(volume)
       },
       setGlobalVolumeForSoundEffects: { volume in
-        .fireAndForget {
-          queue.async {
-            soundEffectsNode.volume = 0.25 * volume
-          }
-        }
+        await Engine.shared.setGlobalSoundEffectsVolume(volume)
       },
       setVolume: { sound, volume in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.volume = volume
-          }
-        }
+        await Engine.shared.setVolumne(sound: sound, volume: volume)
       },
       stop: { sound in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.stop()
-          }
-        }
+        await Engine.shared.files[sound]?.stop()
       }
     )
   }
 }
 
-private var files: [AudioPlayerClient.Sound: AudioPlayer] = [:]
+private actor Engine: GlobalActor {
+  static let shared = Engine()
 
-private class AudioPlayer {
+  var files: [AudioPlayerClient.Sound: AudioPlayer] = [:]
+  var musicVolume: Float = 1
+  let audioEngine = AVAudioEngine()
+  let soundEffectsNode: AVAudioMixerNode
+
+  init() {
+    let node = AVAudioMixerNode()
+    audioEngine.attach(node)
+    audioEngine.connect(node, to: audioEngine.mainMixerNode, format: nil)
+    self.soundEffectsNode = node
+  }
+
+  func load(sounds: [AudioPlayerClient.Sound], bundles: [Bundle]) {
+    let soundsToLoad = sounds.filter { !self.files.keys.contains($0) }
+
+    try? AVAudioSession.sharedInstance().setCategory(.ambient)
+    try? AVAudioSession.sharedInstance().setActive(true, options: [])
+    for sound in soundsToLoad {
+      for bundle in bundles {
+        guard let url = bundle.url(forResource: sound.name, withExtension: "mp3")
+        else { continue }
+        self.files[sound] = AudioPlayer(category: sound.category, url: url)
+      }
+    }
+    guard !self.files.isEmpty else { return }
+    try? audioEngine.start()
+  }
+
+  func setMusicVolume(_ volume: Float) async {
+    self.musicVolume = volume
+    for (_, file) in self.files {
+      if case .music = file.source {
+        await file.setVolume(musicVolume)
+      }
+    }
+  }
+
+  func setGlobalSoundEffectsVolume(_ volume: Float) {
+    self.soundEffectsNode.volume = 0.25 * volume
+  }
+
+  func setVolumne(sound: AudioPlayerClient.Sound, volume: Float) async {
+    await self.files[sound]?.setVolume(volume)
+  }
+}
+
+private actor AudioPlayer {
   enum Source {
     case music(AVAudioPlayer)
     case soundEffect(AVAudioPlayerNode, AVAudioPCMBuffer)
   }
 
   let source: Source
-  var volume: Float = 1 {
-    didSet {
-      self.setVolume(self.volume)
-    }
-  }
 
   init?(category: AudioPlayerClient.Sound.Category, url: URL) {
     switch category {
@@ -103,23 +105,23 @@ private class AudioPlayer {
         (try? file.read(into: buffer)) != nil
       else { return nil }
       let node = AVAudioPlayerNode()
-      audioEngine.attach(node)
-      audioEngine.connect(node, to: soundEffectsNode, format: nil)
+      Engine.shared.audioEngine.attach(node)
+      Engine.shared.audioEngine.connect(node, to: Engine.shared.soundEffectsNode, format: nil)
       self.source = .soundEffect(node, buffer)
     }
   }
 
-  func play(loop: Bool = false) {
+  func play(loop: Bool = false) async {
     switch self.source {
     case let .music(player):
       player.currentTime = 0
       player.numberOfLoops = loop ? -1 : 0
-      player.volume = musicVolume
+      player.volume = await Engine.shared.musicVolume
       player.play()
 
     case let .soundEffect(node, buffer):
-      if !audioEngine.isRunning {
-        guard (try? audioEngine.start()) != nil else { return }
+      if !Engine.shared.audioEngine.isRunning {
+        guard (try? Engine.shared.audioEngine.start()) != nil else { return }
       }
 
       node.stop()
@@ -134,7 +136,7 @@ private class AudioPlayer {
     }
   }
 
-  private func setVolume(_ volume: Float) {
+  func setVolume(_ volume: Float) {
     switch self.source {
     case let .music(player):
       player.volume = volume
@@ -148,30 +150,10 @@ private class AudioPlayer {
     switch self.source {
     case let .music(player):
       player.setVolume(0, fadeDuration: 2.5)
-      queue.asyncAfter(deadline: .now() + 2.5) {
-        player.stop()
-      }
+      player.stop()
 
     case let .soundEffect(node, _):
       node.stop()
     }
   }
 }
-
-let audioEngine = AVAudioEngine()
-let soundEffectsNode: AVAudioMixerNode = {
-  let node = AVAudioMixerNode()
-  audioEngine.attach(node)
-  audioEngine.connect(node, to: audioEngine.mainMixerNode, format: nil)
-  return node
-}()
-private var musicVolume: Float = 1 {
-  didSet {
-    files.forEach { _, file in
-      if case .music = file.source {
-        file.volume = musicVolume
-      }
-    }
-  }
-}
-private let queue = DispatchQueue(label: "Audio Dispatch Queue")

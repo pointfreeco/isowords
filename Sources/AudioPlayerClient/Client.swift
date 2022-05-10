@@ -1,14 +1,14 @@
 import ComposableArchitecture
 
 public struct AudioPlayerClient {
-  public var load: ([Sound]) -> Effect<Never, Never>
-  public var loop: (Sound) -> Effect<Never, Never>
-  public var play: (Sound) -> Effect<Never, Never>
+  public var load: ([Sound]) async -> Void
+  public var loop: (Sound) async -> Void
+  public var play: (Sound) async -> Void
   public var secondaryAudioShouldBeSilencedHint: () -> Bool
-  public var setGlobalVolumeForMusic: (Float) -> Effect<Never, Never>
-  public var setGlobalVolumeForSoundEffects: (Float) -> Effect<Never, Never>
-  public var setVolume: (Sound, Float) -> Effect<Never, Never>
-  public var stop: (Sound) -> Effect<Never, Never>
+  public var setGlobalVolumeForMusic: (Float) async -> Void
+  public var setGlobalVolumeForSoundEffects: (Float) async -> Void
+  public var setVolume: (Sound, Float) async -> Void
+  public var stop: (Sound) async -> Void
 
   public struct Sound: Hashable {
     public let category: Category
@@ -29,8 +29,8 @@ public struct AudioPlayerClient {
     var client = self
     client.play = { sound in
       guard doNotIncludeSounds.contains(sound)
-      else { return self.play(sound) }
-      return .none
+      else { return await self.play(sound) }
+      return
     }
     return client
   }
@@ -38,14 +38,14 @@ public struct AudioPlayerClient {
 
 extension AudioPlayerClient {
   public static let noop = Self(
-    load: { _ in .none },
-    loop: { _ in .none },
-    play: { _ in .none },
+    load: { _ in },
+    loop: { _ in },
+    play: { _ in },
     secondaryAudioShouldBeSilencedHint: { false },
-    setGlobalVolumeForMusic: { _ in .none },
-    setGlobalVolumeForSoundEffects: { _ in .none },
-    setVolume: { _, _ in .none },
-    stop: { _ in .none }
+    setGlobalVolumeForMusic: { _ in },
+    setGlobalVolumeForSoundEffects: { _ in },
+    setVolume: { _, _ in },
+    stop: { _ in }
   )
 }
 
@@ -54,21 +54,21 @@ extension AudioPlayerClient {
 
   extension AudioPlayerClient {
     public static let failing = Self(
-      load: { _ in .failing("\(Self.self).load is unimplemented") },
-      loop: { _ in .failing("\(Self.self).loop is unimplemented") },
-      play: { _ in .failing("\(Self.self).play is unimplemented") },
+      load: { _ in XCTFail("\(Self.self).load is unimplemented") },
+      loop: { _ in XCTFail("\(Self.self).loop is unimplemented") },
+      play: { _ in XCTFail("\(Self.self).play is unimplemented") },
       secondaryAudioShouldBeSilencedHint: {
         XCTFail("\(Self.self).secondaryAudioShouldBeSilencedHint is unimplemented")
         return false
       },
       setGlobalVolumeForMusic: { _ in
-        .failing("\(Self.self).setGlobalVolumeForMusic is unimplemented")
+        XCTFail("\(Self.self).setGlobalVolumeForMusic is unimplemented")
       },
       setGlobalVolumeForSoundEffects: { _ in
-        .failing("\(Self.self).setGlobalVolumeForSoundEffects is unimplemented")
+        XCTFail("\(Self.self).setGlobalVolumeForSoundEffects is unimplemented")
       },
-      setVolume: { _, _ in .failing("\(Self.self).setVolume is unimplemented") },
-      stop: { _ in .failing("\(Self.self).stop is unimplemented") }
+      setVolume: { _, _ in XCTFail("\(Self.self).setVolume is unimplemented") },
+      stop: { _ in XCTFail("\(Self.self).stop is unimplemented") }
     )
   }
 #endif

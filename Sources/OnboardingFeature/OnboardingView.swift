@@ -232,8 +232,9 @@ public let onboardingReducer = Reducer<
         .receive(on: ImmediateScheduler.shared.animation())
         .eraseToEffect(),
 
-      environment.audioPlayer.play(.uiSfxTap)
-        .fireAndForget()
+      .fireAndForget { @MainActor in
+        await environment.audioPlayer.play(.uiSfxTap)
+      }
     )
 
   case .delayedNextStep:
@@ -246,8 +247,9 @@ public let onboardingReducer = Reducer<
         .setHasShownFirstLaunchOnboarding(true)
         .fireAndForget(),
 
-      environment.audioPlayer.stop(.onboardingBgMusic)
-        .fireAndForget(),
+      .fireAndForget { @MainActor in
+        await environment.audioPlayer.stop(.onboardingBgMusic)
+      },
 
       .cancel(id: DelayedNextStepId())
     )
@@ -333,8 +335,14 @@ public let onboardingReducer = Reducer<
     }
 
     return .merge(
-      environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget(),
+      .fireAndForget { @MainActor [presentationStyle = state.presentationStyle] in
+        await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        await environment.audioPlayer.play(
+          presentationStyle == .demo
+          ? .timedGameBgLoop1
+          : .onboardingBgMusic
+        )
+      },
 
       Effect
         .catching { try environment.dictionary.load(.en) }
@@ -347,20 +355,12 @@ public let onboardingReducer = Reducer<
           .delay(for: .seconds(firstStepDelay), scheduler: environment.mainQueue.animation())
           .eraseToEffect()
           .cancellable(id: DelayedNextStepId())
-        : .none,
-
-      environment.audioPlayer.play(
-        state.presentationStyle == .demo
-          ? .timedGameBgLoop1
-          : .onboardingBgMusic
-      )
-      .fireAndForget()
+        : .none
     )
 
   case .nextButtonTapped:
     state.step.next()
-    return environment.audioPlayer.play(.uiSfxTap)
-      .fireAndForget()
+    return .fireAndForget { @MainActor in await environment.audioPlayer.play(.uiSfxTap) }
 
   case .skipButtonTapped:
     guard !environment.userDefaults.hasShownFirstLaunchOnboarding else {
@@ -369,8 +369,9 @@ public let onboardingReducer = Reducer<
           .receive(on: ImmediateScheduler.shared.animation())
           .eraseToEffect(),
 
-        environment.audioPlayer.play(.uiSfxTap)
-          .fireAndForget()
+        .fireAndForget { @MainActor in
+          await environment.audioPlayer.play(.uiSfxTap)
+        }
       )
     }
     state.alert = .init(
@@ -386,8 +387,9 @@ public let onboardingReducer = Reducer<
       ),
       secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
     )
-    return environment.audioPlayer.play(.uiSfxTap)
-      .fireAndForget()
+    return .fireAndForget { @MainActor in
+      await environment.audioPlayer.play(.uiSfxTap)
+    }
   }
 }
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in
