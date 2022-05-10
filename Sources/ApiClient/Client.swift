@@ -132,18 +132,19 @@ public struct ApiClient {
   import XCTestDynamicOverlay
 
   extension ApiClient {
+    struct Unimplemented: Error {}
     public static let failing = Self(
       apiRequest: { route in
         XCTFail("\(Self.self).apiRequest(\(route)) is unimplemented")
-        return (Data(), URLResponse())
+        throw Unimplemented()
       },
       authenticate: { _ in
         XCTFail("\(Self.self).authenticate is unimplemented")
-        return .init(appleReceipt: .mock, player: .blob)
+        throw Unimplemented()
       },
       baseUrl: {
         XCTFail("\(Self.self).baseUrl is unimplemented")
-        return URL(string: "/")!
+        return .init(string: "/")!
       },
       currentPlayer: {
         XCTFail("\(Self.self).currentPlayer is unimplemented")
@@ -154,11 +155,11 @@ public struct ApiClient {
       },
       refreshCurrentPlayer: {
         XCTFail("\(Self.self).refreshCurrentPlayer is unimplemented")
-        return .init(appleReceipt: .mock, player: .blob)
+        throw Unimplemented()
       },
       request: { route in
         XCTFail("\(Self.self).request(\(route)) is unimplemented")
-        return (Data(), URLResponse())
+        throw Unimplemented()
       },
       setBaseUrl: { _ in
         XCTFail("ApiClient.setBaseUrl is unimplemented")

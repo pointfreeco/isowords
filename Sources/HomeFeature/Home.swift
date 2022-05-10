@@ -741,8 +741,8 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
         return
       }
 
-      await send(
-        .dailyChallengeResponse(
+      async let r1 =
+        HomeAction.dailyChallengeResponse(
           TaskResult {
             try await environment.apiClient
               .apiRequest(

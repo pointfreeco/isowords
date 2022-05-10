@@ -372,18 +372,13 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     return .none
 
   case .didChangeScenePhase(.active):
-    return .merge(
-      .fireAndForget { @MainActor in
-        await registerForRemoteNotifications(
-          remoteNotifications: environment.remoteNotifications,
-          userNotifications: environment.userNotifications
-        )
-      },
-
-      .fireAndForget { @MainActor in
-        _ = try? await environment.serverConfig.refresh()
-      }
-    )
+    return .fireAndForget { @MainActor in
+      await registerForRemoteNotifications(
+        remoteNotifications: environment.remoteNotifications,
+        userNotifications: environment.userNotifications
+      )
+      _ = try? await environment.serverConfig.refresh()
+    }
 
   case .didChangeScenePhase:
     return .none

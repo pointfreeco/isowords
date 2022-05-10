@@ -58,22 +58,26 @@ let appDelegateReducer = Reducer<
       environment.userNotifications.delegate
         .map(AppDelegateAction.userNotifications),
 
-      .fireAndForget { @MainActor in
-        switch await environment.userNotifications.getNotificationSettings().authorizationStatus {
-        case .notDetermined, .provisional:
-          _ = try? await environment.userNotifications.requestAuthorization(.provisional)
-        case .authorized:
-          _ = try? await environment.userNotifications.requestAuthorization([.alert, .sound])
-        case .denied, .ephemeral:
-          return
-        @unknown default:
-          return
-        }
+      // .task { }.fireAndForget()
 
-        await registerForRemoteNotifications(
-          remoteNotifications: environment.remoteNotifications,
-          userNotifications: environment.userNotifications
-        )
+      .fireAndForget { @MainActor in
+        do {
+          switch await environment.userNotifications.getNotificationSettings().authorizationStatus {
+          case .notDetermined, .provisional:
+            _ = try await environment.userNotifications.requestAuthorization(.provisional)
+          case .authorized:
+            _ = try await environment.userNotifications.requestAuthorization([.alert, .sound])
+          case .denied, .ephemeral:
+            return
+          @unknown default:
+            return
+          }
+
+          await registerForRemoteNotifications(
+            remoteNotifications: environment.remoteNotifications,
+            userNotifications: environment.userNotifications
+          )
+        } catch {}
       },
 
       // Preload dictionary
@@ -135,7 +139,7 @@ let appDelegateReducer = Reducer<
         await environment.audioPlayer.setGlobalVolumeForSoundEffects(
           soundEffectsVolume
         )
-        await environment.audioPlayer.setGlobalVolumeForSoundEffects(
+        await environment.audioPlayer.setGlobalVolumeForMusic(
           environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
           ? 0
           : musicVolume
