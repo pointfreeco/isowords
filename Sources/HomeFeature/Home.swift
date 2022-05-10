@@ -751,10 +751,10 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
               )
           }
         )
-      )
 
-      await send(
-        .weekInReviewResponse(
+
+      async let r2 =
+      HomeAction.weekInReviewResponse(
           TaskResult {
             try await environment.apiClient
               .apiRequest(
@@ -763,7 +763,8 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
               )
           }
         )
-      )
+
+      _ = await (send(r1), send(r2))
 
       // TODO: how to merge the above two?
     }
