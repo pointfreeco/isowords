@@ -310,14 +310,10 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     switch action {
     case .binding(\.$developer.currentBaseUrl):
-      return .merge(
-        .fireAndForget { @MainActor [url = state.developer.currentBaseUrl.url] in
-          await environment.apiClient.setBaseUrl(url)
-        },
-        .fireAndForget { @MainActor in
-          await environment.apiClient.logout()
-        }
-      )
+      return .fireAndForget { @MainActor [url = state.developer.currentBaseUrl.url] in
+        await environment.apiClient.setBaseUrl(url)
+        await environment.apiClient.logout()
+      }
 
     case .binding(\.$enableNotifications):
       guard
@@ -496,18 +492,18 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           .cancellable(id: PaymentObserverId()),
 
         .run { @MainActor send in
-          let settings = await environment.userNotifications.getNotificationSettings()
-          await MainActor.run {
-            withAnimation {
-              send(.userNotificationSettingsResponse(settings))
-            }
-          }
-        },
+          await send(
+            .userNotificationSettingsResponse(environment.userNotifications.getNotificationSettings()),
+            animation: .default
+          )
 
-        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
-          .map { _ in .didBecomeActive }
-          .eraseToEffect()
-          .cancellable(id: DidBecomeActiveId())
+          let notifications = NotificationCenter.default
+            .notifications(named: UIApplication.didBecomeActiveNotification)
+          for await _ in notifications {
+            send(.didBecomeActive)
+          }
+        }
+        .cancellable(id: DidBecomeActiveId())
       )
 
     case .onDismiss:
@@ -518,13 +514,13 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .paymentTransaction(.removedTransactions):
       state.isPurchasing = false
-      return .task { @MainActor in
-        let result = await TaskResult { try await environment.apiClient.refreshCurrentPlayer() }
-        return await MainActor.run {
-          withAnimation {
-            .currentPlayerRefreshed(result)
-          }
-        }
+      return .run { @MainActor send in
+        await send(
+          .currentPlayerRefreshed(
+            TaskResult { try await environment.apiClient.refreshCurrentPlayer() }
+          ),
+          animation: .default
+        )
       }
 
     case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
@@ -600,9 +596,10 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case let .userNotificationAuthorizationResponse(.success(granted)):
       state.enableNotifications = granted
-      return granted
-        ? .fireAndForget { await environment.remoteNotifications.register() }
-        : .none
+      return .fireAndForget { @MainActor in
+        guard granted else { return }
+        await environment.remoteNotifications.register()
+      }
 
     case .userNotificationAuthorizationResponse:
       return .none

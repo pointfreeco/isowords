@@ -711,6 +711,7 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
   var serverAuthentication: Effect<HomeAction, Never> {
     .run { @MainActor send in
       do {
+        try await environment.gameCenter.localPlayer.authenticate()
         try await send(.authenticationResponse(authenticate(environment: environment)))
         try await send(.serverConfigResponse(environment.serverConfig.refresh()))
 

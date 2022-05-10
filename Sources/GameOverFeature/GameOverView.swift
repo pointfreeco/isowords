@@ -289,9 +289,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           return
         }
 
-        await MainActor.run {
-          withAnimation { send(.submitGameResponse(response)) }
-        }
+        send(.submitGameResponse(response), animation: .default)
       }
 
       //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won

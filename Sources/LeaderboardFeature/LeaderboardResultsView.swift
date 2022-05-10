@@ -81,9 +81,6 @@ extension Reducer {
             }
           )
         }
-//        return environment.loadResults(state.gameMode, state.timeScope)
-//          .receive(on: environment.mainQueue.animation())
-//          .catchToEffect(LeaderboardResultsAction.resultsResponse)
 
       case .onAppear:
         state.isLoading = true
@@ -96,9 +93,6 @@ extension Reducer {
             }
           )
         }
-//        return environment.loadResults(state.gameMode, state.timeScope)
-//          .receive(on: environment.mainQueue.animation())
-//          .catchToEffect(LeaderboardResultsAction.resultsResponse)
 
       case .resultsResponse(.failure):
         state.isLoading = false
@@ -128,10 +122,6 @@ extension Reducer {
             }
           )
         }
-
-//        return environment.loadResults(state.gameMode, state.timeScope)
-//          .receive(on: environment.mainQueue.animation())
-//          .catchToEffect(LeaderboardResultsAction.resultsResponse)
       }
     }
   }

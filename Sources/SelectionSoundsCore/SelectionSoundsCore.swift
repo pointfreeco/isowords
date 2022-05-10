@@ -14,12 +14,14 @@ extension Reducer {
     self
       .onChange(of: selectedWord) { previousSelection, selectedWord, state, _, environment in
         .fireAndForget { @MainActor [state] in
+          let audioPlayer = audioPlayer(environment)
+
           if let noteIndex = noteIndex(
             selectedWord: selectedWord,
             cubes: puzzle(state),
             notes: AudioPlayerClient.Sound.allNotes
           ) {
-            await audioPlayer(environment).play(AudioPlayerClient.Sound.allNotes[noteIndex])
+            await audioPlayer.play(AudioPlayerClient.Sound.allNotes[noteIndex])
           }
 
           let selectedWordString = puzzle(state).string(from: selectedWord)
@@ -36,7 +38,7 @@ extension Reducer {
                 : 0
               }
             if validCount > 0 {
-              await audioPlayer(environment).play(.validWord(level: validCount))
+              await audioPlayer.play(.validWord(level: validCount))
             }
           }
         }

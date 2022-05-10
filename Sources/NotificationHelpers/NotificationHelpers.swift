@@ -7,10 +7,10 @@ public func registerForRemoteNotifications(
   userNotifications: UserNotificationClient
 ) async {
   switch await userNotifications.getNotificationSettings().authorizationStatus {
-  case .notDetermined, .denied, .ephemeral:
-    return
   case .authorized, .provisional:
     await remoteNotifications.register()
+  case .notDetermined, .denied, .ephemeral:
+    return
   @unknown default:
     return
   }
