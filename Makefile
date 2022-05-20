@@ -20,7 +20,7 @@ ifdef PRIVATE
 else
 	@echo "  ⚠️  Checking for Git LFS..."
 	@command -v git-lfs >/dev/null || (echo "$$GITLFS_ERROR_INSTALL" && exit 1)
-	@command -v git config --get-refexp filter.lfs >/dev/null 2>&1 \
+	@command -v git config --get-regexp filter.lfs >/dev/null 2>&1 \
 		|| (echo "$$GITLFS_ERROR_INSTALL_2" && exit 1)
 	@echo "  ✅ Git LFS is good to go!"
 	@git lfs pull
