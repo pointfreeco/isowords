@@ -8,8 +8,8 @@ import ServerConfig
 import ServerRouter
 import SharedModels
 import SnsClient
-import VerifyReceiptMiddleware
 import URLRouting
+import VerifyReceiptMiddleware
 
 public struct ServerEnvironment {
   public var changelog: () -> Changelog

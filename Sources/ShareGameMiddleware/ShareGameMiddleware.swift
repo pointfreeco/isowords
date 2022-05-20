@@ -123,10 +123,11 @@ public struct ShowSharedGameRequest {
 public func showSharedGameMiddleware(
   _ conn: Conn<StatusLineOpen, ShowSharedGameRequest>
 ) -> IO<Conn<ResponseEnded, Data>> {
-  conn |> redirect(
-    to: conn.data.router
-      .baseURL("isowords://")
-      .url(for: .sharedGame(.show(conn.data.code)))
-      .absoluteString
-  )
+  conn
+    |> redirect(
+      to: conn.data.router
+        .baseURL("isowords://")
+        .url(for: .sharedGame(.show(conn.data.code)))
+        .absoluteString
+    )
 }

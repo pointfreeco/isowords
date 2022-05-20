@@ -8,7 +8,7 @@ func verifiedDataBody(
   secrets: [String],
   sha256: @escaping (Data) -> Data
 ) -> AnyParserPrinter<URLRequestData, Data> {
-  
+
   OneOf {
     Route(.verifySignature(date: date, secrets: secrets, sha256: sha256)) {
       Body()
@@ -43,7 +43,7 @@ extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
           let signature = signature,
           let timestamp = timestamp
         else { return nil }
-        
+
         return isValidSignature(
           data: data,
           date: date,
@@ -52,8 +52,8 @@ extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
           sha256: sha256,
           timestamp: timestamp
         )
-        ? data
-        : nil
+          ? data
+          : nil
       },
       unapply: { data in
         guard let firstSecret = secrets.first

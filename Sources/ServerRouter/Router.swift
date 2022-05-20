@@ -3,8 +3,8 @@ import Foundation
 import Parsing
 import SharedModels
 import Tagged
-import XCTestDynamicOverlay
 import URLRouting
+import XCTestDynamicOverlay
 
 #if canImport(FoundationNetworking)
   import FoundationNetworking
@@ -48,7 +48,10 @@ public struct ServerRouter: ParserPrinter {
 
       Route(.case(ServerRoute.authenticate)) {
         Method.post
-        Path { "api"; "authenticate" }
+        Path {
+          "api"
+          "authenticate"
+        }
         verifiedDataBody(date: date, require: false, secrets: secrets, sha256: sha256)
           .map(
             .json(
@@ -60,7 +63,10 @@ public struct ServerRouter: ParserPrinter {
       }
 
       Route(.case(ServerRoute.appSiteAssociation)) {
-        Path { ".well-known"; "apple-app-site-association" }
+        Path {
+          ".well-known"
+          "apple-app-site-association"
+        }
       }
 
       Route(.case(ServerRoute.appStore)) {
@@ -69,7 +75,10 @@ public struct ServerRouter: ParserPrinter {
 
       Route(.case(ServerRoute.demo)) {
         Method.post
-        Path { "demo"; "games" }
+        Path {
+          "demo"
+          "games"
+        }
         Body(.json(ServerRoute.Demo.SubmitRequest.self))
           .map(.case(ServerRoute.Demo.submitGame))
       }
@@ -92,7 +101,10 @@ public struct ServerRouter: ParserPrinter {
 
       Route(.case(ServerRoute.sharedGame)) {
         Path {
-          OneOf { "shared-games"; "sharedGames" }
+          OneOf {
+            "shared-games"
+            "sharedGames"
+          }
           Parse(.string.representing(SharedGame.Code.self))
             .map(.case(ServerRoute.SharedGame.show))
         }
@@ -122,7 +134,9 @@ public struct ServerRouter: ParserPrinter {
       Route(.case(ServerRoute.Api.Route.DailyChallenge.results)) {
         Path { "results" }
         OneOf {
-          Route(.case(ServerRoute.Api.Route.DailyChallenge.Results.fetch(gameMode:gameNumber:language:))) {
+          Route(
+            .case(ServerRoute.Api.Route.DailyChallenge.Results.fetch(gameMode:gameNumber:language:))
+          ) {
             Query {
               OneOf {
                 Field("gameMode") { GameMode.parser() }
