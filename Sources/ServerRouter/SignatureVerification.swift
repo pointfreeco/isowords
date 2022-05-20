@@ -1,7 +1,6 @@
 import Foundation
-import Prelude
 import Parsing
-import _URLRouting
+import URLRouting
 
 func verifiedDataBody(
   date: @escaping () -> Date,
@@ -11,7 +10,7 @@ func verifiedDataBody(
 ) -> AnyParserPrinter<URLRequestData, Data> {
   
   OneOf {
-    Route(._verifySignature(date: date, secrets: secrets, sha256: sha256)) {
+    Route(.verifySignature(date: date, secrets: secrets, sha256: sha256)) {
       Body()
       Headers {
         Optionally {
@@ -33,7 +32,7 @@ func verifiedDataBody(
 }
 
 extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
-  static func _verifySignature(
+  static func verifySignature(
     date: @escaping () -> Date,
     secrets: [String],
     sha256: @escaping (Data) -> Data

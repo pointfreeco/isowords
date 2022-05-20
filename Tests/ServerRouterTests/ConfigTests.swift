@@ -9,7 +9,7 @@ import SharedModels
 import TestHelpers
 import Parsing
 import XCTest
-import _URLRouting
+import URLRouting
 
 @testable import ServerRouter
 

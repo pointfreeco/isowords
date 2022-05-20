@@ -7,8 +7,8 @@ import Foundation
 import Overture
 import SharedModels
 import Parsing
-import _URLRouting
 import TestHelpers
+import URLRouting
 import XCTest
 
 @testable import ServerRouter

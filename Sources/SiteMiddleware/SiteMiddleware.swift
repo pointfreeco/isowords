@@ -9,7 +9,7 @@ import ServerRouter
 import ShareGameMiddleware
 import SharedModels
 import Tagged
-import _URLRouting
+import URLRouting
 
 public func siteMiddleware(
   environment: ServerEnvironment

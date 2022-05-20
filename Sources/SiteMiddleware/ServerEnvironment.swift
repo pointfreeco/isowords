@@ -9,7 +9,7 @@ import ServerRouter
 import SharedModels
 import SnsClient
 import VerifyReceiptMiddleware
-import _URLRouting
+import URLRouting
 
 public struct ServerEnvironment {
   public var changelog: () -> Changelog

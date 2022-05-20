@@ -28,8 +28,9 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.8.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "0.1.0"),
-    .package(url: "https://github.com/pointfreeco/swift-parsing", branch: "optional-one-of-printer"),
+    .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
     .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
+    .package(url: "https://github.com/pointfreeco/swift-url-routing", from: "0.2.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
     .package(
       name: "Overture", url: "https://github.com/pointfreeco/swift-overture", from: "0.5.0"),
@@ -114,7 +115,7 @@ var package = Package(
         "SharedModels",
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "Parsing", package: "swift-parsing"),
-        .product(name: "_URLRouting", package: "swift-parsing"),
+        .product(name: "URLRouting", package: "swift-url-routing"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -127,7 +128,7 @@ var package = Package(
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Overture", package: "Overture"),
         .product(name: "Parsing", package: "swift-parsing"),
-        .product(name: "_URLRouting", package: "swift-parsing"),
+        .product(name: "URLRouting", package: "swift-url-routing"),
       ]
     ),
     .target(

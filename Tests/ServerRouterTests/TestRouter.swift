@@ -1,7 +1,7 @@
 import Foundation
 import Parsing
 import ServerRouter
-import _URLRouting
+import URLRouting
 
 let date = { Date(timeIntervalSince1970: 1_234_567_890) }
 let testRouter = ServerRouter(
