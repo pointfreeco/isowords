@@ -1,8 +1,10 @@
 import Foundation
+import Parsing
 import ServerRouter
+import URLRouting
 
 let date = { Date(timeIntervalSince1970: 1_234_567_890) }
-let testRouter = router(
+let testRouter = ServerRouter(
   date: date,
   decoder: decoder,
   encoder: encoder,

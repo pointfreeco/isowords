@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 
 import Foundation
 import PackageDescription
@@ -25,10 +25,12 @@ var package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.7.0"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.8.1"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "0.1.0"),
+    .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
     .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
+    .package(url: "https://github.com/pointfreeco/swift-url-routing", from: "0.2.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
     .package(
       name: "Overture", url: "https://github.com/pointfreeco/swift-overture", from: "0.5.0"),
@@ -111,8 +113,9 @@ var package = Package(
       name: "ServerRouter",
       dependencies: [
         "SharedModels",
-        .product(name: "ApplicativeRouter", package: "swift-web"),
         .product(name: "Tagged", package: "swift-tagged"),
+        .product(name: "Parsing", package: "swift-parsing"),
+        .product(name: "URLRouting", package: "swift-url-routing"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -124,6 +127,8 @@ var package = Package(
         "TestHelpers",
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Overture", package: "Overture"),
+        .product(name: "Parsing", package: "swift-parsing"),
+        .product(name: "URLRouting", package: "swift-url-routing"),
       ]
     ),
     .target(
@@ -1060,7 +1065,7 @@ package.targets.append(contentsOf: [
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
-  .target(
+  .executableTarget(
     name: "daily-challenge-reports",
     dependencies: [
       "DailyChallengeReports"
@@ -1225,7 +1230,7 @@ package.targets.append(contentsOf: [
       .product(name: "SnapshotTesting", package: "SnapshotTesting"),
     ]
   ),
-  .target(
+  .executableTarget(
     name: "runner",
     dependencies: [
       "RunnerTasks"
@@ -1245,7 +1250,7 @@ package.targets.append(contentsOf: [
       .product(name: "CustomDump", package: "swift-custom-dump"),
     ]
   ),
-  .target(
+  .executableTarget(
     name: "server",
     dependencies: [
       "ServerBootstrap",
@@ -1332,7 +1337,6 @@ package.targets.append(contentsOf: [
       "ShareGameMiddleware",
       "SnsClient",
       "VerifyReceiptMiddleware",
-      .product(name: "ApplicativeRouterHttpPipelineSupport", package: "swift-web"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "Overture", package: "Overture"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),

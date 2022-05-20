@@ -1,4 +1,3 @@
-import ApplicativeRouter
 import DatabaseClient
 import Either
 import EnvVars
@@ -13,14 +12,14 @@ public struct ShareGameRequest {
   public let currentPlayer: Player
   public let database: DatabaseClient
   public let envVars: EnvVars
-  public let router: Router<ServerRoute>
+  public let router: ServerRouter
 
   public init(
     completedGame: CompletedGame,
     currentPlayer: Player,
     database: DatabaseClient,
     envVars: EnvVars,
-    router: Router<ServerRoute>
+    router: ServerRouter
   ) {
     self.completedGame = completedGame
     self.currentPlayer = currentPlayer
@@ -51,11 +50,9 @@ public func submitSharedGameMiddleware(
               SubmitSharedGameResponse(
                 code: sharedGame.code,
                 id: sharedGame.id,
-                url:
-                  conn.data.router.url(
-                    for: .sharedGame(.show(sharedGame.code)),
-                    base: conn.data.envVars.baseUrl
-                  )?.absoluteString ?? ""
+                url: conn.data.router
+                  .baseURL(conn.data.envVars.baseUrl.absoluteString)
+                  .url(for: .sharedGame(.show(sharedGame.code))).absoluteString
               )
             )
           )
@@ -112,11 +109,11 @@ public func fetchSharedGameMiddleware(
 
 public struct ShowSharedGameRequest {
   let code: SharedGame.Code
-  let router: Router<ServerRoute>
+  let router: ServerRouter
 
   public init(
     code: SharedGame.Code,
-    router: Router<ServerRoute>
+    router: ServerRouter
   ) {
     self.code = code
     self.router = router
@@ -126,16 +123,10 @@ public struct ShowSharedGameRequest {
 public func showSharedGameMiddleware(
   _ conn: Conn<StatusLineOpen, ShowSharedGameRequest>
 ) -> IO<Conn<ResponseEnded, Data>> {
-  guard
-    let baseUrl = URL(string: "isowords:"),
-    let request = conn.data.router.request(for: .sharedGame(.show(conn.data.code)), base: baseUrl),
-    let urlString = request.url?.absoluteString
-  else {
-    return conn
-      |> writeStatus(.badRequest)
-      >=> respond(json: "{}")
-  }
-
-  return conn
-    |> redirect(to: urlString)
+  conn |> redirect(
+    to: conn.data.router
+      .baseURL("isowords://")
+      .url(for: .sharedGame(.show(conn.data.code)))
+      .absoluteString
+  )
 }

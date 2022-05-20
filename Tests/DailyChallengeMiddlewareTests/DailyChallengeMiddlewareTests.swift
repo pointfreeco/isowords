@@ -154,7 +154,8 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     let puzzle = ArchivablePuzzle.mock
     let index = LatticePoint(x: .two, y: .two, z: .two)
     let move = Move(
-      playedAt: Date(timeIntervalSince1970: 1_234_567_890),
+      // NB: Fractional second forces same encoding on Linux (Apple platforms omit trailing '.0')
+      playedAt: Date(timeIntervalSince1970: 1_234_567_890.5),
       playerIndex: nil,
       reactions: nil,
       score: 27,
@@ -238,15 +239,15 @@ class DailyChallengeMiddlewareTests: XCTestCase {
 
     _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
-      X-Signature: ewogICJnYW1lQ29udGV4dCIgOiB7CiAgICAiZGFpbHlDaGFsbGVuZ2VJZCIgOiAiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIgogIH0sCiAgIm1vdmVzIiA6IFsKICAgIHsKICAgICAgInBsYXllZEF0IiA6IDEyMzQ1Njc4OTAsCiAgICAgICJzY29yZSIgOiAyNywKICAgICAgInR5cGUiIDogewogICAgICAgICJwbGF5ZWRXb3JkIiA6IFsKICAgICAgICAgIHsKICAgICAgICAgICAgImluZGV4IiA6IHsKICAgICAgICAgICAgICAieCIgOiAyLAogICAgICAgICAgICAgICJ5IiA6IDIsCiAgICAgICAgICAgICAgInoiIDogMgogICAgICAgICAgICB9LAogICAgICAgICAgICAic2lkZSIgOiAwCiAgICAgICAgICB9LAogICAgICAgICAgewogICAgICAgICAgICAiaW5kZXgiIDogewogICAgICAgICAgICAgICJ4IiA6IDIsCiAgICAgICAgICAgICAgInkiIDogMiwKICAgICAgICAgICAgICAieiIgOiAyCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJzaWRlIiA6IDEKICAgICAgICAgIH0sCiAgICAgICAgICB7CiAgICAgICAgICAgICJpbmRleCIgOiB7CiAgICAgICAgICAgICAgIngiIDogMiwKICAgICAgICAgICAgICAieSIgOiAyLAogICAgICAgICAgICAgICJ6IiA6IDIKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInNpZGUiIDogMgogICAgICAgICAgfQogICAgICAgIF0KICAgICAgfQogICAgfQogIF0KfS0tLS1TRUNSRVRfREVBREJFRUYtLS0tMTIzNDU2Nzg5MA==
-      
+      X-Signature: ewogICJnYW1lQ29udGV4dCIgOiB7CiAgICAiZGFpbHlDaGFsbGVuZ2VJZCIgOiAiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIgogIH0sCiAgIm1vdmVzIiA6IFsKICAgIHsKICAgICAgInBsYXllZEF0IiA6IDEyMzQ1Njc4OTAuNSwKICAgICAgInNjb3JlIiA6IDI3LAogICAgICAidHlwZSIgOiB7CiAgICAgICAgInBsYXllZFdvcmQiIDogWwogICAgICAgICAgewogICAgICAgICAgICAiaW5kZXgiIDogewogICAgICAgICAgICAgICJ4IiA6IDIsCiAgICAgICAgICAgICAgInkiIDogMiwKICAgICAgICAgICAgICAieiIgOiAyCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJzaWRlIiA6IDAKICAgICAgICAgIH0sCiAgICAgICAgICB7CiAgICAgICAgICAgICJpbmRleCIgOiB7CiAgICAgICAgICAgICAgIngiIDogMiwKICAgICAgICAgICAgICAieSIgOiAyLAogICAgICAgICAgICAgICJ6IiA6IDIKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInNpZGUiIDogMQogICAgICAgICAgfSwKICAgICAgICAgIHsKICAgICAgICAgICAgImluZGV4IiA6IHsKICAgICAgICAgICAgICAieCIgOiAyLAogICAgICAgICAgICAgICJ5IiA6IDIsCiAgICAgICAgICAgICAgInoiIDogMgogICAgICAgICAgICB9LAogICAgICAgICAgICAic2lkZSIgOiAyCiAgICAgICAgICB9CiAgICAgICAgXQogICAgICB9CiAgICB9CiAgXQp9LS0tLVNFQ1JFVF9ERUFEQkVFRi0tLS0xMjM0NTY3ODkw
+
       {
         "gameContext" : {
           "dailyChallengeId" : "DEADBEEF-DEAD-BEEF-DEAD-DA117C4A1132"
         },
         "moves" : [
           {
-            "playedAt" : 1234567890,
+            "playedAt" : 1234567890.5,
             "score" : 27,
             "type" : {
               "playedWord" : [

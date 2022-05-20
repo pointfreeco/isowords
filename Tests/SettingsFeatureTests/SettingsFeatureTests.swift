@@ -256,7 +256,7 @@ class SettingsFeatureTests: XCTestCase {
     )
 
     let store = TestStore(
-      initialState: SettingsState(),
+      initialState: SettingsState(sendDailyChallengeReminder: false),
       reducer: settingsReducer,
       environment: environment
     )
@@ -279,9 +279,7 @@ class SettingsFeatureTests: XCTestCase {
     }
     mainQueue.advance(by: 0.5)
 
-    store.send(.set(\.$sendDailyChallengeSummary, true)) {
-      $0.sendDailyChallengeSummary = true
-    }
+    store.send(.set(\.$sendDailyChallengeSummary, true))
     mainQueue.advance(by: 0.5)
     mainQueue.advance(by: 0.5)
 

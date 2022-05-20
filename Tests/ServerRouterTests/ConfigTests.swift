@@ -7,19 +7,19 @@ import Foundation
 import Overture
 import SharedModels
 import TestHelpers
+import Parsing
 import XCTest
+import URLRouting
 
 @testable import ServerRouter
 
 class ConfigTests: XCTestCase {
   func testConfig() throws {
     var expectedRequest = URLRequest(
-      url: URL(string: "api/config?accessToken=DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF&build=42")!
+      url: URL(string: "/api/config?accessToken=DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF&build=42")!
     )
     expectedRequest.httpMethod = "GET"
-    expectedRequest.allHTTPHeaderFields = [
-      "X-Debug": "false"
-    ]
+    expectedRequest.allHTTPHeaderFields = [:]
     let expectedRoute = ServerRoute.api(
       .init(
         accessToken: .init(rawValue: .deadbeef),
@@ -29,12 +29,12 @@ class ConfigTests: XCTestCase {
     )
 
     XCTAssertNoDifference(
-      testRouter.match(request: expectedRequest),
+      try testRouter.match(request: expectedRequest),
       expectedRoute
     )
 
     XCTAssertNoDifference(
-      testRouter.request(
+      try testRouter.request(
         for: .api(
           .init(
             accessToken: .init(rawValue: .deadbeef),

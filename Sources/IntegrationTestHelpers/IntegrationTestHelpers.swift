@@ -1,5 +1,4 @@
 import ApiClient
-import ApplicativeRouter
 import Combine
 import ComposableArchitecture
 import FirstPartyMocks
@@ -13,7 +12,7 @@ import TestHelpers
 extension ApiClient {
   public init(
     middleware: @escaping Middleware<StatusLineOpen, ResponseEnded, Prelude.Unit, Data>,
-    router: Router<ServerRoute>
+    router: ServerRouter
   ) {
     var currentPlayer: CurrentPlayerEnvelope?
 
@@ -22,7 +21,7 @@ extension ApiClient {
     self.init(
       apiRequest: { route in
         guard
-          let request = router.request(
+          let request = try? router.request(
             for: .api(.init(accessToken: .init(rawValue: .deadbeef), isDebug: true, route: route))
           ),
           let url = request.url
@@ -44,7 +43,7 @@ extension ApiClient {
           .eraseToEffect()
       },
       authenticate: { authRequest in
-        guard let request = router.request(for: .authenticate(authRequest))
+        guard let request = try? router.request(for: .authenticate(authRequest))
         else {
           return Fail(error: ApiError(error: URLError(.badURL)))
             .eraseToEffect()
@@ -68,7 +67,7 @@ extension ApiClient {
       refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       request: { route in
         guard
-          let request = router.request(for: route),
+          let request = try? router.request(for: route),
           let url = request.url
         else {
           return Fail(error: URLError.init(.badURL))

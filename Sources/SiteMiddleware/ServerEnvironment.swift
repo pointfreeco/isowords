@@ -1,4 +1,3 @@
-import ApplicativeRouter
 import DatabaseClient
 import DictionaryClient
 import EnvVars
@@ -10,6 +9,7 @@ import ServerRouter
 import SharedModels
 import SnsClient
 import VerifyReceiptMiddleware
+import URLRouting
 
 public struct ServerEnvironment {
   public var changelog: () -> Changelog
@@ -20,7 +20,7 @@ public struct ServerEnvironment {
   public var envVars: EnvVars
   public var mailgun: MailgunClient
   public var randomCubes: () -> ArchivablePuzzle
-  public var router: Router<ServerRoute>
+  public var router: ServerRouter
   public var snsClient: SnsClient
 
   public init(
@@ -32,7 +32,7 @@ public struct ServerEnvironment {
     itunes: ItunesClient,
     mailgun: MailgunClient,
     randomCubes: @escaping () -> ArchivablePuzzle,
-    router: Router<ServerRoute>,
+    router: ServerRouter,
     snsClient: SnsClient
   ) {
     self.changelog = changelog

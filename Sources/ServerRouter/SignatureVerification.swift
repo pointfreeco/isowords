@@ -1,22 +1,37 @@
-import ApplicativeRouter
 import Foundation
-import Prelude
+import Parsing
+import URLRouting
 
 func verifiedDataBody(
   date: @escaping () -> Date,
   require: Bool = true,
   secrets: [String],
   sha256: @escaping (Data) -> Data
-) -> Router<Data> {
-  (dataBody
-    <%> header("X-Signature", opt(.base64))
-    <%> queryParam("timestamp", opt(.int)))
-    .map(.init(apply: { ($0, $1.0, $1.1) }, unapply: { ($0, ($1, $2)) }))
-    .map(PartialIso.verifySignature(date: date, secrets: secrets, sha256: sha256))
-    <|> (require ? .empty : dataBody)
+) -> AnyParserPrinter<URLRequestData, Data> {
+  
+  OneOf {
+    Route(.verifySignature(date: date, secrets: secrets, sha256: sha256)) {
+      Body()
+      Headers {
+        Optionally {
+          Field("X-Signature", .string.base64)
+        }
+      }
+      Query {
+        Optionally {
+          Field("timestamp") { Digits() }
+        }
+      }
+    }
+
+    if !require {
+      Body()
+    }
+  }
+  .eraseToAnyParserPrinter()
 }
 
-extension PartialIso where A == (Data, Data?, Int?), B == Data {
+extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {
   static func verifySignature(
     date: @escaping () -> Date,
     secrets: [String],
@@ -28,7 +43,7 @@ extension PartialIso where A == (Data, Data?, Int?), B == Data {
           let signature = signature,
           let timestamp = timestamp
         else { return nil }
-
+        
         return isValidSignature(
           data: data,
           date: date,
@@ -37,8 +52,8 @@ extension PartialIso where A == (Data, Data?, Int?), B == Data {
           sha256: sha256,
           timestamp: timestamp
         )
-          ? data
-          : nil
+        ? data
+        : nil
       },
       unapply: { data in
         guard let firstSecret = secrets.first

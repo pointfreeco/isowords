@@ -64,6 +64,9 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       $0.fullGameProduct = fullGameProduct
     }
 
+    store.receive(.timerTick) {
+      $0.secondsPassedCount = 1
+    }
     store.send(.upgradeButtonTapped) {
       $0.isPurchasing = true
     }
