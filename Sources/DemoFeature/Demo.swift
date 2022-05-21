@@ -260,14 +260,14 @@ public struct DemoView: View {
         }
       )
     }
-    .appStoreOverlay(
-      isPresented: self.viewStore.binding(
-        get: \.appStoreOverlayIsPresented,
-        send: DemoAction.appStoreOverlay(isPresented:)
-      )
-    ) {
-      SKOverlay.AppClipConfiguration(position: .bottom)
-    }
+//    .appStoreOverlay(
+//      isPresented: self.viewStore.binding(
+//        get: \.appStoreOverlayIsPresented,
+//        send: DemoAction.appStoreOverlay(isPresented:)
+//      )
+//    ) {
+//      SKOverlay.AppClipConfiguration(position: .bottom)
+//    }
   }
 }
 

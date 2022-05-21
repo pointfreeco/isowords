@@ -16,159 +16,147 @@ public enum GameContext: String, Codable {
   case turnBased
 }
 
-public struct UpgradeInterstitialState: Equatable {
-  public var fullGameProduct: StoreKitClient.Product?
-  public var isDismissable: Bool
-  public var isPurchasing: Bool
-  public var secondsPassedCount: Int
-  public var upgradeInterstitialDuration: Int
+public struct UpgradeInterstitialFeature: ReducerProtocol {
+  public struct State: Equatable {
+    public var fullGameProduct: StoreKitClient.Product?
+    public var isDismissable: Bool
+    public var isPurchasing: Bool
+    public var secondsPassedCount: Int
+    public var upgradeInterstitialDuration: Int
 
-  public init(
-    fullGameProduct: StoreKitClient.Product? = nil,
-    isDismissable: Bool = false,
-    isPurchasing: Bool = false,
-    secondsPassedCount: Int = 0,
-    upgradeInterstitialDuration: Int = ServerConfig.UpgradeInterstitial.default.duration
-  ) {
-    self.fullGameProduct = fullGameProduct
-    self.isDismissable = isDismissable
-    self.isPurchasing = isPurchasing
-    self.secondsPassedCount = secondsPassedCount
-    self.upgradeInterstitialDuration = upgradeInterstitialDuration
+    public init(
+      fullGameProduct: StoreKitClient.Product? = nil,
+      isDismissable: Bool = false,
+      isPurchasing: Bool = false,
+      secondsPassedCount: Int = 0,
+      upgradeInterstitialDuration: Int = ServerConfig.UpgradeInterstitial.default.duration
+    ) {
+      self.fullGameProduct = fullGameProduct
+      self.isDismissable = isDismissable
+      self.isPurchasing = isPurchasing
+      self.secondsPassedCount = secondsPassedCount
+      self.upgradeInterstitialDuration = upgradeInterstitialDuration
+    }
   }
-}
 
-public enum UpgradeInterstitialAction: Equatable {
-  case delegate(DelegateAction)
-  case fullGameProductResponse(StoreKitClient.Product)
-  case maybeLaterButtonTapped
-  case onAppear
-  case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-  case timerTick
-  case upgradeButtonTapped
+  public enum Action: Equatable {
+    case delegate(DelegateAction)
+    case fullGameProductResponse(StoreKitClient.Product)
+    case maybeLaterButtonTapped
+    case onAppear
+    case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
+    case timerTick
+    case upgradeButtonTapped
+  }
 
   public enum DelegateAction {
     case close
     case fullGamePurchased
   }
-}
 
-public struct UpgradeInterstitialEnvironment {
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
-  public var serverConfig: ServerConfigClient
-  public var storeKit: StoreKitClient
+  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.storeKit) var storeKit
 
-  public init(
-    mainRunLoop: AnySchedulerOf<RunLoop>,
-    serverConfig: ServerConfigClient,
-    storeKit: StoreKitClient
-  ) {
-    self.mainRunLoop = mainRunLoop
-    self.serverConfig = serverConfig
-    self.storeKit = storeKit
-  }
-}
+  public init() {}
 
-public let upgradeInterstitialReducer = Reducer<
-  UpgradeInterstitialState, UpgradeInterstitialAction, UpgradeInterstitialEnvironment
-> { state, action, environment in
+  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+    enum StoreKitObserverId {}
+    enum TimerId {}
 
-  struct StoreKitObserverId: Hashable {}
-  struct TimerId: Hashable {}
+    switch action {
+    case .delegate:
+      return .none
 
-  switch action {
-  case .delegate:
-    return .none
+    case let .fullGameProductResponse(product):
+      state.fullGameProduct = product
+      return .none
 
-  case let .fullGameProductResponse(product):
-    state.fullGameProduct = product
-    return .none
-
-  case .maybeLaterButtonTapped:
-    return .merge(
-      .cancel(id: StoreKitObserverId()),
-      .cancel(id: TimerId()),
-      Effect(value: .delegate(.close))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect()
-    )
-
-  case let .paymentTransaction(event):
-    switch event {
-    case .removedTransactions:
-      state.isPurchasing = false
-    case .restoreCompletedTransactionsFailed:
-      break
-    case .restoreCompletedTransactionsFinished:
-      state.isPurchasing = false
-    case .updatedTransactions:
-      break
-    }
-
-    return event.isFullGamePurchased(
-      identifier: environment.serverConfig.config().productIdentifiers.fullGame
-    )
-      ? .merge(
-        .cancel(id: StoreKitObserverId()),
-        .cancel(id: TimerId()),
-        Effect(value: .delegate(.fullGamePurchased))
-      )
-      : .none
-
-  case .onAppear:
-    state.upgradeInterstitialDuration =
-      environment.serverConfig.config().upgradeInterstitial.duration
-
-    return .merge(
-      environment.storeKit.observer
-        .receive(on: environment.mainRunLoop.animation())
-        .map(UpgradeInterstitialAction.paymentTransaction)
-        .eraseToEffect()
-        .cancellable(id: StoreKitObserverId()),
-
-      environment.storeKit.fetchProducts([
-        environment.serverConfig.config().productIdentifiers.fullGame
-      ])
-      .ignoreFailure()
-      .compactMap { response in
-        response.products.first { product in
-          product.productIdentifier == environment.serverConfig.config().productIdentifiers.fullGame
-        }
-      }
-      .receive(on: environment.mainRunLoop.animation())
-      .map(UpgradeInterstitialAction.fullGameProductResponse)
-      .eraseToEffect(),
-
-      !state.isDismissable
-        ? Effect.timer(id: TimerId(), every: 1, on: environment.mainRunLoop.animation())
-          .map { _ in UpgradeInterstitialAction.timerTick }
+    case .maybeLaterButtonTapped:
+      return .merge(
+        .cancel(id: StoreKitObserverId.self),
+        .cancel(id: TimerId.self),
+        Effect(value: .delegate(.close))
+          .receive(on: ImmediateScheduler.shared.animation())
           .eraseToEffect()
-          .cancellable(id: TimerId())
+      )
+
+    case let .paymentTransaction(event):
+      switch event {
+      case .removedTransactions:
+        state.isPurchasing = false
+      case .restoreCompletedTransactionsFailed:
+        break
+      case .restoreCompletedTransactionsFinished:
+        state.isPurchasing = false
+      case .updatedTransactions:
+        break
+      }
+
+      return event.isFullGamePurchased(
+        identifier: self.serverConfig.config().productIdentifiers.fullGame
+      )
+        ? .merge(
+          .cancel(id: StoreKitObserverId.self),
+          .cancel(id: TimerId.self),
+          Effect(value: .delegate(.fullGamePurchased))
+        )
         : .none
-    )
 
-  case .timerTick:
-    state.secondsPassedCount += 1
-    return state.secondsPassedCount == state.upgradeInterstitialDuration
-      ? .cancel(id: TimerId())
-      : .none
+    case .onAppear:
+      state.upgradeInterstitialDuration =
+      self.serverConfig.config().upgradeInterstitial.duration
 
-  case .upgradeButtonTapped:
-    state.isPurchasing = true
+      return .merge(
+        self.storeKit.observer
+          .receive(on: self.mainRunLoop.animation())
+          .map(Action.paymentTransaction)
+          .eraseToEffect()
+          .cancellable(id: StoreKitObserverId.self),
 
-    let payment = SKMutablePayment()
-    payment.productIdentifier = environment.serverConfig.config().productIdentifiers.fullGame
-    payment.quantity = 1
-    return environment.storeKit.addPayment(payment)
-      .fireAndForget()
+        self.storeKit.fetchProducts([
+          self.serverConfig.config().productIdentifiers.fullGame
+        ])
+        .ignoreFailure()
+        .compactMap { response in
+          response.products.first { product in
+            product.productIdentifier == self.serverConfig.config().productIdentifiers.fullGame
+          }
+        }
+        .receive(on: self.mainRunLoop.animation())
+        .map(Action.fullGameProductResponse)
+        .eraseToEffect(),
+
+        !state.isDismissable
+          ? Effect.timer(id: TimerId.self, every: 1, on: self.mainRunLoop.animation())
+            .map { _ in Action.timerTick }
+            .eraseToEffect()
+          : .none
+      )
+
+    case .timerTick:
+      state.secondsPassedCount += 1
+      return state.secondsPassedCount == state.upgradeInterstitialDuration
+        ? .cancel(id: TimerId.self)
+        : .none
+
+    case .upgradeButtonTapped:
+      state.isPurchasing = true
+
+      let payment = SKMutablePayment()
+      payment.productIdentifier = self.serverConfig.config().productIdentifiers.fullGame
+      payment.quantity = 1
+      return self.storeKit.addPayment(payment)
+        .fireAndForget()
+    }
   }
 }
 
 public struct UpgradeInterstitialView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<UpgradeInterstitialState, UpgradeInterstitialAction>
+  let store: StoreOf<UpgradeInterstitialFeature>
 
-  public init(store: Store<UpgradeInterstitialState, UpgradeInterstitialAction>) {
+  public init(store: StoreOf<UpgradeInterstitialFeature>) {
     self.store = store
   }
 
@@ -390,18 +378,14 @@ struct UpgradeInterstitialPreviews: PreviewProvider {
                 localizedDescription: "Full Game",
                 localizedTitle: "Full Game",
                 price: 5,
-                priceLocale: Locale.init(identifier: "en_US"),
+                priceLocale: Locale(identifier: "en_US"),
                 productIdentifier: "full_game"
               ),
               isDismissable: false,
               secondsPassedCount: 0
             ),
-            reducer: upgradeInterstitialReducer,
-            environment: .init(
-              mainRunLoop: .main,
-              serverConfig: .noop,
-              storeKit: .live()
-            )
+            reducer: UpgradeInterstitialFeature()
+              .dependency(\.serverConfig, .noop)
           )
         )
         .navigationBarHidden(true)

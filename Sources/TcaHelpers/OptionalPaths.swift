@@ -225,3 +225,47 @@ extension Reducer {
     }
   }
 }
+
+public struct PullbackSome<
+  StatePath: Path, ActionPath: Path, Local: ReducerProtocol
+>: ReducerProtocol
+where
+  Local.State == StatePath.Value,
+  Local.Action == ActionPath.Value
+{
+  let toLocalState: StatePath
+  let toLocalAction: ActionPath
+  let localReducer: Local
+
+  public init(
+    state toLocalState: StatePath,
+    action toLocalAction: ActionPath,
+    @ReducerBuilder<Local.State, Local.Action> _ local: () -> Local
+  ) {
+    self.toLocalState = toLocalState
+    self.toLocalAction = toLocalAction
+    self.localReducer = local()
+  }
+
+  public func reduce(into state: inout StatePath.Root, action: ActionPath.Root)
+  -> Effect<ActionPath.Root, Never> {
+    guard let localAction = toLocalAction.extract(from: action)
+    else { return .none }
+
+    guard var localState = toLocalState.extract(from: state)
+    else {
+      // TODO: runtime warning?
+      return .none
+    }
+
+    let effect =
+      self.localReducer.reduce(into: &localState, action: localAction)
+      .map { localAction -> Action in
+        var action = action
+        toLocalAction.set(into: &action, localAction)
+        return action
+      }
+    toLocalState.set(into: &state, localState)
+    return effect
+  }
+}

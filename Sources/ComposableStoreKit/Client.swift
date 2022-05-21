@@ -172,3 +172,15 @@ extension StoreKitClient.Product {
     self.productIdentifier = rawValue.productIdentifier
   }
 }
+
+extension DependencyValues {
+  public var storeKit: StoreKitClient {
+    get { self[StoreKitClientKey.self] }
+    set { self[StoreKitClientKey.self] = newValue }
+  }
+
+  private enum StoreKitClientKey: LiveDependencyKey {
+    static let liveValue = StoreKitClient.live()
+    static let testValue = StoreKitClient.failing
+  }
+}

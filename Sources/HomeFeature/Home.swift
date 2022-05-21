@@ -65,7 +65,7 @@ public enum HomeRoute: Equatable {
 }
 
 public struct HomeState: Equatable {
-  public var changelog: ChangelogState?
+  public var changelog: ChangelogFeature.State?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
   public var hasChangelog: Bool
   @BindableState public var hasPastTurnBasedGames: Bool
@@ -124,7 +124,7 @@ public enum HomeAction: BindableAction, Equatable {
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
   case binding(BindingAction<HomeState>)
-  case changelog(ChangelogAction)
+  case changelog(ChangelogFeature.Action)
   case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
   case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
@@ -245,21 +245,11 @@ public struct HomeEnvironment {
 #endif
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine(
-  changelogReducer
-    ._pullback(
-      state: OptionalPath(\.changelog),
-      action: /HomeAction.changelog,
-      environment: {
-        ChangelogEnvironment(
-          apiClient: $0.apiClient,
-          applicationClient: $0.applicationClient,
-          build: $0.build,
-          mainQueue: $0.mainQueue,
-          serverConfig: $0.serverConfig,
-          userDefaults: $0.userDefaults
-        )
-      }
-    ),
+  Reducer.init(
+    PullbackSome(state: OptionalPath(\.changelog), action: /HomeAction.changelog) {
+      ChangelogFeature()
+    }
+  ),
 
   dailyChallengeReducer
     ._pullback(
@@ -309,13 +299,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     .pullback(
       state: \HomeState.nagBanner,
       action: /HomeAction.nagBannerFeature,
-      environment: {
-        NagBannerEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
-      }
+      environment: { _ in NagBannerEnvironment() }
     ),
 
   settingsReducer
@@ -665,7 +649,7 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      NagBannerFeature(
+      NagBannerView(
         store: self.store.scope(
           state: \.nagBanner,
           action: HomeAction.nagBannerFeature

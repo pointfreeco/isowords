@@ -7,12 +7,12 @@ import TcaHelpers
 import UpgradeInterstitialFeature
 
 public struct NagBannerState: Equatable {
-  var upgradeInterstitial: UpgradeInterstitialState? = nil
+  var upgradeInterstitial: UpgradeInterstitialFeature.State? = nil
 }
 
 public enum NagBannerAction: Equatable {
   case tapped
-  case upgradeInterstitial(UpgradeInterstitialAction)
+  case upgradeInterstitial(UpgradeInterstitialFeature.Action)
 }
 
 public enum NagBannerFeatureAction: Equatable {
@@ -20,11 +20,7 @@ public enum NagBannerFeatureAction: Equatable {
   case nagBanner(NagBannerAction)
 }
 
-public struct NagBannerEnvironment {
-  var mainRunLoop: AnySchedulerOf<RunLoop>
-  var serverConfig: ServerConfigClient
-  var storeKit: StoreKitClient
-}
+public struct NagBannerEnvironment {}
 
 let nagBannerFeatureReducer = Reducer<NagBannerState?, NagBannerFeatureAction, NagBannerEnvironment>
   .combine(
@@ -55,18 +51,13 @@ let nagBannerFeatureReducer = Reducer<NagBannerState?, NagBannerFeatureAction, N
 
 private let nagBannerReducer = Reducer<NagBannerState, NagBannerAction, NagBannerEnvironment>
   .combine(
-    upgradeInterstitialReducer
-      ._pullback(
-        state: OptionalPath(\.upgradeInterstitial),
-        action: /NagBannerAction.upgradeInterstitial,
-        environment: {
-          UpgradeInterstitialEnvironment(
-            mainRunLoop: $0.mainRunLoop,
-            serverConfig: $0.serverConfig,
-            storeKit: $0.storeKit
-          )
-        }
-      ),
+    Reducer(
+      PullbackSome(
+        state: OptionalPath(\.upgradeInterstitial), action: /NagBannerAction.upgradeInterstitial
+      ) {
+        UpgradeInterstitialFeature()
+      }
+    ),
 
     .init { state, action, environment in
       switch action {
@@ -88,7 +79,7 @@ private let nagBannerReducer = Reducer<NagBannerState, NagBannerAction, NagBanne
     }
   )
 
-struct NagBannerFeature: View {
+struct NagBannerView: View {
   let store: Store<NagBannerState?, NagBannerFeatureAction>
 
   var body: some View {
@@ -159,11 +150,7 @@ let messages = [
             store: .init(
               initialState: NagBannerState(),
               reducer: nagBannerReducer,
-              environment: NagBannerEnvironment(
-                mainRunLoop: .main,
-                serverConfig: .noop,
-                storeKit: .noop
-              )
+              environment: NagBannerEnvironment()
             )
           )
         }
