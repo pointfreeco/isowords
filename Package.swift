@@ -43,6 +43,7 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]

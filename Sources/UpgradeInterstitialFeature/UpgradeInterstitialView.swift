@@ -9,13 +9,6 @@ import Styleguide
 import SwiftUI
 import SwiftUIHelpers
 
-public enum GameContext: String, Codable {
-  case dailyChallenge
-  case shared
-  case solo
-  case turnBased
-}
-
 public struct UpgradeInterstitialFeature: ReducerProtocol {
   public struct State: Equatable {
     public var fullGameProduct: StoreKitClient.Product?
@@ -47,6 +40,13 @@ public struct UpgradeInterstitialFeature: ReducerProtocol {
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
     case timerTick
     case upgradeButtonTapped
+  }
+
+  public enum GameContext: String, Codable {
+    case dailyChallenge
+    case shared
+    case solo
+    case turnBased
   }
 
   public enum DelegateAction {
@@ -293,7 +293,7 @@ extension StoreKitClient.PaymentTransactionObserverEvent {
 
 extension Effect where Output == Bool, Failure == Error {
   public static func showUpgradeInterstitial(
-    gameContext: GameContext,
+    gameContext: UpgradeInterstitialFeature.GameContext,
     isFullGamePurchased: Bool,
     serverConfig: ServerConfig,
     playedGamesCount: () -> Effect<Int, Error>
@@ -313,7 +313,7 @@ extension Effect where Output == Bool, Failure == Error {
 
 func shouldShowInterstitial(
   gamePlayedCount: Int,
-  gameContext: GameContext,
+  gameContext: UpgradeInterstitialFeature.GameContext,
   serverConfig: ServerConfig
 ) -> Bool {
   let triggerCount = serverConfig.triggerCount(gameContext: gameContext)
@@ -323,7 +323,7 @@ func shouldShowInterstitial(
 }
 
 extension ServerConfig {
-  fileprivate func triggerCount(gameContext: GameContext) -> Int {
+  fileprivate func triggerCount(gameContext: UpgradeInterstitialFeature.GameContext) -> Int {
     switch gameContext {
     case .dailyChallenge:
       return self.upgradeInterstitial.playedDailyChallengeGamesTriggerCount
@@ -336,7 +336,7 @@ extension ServerConfig {
     }
   }
 
-  fileprivate func triggerEvery(gameContext: GameContext) -> Int {
+  fileprivate func triggerEvery(gameContext: UpgradeInterstitialFeature.GameContext) -> Int {
     switch gameContext {
     case .dailyChallenge:
       return self.upgradeInterstitial.dailyChallengeTriggerEvery

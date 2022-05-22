@@ -37,7 +37,7 @@ public struct GameOverState: Equatable {
   public var showConfetti: Bool
   public var summary: RankSummary?
   public var turnBasedContext: TurnBasedContext?
-  public var upgradeInterstitial: UpgradeInterstitialState?
+  public var upgradeInterstitial: UpgradeInterstitialFeature.State?
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
   public init(
@@ -51,7 +51,7 @@ public struct GameOverState: Equatable {
     showConfetti: Bool = false,
     summary: RankSummary? = nil,
     turnBasedContext: TurnBasedContext? = nil,
-    upgradeInterstitial: UpgradeInterstitialState? = nil,
+    upgradeInterstitial: UpgradeInterstitialFeature.State? = nil,
     userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
   ) {
     self.completedGame = completedGame
@@ -87,7 +87,7 @@ public enum GameOverAction: Equatable {
   case showConfetti
   case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
   case submitGameResponse(Result<SubmitGameResponse, ApiError>)
-  case upgradeInterstitial(UpgradeInterstitialAction)
+  case upgradeInterstitial(UpgradeInterstitialFeature.Action)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
   public enum DelegateAction: Equatable {
@@ -164,19 +164,13 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       }
     ),
 
-  upgradeInterstitialReducer
-    .optional()
-    .pullback(
-      state: \.upgradeInterstitial,
-      action: /GameOverAction.upgradeInterstitial,
-      environment: {
-        UpgradeInterstitialEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
+  Reducer(
+    Pullback(state: \.upgradeInterstitial, action: /GameOverAction.upgradeInterstitial) {
+      IfLetReducer {
+        UpgradeInterstitialFeature()
       }
-    ),
+    }
+  ),
 
   Reducer { state, action, environment in
 
