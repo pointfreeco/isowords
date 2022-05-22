@@ -12,6 +12,7 @@ import RemoteNotificationsClient
 import SharedModels
 import Styleguide
 import SwiftUI
+import TcaHelpers
 
 public struct DailyChallengeState: Equatable {
   public var alert: AlertState<DailyChallengeAction>?
@@ -23,7 +24,7 @@ public struct DailyChallengeState: Equatable {
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
   public enum Route: Equatable {
-    case results(DailyChallengeResultsState)
+    case results(DailyChallengeResultsFeature.State)
 
     public enum Tag: Int {
       case results
@@ -57,7 +58,7 @@ public struct DailyChallengeState: Equatable {
 }
 
 public enum DailyChallengeAction: Equatable {
-  case dailyChallengeResults(DailyChallengeResultsAction)
+  case dailyChallengeResults(DailyChallengeResultsFeature.Action)
   case delegate(DelegateAction)
   case dismissAlert
   case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
@@ -102,12 +103,14 @@ public struct DailyChallengeEnvironment {
 public let dailyChallengeReducer = Reducer<
   DailyChallengeState, DailyChallengeAction, DailyChallengeEnvironment
 >.combine(
-  dailyChallengeResultsReducer
-    ._pullback(
+  Reducer(
+    PullbackSome(
       state: (\DailyChallengeState.route).appending(path: /DailyChallengeState.Route.results),
-      action: /DailyChallengeAction.dailyChallengeResults,
-      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
-    ),
+      action: /DailyChallengeAction.dailyChallengeResults
+    ) {
+      DailyChallengeResultsFeature()
+    }
+  ),
 
   notificationsAuthAlertReducer
     .optional()

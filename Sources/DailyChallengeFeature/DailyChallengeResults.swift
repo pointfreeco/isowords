@@ -10,11 +10,12 @@ import SwiftUI
 public struct DailyChallengeResultsFeature: ReducerProtocol {
   public struct State: Equatable {
     public var history: DailyChallengeHistoryResponse?
-    public var leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?>
+    public var leaderboardResults: LeaderboardResultsFeature<DailyChallenge.GameNumber?>.State
 
     public init(
       history: DailyChallengeHistoryResponse? = nil,
-      leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?> = .init(timeScope: nil)
+      leaderboardResults: LeaderboardResultsFeature<DailyChallenge.GameNumber?>.State
+      = .init(timeScope: nil)
     ) {
       self.history = history
       self.leaderboardResults = leaderboardResults
@@ -22,129 +23,79 @@ public struct DailyChallengeResultsFeature: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
+    case leaderboardResults(LeaderboardResultsFeature<DailyChallenge.GameNumber?>.Action)
     case loadHistory
     case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, ApiError>)
   }
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.mainQueue) var mainQueue
-}
 
-public struct DailyChallengeResultsState: Equatable {
-  public var history: DailyChallengeHistoryResponse?
-  public var leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?>
-
-  public init(
-    history: DailyChallengeHistoryResponse? = nil,
-    leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?> = .init(timeScope: nil)
-  ) {
-    self.history = history
-    self.leaderboardResults = leaderboardResults
-  }
-}
-
-public enum DailyChallengeResultsAction: Equatable {
-  case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
-  case loadHistory
-  case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, ApiError>)
-}
-
-public struct DailyChallengeResultsEnvironment {
-  public var apiClient: ApiClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
-
-  public init(
-    apiClient: ApiClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.apiClient = apiClient
-    self.mainQueue = mainQueue
-  }
-}
-
-#if DEBUG
-  extension DailyChallengeResultsEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      mainQueue: .failing("mainQueue")
-    )
-  }
-#endif
-
-public let dailyChallengeResultsReducer = Reducer<
-  DailyChallengeResultsState, DailyChallengeResultsAction, DailyChallengeResultsEnvironment
->.combine(
-
-  Reducer.leaderboardResultsReducer()
-    .pullback(
-      state: \DailyChallengeResultsState.leaderboardResults,
-      action: /DailyChallengeResultsAction.leaderboardResults,
-      environment: {
-        .init(
-          loadResults: $0.apiClient.loadDailyChallengeResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case let .fetchHistoryResponse(.success(response)):
-      state.history = response
-      return .none
-
-    case .fetchHistoryResponse(.failure):
-      state.history = .init(results: [])
-      return .none
-
-    case .leaderboardResults(.gameModeButtonTapped):
-      if let indices = state.history?.results.indices {
-        for index in indices {
-          state.history?.results[index].rank = nil
-        }
-      }
-      return .none
-
-    case .leaderboardResults(.tappedTimeScopeLabel):
-      guard
-        state.leaderboardResults.isTimeScopeMenuVisible
-      else { return .none }
-      return .init(value: .loadHistory)
-
-    case .leaderboardResults:
-      return .none
-
-    case .loadHistory:
-      if state.history?.results.isEmpty == .some(true) {
-        state.history = nil
-      }
-
-      struct CancelId: Hashable {}
-      return environment.apiClient.apiRequest(
-        route: .dailyChallenge(
-          .results(
-            .history(
-              gameMode: state.leaderboardResults.gameMode,
-              language: .en
-            )
-          )
-        ),
-        as: DailyChallengeHistoryResponse.self
+  public var body: some ReducerProtocol<State, Action> {
+    Pullback(state: \.leaderboardResults, action: /Action.leaderboardResults) {
+      LeaderboardResultsFeature(
+        loadResults: self.apiClient.loadDailyChallengeResults(gameMode:timeScope:)
       )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(DailyChallengeResultsAction.fetchHistoryResponse)
-      .cancellable(id: CancelId(), cancelInFlight: true)
+    }
+
+    Reduce { state, action in
+      switch action {
+      case let .fetchHistoryResponse(.success(response)):
+        state.history = response
+        return .none
+
+      case .fetchHistoryResponse(.failure):
+        state.history = .init(results: [])
+        return .none
+
+      case .leaderboardResults(.gameModeButtonTapped):
+        if let indices = state.history?.results.indices {
+          for index in indices {
+            state.history?.results[index].rank = nil
+          }
+        }
+        return .none
+
+      case .leaderboardResults(.tappedTimeScopeLabel):
+        guard
+          state.leaderboardResults.isTimeScopeMenuVisible
+        else { return .none }
+        return .init(value: .loadHistory)
+
+      case .leaderboardResults:
+        return .none
+
+      case .loadHistory:
+        if state.history?.results.isEmpty == .some(true) {
+          state.history = nil
+        }
+
+        enum CancelId {}
+        return self.apiClient.apiRequest(
+          route: .dailyChallenge(
+            .results(
+              .history(
+                gameMode: state.leaderboardResults.gameMode,
+                language: .en
+              )
+            )
+          ),
+          as: DailyChallengeHistoryResponse.self
+        )
+        .receive(on: self.mainQueue)
+        .catchToEffect(Action.fetchHistoryResponse)
+        .cancellable(id: CancelId.self, cancelInFlight: true)
+      }
     }
   }
-)
+}
 
 public struct DailyChallengeResultsView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>
-  @ObservedObject var viewStore: ViewStore<DailyChallengeResultsState, DailyChallengeResultsAction>
+  let store: StoreOf<DailyChallengeResultsFeature>
+  @ObservedObject var viewStore: ViewStoreOf<DailyChallengeResultsFeature>
 
-  public init(store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>) {
+  public init(store: StoreOf<DailyChallengeResultsFeature>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -153,7 +104,7 @@ public struct DailyChallengeResultsView: View {
     LeaderboardResultsView(
       store: self.store.scope(
         state: \.leaderboardResults,
-        action: DailyChallengeResultsAction.leaderboardResults
+        action: DailyChallengeResultsFeature.Action.leaderboardResults
       ),
       title: Text("Daily Challenge"),
       subtitle: (self.viewStore.leaderboardResults.resultEnvelope?.outOf)

@@ -45,7 +45,7 @@ public struct LeaderboardResultsFeature<TimeScope: Equatable>: ReducerProtocol {
 
   let loadResults: (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>
 
-  init(loadResults: @escaping (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>) {
+  public init(loadResults: @escaping (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>) {
     self.loadResults = loadResults
   }
 
