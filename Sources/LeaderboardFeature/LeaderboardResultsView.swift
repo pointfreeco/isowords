@@ -3,116 +3,99 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-public struct LeaderboardResultsState<TimeScope> {
-  public var gameMode: GameMode
-  public var isLoading: Bool
-  public var isTimeScopeMenuVisible: Bool
-  public var resultEnvelope: ResultEnvelope?
-  public var timeScope: TimeScope
+public struct LeaderboardResultsFeature<TimeScope: Equatable>: ReducerProtocol {
+  public struct State: Equatable {
+    public var gameMode: GameMode
+    public var isLoading: Bool
+    public var isTimeScopeMenuVisible: Bool
+    public var resultEnvelope: ResultEnvelope?
+    public var timeScope: TimeScope
 
-  public init(
-    gameMode: GameMode = .timed,
-    isLoading: Bool = false,
-    isTimeScopeMenuVisible: Bool = false,
-    resultEnvelope: ResultEnvelope? = nil,
-    timeScope: TimeScope
-  ) {
-    self.gameMode = gameMode
-    self.isLoading = isLoading
-    self.isTimeScopeMenuVisible = isTimeScopeMenuVisible
-    self.resultEnvelope = resultEnvelope
-    self.timeScope = timeScope
+    public init(
+      gameMode: GameMode = .timed,
+      isLoading: Bool = false,
+      isTimeScopeMenuVisible: Bool = false,
+      resultEnvelope: ResultEnvelope? = nil,
+      timeScope: TimeScope
+    ) {
+      self.gameMode = gameMode
+      self.isLoading = isLoading
+      self.isTimeScopeMenuVisible = isTimeScopeMenuVisible
+      self.resultEnvelope = resultEnvelope
+      self.timeScope = timeScope
+    }
+
+    var nonDisplayedResultsCount: Int {
+      (self.resultEnvelope?.outOf ?? 0)
+        - (self.resultEnvelope?.nonContiguousResult?.rank ?? self.resultEnvelope?.results.count ?? 0)
+    }
   }
 
-  var nonDisplayedResultsCount: Int {
-    (self.resultEnvelope?.outOf ?? 0)
-      - (self.resultEnvelope?.nonContiguousResult?.rank ?? self.resultEnvelope?.results.count ?? 0)
+  public enum Action: Equatable {
+    case dismissTimeScopeMenu
+    case gameModeButtonTapped(GameMode)
+    case resultsResponse(Result<ResultEnvelope, ApiError>)
+    case onAppear
+    case tappedRow(id: UUID)
+    case tappedTimeScopeLabel
+    case timeScopeChanged(TimeScope)
   }
-}
 
-extension LeaderboardResultsState: Equatable where TimeScope: Equatable {}
+  @Dependency(\.mainQueue) var mainQueue
 
-public enum LeaderboardResultsAction<TimeScope> {
-  case dismissTimeScopeMenu
-  case gameModeButtonTapped(GameMode)
-  case resultsResponse(Result<ResultEnvelope, ApiError>)
-  case onAppear
-  case tappedRow(id: UUID)
-  case tappedTimeScopeLabel
-  case timeScopeChanged(TimeScope)
-}
+  let loadResults: (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>
 
-extension LeaderboardResultsAction: Equatable where TimeScope: Equatable {}
-
-public struct LeaderboardResultsEnvironment<TimeScope> {
-  public let loadResults: (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>
-  public let mainQueue: AnySchedulerOf<DispatchQueue>
-
-  public init(
-    loadResults: @escaping (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
+  init(loadResults: @escaping (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>) {
     self.loadResults = loadResults
-    self.mainQueue = mainQueue
   }
-}
 
-extension Reducer {
-  public static func leaderboardResultsReducer<TimeScope>() -> Self
-  where
-    State == LeaderboardResultsState<TimeScope>,
-    Action == LeaderboardResultsAction<TimeScope>,
-    Environment == LeaderboardResultsEnvironment<TimeScope>
-  {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+    switch action {
+    case .dismissTimeScopeMenu:
+      state.isTimeScopeMenuVisible = false
+      return .none
 
-    Self { state, action, environment in
-      switch action {
-      case .dismissTimeScopeMenu:
-        state.isTimeScopeMenuVisible = false
-        return .none
+    case let .gameModeButtonTapped(gameMode):
+      state.gameMode = gameMode
+      state.isLoading = true
+      return self.loadResults(state.gameMode, state.timeScope)
+        .receive(on: self.mainQueue.animation())
+        .catchToEffect(Action.resultsResponse)
 
-      case let .gameModeButtonTapped(gameMode):
-        state.gameMode = gameMode
-        state.isLoading = true
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+    case .onAppear:
+      state.isLoading = true
+      state.isTimeScopeMenuVisible = false
+      state.resultEnvelope = .placeholder
 
-      case .onAppear:
-        state.isLoading = true
-        state.isTimeScopeMenuVisible = false
-        state.resultEnvelope = .placeholder
+      return self.loadResults(state.gameMode, state.timeScope)
+        .receive(on: self.mainQueue.animation())
+        .catchToEffect(Action.resultsResponse)
 
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+    case .resultsResponse(.failure):
+      state.isLoading = false
+      state.resultEnvelope = nil
+      return .none
 
-      case .resultsResponse(.failure):
-        state.isLoading = false
-        state.resultEnvelope = nil
-        return .none
+    case let .resultsResponse(.success(envelope)):
+      state.isLoading = false
+      state.resultEnvelope = envelope
+      return .none
 
-      case let .resultsResponse(.success(envelope)):
-        state.isLoading = false
-        state.resultEnvelope = envelope
-        return .none
+    case .tappedRow:
+      return .none
 
-      case .tappedRow:
-        return .none
+    case .tappedTimeScopeLabel:
+      state.isTimeScopeMenuVisible.toggle()
+      return .none
 
-      case .tappedTimeScopeLabel:
-        state.isTimeScopeMenuVisible.toggle()
-        return .none
+    case let .timeScopeChanged(timeScope):
+      state.isLoading = true
+      state.isTimeScopeMenuVisible = false
+      state.timeScope = timeScope
 
-      case let .timeScopeChanged(timeScope):
-        state.isLoading = true
-        state.isTimeScopeMenuVisible = false
-        state.timeScope = timeScope
-
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
-      }
+      return self.loadResults(state.gameMode, state.timeScope)
+        .receive(on: self.mainQueue.animation())
+        .catchToEffect(Action.resultsResponse)
     }
   }
 }
@@ -130,14 +113,11 @@ where
   let timeScopeMenu: TimeScopeMenu?
   let title: Text?
 
-  public typealias State = LeaderboardResultsState<TimeScope>
-  public typealias Action = LeaderboardResultsAction<TimeScope>
-
-  let store: Store<State, Action>
-  @ObservedObject var viewStore: ViewStore<State, Action>
+  let store: StoreOf<LeaderboardResultsFeature<TimeScope>>
+  @ObservedObject var viewStore: ViewStoreOf<LeaderboardResultsFeature<TimeScope>>
 
   public init(
-    store: Store<State, Action>,
+    store: StoreOf<LeaderboardResultsFeature<TimeScope>>,
     title: Text?,
     subtitle: Text?,
     isFilterable: Bool,
@@ -403,34 +383,30 @@ extension ResultEnvelope {
       Preview {
         LeaderboardResultsView(
           store: .init(
-            initialState: LeaderboardResultsState(
-              gameMode: GameMode.timed,
+            initialState: .init(
+              gameMode: .timed,
               isLoading: false,
               resultEnvelope: nil,
               timeScope: TimeScope.lastWeek
             ),
-            reducer: .leaderboardResultsReducer(),
-            environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in
-                Effect(
-                  value: .init(
-                    outOf: 1000,
-                    results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
-                      ResultEnvelope.Result(
-                        denseRank: index,
-                        id: UUID(),
-                        isYourScore: index == 15,
-                        rank: index,
-                        score: 6000 - index * 300,
-                        subtitle: "mbrandonw",
-                        title: "Longword\(index)"
-                      )
-                    }
-                  )
+            reducer: LeaderboardResultsFeature { _, _ in
+              Effect(
+                value: .init(
+                  outOf: 1000,
+                  results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
+                    ResultEnvelope.Result(
+                      denseRank: index,
+                      id: UUID(),
+                      isYourScore: index == 15,
+                      rank: index,
+                      score: 6000 - index * 300,
+                      subtitle: "mbrandonw",
+                      title: "Longword\(index)"
+                    )
+                  }
                 )
-              },
-              mainQueue: .immediate
-            )
+              )
+            }
           ),
           title: Text("362,998 words"),
           subtitle: nil,
@@ -443,35 +419,31 @@ extension ResultEnvelope {
 
         LeaderboardResultsView(
           store: .init(
-            initialState: LeaderboardResultsState(
-              gameMode: GameMode.timed,
+            initialState: .init(
+              gameMode: .timed,
               isLoading: false,
               resultEnvelope: nil,
               timeScope: TimeScope.lastWeek
             ),
-            reducer: .leaderboardResultsReducer(),
-            environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in
-                Effect(
-                  value: .init(
-                    outOf: 1000,
-                    results: (1...5).map { index in
-                      ResultEnvelope.Result(
-                        denseRank: index,
-                        id: UUID(),
-                        isYourScore: index == 3,
-                        rank: index,
-                        score: 6000 - index * 800,
-                        title: "Player \(index)"
-                      )
-                    }
-                  )
+            reducer: LeaderboardResultsFeature { _, _ in
+              Effect(
+                value: .init(
+                  outOf: 1000,
+                  results: (1...5).map { index in
+                    ResultEnvelope.Result(
+                      denseRank: index,
+                      id: UUID(),
+                      isYourScore: index == 3,
+                      rank: index,
+                      score: 6000 - index * 800,
+                      title: "Player \(index)"
+                    )
+                  }
                 )
-                .delay(for: 1, scheduler: DispatchQueue.main.animation())
-                .eraseToEffect()
-              },
-              mainQueue: .immediate
-            )
+              )
+              .delay(for: 1, scheduler: DispatchQueue.main.animation())
+              .eraseToEffect()
+            }
           ),
           title: Text("Daily challenge"),
           subtitle: Text("1,234 games"),
@@ -484,17 +456,15 @@ extension ResultEnvelope {
 
         LeaderboardResultsView(
           store: .init(
-            initialState: LeaderboardResultsState(
-              gameMode: GameMode.timed,
+            initialState: .init(
+              gameMode: .timed,
               isLoading: false,
               resultEnvelope: nil,
               timeScope: TimeScope.lastWeek
             ),
-            reducer: .leaderboardResultsReducer(),
-            environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-              mainQueue: .immediate
-            )
+            reducer: LeaderboardResultsFeature { _, _ in
+              .init(error: .init(error: NSError(domain: "", code: 1)))
+            }
           ),
           title: Text("Solo"),
           subtitle: Text("1,234 games"),

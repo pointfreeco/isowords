@@ -1,5 +1,18 @@
+import ComposableArchitecture
 import Foundation
 import Tagged
+
+extension DependencyValues {
+  public var build: Build {
+    get { self[BuildKey.self] }
+    set { self[BuildKey.self] = newValue }
+  }
+
+  private enum BuildKey: LiveDependencyKey {
+    static let liveValue = Build.live
+    static let testValue = Build.failing
+  }
+}
 
 public struct Build {
   public var gitSha: () -> String

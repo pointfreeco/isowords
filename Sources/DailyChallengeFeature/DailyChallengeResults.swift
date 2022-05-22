@@ -7,6 +7,30 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
+public struct DailyChallengeResultsFeature: ReducerProtocol {
+  public struct State: Equatable {
+    public var history: DailyChallengeHistoryResponse?
+    public var leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?>
+
+    public init(
+      history: DailyChallengeHistoryResponse? = nil,
+      leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?> = .init(timeScope: nil)
+    ) {
+      self.history = history
+      self.leaderboardResults = leaderboardResults
+    }
+  }
+
+  public enum Action: Equatable {
+    case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
+    case loadHistory
+    case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, ApiError>)
+  }
+
+  @Dependency(\.apiClient) var apiClient
+  @Dependency(\.mainQueue) var mainQueue
+}
+
 public struct DailyChallengeResultsState: Equatable {
   public var history: DailyChallengeHistoryResponse?
   public var leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?>

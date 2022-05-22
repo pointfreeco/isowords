@@ -3,6 +3,17 @@ import ComposableArchitecture
 import Foundation
 import SharedModels
 
+extension DependencyValues {
+  public var apiClient: ApiClient {
+    get { self[ApiClientKey.self] }
+    set { self[ApiClientKey.self] = newValue }
+  }
+
+  private enum ApiClientKey: DependencyKey {
+    static let testValue = ApiClient.failing
+  }
+}
+
 public struct ApiClient {
   public var apiRequest:
     (ServerRoute.Api.Route) -> Effect<(data: Data, response: URLResponse), URLError>

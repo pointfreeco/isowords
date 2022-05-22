@@ -39,8 +39,8 @@ public struct LeaderboardState: Equatable {
   public var isHapticsEnabled: Bool
   public var scope: LeaderboardScope = .games
   public var settings: CubeSceneView.ViewState.Settings
-  public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
-  public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
+  public var solo: LeaderboardResultsFeature<TimeScope>.State = .init(timeScope: .lastWeek)
+  public var vocab: LeaderboardResultsFeature<TimeScope>.State = .init(timeScope: .lastWeek)
 
   public var isCubePreviewPresented: Bool { self.cubePreview != nil }
 
@@ -50,8 +50,8 @@ public struct LeaderboardState: Equatable {
     isHapticsEnabled: Bool,
     scope: LeaderboardScope = .games,
     settings: CubeSceneView.ViewState.Settings,
-    solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
-    vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
+    solo: LeaderboardResultsFeature<TimeScope>.State = .init(timeScope: .lastWeek),
+    vocab: LeaderboardResultsFeature<TimeScope>.State = .init(timeScope: .lastWeek)
   ) {
     self.cubePreview = cubePreview
     self.isAnimationReduced = isAnimationReduced
@@ -68,8 +68,8 @@ public enum LeaderboardAction: Equatable {
   case dismissCubePreview
   case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
   case scopeTapped(LeaderboardScope)
-  case solo(LeaderboardResultsAction<TimeScope>)
-  case vocab(LeaderboardResultsAction<TimeScope>)
+  case solo(LeaderboardResultsFeature<TimeScope>.Action)
+  case vocab(LeaderboardResultsFeature<TimeScope>.Action)
 }
 
 public struct LeaderboardEnvironment {
@@ -106,6 +106,21 @@ public struct LeaderboardEnvironment {
   }
 #endif
 
+// TODO: Combine below
+private struct LeaderboardResults: ReducerProtocol {
+  @Dependency(\.apiClient) var apiClient
+
+  var body: some ReducerProtocol<LeaderboardState, LeaderboardAction> {
+    Pullback(state: \.solo, action: /LeaderboardAction.solo) {
+      LeaderboardResultsFeature(loadResults: self.apiClient.loadSoloResults(gameMode:timeScope:))
+    }
+
+    Pullback(state: \.vocab, action: /LeaderboardAction.vocab) {
+      LeaderboardResultsFeature(loadResults: self.apiClient.loadVocabResults(gameMode:timeScope:))
+    }
+  }
+}
+
 public let leaderboardReducer = Reducer<
   LeaderboardState, LeaderboardAction, LeaderboardEnvironment
 >.combine(
@@ -124,29 +139,7 @@ public let leaderboardReducer = Reducer<
       }
     ),
 
-  Reducer.leaderboardResultsReducer()
-    .pullback(
-      state: \LeaderboardState.solo,
-      action: /LeaderboardAction.solo,
-      environment: {
-        LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadSoloResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
-  Reducer.leaderboardResultsReducer()
-    .pullback(
-      state: \LeaderboardState.vocab,
-      action: /LeaderboardAction.vocab,
-      environment: {
-        LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadVocabResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
+  Reducer(LeaderboardResults()),
 
   .init { state, action, environment in
     switch action {

@@ -1,6 +1,18 @@
 import ComposableArchitecture
 import Foundation
 
+extension DependencyValues {
+  public var userDefaults: UserDefaultsClient {
+    get { self[UserDefaultsClientKey.self] }
+    set { self[UserDefaultsClientKey.self] = newValue }
+  }
+
+  private enum UserDefaultsClientKey: LiveDependencyKey {
+    static let liveValue = UserDefaultsClient.live(userDefaults: .standard)
+    static let testValue = UserDefaultsClient.failing
+  }
+}
+
 public struct UserDefaultsClient {
   public var boolForKey: (String) -> Bool
   public var dataForKey: (String) -> Data?
