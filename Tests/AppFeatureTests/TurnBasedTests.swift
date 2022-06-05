@@ -69,6 +69,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
         $0.lowPowerMode.start = .none
+        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
         $0.serverConfig.refresh = { .init(value: .init()) }
         $0.timeZone = { .newYork }
@@ -84,6 +85,7 @@ class TurnBasedTests: XCTestCase {
     }
 
     self.backgroundQueue.advance()
+    self.mainRunLoop.advance()
     store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
     store.receive(.home(.matchesLoaded(.success([]))))
 
@@ -130,13 +132,10 @@ class TurnBasedTests: XCTestCase {
         $0.isGameLoaded = true
       }
     }
-    store.receive(.currentGame(.game(.matchesLoaded(.success([]))))) {
-      try XCTUnwrap(&$0.game) {
-        $0.isGameLoaded = true
-      }
-    }
+    store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
 
     self.backgroundQueue.advance()
+    self.mainRunLoop.advance()
     store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
     store.receive(.home(.matchesLoaded(.success([]))))
 
@@ -544,22 +543,22 @@ class TurnBasedTests: XCTestCase {
         }
       }
     }
-    store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two))))) {
-      XCTAssertNoDifference(
-        didEndTurnWithRequest,
-        .init(
-          for: match.matchId,
-          matchData: Data(
-            turnBasedMatchData: TurnBasedMatchData(
-              context: try XCTUnwrap($0.game?.turnBasedContext),
-              gameState: try XCTUnwrap($0.game),
-              playerId: nil
-            )
-          ),
-          message: "Blob removed cubes!"
-        )
+    store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
+
+    XCTAssertNoDifference(
+      didEndTurnWithRequest,
+      .init(
+        for: match.matchId,
+        matchData: Data(
+          turnBasedMatchData: TurnBasedMatchData(
+            context: try XCTUnwrap(store.state.game?.turnBasedContext),
+            gameState: try XCTUnwrap(store.state.game),
+            playerId: nil
+          )
+        ),
+        message: "Blob removed cubes!"
       )
-    }
+    )
   }
 
   func testRematch() {

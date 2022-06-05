@@ -254,8 +254,9 @@ public struct GameEnvironment {
   }
 }
 
-private struct TimerId: Hashable {}
-private struct LowPowerModeId: Hashable {}
+private enum InterstitialId {}
+private enum LowPowerModeId {}
+private enum TimerId {}
 
 public func gameReducer<StatePath, Action, Environment>(
   state: StatePath,
@@ -368,7 +369,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
       case .gameLoaded:
         state.isGameLoaded = true
         return Effect<RunLoop.SchedulerTimeType, Never>
-          .timer(id: TimerId(), every: 1, on: environment.mainRunLoop)
+          .timer(id: TimerId.self, every: 1, on: environment.mainRunLoop)
           .map { GameAction.timerTick($0.date) }
 
       case .gameOver(.delegate(.close)):
@@ -961,7 +962,7 @@ extension Effect where Output == GameAction, Failure == Never {
         .receive(on: environment.mainQueue)
         .eraseToEffect()
         .map(GameAction.lowPowerModeChanged)
-        .cancellable(id: LowPowerModeId()),
+        .cancellable(id: LowPowerModeId.self),
 
       Effect(value: .gameLoaded)
         .delay(for: 0.5, scheduler: environment.mainQueue)
@@ -983,6 +984,7 @@ extension Effect where Output == GameAction, Failure == Never {
         .map { _ in GameAction.delayedShowUpgradeInterstitial }
         .ignoreFailure()
         .eraseToEffect()
+        .cancellable(id: InterstitialId.self)
         : .none
     )
   }
@@ -1006,8 +1008,10 @@ extension UpgradeInterstitialFeature.GameContext {
 extension Effect where Output == Never, Failure == Never {
   public static func gameTearDownEffects(audioPlayer: AudioPlayerClient) -> Self {
     .merge(
-      .cancel(id: TimerId()),
-      .cancel(id: LowPowerModeId()),
+      .cancel(id: InterstitialId.self),
+      .cancel(id: ListenerId.self),
+      .cancel(id: LowPowerModeId.self),
+      .cancel(id: TimerId.self),
       Effect
         .merge(AudioPlayerClient.Sound.allMusic.map(audioPlayer.stop))
         .fireAndForget()
@@ -1115,12 +1119,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
     case .gameOver(.delegate(.close)),
       .exitButtonTapped:
-      return .cancel(id: ListenerId())
+      return .cancel(id: ListenerId.self)
 
     case .onAppear:
       return environment.gameCenter.localPlayer.listener
         .map { .gameCenter(.listener($0)) }
-        .cancellable(id: ListenerId())
+        .cancellable(id: ListenerId.self)
 
     case .submitButtonTapped,
       .wordSubmitButton(.delegate(.confirmSubmit)),
@@ -1242,4 +1246,4 @@ extension CompletedGame {
   }
 }
 
-struct ListenerId: Hashable {}
+enum ListenerId {}

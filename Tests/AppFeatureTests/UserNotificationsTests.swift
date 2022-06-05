@@ -41,11 +41,11 @@ class UserNotificationsTests: XCTestCase {
           .didReceiveResponse(response, completionHandler: completionHandler)
         )
       )
-    ) { _ in
-      XCTAssertTrue(didCallback)
+    )
 
-      delegate.send(completion: .finished)
-    }
+    XCTAssertTrue(didCallback)
+
+    delegate.send(completion: .finished)
   }
 
   func testReceiveForegroundNotification() {
@@ -79,10 +79,10 @@ class UserNotificationsTests: XCTestCase {
           .willPresentNotification(notification, completionHandler: completionHandler)
         )
       )
-    ) { _ in
-      XCTAssertNoDifference(didCallbackWithOptions, .banner)
+    )
 
-      delegate.send(completion: .finished)
-    }
+    XCTAssertNoDifference(didCallbackWithOptions, .banner)
+
+    delegate.send(completion: .finished)
   }
 }
