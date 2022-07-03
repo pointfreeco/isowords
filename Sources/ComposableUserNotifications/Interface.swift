@@ -4,11 +4,18 @@ import UserNotifications
 
 public struct UserNotificationClient {
   public var add: (UNNotificationRequest) -> Effect<Void, Error>
+  public var addAsync: @Sendable (UNNotificationRequest) async throws -> Void
   public var delegate: Effect<DelegateEvent, Never>
+  public var delegateAsync: @Sendable () -> AsyncStream<DelegateEvent>
   public var getNotificationSettings: Effect<Notification.Settings, Never>
+  public var getNotificationSettingsAsync: @Sendable () async -> Notification.Settings
   public var removeDeliveredNotificationsWithIdentifiers: ([String]) -> Effect<Never, Never>
+  public var removeDeliveredNotificationsWithIdentifiersAsync: @Sendable ([String]) async -> Void
   public var removePendingNotificationRequestsWithIdentifiers: ([String]) -> Effect<Never, Never>
+  public var removePendingNotificationRequestsWithIdentifiersAsync:
+    @Sendable ([String]) async -> Void
   public var requestAuthorization: (UNAuthorizationOptions) -> Effect<Bool, Error>
+  public var requestAuthorizationAsync: @Sendable (UNAuthorizationOptions) async throws -> Bool
 
   public enum DelegateEvent: Equatable {
     case didReceiveResponse(Notification.Response, completionHandler: () -> Void)

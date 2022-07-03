@@ -15,6 +15,7 @@ extension UserNotificationClient {
         }
       }
     },
+    addAsync: { try await UNUserNotificationCenter.current().add($0) },
     delegate:
       Effect
       .run { subscriber in
@@ -26,10 +27,18 @@ extension UserNotificationClient {
       }
       .share()
       .eraseToEffect(),
+    delegateAsync: {
+      fatalError()
+    },
     getNotificationSettings: .future { callback in
       UNUserNotificationCenter.current().getNotificationSettings { settings in
         callback(.success(.init(rawValue: settings)))
       }
+    },
+    getNotificationSettingsAsync: {
+      await Notification.Settings(
+        rawValue: UNUserNotificationCenter.current().notificationSettings()
+      )
     },
     removeDeliveredNotificationsWithIdentifiers: { identifiers in
       .fireAndForget {
@@ -37,11 +46,17 @@ extension UserNotificationClient {
           .removeDeliveredNotifications(withIdentifiers: identifiers)
       }
     },
+    removeDeliveredNotificationsWithIdentifiersAsync: {
+      UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: $0)
+    },
     removePendingNotificationRequestsWithIdentifiers: { identifiers in
       .fireAndForget {
         UNUserNotificationCenter.current()
           .removePendingNotificationRequests(withIdentifiers: identifiers)
       }
+    },
+    removePendingNotificationRequestsWithIdentifiersAsync: {
+      UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: $0)
     },
     requestAuthorization: { options in
       .future { callback in
@@ -54,6 +69,9 @@ extension UserNotificationClient {
             }
           }
       }
+    },
+    requestAuthorizationAsync: {
+      try await UNUserNotificationCenter.current().requestAuthorization(options: $0)
     }
   )
 }
