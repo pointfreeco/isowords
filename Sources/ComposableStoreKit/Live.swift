@@ -11,8 +11,9 @@ extension StoreKitClient {
           SKPaymentQueue.default().add(payment)
         }
       },
+      addPaymentAsync: { SKPaymentQueue.default().add($0) },
       appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
-      isAuthorizedForPayments: SKPaymentQueue.canMakePayments,
+      isAuthorizedForPayments: { SKPaymentQueue.canMakePayments() },
       fetchProducts: { products in
         .run { subscriber in
           let request = SKProductsRequest(productIdentifiers: products)
@@ -27,6 +28,21 @@ extension StoreKitClient {
           }
         }
       },
+      fetchProductsAsync: { products in
+        let stream = AsyncThrowingStream { continuation in
+          let request = SKProductsRequest(productIdentifiers: products)
+          let delegate = ProductRequestAsync(continuation: continuation)
+          request.delegate = delegate
+          request.start()
+          continuation.onTermination = { _ in
+            request.cancel()
+            _ = delegate
+          }
+        }
+        guard let response = try await stream.first(where: { _ in true })
+        else { throw CancellationError() }
+        return response
+      },
       finishTransaction: { transaction in
         .fireAndForget {
           guard let skTransaction = transaction.rawValue else {
@@ -35,6 +51,13 @@ extension StoreKitClient {
           }
           SKPaymentQueue.default().finishTransaction(skTransaction)
         }
+      },
+      finishTransactionAsync: { transaction in
+        guard let skTransaction = transaction.rawValue else {
+          assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
+          return
+        }
+        SKPaymentQueue.default().finishTransaction(skTransaction)
       },
       observer: Effect.run { subscriber in
         let observer = Observer(subscriber: subscriber)
@@ -45,6 +68,13 @@ extension StoreKitClient {
       }
       .share()
       .eraseToEffect(),
+      observerAsync: {
+        AsyncStream { continuation in
+          let observer = ObserverAsync(continuation: continuation)
+          SKPaymentQueue.default().add(observer)
+          continuation.onTermination = { _ in SKPaymentQueue.default().remove(observer) }
+        }
+      },
       requestReview: {
         .fireAndForget {
           #if canImport(UIKit)
@@ -55,11 +85,17 @@ extension StoreKitClient {
           #endif
         }
       },
+      requestReviewAsync: {
+        guard let windowScene = await UIApplication.shared.windows.first?.windowScene
+        else { return }
+        await SKStoreReviewController.requestReview(in: windowScene)
+      },
       restoreCompletedTransactions: {
         .fireAndForget {
           SKPaymentQueue.default().restoreCompletedTransactions()
         }
-      }
+      },
+      restoreCompletedTransactionsAsync: { SKPaymentQueue.default().restoreCompletedTransactions() }
     )
   }
 }
@@ -83,6 +119,28 @@ private class ProductRequest: NSObject, SKProductsRequestDelegate {
 
   func request(_ request: SKRequest, didFailWithError error: Error) {
     self.subscriber.send(completion: .failure(error))
+  }
+}
+
+private class ProductRequestAsync: NSObject, SKProductsRequestDelegate {
+  let continuation: AsyncThrowingStream<StoreKitClient.ProductsResponse, Error>.Continuation
+
+  init(continuation: AsyncThrowingStream<StoreKitClient.ProductsResponse, Error>.Continuation) {
+    self.continuation = continuation
+  }
+
+  func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
+    self.continuation.yield(
+      .init(
+        invalidProductIdentifiers: response.invalidProductIdentifiers,
+        products: response.products.map(StoreKitClient.Product.init(rawValue:))
+      )
+    )
+    self.continuation.finish()
+  }
+
+  func request(_ request: SKRequest, didFailWithError error: Error) {
+    self.continuation.finish(throwing: error)
   }
 }
 
@@ -125,5 +183,48 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
     _ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error
   ) {
     self.subscriber.send(.restoreCompletedTransactionsFailed(error as NSError))
+  }
+}
+
+private class ObserverAsync: NSObject, SKPaymentTransactionObserver {
+  let continuation: AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>.Continuation
+
+  init(continuation: AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>.Continuation) {
+    self.continuation = continuation
+  }
+
+  func paymentQueue(
+    _ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]
+  ) {
+    self.continuation.yield(
+      .updatedTransactions(
+        transactions.map(StoreKitClient.PaymentTransaction.init(rawValue:))
+      )
+    )
+  }
+
+  func paymentQueue(
+    _ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]
+  ) {
+    self.continuation.yield(
+      .removedTransactions(
+        transactions.map(StoreKitClient.PaymentTransaction.init(rawValue:))
+      )
+    )
+  }
+
+  func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+    self.continuation.yield(
+      .restoreCompletedTransactionsFinished(
+        transactions: queue.transactions.map(StoreKitClient.PaymentTransaction.init)
+      )
+    )
+  }
+
+  func paymentQueue(
+    _ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error
+  ) {
+    // TODO: Should this use TaskResult<Never> instead? TaskFailure?
+    self.continuation.yield(.restoreCompletedTransactionsFailed(error as NSError))
   }
 }

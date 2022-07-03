@@ -226,8 +226,8 @@ public struct ApiClient {
       authenticateAsync: XCTUnimplemented("\(Self.self).authenticateAsync"),
       baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
       baseUrlAsync: XCTUnimplemented("\(Self.self).baseUrlAsync", placeholder: URL(string: "/")!),
-      currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer", placeholder: nil),  // TODO: Automate
-      currentPlayerAsync: XCTUnimplemented("\(Self.self).currentPlayerAsync", placeholder: nil),  // TODO: Automate
+      currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
+      currentPlayerAsync: XCTUnimplemented("\(Self.self).currentPlayerAsync"),
       logout: { .failing("\(Self.self).logout is unimplemented") },
       logoutAsync: XCTUnimplemented("\(Self.self).logoutAsync"),
       refreshCurrentPlayer: { .failing("\(Self.self).refreshCurrentPlayer is unimplemented") },
