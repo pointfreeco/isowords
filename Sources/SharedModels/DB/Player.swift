@@ -1,7 +1,7 @@
 import Foundation
 import Tagged
 
-public struct Player: Codable, Equatable {
+public struct Player: Codable, Equatable, Sendable {
   public typealias Id = Tagged<Self, UUID>
 
   public let accessToken: AccessToken

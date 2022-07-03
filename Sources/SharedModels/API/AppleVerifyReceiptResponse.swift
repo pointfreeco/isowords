@@ -1,17 +1,17 @@
 import Foundation
 
-public struct AppleVerifyReceiptResponse: Equatable {
+public struct AppleVerifyReceiptResponse: Equatable, Sendable {
   public var environment: Environment?
   public var isRetryable: Bool
   public var receipt: Receipt
   public var status: Int
 
-  public enum Environment: String, Codable, Equatable {
+  public enum Environment: String, Codable, Equatable, Sendable {
     case sandbox = "Sandbox"
     case production = "Production"
   }
 
-  public struct Receipt: Equatable {
+  public struct Receipt: Equatable, Sendable {
     public var appItemId: Int
     public var applicationVersion: String
     public var bundleId: String
@@ -20,7 +20,7 @@ public struct AppleVerifyReceiptResponse: Equatable {
     public var receiptCreationDate: Date
     public var requestDate: Date
 
-    public struct InApp: Equatable {
+    public struct InApp: Equatable, Sendable {
       public var originalPurchaseDate: Date
       public var originalTransactionId: String
       public var productId: String

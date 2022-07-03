@@ -1,4 +1,4 @@
-public struct CurrentPlayerEnvelope: Codable, Equatable {
+public struct CurrentPlayerEnvelope: Codable, Equatable, Sendable {
   public let appleReceipt: AppleVerifyReceiptResponse?
   public let player: Player
 

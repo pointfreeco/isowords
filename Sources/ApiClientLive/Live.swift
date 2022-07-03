@@ -5,14 +5,15 @@ import Foundation
 import ServerRouter
 import SharedModels
 
-extension ApiClient {
-  private static let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
-  private static let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
+private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
+private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
 
+extension ApiClient {
   public static func live(
     baseUrl defaultBaseUrl: URL = URL(string: "http://localhost:9876")!,
     sha256: @escaping (Data) -> Data
   ) -> Self {
+
     #if DEBUG
       var baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl {
         didSet {
@@ -42,6 +43,91 @@ extension ApiClient {
       }
     }
 
+    actor Session {
+      var baseUrl: URL {
+        didSet {
+          UserDefaults.standard.set(self.baseUrl, forKey: baseUrlKey)
+        }
+      }
+      var currentPlayer: CurrentPlayerEnvelope? {
+        didSet {
+          UserDefaults.standard.set(
+            self.currentPlayer.flatMap { try? encoder.encode($0) },
+            forKey: currentUserEnvelopeKey
+          )
+        }
+      }
+      private let router: ServerRouter
+
+      init(baseUrl: URL, router: ServerRouter) {
+        self.baseUrl = baseUrl
+        self.router = router
+      }
+
+      func apiRequest(route: ServerRoute.Api.Route) async throws -> (Data, URLResponse) {
+        try await ApiClientLive.apiRequestAsync(
+          accessToken: self.currentPlayer?.player.accessToken,
+          baseUrl: self.baseUrl,
+          route: route,
+          router: self.router
+        )
+      }
+
+      func authenticate(request: ServerRoute.AuthenticateRequest) async throws
+        -> CurrentPlayerEnvelope
+      {
+        let (data, _) = try await ApiClientLive.requestAsync(
+          baseUrl: baseUrl,
+          route: .authenticate(
+            .init(
+              deviceId: request.deviceId,
+              displayName: request.displayName,
+              gameCenterLocalPlayerId: request.gameCenterLocalPlayerId,
+              timeZone: request.timeZone
+            )
+          ),
+          router: router
+        )
+        let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
+        self.currentPlayer = currentPlayer
+        return currentPlayer
+      }
+
+      func logout() {
+        self.currentPlayer = nil
+      }
+
+      func refreshCurrentPlayer() async throws -> CurrentPlayerEnvelope {
+        let (data, _) = try await ApiClientLive.apiRequestAsync(
+          accessToken: currentPlayer?.player.accessToken,
+          baseUrl: self.baseUrl,
+          route: .currentPlayer,
+          router: self.router
+        )
+        let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
+        self.currentPlayer = currentPlayer
+        return currentPlayer
+      }
+
+      func request(route: ServerRoute) async throws -> (Data, URLResponse) {
+        try await ApiClientLive.requestAsync(
+          baseUrl: self.baseUrl,
+          route: route,
+          router: self.router
+        )
+      }
+
+      func setBaseUrl(_ url: URL) {
+        self.baseUrl = url
+      }
+
+      fileprivate func setCurrentPlayer(_ player: CurrentPlayerEnvelope) {
+        self.currentPlayer = player
+      }
+    }
+
+    let session = Session(baseUrl: baseUrl, router: router)
+
     return Self(
       apiRequest: { route in
         ApiClientLive.apiRequest(
@@ -51,6 +137,7 @@ extension ApiClient {
           router: router
         )
       },
+      apiRequestAsync: { try await session.apiRequest(route: $0) },
       authenticate: { request in
         return ApiClientLive.request(
           baseUrl: baseUrl,
@@ -69,14 +156,29 @@ extension ApiClient {
         .handleEvents(
           receiveOutput: { newPlayer in
             DispatchQueue.main.async { currentPlayer = newPlayer }
+            Task { await session.setCurrentPlayer(newPlayer) }
           }
         )
         .eraseToEffect()
       },
+      authenticateAsync: {
+        let newPlayer = try await session.authenticate(request: $0)
+        currentPlayer = newPlayer  // TODO: remove
+        return newPlayer
+      },
       baseUrl: { baseUrl },
+      baseUrlAsync: { await session.baseUrl },
       currentPlayer: { currentPlayer },
+      currentPlayerAsync: { await session.currentPlayer },
       logout: {
-        .fireAndForget { currentPlayer = nil }
+        .fireAndForget {
+          currentPlayer = nil
+          Task { await session.logout() }
+        }
+      },
+      logoutAsync: {
+        await session.logout()
+        currentPlayer = nil  // TODO: remove
       },
       refreshCurrentPlayer: {
         ApiClientLive.apiRequest(
@@ -89,10 +191,18 @@ extension ApiClient {
         .apiDecode(as: CurrentPlayerEnvelope.self)
         .handleEvents(
           receiveOutput: { newPlayer in
-            DispatchQueue.main.async { currentPlayer = newPlayer }
+            DispatchQueue.main.async {
+              currentPlayer = newPlayer
+              Task { await session.setCurrentPlayer(newPlayer) }
+            }
           }
         )
         .eraseToEffect()
+      },
+      refreshCurrentPlayerAsync: {
+        let newPlayer = try await session.refreshCurrentPlayer()
+        currentPlayer = newPlayer  // TODO: remove
+        return newPlayer
       },
       request: { route in
         ApiClientLive.request(
@@ -101,8 +211,16 @@ extension ApiClient {
           router: router
         )
       },
+      requestAsync: { try await session.request(route: $0) },
       setBaseUrl: { url in
-        .fireAndForget { baseUrl = url }
+        .fireAndForget {
+          baseUrl = url
+          Task { await session.setBaseUrl(url) }
+        }
+      },
+      setBaseUrlAsync: {
+        await session.setBaseUrl($0)
+        baseUrl = $0  // TODO: remove
       }
     )
   }
@@ -123,6 +241,17 @@ private func request(
   .eraseToEffect()
 }
 
+private func requestAsync(
+  baseUrl: URL,
+  route: ServerRoute,
+  router: ServerRouter
+) async throws -> (Data, URLResponse) {
+  guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
+  else { throw URLError(.badURL) }
+  request.setHeaders()
+  return try await URLSession.shared.data(for: request)
+}
+
 private func apiRequest(
   accessToken: AccessToken?,
   baseUrl: URL,
@@ -132,7 +261,7 @@ private func apiRequest(
 
   return Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
     guard let accessToken = accessToken
-    else { return .init(error: .init(.userAuthenticationRequired)) }
+    else { return .init(error: URLError(.userAuthenticationRequired)) }
 
     return request(
       baseUrl: baseUrl,
@@ -147,6 +276,29 @@ private func apiRequest(
     )
   }
   .eraseToEffect()
+}
+
+private func apiRequestAsync(
+  accessToken: AccessToken?,
+  baseUrl: URL,
+  route: ServerRoute.Api.Route,
+  router: ServerRouter
+) async throws -> (Data, URLResponse) {
+
+  guard let accessToken = accessToken
+  else { throw URLError(.userAuthenticationRequired) }
+
+  return try await requestAsync(
+    baseUrl: baseUrl,
+    route: .api(
+      .init(
+        accessToken: accessToken,
+        isDebug: isDebug,
+        route: route
+      )
+    ),
+    router: router
+  )
 }
 
 #if DEBUG
