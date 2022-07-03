@@ -5,41 +5,11 @@ extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {
     let actor = AudioActor(bundles: .init(wrappedValue: bundles))
     return Self(
-      load: { sounds in
-        .fireAndForget {
-          queue.async {
-            let soundsToLoad = sounds.filter { !files.keys.contains($0) }
-
-            try? AVAudioSession.sharedInstance().setCategory(.ambient)
-            try? AVAudioSession.sharedInstance().setActive(true, options: [])
-            for sound in soundsToLoad {
-              for bundle in bundles {
-                guard let url = bundle.url(forResource: sound.name, withExtension: "mp3")
-                else { continue }
-                files[sound] = AudioPlayer(category: sound.category, url: url)
-              }
-            }
-            guard !files.isEmpty else { return }
-            try? audioEngine.start()
-          }
-        }
-      },
+      load: { sounds in .fireAndForget { Task { try! await actor.load(sounds: sounds) } } },
       loadAsync: { try? await actor.load(sounds: $0) },
-      loop: { sound in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.play(loop: true)
-          }
-        }
-      },
+      loop: { sound in .fireAndForget { Task { try! await actor.play(sound: sound, loop: true) } } },
       loopAsync: { try? await actor.play(sound: $0, loop: true) },
-      play: { sound in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.play()
-          }
-        }
-      },
+      play: { sound in .fireAndForget { Task { try! await actor.play(sound: sound) } } },
       playAsync: { try? await actor.play(sound: $0) },
       secondaryAudioShouldBeSilencedHint: {
         AVAudioSession.sharedInstance().secondaryAudioShouldBeSilencedHint
@@ -48,36 +18,18 @@ extension AudioPlayerClient {
         AVAudioSession.sharedInstance().secondaryAudioShouldBeSilencedHint
       },
       setGlobalVolumeForMusic: { volume in
-        .fireAndForget {
-          queue.async {
-            musicVolume = volume
-          }
-        }
+        .fireAndForget { Task { await actor.setMusicVolume(to: volume) } }
       },
       setGlobalVolumeForMusicAsync: { await actor.setMusicVolume(to: $0) },
       setGlobalVolumeForSoundEffects: { volume in
-        .fireAndForget {
-          queue.async {
-            soundEffectsNode.volume = 0.25 * volume
-          }
-        }
+        .fireAndForget { Task { await actor.setSoundEffectsVolume(to: volume) } }
       },
       setGlobalVolumeForSoundEffectsAsync: { await actor.setSoundEffectsVolume(to: $0) },
       setVolume: { sound, volume in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.volume = volume
-          }
-        }
+        .fireAndForget { Task { try! await actor.setVolume(of: sound, to: volume) } }
       },
       setVolumeAsync: { try? await actor.setVolume(of: $0, to: $1) },
-      stop: { sound in
-        .fireAndForget {
-          queue.async {
-            files[sound]?.stop()
-          }
-        }
-      },
+      stop: { sound in .fireAndForget { Task { try! await actor.stop(sound: sound) } } },
       stopAsync: { try? await actor.stop(sound: $0) }
     )
   }
