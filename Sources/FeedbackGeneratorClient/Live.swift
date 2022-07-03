@@ -15,9 +15,11 @@ extension FeedbackGeneratorClient {
         prepare: {
           .fireAndForget { generator.prepare() }
         },
+        prepareAsync: { await generator.prepare() },
         selectionChanged: {
           .fireAndForget { generator.selectionChanged() }
-        }
+        },
+        selectionChangedAsync: { await generator.selectionChanged() }
       )
     #else
       let generator = NSHapticFeedbackManager.defaultPerformer
