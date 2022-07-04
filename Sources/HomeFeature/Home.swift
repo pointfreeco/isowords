@@ -535,7 +535,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           for await event in environment.gameCenter.localPlayer.listenerAsync() {
             switch event {
             case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
-              // TODO: Refactor duplicate work done above
               await send(
                 .matchesLoaded(
                   TaskResult {
