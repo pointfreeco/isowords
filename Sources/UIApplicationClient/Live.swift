@@ -5,6 +5,7 @@ import UIKit
 extension UIApplicationClient {
   public static let live = Self(
     alternateIconName: { UIApplication.shared.alternateIconName },
+    alternateIconNameAsync: { await UIApplication.shared.alternateIconName },
     open: { url, options in
       .future { callback in
         UIApplication.shared.open(url, options: options) { bool in
@@ -12,7 +13,9 @@ extension UIApplicationClient {
         }
       }
     },
+    openAsync: { await UIApplication.shared.open($0, options: $1) },
     openSettingsURLString: { UIApplication.openSettingsURLString },
+    openSettingsURLStringAsync: { await UIApplication.openSettingsURLString },
     setAlternateIconName: { iconName in
       .run { subscriber in
         UIApplication.shared.setAlternateIconName(iconName) { error in
@@ -25,6 +28,8 @@ extension UIApplicationClient {
         return AnyCancellable {}
       }
     },
-    supportsAlternateIcons: { UIApplication.shared.supportsAlternateIcons }
+    setAlternateIconNameAsync: { try await UIApplication.shared.setAlternateIconName($0) },
+    supportsAlternateIcons: { UIApplication.shared.supportsAlternateIcons },
+    supportsAlternateIconsAsync: { await UIApplication.shared.supportsAlternateIcons }
   )
 }
