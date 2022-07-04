@@ -22,7 +22,7 @@ public struct ApiClient {
   public var request: (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>
   public var requestAsync: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
   public var setBaseUrl: (URL) -> Effect<Never, Never>
-  public var setBaseUrlAsync: (URL) async -> Void
+  public var setBaseUrlAsync: @Sendable (URL) async -> Void
 
   public init(
     apiRequest: @escaping (ServerRoute.Api.Route) -> Effect<

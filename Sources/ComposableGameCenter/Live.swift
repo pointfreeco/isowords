@@ -16,12 +16,16 @@ extension GameCenterClient {
           }
         }
       },
+      reportAchievementsAsync: { try await GKAchievement.report($0) },
       showNotificationBanner: { request in
         .future { callback in
           GKNotificationBanner.show(withTitle: request.title, message: request.message) {
             callback(.success(()))
           }
         }
+      },
+      showNotificationBannerAsync: {
+        await GKNotificationBanner.show(withTitle: $0.title, message: $0.message)
       },
       turnBasedMatch: .live,
       turnBasedMatchmakerViewController: .live
@@ -31,40 +35,90 @@ extension GameCenterClient {
 
 @available(iOSApplicationExtension, unavailable)
 extension GameCenterViewControllerClient {
-  public static let live = Self(
-    present: .run { subscriber in
-      final class Delegate: NSObject, GKGameCenterControllerDelegate {
-        let subscriber: Effect<DelegateEvent, Never>.Subscriber
+  public static var live: Self {
+    actor Presenter {
+      var viewController: GKGameCenterViewController?
 
-        init(subscriber: Effect<DelegateEvent, Never>.Subscriber) {
-          self.subscriber = subscriber
+      func present() async {
+        final class Delegate: NSObject, GKGameCenterControllerDelegate {
+          let continuation: AsyncStream<Void>.Continuation
+
+          init(continuation: AsyncStream<Void>.Continuation) {
+            self.continuation = continuation
+          }
+
+          func gameCenterViewControllerDidFinish(
+            _ gameCenterViewController: GKGameCenterViewController
+          ) {
+            self.continuation.yield()
+            self.continuation.finish()
+          }
         }
 
-        func gameCenterViewControllerDidFinish(
-          _ gameCenterViewController: GKGameCenterViewController
-        ) {
-          self.subscriber.send(.didFinish)
-          self.subscriber.send(completion: .finished)
+        await self.dismiss()
+        let viewController = await GKGameCenterViewController()
+        self.viewController = viewController
+        _ = await AsyncStream<Void> { continuation in
+          Task {
+            await MainActor.run {
+              let delegate = Delegate(continuation: continuation)
+              continuation.onTermination = { _ in
+                _ = delegate
+              }
+              viewController.gameCenterDelegate = delegate
+              viewController.present()
+            }
+          }
         }
+        .first(where: { _ in true })
       }
 
-      let viewController = GKGameCenterViewController()
-      Self.viewController = viewController
-      var delegate: Optional = Delegate(subscriber: subscriber)
-      viewController.gameCenterDelegate = delegate
-      viewController.present()
-
-      return AnyCancellable {
-        delegate = nil
-        viewController.dismiss()
+      func dismiss() async {
+        guard let viewController = self.viewController else { return }
+        await viewController.dismiss()
+        self.viewController = nil
       }
-    },
-    dismiss: .fireAndForget {
-      guard let viewController = Self.viewController else { return }
-      viewController.dismiss()
-      Self.viewController = nil
     }
-  )
+
+    let presenter = Presenter()
+
+    return Self(
+      present: .run { subscriber in
+        final class Delegate: NSObject, GKGameCenterControllerDelegate {
+          let subscriber: Effect<DelegateEvent, Never>.Subscriber
+
+          init(subscriber: Effect<DelegateEvent, Never>.Subscriber) {
+            self.subscriber = subscriber
+          }
+
+          func gameCenterViewControllerDidFinish(
+            _ gameCenterViewController: GKGameCenterViewController
+          ) {
+            self.subscriber.send(.didFinish)
+            self.subscriber.send(completion: .finished)
+          }
+        }
+
+        let viewController = GKGameCenterViewController()
+        Self.viewController = viewController
+        var delegate: Optional = Delegate(subscriber: subscriber)
+        viewController.gameCenterDelegate = delegate
+        viewController.present()
+
+        return AnyCancellable {
+          delegate = nil
+          viewController.dismiss()
+        }
+      },
+      presentAsync: { await presenter.present() },
+      dismiss: .fireAndForget {
+        guard let viewController = Self.viewController else { return }
+        viewController.dismiss()
+        Self.viewController = nil
+      },
+      dismissAsync: { await presenter.dismiss() }
+    )
+  }
 
   private static var viewController: GKGameCenterViewController?
 }
@@ -91,6 +145,27 @@ extension LocalPlayerClient {
         }
         .shareReplay(1)
         .eraseToEffect(),
+      authenticateAsync: {
+        _ = try await AsyncThrowingStream<Void, Error> { continuation in
+          localPlayer.authenticateHandler = { viewController, error in
+            if let error = error {
+              continuation.finish(throwing: error)
+              return
+            }
+            continuation.finish()
+            if viewController != nil {
+              Self.viewController = viewController
+            }
+          }
+          continuation.onTermination = { _ in
+            Task {
+              await Self.viewController?.dismiss()
+              Self.viewController = nil
+            }
+          }
+        }
+        .first(where: { true })
+      },
       listener:
         Effect
         .run { subscriber in
@@ -189,13 +264,123 @@ extension LocalPlayerClient {
           }
         }
         .eraseToEffect(),
+      listenerAsync: {
+        AsyncStream { continuation in
+          class Listener: NSObject, GKLocalPlayerListener {
+            let continuation: AsyncStream<ListenerEvent>.Continuation
+
+            init(continuation: AsyncStream<ListenerEvent>.Continuation) {
+              self.continuation = continuation
+            }
+
+            func player(
+              _ player: GKPlayer, didComplete challenge: GKChallenge,
+              issuedByFriend friendPlayer: GKPlayer
+            ) {
+              self.continuation.yield(
+                .challenge(.didComplete(challenge, issuedByFriend: friendPlayer)))
+            }
+            func player(_ player: GKPlayer, didReceive challenge: GKChallenge) {
+              self.continuation.yield(.challenge(.didReceive(challenge)))
+            }
+            func player(
+              _ player: GKPlayer, issuedChallengeWasCompleted challenge: GKChallenge,
+              byFriend friendPlayer: GKPlayer
+            ) {
+              self.continuation.yield(
+                .challenge(.issuedChallengeWasCompleted(challenge, byFriend: friendPlayer)))
+            }
+            func player(_ player: GKPlayer, wantsToPlay challenge: GKChallenge) {
+              self.continuation.yield(.challenge(.wantsToPlay(challenge)))
+            }
+            func player(_ player: GKPlayer, didAccept invite: GKInvite) {
+              self.continuation.yield(.invite(.didAccept(invite)))
+            }
+            func player(
+              _ player: GKPlayer, didRequestMatchWithRecipients recipientPlayers: [GKPlayer]
+            ) {
+              self.continuation.yield(.invite(.didRequestMatchWithRecipients(recipientPlayers)))
+            }
+            func player(_ player: GKPlayer, didModifySavedGame savedGame: GKSavedGame) {
+              self.continuation.yield(.savedGame(.didModifySavedGame(savedGame)))
+            }
+            func player(_ player: GKPlayer, hasConflictingSavedGames savedGames: [GKSavedGame]) {
+              self.continuation.yield(.savedGame(.hasConflictingSavedGames(savedGames)))
+            }
+            func player(
+              _ player: GKPlayer, didRequestMatchWithOtherPlayers playersToInvite: [GKPlayer]
+            ) {
+              self.continuation.yield(.turnBased(.didRequestMatchWithOtherPlayers(playersToInvite)))
+            }
+            func player(_ player: GKPlayer, matchEnded match: GKTurnBasedMatch) {
+              self.continuation.yield(.turnBased(.matchEnded(.init(rawValue: match))))
+            }
+            func player(
+              _ player: GKPlayer, receivedExchangeCancellation exchange: GKTurnBasedExchange,
+              for match: GKTurnBasedMatch
+            ) {
+              self.continuation.yield(
+                .turnBased(.receivedExchangeCancellation(exchange, match: .init(rawValue: match))))
+            }
+            func player(
+              _ player: GKPlayer, receivedExchangeReplies replies: [GKTurnBasedExchangeReply],
+              forCompletedExchange exchange: GKTurnBasedExchange, for match: GKTurnBasedMatch
+            ) {
+              self.continuation.yield(
+                .turnBased(.receivedExchangeReplies(replies, match: .init(rawValue: match))))
+            }
+            func player(
+              _ player: GKPlayer, receivedExchangeRequest exchange: GKTurnBasedExchange,
+              for match: GKTurnBasedMatch
+            ) {
+              self.continuation.yield(
+                .turnBased(.receivedExchangeRequest(exchange, match: .init(rawValue: match))))
+            }
+            func player(
+              _ player: GKPlayer, receivedTurnEventFor match: GKTurnBasedMatch,
+              didBecomeActive: Bool
+            ) {
+              self.continuation.yield(
+                .turnBased(
+                  .receivedTurnEventForMatch(
+                    .init(rawValue: match), didBecomeActive: didBecomeActive)))
+            }
+            func player(_ player: GKPlayer, wantsToQuitMatch match: GKTurnBasedMatch) {
+              self.continuation.yield(.turnBased(.wantsToQuitMatch(.init(rawValue: match))))
+            }
+          }
+
+          let id = UUID()
+          let listener = Listener(continuation: continuation)
+          Self.listeners[id] = listener
+          localPlayer.register(listener)
+
+          continuation.onTermination = { _ in
+            localPlayer.unregisterListener(Self.listeners[id]!)
+            Self.listeners[id] = nil
+          }
+        }
+      },
       localPlayer: { .init(rawValue: localPlayer) },
+      localPlayerAsync: { .init(rawValue: localPlayer) },
       presentAuthenticationViewController: .run { _ in
         Self.viewController?.present()
         return AnyCancellable {
           Self.viewController?.dismiss()
           Self.viewController = nil
         }
+      },
+      presentAuthenticationViewControllerAsync: {
+        await Self.viewController?.present()
+        await AsyncStream<Void> { continuation in
+          continuation.onTermination = { _ in
+            Task {
+              await Self.viewController?.dismiss()
+              Self.viewController = nil
+            }
+          }
+        }
+        .first(where: { true })
       }
     )
   }
@@ -236,6 +421,27 @@ extension TurnBasedMatchClient {
         }
       }
     },
+    endMatchInTurnAsync: { request in
+      let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
+      match.message = request.message
+      match.participants.forEach { participant in
+        if participant.status == .active, let player = participant.player {
+          let matchOutcome =
+            request.localPlayerMatchOutcome == .tied
+            ? .tied
+            : player.gamePlayerID == request.localPlayerId.rawValue
+              ? request.localPlayerMatchOutcome
+              : request.localPlayerMatchOutcome == .won
+                ? .lost
+                : .won
+          participant.matchOutcome = matchOutcome
+          if match.currentParticipant == participant {
+            match.currentParticipant?.matchOutcome = matchOutcome
+          }
+        }
+      }
+      try await match.endMatchInTurn(withMatch: request.matchData)
+    },
     endTurn: { request in
       .future { callback in
         GKTurnBasedMatch.load(withID: request.matchId.rawValue) { match, error in
@@ -253,6 +459,16 @@ extension TurnBasedMatchClient {
         }
       }
     },
+    endTurnAsync: { request in
+      let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
+      match.message = request.message
+      try await match.endTurn(
+        withNextParticipants: match.participants
+          .filter { $0.player?.gamePlayerID != match.currentParticipant?.player?.gamePlayerID },
+        turnTimeout: GKTurnTimeoutDefault,
+        match: request.matchData
+      )
+    },
     load: { matchId in
       .future { callback in
         GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
@@ -263,6 +479,10 @@ extension TurnBasedMatchClient {
         }
       }
     },
+    loadAsync: { matchId in
+      let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
+      return try await TurnBasedMatch(rawValue: GKTurnBasedMatch.load(withID: matchId.rawValue))
+    },
     loadMatches: {
       .future { callback in
         GKTurnBasedMatch.loadMatches { matches, error in
@@ -272,6 +492,9 @@ extension TurnBasedMatchClient {
           )
         }
       }
+    },
+    loadMatchesAsync: {
+      try await GKTurnBasedMatch.loadMatches().map(TurnBasedMatch.init(rawValue:))
     },
     participantQuitInTurn: { matchId, matchData in
       .future { callback in
@@ -290,6 +513,16 @@ extension TurnBasedMatchClient {
         }
       }
     },
+    participantQuitInTurnAsync: { matchId, matchData in
+      let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
+      try await match.participantQuitInTurn(
+        with: .quit,
+        nextParticipants: match.participants
+          .filter { $0.player?.gamePlayerID != match.currentParticipant?.player?.gamePlayerID },
+        turnTimeout: 0,
+        match: matchData
+      )
+    },
     participantQuitOutOfTurn: { matchId in
       .future { callback in
         GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
@@ -302,6 +535,10 @@ extension TurnBasedMatchClient {
           }
         }
       }
+    },
+    participantQuitOutOfTurnAsync: { matchId in
+      let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
+      try await match.participantQuitOutOfTurn(with: .quit)
     },
     rematch: { matchId in
       .future { callback in
@@ -319,6 +556,10 @@ extension TurnBasedMatchClient {
         }
       }
     },
+    rematchAsync: { matchId in
+      let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
+      return try await TurnBasedMatch(rawValue: match.rematch())
+    },
     remove: { match in
       .future { callback in
         guard let turnBasedMatch = match.rawValue
@@ -335,6 +576,14 @@ extension TurnBasedMatchClient {
         }
       }
     },
+    removeAsync: { match in
+      guard let turnBasedMatch = match.rawValue
+      else {
+        struct RawValueWasNil: Error {}
+        throw RawValueWasNil()
+      }
+      try await turnBasedMatch.remove()
+    },
     saveCurrentTurn: { matchId, matchData in
       .future { callback in
         GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
@@ -347,6 +596,10 @@ extension TurnBasedMatchClient {
           }
         }
       }
+    },
+    saveCurrentTurnAsync: { matchId, matchData in
+      let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
+      try await match.saveCurrentTurn(withMatch: matchData)
     },
     sendReminder: { request in
       .future { callback in
@@ -362,6 +615,14 @@ extension TurnBasedMatchClient {
           ) { error in callback(error.map(Result.failure) ?? .success(())) }
         }
       }
+    },
+    sendReminderAsync: { request in
+      let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
+      try await match.sendReminder(
+        to: request.participantsAtIndices.map { match.participants[$0] },
+        localizableMessageKey: request.key,
+        arguments: request.arguments
+      )
     }
   )
 }
@@ -415,10 +676,16 @@ extension TurnBasedMatchmakerViewControllerClient {
         }
       }
     },
+    presentAsync: { showExistingMatches in
+
+    },
     dismiss: .fireAndForget {
       guard let viewController = Self.viewController else { return }
       viewController.dismiss()
       Self.viewController = nil
+    },
+    dismissAsync: {
+
     }
   )
 
