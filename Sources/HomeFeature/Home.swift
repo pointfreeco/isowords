@@ -482,71 +482,47 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .cancel(id: ListenerId.self)
 
     case .onAppear:
-      // TODO: This is a merge because of different cancel IDs...can we write `withCancellation(id:)` yet?
-      return .merge(
-        .run { send in
+      return .run { send in
+        await withCancellation(id: AuthenticationId.self, cancelInFlight: true) {
           do {
             try await environment.gameCenter.localPlayer.authenticateAsync()
 
+            let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
+            let currentPlayerEnvelope = try await environment.apiClient.authenticateAsync(
+              .init(
+                deviceId: .init(rawValue: environment.deviceId.id()),
+                displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
+                gameCenterLocalPlayerId: localPlayer.isAuthenticated
+                ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+                : nil,
+                timeZone: environment.timeZone().identifier
+              )
+            )
+            await send(.authenticationResponse(currentPlayerEnvelope))
+            try await send(.serverConfigResponse(environment.serverConfig.refreshAsync()))
+
             await withTaskGroup(of: Void.self) { group in
               group.addTask {
-                do {
-                  let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
-                  let currentPlayerEnvelope = try await environment.apiClient.authenticateAsync(
-                    .init(
-                      deviceId: .init(rawValue: environment.deviceId.id()),
-                      displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
-                      gameCenterLocalPlayerId: localPlayer.isAuthenticated
-                        ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
-                        : nil,
-                      timeZone: environment.timeZone().identifier
-                    )
+                await send(
+                  .dailyChallengeResponse(
+                    TaskResult {
+                      try await environment.apiClient.apiRequestAsync(
+                        route: .dailyChallenge(.today(language: .en)),
+                        as: [FetchTodaysDailyChallengeResponse].self
+                      )
+                    }
                   )
-                  await send(.authenticationResponse(currentPlayerEnvelope))
-                  try await send(.serverConfigResponse(environment.serverConfig.refreshAsync()))
-
-                  await withTaskGroup(of: Void.self) { group in
-                    group.addTask {
-                      await send(
-                        .dailyChallengeResponse(
-                          TaskResult {
-                            try await environment.apiClient.apiRequestAsync(
-                              route: .dailyChallenge(.today(language: .en)),
-                              as: [FetchTodaysDailyChallengeResponse].self
-                            )
-                          }
-                        )
-                      )
-                    }
-
-                    group.addTask {
-                      await send(
-                        .weekInReviewResponse(
-                          TaskResult {
-                            try await environment.apiClient.apiRequestAsync(
-                              route: .leaderboard(.weekInReview(language: .en)),
-                              as: FetchWeekInReviewResponse.self
-                            )
-                          }
-                        )
-                      )
-                    }
-                  }
-                } catch {}
+                )
               }
 
               group.addTask {
-                // TODO: Refactor duplicate work done below? Or is it even needed?
                 await send(
-                  .matchesLoaded(
+                  .weekInReviewResponse(
                     TaskResult {
-                      let (activeMatches, hasPastTurnBasedGames) =
-                        try await environment.gameCenter
-                        .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
-
-                      await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
-
-                      return activeMatches
+                      try await environment.apiClient.apiRequestAsync(
+                        route: .leaderboard(.weekInReview(language: .en)),
+                        as: FetchWeekInReviewResponse.self
+                      )
                     }
                   )
                 )
@@ -554,10 +530,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
             }
           } catch {}
         }
-        .animation()
-        .cancellable(id: AuthenticationId.self, cancelInFlight: true),
 
-        .run { send in
+        await withCancellation(id: ListenerId.self) {
           for await event in environment.gameCenter.localPlayer.listenerAsync() {
             switch event {
             case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
@@ -566,7 +540,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
                 .matchesLoaded(
                   TaskResult {
                     let (activeMatches, hasPastTurnBasedGames) =
-                      try await environment.gameCenter
+                    try await environment.gameCenter
                       .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
 
                     await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
@@ -580,9 +554,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
             }
           }
         }
-        .animation()
-        .cancellable(id: ListenerId.self)
-      )
+      }
+      .animation()
 
     case let .serverConfigResponse(serverConfig):
       state.hasChangelog = serverConfig.newestBuild > environment.build.number()
