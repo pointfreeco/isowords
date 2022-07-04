@@ -132,7 +132,7 @@ public enum HomeAction: BindableAction, Equatable {
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
-  case matchesLoaded(Result<[ActiveTurnBasedMatch], NSError>)
+  case matchesLoaded(TaskResult<[ActiveTurnBasedMatch]>)
   case multiplayer(MultiplayerAction)
   case nagBannerFeature(NagBannerFeatureAction)
   case onAppear
@@ -354,22 +354,44 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
   .init { state, action, environment in
     switch action {
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
-      return .concatenate(
-        environment.gameCenter.turnBasedMatch.load(matchId)
-          .flatMap { match in
-            forceQuitMatch(match: match, gameCenter: environment.gameCenter)
+      return .run { send in
+        let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
+
+        do {
+          let match = try await environment.gameCenter.turnBasedMatch.loadAsync(matchId)
+          let currentParticipantIsLocalPlayer =
+            match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+
+          if currentParticipantIsLocalPlayer {
+            try await environment.gameCenter.turnBasedMatch
+              .endMatchInTurnAsync(
+                .init(
+                  for: match.matchId,
+                  matchData: match.matchData ?? Data(),
+                  localPlayerId: localPlayer.gamePlayerId,
+                  localPlayerMatchOutcome: .quit,
+                  message: "\(localPlayer.displayName) forfeited the match."
+                )
+              )
+          } else {
+            try await environment.gameCenter.turnBasedMatch
+              .participantQuitOutOfTurnAsync(match.matchId)
           }
-          .fireAndForget(),
+        } catch {}
 
-        loadMatches(
-          gameCenter: environment.gameCenter,
-          backgroundQueue: environment.backgroundQueue,
-          mainRunLoop: environment.mainRunLoop
-        ),
+        let matches = await TaskResult {
+          try await environment.gameCenter.turnBasedMatch.loadMatchesAsync()
+        }
+        let hasPastTurnBasedGames = (try? matches.value.contains { $0.status == .ended }) ?? false
+        await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
 
-        environment.audioPlayer.play(.uiSfxActionDestructive)
-          .fireAndForget()
-      )
+        let activeMatches = matches.map {
+          $0.activeMatches(for: localPlayer, at: environment.mainRunLoop.now.date)
+        }
+        await send(.matchesLoaded(activeMatches), animation: .default)
+
+        await environment.audioPlayer.playAsync(.uiSfxActionDestructive)
+      }
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId))):
       return .none
@@ -779,7 +801,6 @@ private func loadMatches(
 
   return gameCenter.turnBasedMatch.loadMatches()
     .receive(on: backgroundQueue)
-    .mapError { $0 as NSError }
     .catchToEffect()
     .flatMap { result in
       Effect.merge(
@@ -794,12 +815,14 @@ private func loadMatches(
 
         Effect(
           value: .matchesLoaded(
-            result.map {
-              $0.activeMatches(
-                for: gameCenter.localPlayer.localPlayer(),
-                at: mainRunLoop.now.date
-              )
-            }
+            TaskResult(
+              result.map {
+                $0.activeMatches(
+                  for: gameCenter.localPlayer.localPlayer(),
+                  at: mainRunLoop.now.date
+                )
+              }
+            )
           )
         )
         .receive(on: mainRunLoop.animation())
