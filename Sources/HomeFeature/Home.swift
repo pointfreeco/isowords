@@ -400,8 +400,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex))):
-      return environment.gameCenter.turnBasedMatch
-        .sendReminder(
+      return .fireAndForget {
+        try await environment.gameCenter.turnBasedMatch.sendReminderAsync(
           .init(
             for: matchId,
             to: [otherPlayerIndex.rawValue],
@@ -409,7 +409,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
             arguments: []
           )
         )
-        .fireAndForget()
+      }
 
     case .activeGames:
       return .none
