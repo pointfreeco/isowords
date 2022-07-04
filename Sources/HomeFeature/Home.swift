@@ -379,16 +379,19 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           }
         } catch {}
 
-        let matches = await TaskResult {
-          try await environment.gameCenter.turnBasedMatch.loadMatchesAsync()
-        }
-        let hasPastTurnBasedGames = (try? matches.value.contains { $0.status == .ended }) ?? false
-        await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+        await send(
+          .matchesLoaded(
+            TaskResult {
+              let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
+                .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
 
-        let activeMatches = matches.map {
-          $0.activeMatches(for: localPlayer, at: environment.mainRunLoop.now.date)
-        }
-        await send(.matchesLoaded(activeMatches), animation: .default)
+              await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+
+              return activeMatches
+            }
+          ),
+          animation: .default
+        )
 
         await environment.audioPlayer.playAsync(.uiSfxActionDestructive)
       }
@@ -791,6 +794,18 @@ func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> 
     .receive(on: environment.mainQueue.animation())
     .eraseToEffect()
     .cancellable(id: AuthenticationId(), cancelInFlight: true)
+}
+
+private extension GameCenterClient {
+  func loadActiveMatchesAsync(
+    now: Date
+  ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
+    let localPlayer = await self.localPlayer.localPlayerAsync()
+    let matches = try await self.turnBasedMatch.loadMatchesAsync()
+    let activeMatches = matches.activeMatches(for: localPlayer, at: now)
+    let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
+    return (activeMatches, hasPastTurnBasedGames)
+  }
 }
 
 private func loadMatches(
