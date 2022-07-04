@@ -201,7 +201,7 @@ extension LocalPlayerClient {
   }
 
   private static var listeners: [UUID: GKLocalPlayerListener] = [:]
-  private static var viewController: ViewController?
+  private static var viewController: UIViewController?
 }
 
 extension TurnBasedMatchClient {
