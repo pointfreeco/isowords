@@ -127,7 +127,7 @@ public enum HomeAction: BindableAction, Equatable {
   case changelog(ChangelogAction)
   case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
-  case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
@@ -141,7 +141,7 @@ public enum HomeAction: BindableAction, Equatable {
   case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
-  case weekInReviewResponse(Result<FetchWeekInReviewResponse, ApiError>)
+  case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
 
   public enum GameButtonAction: Equatable {
     case dailyChallenge
@@ -479,31 +479,109 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case .onDisappear:
-      return .cancel(id: ListenerId())
+      return .cancel(id: ListenerId.self)
 
     case .onAppear:
+      // TODO: This is a merge because of different cancel IDs...can we write `withCancellation(id:)` yet?
       return .merge(
-        onAppearEffects(environment: environment),
+        .run { send in
+          do {
+            try await environment.gameCenter.localPlayer.authenticateAsync()
 
-        environment.gameCenter.localPlayer.listener
-          .cancellable(id: ListenerId(), cancelInFlight: true)
-          .filter {
-            switch $0 {
-            case .turnBased(.matchEnded),
-              .turnBased(.receivedTurnEventForMatch):
-              return true
+            await withTaskGroup(of: Void.self) { group in
+              group.addTask {
+                do {
+                  let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
+                  let currentPlayerEnvelope = try await environment.apiClient.authenticateAsync(
+                    .init(
+                      deviceId: .init(rawValue: environment.deviceId.id()),
+                      displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
+                      gameCenterLocalPlayerId: localPlayer.isAuthenticated
+                        ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+                        : nil,
+                      timeZone: environment.timeZone().identifier
+                    )
+                  )
+                  await send(.authenticationResponse(currentPlayerEnvelope))
+                  try await send(.serverConfigResponse(environment.serverConfig.refreshAsync()))
+
+                  await withTaskGroup(of: Void.self) { group in
+                    group.addTask {
+                      await send(
+                        .dailyChallengeResponse(
+                          TaskResult {
+                            try await environment.apiClient.apiRequestAsync(
+                              route: .dailyChallenge(.today(language: .en)),
+                              as: [FetchTodaysDailyChallengeResponse].self
+                            )
+                          }
+                        )
+                      )
+                    }
+
+                    group.addTask {
+                      await send(
+                        .weekInReviewResponse(
+                          TaskResult {
+                            try await environment.apiClient.apiRequestAsync(
+                              route: .leaderboard(.weekInReview(language: .en)),
+                              as: FetchWeekInReviewResponse.self
+                            )
+                          }
+                        )
+                      )
+                    }
+                  }
+                } catch {}
+              }
+
+              group.addTask {
+                // TODO: Refactor duplicate work done below? Or is it even needed?
+                await send(
+                  .matchesLoaded(
+                    TaskResult {
+                      let (activeMatches, hasPastTurnBasedGames) =
+                        try await environment.gameCenter
+                        .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
+
+                      await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+
+                      return activeMatches
+                    }
+                  )
+                )
+              }
+            }
+          } catch {}
+        }
+        .animation()
+        .cancellable(id: AuthenticationId.self, cancelInFlight: true),
+
+        .run { send in
+          for await event in environment.gameCenter.localPlayer.listenerAsync() {
+            switch event {
+            case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
+              // TODO: Refactor duplicate work done above
+              await send(
+                .matchesLoaded(
+                  TaskResult {
+                    let (activeMatches, hasPastTurnBasedGames) =
+                      try await environment.gameCenter
+                      .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
+
+                    await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+
+                    return activeMatches
+                  }
+                )
+              )
             default:
-              return false
+              break
             }
           }
-          .flatMap { _ in
-            loadMatches(
-              gameCenter: environment.gameCenter,
-              backgroundQueue: environment.backgroundQueue,
-              mainRunLoop: environment.mainRunLoop
-            )
-          }
-          .eraseToEffect()
+        }
+        .animation()
+        .cancellable(id: ListenerId.self)
       )
 
     case let .serverConfigResponse(serverConfig):
@@ -731,73 +809,8 @@ extension HomeState {
   }
 }
 
-func onAppearEffects(environment: HomeEnvironment) -> Effect<HomeAction, Never> {
-  var serverAuthentication: Effect<HomeAction, Never> {
-    environment.apiClient.authenticate(
-      .init(
-        deviceId: .init(rawValue: environment.deviceId.id()),
-        displayName: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
-          ? environment.gameCenter.localPlayer.localPlayer().displayName
-          : nil,
-        gameCenterLocalPlayerId: environment.gameCenter.localPlayer.localPlayer().isAuthenticated
-          ? .init(rawValue: environment.gameCenter.localPlayer.localPlayer().gamePlayerId.rawValue)
-          : nil,
-        timeZone: environment.timeZone().identifier
-      )
-    )
-    .ignoreFailure()
-    .flatMap { envelope in
-      Just(HomeAction.authenticationResponse(envelope))
-        .merge(
-          with: environment.serverConfig.refresh()
-            .ignoreFailure()
-            .receive(on: environment.mainQueue)
-            .map(HomeAction.serverConfigResponse)
-        )
-    }
-    .eraseToEffect()
-  }
-
-  let serverAuthenticateAndLoadData = serverAuthentication.flatMap { authentication in
-    Effect.merge(
-      Effect(value: authentication),
-
-      environment.apiClient
-        .apiRequest(
-          route: .dailyChallenge(.today(language: .en)),
-          as: [FetchTodaysDailyChallengeResponse].self
-        )
-        .catchToEffect(HomeAction.dailyChallengeResponse),
-
-      environment.apiClient
-        .apiRequest(
-          route: .leaderboard(.weekInReview(language: .en)),
-          as: FetchWeekInReviewResponse.self
-        )
-        .catchToEffect(HomeAction.weekInReviewResponse)
-    )
-  }
-
-  return
-    environment.gameCenter.localPlayer.authenticate
-    .flatMap { _ in
-      Publishers.Merge(
-        serverAuthenticateAndLoadData,
-
-        loadMatches(
-          gameCenter: environment.gameCenter,
-          backgroundQueue: environment.backgroundQueue,
-          mainRunLoop: environment.mainRunLoop
-        )
-      )
-    }
-    .receive(on: environment.mainQueue.animation())
-    .eraseToEffect()
-    .cancellable(id: AuthenticationId(), cancelInFlight: true)
-}
-
-private extension GameCenterClient {
-  func loadActiveMatchesAsync(
+extension GameCenterClient {
+  fileprivate func loadActiveMatchesAsync(
     now: Date
   ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
     let localPlayer = await self.localPlayer.localPlayerAsync()
@@ -808,47 +821,8 @@ private extension GameCenterClient {
   }
 }
 
-private func loadMatches(
-  gameCenter: GameCenterClient,
-  backgroundQueue: AnySchedulerOf<DispatchQueue>,
-  mainRunLoop: AnySchedulerOf<RunLoop>
-) -> Effect<HomeAction, Never> {
-
-  return gameCenter.turnBasedMatch.loadMatches()
-    .receive(on: backgroundQueue)
-    .catchToEffect()
-    .flatMap { result in
-      Effect.merge(
-        Effect(
-          value: .set(
-            \.$hasPastTurnBasedGames,
-            (try? result.get())?.contains { $0.status == .ended } == .some(true)
-          )
-        )
-        .receive(on: mainRunLoop)
-        .eraseToEffect(),
-
-        Effect(
-          value: .matchesLoaded(
-            TaskResult(
-              result.map {
-                $0.activeMatches(
-                  for: gameCenter.localPlayer.localPlayer(),
-                  at: mainRunLoop.now.date
-                )
-              }
-            )
-          )
-        )
-        .receive(on: mainRunLoop.animation())
-        .eraseToEffect()
-      )
-    }
-    .eraseToEffect()
-}
-
-private struct ListenerId: Hashable {}
-private struct AuthenticationId: Hashable {}
+private enum ListenerId {}
+private enum AuthenticationId {}
 
 private struct CubeIconView: View {
   let action: () -> Void
