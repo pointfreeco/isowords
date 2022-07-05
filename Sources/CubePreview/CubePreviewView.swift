@@ -101,68 +101,58 @@ public let cubePreviewReducer = Reducer<
     return .none
 
   case .onAppear:
-    var effects: [Effect<CubePreviewAction, Never>] = [
-      environment.lowPowerMode.start
-        .prefix(1)
-        .map(CubePreviewAction.lowPowerModeResponse)
-        .eraseToEffect(),
+    return .run { [move = state.moves[state.moveIndex]] send in
+      try await withThrowingTaskGroup(of: Void.self) { group in
+        group.addTask {
+          for await isLowPowerMode in await environment.lowPowerMode.startAsync() {
+            await send(.lowPowerModeResponse(isLowPowerMode))
+          }
+        }
 
-      Effect.none
-        .delay(for: 1, scheduler: environment.mainQueue)
-        .eraseToEffect(),
-    ]
+        group.addTask {
+          try await environment.mainQueue.sleep(for: .seconds(1))
 
-    var accumulatedSelectedFaces: [IndexedCubeFace] = []
-    let move = state.moves[state.moveIndex]
-    switch move.type {
-    case let .playedWord(faces):
-      for (faceIndex, face) in faces.enumerated() {
-        accumulatedSelectedFaces.append(face)
-        let moveDuration = Double.random(in: (0.6...0.8))
+          var accumulatedSelectedFaces: [IndexedCubeFace] = []
+          switch move.type {
+          case let .playedWord(faces):
+            for (faceIndex, face) in faces.enumerated() {
+              accumulatedSelectedFaces.append(face)
+              let moveDuration = Double.random(in: (0.6...0.8))
 
-        effects.append(
-          Effect(value: .set(\.$nub.location, .face(face)))
-            .receive(
-              on: environment.mainQueue
-                .animate(withDuration: moveDuration, options: .curveEaseInOut)
-            )
-            .eraseToEffect()
-        )
+              await UIView.animate(
+                withDuration: moveDuration, delay: 0, options: .curveEaseInOut
+              ) {
+                send(.set(\.$nub.location, .face(face)), animation: .default)
+              }
 
-        effects.append(
-          Effect.merge(
-            // Press the nub on the first character
-            faceIndex == 0 ? Effect(value: .set(\.$nub.isPressed, true)) : .none,
+              try await environment.mainQueue.sleep(
+                for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
+              )
 
-            // Select the faces that have been tapped so far
-            Effect(value: .set(\.$selectedCubeFaces, accumulatedSelectedFaces))
-          )
-          .delay(
-            for: .seconds(
-              faceIndex == 0
-                ? moveDuration
-                : 0.5 * moveDuration
-            ),
-            scheduler: environment.mainQueue.animation()
-          )
-          .eraseToEffect()
-        )
+              // Press the nub on the first character
+              if faceIndex == 0 {
+                await send(.set(\.$nub.isPressed, true), animation: .default)
+              }
+
+              // Select the faces that have been tapped so far
+              await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
+            }
+
+            await send(.set(\.$nub.isPressed, false))
+            await UIView.animate(
+              withDuration: 1, delay: 0, options: .curveEaseInOut
+            ) {
+              send(.set(\.$nub.location, .offScreenRight), animation: .default)
+            }
+          case let .removedCube(index):
+            break
+          }
+        }
+
+        try await group.waitForAll()
       }
-      effects.append(
-        Effect(value: .set(\.$nub.isPressed, false))
-      )
-      effects.append(
-        Effect(value: .set(\.$nub.location, .offScreenRight))
-          .receive(on: environment.mainQueue.animate(withDuration: 1))
-          .eraseToEffect()
-      )
-
-    case let .removedCube(index):
-      break
     }
-
-    return Effect.concatenate(effects)
-      .cancellable(id: SelectionId())
+    .cancellable(id: SelectionId())
 
   case .tap:
     state.nub.location = .offScreenRight
