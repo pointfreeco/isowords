@@ -30,7 +30,7 @@ public struct ChangelogState: Equatable {
 
 public enum ChangelogAction: Equatable {
   case change(id: Build.Number, action: ChangeAction)
-  case changelogResponse(Result<Changelog, ApiError>)
+  case changelogResponse(TaskResult<Changelog>)
   case onAppear
   case updateButtonTapped
 }
@@ -110,19 +110,24 @@ public let changelogReducer = Reducer<
       state.currentBuild = environment.build.number()
       state.isRequestInFlight = true
 
-      return environment.apiClient.apiRequest(
-        route: .changelog(build: environment.build.number()),
-        as: Changelog.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(ChangelogAction.changelogResponse)
+      return .task {
+        await .changelogResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequestAsync(
+              route: .changelog(build: environment.build.number()),
+              as: Changelog.self
+            )
+          }
+        )
+      }
 
     case .updateButtonTapped:
-      return environment.applicationClient.open(
-        environment.serverConfig.config().appStoreUrl.absoluteURL,
-        [:]
-      )
-      .fireAndForget()
+      return .fireAndForget {
+        _ = await environment.applicationClient.openAsync(
+          environment.serverConfig.config().appStoreUrl.absoluteURL,
+          [:]
+        )
+      }
     }
   }
 )
