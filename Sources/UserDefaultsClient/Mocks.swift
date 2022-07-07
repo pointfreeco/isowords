@@ -5,10 +5,15 @@ extension UserDefaultsClient {
     doubleForKey: { _ in 0 },
     integerForKey: { _ in 0 },
     remove: { _ in .none },
+    removeAsync: { _ in },
     setBool: { _, _ in .none },
+    setBoolAsync: { _, _ in },
     setData: { _, _ in .none },
+    setDataAsync: { _, _ in },
     setDouble: { _, _ in .none },
-    setInteger: { _, _ in .none }
+    setDoubleAsync: { _, _ in },
+    setInteger: { _, _ in .none },
+    setIntegerAsync: { _, _ in }
   )
 }
 
@@ -36,10 +41,15 @@ extension UserDefaultsClient {
         return 0
       },
       remove: { key in .failing("\(Self.self).remove(\(key)) is unimplemented") },
+      removeAsync: XCTUnimplemented("\(Self.self).removeAsync"),
       setBool: { _, key in .failing("\(Self.self).setBool(\(key), _) is unimplemented") },
+      setBoolAsync: XCTUnimplemented("\(Self.self).setBoolAsync"),
       setData: { _, key in .failing("\(Self.self).setData(\(key), _) is unimplemented") },
+      setDataAsync: XCTUnimplemented("\(Self.self).setDataAsync"),
       setDouble: { _, key in .failing("\(Self.self).setDouble(\(key), _) is unimplemented") },
-      setInteger: { _, key in .failing("\(Self.self).setInteger(\(key), _) is unimplemented") }
+      setDoubleAsync: XCTUnimplemented("\(Self.self).setDoubleAsync"),
+      setInteger: { _, key in .failing("\(Self.self).setInteger(\(key), _) is unimplemented") },
+      setIntegerAsync: XCTUnimplemented("\(Self.self).setIntegerAsync")
     )
 
     public mutating func override(bool: Bool, forKey key: String) {

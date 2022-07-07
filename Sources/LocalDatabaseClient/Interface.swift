@@ -3,11 +3,17 @@ import SharedModels
 
 public struct LocalDatabaseClient {
   public var fetchGamesForWord: (String) -> Effect<[LocalDatabaseClient.Game], Error>
+  public var fetchGamesForWordAsync: @Sendable (String) async throws -> [LocalDatabaseClient.Game]
   public var fetchStats: Effect<Stats, Error>
+  public var fetchStatsAsync: @Sendable () async throws -> Stats
   public var fetchVocab: Effect<Vocab, Error>
+  public var fetchVocabAsync: @Sendable () async throws -> Vocab
   public var migrate: Effect<Void, Error>
+  public var migrateAsync: @Sendable () async throws -> Void
   public var playedGamesCount: (GameContext) -> Effect<Int, Error>
+  public var playedGamesCountAsync: @Sendable (GameContext) async throws -> Int
   public var saveGame: (CompletedGame) -> Effect<Void, Error>
+  public var saveGameAsync: @Sendable (CompletedGame) async throws -> Void
 
   public struct Game: Equatable {
     public var id: Int
@@ -67,10 +73,16 @@ public struct LocalDatabaseClient {
 extension LocalDatabaseClient {
   public static let noop = Self(
     fetchGamesForWord: { _ in .none },
+    fetchGamesForWordAsync: { _ in try await Task.never() },
     fetchStats: .none,
+    fetchStatsAsync: { try await Task.never() },
     fetchVocab: .none,
+    fetchVocabAsync: { try await Task.never() },
     migrate: .none,
+    migrateAsync: {},
     playedGamesCount: { _ in .none },
-    saveGame: { _ in .none }
+    playedGamesCountAsync: { _ in try await Task.never() },
+    saveGame: { _ in .none },
+    saveGameAsync: { _ in try await Task.never() }
   )
 }

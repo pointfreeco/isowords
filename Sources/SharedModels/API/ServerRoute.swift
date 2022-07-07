@@ -46,7 +46,7 @@ public enum ServerRoute: Equatable {
       self.route = route
     }
 
-    public enum Route: Equatable {
+    public enum Route: Equatable, Sendable {
       case changelog(build: Build.Number)
       case config(build: Build.Number)
       case currentPlayer

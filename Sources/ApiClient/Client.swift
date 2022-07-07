@@ -251,6 +251,18 @@ public struct ApiClient {
           return self.apiRequest(route)
         }
       }
+      self.apiRequestAsync = { [self] route in
+        if route == matchingRoute {
+          fulfill()
+          if #available(iOS 15.0, *) {
+            return try await response.values.first(where: { _ in true })!
+          } else {
+            fatalError("TODO")
+          }
+        } else {
+          return try await self.apiRequestAsync(route)
+        }
+      }
     }
 
     public mutating func override<Value>(

@@ -160,11 +160,9 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
       return .none
 
     case .fullVersionButtonTapped:
-      return environment.applicationClient.open(
-        ServerConfig().appStoreUrl,
-        [:]
-      )
-      .fireAndForget()
+      return .fireAndForget {
+        _ = await environment.applicationClient.openAsync(ServerConfig().appStoreUrl, [:])
+      }
 
     case .game(.gameOver(.submitGameResponse(.success))):
       state.appStoreOverlayIsPresented = true
@@ -178,8 +176,9 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
       return .none
 
     case .onAppear:
-      return environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget()
+      return .fireAndForget {
+        await environment.audioPlayer.loadAsync(AudioPlayerClient.Sound.allCases)
+      }
 
     case .onboarding(.delegate(.getStarted)):
       state.step = .game(

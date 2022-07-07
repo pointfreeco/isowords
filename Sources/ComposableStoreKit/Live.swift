@@ -29,7 +29,7 @@ extension StoreKitClient {
         }
       },
       fetchProductsAsync: { products in
-        let stream = AsyncThrowingStream { continuation in
+        let stream = AsyncThrowingStream<ProductsResponse, Error> { continuation in
           let request = SKProductsRequest(productIdentifiers: products)
           let delegate = ProductRequestAsync(continuation: continuation)
           request.delegate = delegate

@@ -1,6 +1,6 @@
 import Combine
 import CombineSchedulers
-import ComposableArchitecture
+import Dependencies
 import Foundation
 import XCTestDynamicOverlay
 
@@ -26,15 +26,16 @@ extension LowPowerModeClient {
           .scan(false) { a, _ in !a }
           .eraseToEffect(),
         startAsync: {
-          AsyncStream { continuation in
+          AsyncStream<Bool> { continuation in
             let isLowPowerModeEnabled = SendableState(false)
             Task {
               await continuation.yield(isLowPowerModeEnabled.value)
               for await _ in DispatchQueue.main.timer(interval: 2) {
-                let isLowPowerModeEnabled = await isLowPowerModeEnabled.modify {
-                  $0.toggle()
-                  return $0
-                }
+                let isLowPowerModeEnabled = await isLowPowerModeEnabled
+                  .modify { isLowPowerModeEnabled -> Bool in
+                    isLowPowerModeEnabled.toggle()
+                    return isLowPowerModeEnabled
+                  }
                 continuation.yield(isLowPowerModeEnabled)
               }
             }

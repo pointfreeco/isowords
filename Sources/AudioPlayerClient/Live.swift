@@ -1,5 +1,5 @@
 import AVFoundation
-import ComposableArchitecture  // FIXME: Needed for UncheckedSendable
+import Dependencies
 
 extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {

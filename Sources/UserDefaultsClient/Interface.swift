@@ -7,10 +7,15 @@ public struct UserDefaultsClient {
   public var doubleForKey: (String) -> Double
   public var integerForKey: (String) -> Int
   public var remove: (String) -> Effect<Never, Never>
+  public var removeAsync: @Sendable (String) async -> Void
   public var setBool: (Bool, String) -> Effect<Never, Never>
+  public var setBoolAsync: @Sendable (Bool, String) async -> Void
   public var setData: (Data?, String) -> Effect<Never, Never>
+  public var setDataAsync: @Sendable (Data?, String) async -> Void
   public var setDouble: (Double, String) -> Effect<Never, Never>
+  public var setDoubleAsync: @Sendable (Double, String) async -> Void
   public var setInteger: (Int, String) -> Effect<Never, Never>
+  public var setIntegerAsync: @Sendable (Int, String) async -> Void
 
   public var hasShownFirstLaunchOnboarding: Bool {
     self.boolForKey(hasShownFirstLaunchOnboardingKey)

@@ -1,29 +1,36 @@
 import ComposableArchitecture
+import Dependencies
 import Overture
 import SharedModels
 import Sqlite
 
 extension LocalDatabaseClient {
   public static func live(path: URL) -> Self {
-    var _db: Sqlite!
-    func db() throws -> Sqlite {
-      if _db == nil {
+    let _db = UncheckedSendable<Box<Sqlite?>>(wrappedValue: .init(wrappedValue: nil))
+    @Sendable func db() throws -> Sqlite {
+      if _db.uncheckedValue.boxedValue == nil {
         try! FileManager.default.createDirectory(
           at: path.deletingLastPathComponent(), withIntermediateDirectories: true
         )
-        _db = try Sqlite(path: path.absoluteString)
+        _db.uncheckedValue.boxedValue = try Sqlite(path: path.absoluteString)
       }
-      return _db
+      return _db.uncheckedValue.boxedValue!
     }
     return Self(
       fetchGamesForWord: { word in .catching { try db().fetchGames(for: word) } },
+      fetchGamesForWordAsync: { try db().fetchGames(for: $0) },
       fetchStats: .catching { try db().fetchStats() },
+      fetchStatsAsync: { try db().fetchStats() },
       fetchVocab: .catching { try db().fetchVocab() },
+      fetchVocabAsync: { try db().fetchVocab() },
       migrate: .catching { try db().migrate() },
+      migrateAsync: { try db().migrate() },
       playedGamesCount: { gameContext in
         .catching { try db().playedGamesCount(gameContext: gameContext) }
       },
-      saveGame: { game in .catching { try db().saveGame(game) } }
+      playedGamesCountAsync: { try db().playedGamesCount(gameContext: $0) },
+      saveGame: { game in .catching { try db().saveGame(game) } },
+      saveGameAsync: { try db().saveGame($0) }
     )
   }
 

@@ -323,7 +323,7 @@ extension Effect where Output == Bool, Failure == Error {
   }
 }
 
-func shouldShowInterstitial(
+public func shouldShowInterstitial(
   gamePlayedCount: Int,
   gameContext: GameContext,
   serverConfig: ServerConfig

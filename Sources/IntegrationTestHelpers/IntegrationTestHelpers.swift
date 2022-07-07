@@ -162,7 +162,7 @@ extension ApiClient {
       },
       authenticateAsync: {
         let newPlayer = try await session.authenticate(request: $0)
-        currentPlayer = newPlayer  // TODO: remove
+//        currentPlayer = newPlayer  // TODO: remove
         return newPlayer
       },
       baseUrl: { baseUrl },
@@ -177,7 +177,7 @@ extension ApiClient {
       },
       logoutAsync: {
         await session.logout()
-        currentPlayer = nil  // TODO: remove
+//        currentPlayer = nil  // TODO: remove
       },
       refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
@@ -211,7 +211,7 @@ extension ApiClient {
       },
       setBaseUrlAsync: {
         await session.setBaseUrl($0)
-        baseUrl = $0  // TODO: remove
+//        baseUrl = $0  // TODO: remove
       }
     )
   }

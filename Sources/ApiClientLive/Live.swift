@@ -163,7 +163,7 @@ extension ApiClient {
       },
       authenticateAsync: {
         let newPlayer = try await session.authenticate(request: $0)
-        currentPlayer = newPlayer  // TODO: remove
+//        currentPlayer = newPlayer  // TODO: remove
         return newPlayer
       },
       baseUrl: { baseUrl },
@@ -178,7 +178,7 @@ extension ApiClient {
       },
       logoutAsync: {
         await session.logout()
-        currentPlayer = nil  // TODO: remove
+//        currentPlayer = nil  // TODO: remove
       },
       refreshCurrentPlayer: {
         ApiClientLive.apiRequest(
@@ -201,7 +201,7 @@ extension ApiClient {
       },
       refreshCurrentPlayerAsync: {
         let newPlayer = try await session.refreshCurrentPlayer()
-        currentPlayer = newPlayer  // TODO: remove
+//        currentPlayer = newPlayer  // TODO: remove
         return newPlayer
       },
       request: { route in
@@ -220,7 +220,7 @@ extension ApiClient {
       },
       setBaseUrlAsync: {
         await session.setBaseUrl($0)
-        baseUrl = $0  // TODO: remove
+//        baseUrl = $0  // TODO: remove
       }
     )
   }
@@ -249,7 +249,11 @@ private func requestAsync(
   guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
   else { throw URLError(.badURL) }
   request.setHeaders()
-  return try await URLSession.shared.data(for: request)
+  if #available(iOS 15.0, *) {
+    return try await URLSession.shared.data(for: request)
+  } else {
+    fatalError()
+  }
 }
 
 private func apiRequest(

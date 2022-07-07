@@ -76,7 +76,7 @@ public struct GameOverState: Equatable {
 
 public enum GameOverAction: Equatable {
   case closeButtonTapped
-  case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case delayedOnAppear
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
@@ -86,7 +86,7 @@ public enum GameOverAction: Equatable {
   case rematchButtonTapped
   case showConfetti
   case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
-  case submitGameResponse(Result<SubmitGameResponse, ApiError>)
+  case submitGameResponse(TaskResult<SubmitGameResponse>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
@@ -193,10 +193,10 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           .contains(state.userNotificationSettings?.authorizationStatus),
         case .dailyChallenge = state.completedGame.gameContext
       else {
-        return .merge(
-          .reviewRequestEffect(environment: environment),
-          Effect(value: .delegate(.close))
-        )
+        return .task {
+          try? await environment.requestReviewAsync()
+          return .delegate(.close)
+        }
       }
 
       state.notificationsAuthAlert = .init()
@@ -251,100 +251,104 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       }
 
     case .onAppear:
-      guard state.isDemo || state.completedGame.currentScore > 0
-      else {
-        return Effect(value: .delegate(.close))
-          .receive(on: ImmediateScheduler.shared.animation(.default))
-          .eraseToEffect()
-      }
+      return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+        try await environment.mainRunLoop.sleep(until: environment.mainRunLoop.now)
 
-      let submitGameEffect: Effect<GameOverAction, Never>
-      if state.isDemo {
-        submitGameEffect = environment.apiClient.request(
-          route: .demo(
-            .submitGame(
-              .init(
-                gameMode: state.completedGame.gameMode,
-                score: state.completedGame.currentScore
+        await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
+        await environment.audioPlayer.playAsync(.transitionIn)
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+          group.addTaskUnlessCancelled {
+            try await environment.mainRunLoop.sleep(for: .seconds(2))
+            await send(.delayedOnAppear)
+          }
+
+          group.addTaskUnlessCancelled {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettingsAsync()
               )
             )
-          ),
-          as: LeaderboardScoreResult.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .map(SubmitGameResponse.solo)
-        .catchToEffect(GameOverAction.submitGameResponse)
-      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-        completedGame: state.completedGame)
-      {
-        submitGameEffect = environment.apiClient.apiRequest(
-          route: .games(.submit(request)),
-          as: SubmitGameResponse.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .catchToEffect(GameOverAction.submitGameResponse)
-      } else {
-        submitGameEffect = .none
-      }
-
-      //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won
-      //        ? showConfetti
-      //        : .none
-
-      return .merge(
-        Effect(value: .delayedOnAppear)
-          .delay(for: 2, scheduler: environment.mainRunLoop)
-          .eraseToEffect(),
-
-        submitGameEffect,
-
-        //        turnBasedConfettiEffect,
-
-        Effect.showUpgradeInterstitial(
-          gameContext: .init(gameContext: state.completedGame.gameContext),
-          isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
-          serverConfig: environment.serverConfig.config(),
-          playedGamesCount: {
-            environment.database.playedGamesCount(
-              .init(gameContext: state.completedGame.gameContext)
-            )
           }
-        )
-        .flatMap { showUpgrade in
-          showUpgrade
-            ? Effect(value: GameOverAction.delayedShowUpgradeInterstitial)
-              .delay(for: 1, scheduler: environment.mainRunLoop.animation(.easeIn))
-              .eraseToEffect()
-            : Effect<GameOverAction, Never>.none
+
+          group.addTaskUnlessCancelled {
+            let count = try await environment.database
+              .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
+            let isFullGamePurchased =
+              await environment.apiClient.currentPlayerAsync()?.appleReceipt != nil
+
+            if !isFullGamePurchased
+              && shouldShowInterstitial(
+                gamePlayedCount: count,
+                gameContext: .init(gameContext: completedGame.gameContext),
+                serverConfig: environment.serverConfig.config()
+              )
+            {
+              await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
+            }
+          }
+
+          group.addTaskUnlessCancelled {
+            guard isDemo || completedGame.currentScore > 0
+            else {
+              await send(.delegate(.close), animation: .default)
+              return
+            }
+
+            if isDemo {
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await .solo(
+                      environment.apiClient.requestAsync(
+                        route: .demo(
+                          .submitGame(
+                            .init(
+                              gameMode: completedGame.gameMode,
+                              score: completedGame.currentScore
+                            )
+                          )
+                        ),
+                        as: LeaderboardScoreResult.self
+                      )
+                    )
+                  }
+                ),
+                animation: .default
+              )
+            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+              completedGame: completedGame
+            ) {
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await environment.apiClient.apiRequestAsync(
+                      route: .games(.submit(request)),
+                      as: SubmitGameResponse.self
+                    )
+                  }
+                ),
+                animation: .default
+              )
+            }
+          }
+
+          try await group.waitForAll()
         }
-        .ignoreFailure()
-        .eraseToEffect(),
-
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
-          .map(GameOverAction.userNotificationSettingsResponse)
-          .eraseToEffect(),
-
-        environment.audioPlayer.loop(.gameOverMusicLoop)
-          .fireAndForget(),
-
-        environment.audioPlayer.play(.transitionIn)
-          .fireAndForget()
-      )
+      } catch: { _, send in
+        await send(.delegate(.close))
+      }
 
     case .notificationsAuthAlert(.delegate(.close)):
       state.notificationsAuthAlert = nil
-      return .merge(
-        Effect(value: .delegate(.close))
-          .receive(on: ImmediateScheduler.shared.animation())
-          .eraseToEffect(),
-        .reviewRequestEffect(environment: environment)
-      )
+      return .task {
+        try? await environment.requestReviewAsync()
+        return .delegate(.close)
+      }
+      .animation()
 
     case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
-      return Effect(value: .delegate(.close))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect()
+      return .task { .delegate(.close) }.animation()
 
     case .notificationsAuthAlert:
       return .none
@@ -369,18 +373,20 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .submitGameResponse(.success(.dailyChallenge(result))):
       state.summary = .dailyChallenge(result)
 
-      return .merge(
+      return .task {
         //        result.rank.map { $0 <= 10 } == true
         //          ? showConfetti
         //          : .none,
-        environment.apiClient
-          .apiRequest(
-            route: .dailyChallenge(.today(language: .en)),
-            as: [FetchTodaysDailyChallengeResponse].self
-          )
-          .receive(on: environment.mainRunLoop.animation(.default))
-          .catchToEffect(GameOverAction.dailyChallengeResponse)
-      )
+        await .dailyChallengeResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequestAsync(
+              route: .dailyChallenge(.today(language: .en)),
+              as: [FetchTodaysDailyChallengeResponse].self
+            )
+          }
+        )
+      }
+      .animation()
 
     case let .submitGameResponse(.success(.shared(result))):
       return .none
@@ -1040,32 +1046,25 @@ extension CompletedMatch {
   }
 }
 
-extension Effect where Output == GameOverAction, Failure == Never {
-  static func reviewRequestEffect(environment: GameOverEnvironment) -> Self {
+extension GameOverEnvironment {
+  func requestReviewAsync() async throws {
     let hasRequestedReviewBefore =
-      environment.userDefaults
+      self.userDefaults
       .doubleForKey(lastReviewRequestTimeIntervalKey) != 0
     let timeSinceLastReviewRequest =
-      environment.mainRunLoop.now.date.timeIntervalSince1970
-      - environment.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
+      self.mainRunLoop.now.date.timeIntervalSince1970
+      - self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
     let weekInSeconds: Double = 60 * 60 * 24 * 7
 
-    return environment.database.fetchStats
-      .ignoreFailure()
-      .flatMap { stats in
-        stats.gamesPlayed >= 3
-          && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
-          ? Effect.merge(
-            environment.userDefaults.setDouble(
-              environment.mainRunLoop.now.date.timeIntervalSince1970,
-              lastReviewRequestTimeIntervalKey
-            )
-            .fireAndForget(),
-            environment.storeKit.requestReview().fireAndForget()
-          )
-          : Effect.none
-      }
-      .eraseToEffect()
+    let stats = try await self.database.fetchStatsAsync()
+    if stats.gamesPlayed >= 3
+      && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
+    {
+      await self.userDefaults.setDoubleAsync(
+        self.mainRunLoop.now.date.timeIntervalSince1970,
+        lastReviewRequestTimeIntervalKey
+      )
+    }
   }
 }
 

@@ -483,7 +483,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case .onAppear:
       return .run { send in
-        await withCancellation(id: AuthenticationId.self, cancelInFlight: true) {
+        await withTaskCancellation(id: AuthenticationId.self, cancelInFlight: true) {
           do {
             try await environment.gameCenter.localPlayer.authenticateAsync()
 
@@ -531,7 +531,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           } catch {}
         }
 
-        await withCancellation(id: ListenerId.self) {
+        await withTaskCancellation(id: ListenerId.self) {
           for await event in environment.gameCenter.localPlayer.listenerAsync() {
             switch event {
             case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):

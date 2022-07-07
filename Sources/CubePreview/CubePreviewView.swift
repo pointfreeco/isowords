@@ -87,7 +87,8 @@ public let cubePreviewReducer = Reducer<
   CubePreviewAction,
   CubePreviewEnvironment
 > { state, action, environment in
-  struct SelectionId: Hashable {}
+
+  enum SelectionId {}
 
   switch action {
   case .binding:
@@ -119,10 +120,12 @@ public let cubePreviewReducer = Reducer<
               accumulatedSelectedFaces.append(face)
               let moveDuration = Double.random(in: (0.6...0.8))
 
-              await UIView.animate(
-                withDuration: moveDuration, delay: 0, options: .curveEaseInOut
-              ) {
-                send(.set(\.$nub.location, .face(face)), animation: .default)
+              await MainActor.run {
+                UIView.animate(
+                  withDuration: moveDuration, delay: 0, options: .curveEaseInOut
+                ) {
+                  send(.set(\.$nub.location, .face(face)), animation: .default)
+                }
               }
 
               try await environment.mainQueue.sleep(
@@ -139,10 +142,12 @@ public let cubePreviewReducer = Reducer<
             }
 
             await send(.set(\.$nub.isPressed, false))
-            await UIView.animate(
-              withDuration: 1, delay: 0, options: .curveEaseInOut
-            ) {
-              send(.set(\.$nub.location, .offScreenRight), animation: .default)
+            await MainActor.run {
+              UIView.animate(
+                withDuration: 1, delay: 0, options: .curveEaseInOut
+              ) {
+                send(.set(\.$nub.location, .offScreenRight), animation: .default)
+              }
             }
           case let .removedCube(index):
             break
@@ -152,7 +157,7 @@ public let cubePreviewReducer = Reducer<
         try await group.waitForAll()
       }
     }
-    .cancellable(id: SelectionId())
+    .cancellable(id: SelectionId.self)
 
   case .tap:
     state.nub.location = .offScreenRight
@@ -162,7 +167,7 @@ public let cubePreviewReducer = Reducer<
     case .removedCube:
       break
     }
-    return .cancel(id: SelectionId())
+    return .cancel(id: SelectionId.self)
   }
 }
 .binding()
