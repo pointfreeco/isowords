@@ -1,5 +1,5 @@
 import AVFoundation
-import Dependencies
+import ComposableArchitecture
 
 extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {

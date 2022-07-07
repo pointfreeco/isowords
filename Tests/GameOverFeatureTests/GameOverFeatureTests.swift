@@ -61,13 +61,13 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    await store.receive(.delayedOnAppear) {
-      $0.isViewEnabled = true
-    }
     await store.receive(
       .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
     ) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
+    }
+    await store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
     }
     await store.receive(
       .submitGameResponse(
@@ -176,12 +176,12 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
-    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await store.receive(
       .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
     ) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
+    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await store.receive(
       .submitGameResponse(
         .success(
@@ -378,12 +378,12 @@ class GameOverFeatureTests: XCTestCase {
   func testShowUpgradeInterstitial() async throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.override(
       routeCase: /ServerRoute.Api.Route.games .. /ServerRoute.Api.Route.Games.submit,
       withResponse: { _ in .none }
     )
-    environment.database.playedGamesCount = { _ in .init(value: 6) }
+    environment.database.playedGamesCountAsync = { _ in 6 }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
@@ -391,7 +391,9 @@ class GameOverFeatureTests: XCTestCase {
       double: self.mainRunLoop.now.date.timeIntervalSince1970,
       forKey: "last-review-request-timeinterval"
     )
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettingsAsync = {
+      .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: GameOverState(
@@ -411,6 +413,12 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     store.send(.onAppear)
+    await self.mainRunLoop.advance()
+    await store.receive(
+      .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
+    ) {
+      $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
+    }
     await self.mainRunLoop.advance(by: .seconds(1))
     await store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()

@@ -1,6 +1,6 @@
 import Combine
 import CombineSchedulers
-import Dependencies
+import ComposableArchitecture
 import Foundation
 import XCTestDynamicOverlay
 

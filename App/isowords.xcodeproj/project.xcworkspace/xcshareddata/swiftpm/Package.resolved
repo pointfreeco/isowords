@@ -87,13 +87,13 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
           "branch": "concurrency-updates",
-          "revision": "6e75cf259ea9d2f1e63d872254d8d0e35499431f",
+          "revision": "391ac1d36dfb71a5f3d0ac1c2f401cd70d0d95d9",
           "version": null
         }
       },
       {
         "package": "swift-crypto",
-        "repositoryURL": "https://github.com/apple/swift-crypto.git",
+        "repositoryURL": "https://github.com/apple/swift-crypto",
         "state": {
           "branch": null,
           "revision": "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
@@ -267,8 +267,8 @@
         "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
         "state": {
           "branch": null,
-          "revision": "8816142e27f1127d87c61cee4a0a5db93e9df7c4",
-          "version": "0.3.1"
+          "revision": "046aba2944a7e197e5dc070836f8fe2d47d0e471",
+          "version": "0.3.2"
         }
       }
     ]

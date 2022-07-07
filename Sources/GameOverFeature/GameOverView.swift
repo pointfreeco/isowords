@@ -251,90 +251,20 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       }
 
     case .onAppear:
+      guard state.isDemo || state.completedGame.currentScore > 0
+      else {
+        return .task { .delegate(.close) }
+          .animation()
+      }
+
       return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
         try await environment.mainRunLoop.sleep(until: environment.mainRunLoop.now)
-
-        await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
-        await environment.audioPlayer.playAsync(.transitionIn)
-
-        try await withThrowingTaskGroup(of: Void.self) { group in
-          group.addTaskUnlessCancelled {
-            try await environment.mainRunLoop.sleep(for: .seconds(2))
-            await send(.delayedOnAppear)
-          }
-
-          group.addTaskUnlessCancelled {
-            await send(
-              .userNotificationSettingsResponse(
-                environment.userNotifications.getNotificationSettingsAsync()
-              )
-            )
-          }
-
-          group.addTaskUnlessCancelled {
-            let count = try await environment.database
-              .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
-            let isFullGamePurchased =
-              await environment.apiClient.currentPlayerAsync()?.appleReceipt != nil
-
-            if !isFullGamePurchased
-              && shouldShowInterstitial(
-                gamePlayedCount: count,
-                gameContext: .init(gameContext: completedGame.gameContext),
-                serverConfig: environment.serverConfig.config()
-              )
-            {
-              await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
-            }
-          }
-
-          group.addTaskUnlessCancelled {
-            guard isDemo || completedGame.currentScore > 0
-            else {
-              await send(.delegate(.close), animation: .default)
-              return
-            }
-
-            if isDemo {
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    try await .solo(
-                      environment.apiClient.requestAsync(
-                        route: .demo(
-                          .submitGame(
-                            .init(
-                              gameMode: completedGame.gameMode,
-                              score: completedGame.currentScore
-                            )
-                          )
-                        ),
-                        as: LeaderboardScoreResult.self
-                      )
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-              completedGame: completedGame
-            ) {
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    try await environment.apiClient.apiRequestAsync(
-                      route: .games(.submit(request)),
-                      as: SubmitGameResponse.self
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            }
-          }
-
-          try await group.waitForAll()
-        }
+        try await onAppearEffect(
+          completedGame: completedGame,
+          isDemo: isDemo,
+          send: send,
+          environment: environment
+        )
       } catch: { _, send in
         await send(.delegate(.close))
       }
@@ -1145,6 +1075,87 @@ private func praise(mode: GameMode, score: Int) -> LocalizedStringKey {
 }
 
 private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval"
+
+private func onAppearEffect(
+  completedGame: CompletedGame,
+  isDemo: Bool,
+  send: Send<GameOverAction>,
+  environment: GameOverEnvironment
+) async throws {
+  await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
+  await environment.audioPlayer.playAsync(.transitionIn)
+  await send(
+    .userNotificationSettingsResponse(
+      environment.userNotifications.getNotificationSettingsAsync()
+    )
+  )
+
+  try await withThrowingTaskGroup(of: Void.self) { group in
+    _ = group.addTaskUnlessCancelled {
+      try await environment.mainRunLoop.sleep(for: .seconds(2))
+      await send(.delayedOnAppear)
+    }
+
+    _ = group.addTaskUnlessCancelled {
+      let count = try await environment.database
+        .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
+      let isFullGamePurchased =
+      await environment.apiClient.currentPlayerAsync()?.appleReceipt != nil
+
+      if !isFullGamePurchased
+          && shouldShowInterstitial(
+            gamePlayedCount: count,
+            gameContext: .init(gameContext: completedGame.gameContext),
+            serverConfig: environment.serverConfig.config()
+          )
+      {
+        try await environment.mainRunLoop.sleep(for: .seconds(1))
+        await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
+      }
+    }
+
+    _ = group.addTaskUnlessCancelled {
+      if isDemo {
+        await send(
+          .submitGameResponse(
+            TaskResult {
+              try await .solo(
+                environment.apiClient.requestAsync(
+                  route: .demo(
+                    .submitGame(
+                      .init(
+                        gameMode: completedGame.gameMode,
+                        score: completedGame.currentScore
+                      )
+                    )
+                  ),
+                  as: LeaderboardScoreResult.self
+                )
+              )
+            }
+          ),
+          animation: .default
+        )
+      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+        completedGame: completedGame
+      ) {
+        await send(
+          .submitGameResponse(
+            TaskResult {
+              try await environment.apiClient.apiRequestAsync(
+                route: .games(.submit(request)),
+                as: SubmitGameResponse.self
+              )
+            }
+          ),
+          animation: .default
+        )
+      }
+    }
+
+    try await group.waitForAll()
+  }
+}
 
 #if DEBUG
   struct GameOverView_Solo_Previews: PreviewProvider {
