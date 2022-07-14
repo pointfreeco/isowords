@@ -50,6 +50,40 @@ public func startDailyChallenge(
   .eraseToEffect()
 }
 
+public func startDailyChallengeAsync(
+  _ challenge: FetchTodaysDailyChallengeResponse,
+  apiClient: ApiClient,
+  date: @escaping () -> Date,
+  fileClient: FileClient
+) async throws -> InProgressGame {
+  guard challenge.yourResult.rank == nil else {
+    throw DailyChallengeError.alreadyPlayed(endsAt: challenge.dailyChallenge.endsAt)
+  }
+
+  guard
+    challenge.dailyChallenge.gameMode == .unlimited,
+    let game = try? await fileClient.loadSavedGamesAsync().dailyChallengeUnlimited
+  else {
+    do {
+      return try await InProgressGame(
+        response: apiClient.apiRequestAsync(
+          route: .dailyChallenge(
+            .start(
+              gameMode: challenge.dailyChallenge.gameMode,
+              language: challenge.dailyChallenge.language
+            )
+          ),
+          as: StartDailyChallengeResponse.self
+        ),
+        date: date()
+      )
+    } catch {
+      throw DailyChallengeError.couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt)
+    }
+  }
+  return game
+}
+
 extension InProgressGame {
   public init(response: StartDailyChallengeResponse, date: Date) {
     self.init(

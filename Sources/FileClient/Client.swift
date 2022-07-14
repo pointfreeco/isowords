@@ -5,8 +5,11 @@ import Foundation
 
 public struct FileClient {
   public var delete: (String) -> Effect<Never, Error>
+  public var deleteAsync: @Sendable (String) async throws -> Void
   public var load: (String) -> Effect<Data, Error>
+  public var loadAsync: @Sendable (String) async throws -> Data
   public var save: (String, Data) -> Effect<Never, Error>
+  public var saveAsync: @Sendable (String, Data) async throws -> Void
 
   public func load<A: Decodable>(
     _ type: A.Type, from fileName: String
@@ -15,6 +18,10 @@ public struct FileClient {
       .decode(type: A.self, decoder: JSONDecoder())
       .mapError { $0 as NSError }
       .catchToEffect()
+  }
+
+  public func loadAsync<A: Decodable>(_ type: A.Type, from fileName: String) async throws -> A {
+    try await JSONDecoder().decode(A.self, from: self.loadAsync(fileName))
   }
 
   public func save<A: Encodable>(
@@ -26,5 +33,9 @@ public struct FileClient {
       .flatMap { data in self.save(fileName, data) }
       .ignoreFailure()
       .eraseToEffect()
+  }
+
+  public func saveAsync<A: Encodable>(_ data: A, to fileName: String) async throws -> Void {
+    try await self.saveAsync(fileName, JSONEncoder().encode(data))
   }
 }

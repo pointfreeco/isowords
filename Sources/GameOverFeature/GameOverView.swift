@@ -85,7 +85,7 @@ public enum GameOverAction: Equatable {
   case notificationsAuthAlert(NotificationsAuthAlertAction)
   case rematchButtonTapped
   case showConfetti
-  case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
+  case startDailyChallengeResponse(TaskResult<InProgressGame>)
   case submitGameResponse(TaskResult<SubmitGameResponse>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
@@ -180,12 +180,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
   Reducer { state, action, environment in
 
-    //    var showConfetti: Effect<GameOverAction, Never> {
-    //      Effect(value: .showConfetti)
-    //        .delay(for: 1, scheduler: environment.mainQueue)
-    //        .eraseToEffect()
-    //    }
-
     switch action {
     case .closeButtonTapped:
       guard
@@ -226,26 +220,27 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .gameButtonTapped(gameMode):
       switch state.completedGame.gameContext {
       case .dailyChallenge:
-        let challenge = state.dailyChallenges
-          .first(where: { $0.dailyChallenge.gameMode == gameMode })
-        state.gameModeIsLoading = challenge?.dailyChallenge.gameMode
-        return
-          challenge
-          .map {
-            startDailyChallenge(
-              $0,
-              apiClient: environment.apiClient,
-              date: { environment.mainRunLoop.now.date },
-              fileClient: environment.fileClient,
-              mainRunLoop: environment.mainRunLoop
-            )
-            .catchToEffect(GameOverAction.startDailyChallengeResponse)
-          }
-          ?? .none
+        guard
+          let challenge = state.dailyChallenges
+            .first(where: { $0.dailyChallenge.gameMode == gameMode })
+        else { return .none }
+        state.gameModeIsLoading = challenge.dailyChallenge.gameMode
+        return .task {
+          await .startDailyChallengeResponse(
+            TaskResult {
+              try await startDailyChallengeAsync(
+                challenge,
+                apiClient: environment.apiClient,
+                date: { environment.mainRunLoop.now.date },
+                fileClient: environment.fileClient
+              )
+            }
+          )
+        }
       case .shared:
         return .none
       case .solo:
-        return Effect(value: .delegate(.startSoloGame(gameMode)))
+        return .task { .delegate(.startSoloGame(gameMode)) }
       case .turnBased:
         return .none
       }
@@ -253,8 +248,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case .onAppear:
       guard state.isDemo || state.completedGame.currentScore > 0
       else {
-        return .task { .delegate(.close) }
-          .animation()
+        return .task { .delegate(.close) }.animation()
       }
 
       return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
@@ -288,9 +282,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .showConfetti:
       return .none
-    //      state.showConfetti = true
-    //      return environment.audioPlayer.play(.highScoreCelebration)
-    //        .fireAndForget()
 
     case .startDailyChallengeResponse(.failure):
       state.gameModeIsLoading = nil
@@ -304,9 +295,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       state.summary = .dailyChallenge(result)
 
       return .task {
-        //        result.rank.map { $0 <= 10 } == true
-        //          ? showConfetti
-        //          : .none,
         await .dailyChallengeResponse(
           TaskResult {
             try await environment.apiClient.apiRequestAsync(
@@ -331,9 +319,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         )
       )
       return .none
-    //      return result.ranks.values.contains(where: { $0.rank <= 10 })
-    //        ? showConfetti
-    //        : .none
 
     case .submitGameResponse(.success(.turnBased)):
       return .none
@@ -1123,10 +1108,7 @@ private func onAppearEffect(
                 environment.apiClient.requestAsync(
                   route: .demo(
                     .submitGame(
-                      .init(
-                        gameMode: completedGame.gameMode,
-                        score: completedGame.currentScore
-                      )
+                      .init(gameMode: completedGame.gameMode, score: completedGame.currentScore)
                     )
                   ),
                   as: LeaderboardScoreResult.self
@@ -1142,10 +1124,8 @@ private func onAppearEffect(
         await send(
           .submitGameResponse(
             TaskResult {
-              try await environment.apiClient.apiRequestAsync(
-                route: .games(.submit(request)),
-                as: SubmitGameResponse.self
-              )
+              try await environment.apiClient
+                .apiRequestAsync(route: .games(.submit(request)), as: SubmitGameResponse.self)
             }
           ),
           animation: .default

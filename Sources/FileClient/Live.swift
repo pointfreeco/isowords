@@ -17,6 +17,11 @@ extension FileClient {
           )
         }
       },
+      deleteAsync: {
+        try FileManager.default.removeItem(
+          at: documentDirectory.appendingPathComponent($0).appendingPathExtension("json")
+        )
+      },
       load: { fileName in
         .catching {
           try Data(
@@ -27,6 +32,11 @@ extension FileClient {
           )
         }
       },
+      loadAsync: {
+        try Data(
+          contentsOf: documentDirectory.appendingPathComponent($0).appendingPathExtension("json")
+        )
+      },
       save: { fileName, data in
         .fireAndForget {
           _ = try? data.write(
@@ -36,6 +46,14 @@ extension FileClient {
               .appendingPathExtension("json")
           )
         }
+      },
+      saveAsync: {
+        try $1.write(
+          to:
+            documentDirectory
+            .appendingPathComponent($0)
+            .appendingPathExtension("json")
+        )
       }
     )
   }
