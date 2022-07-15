@@ -219,7 +219,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .gameButtonTapped(gameMode):
       switch state.completedGame.gameContext {
       case .dailyChallenge:
-        state.gameModeIsLoading = gameMode // TODO: Move below guard?
+        state.gameModeIsLoading = gameMode  // TODO: Move below guard?
         guard
           let challenge = state.dailyChallenges
             .first(where: { $0.dailyChallenge.gameMode == gameMode })
@@ -249,79 +249,76 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       guard state.isDemo || state.completedGame.currentScore > 0
       else { return .task { .delegate(.close) }.animation() }
 
-      return .merge(
-        .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
-          await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask {
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    if isDemo {
-                      return try await .solo(
-                        environment.apiClient.requestAsync(
-                          route: .demo(
-                            .submitGame(
-                              .init(
-                                gameMode: completedGame.gameMode,
-                                score: completedGame.currentScore
-                              )
-                            )
-                          ),
-                          as: LeaderboardScoreResult.self
-                        )
-                      )
-                    } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-                      completedGame: completedGame
-                    ) {
-                      return try await environment.apiClient.apiRequestAsync(
-                        route: .games(.submit(request)),
-                        as: SubmitGameResponse.self
-                      )
-                    } else {
-                      throw CancellationError()
-                    }
-                  }
-                ),
-                animation: .default
-              )
-            }
+      return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+        await environment.audioPlayer.playAsync(.transitionIn)
+        await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
 
-            group.addTask {
-              try await environment.mainRunLoop.sleep(for: .seconds(1))
-              async let playedGamesCount = environment.database
-                .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
-              async let isFullGamePurchased = environment.apiClient
-                .currentPlayerAsync()?.appleReceipt != nil
-              guard try await shouldShowInterstitial(
+        await withThrowingTaskGroup(of: Void.self) { group in
+          group.addTask {
+            await send(
+              .submitGameResponse(
+                TaskResult {
+                  if isDemo {
+                    return try await .solo(
+                      environment.apiClient.requestAsync(
+                        route: .demo(
+                          .submitGame(
+                            .init(
+                              gameMode: completedGame.gameMode,
+                              score: completedGame.currentScore
+                            )
+                          )
+                        ),
+                        as: LeaderboardScoreResult.self
+                      )
+                    )
+                  } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+                    completedGame: completedGame
+                  ) {
+                    return try await environment.apiClient.apiRequestAsync(
+                      route: .games(.submit(request)),
+                      as: SubmitGameResponse.self
+                    )
+                  } else {
+                    throw CancellationError()
+                  }
+                }
+              ),
+              animation: .default
+            )
+          }
+
+          group.addTask {
+            try await environment.mainRunLoop.sleep(for: .seconds(1))
+            async let playedGamesCount = environment.database
+              .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
+            async let isFullGamePurchased =
+              environment.apiClient
+              .currentPlayerAsync()?.appleReceipt != nil
+            guard
+              try await shouldShowInterstitial(
                 gamePlayedCount: playedGamesCount,
                 gameContext: .init(gameContext: completedGame.gameContext),
                 serverConfig: environment.serverConfig.config()
               )
-              else { return }
-              await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
-            }
-
-            group.addTask {
-              try await environment.mainRunLoop.sleep(for: .seconds(2))
-              await send(.delayedOnAppear)
-            }
-
-            group.addTask {
-              await send(
-                .userNotificationSettingsResponse(
-                  environment.userNotifications.getNotificationSettingsAsync()
-                )
-              )
-            }
+            else { return }
+            await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
           }
-        },
 
-        environment.audioPlayer.loop(.gameOverMusicLoop)
-          .fireAndForget(),
+          group.addTask {
+            try await environment.mainRunLoop.sleep(for: .seconds(2))
+            await send(.delayedOnAppear)
+          }
 
-        environment.audioPlayer.play(.transitionIn)
-          .fireAndForget()
-      )
+          group.addTask {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettingsAsync()
+              )
+            )
+          }
+        }
+      }
 
     case .notificationsAuthAlert(.delegate(.close)):
       state.notificationsAuthAlert = nil
