@@ -5,8 +5,9 @@ import SharedModels
 import SiteMiddleware
 import XCTest
 
+@MainActor
 class GameOverFeatureIntegrationTests: XCTestCase {
-  func testSubmitSoloScore() {
+  func testSubmitSoloScore() async {
     let ranks: [TimeScope: LeaderboardScoreResult.Rank] = [
       .allTime: .init(outOf: 10_000, rank: 1_000),
       .lastWeek: .init(outOf: 1_000, rank: 100),
@@ -44,10 +45,12 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       middleware: siteMiddleware(environment: serverEnvironment),
       router: .test
     )
-    environment.database.playedGamesCount = { _ in .init(value: 0) }
+    environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettingsAsync = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: GameOverState(
@@ -58,14 +61,14 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    let task = await store.send(.onAppear)
 
-    store.receive(.delayedOnAppear) {
-      $0.isViewEnabled = true
-    }
-
-    store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
+    await store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
       $0.summary = .leaderboard(ranks)
     }
+    await store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
+    }
+    await task.cancel()
   }
 }
