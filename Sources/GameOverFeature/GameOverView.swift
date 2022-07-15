@@ -86,7 +86,7 @@ public enum GameOverAction: Equatable {
   case rematchButtonTapped
   case showConfetti
   case startDailyChallengeResponse(TaskResult<InProgressGame>)
-  case submitGameResponse(Result<SubmitGameResponse, ApiError>)
+  case submitGameResponse(TaskResult<SubmitGameResponse>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
@@ -247,54 +247,60 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .onAppear:
       guard state.isDemo || state.completedGame.currentScore > 0
-      else {
-        return Effect(value: .delegate(.close))
-          .receive(on: ImmediateScheduler.shared.animation(.default))
-          .eraseToEffect()
-      }
-
-      let submitGameEffect: Effect<GameOverAction, Never>
-      if state.isDemo {
-        submitGameEffect = environment.apiClient.request(
-          route: .demo(
-            .submitGame(
-              .init(
-                gameMode: state.completedGame.gameMode,
-                score: state.completedGame.currentScore
-              )
-            )
-          ),
-          as: LeaderboardScoreResult.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .map(SubmitGameResponse.solo)
-        .catchToEffect(GameOverAction.submitGameResponse)
-      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-        completedGame: state.completedGame)
-      {
-        submitGameEffect = environment.apiClient.apiRequest(
-          route: .games(.submit(request)),
-          as: SubmitGameResponse.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .catchToEffect(GameOverAction.submitGameResponse)
-      } else {
-        submitGameEffect = .none
-      }
-
-      //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won
-      //        ? showConfetti
-      //        : .none
+      else { return .task { .delegate(.close) }.animation() }
 
       return .merge(
-        Effect(value: .delayedOnAppear)
-          .delay(for: 2, scheduler: environment.mainRunLoop)
-          .eraseToEffect(),
+        .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    if isDemo {
+                      return try await .solo(
+                        environment.apiClient.requestAsync(
+                          route: .demo(
+                            .submitGame(
+                              .init(
+                                gameMode: completedGame.gameMode,
+                                score: completedGame.currentScore
+                              )
+                            )
+                          ),
+                          as: LeaderboardScoreResult.self
+                        )
+                      )
+                    } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+                      completedGame: completedGame
+                    ) {
+                      return try await environment.apiClient.apiRequestAsync(
+                        route: .games(.submit(request)),
+                        as: SubmitGameResponse.self
+                      )
+                    } else {
+                      throw CancellationError()
+                    }
+                  }
+                ),
+                animation: .default
+              )
+            }
 
-        submitGameEffect,
+            group.addTask {
+              try await environment.mainRunLoop.sleep(for: .seconds(2))
+              await send(.delayedOnAppear)
+            }
 
-        //        turnBasedConfettiEffect,
-
+            group.addTask {
+              await send(
+                .userNotificationSettingsResponse(
+                  environment.userNotifications.getNotificationSettingsAsync()
+                )
+              )
+            }
+          }
+        },
+        
         Effect.showUpgradeInterstitial(
           gameContext: .init(gameContext: state.completedGame.gameContext),
           isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
@@ -314,11 +320,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         }
         .ignoreFailure()
         .eraseToEffect(),
-
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
-          .map(GameOverAction.userNotificationSettingsResponse)
-          .eraseToEffect(),
 
         environment.audioPlayer.loop(.gameOverMusicLoop)
           .fireAndForget(),
