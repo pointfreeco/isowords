@@ -179,10 +179,10 @@ class GameOverFeatureTests: XCTestCase {
     ) {
       $0.summary = .dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true))
     }
+    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await store.receive(.dailyChallengeResponse(.success(dailyChallengeResponses))) {
       $0.dailyChallenges = dailyChallengeResponses
     }
-    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
   }
 

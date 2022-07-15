@@ -76,7 +76,7 @@ public struct GameOverState: Equatable {
 
 public enum GameOverAction: Equatable {
   case closeButtonTapped
-  case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case delayedOnAppear
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
@@ -328,9 +328,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       }
 
     case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
-      return Effect(value: .delegate(.close))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect()
+      return .task { .delegate(.close) }.animation()
 
     case .notificationsAuthAlert:
       return .none
@@ -340,9 +338,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .showConfetti:
       return .none
-    //      state.showConfetti = true
-    //      return environment.audioPlayer.play(.highScoreCelebration)
-    //        .fireAndForget()
 
     case .startDailyChallengeResponse(.failure):
       state.gameModeIsLoading = nil
@@ -355,18 +350,17 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .submitGameResponse(.success(.dailyChallenge(result))):
       state.summary = .dailyChallenge(result)
 
-      return .merge(
-        //        result.rank.map { $0 <= 10 } == true
-        //          ? showConfetti
-        //          : .none,
-        environment.apiClient
-          .apiRequest(
-            route: .dailyChallenge(.today(language: .en)),
-            as: [FetchTodaysDailyChallengeResponse].self
-          )
-          .receive(on: environment.mainRunLoop.animation(.default))
-          .catchToEffect(GameOverAction.dailyChallengeResponse)
-      )
+      return .task {
+        await .dailyChallengeResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequestAsync(
+              route: .dailyChallenge(.today(language: .en)),
+              as: [FetchTodaysDailyChallengeResponse].self
+            )
+          }
+        )
+      }
+      .animation()
 
     case let .submitGameResponse(.success(.shared(result))):
       return .none
