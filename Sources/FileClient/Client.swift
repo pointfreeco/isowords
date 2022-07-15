@@ -4,11 +4,11 @@ import ComposableArchitecture
 import Foundation
 
 public struct FileClient {
-  public var delete: (String) -> Effect<Never, Error>
+  @available(*, deprecated) public var delete: (String) -> Effect<Never, Error>
   public var deleteAsync: @Sendable (String) async throws -> Void
-  public var load: (String) -> Effect<Data, Error>
+  @available(*, deprecated) public var load: (String) -> Effect<Data, Error>
   public var loadAsync: @Sendable (String) async throws -> Data
-  public var save: (String, Data) -> Effect<Never, Error>
+  @available(*, deprecated) public var save: (String, Data) -> Effect<Never, Error>
   public var saveAsync: @Sendable (String, Data) async throws -> Void
 
   public func load<A: Decodable>(

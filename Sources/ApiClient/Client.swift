@@ -4,24 +4,24 @@ import Foundation
 import SharedModels
 
 public struct ApiClient {
-  public var apiRequest:
+  @available(*, deprecated) public var apiRequest:
     (ServerRoute.Api.Route) -> Effect<(data: Data, response: URLResponse), URLError>
   public var apiRequestAsync: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
-  public var authenticate:
+  @available(*, deprecated) public var authenticate:
     (ServerRoute.AuthenticateRequest) -> Effect<CurrentPlayerEnvelope, ApiError>
   public var authenticateAsync:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
-  public var baseUrl: () -> URL
+  @available(*, deprecated) public var baseUrl: () -> URL
   public var baseUrlAsync: @Sendable () async -> URL
-  public var currentPlayer: () -> CurrentPlayerEnvelope?
+  @available(*, deprecated) public var currentPlayer: () -> CurrentPlayerEnvelope?
   public var currentPlayerAsync: @Sendable () async -> CurrentPlayerEnvelope?
-  public var logout: () -> Effect<Never, Never>
+  @available(*, deprecated) public var logout: () -> Effect<Never, Never>
   public var logoutAsync: @Sendable () async -> Void
-  public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
+  @available(*, deprecated) public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
   public var refreshCurrentPlayerAsync: @Sendable () async throws -> CurrentPlayerEnvelope
-  public var request: (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>
+  @available(*, deprecated) public var request: (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>
   public var requestAsync: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
-  public var setBaseUrl: (URL) -> Effect<Never, Never>
+  @available(*, deprecated) public var setBaseUrl: (URL) -> Effect<Never, Never>
   public var setBaseUrlAsync: @Sendable (URL) async -> Void
 
   public init(

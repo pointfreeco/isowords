@@ -1,11 +1,11 @@
 import ComposableArchitecture
 
 public struct RemoteNotificationsClient {
-  public var isRegistered: () -> Bool
+  @available(*, deprecated) public var isRegistered: () -> Bool
   public var isRegisteredAsync: @Sendable () async -> Bool
-  public var register: () -> Effect<Never, Never>
+  @available(*, deprecated) public var register: () -> Effect<Never, Never>
   public var registerAsync: @Sendable () async -> Void
-  public var unregister: () -> Effect<Never, Never>
+  @available(*, deprecated) public var unregister: () -> Effect<Never, Never>
   public var unregisterAsync: @Sendable () async -> Void
 }
 

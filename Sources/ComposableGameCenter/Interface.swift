@@ -6,9 +6,9 @@ import Tagged
 public struct GameCenterClient {
   public var gameCenterViewController: GameCenterViewControllerClient
   public var localPlayer: LocalPlayerClient
-  public var reportAchievements: ([GKAchievement]) -> Effect<Void, Error>
+  @available(*, deprecated) public var reportAchievements: ([GKAchievement]) -> Effect<Void, Error>
   public var reportAchievementsAsync: @Sendable ([GKAchievement]) async throws -> Void
-  public var showNotificationBanner: (NotificationBannerRequest) -> Effect<Void, Never>
+  @available(*, deprecated) public var showNotificationBanner: (NotificationBannerRequest) -> Effect<Void, Never>
   public var showNotificationBannerAsync: @Sendable (NotificationBannerRequest) async -> Void
   public var turnBasedMatch: TurnBasedMatchClient
   public var turnBasedMatchmakerViewController: TurnBasedMatchmakerViewControllerClient
@@ -25,9 +25,9 @@ public struct GameCenterClient {
 }
 
 public struct GameCenterViewControllerClient {
-  public var present: Effect<DelegateEvent, Never>
+  @available(*, deprecated) public var present: Effect<DelegateEvent, Never>
   public var presentAsync: @Sendable () async -> Void
-  public var dismiss: Effect<Never, Never>
+  @available(*, deprecated) public var dismiss: Effect<Never, Never>
   public var dismissAsync: @Sendable () async -> Void
 
   public enum DelegateEvent: Equatable {
@@ -36,13 +36,13 @@ public struct GameCenterViewControllerClient {
 }
 
 public struct LocalPlayerClient {
-  public var authenticate: Effect<NSError?, Never>
+  @available(*, deprecated) public var authenticate: Effect<NSError?, Never>
   public var authenticateAsync: @Sendable () async throws -> Void
-  public var listener: Effect<ListenerEvent, Never>
+  @available(*, deprecated) public var listener: Effect<ListenerEvent, Never>
   public var listenerAsync: @Sendable () -> AsyncStream<ListenerEvent>
-  public var localPlayer: () -> LocalPlayer
+  @available(*, deprecated) public var localPlayer: () -> LocalPlayer
   public var localPlayerAsync: @Sendable () async -> LocalPlayer
-  public var presentAuthenticationViewController: Effect<Never, Never>
+  @available(*, deprecated) public var presentAuthenticationViewController: Effect<Never, Never>
   public var presentAuthenticationViewControllerAsync: @Sendable () async -> Void
 
   public enum ListenerEvent: Equatable {
@@ -81,25 +81,25 @@ public struct LocalPlayerClient {
 }
 
 public struct TurnBasedMatchClient {
-  public var endMatchInTurn: (EndMatchInTurnRequest) -> Effect<Void, Error>
+  @available(*, deprecated) public var endMatchInTurn: (EndMatchInTurnRequest) -> Effect<Void, Error>
   public var endMatchInTurnAsync: @Sendable (EndMatchInTurnRequest) async throws -> Void
-  public var endTurn: (EndTurnRequest) -> Effect<Void, Error>
+  @available(*, deprecated) public var endTurn: (EndTurnRequest) -> Effect<Void, Error>
   public var endTurnAsync: @Sendable (EndTurnRequest) async throws -> Void
-  public var load: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
+  @available(*, deprecated) public var load: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
   public var loadAsync : @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
-  public var loadMatches: () -> Effect<[TurnBasedMatch], Error>
+  @available(*, deprecated) public var loadMatches: () -> Effect<[TurnBasedMatch], Error>
   public var loadMatchesAsync: @Sendable () async throws -> [TurnBasedMatch]
-  public var participantQuitInTurn: (TurnBasedMatch.Id, Data) -> Effect<Error?, Never>
+  @available(*, deprecated) public var participantQuitInTurn: (TurnBasedMatch.Id, Data) -> Effect<Error?, Never>
   public var participantQuitInTurnAsync: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
-  public var participantQuitOutOfTurn: (TurnBasedMatch.Id) -> Effect<Error?, Never>
+  @available(*, deprecated) public var participantQuitOutOfTurn: (TurnBasedMatch.Id) -> Effect<Error?, Never>
   public var participantQuitOutOfTurnAsync: @Sendable (TurnBasedMatch.Id) async throws -> Void
-  public var rematch: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
+  @available(*, deprecated) public var rematch: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
   public var rematchAsync: @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
-  public var remove: (TurnBasedMatch) -> Effect<Void, Error>
+  @available(*, deprecated) public var remove: (TurnBasedMatch) -> Effect<Void, Error>
   public var removeAsync: @Sendable (TurnBasedMatch) async throws -> Void
-  public var saveCurrentTurn: (TurnBasedMatch.Id, Data) -> Effect<Void, Error>
+  @available(*, deprecated) public var saveCurrentTurn: (TurnBasedMatch.Id, Data) -> Effect<Void, Error>
   public var saveCurrentTurnAsync: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
-  public var sendReminder: (SendReminderRequest) -> Effect<Void, Error>
+  @available(*, deprecated) public var sendReminder: (SendReminderRequest) -> Effect<Void, Error>
   public var sendReminderAsync: @Sendable (SendReminderRequest) async throws -> Void
 
   public struct EndMatchInTurnRequest: Equatable {
@@ -162,9 +162,9 @@ public struct TurnBasedMatchClient {
 }
 
 public struct TurnBasedMatchmakerViewControllerClient {
-  public var present: (_ showExistingMatches: Bool) -> Effect<DelegateEvent, Never>
+  @available(*, deprecated) public var present: (_ showExistingMatches: Bool) -> Effect<DelegateEvent, Never>
   public var presentAsync: @Sendable (_ showExistingMatches: Bool) async throws -> Void
-  public var dismiss: Effect<Never, Never>
+  @available(*, deprecated) public var dismiss: Effect<Never, Never>
   public var dismissAsync: @Sendable () async -> Void
 
   public enum DelegateEvent: Equatable {

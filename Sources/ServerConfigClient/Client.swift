@@ -3,6 +3,6 @@ import ComposableArchitecture
 
 public struct ServerConfigClient {
   public var config: () -> ServerConfig
-  public var refresh: () -> Effect<ServerConfig, Error>
+  @available(*, deprecated) public var refresh: () -> Effect<ServerConfig, Error>
   public var refreshAsync: @Sendable () async throws -> ServerConfig
 }

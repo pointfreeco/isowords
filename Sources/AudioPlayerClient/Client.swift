@@ -1,21 +1,21 @@
 import ComposableArchitecture
 
 public struct AudioPlayerClient {
-  public var load: ([Sound]) -> Effect<Never, Never>
+  @available(*, deprecated) public var load: ([Sound]) -> Effect<Never, Never>
   public var loadAsync: @Sendable ([Sound]) async -> Void
-  public var loop: (Sound) -> Effect<Never, Never>
+  @available(*, deprecated) public var loop: (Sound) -> Effect<Never, Never>
   public var loopAsync: @Sendable (Sound) async -> Void
-  public var play: (Sound) -> Effect<Never, Never>
+  @available(*, deprecated) public var play: (Sound) -> Effect<Never, Never>
   public var playAsync: @Sendable (Sound) async -> Void
-  public var secondaryAudioShouldBeSilencedHint: () -> Bool
+  @available(*, deprecated) public var secondaryAudioShouldBeSilencedHint: () -> Bool
   public var secondaryAudioShouldBeSilencedHintAsync: @Sendable () async -> Bool
-  public var setGlobalVolumeForMusic: (Float) -> Effect<Never, Never>
+  @available(*, deprecated) public var setGlobalVolumeForMusic: (Float) -> Effect<Never, Never>
   public var setGlobalVolumeForMusicAsync: @Sendable (Float) async -> Void
-  public var setGlobalVolumeForSoundEffects: (Float) -> Effect<Never, Never>
+  @available(*, deprecated) public var setGlobalVolumeForSoundEffects: (Float) -> Effect<Never, Never>
   public var setGlobalVolumeForSoundEffectsAsync: @Sendable (Float) async -> Void
-  public var setVolume: (Sound, Float) -> Effect<Never, Never>
+  @available(*, deprecated) public var setVolume: (Sound, Float) -> Effect<Never, Never>
   public var setVolumeAsync: @Sendable (Sound, Float) async ->Void
-  public var stop: (Sound) -> Effect<Never, Never>
+  @available(*, deprecated) public var stop: (Sound) -> Effect<Never, Never>
   public var stopAsync: @Sendable (Sound) async -> Void
 
   public struct Sound: Hashable {

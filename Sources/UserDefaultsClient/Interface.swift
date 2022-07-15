@@ -6,39 +6,53 @@ public struct UserDefaultsClient {
   public var dataForKey: (String) -> Data?
   public var doubleForKey: (String) -> Double
   public var integerForKey: (String) -> Int
-  public var remove: (String) -> Effect<Never, Never>
+  @available(*, deprecated) public var remove: (String) -> Effect<Never, Never>
   public var removeAsync: @Sendable (String) async -> Void
-  public var setBool: (Bool, String) -> Effect<Never, Never>
+  @available(*, deprecated) public var setBool: (Bool, String) -> Effect<Never, Never>
   public var setBoolAsync: @Sendable (Bool, String) async -> Void
-  public var setData: (Data?, String) -> Effect<Never, Never>
+  @available(*, deprecated) public var setData: (Data?, String) -> Effect<Never, Never>
   public var setDataAsync: @Sendable (Data?, String) async -> Void
-  public var setDouble: (Double, String) -> Effect<Never, Never>
+  @available(*, deprecated) public var setDouble: (Double, String) -> Effect<Never, Never>
   public var setDoubleAsync: @Sendable (Double, String) async -> Void
-  public var setInteger: (Int, String) -> Effect<Never, Never>
+  @available(*, deprecated) public var setInteger: (Int, String) -> Effect<Never, Never>
   public var setIntegerAsync: @Sendable (Int, String) async -> Void
 
   public var hasShownFirstLaunchOnboarding: Bool {
     self.boolForKey(hasShownFirstLaunchOnboardingKey)
   }
 
-  public func setHasShownFirstLaunchOnboarding(_ bool: Bool) -> Effect<Never, Never> {
+  @available(*, deprecated) public func setHasShownFirstLaunchOnboarding(_ bool: Bool) -> Effect<Never, Never> {
     self.setBool(bool, hasShownFirstLaunchOnboardingKey)
+  }
+
+  public func setHasShownFirstLaunchOnboardingAsync(_ bool: Bool) async {
+    await self.setBoolAsync(bool, hasShownFirstLaunchOnboardingKey)
   }
 
   public var installationTime: Double {
     self.doubleForKey(installationTimeKey)
   }
 
-  public func setInstallationTime(_ double: Double) -> Effect<Never, Never> {
+  @available(*, deprecated) public func setInstallationTime(_ double: Double) -> Effect<Never, Never> {
     self.setDouble(double, installationTimeKey)
   }
 
-  public func incrementMultiplayerOpensCount() -> Effect<Int, Never> {
+  public func setInstallationTimeAsync(_ double: Double) async {
+    await self.setDoubleAsync(double, installationTimeKey)
+  }
+
+  @available(*, deprecated) public func incrementMultiplayerOpensCount() -> Effect<Int, Never> {
     let incremented = self.integerForKey(multiplayerOpensCount) + 1
     return .concatenate(
       self.setInteger(incremented, multiplayerOpensCount).fireAndForget(),
       .init(value: incremented)
     )
+  }
+
+  public func incrementMultiplayerOpensCountAsync() async -> Int {
+    let incremented = self.integerForKey(multiplayerOpensCount) + 1
+    await self.setIntegerAsync(incremented, multiplayerOpensCount)
+    return incremented
   }
 }
 

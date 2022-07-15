@@ -3,19 +3,19 @@ import ComposableArchitecture
 import StoreKit
 
 public struct StoreKitClient {
-  public var addPayment: (SKPayment) -> Effect<Never, Never>
+  @available(*, deprecated) public var addPayment: (SKPayment) -> Effect<Never, Never>
   public var addPaymentAsync: @Sendable (SKPayment) async -> Void
-  public var appStoreReceiptURL: @Sendable () -> URL?
+  @available(*, deprecated) public var appStoreReceiptURL: @Sendable () -> URL?
   public var isAuthorizedForPayments: @Sendable () -> Bool
-  public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>
+  @available(*, deprecated) public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>
   public var fetchProductsAsync: @Sendable (Set<String>) async throws -> ProductsResponse
-  public var finishTransaction: (PaymentTransaction) -> Effect<Never, Never>
+  @available(*, deprecated) public var finishTransaction: (PaymentTransaction) -> Effect<Never, Never>
   public var finishTransactionAsync: @Sendable (PaymentTransaction) async -> Void
-  public var observer: Effect<PaymentTransactionObserverEvent, Never>
+  @available(*, deprecated) public var observer: Effect<PaymentTransactionObserverEvent, Never>
   public var observerAsync: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
-  public var requestReview: () -> Effect<Never, Never>
+  @available(*, deprecated) public var requestReview: () -> Effect<Never, Never>
   public var requestReviewAsync: @Sendable () async -> Void
-  public var restoreCompletedTransactions: () -> Effect<Never, Never>
+  @available(*, deprecated) public var restoreCompletedTransactions: () -> Effect<Never, Never>
   public var restoreCompletedTransactionsAsync: @Sendable () async -> Void
 
   public enum PaymentTransactionObserverEvent: Equatable {
