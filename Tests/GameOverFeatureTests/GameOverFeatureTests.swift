@@ -209,16 +209,6 @@ class GameOverFeatureTests: XCTestCase {
       withResponse: .ok(["turnBased": true])
     )
     environment.database.playedGamesCountAsync = { _ in 10 }
-    environment.database.fetchStats = .init(
-      value: .init(
-        averageWordLength: nil,
-        gamesPlayed: 1,
-        highestScoringWord: nil,
-        longestWord: nil,
-        secondsPlayed: 1,
-        wordsFound: 1
-      )
-    )
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettingsAsync = {
@@ -285,7 +275,6 @@ class GameOverFeatureTests: XCTestCase {
         await lastReviewRequestTimeIntervalSet.set(double)
       }
     }
-    environment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
       initialState: GameOverState(completedGame: completedGame, isDemo: false, isViewEnabled: true),
@@ -350,9 +339,8 @@ class GameOverFeatureTests: XCTestCase {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequestAsync = { _ in try await Task.never() }
+    environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
     environment.database.playedGamesCountAsync = { _ in 6 }
-    environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
@@ -394,9 +382,8 @@ class GameOverFeatureTests: XCTestCase {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequestAsync = { _ in try await Task.never() }
+    environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
     environment.database.playedGamesCountAsync = { _ in 5 }
-    environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(

@@ -375,9 +375,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         )
       )
       return .none
-    //      return result.ranks.values.contains(where: { $0.rank <= 10 })
-    //        ? showConfetti
-    //        : .none
 
     case .submitGameResponse(.success(.turnBased)):
       return .none
