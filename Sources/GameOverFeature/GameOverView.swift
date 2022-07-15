@@ -287,6 +287,21 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             }
 
             group.addTask {
+              try await environment.mainRunLoop.sleep(for: .seconds(1))
+              async let playedGamesCount = environment.database
+                .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
+              async let isFullGamePurchased = environment.apiClient
+                .currentPlayerAsync()?.appleReceipt != nil
+              guard try await shouldShowInterstitial(
+                gamePlayedCount: playedGamesCount,
+                gameContext: .init(gameContext: completedGame.gameContext),
+                serverConfig: environment.serverConfig.config()
+              )
+              else { return }
+              await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
+            }
+
+            group.addTask {
               try await environment.mainRunLoop.sleep(for: .seconds(2))
               await send(.delayedOnAppear)
             }
@@ -300,26 +315,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             }
           }
         },
-        
-        Effect.showUpgradeInterstitial(
-          gameContext: .init(gameContext: state.completedGame.gameContext),
-          isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
-          serverConfig: environment.serverConfig.config(),
-          playedGamesCount: {
-            environment.database.playedGamesCount(
-              .init(gameContext: state.completedGame.gameContext)
-            )
-          }
-        )
-        .flatMap { showUpgrade in
-          showUpgrade
-            ? Effect(value: GameOverAction.delayedShowUpgradeInterstitial)
-              .delay(for: 1, scheduler: environment.mainRunLoop.animation(.easeIn))
-              .eraseToEffect()
-            : Effect<GameOverAction, Never>.none
-        }
-        .ignoreFailure()
-        .eraseToEffect(),
 
         environment.audioPlayer.loop(.gameOverMusicLoop)
           .fireAndForget(),

@@ -16,7 +16,7 @@ class GameOverFeatureTests: XCTestCase {
   func testSubmitLeaderboardScore() async throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
       route: .games(
         .submit(
@@ -36,7 +36,7 @@ class GameOverFeatureTests: XCTestCase {
         ]
       ])
     )
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettingsAsync = {
@@ -110,7 +110,7 @@ class GameOverFeatureTests: XCTestCase {
 
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
       route: .games(
         .submit(
@@ -147,7 +147,7 @@ class GameOverFeatureTests: XCTestCase {
         ],
       ])
     )
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettingsAsync = {
@@ -189,7 +189,7 @@ class GameOverFeatureTests: XCTestCase {
   func testTurnBased_TrackLeaderboards() async throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
       route: .games(
         .submit(
@@ -208,7 +208,7 @@ class GameOverFeatureTests: XCTestCase {
       ),
       withResponse: .ok(["turnBased": true])
     )
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.playedGamesCountAsync = { _ in 10 }
     environment.database.fetchStats = .init(
       value: .init(
         averageWordLength: nil,
@@ -349,9 +349,9 @@ class GameOverFeatureTests: XCTestCase {
   func testShowUpgradeInterstitial() async {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequestAsync = { _ in try await Task.never() }
-    environment.database.playedGamesCount = { _ in .init(value: 6) }
+    environment.database.playedGamesCountAsync = { _ in 6 }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
@@ -393,9 +393,9 @@ class GameOverFeatureTests: XCTestCase {
   func testSkipUpgradeIfLessThan10GamesPlayed() async {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequestAsync = { _ in try await Task.never() }
-    environment.database.playedGamesCount = { _ in .init(value: 5) }
+    environment.database.playedGamesCountAsync = { _ in 5 }
     environment.database.fetchStats = .init(value: .init())
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
