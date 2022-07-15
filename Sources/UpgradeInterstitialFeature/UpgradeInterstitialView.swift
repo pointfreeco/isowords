@@ -303,26 +303,6 @@ extension StoreKitClient.PaymentTransactionObserverEvent {
   }
 }
 
-extension Effect where Output == Bool, Failure == Error {
-  public static func showUpgradeInterstitial(
-    gameContext: GameContext,
-    isFullGamePurchased: Bool,
-    serverConfig: ServerConfig,
-    playedGamesCount: () -> Effect<Int, Error>
-  ) -> Self {
-    playedGamesCount()
-      .map { count in
-        !isFullGamePurchased
-          && shouldShowInterstitial(
-            gamePlayedCount: count,
-            gameContext: gameContext,
-            serverConfig: serverConfig
-          )
-      }
-      .eraseToEffect()
-  }
-}
-
 public func shouldShowInterstitial(
   gamePlayedCount: Int,
   gameContext: GameContext,

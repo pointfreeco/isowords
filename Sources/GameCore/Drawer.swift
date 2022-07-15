@@ -52,7 +52,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       )
       return .none
 
-    case .onAppear:
+    case .task:
       return activeGameEffects
 
     case let .savedGamesLoaded(.success(savedGames)):

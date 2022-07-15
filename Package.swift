@@ -8,7 +8,7 @@ var package = Package(
   name: "isowords",
   platforms: [
     .macOS(.v10_15),
-    .iOS(.v14),
+    .iOS(.v15),
   ],
   products: [
     .library(name: "Build", targets: ["Build"]),

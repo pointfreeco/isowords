@@ -125,7 +125,7 @@ class TurnBasedTests: XCTestCase {
       XCTAssertNoDifference(key, "multiplayerOpensCount")
       return .none
     }
-    store.send(.currentGame(.game(.onAppear)))
+    store.send(.currentGame(.game(.task)))
 
     store.receive(.currentGame(.game(.gameLoaded))) {
       try XCTUnwrap(&$0.game) {

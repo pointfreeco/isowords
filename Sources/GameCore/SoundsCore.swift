@@ -9,7 +9,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .combined(
         with: .init { state, action, environment in
           switch action {
-          case .onAppear:
+          case .task:
             let soundEffect: Effect<Never, Never>
             if state.gameMode == .timed {
               soundEffect = environment.audioPlayer

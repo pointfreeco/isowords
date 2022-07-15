@@ -290,13 +290,14 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
           group.addTask {
             try await environment.mainRunLoop.sleep(for: .seconds(1))
-            async let playedGamesCount = environment.database
+            let playedGamesCount = try await environment.database
               .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
-            async let isFullGamePurchased =
+            let isFullGamePurchased = await
               environment.apiClient
               .currentPlayerAsync()?.appleReceipt != nil
             guard
-              try await shouldShowInterstitial(
+              !isFullGamePurchased,
+              shouldShowInterstitial(
                 gamePlayedCount: playedGamesCount,
                 gameContext: .init(gameContext: completedGame.gameContext),
                 serverConfig: environment.serverConfig.config()

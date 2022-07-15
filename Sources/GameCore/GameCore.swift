@@ -163,7 +163,7 @@ public enum GameAction: Equatable {
   case lowPowerModeChanged(Bool)
   case matchesLoaded(Result<[TurnBasedMatch], NSError>)
   case menuButtonTapped
-  case onAppear
+  case task
   case pan(UIGestureRecognizer.State, PanData?)
   case savedGamesLoaded(Result<SavedGamesState, NSError>)
   case settingsButtonTapped
@@ -394,7 +394,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         state.bottomMenu = .gameMenu(state: state)
         return .none
 
-      case .onAppear:
+      case .task:
         guard !state.isGameOver else { return .none }
         state.gameCurrentTime = environment.date()
         return .onAppearEffects(
@@ -643,7 +643,7 @@ extension GameState {
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .init(value: .confirmRemoveCube(index)) }
+    else { return .task { .confirmRemoveCube(index) } }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.turnBasedContext,
@@ -657,7 +657,8 @@ extension GameState {
     }
 
     self.bottomMenu = .removeCube(
-      index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
+      index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval
+    )
     return .none
   }
 
@@ -945,36 +946,40 @@ extension Effect where Output == GameAction, Failure == Never {
     environment: GameEnvironment,
     gameContext: ClientModels.GameContext
   ) -> Self {
-    .merge(
-      environment.lowPowerMode.start
-        .receive(on: environment.mainQueue)
-        .eraseToEffect()
-        .map(GameAction.lowPowerModeChanged)
-        .cancellable(id: LowPowerModeId.self),
-
-      Effect(value: .gameLoaded)
-        .delay(for: 0.5, scheduler: environment.mainQueue)
-        .eraseToEffect(),
-
-      gameContext.isTurnBased
-        ? Effect<Bool, Error>.showUpgradeInterstitial(
-          gameContext: .init(gameContext: gameContext),
-          isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
-          serverConfig: environment.serverConfig.config(),
-          playedGamesCount: {
-            environment.userDefaults.incrementMultiplayerOpensCount()
-              .setFailureType(to: Error.self)
-              .eraseToEffect()
+    return .run { send in
+      await withThrowingTaskGroup(of: Void.self) { group in
+        group.addTask {
+          for await isLowPower in await environment.lowPowerMode.startAsync() {
+            await send(.lowPowerModeChanged(isLowPower))
           }
-        )
-        .filter { $0 }
-        .delay(for: 3, scheduler: environment.mainRunLoop.animation())
-        .map { _ in GameAction.delayedShowUpgradeInterstitial }
-        .ignoreFailure()
-        .eraseToEffect()
-        .cancellable(id: InterstitialId.self)
-        : .none
-    )
+        }
+
+        if gameContext.isTurnBased {
+          group.addTask {
+            let playedGamesCount = await environment.userDefaults
+              .incrementMultiplayerOpensCountAsync()
+            let isFullGamePurchased = await
+              environment.apiClient
+              .currentPlayerAsync()?.appleReceipt != nil
+            guard
+              !isFullGamePurchased,
+              shouldShowInterstitial(
+                gamePlayedCount: playedGamesCount,
+                gameContext: .init(gameContext: gameContext),
+                serverConfig: environment.serverConfig.config()
+              )
+            else { return }
+            try await environment.mainRunLoop.sleep(for: .seconds(3))
+            await send(.delayedShowUpgradeInterstitial, animation: .default)
+          }
+        }
+
+        group.addTask {
+          try await environment.mainQueue.sleep(for: 0.5)
+          await send(.gameLoaded)
+        }
+      }
+    }
   }
 }
 
@@ -1109,7 +1114,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .exitButtonTapped:
       return .cancel(id: ListenerId.self)
 
-    case .onAppear:
+    case .task:
       return environment.gameCenter.localPlayer.listener
         .map { .gameCenter(.listener($0)) }
         .cancellable(id: ListenerId.self)

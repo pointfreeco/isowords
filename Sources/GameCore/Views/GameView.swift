@@ -184,6 +184,6 @@ public struct GameView<Content>: View where Content: View {
         dismiss: .dismiss
       )
     }
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
   }
 }
