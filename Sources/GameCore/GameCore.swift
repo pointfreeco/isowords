@@ -687,8 +687,6 @@ extension GameState {
     with reaction: Move.Reaction?,
     environment: GameEnvironment
   ) -> Effect<GameAction, Never> {
-    let soundEffects: Effect<Never, Never>
-
     let move = Move(
       playedAt: environment.mainRunLoop.now.date,
       playerIndex: self.turnBasedContext?.localPlayerIndex,
@@ -705,30 +703,23 @@ extension GameState {
       previousMoves: self.moves
     )
 
-    if result != nil {
-      self.moves.append(move)
-      soundEffects = .merge(
-        self
-          .selectedWord.compactMap { !self.cubes[$0.index].isInPlay ? $0.index : nil }
-          .map { index in
-            environment.audioPlayer
-              .play(.cubeRemove)
-              .deferred(
-                for: .milliseconds(removeCubeDelay(index: index)),
-                scheduler: environment.mainQueue
-              )
-              .fireAndForget()
+    defer { self.selectedWord = [] }
+
+    guard result != nil else { return .none }
+
+    self.moves.append(move)
+
+    return .fireAndForget { [self] in
+      await withThrowingTaskGroup(of: Void.self) { group in
+        for face in self.selectedWord where !self.cubes[face.index].isInPlay {
+          group.addTask {
+            try await environment.mainQueue
+              .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
+            await environment.audioPlayer.playAsync(.cubeRemove)
           }
-      )
-    } else {
-      soundEffects = .none
+        }
+      }
     }
-
-    self.selectedWord = []
-
-    return
-      soundEffects
-      .fireAndForget()
   }
 
   mutating func gameOver(environment: GameEnvironment) -> Effect<GameAction, Never> {
@@ -739,14 +730,11 @@ extension GameState {
       isDemo: self.isDemo
     )
 
-    let saveGameEffect: Effect<GameAction, Never> = environment.database
-      .saveGame(.init(gameState: self))
-      .receive(on: environment.mainQueue)
-      .fireAndForget()
-
     switch self.gameContext {
     case .dailyChallenge, .shared, .solo:
-      return saveGameEffect
+      return .fireAndForget { [self] in
+        try await environment.database.saveGameAsync(.init(gameState: self))
+      }
 
     case let .turnBased(turnBasedMatch):
       self.gameOver?.turnBasedContext = turnBasedMatch
