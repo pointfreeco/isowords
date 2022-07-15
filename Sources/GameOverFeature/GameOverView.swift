@@ -187,27 +187,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         case .dailyChallenge = state.completedGame.gameContext
       else {
         return .run { send in
-          do {
-            let stats = try await environment.database.fetchStatsAsync()
-            let hasRequestedReviewBefore =
-              environment.userDefaults
-              .doubleForKey(lastReviewRequestTimeIntervalKey) != 0
-            let timeSinceLastReviewRequest =
-              environment.mainRunLoop.now.date.timeIntervalSince1970
-              - environment.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
-            let weekInSeconds: Double = 60 * 60 * 24 * 7
-
-            if stats.gamesPlayed >= 3
-              && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
-            {
-              await environment.storeKit.requestReviewAsync()
-              await environment.userDefaults.setDoubleAsync(
-                environment.mainRunLoop.now.date.timeIntervalSince1970,
-                lastReviewRequestTimeIntervalKey
-              )
-            }
-          } catch {}
           await send(.delegate(.close))
+          try? await environment.requestReviewAsync()
         }
       }
 
@@ -346,12 +327,10 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .notificationsAuthAlert(.delegate(.close)):
       state.notificationsAuthAlert = nil
-      return .merge(
-        Effect(value: .delegate(.close))
-          .receive(on: ImmediateScheduler.shared.animation())
-          .eraseToEffect(),
-        .reviewRequestEffect(environment: environment)
-      )
+      return .run { send in
+        await send(.delegate(.close), animation: .default)
+        try? await environment.requestReviewAsync()
+      }
 
     case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
       return Effect(value: .delegate(.close))
@@ -1052,32 +1031,26 @@ extension CompletedMatch {
   }
 }
 
-extension Effect where Output == GameOverAction, Failure == Never {
-  static func reviewRequestEffect(environment: GameOverEnvironment) -> Self {
+extension GameOverEnvironment {
+  func requestReviewAsync() async throws {
+    let stats = try await self.database.fetchStatsAsync()
     let hasRequestedReviewBefore =
-      environment.userDefaults
+      self.userDefaults
       .doubleForKey(lastReviewRequestTimeIntervalKey) != 0
     let timeSinceLastReviewRequest =
-      environment.mainRunLoop.now.date.timeIntervalSince1970
-      - environment.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
+      self.mainRunLoop.now.date.timeIntervalSince1970
+      - self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
     let weekInSeconds: Double = 60 * 60 * 24 * 7
 
-    return environment.database.fetchStats
-      .ignoreFailure()
-      .flatMap { stats in
-        stats.gamesPlayed >= 3
-          && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
-          ? Effect.merge(
-            environment.userDefaults.setDouble(
-              environment.mainRunLoop.now.date.timeIntervalSince1970,
-              lastReviewRequestTimeIntervalKey
-            )
-            .fireAndForget(),
-            environment.storeKit.requestReview().fireAndForget()
-          )
-          : Effect.none
-      }
-      .eraseToEffect()
+    if stats.gamesPlayed >= 3
+      && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
+    {
+      await self.storeKit.requestReviewAsync()
+      await self.userDefaults.setDoubleAsync(
+        self.mainRunLoop.now.date.timeIntervalSince1970,
+        lastReviewRequestTimeIntervalKey
+      )
+    }
   }
 }
 
