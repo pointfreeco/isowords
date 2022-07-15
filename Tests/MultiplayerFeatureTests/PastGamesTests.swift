@@ -8,8 +8,9 @@ import XCTest
 
 @testable import MultiplayerFeature
 
+@MainActor
 class PastGamesTests: XCTestCase {
-  func testLoadMatches() {
+  func testLoadMatches() async {
     var environment = PastGamesEnvironment.failing
     environment.backgroundQueue = .immediate
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
@@ -22,14 +23,14 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
 
-    store.receive(.matchesResponse(.success([pastGameState]))) {
+    await store.receive(.matchesResponse(.success([pastGameState]))) {
       $0.pastGames = [pastGameState]
     }
   }
 
-  func testOpenMatch() {
+  func testOpenMatch() async {
     var environment = PastGamesEnvironment.failing
     environment.gameCenter.turnBasedMatch.load = { _ in .init(value: match) }
     environment.mainQueue = .immediate
@@ -40,14 +41,14 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.pastGame("id", .tappedRow))
+    await store.send(.pastGame("id", .tappedRow))
 
-    store.receive(.pastGame("id", .matchResponse(.success(match))))
+    await store.receive(.pastGame("id", .matchResponse(.success(match))))
 
-    store.receive(.pastGame("id", .delegate(.openMatch(match))))
+    await store.receive(.pastGame("id", .delegate(.openMatch(match))))
   }
 
-  func testRematch() {
+  func testRematch() async {
     var environment = PastGamesEnvironment.failing
     environment.mainQueue = .immediate
     environment.gameCenter.turnBasedMatch.rematch = { _ in .init(value: match) }
@@ -58,22 +59,22 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.pastGame("id", .rematchButtonTapped)) {
+    await store.send(.pastGame("id", .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = true
       }
     }
 
-    store.receive(.pastGame("id", .rematchResponse(.success(match)))) {
+    await store.receive(.pastGame("id", .rematchResponse(.success(match)))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
       }
     }
 
-    store.receive(.pastGame("id", .delegate(.openMatch(match))))
+    await store.receive(.pastGame("id", .delegate(.openMatch(match))))
   }
 
-  func testRematch_Failure() {
+  func testRematch_Failure() async {
     struct RematchFailure: Error, Equatable {}
 
     var environment = PastGamesEnvironment.failing
@@ -86,13 +87,13 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.pastGame("id", .rematchButtonTapped)) {
+    await store.send(.pastGame("id", .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = true
       }
     }
 
-    store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure() as NSError)))) {
+    await store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure() as NSError)))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
         $0.alert = .init(

@@ -12,10 +12,11 @@ import XCTest
 
 @testable import GameFeature
 
+@MainActor
 class GameFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
-  func testRemoveCubeMove() {
+  func testRemoveCubeMove() async {
     let environment = update(GameEnvironment.failing) {
       $0.audioPlayer.play = { _ in .none }
       $0.fileClient.load = { _ in .none }
@@ -51,8 +52,8 @@ class GameFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.doubleTap(index: .zero)))
-    store.receive(.game(.confirmRemoveCube(.zero))) {
+    await store.send(.game(.doubleTap(index: .zero)))
+    await store.receive(.game(.confirmRemoveCube(.zero))) {
       $0.game?.cubes.0.0.0.wasRemoved = true
       $0.game?.moves = [
         .init(
@@ -66,7 +67,7 @@ class GameFeatureTests: XCTestCase {
     }
   }
 
-  func testDoubleTapRemoveCube_MultipleSelectedFaces() {
+  func testDoubleTapRemoveCube_MultipleSelectedFaces() async {
     let environment = update(GameEnvironment.failing) {
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
@@ -94,7 +95,7 @@ class GameFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.doubleTap(index: .zero)))
+    await store.send(.game(.doubleTap(index: .zero)))
   }
 
   func testIsYourTurn() {

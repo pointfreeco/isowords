@@ -60,7 +60,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
     await store.receive(
       .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
     ) {
@@ -175,7 +175,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
     await store.receive(
       .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
     ) {
@@ -258,7 +258,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await store.receive(.submitGameResponse(.success(.turnBased)))
   }
@@ -370,7 +370,7 @@ class GameOverFeatureTests: XCTestCase {
 //    // TODO: Why is this `@Sendable` necessary?
 //    store.environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
 
-    let task = store.send(.onAppear)
+    let task = await store.send(.onAppear)
     await task.cancel()
     await store.receive(.delegate(.close))
   }
@@ -412,7 +412,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
     await self.mainRunLoop.advance()
     await store.receive(
       .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
@@ -430,18 +430,13 @@ class GameOverFeatureTests: XCTestCase {
   func testSkipUpgradeIfLessThan10GamesPlayed() async throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequest = { route in
-      switch route {
-      case .games(.submit):
-        return .none
-      default:
-        XCTFail("Unhandled route: \(route)")
-        return .none
-      }
-    }
-    environment.database.playedGamesCount = { _ in .init(value: 5) }
-    environment.database.fetchStats = .init(value: .init())
+    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
+    environment.apiClient.override(
+      routeCase: (/ServerRoute.Api.Route.games).appending(path: /ServerRoute.Api.Route.Games.submit),
+      withResponse: { _ in .none }
+    )
+    environment.database.playedGamesCountAsync = { _ in 5 }
+    environment.database.fetchStatsAsync = { .init() }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
@@ -467,7 +462,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
   }
 }

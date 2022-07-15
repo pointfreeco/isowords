@@ -9,24 +9,24 @@ import XCTest
 @testable import LeaderboardFeature
 @testable import SharedModels
 
+@MainActor
 class LeaderboardFeatureTests: XCTestCase {
-
-  func testScopeSwitcher() {
+  func testScopeSwitcher() async {
     let store = TestStore(
       initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: .failing
     )
 
-    store.send(.scopeTapped(.vocab)) {
+    await store.send(.scopeTapped(.vocab)) {
       $0.scope = .vocab
     }
-    store.send(.scopeTapped(.games)) {
+    await store.send(.scopeTapped(.games)) {
       $0.scope = .games
     }
   }
 
-  func testTimeScopeSynchronization() {
+  func testTimeScopeSynchronization() async {
     let store = TestStore(
       initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
@@ -39,19 +39,19 @@ class LeaderboardFeatureTests: XCTestCase {
       )
     )
 
-    store.send(.solo(.timeScopeChanged(.lastDay))) {
+    await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay
       $0.solo.isLoading = true
       $0.vocab.timeScope = .lastDay
     }
-    store.send(.vocab(.timeScopeChanged(.allTime))) {
+    await store.send(.vocab(.timeScopeChanged(.allTime))) {
       $0.solo.timeScope = .allTime
       $0.vocab.timeScope = .allTime
       $0.vocab.isLoading = true
     }
   }
 
-  func testCubePreview() {
+  func testCubePreview() async {
     let wordId = Word.Id(rawValue: UUID(uuidString: "00000000-0000-0000-0000-00000000304d")!)
     let vocabEntry = FetchVocabLeaderboardResponse.Entry(
       denseRank: 1,
@@ -114,16 +114,16 @@ class LeaderboardFeatureTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    store.send(.vocab(.onAppear)) {
+    await store.send(.vocab(.onAppear)) {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }
-    store.receive(.vocab(.resultsResponse(.success(resultsEnvelope)))) {
+    await store.receive(.vocab(.resultsResponse(.success(resultsEnvelope)))) {
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = resultsEnvelope
     }
-    store.send(.vocab(.tappedRow(id: wordId.rawValue)))
-    store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
+    await store.send(.vocab(.tappedRow(id: wordId.rawValue)))
+    await store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
       $0.cubePreview = .init(
         cubes: .mock,
         isAnimationReduced: false,
@@ -134,7 +134,7 @@ class LeaderboardFeatureTests: XCTestCase {
         settings: .init()
       )
     }
-    store.send(.dismissCubePreview) {
+    await store.send(.dismissCubePreview) {
       $0.cubePreview = nil
     }
   }

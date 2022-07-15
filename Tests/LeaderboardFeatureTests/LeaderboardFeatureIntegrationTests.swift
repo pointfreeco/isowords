@@ -8,8 +8,9 @@ import XCTest
 
 @testable import LeaderboardFeature
 
+@MainActor
 class LeaderboardFeatureIntegrationTests: XCTestCase {
-  func testSoloIntegrationWithLeaderboardResults() {
+  func testSoloIntegrationWithLeaderboardResults() async {
     let fetchLeaderboardsEntries = [
       FetchLeaderboardResponse.Entry(
         id: .init(rawValue: .deadbeef),
@@ -47,17 +48,17 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    store.send(.solo(.onAppear)) {
+    await store.send(.solo(.onAppear)) {
       $0.solo.isLoading = true
       $0.solo.resultEnvelope = .placeholder
     }
-    store.receive(.solo(.resultsResponse(.success(results)))) {
+    await store.receive(.solo(.resultsResponse(.success(results)))) {
       $0.solo.isLoading = false
       $0.solo.resultEnvelope = results
     }
   }
 
-  func testVocabIntegrationWithLeaderboardResults() {
+  func testVocabIntegrationWithLeaderboardResults() async {
     let fetchVocabEntries = [
       FetchVocabLeaderboardResponse.Entry.init(
         denseRank: 1,
@@ -106,11 +107,11 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    store.send(.vocab(.onAppear)) {
+    await store.send(.vocab(.onAppear)) {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }
-    store.receive(.vocab(.resultsResponse(.success(results)))) {
+    await store.receive(.vocab(.resultsResponse(.success(results)))) {
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = results
     }

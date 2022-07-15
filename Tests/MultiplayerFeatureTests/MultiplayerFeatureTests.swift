@@ -3,8 +3,9 @@ import XCTest
 
 @testable import MultiplayerFeature
 
+@MainActor
 class MultiplayerFeatureTests: XCTestCase {
-  func testStartGame_GameCenterAuthenticated() {
+  func testStartGame_GameCenterAuthenticated() async {
     var didPresentMatchmakerViewController = false
 
     var environment = MultiplayerEnvironment.failing
@@ -21,12 +22,12 @@ class MultiplayerFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.startButtonTapped)
+    await store.send(.startButtonTapped)
 
     XCTAssertNoDifference(didPresentMatchmakerViewController, true)
   }
 
-  func testStartGame_GameCenterNotAuthenticated() {
+  func testStartGame_GameCenterNotAuthenticated() async {
     var didPresentAuthentication = false
 
     var environment = MultiplayerEnvironment.failing
@@ -41,22 +42,22 @@ class MultiplayerFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.startButtonTapped)
+    await store.send(.startButtonTapped)
 
     XCTAssertNoDifference(didPresentAuthentication, true)
   }
 
-  func testNavigateToPastGames() {
+  func testNavigateToPastGames() async {
     let store = TestStore(
       initialState: MultiplayerState(hasPastGames: true),
       reducer: multiplayerReducer,
       environment: .failing
     )
 
-    store.send(.setNavigation(tag: .pastGames)) {
+    await store.send(.setNavigation(tag: .pastGames)) {
       $0.route = .pastGames(.init(pastGames: []))
     }
-    store.send(.setNavigation(tag: nil)) {
+    await store.send(.setNavigation(tag: nil)) {
       $0.route = nil
     }
   }

@@ -10,8 +10,9 @@ import XCTest
 
 @testable import GameFeature
 
+@MainActor
 class DailyChallengeTests: XCTestCase {
-  func testLeaveTimedDailyChallenge() {
+  func testLeaveTimedDailyChallenge() async {
     let move = Move(
       playedAt: .mock,
       playerIndex: nil,
@@ -54,7 +55,7 @@ class DailyChallengeTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.endGameButtonTapped)) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: CompletedGame(gameState: $0),
@@ -66,7 +67,7 @@ class DailyChallengeTests: XCTestCase {
     XCTAssertNoDifference(didSave, true)
   }
 
-  func testLeaveUnlimitedDailyChallenge() {
+  func testLeaveUnlimitedDailyChallenge() async {
     let move = Move(
       playedAt: .mock,
       playerIndex: nil,
@@ -108,7 +109,7 @@ class DailyChallengeTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.endGameButtonTapped)) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: CompletedGame(gameState: $0),

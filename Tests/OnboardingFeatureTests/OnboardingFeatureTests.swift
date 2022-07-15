@@ -4,10 +4,11 @@ import XCTest
 
 @testable import OnboardingFeature
 
+@MainActor
 class OnboardingFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
 
-  func testBasics_FirstLaunch() {
+  func testBasics_FirstLaunch() async {
     var isFirstLaunchOnboardingKeySet = false
     
     var environment = OnboardingEnvironment.failing
@@ -34,41 +35,41 @@ class OnboardingFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
 
-    self.mainQueue.advance(by: .seconds(4))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(4))
+    await store.receive(.delayedNextStep) {
       $0.step = .step2_FindWordsOnCube
     }
 
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step3_ConnectLettersTouching
     }
 
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step4_FindGame
     }
 
     // Find and submit "GAME"
-    store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .two, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .two, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .one, y: .two, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .one, y: .two, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .right))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
       $0.step = .step5_SubmitGame
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
       $0.game.selectedWordIsValid = true
     }
-    store.send(.game(.submitButtonTapped(reaction: nil))) {
+    await store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubes[.one][.two][.two].left.useCount += 1
       $0.game.cubes[.two][.two][.two].left.useCount += 1
       $0.game.cubes[.two][.two][.two].right.useCount += 1
@@ -93,38 +94,38 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     // Wait a moment to automatically go to the next step
-    self.mainQueue.advance(by: .seconds(2))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(2))
+    await store.receive(.delayedNextStep) {
       $0.step = .step7_BiggerCube
     }
 
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step8_FindCubes
     }
 
     // Find and submit the word "CUBES"
-    store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .two, z: .two), side: .top)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .two, z: .two), side: .top)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .one, y: .two, z: .two), side: .top)
       $0.game.selectedWord.append(.init(index: .init(x: .one, y: .two, z: .two), side: .top))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .two, z: .one), side: .top)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .two, z: .one), side: .top)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .one, y: .two, z: .one), side: .top)
       $0.game.selectedWord.append(.init(index: .init(x: .one, y: .two, z: .one), side: .top))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .top)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .top)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .top)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .top))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .top)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .top)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .top)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .top))
       $0.game.selectedWordIsValid = true
     }
-    store.send(.game(.submitButtonTapped(reaction: nil))) {
+    await store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubes[.one][.two][.two].top.useCount += 1
       $0.game.cubes[.one][.two][.one].top.useCount += 1
       $0.game.cubes[.two][.two][.two].top.useCount += 1
@@ -151,44 +152,44 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     // Wait a moment to automatically go to the next step
-    self.mainQueue.advance(by: .seconds(2))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(2))
+    await store.receive(.delayedNextStep) {
       $0.step = .step10_CubeDisappear
     }
 
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step11_FindRemove
     }
 
     // Find and submit the word "REMOVE"
-    store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .one, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .one, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .one, y: .one, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .one, y: .one, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .one, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .one, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .two), side: .right))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .two), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .one, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .one, z: .two), side: .right))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .one), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .one, z: .one), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .one, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .one, z: .one), side: .right))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
       $0.game.cubeStartedShakingAt = environment.mainRunLoop.now.date
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
       $0.game.selectedWordIsValid = true
       $0.step = .step12_CubeIsShaking
     }
-    store.send(.game(.submitButtonTapped(reaction: nil))) {
+    await store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubeStartedShakingAt = nil
       $0.game.cubes[.one][.one][.two].left.useCount += 1
       $0.game.cubes[.two][.one][.two].left.useCount += 1
@@ -217,37 +218,37 @@ class OnboardingFeatureTests: XCTestCase {
       $0.step = .step13_Congrats
     }
 
-    self.mainQueue.advance(by: .seconds(3))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(3))
+    await store.receive(.delayedNextStep) {
       $0.step = .step14_LettersRevealed
     }
 
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step15_FullCube
     }
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step16_FindAnyWord
     }
 
     // Find the word "WORD"
-    store.send(.game(.tap(.began, .init(index: .init(x: .zero, y: .zero, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .zero, y: .zero, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .zero, y: .zero, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .zero, y: .zero, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .zero, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .one, y: .zero, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .one, y: .zero, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .one, y: .zero, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .zero, z: .two), side: .left)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .zero, z: .two), side: .left)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .zero, z: .two), side: .left)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .zero, z: .two), side: .left))
     }
-    store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .zero, z: .two), side: .right)))) {
+    await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .zero, z: .two), side: .right)))) {
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .zero, z: .two), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .zero, z: .two), side: .right))
       $0.game.selectedWordIsValid = true
     }
-    store.send(.game(.submitButtonTapped(reaction: nil))) {
+    await store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubes[.zero][.zero][.two].left.useCount += 1
       $0.game.cubes[.one][.zero][.two].left.useCount += 1
       $0.game.cubes[.two][.zero][.two].left.useCount += 1
@@ -271,17 +272,17 @@ class OnboardingFeatureTests: XCTestCase {
       $0.step = .step17_Congrats
     }
 
-    self.mainQueue.advance(by: .seconds(2))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(2))
+    await store.receive(.delayedNextStep) {
       $0.step = .step18_OneLastThing
     }
 
-    store.send(.nextButtonTapped) {
+    await store.send(.nextButtonTapped) {
       $0.step = .step19_DoubleTapToRemove
     }
 
-    store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
-    store.receive(.game(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))) {
+    await store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
+    await store.receive(.game(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))) {
       $0.game.cubes[.two][.two][.two].wasRemoved = true
       $0.game.moves.append(
         .init(
@@ -295,18 +296,18 @@ class OnboardingFeatureTests: XCTestCase {
       $0.step = .step20_Congrats
     }
 
-    self.mainQueue.advance(by: .seconds(2))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(2))
+    await store.receive(.delayedNextStep) {
       $0.step = .step21_PlayAGameYourself
     }
 
-    store.send(.getStartedButtonTapped)
-    store.receive(.delegate(.getStarted))
+    await store.send(.getStartedButtonTapped)
+    await store.receive(.delegate(.getStarted))
 
     XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
   }
 
-  func testSkip_HasSeenOnboardingBefore() {
+  func testSkip_HasSeenOnboardingBefore() async {
     var isFirstLaunchOnboardingKeySet = false
 
     var environment = OnboardingEnvironment.failing
@@ -332,21 +333,21 @@ class OnboardingFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
 
-    self.mainQueue.advance(by: .seconds(4))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(4))
+    await store.receive(.delayedNextStep) {
       $0.step = .step2_FindWordsOnCube
     }
 
-    store.send(.skipButtonTapped)
+    await store.send(.skipButtonTapped)
 
-    store.receive(.delegate(.getStarted))
+    await store.receive(.delegate(.getStarted))
 
     XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
   }
 
-  func testSkip_HasNotSeenOnboardingBefore() {
+  func testSkip_HasNotSeenOnboardingBefore() async {
     var isFirstLaunchOnboardingKeySet = false
 
     var environment = OnboardingEnvironment.failing
@@ -372,14 +373,14 @@ class OnboardingFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
 
-    self.mainQueue.advance(by: .seconds(4))
-    store.receive(.delayedNextStep) {
+    await self.mainQueue.advance(by: .seconds(4))
+    await store.receive(.delayedNextStep) {
       $0.step = .step2_FindWordsOnCube
     }
 
-    store.send(.skipButtonTapped) {
+    await store.send(.skipButtonTapped) {
       $0.alert = .init(
         title: .init("Skip tutorial?"),
         message: .init("""
@@ -395,16 +396,16 @@ class OnboardingFeatureTests: XCTestCase {
       )
     }
 
-    store.send(.alert(.skipButtonTapped)) {
+    await store.send(.alert(.skipButtonTapped)) {
       $0.alert = nil
     }
 
-    store.receive(.alert(.confirmSkipButtonTapped)) {
+    await store.receive(.alert(.confirmSkipButtonTapped)) {
       $0.step = .step21_PlayAGameYourself
     }
 
-    store.send(.getStartedButtonTapped)
-    store.receive(.delegate(.getStarted))
+    await store.send(.getStartedButtonTapped)
+    await store.receive(.delegate(.getStarted))
 
     XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
   }
