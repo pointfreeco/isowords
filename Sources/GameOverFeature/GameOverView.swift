@@ -85,7 +85,7 @@ public enum GameOverAction: Equatable {
   case notificationsAuthAlert(NotificationsAuthAlertAction)
   case rematchButtonTapped
   case showConfetti
-  case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
+  case startDailyChallengeResponse(TaskResult<InProgressGame>)
   case submitGameResponse(Result<SubmitGameResponse, ApiError>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
@@ -219,22 +219,24 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .gameButtonTapped(gameMode):
       switch state.completedGame.gameContext {
       case .dailyChallenge:
-        let challenge = state.dailyChallenges
-          .first(where: { $0.dailyChallenge.gameMode == gameMode })
-        state.gameModeIsLoading = challenge?.dailyChallenge.gameMode
-        return
-          challenge
-          .map {
-            startDailyChallenge(
-              $0,
-              apiClient: environment.apiClient,
-              date: { environment.mainRunLoop.now.date },
-              fileClient: environment.fileClient,
-              mainRunLoop: environment.mainRunLoop
-            )
-            .catchToEffect(GameOverAction.startDailyChallengeResponse)
-          }
-          ?? .none
+        state.gameModeIsLoading = gameMode // TODO: Move below guard?
+        guard
+          let challenge = state.dailyChallenges
+            .first(where: { $0.dailyChallenge.gameMode == gameMode })
+        else { return .none }
+        return .task {
+          await .startDailyChallengeResponse(
+            TaskResult {
+              try await startDailyChallengeAsync(
+                challenge,
+                apiClient: environment.apiClient,
+                date: { environment.mainRunLoop.now.date },
+                fileClient: environment.fileClient
+              )
+            }
+          )
+        }
+
       case .shared:
         return .none
       case .solo:

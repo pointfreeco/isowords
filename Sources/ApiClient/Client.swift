@@ -69,7 +69,7 @@ public struct ApiClient {
 
   public struct Unit: Codable {}
 
-  public func apiRequest(
+  @available(*, deprecated) public func apiRequest(
     route: ServerRoute.Api.Route,
     file: StaticString = #file,
     line: UInt = #line
@@ -77,7 +77,7 @@ public struct ApiClient {
     self.apiRequest(route: route, as: Unit.self, file: file, line: line)
   }
 
-  public func apiRequest<A: Decodable>(
+  @available(*, deprecated) public func apiRequest<A: Decodable>(
     route: ServerRoute.Api.Route,
     as: A.Type,
     file: StaticString = #file,
@@ -139,7 +139,7 @@ public struct ApiClient {
     }
   }
 
-  public func request<A: Decodable>(
+  @available(*, deprecated) public func request<A: Decodable>(
     route: ServerRoute,
     as: A.Type,
     file: StaticString = #file,

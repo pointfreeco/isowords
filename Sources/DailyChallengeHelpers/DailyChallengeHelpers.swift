@@ -56,7 +56,8 @@ public func startDailyChallengeAsync(
   date: @escaping () -> Date,
   fileClient: FileClient
 ) async throws -> InProgressGame {
-  guard challenge.yourResult.rank == nil else {
+  guard challenge.yourResult.rank == nil
+  else {
     throw DailyChallengeError.alreadyPlayed(endsAt: challenge.dailyChallenge.endsAt)
   }
 
@@ -77,6 +78,7 @@ public func startDailyChallengeAsync(
         ),
         date: date()
       )
+
     } catch {
       throw DailyChallengeError.couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt)
     }
