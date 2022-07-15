@@ -240,7 +240,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       case .shared:
         return .none
       case .solo:
-        return Effect(value: .delegate(.startSoloGame(gameMode)))
+        return .task { .delegate(.startSoloGame(gameMode)) }
       case .turnBased:
         return .none
       }
@@ -345,7 +345,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case let .startDailyChallengeResponse(.success(inProgressGame)):
       state.gameModeIsLoading = nil
-      return .init(value: .delegate(.startGame(inProgressGame)))
+      return .task { .delegate(.startGame(inProgressGame)) }
 
     case let .submitGameResponse(.success(.dailyChallenge(result))):
       state.summary = .dailyChallenge(result)
