@@ -187,8 +187,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         case .dailyChallenge = state.completedGame.gameContext
       else {
         return .run { send in
-          await send(.delegate(.close))
           try? await environment.requestReviewAsync()
+          await send(.delegate(.close))
         }
       }
 
@@ -248,8 +248,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case .notificationsAuthAlert(.delegate(.close)):
       state.notificationsAuthAlert = nil
       return .run { send in
-        await send(.delegate(.close), animation: .default)
         try? await environment.requestReviewAsync()
+        await send(.delegate(.close), animation: .default)
       }
 
     case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
