@@ -81,11 +81,11 @@ public enum GameOverAction: Equatable {
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
   case gameButtonTapped(GameMode)
-  case onAppear
   case notificationsAuthAlert(NotificationsAuthAlertAction)
   case rematchButtonTapped
   case showConfetti
   case startDailyChallengeResponse(TaskResult<InProgressGame>)
+  case task
   case submitGameResponse(TaskResult<SubmitGameResponse>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
@@ -245,82 +245,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         return .none
       }
 
-    case .onAppear:
-      guard state.isDemo || state.completedGame.currentScore > 0
-      else { return .task { .delegate(.close) }.animation() }
-
-      return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
-        await environment.audioPlayer.playAsync(.transitionIn)
-        await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
-
-        await withThrowingTaskGroup(of: Void.self) { group in
-          group.addTask {
-            if isDemo {
-              let request = ServerRoute.Demo.SubmitRequest(
-                gameMode: completedGame.gameMode,
-                score: completedGame.currentScore
-              )
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    try await .solo(
-                      environment.apiClient.requestAsync(
-                        route: .demo(.submitGame(request)),
-                        as: LeaderboardScoreResult.self
-                      )
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(completedGame: completedGame) {
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    try await environment.apiClient.apiRequestAsync(
-                      route: .games(.submit(request)),
-                      as: SubmitGameResponse.self
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            }
-          }
-
-          group.addTask {
-            try await environment.mainRunLoop.sleep(for: .seconds(1))
-            let playedGamesCount = try await environment.database
-              .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
-            let isFullGamePurchased = await
-              environment.apiClient
-              .currentPlayerAsync()?.appleReceipt != nil
-            guard
-              !isFullGamePurchased,
-              shouldShowInterstitial(
-                gamePlayedCount: playedGamesCount,
-                gameContext: .init(gameContext: completedGame.gameContext),
-                serverConfig: environment.serverConfig.config()
-              )
-            else { return }
-            await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
-          }
-
-          group.addTask {
-            try await environment.mainRunLoop.sleep(for: .seconds(2))
-            await send(.delayedOnAppear)
-          }
-
-          group.addTask {
-            await send(
-              .userNotificationSettingsResponse(
-                environment.userNotifications.getNotificationSettingsAsync()
-              )
-            )
-          }
-        }
-      }
-
     case .notificationsAuthAlert(.delegate(.close)):
       state.notificationsAuthAlert = nil
       return .run { send in
@@ -382,6 +306,82 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .submitGameResponse(.failure):
       return .none
+
+    case .task:
+      guard state.isDemo || state.completedGame.currentScore > 0
+      else { return .task { .delegate(.close) }.animation() }
+
+      return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+        await environment.audioPlayer.playAsync(.transitionIn)
+        await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
+
+        await withThrowingTaskGroup(of: Void.self) { group in
+          group.addTask {
+            if isDemo {
+              let request = ServerRoute.Demo.SubmitRequest(
+                gameMode: completedGame.gameMode,
+                score: completedGame.currentScore
+              )
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await .solo(
+                      environment.apiClient.requestAsync(
+                        route: .demo(.submitGame(request)),
+                        as: LeaderboardScoreResult.self
+                      )
+                    )
+                  }
+                ),
+                animation: .default
+              )
+            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(completedGame: completedGame) {
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await environment.apiClient.apiRequestAsync(
+                      route: .games(.submit(request)),
+                      as: SubmitGameResponse.self
+                    )
+                  }
+                ),
+                animation: .default
+              )
+            }
+          }
+
+          group.addTask {
+            try await environment.mainRunLoop.sleep(for: .seconds(1))
+            let playedGamesCount = try await environment.database
+              .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
+            let isFullGamePurchased = await
+            environment.apiClient
+              .currentPlayerAsync()?.appleReceipt != nil
+            guard
+              !isFullGamePurchased,
+              shouldShowInterstitial(
+                gamePlayedCount: playedGamesCount,
+                gameContext: .init(gameContext: completedGame.gameContext),
+                serverConfig: environment.serverConfig.config()
+              )
+            else { return }
+            await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
+          }
+
+          group.addTask {
+            try await environment.mainRunLoop.sleep(for: .seconds(2))
+            await send(.delayedOnAppear)
+          }
+
+          group.addTask {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettingsAsync()
+              )
+            )
+          }
+        }
+      }
 
     case .upgradeInterstitial(.delegate(.close)),
       .upgradeInterstitial(.delegate(.fullGamePurchased)):
@@ -543,7 +543,7 @@ public struct GameOverView: View {
       (self.colorScheme == .dark ? .isowordsBlack : self.color)
         .ignoresSafeArea()
     )
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
       store: self.store.scope(
         state: \.notificationsAuthAlert,
