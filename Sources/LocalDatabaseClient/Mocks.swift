@@ -2,6 +2,13 @@ import ComposableArchitecture
 import SharedModels
 import XCTestDynamicOverlay
 
+class Box<Value> {
+  var wrappedValue: Value
+  init(wrappedValue: Value) {
+    self.wrappedValue = wrappedValue
+  }
+}
+
 extension LocalDatabaseClient {
   public static var mock: Self {
     let games = UncheckedSendable(wrappedValue: Box(wrappedValue: [CompletedGame]()))
@@ -19,12 +26,12 @@ extension LocalDatabaseClient {
       playedGamesCountAsync: { _ in 10 },
       saveGame: { game in
         .result {
-          games.uncheckedValue.boxedValue.append(game)
+          games.uncheckedValue.wrappedValue.append(game)
           return .success(())
         }
       },
       saveGameAsync: {
-        games.uncheckedValue.boxedValue.append($0)
+        games.uncheckedValue.wrappedValue.append($0)
       }
     )
   }

@@ -23,7 +23,7 @@ extension UserNotificationClient {
       add: { _ in .failing("\(Self.self).add is not implemented") },
       addAsync: XCTUnimplemented("\(Self.self).addAsync"),
       delegate: .failing("\(Self.self).delegate is not implemented"),
-      delegateAsync: XCTUnimplemented("\(Self.self).delegateAsync"),
+      delegateAsync: XCTUnimplemented("\(Self.self).delegateAsync", placeholder: .finished),
       getNotificationSettings: .failing("\(Self.self).getNotificationSettings is not implemented"),
       getNotificationSettingsAsync: XCTUnimplemented(
         "\(Self.self).getNotificationSettingsAsync",

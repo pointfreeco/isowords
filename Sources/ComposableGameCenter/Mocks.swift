@@ -120,7 +120,9 @@ extension TurnBasedMatchmakerViewControllerClient {
         XCTFail("\(Self.self).localPlayer is unimplemented")
         return .notAuthenticated
       },
-      localPlayerAsync: XCTUnimplemented("\(Self.self).localPlayerAsync"),
+      localPlayerAsync: XCTUnimplemented(
+        "\(Self.self).localPlayerAsync", placeholder: .notAuthenticated
+      ),
       presentAuthenticationViewController:
         .failing("\(Self.self).presentAuthenticationViewController is unimplemented"),
       presentAuthenticationViewControllerAsync: XCTUnimplemented(

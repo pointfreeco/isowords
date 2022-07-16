@@ -11,12 +11,13 @@ import SharedModels
 import TcaHelpers
 import UIKit
 import UserNotifications
+import XCTestDynamicOverlay
 
 public enum AppDelegateAction: Equatable {
   case didFinishLaunching
   case didRegisterForRemoteNotifications(Result<Data, NSError>)
   case userNotifications(UserNotificationClient.DelegateEvent)
-  case userSettingsLoaded(Result<UserSettings, NSError>)
+  case userSettingsLoaded(TaskResult<UserSettings>)
 }
 
 struct AppDelegateEnvironment {
@@ -28,7 +29,9 @@ struct AppDelegateEnvironment {
   var fileClient: FileClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
-  var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
+  @available(*, deprecated) var setUserInterfaceStyle:
+    (UIUserInterfaceStyle) -> Effect<Never, Never>
+  var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   var userNotifications: UserNotificationClient
 
   #if DEBUG
@@ -41,7 +44,8 @@ struct AppDelegateEnvironment {
       fileClient: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
-      setUserInterfaceStyle: { _ in .failing("setUserInterfaceStyle") },
+      setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle") },
+      setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
       userNotifications: .failing
     )
   #endif
@@ -52,69 +56,67 @@ let appDelegateReducer = Reducer<
 > { state, action, environment in
   switch action {
   case .didFinishLaunching:
-    return .merge(
-      // Set notifications delegate
-      environment.userNotifications.delegate
-        .map(AppDelegateAction.userNotifications),
-
-      environment.userNotifications.getNotificationSettings
-        .receive(on: environment.mainQueue)
-        .flatMap { settings in
-          [.notDetermined, .provisional].contains(settings.authorizationStatus)
-            ? environment.userNotifications.requestAuthorization(.provisional)
-            : settings.authorizationStatus == .authorized
-              ? environment.userNotifications.requestAuthorization([.alert, .sound])
-              : .none
+    return .run { send in
+      await withThrowingTaskGroup(of: Void.self) { group in
+        group.addTask {
+          for await event in environment.userNotifications.delegateAsync() {
+            await send(.userNotifications(event))
+          }
         }
-        .ignoreFailure()
-        .flatMap { successful in
-          successful
-            ? Effect.registerForRemoteNotifications(
-              remoteNotifications: environment.remoteNotifications,
-              scheduler: environment.mainQueue,
-              userNotifications: environment.userNotifications
+
+        group.addTask {
+          let settings = await environment.userNotifications.getNotificationSettingsAsync()
+          switch settings.authorizationStatus {
+          case .authorized:
+            guard
+              try await environment.userNotifications.requestAuthorizationAsync([.alert, .sound])
+            else { return }
+          case .notDetermined, .provisional:
+            guard try await environment.userNotifications.requestAuthorizationAsync(.provisional)
+            else { return }
+          default:
+            return
+          }
+          await environment.remoteNotifications.registerAsync()
+        }
+
+        group.addTask {
+          _ = try environment.dictionary.load(.en)
+        }
+
+        group.addTask {
+          await environment.audioPlayer.loadAsync(AudioPlayerClient.Sound.allCases)
+        }
+
+        group.addTask {
+          await send(
+            .userSettingsLoaded(
+              TaskResult { try await environment.fileClient.loadUserSettingsAsync() }
             )
-            : .none
+          )
         }
-        .eraseToEffect()
-        .fireAndForget(),
-
-      // Preload dictionary
-      Effect
-        .catching { try environment.dictionary.load(.en) }
-        .subscribe(on: environment.backgroundQueue)
-        .fireAndForget(),
-
-      .concatenate(
-        environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-          .fireAndForget(),
-
-        environment.fileClient.loadUserSettings()
-          .map(AppDelegateAction.userSettingsLoaded)
-      )
-    )
+      }
+    }
 
   case .didRegisterForRemoteNotifications(.failure):
     return .none
 
   case let .didRegisterForRemoteNotifications(.success(tokenData)):
     let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-    return environment.userNotifications.getNotificationSettings
-      .flatMap { settings in
-        environment.apiClient.apiRequest(
-          route: .push(
-            .register(
-              .init(
-                authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                build: environment.build.number(),
-                token: token
-              )
+    return .fireAndForget {
+      let settings = await environment.userNotifications.getNotificationSettingsAsync()
+      _ = try await environment.apiClient.apiRequestAsync(
+        route: .push(
+          .register(
+            .init(
+              authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
+              build: environment.build.number(),
+              token: token
             )
           )
         )
-      }
-      .receive(on: environment.mainQueue)
-      .fireAndForget()
+      )
+    }
 
   case let .userNotifications(.willPresentNotification(_, completionHandler)):
     return .fireAndForget {
@@ -125,25 +127,17 @@ let appDelegateReducer = Reducer<
     return .none
 
   case let .userSettingsLoaded(result):
-    state = (try? result.get()) ?? state
-    return .merge(
-      environment.audioPlayer.setGlobalVolumeForSoundEffects(
-        state.soundEffectsVolume
-      )
-      .fireAndForget(),
-
-      environment.audioPlayer.setGlobalVolumeForSoundEffects(
-        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
+    state = (try? result.value) ?? state
+    return .fireAndForget { [state] in
+      async let setSoundEffects: Void =
+        await environment.audioPlayer.setGlobalVolumeForSoundEffectsAsync(state.soundEffectsVolume)
+      async let setMusic: Void = await environment.audioPlayer.setGlobalVolumeForMusicAsync(
+        environment.audioPlayer.secondaryAudioShouldBeSilencedHintAsync()
           ? 0
           : state.musicVolume
       )
-      .fireAndForget(),
-
-      environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
-        // NB: This is necessary because UIKit needs at least one tick of the run loop before we
-        //     can set the user interface style.
-        .subscribe(on: environment.mainQueue)
-        .fireAndForget()
-    )
+      async let setUI: Void =
+        await environment.setUserInterfaceStyleAsync(state.colorScheme.userInterfaceStyle)
+    }
   }
 }

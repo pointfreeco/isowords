@@ -37,5 +37,13 @@ extension FileClient {
         return self.load($0)
       }
     }
+    self.loadAsync = { [self] in
+      if $0 == file {
+        fulfill()
+        return try await data.tryMap { try JSONEncoder().encode($0) }.values.first(where: { _ in true })!
+      } else {
+        return try await loadAsync($0)
+      }
+    }
   }
 }

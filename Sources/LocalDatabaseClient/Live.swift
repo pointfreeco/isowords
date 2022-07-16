@@ -7,13 +7,13 @@ extension LocalDatabaseClient {
   public static func live(path: URL) -> Self {
     let _db = UncheckedSendable<Box<Sqlite?>>(wrappedValue: .init(wrappedValue: nil))
     @Sendable func db() throws -> Sqlite {
-      if _db.uncheckedValue.boxedValue == nil {
+      if _db.uncheckedValue.wrappedValue == nil {
         try! FileManager.default.createDirectory(
           at: path.deletingLastPathComponent(), withIntermediateDirectories: true
         )
-        _db.uncheckedValue.boxedValue = try Sqlite(path: path.absoluteString)
+        _db.uncheckedValue.wrappedValue = try Sqlite(path: path.absoluteString)
       }
-      return _db.uncheckedValue.boxedValue!
+      return _db.uncheckedValue.wrappedValue!
     }
     return Self(
       fetchGamesForWord: { word in .catching { try db().fetchGames(for: word) } },

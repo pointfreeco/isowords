@@ -20,15 +20,16 @@ import XCTest
 @testable import ComposableGameCenter
 @testable import HomeFeature
 
+@MainActor
 class TurnBasedTests: XCTestCase {
   let backgroundQueue = DispatchQueue.test
   let mainQueue = DispatchQueue.test
   let mainRunLoop = RunLoop.test
 
-  func testNewGame() throws {
+  func testNewGame() async throws {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
     var didSaveCurrentTurn = false
-    let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
+    let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
@@ -39,10 +40,9 @@ class TurnBasedTests: XCTestCase {
       ),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
-        $0.apiClient
-          .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
-        $0.apiClient.authenticate = { _ in .init(value: .mock) }
+        // TODO: asyncOverride
+        $0.apiClient.apiRequestAsync = { @Sendable _ in throw CancellationError() }
+        $0.apiClient.authenticateAsync = { _ in .mock }
         $0.apiClient.currentPlayer = { currentPlayer }
         $0.audioPlayer.loop = { _ in .none }
         $0.audioPlayer.play = { _ in .none }
@@ -54,44 +54,45 @@ class TurnBasedTests: XCTestCase {
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
+        $0.gameCenter.localPlayer.authenticateAsync = {}
+        $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
+        $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.endTurn = {
           didEndTurnWithRequest = $0
           return .none
         }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
+        $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
           didSaveCurrentTurn = true
           return .none
         }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
-        $0.lowPowerMode.start = .none
+        $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
+        $0.gameCenter.turnBasedMatchmakerViewController.presentAsync = { _ in }
+        $0.lowPowerMode.startAsync = { .never }
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
-        $0.serverConfig.refresh = { .init(value: .init()) }
+        $0.serverConfig.refreshAsync = { .init() }
         $0.timeZone = { .newYork }
       }
     )
 
-    store.send(.appDelegate(.didFinishLaunching))
-    store.send(.home(.onAppear))
+    await store.send(.appDelegate(.didFinishLaunching))
+    await store.send(.home(.onAppear))
 
-    store.receive(.home(.authenticationResponse(.mock)))
-    store.receive(.home(.serverConfigResponse(.init()))) {
+    await store.receive(.home(.authenticationResponse(.mock)))
+    await store.receive(.home(.serverConfigResponse(.init()))) {
       $0.home.hasChangelog = true
     }
 
-    self.backgroundQueue.advance()
-    self.mainRunLoop.advance()
-    store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    store.receive(.home(.matchesLoaded(.success([]))))
+    await self.backgroundQueue.advance()
+    await self.mainRunLoop.advance()
+    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
+    await store.receive(.home(.matchesLoaded(.success([]))))
 
-    store.send(.home(.multiplayer(.startButtonTapped)))
+    await store.send(.home(.multiplayer(.startButtonTapped)))
 
-    listener.send(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
+    listener.continuation
+      .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
 
     let initialGameState = GameState(
       inProgressGame: InProgressGame(
@@ -109,7 +110,7 @@ class TurnBasedTests: XCTestCase {
         secondsPlayed: 0
       )
     )
-    store.receive(
+    await store.receive(
       .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true))))
     ) {
       $0.game = initialGameState
@@ -125,19 +126,19 @@ class TurnBasedTests: XCTestCase {
       XCTAssertNoDifference(key, "multiplayerOpensCount")
       return .none
     }
-    store.send(.currentGame(.game(.task)))
+    await store.send(.currentGame(.game(.task)))
 
-    store.receive(.currentGame(.game(.gameLoaded))) {
+    await store.receive(.currentGame(.game(.gameLoaded))) {
       try XCTUnwrap(&$0.game) {
         $0.isGameLoaded = true
       }
     }
-    store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
+    await store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
 
-    self.backgroundQueue.advance()
-    self.mainRunLoop.advance()
-    store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    store.receive(.home(.matchesLoaded(.success([]))))
+    await self.backgroundQueue.advance()
+    await self.mainRunLoop.advance()
+    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
+    await store.receive(.home(.matchesLoaded(.success([]))))
 
     XCTAssert(didSaveCurrentTurn)
 
@@ -146,36 +147,36 @@ class TurnBasedTests: XCTestCase {
     let A = IndexedCubeFace(index: index, side: .left)
     let B = IndexedCubeFace(index: index, side: .right)
 
-    store.send(.currentGame(.game(.tap(.began, C)))) {
+    await store.send(.currentGame(.game(.tap(.began, C)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = C
         $0.selectedWord = [C]
       }
     }
-    store.send(.currentGame(.game(.tap(.ended, C)))) {
+    await store.send(.currentGame(.game(.tap(.ended, C)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    store.send(.currentGame(.game(.tap(.began, A)))) {
+    await store.send(.currentGame(.game(.tap(.began, A)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = A
         $0.selectedWord = [C, A]
       }
     }
-    store.send(.currentGame(.game(.tap(.ended, A)))) {
+    await store.send(.currentGame(.game(.tap(.ended, A)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    store.send(.currentGame(.game(.tap(.began, B)))) {
+    await store.send(.currentGame(.game(.tap(.began, B)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = B
         $0.selectedWord = [C, A, B]
         $0.selectedWordIsValid = true
       }
     }
-    store.send(.currentGame(.game(.tap(.ended, B)))) {
+    await store.send(.currentGame(.game(.tap(.ended, B)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
@@ -222,7 +223,7 @@ class TurnBasedTests: XCTestCase {
       .init(value: updatedMatch)
     }
 
-    store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
+    await store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
 
       XCTAssertNoDifference(
@@ -241,7 +242,7 @@ class TurnBasedTests: XCTestCase {
       )
     }
 
-    store.receive(
+    await store.receive(
       .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
     ) {
       try XCTUnwrap(&$0.game) {
@@ -256,8 +257,8 @@ class TurnBasedTests: XCTestCase {
       }
     }
 
-    store.send(.currentGame(.onDisappear))
-    listener.send(completion: .finished)
+    await store.send(.currentGame(.onDisappear))
+    listener.continuation.finish()
   }
 
   func testResumeGame() {

@@ -78,14 +78,12 @@ public let multiplayerReducer = Reducer<
       return .none
 
     case .startButtonTapped:
-      if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
-        return environment.gameCenter.turnBasedMatchmakerViewController
-          .present(showExistingMatches: false)
-          .fireAndForget()
-
-      } else {
-        return environment.gameCenter.localPlayer.presentAuthenticationViewController
-          .fireAndForget()
+      return .fireAndForget {
+        if await environment.gameCenter.localPlayer.localPlayerAsync().isAuthenticated {
+          try await environment.gameCenter.turnBasedMatchmakerViewController.presentAsync(false)
+        } else {
+          await environment.gameCenter.localPlayer.presentAuthenticationViewControllerAsync()
+        }
       }
 
     case .setNavigation(tag: .pastGames):

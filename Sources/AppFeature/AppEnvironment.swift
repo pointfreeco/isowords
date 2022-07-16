@@ -36,7 +36,8 @@ public struct AppEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
+  @available(*, deprecated) public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
+  public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var timeZone: () -> TimeZone
   public var userDefaults: UserDefaultsClient
@@ -60,6 +61,7 @@ public struct AppEnvironment {
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
     setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
+    setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     timeZone: @escaping () -> TimeZone,
     userDefaults: UserDefaultsClient,
@@ -82,6 +84,7 @@ public struct AppEnvironment {
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.setUserInterfaceStyle = setUserInterfaceStyle
+    self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
     self.storeKit = storeKit
     self.timeZone = timeZone
     self.userDefaults = userDefaults
@@ -93,7 +96,7 @@ public struct AppEnvironment {
       apiClient: .failing,
       applicationClient: .failing,
       audioPlayer: .failing,
-      backgroundQueue: .failing("backgroundQueue"),
+      backgroundQueue: .unimplemented("backgroundQueue"),
       build: .failing,
       database: .failing,
       deviceId: .failing,
@@ -102,18 +105,14 @@ public struct AppEnvironment {
       fileClient: .failing,
       gameCenter: .failing,
       lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue"),
-      mainRunLoop: .failing("mainRunLoop"),
+      mainQueue: .unimplemented("mainQueue"),
+      mainRunLoop: .unimplemented("mainRunLoop"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyle: { _ in
-        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
-      },
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
+      setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
       storeKit: .failing,
-      timeZone: {
-        XCTFail("\(Self.self).timeZone is unimplemented")
-        return TimeZone(secondsFromGMT: 0)!
-      },
+      timeZone: XCTUnimplemented("\(Self.self).timeZone"),
       userDefaults: .failing,
       userNotifications: .failing
     )
@@ -136,6 +135,7 @@ public struct AppEnvironment {
       remoteNotifications: .noop,
       serverConfig: .noop,
       setUserInterfaceStyle: { _ in .none },
+      setUserInterfaceStyleAsync: { _ in },
       storeKit: .noop,
       timeZone: { .autoupdatingCurrent },
       userDefaults: .noop,

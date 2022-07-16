@@ -6,14 +6,12 @@ import XCTest
 @MainActor
 class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterAuthenticated() async {
-    var didPresentMatchmakerViewController = false
+    let didPresentMatchmakerViewController = SendableState(false)
 
     var environment = MultiplayerEnvironment.failing
-    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatchmakerViewController.present = { _ in
-      .fireAndForget {
-        didPresentMatchmakerViewController = true
-      }
+    environment.gameCenter.localPlayer.localPlayerAsync = { .authenticated }
+    environment.gameCenter.turnBasedMatchmakerViewController.presentAsync = { _ in
+      await didPresentMatchmakerViewController.set(true)
     }
 
     let store = TestStore(
@@ -23,17 +21,16 @@ class MultiplayerFeatureTests: XCTestCase {
     )
 
     await store.send(.startButtonTapped)
-
-    XCTAssertNoDifference(didPresentMatchmakerViewController, true)
+    await didPresentMatchmakerViewController.modify { XCTAssertNoDifference($0, true) }
   }
 
   func testStartGame_GameCenterNotAuthenticated() async {
-    var didPresentAuthentication = false
+    let didPresentAuthentication = SendableState(false)
 
     var environment = MultiplayerEnvironment.failing
-    environment.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-    environment.gameCenter.localPlayer.presentAuthenticationViewController = .fireAndForget {
-      didPresentAuthentication = true
+    environment.gameCenter.localPlayer.localPlayerAsync = { .notAuthenticated }
+    environment.gameCenter.localPlayer.presentAuthenticationViewControllerAsync = {
+      await didPresentAuthentication.set(true)
     }
 
     let store = TestStore(
@@ -43,8 +40,7 @@ class MultiplayerFeatureTests: XCTestCase {
     )
 
     await store.send(.startButtonTapped)
-
-    XCTAssertNoDifference(didPresentAuthentication, true)
+    await didPresentAuthentication.modify { XCTAssertNoDifference($0, true) }
   }
 
   func testNavigateToPastGames() async {

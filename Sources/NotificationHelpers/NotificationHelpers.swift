@@ -20,3 +20,13 @@ extension Effect where Output == Never, Failure == Never {
       .eraseToEffect()
   }
 }
+
+public func registerForRemoteNotificationsAsync(
+  remoteNotifications: RemoteNotificationsClient,
+  userNotifications: UserNotificationClient
+) async {
+  let settings = await userNotifications.getNotificationSettingsAsync()
+  guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+  else { return }
+  await remoteNotifications.registerAsync()
+}

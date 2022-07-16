@@ -254,11 +254,7 @@ public struct ApiClient {
       self.apiRequestAsync = { [self] route in
         if route == matchingRoute {
           fulfill()
-          if #available(iOS 15.0, *) {
-            return try await response.values.first(where: { _ in true })!
-          } else {
-            fatalError("TODO")
-          }
+          return try await response.values.first(where: { _ in true })!
         } else {
           return try await self.apiRequestAsync(route)
         }

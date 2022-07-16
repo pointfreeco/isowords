@@ -272,7 +272,7 @@ class PersistenceTests: XCTestCase {
       }
     )
 
-    await store.send(.appDelegate(.didFinishLaunching))
+    let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.receive(.savedGamesLoaded(.success(savedGames))) {
       $0.home.savedGames = savedGames
     }
@@ -282,6 +282,7 @@ class PersistenceTests: XCTestCase {
     await store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
       $0.game = GameState(inProgressGame: .mock)
     }
+    await task.cancel()
   }
 
   func testTurnBasedAbandon() async {
