@@ -142,7 +142,6 @@ public enum OnboardingAction: Equatable {
   case task
 
   public enum AlertAction: Equatable {
-    case confirmSkipButtonTapped
     case dismiss
     case resumeButtonTapped
     case skipButtonTapped
@@ -216,20 +215,15 @@ public let onboardingReducer = Reducer<
   OnboardingEnvironment
 > { state, action, environment in
   switch action {
-  case .alert(.confirmSkipButtonTapped):
-    state.alert = nil
-    state.step = OnboardingState.Step.allCases.last!
-    return .none
-
   case .alert(.dismiss), .alert(.resumeButtonTapped):
     state.alert = nil
     return .none
 
   case .alert(.skipButtonTapped):
     state.alert = nil
+    state.step = OnboardingState.Step.allCases.last!
 
-    return .run { send in
-      await send(.alert(.confirmSkipButtonTapped), animation: .default)
+    return .fireAndForget {
       await environment.audioPlayer.playAsync(.uiSfxTap)
     }
 
