@@ -265,7 +265,6 @@ class PersistenceTests: XCTestCase {
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
         $0.fileClient.override(load: savedGamesFileName, .init(value: savedGames))
-        $0.gameCenter.localPlayer.listenerAsync = { .finished }
       }
     )
 
