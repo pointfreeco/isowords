@@ -38,13 +38,11 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       )
       .onChange(of: { $0.gameOver == nil }) { _, _, _, environment in
         .merge(
-          Effect
-            .merge(
-              AudioPlayerClient.Sound.allMusic
-                .filter { $0 != .gameOverMusicLoop }
-                .map(environment.audioPlayer.stop)
-            )
-            .fireAndForget(),
+          .fireAndForget {
+            for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
+              await environment.audioPlayer.stopAsync(music)
+            }
+          },
 
           .cancel(id: CubeShakingId())
         )

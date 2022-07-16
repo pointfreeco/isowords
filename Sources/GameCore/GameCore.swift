@@ -1005,9 +1005,11 @@ extension Effect where Output == Never, Failure == Never {
       .cancel(id: ListenerId.self),
       .cancel(id: LowPowerModeId.self),
       .cancel(id: TimerId.self),
-      Effect
-        .merge(AudioPlayerClient.Sound.allMusic.map(audioPlayer.stop))
-        .fireAndForget()
+      .fireAndForget {
+        for music in AudioPlayerClient.Sound.allMusic {
+          await audioPlayer.stopAsync(music)
+        }
+      }
     )
   }
 }
@@ -1115,9 +1117,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       return .cancel(id: ListenerId.self)
 
     case .task:
-      return environment.gameCenter.localPlayer.listener
-        .map { .gameCenter(.listener($0)) }
-        .cancellable(id: ListenerId.self)
+      return .run { send in
+        for await event in environment.gameCenter.localPlayer.listenerAsync() {
+          await send(.gameCenter(.listener(event)))
+        }
+      }
+      .cancellable(id: ListenerId.self)
 
     case .submitButtonTapped,
       .wordSubmitButton(.delegate(.confirmSubmit)),

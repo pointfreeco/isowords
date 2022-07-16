@@ -807,6 +807,20 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
 }
 
 private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async {
+  await send(
+    .matchesLoaded(
+      TaskResult {
+        let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
+          .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
+
+        await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+
+        return activeMatches
+      }
+    ),
+    animation: .default
+  )
+
   for await event in environment.gameCenter.localPlayer.listenerAsync() {
     switch event {
     case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):

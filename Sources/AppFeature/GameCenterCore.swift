@@ -126,16 +126,15 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
           switch action {
           case .appDelegate(.didFinishLaunching):
-            return environment.gameCenter.localPlayer.authenticate
-              .map { $0 == nil }
-              .removeDuplicates()
-              .flatMap {
-                $0
-                  ? environment.gameCenter.localPlayer.listener.map { .gameCenter(.listener($0)) }
-                    .cancellable(id: ListenerId(), cancelInFlight: true)
-                  : .cancel(id: ListenerId())
+            return .run { send in
+              try await environment.gameCenter.localPlayer.authenticateAsync()
+              for await event in environment.gameCenter.localPlayer.listenerAsync() {
+                await send(.gameCenter(.listener(event)))
               }
-              .eraseToEffect()
+            } catch: { _, send in
+              await Task.cancel(id: ListenerId())
+            }
+            .cancellable(id: ListenerId(), cancelInFlight: true)
 
           case .currentGame(.game(.gameOver(.rematchButtonTapped))):
             guard

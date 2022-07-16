@@ -391,10 +391,6 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.alert(.skipButtonTapped)) {
-      $0.alert = nil
-    }
-
-    await store.receive(.alert(.confirmSkipButtonTapped)) {
       $0.step = .step21_PlayAGameYourself
     }
 

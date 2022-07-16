@@ -34,6 +34,27 @@ class TurnBasedTests: XCTestCase {
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
     let currentPlayer = CurrentPlayerEnvelope.mock
+    let dailyChallenges = [
+      FetchTodaysDailyChallengeResponse(
+        dailyChallenge: .init(
+          endsAt: self.mainRunLoop.now.date,
+          gameMode: .unlimited,
+          id: .init(rawValue: .dailyChallengeId),
+          language: .en
+        ),
+        yourResult: .init(outOf: 0, rank: nil, score: nil)
+      ),
+      FetchTodaysDailyChallengeResponse(
+        dailyChallenge: .init(
+          endsAt: self.mainRunLoop.now.date,
+          gameMode: .timed,
+          id: .init(rawValue: .dailyChallengeId),
+          language: .en
+        ),
+        yourResult: .init(outOf: 0, rank: nil, score: nil)
+      ),
+    ]
+      let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
     let store = TestStore(
       initialState: .init(
         home: .init(route: .multiplayer(.init(hasPastGames: false)))
@@ -41,12 +62,24 @@ class TurnBasedTests: XCTestCase {
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
         // TODO: asyncOverride
-        $0.apiClient.apiRequestAsync = { @Sendable _ in throw CancellationError() }
+        $0.apiClient.apiRequestAsync = { @Sendable route in
+          switch route {
+          case .dailyChallenge(.today):
+            return try (JSONEncoder().encode(dailyChallenges), .init())
+          case .leaderboard(.weekInReview):
+            return try (JSONEncoder().encode(weekInReview), .init())
+          default:
+            return try await Task.never()
+          }
+        }
         $0.apiClient.authenticateAsync = { _ in .mock }
         $0.apiClient.currentPlayer = { currentPlayer }
+        $0.apiClient.currentPlayerAsync = { currentPlayer }
         $0.audioPlayer.loop = { _ in .none }
+        $0.audioPlayer.loopAsync = { _ in }
         $0.audioPlayer.play = { _ in .none }
-        $0.audioPlayer.stop = { _ in .none }
+        $0.audioPlayer.playAsync = { _ in }
+        $0.audioPlayer.stopAsync = { _ in }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.build.number = { 42 }
         $0.database.playedGamesCount = { _ in .none }
@@ -54,34 +87,47 @@ class TurnBasedTests: XCTestCase {
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
+        $0.fileClient.saveAsync = { @Sendable _, _ in }
+        $0.fileClient.load = { _ in .none }
         $0.gameCenter.localPlayer.authenticateAsync = {}
         $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
+        $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.endTurn = {
           didEndTurnWithRequest = $0
           return .none
         }
+        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
           didSaveCurrentTurn = true
           return .none
         }
+        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
+        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
         $0.gameCenter.turnBasedMatchmakerViewController.presentAsync = { _ in }
         $0.lowPowerMode.startAsync = { .never }
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
         $0.serverConfig.refreshAsync = { .init() }
+        $0.userDefaults.setIntegerAsync = { _, _ in }
         $0.timeZone = { .newYork }
       }
     )
 
-    await store.send(.appDelegate(.didFinishLaunching))
+    let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     await store.send(.home(.onAppear))
 
     await store.receive(.home(.authenticationResponse(.mock)))
     await store.receive(.home(.serverConfigResponse(.init()))) {
       $0.home.hasChangelog = true
+    }
+    await store.receive(.home(.dailyChallengeResponse(.success(dailyChallenges)))) {
+      $0.home.dailyChallenges = dailyChallenges
+    }
+    await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
+      $0.home.weekInReview = weekInReview
     }
 
     await self.backgroundQueue.advance()
@@ -93,6 +139,8 @@ class TurnBasedTests: XCTestCase {
 
     listener.continuation
       .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
+    await self.backgroundQueue.advance()
+    await self.mainRunLoop.advance()
 
     let initialGameState = GameState(
       inProgressGame: InProgressGame(
@@ -126,19 +174,17 @@ class TurnBasedTests: XCTestCase {
       XCTAssertNoDifference(key, "multiplayerOpensCount")
       return .none
     }
-    await store.send(.currentGame(.game(.task)))
+    let gameTask = await store.send(.currentGame(.game(.task)))
 
+    await store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
     await store.receive(.currentGame(.game(.gameLoaded))) {
       try XCTUnwrap(&$0.game) {
         $0.isGameLoaded = true
       }
     }
-    await store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
 
     await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
-    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    await store.receive(.home(.matchesLoaded(.success([]))))
 
     XCTAssert(didSaveCurrentTurn)
 
@@ -258,7 +304,8 @@ class TurnBasedTests: XCTestCase {
     }
 
     await store.send(.currentGame(.onDisappear))
-    listener.continuation.finish()
+    await gameTask.cancel()
+    await didFinishLaunchingTask.cancel()
   }
 
   func testResumeGame() {
