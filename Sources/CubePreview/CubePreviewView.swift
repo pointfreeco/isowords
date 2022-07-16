@@ -59,8 +59,8 @@ public enum CubePreviewAction: BindableAction, Equatable {
   case binding(BindingAction<CubePreviewState>)
   case cubeScene(CubeSceneView.ViewAction)
   case lowPowerModeResponse(Bool)
-  case onAppear
   case tap
+  case task
 }
 
 public struct CubePreviewEnvironment {
@@ -101,7 +101,17 @@ public let cubePreviewReducer = Reducer<
     state.isOnLowPowerMode = isOn
     return .none
 
-  case .onAppear:
+  case .tap:
+    state.nub.location = .offScreenRight
+    switch state.moves[state.moveIndex].type {
+    case let .playedWord(faces):
+      state.selectedCubeFaces = faces
+    case .removedCube:
+      break
+    }
+    return .cancel(id: SelectionId.self)
+
+  case .task:
     return .run { [move = state.moves[state.moveIndex]] send in
       await send(
         .lowPowerModeResponse(
@@ -153,16 +163,6 @@ public let cubePreviewReducer = Reducer<
       }
     }
     .cancellable(id: SelectionId.self)
-
-  case .tap:
-    state.nub.location = .offScreenRight
-    switch state.moves[state.moveIndex].type {
-    case let .playedWord(faces):
-      state.selectedCubeFaces = faces
-    case .removedCube:
-      break
-    }
-    return .cancel(id: SelectionId.self)
   }
 }
 .binding()
@@ -243,9 +243,7 @@ public struct CubePreviewView: View {
             action: CubePreviewAction.cubeScene
           )
         )
-        .onAppear {
-          self.viewStore.send(.onAppear)
-        }
+        .task { await self.viewStore.send(.task).finish() }
       }
       .background(
         self.viewStore.isAnimationReduced
