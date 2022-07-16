@@ -54,7 +54,7 @@ class TurnBasedTests: XCTestCase {
         yourResult: .init(outOf: 0, rank: nil, score: nil)
       ),
     ]
-      let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
+    let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
     let store = TestStore(
       initialState: .init(
         home: .init(route: .multiplayer(.init(hasPastGames: false)))
@@ -308,41 +308,88 @@ class TurnBasedTests: XCTestCase {
     await didFinishLaunchingTask.cancel()
   }
 
-  func testResumeGame() {
-    let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
+  func testResumeGame() async {
+    let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
+
+    let dailyChallenges = [
+      FetchTodaysDailyChallengeResponse(
+        dailyChallenge: .init(
+          endsAt: self.mainRunLoop.now.date,
+          gameMode: .unlimited,
+          id: .init(rawValue: .dailyChallengeId),
+          language: .en
+        ),
+        yourResult: .init(outOf: 0, rank: nil, score: nil)
+      ),
+      FetchTodaysDailyChallengeResponse(
+        dailyChallenge: .init(
+          endsAt: self.mainRunLoop.now.date,
+          gameMode: .timed,
+          id: .init(rawValue: .dailyChallengeId),
+          language: .en
+        ),
+        yourResult: .init(outOf: 0, rank: nil, score: nil)
+      ),
+    ]
+    let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
+
     let store = TestStore(
       initialState: .init(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
         $0.apiClient.authenticate = { _ in .init(value: .mock) }
+        $0.apiClient.authenticateAsync = { _ in .mock }
+        $0.build.number = { 42 }
         $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
-        $0.apiClient
-          .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
+        $0.apiClient.apiRequestAsync = { @Sendable route in
+          switch route {
+          case .dailyChallenge(.today):
+            return try (JSONEncoder().encode(dailyChallenges), .init())
+          case .leaderboard(.weekInReview):
+            return try (JSONEncoder().encode(weekInReview), .init())
+          default:
+            return try await Task.never()
+          }
+        }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.deviceId.id = { .deviceId }
+        $0.fileClient.saveAsync = { @Sendable _, _ in }
         $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
+        $0.gameCenter.localPlayer.authenticateAsync = {}
+        $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
+        $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
+        $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.serverConfig.config = { .init() }
         $0.timeZone = { .newYork }
       }
     )
 
-    store.send(.appDelegate(.didFinishLaunching))
-    store.send(.home(.onAppear))
-    store.receive(.home(.authenticationResponse(.mock)))
+    let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
+    await store.send(.home(.onAppear))
 
-    self.backgroundQueue.advance()
-    store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    store.receive(.home(.matchesLoaded(.success([]))))
+    await self.backgroundQueue.advance()
+    await store.receive(.home(.authenticationResponse(.mock)))
+    await store.receive(.home(.serverConfigResponse(.init()))) {
+      $0.home.hasChangelog = true
+    }
+    await store.receive(.home(.dailyChallengeResponse(.success(dailyChallenges)))) {
+      $0.home.dailyChallenges = dailyChallenges
+    }
+    await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
+      $0.home.weekInReview = weekInReview
+    }
 
-    listener.send(.turnBased(.receivedTurnEventForMatch(.inProgress, didBecomeActive: true)))
+    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
+    await store.receive(.home(.matchesLoaded(.success([]))))
 
-    store.receive(
+    listener.continuation
+      .yield(.turnBased(.receivedTurnEventForMatch(.inProgress, didBecomeActive: true)))
+
+    await store.receive(
       .gameCenter(
         .listener(
           .turnBased(
@@ -371,47 +418,91 @@ class TurnBasedTests: XCTestCase {
       ) { $0.gameCurrentTime = self.mainRunLoop.now.date }
     }
 
-    self.backgroundQueue.advance()
-    store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    store.receive(.home(.matchesLoaded(.success([]))))
+    await self.backgroundQueue.advance()
 
-    listener.send(completion: .finished)
+    await didFinishLaunchingTask.cancel()
   }
 
-  func testResumeForfeitedGame() {
-    let listener = PassthroughSubject<LocalPlayerClient.ListenerEvent, Never>()
+  func testResumeForfeitedGame() async {
+    let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
+
+    let dailyChallenges = [
+      FetchTodaysDailyChallengeResponse(
+        dailyChallenge: .init(
+          endsAt: self.mainRunLoop.now.date,
+          gameMode: .unlimited,
+          id: .init(rawValue: .dailyChallengeId),
+          language: .en
+        ),
+        yourResult: .init(outOf: 0, rank: nil, score: nil)
+      ),
+      FetchTodaysDailyChallengeResponse(
+        dailyChallenge: .init(
+          endsAt: self.mainRunLoop.now.date,
+          gameMode: .timed,
+          id: .init(rawValue: .dailyChallengeId),
+          language: .en
+        ),
+        yourResult: .init(outOf: 0, rank: nil, score: nil)
+      ),
+    ]
+    let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
+
     let store = TestStore(
       initialState: .init(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
         $0.apiClient.authenticate = { _ in .init(value: .mock) }
+        $0.apiClient.authenticateAsync = { _ in .mock }
         $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.override(route: .dailyChallenge(.today(language: .en)), withResponse: .none)
-        $0.apiClient
-          .override(route: .leaderboard(.weekInReview(language: .en)), withResponse: .none)
+        $0.apiClient.apiRequestAsync = { @Sendable route in
+          switch route {
+          case .dailyChallenge(.today):
+            return try (JSONEncoder().encode(dailyChallenges), .init())
+          case .leaderboard(.weekInReview):
+            return try (JSONEncoder().encode(weekInReview), .init())
+          default:
+            return try await Task.never()
+          }
+        }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
+        $0.build.number = { 42 }
         $0.deviceId.id = { .deviceId }
+        $0.fileClient.saveAsync = { _, _ in }
         $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.listener = listener.eraseToEffect()
+        $0.gameCenter.localPlayer.authenticateAsync = {}
+        $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
+        $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
+        $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.serverConfig.config = { .init() }
         $0.timeZone = { .newYork }
       }
     )
 
-    store.send(.appDelegate(.didFinishLaunching))
-    store.send(.home(.onAppear))
-    store.receive(.home(.authenticationResponse(.mock)))
+    let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
+    await store.send(.home(.onAppear))
+    await store.receive(.home(.authenticationResponse(.mock)))
 
-    self.backgroundQueue.advance()
-    store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    store.receive(.home(.matchesLoaded(.success([]))))
+    await store.receive(.home(.serverConfigResponse(.init()))) {
+      $0.home.hasChangelog = true
+    }
+    await store.receive(.home(.dailyChallengeResponse(.success(dailyChallenges)))) {
+      $0.home.dailyChallenges = dailyChallenges
+    }
+    await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
+      $0.home.weekInReview = weekInReview
+    }
+    await self.backgroundQueue.advance()
+    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
+    await store.receive(.home(.matchesLoaded(.success([]))))
 
-    listener.send(.turnBased(.receivedTurnEventForMatch(.forfeited, didBecomeActive: true)))
+    listener.continuation
+      .yield(.turnBased(.receivedTurnEventForMatch(.forfeited, didBecomeActive: true)))
 
-    store.receive(
+    await store.receive(
       .gameCenter(
         .listener(
           .turnBased(
@@ -449,11 +540,9 @@ class TurnBasedTests: XCTestCase {
       $0.game = gameState
     }
 
-    self.backgroundQueue.advance()
-    store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    store.receive(.home(.matchesLoaded(.success([]))))
+    await self.backgroundQueue.advance()
 
-    listener.send(completion: .finished)
+    await didFinishLaunchingTask.cancel()
   }
 
   func testRemovingCubes() {

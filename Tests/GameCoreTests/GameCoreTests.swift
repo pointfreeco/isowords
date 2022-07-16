@@ -3,12 +3,13 @@ import ComposableArchitecture
 import GameCore
 import XCTest
 
+@MainActor
 class GameCoreTests: XCTestCase {
-  func testForfeitTurnBasedGame() {
+  func testForfeitTurnBasedGame() async {
     var didEndMatchInTurn = false
 
     var environment = GameEnvironment.failing
-    environment.audioPlayer.stop = { _ in .none }
+    environment.audioPlayer.stopAsync = { _ in }
     environment.database.saveGame = { _ in .none }
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
     environment.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
@@ -36,7 +37,7 @@ class GameCoreTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.forfeitGameButtonTapped) {
+    await store.send(.forfeitGameButtonTapped) {
       $0.alert = .init(
         title: .init("Are you sure?"),
         message: .init(
@@ -50,7 +51,7 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    store.send(.alert(.forfeitButtonTapped)) {
+    await store.send(.alert(.forfeitButtonTapped)) {
       $0.alert = nil
       $0.gameOver = .init(
         completedGame: .init(gameState: gameState),
@@ -60,5 +61,7 @@ class GameCoreTests: XCTestCase {
     }
 
     XCTAssertNoDifference(didEndMatchInTurn, true)
+
+    await store.finish()
   }
 }
