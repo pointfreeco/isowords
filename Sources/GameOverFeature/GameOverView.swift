@@ -255,37 +255,37 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
         await withThrowingTaskGroup(of: Void.self) { group in
           group.addTask {
-            await send(
-              .submitGameResponse(
-                TaskResult {
-                  if isDemo {
-                    return try await .solo(
+            if isDemo {
+              let request = ServerRoute.Demo.SubmitRequest(
+                gameMode: completedGame.gameMode,
+                score: completedGame.currentScore
+              )
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await .solo(
                       environment.apiClient.requestAsync(
-                        route: .demo(
-                          .submitGame(
-                            .init(
-                              gameMode: completedGame.gameMode,
-                              score: completedGame.currentScore
-                            )
-                          )
-                        ),
+                        route: .demo(.submitGame(request)),
                         as: LeaderboardScoreResult.self
                       )
                     )
-                  } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-                    completedGame: completedGame
-                  ) {
-                    return try await environment.apiClient.apiRequestAsync(
+                  }
+                ),
+                animation: .default
+              )
+            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(completedGame: completedGame) {
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await environment.apiClient.apiRequestAsync(
                       route: .games(.submit(request)),
                       as: SubmitGameResponse.self
                     )
-                  } else {
-                    throw CancellationError()
                   }
-                }
-              ),
-              animation: .default
-            )
+                ),
+                animation: .default
+              )
+            }
           }
 
           group.addTask {
