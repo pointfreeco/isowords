@@ -21,12 +21,10 @@ class OnboardingFeatureTests: XCTestCase {
     environment.feedbackGenerator = .noop
     environment.mainRunLoop = .immediate
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    environment.userDefaults.setBool = { value, key in
-      .fireAndForget {
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertNoDifference(value, true)
-        isFirstLaunchOnboardingKeySet = true
-      }
+    environment.userDefaults.setBoolAsync = { value, key in
+      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+      XCTAssertNoDifference(value, true)
+      isFirstLaunchOnboardingKeySet = true
     }
 
     let store = TestStore(
@@ -35,7 +33,7 @@ class OnboardingFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await self.mainQueue.advance(by: .seconds(4))
     await store.receive(.delayedNextStep) {
@@ -319,12 +317,10 @@ class OnboardingFeatureTests: XCTestCase {
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return true
     }
-    environment.userDefaults.setBool = { value, key in
-      .fireAndForget {
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertNoDifference(value, true)
-        isFirstLaunchOnboardingKeySet = true
-      }
+    environment.userDefaults.setBoolAsync = { value, key in
+      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+      XCTAssertNoDifference(value, true)
+      isFirstLaunchOnboardingKeySet = true
     }
 
     let store = TestStore(
@@ -333,7 +329,7 @@ class OnboardingFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await self.mainQueue.advance(by: .seconds(4))
     await store.receive(.delayedNextStep) {
@@ -359,12 +355,10 @@ class OnboardingFeatureTests: XCTestCase {
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return false
     }
-    environment.userDefaults.setBool = { value, key in
-      .fireAndForget {
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertNoDifference(value, true)
-        isFirstLaunchOnboardingKeySet = true
-      }
+    environment.userDefaults.setBoolAsync = { value, key in
+      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+      XCTAssertNoDifference(value, true)
+      isFirstLaunchOnboardingKeySet = true
     }
 
     let store = TestStore(
@@ -373,7 +367,7 @@ class OnboardingFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await self.mainQueue.advance(by: .seconds(4))
     await store.receive(.delayedNextStep) {

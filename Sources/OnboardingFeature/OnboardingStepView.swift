@@ -331,7 +331,7 @@ struct OnboardingStepView: View {
         )
       }
     }
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
     .alert(
       self.store.scope(state: \.alert, action: OnboardingAction.alert),
       dismiss: .dismiss

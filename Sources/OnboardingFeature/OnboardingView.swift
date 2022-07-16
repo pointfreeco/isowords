@@ -137,9 +137,9 @@ public enum OnboardingAction: Equatable {
   case delegate(DelegateAction)
   case game(GameAction)
   case getStartedButtonTapped
-  case onAppear
   case nextButtonTapped
   case skipButtonTapped
+  case task
 
   public enum AlertAction: Equatable {
     case confirmSkipButtonTapped
@@ -227,30 +227,22 @@ public let onboardingReducer = Reducer<
 
   case .alert(.skipButtonTapped):
     state.alert = nil
-    return .merge(
-      Effect(value: .alert(.confirmSkipButtonTapped))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect(),
 
-      environment.audioPlayer.play(.uiSfxTap)
-        .fireAndForget()
-    )
+    return .run { send in
+      await send(.alert(.confirmSkipButtonTapped), animation: .default)
+      await environment.audioPlayer.playAsync(.uiSfxTap)
+    }
 
   case .delayedNextStep:
     state.step.next()
     return .none
 
   case .delegate(.getStarted):
-    return .merge(
-      environment.userDefaults
-        .setHasShownFirstLaunchOnboarding(true)
-        .fireAndForget(),
-
-      environment.audioPlayer.stop(.onboardingBgMusic)
-        .fireAndForget(),
-
-      .cancel(id: DelayedNextStepId())
-    )
+    return .fireAndForget {
+      await environment.userDefaults.setHasShownFirstLaunchOnboardingAsync(true)
+      await environment.audioPlayer.stopAsync(.onboardingBgMusic)
+      await Task.cancel(id: DelayedNextStepId.self)
+    }
 
   case .game where state.step.isCongratsStep:
     return .none
@@ -322,56 +314,16 @@ public let onboardingReducer = Reducer<
   case .getStartedButtonTapped:
     return .init(value: .delegate(.getStarted))
 
-  case .onAppear:
-    var firstStepDelay: Int {
-      switch state.presentationStyle {
-      case .demo, .firstLaunch:
-        return 4
-      case .help:
-        return 2
-      }
-    }
-
-    return .merge(
-      environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget(),
-
-      Effect
-        .catching { try environment.dictionary.load(.en) }
-        .subscribe(on: environment.backgroundQueue)
-        .receive(on: environment.mainQueue)
-        .fireAndForget(),
-
-      state.step == OnboardingState.Step.allCases[0]
-        ? Effect(value: .delayedNextStep)
-          .delay(for: .seconds(firstStepDelay), scheduler: environment.mainQueue.animation())
-          .eraseToEffect()
-          .cancellable(id: DelayedNextStepId())
-        : .none,
-
-      environment.audioPlayer.play(
-        state.presentationStyle == .demo
-          ? .timedGameBgLoop1
-          : .onboardingBgMusic
-      )
-      .fireAndForget()
-    )
-
   case .nextButtonTapped:
     state.step.next()
-    return environment.audioPlayer.play(.uiSfxTap)
-      .fireAndForget()
+    return .fireAndForget { await environment.audioPlayer.playAsync(.uiSfxTap) }
 
   case .skipButtonTapped:
     guard !environment.userDefaults.hasShownFirstLaunchOnboarding else {
-      return .merge(
-        Effect(value: .delegate(.getStarted))
-          .receive(on: ImmediateScheduler.shared.animation())
-          .eraseToEffect(),
-
-        environment.audioPlayer.play(.uiSfxTap)
-          .fireAndForget()
-      )
+      return .run { send in
+        await send(.delegate(.getStarted), animation: .default)
+        await environment.audioPlayer.playAsync(.uiSfxTap)
+      }
     }
     state.alert = .init(
       title: .init("Skip tutorial?"),
@@ -386,8 +338,33 @@ public let onboardingReducer = Reducer<
       ),
       secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
     )
-    return environment.audioPlayer.play(.uiSfxTap)
-      .fireAndForget()
+    return .fireAndForget { await environment.audioPlayer.playAsync(.uiSfxTap) }
+
+  case .task:
+    let firstStepDelay: Int = {
+      switch state.presentationStyle {
+      case .demo, .firstLaunch:
+        return 4
+      case .help:
+        return 2
+      }
+    }()
+
+    return .run { [step = state.step, presentationStyle = state.presentationStyle] send in
+      await environment.audioPlayer.loadAsync(AudioPlayerClient.Sound.allCases)
+      _ = try environment.dictionary.load(.en)
+
+      if step == OnboardingState.Step.allCases[0] {
+        try await withTaskCancellation(id: DelayedNextStepId.self) {
+          try await environment.mainQueue.sleep(for: .seconds(firstStepDelay))
+          await send(.delayedNextStep, animation: .default)
+        }
+      }
+
+      await environment.audioPlayer.playAsync(
+        presentationStyle == .demo ? .timedGameBgLoop1 : .onboardingBgMusic
+      )
+    }
   }
 }
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in
@@ -544,7 +521,7 @@ private let onboardingGameReducer = gameReducer(
   isHapticsEnabled: { _ in true }
 )
 
-private struct DelayedNextStepId: Hashable {}
+private enum DelayedNextStepId: Hashable {}
 
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {
