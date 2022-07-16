@@ -60,7 +60,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    let task = await store.send(.onAppear)
+    let task = await store.send(.task)
     await store.receive(
       .submitGameResponse(
         .success(
@@ -171,7 +171,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    let task = await store.send(.onAppear)
+    let task = await store.send(.task)
     await store.receive(
       .submitGameResponse(
         .success(.dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true)))
@@ -233,7 +233,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    let task = await store.send(.onAppear)
+    let task = await store.send(.task)
     await store.receive(.submitGameResponse(.success(.turnBased)))
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
@@ -331,7 +331,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: .failing
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
     await store.receive(.delegate(.close))
   }
 
@@ -368,7 +368,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    let task = await store.send(.onAppear)
+    let task = await store.send(.task)
     await self.mainRunLoop.advance(by: .seconds(1))
     await store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
@@ -411,7 +411,7 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    let task = await store.send(.onAppear)
+    let task = await store.send(.task)
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
   }

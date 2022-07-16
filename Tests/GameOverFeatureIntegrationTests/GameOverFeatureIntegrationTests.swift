@@ -61,7 +61,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       environment: environment
     )
 
-    let task = await store.send(.onAppear)
+    let task = await store.send(.task)
 
     await store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
       $0.summary = .leaderboard(ranks)

@@ -29,7 +29,7 @@ extension AudioPlayerClient {
         .fireAndForget { Task { try! await actor.setVolume(of: sound, to: volume) } }
       },
       setVolumeAsync: { try? await actor.setVolume(of: $0, to: $1) },
-      stop: { sound in .fireAndForget { Task { try! await actor.stop(sound: sound) } } },
+      stop: { sound in .fireAndForget { Task { try? await actor.stop(sound: sound) } } },
       stopAsync: { try? await actor.stop(sound: $0) }
     )
   }
