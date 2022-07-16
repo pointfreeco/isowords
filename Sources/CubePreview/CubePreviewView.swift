@@ -103,58 +103,53 @@ public let cubePreviewReducer = Reducer<
 
   case .onAppear:
     return .run { [move = state.moves[state.moveIndex]] send in
-      try await withThrowingTaskGroup(of: Void.self) { group in
-        group.addTask {
-          for await isLowPowerMode in await environment.lowPowerMode.startAsync() {
-            await send(.lowPowerModeResponse(isLowPowerMode))
+      await send(
+        .lowPowerModeResponse(
+          await environment.lowPowerMode.startAsync().first(where: { _ in true }) ?? false
+        )
+      )
+
+      try await environment.mainQueue.sleep(for: .seconds(1))
+
+      var accumulatedSelectedFaces: [IndexedCubeFace] = []
+      switch move.type {
+      case let .playedWord(faces):
+        for (faceIndex, face) in faces.enumerated() {
+          accumulatedSelectedFaces.append(face)
+          let moveDuration = Double.random(in: (0.6...0.8))
+
+          // Move the nub to the face
+          await MainActor.run {
+            UIView.animate(withDuration: moveDuration, delay: 0, options: .curveEaseInOut) {
+              send(.set(\.$nub.location, .face(face)), animation: .default)
+            }
           }
+
+          // Pause a bit to allow the nub to animate to the face
+          try await environment.mainQueue.sleep(
+            for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
+          )
+
+          // Press the nub on the first character
+          if faceIndex == 0 {
+            await send(.set(\.$nub.isPressed, true), animation: .default)
+          }
+
+          // Select the faces that have been tapped so far
+          await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
         }
 
-        group.addTask {
-          try await environment.mainQueue.sleep(for: .seconds(1))
+        // Un-press the nub once finished selecting all faces
+        await send(.set(\.$nub.isPressed, false))
 
-          var accumulatedSelectedFaces: [IndexedCubeFace] = []
-          switch move.type {
-          case let .playedWord(faces):
-            for (faceIndex, face) in faces.enumerated() {
-              accumulatedSelectedFaces.append(face)
-              let moveDuration = Double.random(in: (0.6...0.8))
-
-              await MainActor.run {
-                UIView.animate(
-                  withDuration: moveDuration, delay: 0, options: .curveEaseInOut
-                ) {
-                  send(.set(\.$nub.location, .face(face)), animation: .default)
-                }
-              }
-
-              try await environment.mainQueue.sleep(
-                for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
-              )
-
-              // Press the nub on the first character
-              if faceIndex == 0 {
-                await send(.set(\.$nub.isPressed, true), animation: .default)
-              }
-
-              // Select the faces that have been tapped so far
-              await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
-            }
-
-            await send(.set(\.$nub.isPressed, false))
-            await MainActor.run {
-              UIView.animate(
-                withDuration: 1, delay: 0, options: .curveEaseInOut
-              ) {
-                send(.set(\.$nub.location, .offScreenRight), animation: .default)
-              }
-            }
-          case let .removedCube(index):
-            break
+        // Move the nub off the screen
+        await MainActor.run {
+          UIView.animate(withDuration: 1, delay: 0, options: .curveEaseInOut) {
+            send(.set(\.$nub.location, .offScreenRight), animation: .default)
           }
         }
-
-        try await group.waitForAll()
+      case let .removedCube(index):
+        break
       }
     }
     .cancellable(id: SelectionId.self)
