@@ -265,7 +265,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     return .none
 
   case .currentGame(.game(.endGameButtonTapped)),
-    .currentGame(.game(.gameOver(.onAppear))):
+    .currentGame(.game(.gameOver(.task))):
 
     switch (state.game?.gameContext, state.game?.gameMode) {
     case (.dailyChallenge, .unlimited):
