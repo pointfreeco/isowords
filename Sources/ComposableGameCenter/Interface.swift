@@ -38,7 +38,7 @@ public struct GameCenterViewControllerClient {
 public struct LocalPlayerClient {
   public var authenticate: @Sendable () async throws -> Void
   public var listener: @Sendable () -> AsyncStream<ListenerEvent>
-  @available(*, deprecated) public var localPlayer: () -> LocalPlayer
+  /*@available(*, deprecated)*/ public var localPlayer: () -> LocalPlayer
   public var localPlayerAsync: @Sendable () async -> LocalPlayer
   @available(*, deprecated) public var presentAuthenticationViewController: Effect<Never, Never>
   public var presentAuthenticationViewControllerAsync: @Sendable () async -> Void

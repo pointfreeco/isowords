@@ -76,7 +76,7 @@ extension ApiClient {
       func authenticate(request: ServerRoute.AuthenticateRequest) async throws
         -> CurrentPlayerEnvelope
       {
-        let (data, _) = try await ApiClientLive.requestAsync(
+        let (data, _) = try await ApiClientLive.request(
           baseUrl: baseUrl,
           route: .authenticate(
             .init(
@@ -110,7 +110,7 @@ extension ApiClient {
       }
 
       func request(route: ServerRoute) async throws -> (Data, URLResponse) {
-        try await ApiClientLive.requestAsync(
+        try await ApiClientLive.request(
           baseUrl: self.baseUrl,
           route: route,
           router: self.router
@@ -166,14 +166,7 @@ extension ApiClient {
 //        currentPlayer = newPlayer  // TODO: remove
         return newPlayer
       },
-      request: { route in
-        ApiClientLive.request(
-          baseUrl: baseUrl,
-          route: route,
-          router: router
-        )
-      },
-      requestAsync: { try await session.request(route: $0) },
+      request: { try await session.request(route: $0) },
       setBaseUrl: { url in
         .fireAndForget {
           baseUrl = url
@@ -203,7 +196,7 @@ private func request(
   .eraseToEffect()
 }
 
-private func requestAsync(
+private func request(
   baseUrl: URL,
   route: ServerRoute,
   router: ServerRouter
@@ -254,7 +247,7 @@ private func apiRequest(
   guard let accessToken = accessToken
   else { throw URLError(.userAuthenticationRequired) }
 
-  return try await requestAsync(
+  return try await request(
     baseUrl: baseUrl,
     route: .api(
       .init(

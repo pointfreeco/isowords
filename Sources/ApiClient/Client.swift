@@ -15,8 +15,7 @@ public struct ApiClient {
   public var logoutAsync: @Sendable () async -> Void
   @available(*, deprecated) public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
   public var refreshCurrentPlayerAsync: @Sendable () async throws -> CurrentPlayerEnvelope
-  @available(*, deprecated) public var request: (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>
-  public var requestAsync: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
+  public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
   @available(*, deprecated) public var setBaseUrl: (URL) -> Effect<Never, Never>
   public var setBaseUrlAsync: @Sendable (URL) async -> Void
 
@@ -32,8 +31,7 @@ public struct ApiClient {
     logoutAsync: @escaping @Sendable () async -> Void,
     refreshCurrentPlayer: @escaping () -> Effect<CurrentPlayerEnvelope, ApiError>,
     refreshCurrentPlayerAsync: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
-    request: @escaping (ServerRoute) -> Effect<(data: Data, response: URLResponse), URLError>,
-    requestAsync: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
+    request: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
     setBaseUrl: @escaping (URL) -> Effect<Never, Never>,
     setBaseUrlAsync: @escaping @Sendable (URL) async -> Void
   ) {
@@ -48,7 +46,6 @@ public struct ApiClient {
     self.refreshCurrentPlayer = refreshCurrentPlayer
     self.refreshCurrentPlayerAsync = refreshCurrentPlayerAsync
     self.request = request
-    self.requestAsync = requestAsync
     self.setBaseUrl = setBaseUrl
     self.setBaseUrlAsync = setBaseUrlAsync
   }
@@ -91,39 +88,13 @@ public struct ApiClient {
     }
   }
 
-  @available(*, deprecated) public func request<A: Decodable>(
-    route: ServerRoute,
-    as: A.Type,
-    file: StaticString = #file,
-    line: UInt = #line
-  ) -> Effect<A, ApiError> {
-    self.request(route)
-      .handleEvents(
-        receiveOutput: {
-          #if DEBUG
-            print(
-              """
-                API: route: \(route), \
-                status: \(($0.response as? HTTPURLResponse)?.statusCode ?? 0), \
-                receive data: \(String(decoding: $0.data, as: UTF8.self))
-              """
-            )
-          #endif
-        }
-      )
-      .map { data, _ in data }
-      .apiDecode(as: A.self, file: file, line: line)
-      .print("API")
-      .eraseToEffect()
-  }
-
-  public func requestAsync(
+  public func request(
     route: ServerRoute,
     file: StaticString = #file,
     line: UInt = #line
   ) async throws -> (Data, URLResponse) {
     do {
-      let (data, response) = try await self.requestAsync(route)
+      let (data, response) = try await self.request(route)
       #if DEBUG
         print(
           """
@@ -139,13 +110,13 @@ public struct ApiClient {
     }
   }
 
-  public func requestAsync<A: Decodable>(
+  public func request<A: Decodable>(
     route: ServerRoute,
     as: A.Type,
     file: StaticString = #file,
     line: UInt = #line
   ) async throws -> A {
-    let (data, _) = try await self.requestAsync(route: route, file: file, line: line)
+    let (data, _) = try await self.request(route: route, file: file, line: line)
     do {
       return try apiDecode(A.self, from: data)
     } catch {
@@ -182,8 +153,7 @@ public struct ApiClient {
       logoutAsync: XCTUnimplemented("\(Self.self).logoutAsync"),
       refreshCurrentPlayer: { .failing("\(Self.self).refreshCurrentPlayer is unimplemented") },
       refreshCurrentPlayerAsync: XCTUnimplemented("\(Self.self).refreshCurrentPlayerAsync"),
-      request: { route in .failing("\(Self.self).request(\(route)) is unimplemented") },
-      requestAsync: XCTUnimplemented("\(Self.self).requestAsync"),
+      request: XCTUnimplemented("\(Self.self).request"),
       setBaseUrl: { _ in .failing("ApiClient.setBaseUrl is unimplemented") },
       setBaseUrlAsync: XCTUnimplemented("ApiClient.setBaseUrlAsync")
     )
@@ -232,8 +202,7 @@ extension ApiClient {
     logoutAsync: {},
     refreshCurrentPlayer: { .none },
     refreshCurrentPlayerAsync: { try await Task.never() },
-    request: { _ in .none },
-    requestAsync: { _ in try await Task.never() },
+    request: { _ in try await Task.never() },
     setBaseUrl: { _ in .none },
     setBaseUrlAsync: { _ in }
   )

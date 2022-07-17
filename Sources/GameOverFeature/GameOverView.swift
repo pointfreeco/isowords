@@ -326,7 +326,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
                 .submitGameResponse(
                   TaskResult {
                     try await .solo(
-                      environment.apiClient.requestAsync(
+                      environment.apiClient.request(
                         route: .demo(.submitGame(request)),
                         as: LeaderboardScoreResult.self
                       )

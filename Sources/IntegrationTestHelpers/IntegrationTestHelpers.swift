@@ -128,28 +128,7 @@ extension ApiClient {
       logoutAsync: { await session.logout() },
       refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
-      request: { route in
-        guard
-          let request = try? router.request(for: route),
-          let url = request.url
-        else {
-          return Fail(error: URLError.init(.badURL))
-            .eraseToEffect()
-        }
-        let conn = middleware(connection(from: request)).perform()
-
-        let response = HTTPURLResponse(
-          url: url,
-          statusCode: conn.response.status.rawValue,
-          httpVersion: nil,
-          headerFields: Dictionary(
-            uniqueKeysWithValues: conn.response.headers.map { ($0.name, $0.value) })
-        )!
-        return Just((conn.data, response))
-          .setFailureType(to: URLError.self)
-          .eraseToEffect()
-      },
-      requestAsync: { try await session.request(route: $0) },
+      request: { try await session.request(route: $0) },
       setBaseUrl: { url in
         .fireAndForget {
           baseUrl = url
