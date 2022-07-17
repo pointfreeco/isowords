@@ -106,7 +106,7 @@ class TurnBasedTests: XCTestCase {
         $0.lowPowerMode.startAsync = { .never }
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
-        $0.serverConfig.refreshAsync = { .init() }
+        $0.serverConfig.refresh = { .init() }
         $0.userDefaults.setIntegerAsync = { _, _ in }
         $0.timeZone = { .newYork }
       }

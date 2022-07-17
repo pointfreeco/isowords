@@ -766,7 +766,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
       )
     )
     await send(.authenticationResponse(currentPlayerEnvelope))
-    try await send(.serverConfigResponse(environment.serverConfig.refreshAsync()))
+    try await send(.serverConfigResponse(environment.serverConfig.refresh()))
 
     async let sendDailyChallengeResponse: Void = send(
       .dailyChallengeResponse(

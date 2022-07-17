@@ -22,10 +22,7 @@ extension ServerConfigClient {
 
     return Self(
       config: { currentConfig },
-      refresh: { effect },
-      refreshAsync: {
-        try await effect.values.first(where: { _ in true }) ?? .init()
-      }
+      refresh: { try await effect.values.first(where: { _ in true }) ?? .init() }
     )
   }
 }

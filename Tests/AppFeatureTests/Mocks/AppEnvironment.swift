@@ -18,7 +18,7 @@ extension AppEnvironment {
     $0.gameCenter.localPlayer.listenerAsync = { .finished }
     $0.mainQueue = .immediate
     $0.mainRunLoop = .immediate
-    $0.serverConfig.refreshAsync = { .init() }
+    $0.serverConfig.refresh = { .init() }
     $0.storeKit.observer = .none
     $0.storeKit.observerAsync = { .finished }
     $0.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")

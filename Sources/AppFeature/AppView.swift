@@ -373,7 +373,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
         remoteNotifications: environment.remoteNotifications,
         userNotifications: environment.userNotifications
       )
-      async let refresh = environment.serverConfig.refreshAsync()
+      async let refresh = environment.serverConfig.refresh()
     }
 
   case .didChangeScenePhase:
