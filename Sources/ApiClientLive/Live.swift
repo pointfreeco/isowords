@@ -129,14 +129,6 @@ extension ApiClient {
     let session = Session(baseUrl: baseUrl, router: router)
 
     return Self(
-      apiRequest: { route in
-        ApiClientLive.apiRequest(
-          accessToken: currentPlayer?.player.accessToken,
-          baseUrl: baseUrl,
-          route: route,
-          router: router
-        )
-      },
       apiRequestAsync: { try await session.apiRequest(route: $0) },
       authenticate: { try await session.authenticate(request: $0) },
       baseUrl: { baseUrl },

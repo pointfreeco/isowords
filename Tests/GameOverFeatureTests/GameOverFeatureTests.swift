@@ -1,3 +1,4 @@
+import ApiClient
 import CasePaths
 import ComposableArchitecture
 import GameOverFeature
@@ -26,15 +27,17 @@ class GameOverFeatureTests: XCTestCase {
           )
         )
       ),
-      withResponse: .ok([
-        "solo": [
-          "ranks": [
-            "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
-            "lastWeek": .init(outOf: 1000, rank: 10),
-            "allTime": .init(outOf: 10000, rank: 100),
+      withResponse: {
+        try await OK([
+          "solo": [
+            "ranks": [
+              "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
+              "lastWeek": .init(outOf: 1000, rank: 10),
+              "allTime": .init(outOf: 10000, rank: 100),
+            ]
           ]
-        ]
-      ])
+        ])
+      }
     )
     environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
@@ -120,32 +123,34 @@ class GameOverFeatureTests: XCTestCase {
           )
         )
       ),
-      withResponse: .ok([
-        "dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]
-      ])
+      withResponse: {
+        try await OK(["dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]])
+      }
     )
     environment.apiClient.override(
       route: .dailyChallenge(.today(language: .en)),
-      withResponse: .ok([
-        [
-          "dailyChallenge": [
-            "endsAt": 1_234_567_890,
-            "gameMode": "timed",
-            "id": UUID.dailyChallengeId.uuidString,
-            "language": "en",
+      withResponse: {
+        try await OK([
+          [
+            "dailyChallenge": [
+              "endsAt": 1_234_567_890,
+              "gameMode": "timed",
+              "id": UUID.dailyChallengeId.uuidString,
+              "language": "en",
+            ],
+            "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
           ],
-          "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
-        ],
-        [
-          "dailyChallenge": [
-            "endsAt": 1_234_567_890,
-            "gameMode": "unlimited",
-            "id": UUID.dailyChallengeId.uuidString,
-            "language": "en",
+          [
+            "dailyChallenge": [
+              "endsAt": 1_234_567_890,
+              "gameMode": "unlimited",
+              "id": UUID.dailyChallengeId.uuidString,
+              "language": "en",
+            ],
+            "yourResult": ["outOf": 42, "started": false],
           ],
-          "yourResult": ["outOf": 42, "started": false],
-        ],
-      ])
+        ])
+      }
     )
     environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
@@ -206,7 +211,7 @@ class GameOverFeatureTests: XCTestCase {
           )
         )
       ),
-      withResponse: .ok(["turnBased": true])
+      withResponse: { try await OK(["turnBased": true]) }
     )
     environment.database.playedGamesCountAsync = { _ in 10 }
     environment.mainRunLoop = .immediate

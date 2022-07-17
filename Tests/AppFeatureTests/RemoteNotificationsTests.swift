@@ -44,7 +44,7 @@ class RemoteNotificationsTests: XCTestCase {
       route: .push(
         .register(.init(authorizationStatus: .authorized, build: 80, token: "6465616462656566"))
       ),
-      withResponse: .init(value: (Data(), URLResponse()))
+      withResponse: { (Data(), URLResponse()) }
     )
     await store.send(
       .appDelegate(.didRegisterForRemoteNotifications(.success(Data("deadbeef".utf8)))))
@@ -60,7 +60,7 @@ class RemoteNotificationsTests: XCTestCase {
       route: .push(
         .register(.init(authorizationStatus: .authorized, build: 80, token: "6261616462656566"))
       ),
-      withResponse: .init(value: (Data(), URLResponse()))
+      withResponse: { (Data(), URLResponse()) }
     )
     await store.send(
       .appDelegate(.didRegisterForRemoteNotifications(.success(Data("baadbeef".utf8)))))

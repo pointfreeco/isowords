@@ -1,3 +1,4 @@
+import ApiClient
 import ComposableArchitecture
 import ServerConfig
 import XCTest
@@ -18,7 +19,7 @@ class ChangelogFeatureTests: XCTestCase {
     var environment = ChangelogEnvironment.failing
     environment.apiClient.override(
       route: .changelog(build: 42),
-      withResponse: .ok(changelog)
+      withResponse: { try await OK(changelog) }
     )
     environment.build.number = { 42 }
 
@@ -59,7 +60,7 @@ class ChangelogFeatureTests: XCTestCase {
     var environment = ChangelogEnvironment.failing
     environment.apiClient.override(
       route: .changelog(build: 40),
-      withResponse: .ok(changelog)
+      withResponse: { try await OK(changelog) }
     )
     environment.build.number = { 40 }
 

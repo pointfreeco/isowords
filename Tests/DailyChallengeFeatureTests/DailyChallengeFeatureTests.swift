@@ -1,3 +1,4 @@
+import ApiClient
 import ClientModels
 import ComposableArchitecture
 import XCTest
@@ -14,7 +15,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     var environment = DailyChallengeEnvironment.failing
     environment.apiClient.override(
       route: .dailyChallenge(.today(language: .en)),
-      withResponse: .ok([FetchTodaysDailyChallengeResponse.played])
+      withResponse: { try await OK([FetchTodaysDailyChallengeResponse.played]) }
     )
     environment.mainRunLoop = .immediate
     environment.userNotifications.getNotificationSettingsAsync = {
@@ -67,20 +68,22 @@ class DailyChallengeFeatureTests: XCTestCase {
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.apiClient.override(
       route: .dailyChallenge(.start(gameMode: .unlimited, language: .en)),
-      withResponse: .ok(
-        StartDailyChallengeResponse(
-          dailyChallenge: .init(
-            createdAt: .mock,
-            endsAt: .mock,
-            gameMode: .unlimited,
-            gameNumber: 42,
-            id: .init(rawValue: .dailyChallengeId),
-            language: .en,
-            puzzle: .mock
-          ),
-          dailyChallengePlayId: .init(rawValue: .deadbeef)
+      withResponse: {
+        try await OK(
+          StartDailyChallengeResponse(
+            dailyChallenge: .init(
+              createdAt: .mock,
+              endsAt: .mock,
+              gameMode: .unlimited,
+              gameNumber: 42,
+              id: .init(rawValue: .dailyChallengeId),
+              language: .en,
+              puzzle: .mock
+            ),
+            dailyChallengePlayId: .init(rawValue: .deadbeef)
+          )
         )
-      )
+      }
     )
     struct FileNotFound: Error {}
     environment.fileClient.loadAsync = { _ in throw FileNotFound() }

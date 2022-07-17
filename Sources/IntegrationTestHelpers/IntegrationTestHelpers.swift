@@ -113,29 +113,6 @@ extension ApiClient {
     let session = Session(baseUrl: baseUrl, middleware: middleware, router: router)
 
     self.init(
-      apiRequest: { route in
-        guard
-          let request = try? router.request(
-            for: .api(.init(accessToken: .init(rawValue: .deadbeef), isDebug: true, route: route))
-          ),
-          let url = request.url
-        else {
-          return Fail(error: URLError.init(.badURL))
-            .eraseToEffect()
-        }
-        let conn = middleware(connection(from: request)).perform()
-
-        let response = HTTPURLResponse(
-          url: url,
-          statusCode: conn.response.status.rawValue,
-          httpVersion: nil,
-          headerFields: Dictionary(
-            uniqueKeysWithValues: conn.response.headers.map { ($0.name, $0.value) })
-        )!
-        return Just((conn.data, response))
-          .setFailureType(to: URLError.self)
-          .eraseToEffect()
-      },
       apiRequestAsync: { try await session.apiRequest(route: $0) },
       authenticate: { try await session.authenticate(request: $0) },
       baseUrl: { baseUrl },

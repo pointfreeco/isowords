@@ -410,10 +410,11 @@ extension ResultEnvelope.Result {
               reducer: leaderboardReducer,
               environment: LeaderboardEnvironment(
                 apiClient: update(.noop) {
-                  $0.apiRequest = { route in
+                  $0.apiRequestAsync = { @Sendable route in
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      return Effect.ok(
+                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                      return try await OK(
                         FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
@@ -428,11 +429,9 @@ extension ResultEnvelope.Result {
                           }
                         )
                       )
-                      .delay(for: 1, scheduler: DispatchQueue.main)
-                      .eraseToEffect()
 
                     default:
-                      return .none
+                      throw CancellationError()
                     }
                   }
                 },

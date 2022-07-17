@@ -1,3 +1,4 @@
+import ApiClient
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
@@ -237,7 +238,7 @@ class SettingsFeatureTests: XCTestCase {
       route: .push(
         .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
       ),
-      withResponse: .ok([:])
+      withResponse: { try await OK([:]) }
     )
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate

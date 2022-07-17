@@ -4,8 +4,6 @@ import Foundation
 import SharedModels
 
 public struct ApiClient {
-  @available(*, deprecated) public var apiRequest:
-    (ServerRoute.Api.Route) -> Effect<(data: Data, response: URLResponse), URLError>
   public var apiRequestAsync: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
@@ -23,9 +21,6 @@ public struct ApiClient {
   public var setBaseUrlAsync: @Sendable (URL) async -> Void
 
   public init(
-    apiRequest: @escaping (ServerRoute.Api.Route) -> Effect<
-      (data: Data, response: URLResponse), URLError
-    >,
     apiRequestAsync: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (
       Data, URLResponse
     ),
@@ -44,7 +39,6 @@ public struct ApiClient {
     setBaseUrl: @escaping (URL) -> Effect<Never, Never>,
     setBaseUrlAsync: @escaping @Sendable (URL) async -> Void
   ) {
-    self.apiRequest = apiRequest
     self.apiRequestAsync = apiRequestAsync
     self.authenticate = authenticate
     self.baseUrl = baseUrl
@@ -180,7 +174,6 @@ public struct ApiClient {
 
   extension ApiClient {
     public static let failing = Self(
-      apiRequest: { route in .failing("\(Self.self).apiRequest(\(route)) is unimplemented") },
       apiRequestAsync: XCTUnimplemented("\(Self.self).apiRequestAsync"),
       authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
@@ -199,21 +192,13 @@ public struct ApiClient {
 
     public mutating func override(
       route matchingRoute: ServerRoute.Api.Route,
-      withResponse response: Effect<(data: Data, response: URLResponse), URLError>
+      withResponse response: @escaping () async throws -> (Data, URLResponse)
     ) {
       let fulfill = expectation(description: "route")
-      self.apiRequest = { [self] route in
-        if route == matchingRoute {
-          fulfill()
-          return response
-        } else {
-          return self.apiRequest(route)
-        }
-      }
       self.apiRequestAsync = { [self] route in
         if route == matchingRoute {
           fulfill()
-          return try await response.values.first(where: { _ in true })!
+          return try await response()
         } else {
           return try await self.apiRequestAsync(route)
         }
@@ -222,17 +207,15 @@ public struct ApiClient {
 
     public mutating func override<Value>(
       routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
-      withResponse response: @escaping (Value) -> Effect<
-        (data: Data, response: URLResponse), URLError
-      >
+      withResponse response: @escaping (Value) async throws -> (Data, URLResponse)
     ) {
       let fulfill = expectation(description: "route")
-      self.apiRequest = { [self] route in
+      self.apiRequestAsync = { [self] route in
         if let value = matchingRoute.extract(from: route) {
           fulfill()
-          return response(value)
+          return try await response(value)
         } else {
-          return self.apiRequest(route)
+          return try await self.apiRequestAsync(route)
         }
       }
     }
@@ -241,7 +224,6 @@ public struct ApiClient {
 
 extension ApiClient {
   public static let noop = Self(
-    apiRequest: { _ in .none },
     apiRequestAsync: { _ in try await Task.never() },
     authenticate: { _ in try await Task.never() },
     baseUrl: { URL(string: "/")! },
