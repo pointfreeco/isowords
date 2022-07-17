@@ -182,7 +182,7 @@ public enum GameAction: Equatable {
 
   public enum GameCenterAction: Equatable {
     case listener(LocalPlayerClient.ListenerEvent)
-    case turnBasedMatchResponse(Result<TurnBasedMatch, NSError>)
+    case turnBasedMatchResponse(TaskResult<TurnBasedMatch>)
   }
 }
 
@@ -910,7 +910,8 @@ func menuTitle(state: GameState) -> TextState {
       mainRunLoop: .failing("mainRunLoop"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
+      setUserInterfaceStyle: { _ in
+        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
       },
       storeKit: .failing,
       userDefaults: .failing,
@@ -958,7 +959,8 @@ extension Effect where Output == GameAction, Failure == Never {
           group.addTask {
             let playedGamesCount = await environment.userDefaults
               .incrementMultiplayerOpensCountAsync()
-            let isFullGamePurchased = await
+            let isFullGamePurchased =
+              await
               environment.apiClient
               .currentPlayerAsync()?.appleReceipt != nil
             guard
@@ -1133,81 +1135,73 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         playerId: environment.apiClient.currentPlayer()?.player.id
       )
       let matchData = Data(turnBasedMatchData: turnBasedMatchData)
-      let reloadMatch = environment.gameCenter.turnBasedMatch.load(turnBasedContext.match.matchId)
-        .mapError { $0 as NSError }
-        .catchToEffect { GameAction.gameCenter(.turnBasedMatchResponse($0)) }
 
-      if state.isGameOver {
-        let completedGame = CompletedGame(gameState: state)
-        guard
-          let completedMatch = CompletedMatch(
-            completedGame: completedGame,
-            turnBasedContext: turnBasedContext
-          )
-        else { return .none }
-
-        return .concatenate(
-          environment.gameCenter.turnBasedMatch
-            .endMatchInTurn(
-              .init(
-                for: turnBasedContext.match.matchId,
-                matchData: matchData,
-                localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
-                localPlayerMatchOutcome: completedMatch.yourOutcome,
-                message: "Game over! Let’s see how you did!"
-              )
-            )
-            .fireAndForget(),
-
-          reloadMatch,
-
-          environment.database.saveGame(completedGame)
-            .fireAndForget()
-        )
-      } else {
-        switch move.type {
-        case .removedCube:
-          let shouldEndTurn =
-            state.moves.count > 1
-            && state.moves[state.moves.count - 2].playerIndex == turnBasedContext.localPlayerIndex
-
-          return .concatenate(
-            shouldEndTurn
-              ? environment.gameCenter.turnBasedMatch
-                .endTurn(
-                  .init(
-                    for: turnBasedContext.match.matchId,
-                    matchData: matchData,
-                    message: "\(turnBasedContext.localPlayer.displayName) removed cubes!"
+      return .task { [state] in
+        return await .gameCenter(
+          .turnBasedMatchResponse(
+            TaskResult {
+              if state.isGameOver {
+                let completedGame = CompletedGame(gameState: state)
+                if
+                  let completedMatch = CompletedMatch(
+                    completedGame: completedGame,
+                    turnBasedContext: turnBasedContext
                   )
-                )
-                .fireAndForget()
+                {
+                  try await environment.gameCenter.turnBasedMatch.endMatchInTurnAsync(
+                    .init(
+                      for: turnBasedContext.match.matchId,
+                      matchData: matchData,
+                      localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
+                      localPlayerMatchOutcome: completedMatch.yourOutcome,
+                      message: "Game over! Let’s see how you did!"
+                    )
+                  )
+                  try await environment.database.saveGameAsync(completedGame)
+                }
+              } else {
+                switch move.type {
+                case .removedCube:
+                  let shouldEndTurn =
+                    state.moves.count > 1
+                    && state.moves[state.moves.count - 2].playerIndex
+                      == turnBasedContext.localPlayerIndex
 
-              : environment.gameCenter.turnBasedMatch
-                .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
-                .fireAndForget(),
-            reloadMatch
+                  if shouldEndTurn {
+                    try await environment.gameCenter.turnBasedMatch.endTurnAsync(
+                      .init(
+                        for: turnBasedContext.match.matchId,
+                        matchData: matchData,
+                        message: "\(turnBasedContext.localPlayer.displayName) removed cubes!"
+                      )
+                    )
+                  } else {
+                    try await environment.gameCenter.turnBasedMatch
+                      .saveCurrentTurnAsync(turnBasedContext.match.matchId, matchData)
+                  }
+
+                case let .playedWord(cubeFaces):
+                  let word = state.cubes.string(from: cubeFaces)
+                  let score = SharedModels.score(word)
+                  let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
+
+                  try await environment.gameCenter.turnBasedMatch.endTurnAsync(
+                    .init(
+                      for: turnBasedContext.match.matchId,
+                      matchData: matchData,
+                      message: """
+                        \(turnBasedContext.localPlayer.displayName) played \(word)! \
+                        (+\(score)\(reaction))
+                        """
+                    )
+                  )
+                }
+              }
+              return try await environment.gameCenter.turnBasedMatch
+                .loadAsync(turnBasedContext.match.matchId)
+            }
           )
-        case let .playedWord(cubeFaces):
-          let word = state.cubes.string(from: cubeFaces)
-          let score = SharedModels.score(word)
-          let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
-
-          return .concatenate(
-            environment.gameCenter.turnBasedMatch
-              .endTurn(
-                .init(
-                  for: turnBasedContext.match.matchId,
-                  matchData: matchData,
-                  message:
-                    "\(turnBasedContext.localPlayer.displayName) played \(word)! (+\(score)\(reaction))"
-                )
-              )
-              .fireAndForget(),
-
-            reloadMatch
-          )
-        }
+        )
       }
     default:
       return .none

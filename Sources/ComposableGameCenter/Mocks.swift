@@ -136,7 +136,7 @@ extension TurnBasedMatchmakerViewControllerClient {
       endMatchInTurn: { _ in .failing("\(Self.self).endMatchInTurn is unimplemented") },
       endMatchInTurnAsync: XCTUnimplemented("\(Self.self).endMatchInTurnAsync"),
       endTurn: { _ in .failing("\(Self.self).endTurn is unimplemented") },
-      endTurnAsync: XCTUnimplemented("\(Self.self).endMatchInTurnAsync"),
+      endTurnAsync: XCTUnimplemented("\(Self.self).endTurnAsync"),
       load: { _ in .failing("\(Self.self).load is unimplemented") },
       loadAsync: XCTUnimplemented("\(Self.self).loadAsync"),
       loadMatches: { .failing("\(Self.self).loadMatches is unimplemented") },

@@ -93,10 +93,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
-        $0.gameCenter.turnBasedMatch.endTurn = {
-          didEndTurnWithRequest = $0
-          return .none
-        }
+        $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
@@ -265,9 +262,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { _ in
-      .init(value: updatedMatch)
-    }
+    store.environment.gameCenter.turnBasedMatch.loadAsync = { _ in updatedMatch }
 
     await store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
@@ -545,7 +540,7 @@ class TurnBasedTests: XCTestCase {
     await didFinishLaunchingTask.cancel()
   }
 
-  func testRemovingCubes() {
+  func testRemovingCubes() async {
     var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
     let match = update(TurnBasedMatch.inProgress) {
       $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
@@ -556,11 +551,8 @@ class TurnBasedTests: XCTestCase {
       $0.apiClient.currentPlayer = { nil }
       $0.audioPlayer.play = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .init(value: ()) }
-      $0.gameCenter.turnBasedMatch.endTurn = {
-        didEndTurnWithRequest = $0
-        return .init(value: ())
-      }
+      $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
+      $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
 
@@ -584,7 +576,7 @@ class TurnBasedTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.currentGame(.game(.doubleTap(index: .zero)))) {
+    await store.send(.currentGame(.game(.doubleTap(index: .zero)))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .removeCube(index: .zero, state: $0, isTurnEndingRemoval: false)
       }
@@ -616,12 +608,12 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: updatedMatch) }
+    store.environment.gameCenter.turnBasedMatch.loadAsync = { _ in updatedMatch }
 
-    store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
+    await store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
       $0.game = updatedGameState
     }
-    store.receive(
+    await store.receive(
       .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
     ) {
       try XCTUnwrap(&$0.game) {
@@ -630,7 +622,7 @@ class TurnBasedTests: XCTestCase {
         }
       }
     }
-    store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
+    await store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .removeCube(
           index: .init(x: .zero, y: .zero, z: .one),
@@ -668,19 +660,19 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { _ in .init(value: updatedMatch) }
+    store.environment.gameCenter.turnBasedMatch.loadAsync = { _ in updatedMatch }
 
-    store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
+    await store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
       $0.game = updatedGameState
     }
-    store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))) {
+    await store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))) {
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
           $0.match = updatedMatch
         }
       }
     }
-    store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
+    await store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
 
     XCTAssertNoDifference(
       didEndTurnWithRequest,
