@@ -83,7 +83,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       )
     )
     struct FileNotFound: Error {}
-    environment.fileClient.load = { _ in .init(error: FileNotFound()) }
+    environment.fileClient.loadAsync = { _ in throw FileNotFound() }
 
     let store = TestStore(
       initialState: DailyChallengeState(dailyChallenges: [.notStarted]),
@@ -111,12 +111,8 @@ class DailyChallengeFeatureTests: XCTestCase {
     ]
 
     var environment = DailyChallengeEnvironment.failing
-    environment.fileClient.load = { asdf in
-      .init(
-        value: try! JSONEncoder().encode(
-          SavedGamesState.init(dailyChallengeUnlimited: inProgressGame)
-        )
-      )
+    environment.fileClient.loadAsync = { asdf in
+      try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
     }
     environment.mainRunLoop = .immediate
 
