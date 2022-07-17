@@ -73,18 +73,14 @@ class LeaderboardTests: XCTestCase {
       initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
       reducer: Reducer.leaderboardResultsReducer(),
       environment: LeaderboardResultsEnvironment(
-        loadResults: { _, _ in
-          .init(error: .init(error: SomeError()))
-        },
-        mainQueue: .immediate
+        loadResults: { _, _ in throw SomeError() }
       )
     )
 
     await store.send(.onAppear) {
       $0.isLoading = true
     }
-    // TODO: why does this pass?? how is the error checked for equality?
-    await store.receive(.resultsResponse(.failure(.init(error: SomeError())))) {
+    await store.receive(.resultsResponse(.failure(ApiError(error: SomeError())))) {
       $0.isLoading = false
       $0.resultEnvelope = nil
     }
@@ -127,12 +123,11 @@ extension LeaderboardResultsEnvironment {
       loadResults: { gameMode, _ in
         switch gameMode {
         case .timed:
-          return .init(value: timedResults)
+          return timedResults
         case .unlimited:
-          return .init(value: untimedResults)
+          return untimedResults
         }
-      },
-      mainQueue: .immediate
+      }
     )
   }
 }

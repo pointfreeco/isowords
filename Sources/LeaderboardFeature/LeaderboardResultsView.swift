@@ -35,7 +35,7 @@ extension LeaderboardResultsState: Equatable where TimeScope: Equatable {}
 public enum LeaderboardResultsAction<TimeScope> {
   case dismissTimeScopeMenu
   case gameModeButtonTapped(GameMode)
-  case resultsResponse(Result<ResultEnvelope, ApiError>)
+  case resultsResponse(TaskResult<ResultEnvelope>)
   case onAppear
   case tappedRow(id: UUID)
   case tappedTimeScopeLabel
@@ -45,15 +45,12 @@ public enum LeaderboardResultsAction<TimeScope> {
 extension LeaderboardResultsAction: Equatable where TimeScope: Equatable {}
 
 public struct LeaderboardResultsEnvironment<TimeScope> {
-  public let loadResults: (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>
-  public let mainQueue: AnySchedulerOf<DispatchQueue>
+  public let loadResults: @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
 
   public init(
-    loadResults: @escaping (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>,
-    mainQueue: AnySchedulerOf<DispatchQueue>
+    loadResults: @escaping @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
   ) {
     self.loadResults = loadResults
-    self.mainQueue = mainQueue
   }
 }
 
@@ -74,18 +71,23 @@ extension Reducer {
       case let .gameModeButtonTapped(gameMode):
         state.gameMode = gameMode
         state.isLoading = true
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+        return .task { [timeScope = state.timeScope] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
 
       case .onAppear:
         state.isLoading = true
         state.isTimeScopeMenuVisible = false
         state.resultEnvelope = .placeholder
 
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+        return .task { [gameMode = state.gameMode, timeScope = state.timeScope] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
+        .animation()
 
       case .resultsResponse(.failure):
         state.isLoading = false
@@ -109,9 +111,12 @@ extension Reducer {
         state.isTimeScopeMenuVisible = false
         state.timeScope = timeScope
 
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+        return .task { [gameMode = state.gameMode] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
+        .animation()
       }
     }
   }
@@ -412,24 +417,21 @@ extension ResultEnvelope {
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
               loadResults: { _, _ in
-                Effect(
-                  value: .init(
-                    outOf: 1000,
-                    results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
-                      ResultEnvelope.Result(
-                        denseRank: index,
-                        id: UUID(),
-                        isYourScore: index == 15,
-                        rank: index,
-                        score: 6000 - index * 300,
-                        subtitle: "mbrandonw",
-                        title: "Longword\(index)"
-                      )
-                    }
-                  )
+                .init(
+                  outOf: 1000,
+                  results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
+                    ResultEnvelope.Result(
+                      denseRank: index,
+                      id: UUID(),
+                      isYourScore: index == 15,
+                      rank: index,
+                      score: 6000 - index * 300,
+                      subtitle: "mbrandonw",
+                      title: "Longword\(index)"
+                    )
+                  }
                 )
-              },
-              mainQueue: .immediate
+              }
             )
           ),
           title: Text("362,998 words"),
@@ -452,25 +454,20 @@ extension ResultEnvelope {
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
               loadResults: { _, _ in
-                Effect(
-                  value: .init(
-                    outOf: 1000,
-                    results: (1...5).map { index in
-                      ResultEnvelope.Result(
-                        denseRank: index,
-                        id: UUID(),
-                        isYourScore: index == 3,
-                        rank: index,
-                        score: 6000 - index * 800,
-                        title: "Player \(index)"
-                      )
-                    }
-                  )
+                .init(
+                  outOf: 1000,
+                  results: (1...5).map { index in
+                    ResultEnvelope.Result(
+                      denseRank: index,
+                      id: UUID(),
+                      isYourScore: index == 3,
+                      rank: index,
+                      score: 6000 - index * 800,
+                      title: "Player \(index)"
+                    )
+                  }
                 )
-                .delay(for: 1, scheduler: DispatchQueue.main.animation())
-                .eraseToEffect()
-              },
-              mainQueue: .immediate
+              }
             )
           ),
           title: Text("Daily challenge"),
@@ -492,8 +489,10 @@ extension ResultEnvelope {
             ),
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-              mainQueue: .immediate
+              loadResults: { _, _ in
+                struct Failure: Error {}
+                throw Failure()
+              }
             )
           ),
           title: Text("Solo"),

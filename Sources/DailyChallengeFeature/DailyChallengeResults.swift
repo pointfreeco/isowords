@@ -56,12 +56,7 @@ public let dailyChallengeResultsReducer = Reducer<
     .pullback(
       state: \DailyChallengeResultsState.leaderboardResults,
       action: /DailyChallengeResultsAction.leaderboardResults,
-      environment: {
-        .init(
-          loadResults: $0.apiClient.loadDailyChallengeResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
-        )
-      }
+      environment: { .init(loadResults: $0.apiClient.loadDailyChallengeResults) }
     ),
 
   .init { state, action, environment in
@@ -172,23 +167,25 @@ public struct DailyChallengeResultsView: View {
 }
 
 extension ApiClient {
+  @Sendable
   func loadDailyChallengeResults(
     gameMode: GameMode,
     timeScope gameNumber: DailyChallenge.GameNumber?
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
-      route: .dailyChallenge(
-        .results(
-          .fetch(
-            gameMode: gameMode,
-            gameNumber: gameNumber,
-            language: .en
+  ) async throws -> ResultEnvelope {
+    try await ResultEnvelope(
+      self.apiRequestAsync(
+        route: .dailyChallenge(
+          .results(
+            .fetch(
+              gameMode: gameMode,
+              gameNumber: gameNumber,
+              language: .en
+            )
           )
-        )
-      ),
-      as: FetchDailyChallengeResultsResponse.self
+        ),
+        as: FetchDailyChallengeResultsResponse.self
+      )
     )
-    .map(ResultEnvelope.init)
   }
 }
 

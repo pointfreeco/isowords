@@ -31,24 +31,27 @@ class LeaderboardFeatureTests: XCTestCase {
       initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: .init(
-        apiClient: .noop,
+        apiClient: .failing,
         audioPlayer: .noop,
         feedbackGenerator: .noop,
         lowPowerMode: .false,
         mainQueue: .immediate
       )
     )
+    store.environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
 
-    await store.send(.solo(.timeScopeChanged(.lastDay))) {
+    let task1 = await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay
       $0.solo.isLoading = true
       $0.vocab.timeScope = .lastDay
     }
-    await store.send(.vocab(.timeScopeChanged(.allTime))) {
+    let task2 = await store.send(.vocab(.timeScopeChanged(.allTime))) {
       $0.solo.timeScope = .allTime
       $0.vocab.timeScope = .allTime
       $0.vocab.isLoading = true
     }
+    await task1.cancel()
+    await task2.cancel()
   }
 
   func testCubePreview() async {

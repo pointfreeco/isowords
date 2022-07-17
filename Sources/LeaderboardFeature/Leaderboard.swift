@@ -130,8 +130,7 @@ public let leaderboardReducer = Reducer<
       action: /LeaderboardAction.solo,
       environment: {
         LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadSoloResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
+          loadResults: $0.apiClient.loadSoloResults(gameMode:timeScope:)
         )
       }
     ),
@@ -142,8 +141,7 @@ public let leaderboardReducer = Reducer<
       action: /LeaderboardAction.vocab,
       environment: {
         LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadVocabResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
+          loadResults: $0.apiClient.loadVocabResults(gameMode:timeScope:)
         )
       }
     ),
@@ -318,11 +316,12 @@ public struct LeaderboardView: View {
 }
 
 extension ApiClient {
+  @Sendable
   func loadSoloResults(
     gameMode: GameMode,
     timeScope: TimeScope
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
+  ) async throws -> ResultEnvelope {
+    let response = try await self.apiRequestAsync(
       route: .leaderboard(
         .fetch(
           gameMode: gameMode,
@@ -332,34 +331,33 @@ extension ApiClient {
       ),
       as: FetchLeaderboardResponse.self
     )
-    .compactMap { response in
-      response.entries.first.map { firstEntry in
-        ResultEnvelope(
-          outOf: firstEntry.outOf,
-          results: response.entries.map { entry in
-            ResultEnvelope.Result(
-              denseRank: entry.rank,
-              id: entry.id.rawValue,
-              isYourScore: entry.isYourScore,
-              rank: entry.rank,
-              score: entry.score,
-              subtitle: nil,
-              title: entry.playerDisplayName ?? (entry.isYourScore ? "You" : "Someone")
-            )
-          }
-        )
-      }
+    return response.entries.first.map { firstEntry in
+      ResultEnvelope(
+        outOf: firstEntry.outOf,
+        results: response.entries.map { entry in
+          ResultEnvelope.Result(
+            denseRank: entry.rank,
+            id: entry.id.rawValue,
+            isYourScore: entry.isYourScore,
+            rank: entry.rank,
+            score: entry.score,
+            subtitle: nil,
+            title: entry.playerDisplayName ?? (entry.isYourScore ? "You" : "Someone")
+          )
+        }
+      )
     }
-    .eraseToEffect()
+    ?? .init()
   }
 }
 
 extension ApiClient {
+  @Sendable
   func loadVocabResults(
     gameMode: GameMode,
     timeScope: TimeScope
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
+  ) async throws -> ResultEnvelope {
+    let response = try await self.apiRequestAsync(
       route: .leaderboard(
         .vocab(
           .fetch(
@@ -370,15 +368,13 @@ extension ApiClient {
       ),
       as: [FetchVocabLeaderboardResponse.Entry].self
     )
-    .compactMap { response in
-      response.first.map { firstEntry in
-        ResultEnvelope(
-          outOf: firstEntry.outOf,
-          results: response.map(ResultEnvelope.Result.init)
-        )
-      }
+    return response.first.map { firstEntry in
+      ResultEnvelope(
+        outOf: firstEntry.outOf,
+        results: response.map(ResultEnvelope.Result.init)
+      )
     }
-    .eraseToEffect()
+    ?? .init()
   }
 }
 
