@@ -72,7 +72,7 @@ class TurnBasedTests: XCTestCase {
             return try await Task.never()
           }
         }
-        $0.apiClient.authenticateAsync = { _ in .mock }
+        $0.apiClient.authenticate = { _ in .mock }
         $0.apiClient.currentPlayer = { currentPlayer }
         $0.apiClient.currentPlayerAsync = { currentPlayer }
         $0.audioPlayer.loop = { _ in }
@@ -330,8 +330,7 @@ class TurnBasedTests: XCTestCase {
       initialState: .init(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.apiClient.authenticate = { _ in .init(value: .mock) }
-        $0.apiClient.authenticateAsync = { _ in .mock }
+        $0.apiClient.authenticate = { _ in .mock }
         $0.build.number = { 42 }
         $0.apiClient.currentPlayer = { nil }
         $0.apiClient.apiRequestAsync = { @Sendable route in
@@ -444,8 +443,7 @@ class TurnBasedTests: XCTestCase {
       initialState: .init(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.apiClient.authenticate = { _ in .init(value: .mock) }
-        $0.apiClient.authenticateAsync = { _ in .mock }
+        $0.apiClient.authenticate = { _ in .mock }
         $0.apiClient.currentPlayer = { nil }
         $0.apiClient.apiRequestAsync = { @Sendable route in
           switch route {

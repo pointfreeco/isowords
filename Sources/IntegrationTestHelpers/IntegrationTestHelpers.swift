@@ -137,34 +137,7 @@ extension ApiClient {
           .eraseToEffect()
       },
       apiRequestAsync: { try await session.apiRequest(route: $0) },
-      authenticate: { authRequest in
-        guard let request = try? router.request(for: .authenticate(authRequest))
-        else {
-          return Fail(error: ApiError(error: URLError(.badURL)))
-            .eraseToEffect()
-        }
-
-        return Effect.catching {
-          try JSONDecoder().decode(
-            CurrentPlayerEnvelope.self,
-            from: middleware(connection(from: request)).perform().data
-          )
-        }
-        .mapError { ApiError(error: $0) }
-        .handleEvents(
-          receiveOutput: { _ in
-            let newPlayer = CurrentPlayerEnvelope(appleReceipt: nil, player: .blob)
-            currentPlayer = newPlayer
-            Task { await session.setCurrentPlayer(newPlayer) }
-          }
-        )
-        .eraseToEffect()
-      },
-      authenticateAsync: {
-        let newPlayer = try await session.authenticate(request: $0)
-//        currentPlayer = newPlayer  // TODO: remove
-        return newPlayer
-      },
+      authenticate: { try await session.authenticate(request: $0) },
       baseUrl: { baseUrl },
       baseUrlAsync: { await session.baseUrl },
       currentPlayer: { currentPlayer },
@@ -175,10 +148,7 @@ extension ApiClient {
           Task { await session.logout() }
         }
       },
-      logoutAsync: {
-        await session.logout()
-//        currentPlayer = nil  // TODO: remove
-      },
+      logoutAsync: { await session.logout() },
       refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
       request: { route in

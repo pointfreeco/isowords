@@ -138,34 +138,7 @@ extension ApiClient {
         )
       },
       apiRequestAsync: { try await session.apiRequest(route: $0) },
-      authenticate: { request in
-        return ApiClientLive.request(
-          baseUrl: baseUrl,
-          route: .authenticate(
-            .init(
-              deviceId: request.deviceId,
-              displayName: request.displayName,
-              gameCenterLocalPlayerId: request.gameCenterLocalPlayerId,
-              timeZone: request.timeZone
-            )
-          ),
-          router: router
-        )
-        .map { data, _ in data }
-        .apiDecode(as: CurrentPlayerEnvelope.self)
-        .handleEvents(
-          receiveOutput: { newPlayer in
-            DispatchQueue.main.async { currentPlayer = newPlayer }
-            Task { await session.setCurrentPlayer(newPlayer) }
-          }
-        )
-        .eraseToEffect()
-      },
-      authenticateAsync: {
-        let newPlayer = try await session.authenticate(request: $0)
-//        currentPlayer = newPlayer  // TODO: remove
-        return newPlayer
-      },
+      authenticate: { try await session.authenticate(request: $0) },
       baseUrl: { baseUrl },
       baseUrlAsync: { await session.baseUrl },
       currentPlayer: { currentPlayer },
@@ -176,10 +149,7 @@ extension ApiClient {
           Task { await session.logout() }
         }
       },
-      logoutAsync: {
-        await session.logout()
-//        currentPlayer = nil  // TODO: remove
-      },
+      logoutAsync: { await session.logout() },
       refreshCurrentPlayer: {
         ApiClientLive.apiRequest(
           accessToken: currentPlayer?.player.accessToken,

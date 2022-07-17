@@ -755,7 +755,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
     try await environment.gameCenter.localPlayer.authenticate()
 
     let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
-    let currentPlayerEnvelope = try await environment.apiClient.authenticateAsync(
+    let currentPlayerEnvelope = try await environment.apiClient.authenticate(
       .init(
         deviceId: .init(rawValue: environment.deviceId.id()),
         displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,

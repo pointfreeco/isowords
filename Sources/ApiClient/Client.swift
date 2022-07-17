@@ -7,9 +7,7 @@ public struct ApiClient {
   @available(*, deprecated) public var apiRequest:
     (ServerRoute.Api.Route) -> Effect<(data: Data, response: URLResponse), URLError>
   public var apiRequestAsync: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
-  @available(*, deprecated) public var authenticate:
-    (ServerRoute.AuthenticateRequest) -> Effect<CurrentPlayerEnvelope, ApiError>
-  public var authenticateAsync:
+  public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
   @available(*, deprecated) public var baseUrl: () -> URL
   public var baseUrlAsync: @Sendable () async -> URL
@@ -31,10 +29,7 @@ public struct ApiClient {
     apiRequestAsync: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (
       Data, URLResponse
     ),
-    authenticate: @escaping (ServerRoute.AuthenticateRequest) -> Effect<
-      CurrentPlayerEnvelope, ApiError
-    >,
-    authenticateAsync: @escaping @Sendable (ServerRoute.AuthenticateRequest) async throws ->
+    authenticate: @escaping @Sendable (ServerRoute.AuthenticateRequest) async throws ->
       CurrentPlayerEnvelope,
     baseUrl: @escaping () -> URL,
     baseUrlAsync: @escaping @Sendable () async -> URL,
@@ -52,7 +47,6 @@ public struct ApiClient {
     self.apiRequest = apiRequest
     self.apiRequestAsync = apiRequestAsync
     self.authenticate = authenticate
-    self.authenticateAsync = authenticateAsync
     self.baseUrl = baseUrl
     self.baseUrlAsync = baseUrlAsync
     self.currentPlayer = currentPlayer
@@ -222,8 +216,7 @@ public struct ApiClient {
     public static let failing = Self(
       apiRequest: { route in .failing("\(Self.self).apiRequest(\(route)) is unimplemented") },
       apiRequestAsync: XCTUnimplemented("\(Self.self).apiRequestAsync"),
-      authenticate: { _ in .failing("\(Self.self).authenticate is unimplemented") },
-      authenticateAsync: XCTUnimplemented("\(Self.self).authenticateAsync"),
+      authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
       baseUrlAsync: XCTUnimplemented("\(Self.self).baseUrlAsync", placeholder: URL(string: "/")!),
       currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
@@ -284,8 +277,7 @@ extension ApiClient {
   public static let noop = Self(
     apiRequest: { _ in .none },
     apiRequestAsync: { _ in try await Task.never() },
-    authenticate: { _ in .none },
-    authenticateAsync: { _ in try await Task.never() },
+    authenticate: { _ in try await Task.never() },
     baseUrl: { URL(string: "/")! },
     baseUrlAsync: { URL(string: "/")! },
     currentPlayer: { nil },
