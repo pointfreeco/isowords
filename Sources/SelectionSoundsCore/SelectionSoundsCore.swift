@@ -19,7 +19,7 @@ extension Reducer {
             cubes: puzzle(state),
             notes: AudioPlayerClient.Sound.allNotes
           ) {
-            await audioPlayer(environment).playAsync(AudioPlayerClient.Sound.allNotes[noteIndex])
+            await audioPlayer(environment).play(AudioPlayerClient.Sound.allNotes[noteIndex])
           }
 
           let selectedWordString = puzzle(state).string(from: selectedWord)
@@ -36,7 +36,7 @@ extension Reducer {
                   : 0
               }
             if validCount > 0 {
-              await audioPlayer(environment).playAsync(.validWord(level: validCount))
+              await audioPlayer(environment).play(.validWord(level: validCount))
             }
           }
         }

@@ -32,10 +32,8 @@ class PersistenceTests: XCTestCase {
       ),
       reducer: appReducer,
       environment: update(.failing) {
-        $0.audioPlayer.play = { _ in .none }
-        $0.audioPlayer.playAsync = { _ in }
-        $0.audioPlayer.stop = { _ in .none }
-        $0.audioPlayer.stopAsync = { _ in }
+        $0.audioPlayer.play = { _ in }
+        $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
@@ -161,7 +159,7 @@ class PersistenceTests: XCTestCase {
       ),
       reducer: appReducer,
       environment: update(.failing) {
-        $0.audioPlayer.stopAsync = { _ in }
+        $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
         $0.database.saveGameAsync = { _ in didArchiveGame = true }
         $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
@@ -218,7 +216,7 @@ class PersistenceTests: XCTestCase {
       initialState: AppState(game: update(.mock) { $0.gameMode = .timed }),
       reducer: appReducer,
       environment: update(.failing) {
-        $0.audioPlayer.stopAsync = { _ in }
+        $0.audioPlayer.stop = { _ in }
         $0.database.saveGameAsync = { _ in didArchiveGame = true }
         $0.mainQueue = .immediate
       }
@@ -302,7 +300,7 @@ class PersistenceTests: XCTestCase {
       ),
       reducer: appReducer,
       environment: update(.failing) {
-        $0.audioPlayer.stopAsync = { _ in }
+        $0.audioPlayer.stop = { _ in }
       }
     )
 

@@ -108,10 +108,10 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
 
     case .task:
       return .run { send in
-        await environment.audioPlayer.loadAsync(AudioPlayerClient.Sound.allCases)
+        await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
         
         // Play trailer music
-        await environment.audioPlayer.playAsync(.onboardingBgMusic)
+        await environment.audioPlayer.play(.onboardingBgMusic)
 
         // Fade the cube in after a second
         await send(.set(\.$opacity, 1), animation: .easeInOut(duration: fadeInDuration))

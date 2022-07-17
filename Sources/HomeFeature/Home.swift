@@ -393,7 +393,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           animation: .default
         )
 
-        await environment.audioPlayer.playAsync(.uiSfxActionDestructive)
+        await environment.audioPlayer.play(.uiSfxActionDestructive)
       }
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId))):

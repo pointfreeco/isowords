@@ -224,7 +224,7 @@ public let onboardingReducer = Reducer<
     state.step = OnboardingState.Step.allCases.last!
 
     return .fireAndForget {
-      await environment.audioPlayer.playAsync(.uiSfxTap)
+      await environment.audioPlayer.play(.uiSfxTap)
     }
 
   case .delayedNextStep:
@@ -234,7 +234,7 @@ public let onboardingReducer = Reducer<
   case .delegate(.getStarted):
     return .fireAndForget {
       await environment.userDefaults.setHasShownFirstLaunchOnboarding(true)
-      await environment.audioPlayer.stopAsync(.onboardingBgMusic)
+      await environment.audioPlayer.stop(.onboardingBgMusic)
       await Task.cancel(id: DelayedNextStepId.self)
     }
 
@@ -310,13 +310,13 @@ public let onboardingReducer = Reducer<
 
   case .nextButtonTapped:
     state.step.next()
-    return .fireAndForget { await environment.audioPlayer.playAsync(.uiSfxTap) }
+    return .fireAndForget { await environment.audioPlayer.play(.uiSfxTap) }
 
   case .skipButtonTapped:
     guard !environment.userDefaults.hasShownFirstLaunchOnboarding else {
       return .run { send in
         await send(.delegate(.getStarted), animation: .default)
-        await environment.audioPlayer.playAsync(.uiSfxTap)
+        await environment.audioPlayer.play(.uiSfxTap)
       }
     }
     state.alert = .init(
@@ -332,7 +332,7 @@ public let onboardingReducer = Reducer<
       ),
       secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
     )
-    return .fireAndForget { await environment.audioPlayer.playAsync(.uiSfxTap) }
+    return .fireAndForget { await environment.audioPlayer.play(.uiSfxTap) }
 
   case .task:
     let firstStepDelay: Int = {
@@ -345,7 +345,7 @@ public let onboardingReducer = Reducer<
     }()
 
     return .run { [step = state.step, presentationStyle = state.presentationStyle] send in
-      await environment.audioPlayer.loadAsync(AudioPlayerClient.Sound.allCases)
+      await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
       _ = try environment.dictionary.load(.en)
 
       if step == OnboardingState.Step.allCases[0] {
@@ -355,7 +355,7 @@ public let onboardingReducer = Reducer<
         }
       }
 
-      await environment.audioPlayer.playAsync(
+      await environment.audioPlayer.play(
         presentationStyle == .demo ? .timedGameBgLoop1 : .onboardingBgMusic
       )
     }

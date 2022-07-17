@@ -13,7 +13,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             return .fireAndForget { [gameMode = state.gameMode, isDemo = state.isDemo] in
               if gameMode == .timed {
                 await environment.audioPlayer
-                  .playAsync(
+                  .play(
                     isDemo
                       ? .timedGameBgLoop1
                       : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
@@ -21,12 +21,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
               } else {
                 await environment.audioPlayer
-                  .loopAsync([.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!)
+                  .loop([.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!)
               }
             }
 
           case .confirmRemoveCube:
-            return .fireAndForget { await environment.audioPlayer.playAsync(.cubeRemove) }
+            return .fireAndForget { await environment.audioPlayer.play(.cubeRemove) }
 
           default:
             return .none
@@ -37,17 +37,17 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         .fireAndForget {
           await Task.cancel(id: CubeShakingID.self)
           for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
-            await environment.audioPlayer.stopAsync(music)
+            await environment.audioPlayer.stop(music)
           }
         }
       }
       .onChange(of: \.secondsPlayed) { secondsPlayed, state, _, environment in
         if secondsPlayed == state.gameMode.seconds - 10 {
-          return .fireAndForget { await environment.audioPlayer.playAsync(.timed10SecWarning) }
+          return .fireAndForget { await environment.audioPlayer.play(.timed10SecWarning) }
         } else if secondsPlayed >= state.gameMode.seconds - 5
           && secondsPlayed <= state.gameMode.seconds
         {
-          return .fireAndForget { await environment.audioPlayer.playAsync(.timedCountdownTone) }
+          return .fireAndForget { await environment.audioPlayer.play(.timedCountdownTone) }
         } else {
           return .none
         }
@@ -62,10 +62,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
         switch action {
         case .submitButtonTapped, .wordSubmitButton(.delegate(.confirmSubmit)):
-          return .fireAndForget { await environment.audioPlayer.playAsync(.invalidWord) }
+          return .fireAndForget { await environment.audioPlayer.play(.invalidWord) }
 
         default:
-          return .fireAndForget { await environment.audioPlayer.playAsync(.cubeDeselect) }
+          return .fireAndForget { await environment.audioPlayer.play(.cubeDeselect) }
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, _, environment in
@@ -90,9 +90,9 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           state.cubeStartedShakingAt = state.cubeStartedShakingAt ?? environment.date()
 
           return cubeWasShaking ? .none : .fireAndForget {
-            await environment.audioPlayer.playAsync(.cubeShake)
+            await environment.audioPlayer.play(.cubeShake)
             for await _ in environment.mainQueue.timer(interval: .seconds(2)) {
-              await environment.audioPlayer.playAsync(.cubeShake)
+              await environment.audioPlayer.play(.cubeShake)
             }
           }
           .cancellable(id: CubeShakingID.self)
@@ -117,7 +117,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         )
 
         return .fireAndForget {
-          await environment.audioPlayer.playAsync(AudioPlayerClient.Sound.allSubmits[firstIndex])
+          await environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
         }
       }
       .selectionSounds(

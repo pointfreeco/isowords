@@ -287,7 +287,7 @@ class SettingsFeatureTests: XCTestCase {
     var setMusicVolume: Float!
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForMusicAsync = { setMusicVolume = $0 }
+    environment.audioPlayer.setGlobalVolumeForMusic = { setMusicVolume = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -306,7 +306,7 @@ class SettingsFeatureTests: XCTestCase {
     var setSoundEffectsVolume: Float!
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForSoundEffectsAsync = { setSoundEffectsVolume = $0 }
+    environment.audioPlayer.setGlobalVolumeForSoundEffects = { setSoundEffectsVolume = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),

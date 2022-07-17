@@ -9,7 +9,7 @@ class GameCoreTests: XCTestCase {
     let didEndMatchInTurn = SendableState(false)
 
     var environment = GameEnvironment.failing
-    environment.audioPlayer.stopAsync = { _ in }
+    environment.audioPlayer.stop = { _ in }
     environment.gameCenter.localPlayer.localPlayerAsync = { .authenticated }
     environment.gameCenter.turnBasedMatch.endMatchInTurnAsync = { _ in
       await didEndMatchInTurn.set(true)

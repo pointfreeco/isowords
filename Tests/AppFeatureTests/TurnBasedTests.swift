@@ -75,11 +75,9 @@ class TurnBasedTests: XCTestCase {
         $0.apiClient.authenticateAsync = { _ in .mock }
         $0.apiClient.currentPlayer = { currentPlayer }
         $0.apiClient.currentPlayerAsync = { currentPlayer }
-        $0.audioPlayer.loop = { _ in .none }
-        $0.audioPlayer.loopAsync = { _ in }
-        $0.audioPlayer.play = { _ in .none }
-        $0.audioPlayer.playAsync = { _ in }
-        $0.audioPlayer.stopAsync = { _ in }
+        $0.audioPlayer.loop = { _ in }
+        $0.audioPlayer.play = { _ in }
+        $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.build.number = { 42 }
         $0.database.playedGamesCount = { _ in .none }
@@ -549,7 +547,7 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
-      $0.audioPlayer.playAsync = { _ in }
+      $0.audioPlayer.play = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
       $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
       $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }

@@ -5,31 +5,16 @@ extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {
     let actor = AudioActor(bundles: .init(wrappedValue: bundles))
     return Self(
-      loadAsync: { try? await actor.load(sounds: $0) },
-      loop: { sound in .fireAndForget { Task { try! await actor.play(sound: sound, loop: true) } } },
-      loopAsync: { try? await actor.play(sound: $0, loop: true) },
-      play: { sound in .fireAndForget { Task { try! await actor.play(sound: sound) } } },
-      playAsync: { try? await actor.play(sound: $0) },
+      load: { try? await actor.load(sounds: $0) },
+      loop: { try? await actor.play(sound: $0, loop: true) },
+      play: { try? await actor.play(sound: $0) },
       secondaryAudioShouldBeSilencedHint: {
         AVAudioSession.sharedInstance().secondaryAudioShouldBeSilencedHint
       },
-      secondaryAudioShouldBeSilencedHintAsync: {
-        AVAudioSession.sharedInstance().secondaryAudioShouldBeSilencedHint
-      },
-      setGlobalVolumeForMusic: { volume in
-        .fireAndForget { Task { await actor.setMusicVolume(to: volume) } }
-      },
-      setGlobalVolumeForMusicAsync: { await actor.setMusicVolume(to: $0) },
-      setGlobalVolumeForSoundEffects: { volume in
-        .fireAndForget { Task { await actor.setSoundEffectsVolume(to: volume) } }
-      },
-      setGlobalVolumeForSoundEffectsAsync: { await actor.setSoundEffectsVolume(to: $0) },
-      setVolume: { sound, volume in
-        .fireAndForget { Task { try! await actor.setVolume(of: sound, to: volume) } }
-      },
-      setVolumeAsync: { try? await actor.setVolume(of: $0, to: $1) },
-      stop: { sound in .fireAndForget { Task { try? await actor.stop(sound: sound) } } },
-      stopAsync: { try? await actor.stop(sound: $0) }
+      setGlobalVolumeForMusic: { await actor.setMusicVolume(to: $0) },
+      setGlobalVolumeForSoundEffects: { await actor.setSoundEffectsVolume(to: $0) },
+      setVolume: { try? await actor.setVolume(of: $0, to: $1) },
+      stop: { try? await actor.stop(sound: $0) }
     )
   }
 

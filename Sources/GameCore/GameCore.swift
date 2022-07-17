@@ -732,7 +732,7 @@ extension GameState {
           group.addTask {
             try await environment.mainQueue
               .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
-            await environment.audioPlayer.playAsync(.cubeRemove)
+            await environment.audioPlayer.play(.cubeRemove)
           }
         }
       }
@@ -1024,7 +1024,7 @@ extension Effect where Failure == Never {
       await Task.cancel(id: LowPowerModeId.self)
       await Task.cancel(id: TimerId.self)
       for music in AudioPlayerClient.Sound.allMusic {
-        await audioPlayer.stopAsync(music)
+        await audioPlayer.stop(music)
       }
     }
   }

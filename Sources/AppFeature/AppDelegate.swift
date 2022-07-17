@@ -82,7 +82,7 @@ let appDelegateReducer = Reducer<
         }
 
         group.addTask {
-          await environment.audioPlayer.loadAsync(AudioPlayerClient.Sound.allCases)
+          await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
         }
 
         group.addTask {
@@ -127,9 +127,9 @@ let appDelegateReducer = Reducer<
     state = (try? result.value) ?? state
     return .fireAndForget { [state] in
       async let setSoundEffects: Void =
-        await environment.audioPlayer.setGlobalVolumeForSoundEffectsAsync(state.soundEffectsVolume)
-      async let setMusic: Void = await environment.audioPlayer.setGlobalVolumeForMusicAsync(
-        environment.audioPlayer.secondaryAudioShouldBeSilencedHintAsync()
+        await environment.audioPlayer.setGlobalVolumeForSoundEffects(state.soundEffectsVolume)
+      async let setMusic: Void = await environment.audioPlayer.setGlobalVolumeForMusic(
+        environment.audioPlayer.secondaryAudioShouldBeSilencedHint()
           ? 0
           : state.musicVolume
       )

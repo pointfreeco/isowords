@@ -312,8 +312,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       else { return .task { .delegate(.close) }.animation() }
 
       return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
-        await environment.audioPlayer.playAsync(.transitionIn)
-        await environment.audioPlayer.loopAsync(.gameOverMusicLoop)
+        await environment.audioPlayer.play(.transitionIn)
+        await environment.audioPlayer.loop(.gameOverMusicLoop)
 
         await withThrowingTaskGroup(of: Void.self) { group in
           group.addTask {
