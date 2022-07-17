@@ -165,7 +165,7 @@ extension TurnBasedMatchmakerViewControllerClient {
       present: { _ in .failing("\(Self.self).present is unimplemented") },
       presentAsync: XCTUnimplemented("\(Self.self).presentAsync"),
       dismiss: .failing("\(Self.self).dismiss is unimplemented"),
-      dismissAsync: XCTUnimplemented("\(Self.self).participantQuitInTurnAsync")
+      dismissAsync: XCTUnimplemented("\(Self.self).dismissAsync")
     )
   }
 #endif

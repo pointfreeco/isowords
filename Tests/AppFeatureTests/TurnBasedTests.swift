@@ -98,6 +98,7 @@ class TurnBasedTests: XCTestCase {
           didSaveCurrentTurn = true
           return .none
         }
+        $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in didSaveCurrentTurn = true }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
         $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
         $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
@@ -547,6 +548,7 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
+      $0.apiClient.currentPlayerAsync = { nil }
       $0.audioPlayer.play = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
       $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
@@ -688,7 +690,7 @@ class TurnBasedTests: XCTestCase {
     )
   }
 
-  func testRematch() {
+  func testRematch() async {
     let localParticipant = TurnBasedParticipant.local
     let match = update(TurnBasedMatch.inProgress) {
       $0.currentParticipant = localParticipant
@@ -701,6 +703,7 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
+      $0.apiClient.currentPlayerAsync = { nil }
       $0.dictionary.randomCubes = { _ in .mock }
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = {
@@ -711,8 +714,8 @@ class TurnBasedTests: XCTestCase {
         didRematchWithId = $0
         return .init(value: newMatch)
       }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in .none }
-      $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
+      $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
+      $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
@@ -744,13 +747,13 @@ class TurnBasedTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.currentGame(.game(.gameOver(.rematchButtonTapped)))) {
+    await store.send(.currentGame(.game(.gameOver(.rematchButtonTapped)))) {
       $0.game = nil
     }
     XCTAssertNoDifference(didRematchWithId, match.matchId)
-    self.mainQueue.advance()
+    await self.mainQueue.advance()
 
-    store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
+    await store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
       $0.currentGame = GameFeatureState(
         game: GameState(
           cubes: .mock,
@@ -770,7 +773,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
-  func testGameCenterNotification_ShowsRecentTurn() {
+  func testGameCenterNotification_ShowsRecentTurn() async {
     let localParticipant = TurnBasedParticipant.local
     let remoteParticipant = update(TurnBasedParticipant.remote) {
       $0.lastTurnDate = self.mainRunLoop.now.date - 10
@@ -825,13 +828,13 @@ class TurnBasedTests: XCTestCase {
       environment: environment
     )
 
-    store.send(
+    await store.send(
       .gameCenter(
         .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: false)))
       )
     )
 
-    self.mainQueue.advance()
+    await self.mainQueue.advance()
     XCTAssertNoDifference(
       notificationBannerRequest,
       GameCenterClient.NotificationBannerRequest(
@@ -841,7 +844,7 @@ class TurnBasedTests: XCTestCase {
     )
   }
 
-  func testGameCenterNotification_DoesNotShow() {
+  func testGameCenterNotification_DoesNotShow() async {
     let localParticipant = TurnBasedParticipant.local
     let remoteParticipant = update(TurnBasedParticipant.remote) {
       $0.lastTurnDate = self.mainRunLoop.now.date - 10
@@ -885,11 +888,11 @@ class TurnBasedTests: XCTestCase {
       environment: environment
     )
 
-    store.send(
+    await store.send(
       .gameCenter(
         .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: false)))
       )
     )
-    self.mainQueue.run()
+    await self.mainQueue.run()
   }
 }

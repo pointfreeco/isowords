@@ -44,22 +44,19 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: game,
                 settings: state.home.settings
               )
-              return .merge(
-                environment.gameCenter.turnBasedMatchmakerViewController.dismiss
-                  .fireAndForget(),
-                environment.gameCenter.turnBasedMatch
-                  .saveCurrentTurn(
-                    match.matchId,
-                    Data(
-                      turnBasedMatchData: .init(
-                        context: context,
-                        gameState: game,
-                        playerId: environment.apiClient.currentPlayer()?.player.id
-                      )
+              return .fireAndForget {
+                await environment.gameCenter.turnBasedMatchmakerViewController.dismissAsync()
+                try await environment.gameCenter.turnBasedMatch.saveCurrentTurnAsync(
+                  match.matchId,
+                  Data(
+                    turnBasedMatchData: .init(
+                      context: context,
+                      gameState: game,
+                      playerId: environment.apiClient.currentPlayerAsync()?.player.id
                     )
                   )
-                  .fireAndForget()
-              )
+                )
+              }
             }
 
             guard var turnBasedMatchData = matchData.turnBasedMatchData else {
