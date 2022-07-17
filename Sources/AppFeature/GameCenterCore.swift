@@ -10,7 +10,7 @@ import SharedModels
 
 public enum GameCenterAction: Equatable {
   case listener(LocalPlayerClient.ListenerEvent)
-  case rematchResponse(Result<TurnBasedMatch, NSError>)
+  case rematchResponse(TaskResult<TurnBasedMatch>)
   case turnBasedMatchReloaded(Result<TurnBasedMatch, NSError>)
 }
 
@@ -128,9 +128,9 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 await send(.gameCenter(.listener(event)))
               }
             } catch: { _, send in
-              await Task.cancel(id: ListenerId())
+              await Task.cancel(id: ListenerID.self)
             }
-            .cancellable(id: ListenerId(), cancelInFlight: true)
+            .cancellable(id: ListenerID.self, cancelInFlight: true)
 
           case .currentGame(.game(.gameOver(.rematchButtonTapped))):
             guard
@@ -140,11 +140,17 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
             state.game = nil
 
-            return environment.gameCenter.turnBasedMatch
-              .rematch(turnBasedMatch.match.matchId)
-              .receive(on: environment.mainQueue)
-              .mapError { $0 as NSError }
-              .catchToEffect { .gameCenter(.rematchResponse($0)) }
+            return .task {
+              await .gameCenter(
+                .rematchResponse(
+                  TaskResult {
+                    try await environment.gameCenter.turnBasedMatch.rematchAsync(
+                      turnBasedMatch.match.matchId
+                    )
+                  }
+                )
+              )
+            }
 
           case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
             guard state.game?.turnBasedContext?.match.matchId == match.matchId
@@ -199,16 +205,22 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             return .none
 
           case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
-            return environment.gameCenter.turnBasedMatch.rematch(matchId)
-              .receive(on: environment.mainQueue)
-              .mapError { $0 as NSError }
-              .catchToEffect { .gameCenter(.rematchResponse($0)) }
+            return .task {
+              await .gameCenter(
+                .rematchResponse(
+                  TaskResult {
+                    try await environment.gameCenter.turnBasedMatch.rematchAsync(matchId)
+                  }
+                )
+              )
+            }
 
           default:
             return .none
           }
-        })
+        }
+      )
   }
 }
 
-private struct ListenerId: Hashable {}
+private enum ListenerID: Hashable {}

@@ -710,9 +710,9 @@ class TurnBasedTests: XCTestCase {
         update(.authenticated) { $0.player = localParticipant.player! }
       }
       $0.gameCenter.turnBasedMatch.loadMatches = { .none }
-      $0.gameCenter.turnBasedMatch.rematch = {
+      $0.gameCenter.turnBasedMatch.rematchAsync = {
         didRematchWithId = $0
-        return .init(value: newMatch)
+        return newMatch
       }
       $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
       $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
