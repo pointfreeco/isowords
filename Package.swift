@@ -191,7 +191,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "ClientModels", targets: ["ClientModels"]),
     .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
     .library(name: "ComposableGameCenter", targets: ["ComposableGameCenter"]),
-    .library(name: "ComposableGameCenterHelpers", targets: ["ComposableGameCenterHelpers"]),
     .library(name: "ComposableStoreKit", targets: ["ComposableStoreKit"]),
     .library(name: "ComposableUserNotifications", targets: ["ComposableUserNotifications"]),
     .library(name: "CubeCore", targets: ["CubeCore"]),
@@ -287,7 +286,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Build",
         "ClientModels",
         "ComposableGameCenter",
-        "ComposableGameCenterHelpers",
         "ComposableStoreKit",
         "CubeCore",
         "CubePreview",
@@ -418,10 +416,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
-    ),
-    .target(
-      name: "ComposableGameCenterHelpers",
-      dependencies: ["ComposableGameCenter"]
     ),
     .target(
       name: "ComposableStoreKit",
@@ -582,7 +576,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Build",
         "ClientModels",
         "ComposableGameCenter",
-        "ComposableGameCenterHelpers",
         "ComposableUserNotifications",
         "CubeCore",
         "DictionaryClient",
@@ -714,7 +707,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ChangelogFeature",
         "ClientModels",
         "CombineHelpers",
-        "ComposableGameCenterHelpers",
         "ComposableStoreKit",
         "ComposableUserNotifications",
         "DailyChallengeFeature",

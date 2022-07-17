@@ -320,8 +320,26 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         else { return .none }
 
         return .merge(
-          forceQuitMatch(match: match, gameCenter: environment.gameCenter)
-            .fireAndForget(),
+          .fireAndForget {
+            let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
+            let currentParticipantIsLocalPlayer =
+              match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+
+            if currentParticipantIsLocalPlayer {
+              try await environment.gameCenter.turnBasedMatch.endMatchInTurnAsync(
+                .init(
+                  for: match.matchId,
+                  matchData: match.matchData ?? Data(),
+                  localPlayerId: localPlayer.gamePlayerId,
+                  localPlayerMatchOutcome: .quit,
+                  message: "\(localPlayer.displayName) forfeited the match."
+                )
+              )
+            } else {
+              try await environment.gameCenter.turnBasedMatch
+                .participantQuitOutOfTurnAsync(match.matchId)
+            }
+          },
 
           state.gameOver(environment: environment)
         )

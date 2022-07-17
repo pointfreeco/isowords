@@ -11,11 +11,8 @@ class GameCoreTests: XCTestCase {
     var environment = GameEnvironment.failing
     environment.audioPlayer.stopAsync = { _ in }
     environment.database.saveGame = { _ in .none }
-    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
-      didEndMatchInTurn = true
-      return .none
-    }
+    environment.gameCenter.localPlayer.localPlayerAsync = { .authenticated }
+    environment.gameCenter.turnBasedMatch.endMatchInTurnAsync = { _ in didEndMatchInTurn = true }
 
     var gameState = GameState(inProgressGame: .mock)
     gameState.gameContext = .turnBased(
