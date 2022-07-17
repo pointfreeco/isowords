@@ -183,10 +183,12 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
-    environment.applicationClient.openSettingsURLString = { "settings:isowords//isowords/settings" }
-    environment.applicationClient.open = { url, _ in
+    environment.applicationClient.openSettingsURLStringAsync = {
+      "settings:isowords//isowords/settings"
+    }
+    environment.applicationClient.openAsync = { url, _ in
       openedUrl = url
-      return .init(value: true)
+      return true
     }
     environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }

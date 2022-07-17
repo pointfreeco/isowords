@@ -431,15 +431,17 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       return .none
 
     case .didBecomeActive:
-      return environment.userNotifications.getNotificationSettings
-        .receive(on: environment.mainQueue)
-        .eraseToEffect()
-        .map(SettingsAction.userNotificationSettingsResponse)
+      return .task {
+        await .userNotificationSettingsResponse(
+          environment.userNotifications.getNotificationSettingsAsync()
+        )
+      }
 
     case .leaveUsAReviewButtonTapped:
-      return environment.applicationClient
-        .open(environment.serverConfig.config().appStoreReviewUrl, [:])
-        .fireAndForget()
+      return .fireAndForget {
+        _ = await environment.applicationClient
+          .openAsync(environment.serverConfig.config().appStoreReviewUrl, [:])
+      }
 
     case .onAppear:
       state.fullGamePurchasedAt =
@@ -518,11 +520,12 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       return .none
 
     case .openSettingButtonTapped:
-      return URL(string: environment.applicationClient.openSettingsURLString())
-        .map {
-          environment.applicationClient.open($0, [:]).fireAndForget()
-        }
-        ?? .none
+      return .fireAndForget {
+        guard
+          let url = await URL(string: environment.applicationClient.openSettingsURLStringAsync())
+        else { return }
+        _ = await environment.applicationClient.openAsync(url, [:])
+      }
 
     case let .productsResponse(.success(response)):
       state.fullGameProduct =
