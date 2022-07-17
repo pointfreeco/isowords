@@ -42,9 +42,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
-    self.viewStore.send(
-      .appDelegate(.didRegisterForRemoteNotifications(.failure(error as NSError)))
-    )
+    self.viewStore.send(.appDelegate(.didRegisterForRemoteNotifications(.failure(error))))
   }
 }
 

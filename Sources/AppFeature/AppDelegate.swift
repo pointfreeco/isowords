@@ -15,7 +15,7 @@ import XCTestDynamicOverlay
 
 public enum AppDelegateAction: Equatable {
   case didFinishLaunching
-  case didRegisterForRemoteNotifications(Result<Data, NSError>)
+  case didRegisterForRemoteNotifications(TaskResult<Data>)
   case userNotifications(UserNotificationClient.DelegateEvent)
   case userSettingsLoaded(TaskResult<UserSettings>)
 }
