@@ -59,7 +59,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               }
             }
 
-            guard var turnBasedMatchData = matchData.turnBasedMatchData else {
+            guard let turnBasedMatchData = matchData.turnBasedMatchData else {
               return .none
             }
 
@@ -87,19 +87,17 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
-              return .merge(
-                environment.gameCenter.turnBasedMatchmakerViewController.dismiss
-                  .fireAndForget(),
-
-                gameState.isYourTurn
-                  ? environment.gameCenter.turnBasedMatch.saveCurrentTurn(
+              return .fireAndForget { [turnBasedMatchData] in
+                await environment.gameCenter.turnBasedMatchmakerViewController.dismissAsync()
+                if gameState.isYourTurn {
+                  var turnBasedMatchData = turnBasedMatchData
+                  turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
+                  try await environment.gameCenter.turnBasedMatch.saveCurrentTurnAsync(
                     match.matchId,
                     Data(turnBasedMatchData: turnBasedMatchData)
                   )
-                  .fireAndForget()
-                  : .none
-              )
+                }
+              }
             }
 
             let context = TurnBasedContext(
