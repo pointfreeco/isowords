@@ -11,7 +11,6 @@ import SharedModels
 public enum GameCenterAction: Equatable {
   case listener(LocalPlayerClient.ListenerEvent)
   case rematchResponse(TaskResult<TurnBasedMatch>)
-  case turnBasedMatchReloaded(Result<TurnBasedMatch, NSError>)
 }
 
 extension Reducer where State == AppState, Action == AppAction, Environment == AppEnvironment {
@@ -153,13 +152,10 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             }
 
           case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
-            guard state.game?.turnBasedContext?.match.matchId == match.matchId
+            guard
+              state.game?.turnBasedContext?.match.matchId == match.matchId,
+              let turnBasedMatchData = match.matchData?.turnBasedMatchData
             else { return .none }
-
-            guard let turnBasedMatchData = match.matchData?.turnBasedMatchData
-            else {
-              return .none
-            }
 
             let newGame = GameState(
               gameCurrentTime: environment.mainRunLoop.now.date,
@@ -199,12 +195,6 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
           case let .gameCenter(.rematchResponse(.success(turnBasedMatch))),
             let .home(.multiplayer(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))):
             return handleTurnBasedMatch(turnBasedMatch, didBecomeActive: true)
-
-          case let .gameCenter(.turnBasedMatchReloaded(.success(turnBasedMatch))):
-            if state.game?.turnBasedContext?.match.matchId == turnBasedMatch.matchId {
-              state.game?.turnBasedContext?.match = turnBasedMatch
-            }
-            return .none
 
           case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
             return .task {
