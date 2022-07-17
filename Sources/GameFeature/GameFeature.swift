@@ -19,6 +19,7 @@ public struct GameFeatureState: Equatable {
 }
 
 public enum GameFeatureAction: Equatable {
+  case dismissSettings
   case game(GameAction)
   case settings(SettingsAction)
   case onDisappear
@@ -61,12 +62,18 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
 
     .init { state, action, environment in
       switch action {
+      case .dismissSettings:
+        state.game?.isSettingsPresented = false
+        return .none
+
       case .onDisappear:
         return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
 
-      case .settings(.onDismiss):
-        state.game?.isSettingsPresented = false
-        return .none
+      case .settings(.task):
+        return .concatenate(
+          .task { try await Task.never() },
+          .task { .dismissSettings }
+        )
 
       default:
         return .none

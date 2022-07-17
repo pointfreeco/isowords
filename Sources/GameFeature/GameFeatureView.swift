@@ -39,12 +39,7 @@ public struct GameFeatureView<Content>: View where Content: View {
         // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
         // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
         EmptyView()
-          .sheet(
-            isPresented: viewStore.binding(
-              get: { $0 },
-              send: .settings(.onDismiss)
-            )
-          ) {
+          .sheet(isPresented: viewStore.binding(send: .dismissSettings)) {
             NavigationView {
               SettingsView(
                 store: self.store.scope(
