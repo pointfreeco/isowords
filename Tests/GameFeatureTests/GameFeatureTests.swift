@@ -18,7 +18,7 @@ class GameFeatureTests: XCTestCase {
 
   func testRemoveCubeMove() async {
     let environment = update(GameEnvironment.failing) {
-      $0.audioPlayer.play = { _ in .none }
+      $0.audioPlayer.playAsync = { _ in }
       $0.fileClient.load = { _ in .none }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()

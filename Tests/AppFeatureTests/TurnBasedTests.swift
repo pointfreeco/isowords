@@ -549,7 +549,7 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
-      $0.audioPlayer.play = { _ in .none }
+      $0.audioPlayer.playAsync = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
       $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
       $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
