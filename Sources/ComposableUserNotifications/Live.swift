@@ -19,7 +19,7 @@ extension UserNotificationClient {
     delegate:
       Effect
       .run { subscriber in
-        var delegate: Optional = Delegate(subscriber: subscriber)
+        var delegate: Optional = _Delegate(subscriber: subscriber)
         UNUserNotificationCenter.current().delegate = delegate
         return AnyCancellable {
           delegate = nil
@@ -28,7 +28,11 @@ extension UserNotificationClient {
       .share()
       .eraseToEffect(),
     delegateAsync: {
-      fatalError()
+      AsyncStream { continuation in
+        let delegate = Delegate(continuation: continuation)
+        UNUserNotificationCenter.current().delegate = delegate
+        continuation.onTermination = { [delegate] _ in }
+      }
     },
     getNotificationSettings: .future { callback in
       UNUserNotificationCenter.current().getNotificationSettings { settings in
@@ -97,6 +101,47 @@ extension UserNotificationClient.Notification.Settings {
 
 extension UserNotificationClient {
   fileprivate class Delegate: NSObject, UNUserNotificationCenterDelegate {
+    let continuation: AsyncStream<UserNotificationClient.DelegateEvent>.Continuation
+
+    init(continuation: AsyncStream<UserNotificationClient.DelegateEvent>.Continuation) {
+      self.continuation = continuation
+    }
+
+    func userNotificationCenter(
+      _ center: UNUserNotificationCenter,
+      didReceive response: UNNotificationResponse,
+      withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+      self.continuation.yield(
+        .didReceiveResponse(.init(rawValue: response), completionHandler: completionHandler)
+      )
+    }
+
+    func userNotificationCenter(
+      _ center: UNUserNotificationCenter,
+      openSettingsFor notification: UNNotification?
+    ) {
+      self.continuation.yield(
+        .openSettingsForNotification(notification.map(Notification.init(rawValue:)))
+      )
+    }
+
+    func userNotificationCenter(
+      _ center: UNUserNotificationCenter,
+      willPresent notification: UNNotification,
+      withCompletionHandler completionHandler:
+        @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+      self.continuation.yield(
+        .willPresentNotification(
+          .init(rawValue: notification),
+          completionHandler: completionHandler
+        )
+      )
+    }
+  }
+
+  fileprivate class _Delegate: NSObject, UNUserNotificationCenterDelegate {
     let subscriber: Effect<UserNotificationClient.DelegateEvent, Never>.Subscriber
 
     init(subscriber: Effect<UserNotificationClient.DelegateEvent, Never>.Subscriber) {

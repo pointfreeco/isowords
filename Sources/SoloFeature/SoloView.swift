@@ -19,7 +19,7 @@ public struct SoloState: Equatable {
 public enum SoloAction: Equatable {
   case gameButtonTapped(GameMode)
   case onAppear
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
+  case savedGamesLoaded(TaskResult<SavedGamesState>)
 }
 
 public struct SoloEnvironment {
@@ -39,8 +39,9 @@ public let soloReducer = Reducer<SoloState, SoloAction, SoloEnvironment> {
     return .none
 
   case .onAppear:
-    return environment.fileClient.loadSavedGames()
-      .map(SoloAction.savedGamesLoaded)
+    return .task {
+      await .savedGamesLoaded(TaskResult { try await environment.fileClient.loadSavedGamesAsync() })
+    }
 
   case .savedGamesLoaded(.failure):
     return .none

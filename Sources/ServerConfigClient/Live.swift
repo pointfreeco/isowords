@@ -24,12 +24,7 @@ extension ServerConfigClient {
       config: { currentConfig },
       refresh: { effect },
       refreshAsync: {
-        if #available(iOS 15.0, *) {
-          for try await value in effect.values {
-            return value
-          }
-        }
-        fatalError("TODO: Refactor")
+        try await effect.values.first(where: { _ in true }) ?? .init()
       }
     )
   }

@@ -13,42 +13,33 @@ extension Reducer {
   ) -> Reducer {
     self
       .onChange(of: selectedWord) { previousSelection, selectedWord, state, _, environment in
-        var effects: [Effect<Action, Never>] = []
+        return .fireAndForget { [state] in
+          if let noteIndex = noteIndex(
+            selectedWord: selectedWord,
+            cubes: puzzle(state),
+            notes: AudioPlayerClient.Sound.allNotes
+          ) {
+            await audioPlayer(environment).playAsync(AudioPlayerClient.Sound.allNotes[noteIndex])
+          }
 
-        if let noteIndex = noteIndex(
-          selectedWord: selectedWord,
-          cubes: puzzle(state),
-          notes: AudioPlayerClient.Sound.allNotes
-        ) {
-          effects.append(
-            audioPlayer(environment).play(AudioPlayerClient.Sound.allNotes[noteIndex])
-              .fireAndForget()
-          )
-        }
-
-        let selectedWordString = puzzle(state).string(from: selectedWord)
-        if !hasBeenPlayed(state, selectedWordString)
-          && contains(state, environment, selectedWordString)
-        {
-
-          let validCount = selectedWordString
-            .indices
-            .dropFirst(2)
-            .reduce(into: 0) { count, index in
-              count +=
-                contains(state, environment, String(selectedWordString[...index]))
-                ? 1
-                : 0
+          let selectedWordString = puzzle(state).string(from: selectedWord)
+          if !hasBeenPlayed(state, selectedWordString)
+            && contains(state, environment, selectedWordString)
+          {
+            let validCount = selectedWordString
+              .indices
+              .dropFirst(2)
+              .reduce(into: 0) { count, index in
+                count +=
+                  contains(state, environment, String(selectedWordString[...index]))
+                  ? 1
+                  : 0
+              }
+            if validCount > 0 {
+              await audioPlayer(environment).playAsync(.validWord(level: validCount))
             }
-          effects.append(
-            validCount > 0
-              ? audioPlayer(environment).play(.validWord(level: validCount))
-                .fireAndForget()
-              : .none
-          )
+          }
         }
-
-        return .merge(effects)
       }
   }
 }
