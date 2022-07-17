@@ -115,9 +115,11 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               lastTurnDate > environment.mainRunLoop.now.date.addingTimeInterval(-60)
             else { return .none }
 
-            return environment.gameCenter
-              .showNotificationBanner(.init(title: match.message, message: nil))
-              .fireAndForget()
+            return .fireAndForget {
+              await environment.gameCenter.showNotificationBannerAsync(
+                .init(title: match.message, message: nil)
+              )
+            }
           }
 
           switch action {
