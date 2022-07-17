@@ -167,7 +167,6 @@ public struct HomeEnvironment {
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
   @available(*, deprecated)
-  public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
   public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var timeZone: () -> TimeZone
@@ -190,7 +189,6 @@ public struct HomeEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
     setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     timeZone: @escaping () -> TimeZone,
@@ -212,7 +210,6 @@ public struct HomeEnvironment {
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
     self.storeKit = storeKit
     self.timeZone = timeZone
@@ -239,7 +236,6 @@ public struct HomeEnvironment {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in .none },
       setUserInterfaceStyleAsync: { _ in },
       storeKit: .noop,
       timeZone: { TimeZone(secondsFromGMT: 0)! },
@@ -341,7 +337,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
           serverConfig: $0.serverConfig,
-          setUserInterfaceStyle: $0.setUserInterfaceStyle,
           setUserInterfaceStyleAsync: $0.setUserInterfaceStyleAsync,
           storeKit: $0.storeKit,
           userDefaults: $0.userDefaults,
@@ -954,7 +949,6 @@ private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async 
         mainRunLoop: .main,
         remoteNotifications: .noop,
         serverConfig: .noop,
-        setUserInterfaceStyle: { _ in .none },
         setUserInterfaceStyleAsync: { _ in },
         storeKit: .noop,
         timeZone: { .autoupdatingCurrent },

@@ -100,11 +100,6 @@ extension AppEnvironment {
       mainRunLoop: .main,
       remoteNotifications: .live,
       serverConfig: .live(apiClient: apiClient, build: build),
-      setUserInterfaceStyle: { userInterfaceStyle in
-        .fireAndForget {
-          UIApplication.shared.windows.first?.overrideUserInterfaceStyle = userInterfaceStyle
-        }
-      },
       setUserInterfaceStyleAsync: { userInterfaceStyle in
         await MainActor.run {
           guard

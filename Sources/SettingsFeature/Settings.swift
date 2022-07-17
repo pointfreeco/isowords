@@ -201,7 +201,6 @@ public struct SettingsEnvironment {
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
   @available(*, deprecated)
-  public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
   public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
@@ -220,7 +219,6 @@ public struct SettingsEnvironment {
     mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
     setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
@@ -238,7 +236,6 @@ public struct SettingsEnvironment {
     self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
     self.storeKit = storeKit
     self.userDefaults = userDefaults
@@ -263,9 +260,6 @@ public struct SettingsEnvironment {
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyle: { _ in
-        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
-      },
       setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
       storeKit: .failing,
       userDefaults: .failing,
@@ -285,7 +279,6 @@ public struct SettingsEnvironment {
       mainQueue: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in .none },
       setUserInterfaceStyleAsync: { _ in },
       storeKit: .noop,
       userDefaults: .noop,

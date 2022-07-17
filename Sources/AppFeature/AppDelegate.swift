@@ -29,8 +29,6 @@ struct AppDelegateEnvironment {
   var fileClient: FileClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
-  @available(*, deprecated) var setUserInterfaceStyle:
-    (UIUserInterfaceStyle) -> Effect<Never, Never>
   var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   var userNotifications: UserNotificationClient
 
@@ -44,7 +42,6 @@ struct AppDelegateEnvironment {
       fileClient: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
-      setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle") },
       setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
       userNotifications: .failing
     )

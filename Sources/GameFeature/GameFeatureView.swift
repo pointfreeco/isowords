@@ -124,7 +124,6 @@ public struct GameFeatureView<Content>: View where Content: View {
               mainRunLoop: .main,
               remoteNotifications: .noop,
               serverConfig: .noop,
-              setUserInterfaceStyle: { _ in .none },
               setUserInterfaceStyleAsync: { _ in },
               storeKit: .live(),
               userDefaults: .noop,

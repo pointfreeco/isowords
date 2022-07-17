@@ -95,7 +95,6 @@ extension AppEnvironment {
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
-      setUserInterfaceStyle: self.setUserInterfaceStyle,
       setUserInterfaceStyleAsync: self.setUserInterfaceStyleAsync,
       storeKit: self.storeKit,
       userDefaults: self.userDefaults,
@@ -120,7 +119,6 @@ extension AppEnvironment {
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
-      setUserInterfaceStyle: self.setUserInterfaceStyle,
       setUserInterfaceStyleAsync: self.setUserInterfaceStyleAsync,
       storeKit: self.storeKit,
       timeZone: self.timeZone,
@@ -145,7 +143,6 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
           fileClient: $0.fileClient,
           mainQueue: $0.mainQueue,
           remoteNotifications: $0.remoteNotifications,
-          setUserInterfaceStyle: $0.setUserInterfaceStyle,
           setUserInterfaceStyleAsync: $0.setUserInterfaceStyleAsync,
           userNotifications: $0.userNotifications
         )

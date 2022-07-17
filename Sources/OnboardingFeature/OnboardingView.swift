@@ -201,7 +201,6 @@ public struct OnboardingEnvironment {
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in .none },
       setUserInterfaceStyleAsync: { _ in },
       storeKit: .noop,
       userDefaults: self.userDefaults,

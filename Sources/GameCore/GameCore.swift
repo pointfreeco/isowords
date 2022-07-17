@@ -202,8 +202,6 @@ public struct GameEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  @available(*, deprecated)
-  public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
   public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
@@ -225,7 +223,6 @@ public struct GameEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
     setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
@@ -246,7 +243,6 @@ public struct GameEnvironment {
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
     self.storeKit = storeKit
     self.userDefaults = userDefaults
@@ -932,9 +928,6 @@ func menuTitle(state: GameState) -> TextState {
       mainRunLoop: .failing("mainRunLoop"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyle: { _ in
-        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
-      },
       setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
       storeKit: .failing,
       userDefaults: .failing,
@@ -957,7 +950,6 @@ func menuTitle(state: GameState) -> TextState {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in .none },
       setUserInterfaceStyleAsync: { _ in },
       storeKit: .noop,
       userDefaults: .noop,
