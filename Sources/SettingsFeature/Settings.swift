@@ -535,7 +535,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
       return .merge(
         .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
-          await withThrowingTaskGroup(of: Void.self) { group in
+          await withTaskGroup(of: Void.self) { group in
             group.addTask {
               for await event in environment.storeKit.observerAsync() {
                 await send(.paymentTransaction(event), animation: .default)
@@ -556,13 +556,17 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
                 )
               }
             }
+
+            group.addTask {
+              await send(
+                .userNotificationSettingsResponse(
+                  environment.userNotifications.getNotificationSettingsAsync()
+                ),
+                animation: .default
+              )
+            }
           }
         },
-
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainQueue.animation())
-          .eraseToEffect()
-          .map(SettingsAction.userNotificationSettingsResponse),
 
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
           .map { _ in .didBecomeActive }
