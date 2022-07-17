@@ -67,7 +67,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .notDetermined)
     }
     environment.userNotifications.requestAuthorizationAsync = { _ in true }
@@ -108,7 +108,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .notDetermined)
     }
     environment.userNotifications.requestAuthorizationAsync = { _ in false }
@@ -149,7 +149,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
 
@@ -194,7 +194,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .denied)
     }
 
@@ -247,7 +247,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
 
@@ -377,7 +377,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 

@@ -185,7 +185,7 @@ public let dailyChallengeReducer = Reducer<
           group.addTask {
             await send(
               .userNotificationSettingsResponse(
-                environment.userNotifications.getNotificationSettingsAsync()
+                environment.userNotifications.getNotificationSettings()
               )
             )
           }
@@ -534,8 +534,9 @@ private struct RingEffect: GeometryEffect {
         remoteNotifications: .noop,
         userNotifications: .noop
       )
-      environment.userNotifications.getNotificationSettings = .init(
-        value: .init(authorizationStatus: .notDetermined))
+      environment.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .notDetermined)
+      }
 
       return Preview {
         NavigationView {

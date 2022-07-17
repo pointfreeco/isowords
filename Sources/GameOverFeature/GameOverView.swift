@@ -377,7 +377,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           group.addTask {
             await send(
               .userNotificationSettingsResponse(
-                environment.userNotifications.getNotificationSettingsAsync()
+                environment.userNotifications.getNotificationSettings()
               )
             )
           }

@@ -42,7 +42,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 
@@ -155,7 +155,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 
@@ -216,7 +216,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.database.playedGamesCountAsync = { _ in 10 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 
@@ -352,7 +352,7 @@ class GameOverFeatureTests: XCTestCase {
       double: self.mainRunLoop.now.date.timeIntervalSince1970,
       forKey: "last-review-request-timeinterval"
     )
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 
@@ -395,7 +395,7 @@ class GameOverFeatureTests: XCTestCase {
       double: self.mainRunLoop.now.date.timeIntervalSince1970,
       forKey: "last-review-request-timeinterval"
     )
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 

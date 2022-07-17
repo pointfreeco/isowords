@@ -62,7 +62,7 @@ let appDelegateReducer = Reducer<
         }
 
         group.addTask {
-          let settings = await environment.userNotifications.getNotificationSettingsAsync()
+          let settings = await environment.userNotifications.getNotificationSettings()
           switch settings.authorizationStatus {
           case .authorized:
             guard
@@ -101,7 +101,7 @@ let appDelegateReducer = Reducer<
   case let .didRegisterForRemoteNotifications(.success(tokenData)):
     let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
     return .fireAndForget {
-      let settings = await environment.userNotifications.getNotificationSettingsAsync()
+      let settings = await environment.userNotifications.getNotificationSettings()
       _ = try await environment.apiClient.apiRequest(
         route: .push(
           .register(

@@ -7,8 +7,7 @@ public struct UserNotificationClient {
   public var addAsync: @Sendable (UNNotificationRequest) async throws -> Void
   @available(*, deprecated) public var delegate: Effect<DelegateEvent, Never>
   public var delegateAsync: @Sendable () -> AsyncStream<DelegateEvent>
-  @available(*, deprecated) public var getNotificationSettings: Effect<Notification.Settings, Never>
-  public var getNotificationSettingsAsync: @Sendable () async -> Notification.Settings
+  public var getNotificationSettings: @Sendable () async -> Notification.Settings
   @available(*, deprecated) public var removeDeliveredNotificationsWithIdentifiers: ([String]) -> Effect<Never, Never>
   public var removeDeliveredNotificationsWithIdentifiersAsync: @Sendable ([String]) async -> Void
   @available(*, deprecated) public var removePendingNotificationRequestsWithIdentifiers: ([String]) -> Effect<Never, Never>

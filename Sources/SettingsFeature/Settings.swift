@@ -422,7 +422,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case .didBecomeActive:
       return .task {
         await .userNotificationSettingsResponse(
-          environment.userNotifications.getNotificationSettingsAsync()
+          environment.userNotifications.getNotificationSettings()
         )
       }
 
@@ -560,7 +560,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
             group.addTask {
               await send(
                 .userNotificationSettingsResponse(
-                  environment.userNotifications.getNotificationSettingsAsync()
+                  environment.userNotifications.getNotificationSettings()
                 ),
                 animation: .default
               )

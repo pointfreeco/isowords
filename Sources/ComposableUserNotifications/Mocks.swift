@@ -4,8 +4,7 @@ extension UserNotificationClient {
     addAsync: { _ in },
     delegate: .none,
     delegateAsync: { AsyncStream { _ in } },
-    getNotificationSettings: .none,
-    getNotificationSettingsAsync: { Notification.Settings(authorizationStatus: .notDetermined) },
+    getNotificationSettings: { Notification.Settings(authorizationStatus: .notDetermined) },
     removeDeliveredNotificationsWithIdentifiers: { _ in .none },
     removeDeliveredNotificationsWithIdentifiersAsync: { _ in },
     removePendingNotificationRequestsWithIdentifiers: { _ in .none },
@@ -24,9 +23,8 @@ extension UserNotificationClient {
       addAsync: XCTUnimplemented("\(Self.self).addAsync"),
       delegate: .failing("\(Self.self).delegate is not implemented"),
       delegateAsync: XCTUnimplemented("\(Self.self).delegateAsync", placeholder: .finished),
-      getNotificationSettings: .failing("\(Self.self).getNotificationSettings is not implemented"),
-      getNotificationSettingsAsync: XCTUnimplemented(
-        "\(Self.self).getNotificationSettingsAsync",
+      getNotificationSettings: XCTUnimplemented(
+        "\(Self.self).getNotificationSettings",
         placeholder: Notification.Settings(authorizationStatus: .notDetermined)
       ),
       removeDeliveredNotificationsWithIdentifiers: { _ in

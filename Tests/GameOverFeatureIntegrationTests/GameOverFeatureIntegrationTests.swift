@@ -48,7 +48,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
     environment.database.playedGamesCountAsync = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
 

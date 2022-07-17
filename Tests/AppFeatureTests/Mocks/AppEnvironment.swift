@@ -26,7 +26,7 @@ extension AppEnvironment {
     let defaults = $0.userDefaults
     $0.userDefaults.setDoubleAsync = { _, _ in }
     $0.userNotifications.delegateAsync = { .finished }
-    $0.userNotifications.getNotificationSettingsAsync = {
+    $0.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
     $0.userNotifications.requestAuthorizationAsync = { _ in false }

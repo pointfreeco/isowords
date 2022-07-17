@@ -18,7 +18,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       withResponse: { try await OK([FetchTodaysDailyChallengeResponse.played]) }
     )
     environment.mainRunLoop = .immediate
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
 
@@ -158,7 +158,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     var didRegisterForRemoteNotifications = false
 
     var environment = DailyChallengeEnvironment.failing
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
     environment.userNotifications.requestAuthorizationAsync = { _ in true }
@@ -191,7 +191,7 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   func testNotifications_DenyAccess() async {
     var environment = DailyChallengeEnvironment.failing
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .denied)
     }
     environment.userNotifications.requestAuthorizationAsync = { _ in false }

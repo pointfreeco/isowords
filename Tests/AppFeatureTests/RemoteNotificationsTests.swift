@@ -20,7 +20,7 @@ class RemoteNotificationsTests: XCTestCase {
     environment.remoteNotifications.registerAsync = {
       await didRegisterForRemoteNotifications.set(true)
     }
-    environment.userNotifications.getNotificationSettingsAsync = {
+    environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
     environment.userNotifications.requestAuthorizationAsync = { options in

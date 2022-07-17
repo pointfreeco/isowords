@@ -61,7 +61,7 @@ public let notificationsAuthAlertReducer = Reducer<
       await send(
         .delegate(
           .didChooseNotificationSettings(
-            environment.userNotifications.getNotificationSettingsAsync()
+            environment.userNotifications.getNotificationSettings()
           )
         ),
         animation: .default

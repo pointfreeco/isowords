@@ -34,12 +34,7 @@ extension UserNotificationClient {
         continuation.onTermination = { [delegate] _ in }
       }
     },
-    getNotificationSettings: .future { callback in
-      UNUserNotificationCenter.current().getNotificationSettings { settings in
-        callback(.success(.init(rawValue: settings)))
-      }
-    },
-    getNotificationSettingsAsync: {
+    getNotificationSettings: {
       await Notification.Settings(
         rawValue: UNUserNotificationCenter.current().notificationSettings()
       )
