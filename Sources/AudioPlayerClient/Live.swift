@@ -102,15 +102,15 @@ extension AudioPlayerClient {
 
       switch player {
       case let .music(player):
+        player.currentTime = 0
         player.numberOfLoops = loop ? -1 : 0
-        player.play(atTime: 0)
+        player.play()
 
       case let .soundEffect(node, buffer):
         if !self.audioEngine.isRunning {
           try audioEngine.start()
         }
 
-        node.stop()  // TODO: Is this needed?
         node.scheduleBuffer(
           buffer,
           at: nil,
@@ -118,7 +118,7 @@ extension AudioPlayerClient {
           completionCallbackType: .dataPlayedBack,
           completionHandler: nil
         )
-        node.play()  // TODO: Is this needed?
+        node.play()
       }
     }
 
@@ -161,108 +161,3 @@ extension AudioPlayerClient {
     }
   }
 }
-
-private var files: [AudioPlayerClient.Sound: AudioPlayer] = [:]
-
-private class AudioPlayer {
-  enum Source {
-    case music(AVAudioPlayer)
-    case soundEffect(AVAudioPlayerNode, AVAudioPCMBuffer)
-  }
-
-  let source: Source
-  var volume: Float = 1 {
-    didSet {
-      self.setVolume(self.volume)
-    }
-  }
-
-  init?(category: AudioPlayerClient.Sound.Category, url: URL) {
-    switch category {
-    case .music:
-      guard let player = try? AVAudioPlayer(contentsOf: url)
-      else { return nil }
-      self.source = .music(player)
-
-    case .soundEffect:
-      guard
-        let file = try? AVAudioFile(forReading: url),
-        let buffer = AVAudioPCMBuffer(
-          pcmFormat: file.processingFormat,
-          frameCapacity: AVAudioFrameCount(file.length)
-        ),
-        (try? file.read(into: buffer)) != nil
-      else { return nil }
-      let node = AVAudioPlayerNode()
-      audioEngine.attach(node)
-      audioEngine.connect(node, to: soundEffectsNode, format: nil)
-      self.source = .soundEffect(node, buffer)
-    }
-  }
-
-  func play(loop: Bool = false) {
-    switch self.source {
-    case let .music(player):
-      player.currentTime = 0
-      player.numberOfLoops = loop ? -1 : 0
-      player.volume = musicVolume
-      player.play()
-
-    case let .soundEffect(node, buffer):
-      if !audioEngine.isRunning {
-        guard (try? audioEngine.start()) != nil else { return }
-      }
-
-      node.stop()
-      node.scheduleBuffer(
-        buffer,
-        at: nil,
-        options: loop ? .loops : [],
-        completionCallbackType: .dataPlayedBack,
-        completionHandler: nil
-      )
-      node.play(at: nil)
-    }
-  }
-
-  private func setVolume(_ volume: Float) {
-    switch self.source {
-    case let .music(player):
-      player.volume = volume
-
-    case let .soundEffect(node, _):
-      node.volume = volume
-    }
-  }
-
-  func stop() {
-    switch self.source {
-    case let .music(player):
-      player.setVolume(0, fadeDuration: 2.5)
-      queue.asyncAfter(deadline: .now() + 2.5) {
-        player.stop()
-      }
-
-    case let .soundEffect(node, _):
-      node.stop()
-    }
-  }
-}
-
-let audioEngine = AVAudioEngine()
-let soundEffectsNode: AVAudioMixerNode = {
-  let node = AVAudioMixerNode()
-  audioEngine.attach(node)
-  audioEngine.connect(node, to: audioEngine.mainMixerNode, format: nil)
-  return node
-}()
-private var musicVolume: Float = 1 {
-  didSet {
-    files.forEach { _, file in
-      if case .music = file.source {
-        file.volume = musicVolume
-      }
-    }
-  }
-}
-private let queue = DispatchQueue(label: "Audio Dispatch Queue")
