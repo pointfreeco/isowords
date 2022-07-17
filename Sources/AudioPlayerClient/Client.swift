@@ -1,7 +1,6 @@
 import ComposableArchitecture
 
 public struct AudioPlayerClient {
-  @available(*, deprecated) public var load: ([Sound]) -> Effect<Never, Never>
   public var loadAsync: @Sendable ([Sound]) async -> Void
   @available(*, deprecated) public var loop: (Sound) -> Effect<Never, Never>
   public var loopAsync: @Sendable (Sound) async -> Void
@@ -45,7 +44,6 @@ public struct AudioPlayerClient {
 
 extension AudioPlayerClient {
   public static let noop = Self(
-    load: { _ in .none },
     loadAsync: { _ in },
     loop: { _ in .none },
     loopAsync: { _ in },
@@ -69,7 +67,6 @@ extension AudioPlayerClient {
 
   extension AudioPlayerClient {
     public static let failing = Self(
-      load: { _ in .failing("\(Self.self).load is unimplemented") },
       loadAsync: XCTUnimplemented("\(Self.self).loadAsync"),
       loop: { _ in .failing("\(Self.self).loop is unimplemented") },
       loopAsync: XCTUnimplemented("\(Self.self).loopAsync"),

@@ -5,7 +5,6 @@ extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {
     let actor = AudioActor(bundles: .init(wrappedValue: bundles))
     return Self(
-      load: { sounds in .fireAndForget { Task { try! await actor.load(sounds: sounds) } } },
       loadAsync: { try? await actor.load(sounds: $0) },
       loop: { sound in .fireAndForget { Task { try! await actor.play(sound: sound, loop: true) } } },
       loopAsync: { try? await actor.play(sound: $0, loop: true) },
