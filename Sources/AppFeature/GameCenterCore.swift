@@ -178,18 +178,20 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             return handleTurnBasedMatch(match, didBecomeActive: didBecomeActive)
 
           case let .gameCenter(.listener(.turnBased(.wantsToQuitMatch(match)))):
-            return environment.gameCenter.turnBasedMatch
-              .endMatchInTurn(
+            return .fireAndForget {
+              try await environment.gameCenter.turnBasedMatch.endMatchInTurnAsync(
                 .init(
                   for: match.matchId,
                   matchData: match.matchData ?? Data(),
                   localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId,
                   localPlayerMatchOutcome: .quit,
-                  message:
-                    "\(environment.gameCenter.localPlayer.localPlayer().displayName) forfeited the match."
+                  message: """
+                    \(environment.gameCenter.localPlayer.localPlayer().displayName) \
+                    forfeited the match.
+                    """
                 )
               )
-              .fireAndForget()
+            }
 
           case .gameCenter(.listener):
             return .none
