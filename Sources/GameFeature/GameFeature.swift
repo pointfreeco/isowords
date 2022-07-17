@@ -22,7 +22,6 @@ public enum GameFeatureAction: Equatable {
   case dismissSettings
   case game(GameAction)
   case settings(SettingsAction)
-  case onDisappear
 }
 
 public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, GameEnvironment>
@@ -65,15 +64,6 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
       case .dismissSettings:
         state.game?.isSettingsPresented = false
         return .none
-
-      case .onDisappear:
-        return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
-
-      case .settings(.task):
-        return .concatenate(
-          .task { try await Task.never() },
-          .task { .dismissSettings }
-        )
 
       default:
         return .none

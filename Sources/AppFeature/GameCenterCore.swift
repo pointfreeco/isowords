@@ -126,10 +126,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               for await event in environment.gameCenter.localPlayer.listenerAsync() {
                 await send(.gameCenter(.listener(event)))
               }
-            } catch: { _, send in
-              await Task.cancel(id: ListenerID.self)
             }
-            .cancellable(id: ListenerID.self, cancelInFlight: true)
 
           case .currentGame(.game(.gameOver(.rematchButtonTapped))):
             guard
@@ -214,5 +211,3 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
       )
   }
 }
-
-private enum ListenerID: Hashable {}

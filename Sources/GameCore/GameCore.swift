@@ -253,10 +253,6 @@ public struct GameEnvironment {
   }
 }
 
-private enum InterstitialId {}
-private enum LowPowerModeId {}
-private enum TimerId {}
-
 public func gameReducer<StatePath, Action, Environment>(
   state: StatePath,
   action: CasePath<Action, GameAction>,
@@ -364,7 +360,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return state.gameOver(environment: environment)
 
       case .exitButtonTapped:
-        return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
+        return .none
 
       case .forfeitGameButtonTapped:
         state.alert = .init(
@@ -392,7 +388,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         }
 
       case .gameOver(.delegate(.close)):
-        return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
+        return .none
 
       case let .gameOver(.delegate(.startGame(inProgressGame))):
         state = .init(inProgressGame: inProgressGame)
@@ -415,10 +411,45 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
       case .task:
         guard !state.isGameOver else { return .none }
         state.gameCurrentTime = environment.date()
-        return .onAppearEffects(
-          environment: environment,
-          gameContext: state.gameContext
-        )
+
+        return .run { [gameContext = state.gameContext] send in
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+              for await isLowPower in await environment.lowPowerMode.startAsync() {
+                await send(.lowPowerModeChanged(isLowPower))
+              }
+            }
+
+            if gameContext.isTurnBased {
+              group.addTask {
+                let playedGamesCount = await environment.userDefaults
+                  .incrementMultiplayerOpensCount()
+                let isFullGamePurchased =
+                  await
+                  environment.apiClient
+                  .currentPlayerAsync()?.appleReceipt != nil
+                guard
+                  !isFullGamePurchased,
+                  shouldShowInterstitial(
+                    gamePlayedCount: playedGamesCount,
+                    gameContext: .init(gameContext: gameContext),
+                    serverConfig: environment.serverConfig.config()
+                  )
+                else { return }
+                try await environment.mainRunLoop.sleep(for: .seconds(3))
+                await send(.delayedShowUpgradeInterstitial, animation: .default)
+              }
+            }
+
+            group.addTask {
+              try await environment.mainQueue.sleep(for: 0.5)
+              await send(.gameLoaded)
+            }
+          }
+          for music in AudioPlayerClient.Sound.allMusic {
+            await environment.audioPlayer.stop(music)
+          }
+        }
 
       case .pan(.began, _):
         state.isPanning = true
@@ -960,49 +991,6 @@ func menuTitle(state: GameState) -> TextState {
   }
 #endif
 
-extension Effect where Output == GameAction, Failure == Never {
-  static func onAppearEffects(
-    environment: GameEnvironment,
-    gameContext: ClientModels.GameContext
-  ) -> Self {
-    return .run { send in
-      await withThrowingTaskGroup(of: Void.self) { group in
-        group.addTask {
-          for await isLowPower in await environment.lowPowerMode.startAsync() {
-            await send(.lowPowerModeChanged(isLowPower))
-          }
-        }
-
-        if gameContext.isTurnBased {
-          group.addTask {
-            let playedGamesCount = await environment.userDefaults
-              .incrementMultiplayerOpensCount()
-            let isFullGamePurchased =
-              await
-              environment.apiClient
-              .currentPlayerAsync()?.appleReceipt != nil
-            guard
-              !isFullGamePurchased,
-              shouldShowInterstitial(
-                gamePlayedCount: playedGamesCount,
-                gameContext: .init(gameContext: gameContext),
-                serverConfig: environment.serverConfig.config()
-              )
-            else { return }
-            try await environment.mainRunLoop.sleep(for: .seconds(3))
-            await send(.delayedShowUpgradeInterstitial, animation: .default)
-          }
-        }
-
-        group.addTask {
-          try await environment.mainQueue.sleep(for: 0.5)
-          await send(.gameLoaded)
-        }
-      }
-    }
-  }
-}
-
 extension UpgradeInterstitialFeature.GameContext {
   fileprivate init(gameContext: ClientModels.GameContext) {
     switch gameContext {
@@ -1014,20 +1002,6 @@ extension UpgradeInterstitialFeature.GameContext {
       self = .solo
     case .turnBased:
       self = .turnBased
-    }
-  }
-}
-
-extension Effect where Failure == Never {
-  public static func gameTearDownEffects(audioPlayer: AudioPlayerClient) -> Self {
-    .fireAndForget {
-      await Task.cancel(id: InterstitialId.self)
-      await Task.cancel(id: ListenerId.self)
-      await Task.cancel(id: LowPowerModeId.self)
-      await Task.cancel(id: TimerId.self)
-      for music in AudioPlayerClient.Sound.allMusic {
-        await audioPlayer.stop(music)
-      }
     }
   }
 }
@@ -1126,7 +1100,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
     case .gameOver(.delegate(.close)),
       .exitButtonTapped:
-      return .cancel(id: ListenerId.self)
+      return .none
 
     case .task:
       return .run { send in
@@ -1134,7 +1108,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           await send(.gameCenter(.listener(event)))
         }
       }
-      .cancellable(id: ListenerId.self)
 
     case .submitButtonTapped,
       .wordSubmitButton(.delegate(.confirmSubmit)),
@@ -1247,5 +1220,3 @@ extension CompletedGame {
     )
   }
 }
-
-enum ListenerId {}

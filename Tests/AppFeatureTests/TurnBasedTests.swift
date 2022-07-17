@@ -297,7 +297,6 @@ class TurnBasedTests: XCTestCase {
       }
     }
 
-    await store.send(.currentGame(.onDisappear))
     await gameTask.cancel()
     await didFinishLaunchingTask.cancel()
   }
