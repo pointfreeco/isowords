@@ -266,7 +266,7 @@ class GameOverFeatureTests: XCTestCase {
       )
     }
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    environment.storeKit.requestReviewAsync = {
+    environment.storeKit.requestReview = {
       await requestReviewCount.modify { $0 += 1 }
     }
     environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")

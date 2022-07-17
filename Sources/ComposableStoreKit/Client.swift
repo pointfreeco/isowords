@@ -12,8 +12,7 @@ public struct StoreKitClient {
   public var finishTransaction: @Sendable (PaymentTransaction) async -> Void
   @available(*, deprecated) public var observer: Effect<PaymentTransactionObserverEvent, Never>
   public var observerAsync: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
-  @available(*, deprecated) public var requestReview: () -> Effect<Never, Never>
-  public var requestReviewAsync: @Sendable () async -> Void
+  public var requestReview: @Sendable () async -> Void
   @available(*, deprecated) public var restoreCompletedTransactions: () -> Effect<Never, Never>
   public var restoreCompletedTransactionsAsync: @Sendable () async -> Void
 

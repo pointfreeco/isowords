@@ -1032,7 +1032,7 @@ extension GameOverEnvironment {
     if stats.gamesPlayed >= 3
       && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
     {
-      await self.storeKit.requestReviewAsync()
+      await self.storeKit.requestReview()
       await self.userDefaults.setDoubleAsync(
         self.mainRunLoop.now.date.timeIntervalSince1970,
         lastReviewRequestTimeIntervalKey
