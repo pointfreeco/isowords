@@ -167,7 +167,8 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           try await environment.mainQueue.sleep(
             for: .seconds(
               .random(
-                in: moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration + submitHestitationDuration)
+                in: moveNubToSubmitButtonDuration ...
+                  (moveNubToSubmitButtonDuration + submitHestitationDuration)
               )
             )
           )
