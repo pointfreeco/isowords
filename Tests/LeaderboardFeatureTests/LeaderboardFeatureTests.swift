@@ -38,7 +38,7 @@ class LeaderboardFeatureTests: XCTestCase {
         mainQueue: .immediate
       )
     )
-    store.environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
+    store.environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
 
     let task1 = await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay

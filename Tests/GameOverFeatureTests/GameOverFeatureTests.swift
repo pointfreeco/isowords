@@ -344,7 +344,7 @@ class GameOverFeatureTests: XCTestCase {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
+    environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
     environment.database.playedGamesCountAsync = { _ in 6 }
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
@@ -387,7 +387,7 @@ class GameOverFeatureTests: XCTestCase {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequestAsync = { @Sendable _ in try await Task.never() }
+    environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
     environment.database.playedGamesCountAsync = { _ in 5 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }

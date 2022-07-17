@@ -771,7 +771,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
     async let sendDailyChallengeResponse: Void = send(
       .dailyChallengeResponse(
         TaskResult {
-          try await environment.apiClient.apiRequestAsync(
+          try await environment.apiClient.apiRequest(
             route: .dailyChallenge(.today(language: .en)),
             as: [FetchTodaysDailyChallengeResponse].self
           )
@@ -781,7 +781,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
     async let sendWeekInReviewResponse: Void = await send(
       .weekInReviewResponse(
         TaskResult {
-          try await environment.apiClient.apiRequestAsync(
+          try await environment.apiClient.apiRequest(
             route: .leaderboard(.weekInReview(language: .en)),
             as: FetchWeekInReviewResponse.self
           )

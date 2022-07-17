@@ -4,7 +4,7 @@ import Foundation
 import SharedModels
 
 public struct ApiClient {
-  public var apiRequestAsync: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
+  public var apiRequest: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
   @available(*, deprecated) public var baseUrl: () -> URL
@@ -21,9 +21,7 @@ public struct ApiClient {
   public var setBaseUrlAsync: @Sendable (URL) async -> Void
 
   public init(
-    apiRequestAsync: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (
-      Data, URLResponse
-    ),
+    apiRequest: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse),
     authenticate: @escaping @Sendable (ServerRoute.AuthenticateRequest) async throws ->
       CurrentPlayerEnvelope,
     baseUrl: @escaping () -> URL,
@@ -39,7 +37,7 @@ public struct ApiClient {
     setBaseUrl: @escaping (URL) -> Effect<Never, Never>,
     setBaseUrlAsync: @escaping @Sendable (URL) async -> Void
   ) {
-    self.apiRequestAsync = apiRequestAsync
+    self.apiRequest = apiRequest
     self.authenticate = authenticate
     self.baseUrl = baseUrl
     self.baseUrlAsync = baseUrlAsync
@@ -57,13 +55,13 @@ public struct ApiClient {
 
   public struct Unit: Codable {}
 
-  public func apiRequestAsync(
+  public func apiRequest(
     route: ServerRoute.Api.Route,
     file: StaticString = #file,
     line: UInt = #line
   ) async throws -> (Data, URLResponse) {
     do {
-      let (data, response) = try await self.apiRequestAsync(route)
+      let (data, response) = try await self.apiRequest(route)
       #if DEBUG
         print(
           """
@@ -79,13 +77,13 @@ public struct ApiClient {
     }
   }
 
-  public func apiRequestAsync<A: Decodable>(
+  public func apiRequest<A: Decodable>(
     route: ServerRoute.Api.Route,
     as: A.Type,
     file: StaticString = #file,
     line: UInt = #line
   ) async throws -> A {
-    let (data, _) = try await self.apiRequestAsync(route: route, file: file, line: line)
+    let (data, _) = try await self.apiRequest(route: route, file: file, line: line)
     do {
       return try apiDecode(A.self, from: data)
     } catch {
@@ -174,7 +172,7 @@ public struct ApiClient {
 
   extension ApiClient {
     public static let failing = Self(
-      apiRequestAsync: XCTUnimplemented("\(Self.self).apiRequestAsync"),
+      apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
       authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
       baseUrlAsync: XCTUnimplemented("\(Self.self).baseUrlAsync", placeholder: URL(string: "/")!),
@@ -192,30 +190,30 @@ public struct ApiClient {
 
     public mutating func override(
       route matchingRoute: ServerRoute.Api.Route,
-      withResponse response: @escaping () async throws -> (Data, URLResponse)
+      withResponse response: @escaping @Sendable () async throws -> (Data, URLResponse)
     ) {
       let fulfill = expectation(description: "route")
-      self.apiRequestAsync = { [self] route in
+      self.apiRequest = { [self] route in
         if route == matchingRoute {
           fulfill()
           return try await response()
         } else {
-          return try await self.apiRequestAsync(route)
+          return try await self.apiRequest(route)
         }
       }
     }
 
     public mutating func override<Value>(
       routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
-      withResponse response: @escaping (Value) async throws -> (Data, URLResponse)
+      withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
     ) {
       let fulfill = expectation(description: "route")
-      self.apiRequestAsync = { [self] route in
+      self.apiRequest = { [self] route in
         if let value = matchingRoute.extract(from: route) {
           fulfill()
           return try await response(value)
         } else {
-          return try await self.apiRequestAsync(route)
+          return try await self.apiRequest(route)
         }
       }
     }
@@ -224,7 +222,7 @@ public struct ApiClient {
 
 extension ApiClient {
   public static let noop = Self(
-    apiRequestAsync: { _ in try await Task.never() },
+    apiRequest: { _ in try await Task.never() },
     authenticate: { _ in try await Task.never() },
     baseUrl: { URL(string: "/")! },
     baseUrlAsync: { URL(string: "/")! },

@@ -38,7 +38,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
                   TaskResult {
                     try await ReceiptFinalizationEnvelope(
                       transactions: transactions,
-                      verifyEnvelope: environment.apiClient.apiRequestAsync(
+                      verifyEnvelope: environment.apiClient.apiRequest(
                         route: .verifyReceipt(receiptData),
                         as: VerifyReceiptEnvelope.self
                       )

@@ -110,7 +110,7 @@ public let changelogReducer = Reducer<
       return .task {
         await .changelogResponse(
           TaskResult {
-            try await environment.apiClient.apiRequestAsync(
+            try await environment.apiClient.apiRequest(
               route: .changelog(build: environment.build.number()),
               as: Changelog.self
             )

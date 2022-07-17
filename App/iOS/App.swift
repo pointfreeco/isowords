@@ -126,7 +126,7 @@ extension ServerConfigClient {
     .live(
       fetch: {
         try await apiClient
-          .apiRequestAsync(route: .config(build: build.number()), as: ServerConfig.self)
+          .apiRequest(route: .config(build: build.number()), as: ServerConfig.self)
       }
     )
   }

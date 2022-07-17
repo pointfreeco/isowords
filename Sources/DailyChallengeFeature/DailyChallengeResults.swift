@@ -91,7 +91,7 @@ public let dailyChallengeResultsReducer = Reducer<
       return .task { [gameMode = state.leaderboardResults.gameMode] in
         await .fetchHistoryResponse(
           TaskResult {
-            try await environment.apiClient.apiRequestAsync(
+            try await environment.apiClient.apiRequest(
               route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
               as: DailyChallengeHistoryResponse.self
             )
@@ -169,7 +169,7 @@ extension ApiClient {
     timeScope gameNumber: DailyChallenge.GameNumber?
   ) async throws -> ResultEnvelope {
     try await ResultEnvelope(
-      self.apiRequestAsync(
+      self.apiRequest(
         route: .dailyChallenge(
           .results(
             .fetch(

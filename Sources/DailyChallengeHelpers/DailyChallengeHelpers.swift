@@ -28,7 +28,7 @@ public func startDailyChallengeAsync(
   else {
     do {
       return try await InProgressGame(
-        response: apiClient.apiRequestAsync(
+        response: apiClient.apiRequest(
           route: .dailyChallenge(
             .start(
               gameMode: challenge.dailyChallenge.gameMode,

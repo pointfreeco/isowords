@@ -278,7 +278,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
       return .task {
         await .dailyChallengeResponse(
           TaskResult {
-            try await environment.apiClient.apiRequestAsync(
+            try await environment.apiClient.apiRequest(
               route: .dailyChallenge(.today(language: .en)),
               as: [FetchTodaysDailyChallengeResponse].self
             )
@@ -341,7 +341,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
               await send(
                 .submitGameResponse(
                   TaskResult {
-                    try await environment.apiClient.apiRequestAsync(
+                    try await environment.apiClient.apiRequest(
                       route: .games(.submit(request)),
                       as: SubmitGameResponse.self
                     )

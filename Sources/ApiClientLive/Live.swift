@@ -65,7 +65,7 @@ extension ApiClient {
       }
 
       func apiRequest(route: ServerRoute.Api.Route) async throws -> (Data, URLResponse) {
-        try await ApiClientLive.apiRequestAsync(
+        try await ApiClientLive.apiRequest(
           accessToken: self.currentPlayer?.player.accessToken,
           baseUrl: self.baseUrl,
           route: route,
@@ -98,7 +98,7 @@ extension ApiClient {
       }
 
       func refreshCurrentPlayer() async throws -> CurrentPlayerEnvelope {
-        let (data, _) = try await ApiClientLive.apiRequestAsync(
+        let (data, _) = try await ApiClientLive.apiRequest(
           accessToken: currentPlayer?.player.accessToken,
           baseUrl: self.baseUrl,
           route: .currentPlayer,
@@ -129,7 +129,7 @@ extension ApiClient {
     let session = Session(baseUrl: baseUrl, router: router)
 
     return Self(
-      apiRequestAsync: { try await session.apiRequest(route: $0) },
+      apiRequest: { try await session.apiRequest(route: $0) },
       authenticate: { try await session.authenticate(request: $0) },
       baseUrl: { baseUrl },
       baseUrlAsync: { await session.baseUrl },
@@ -244,7 +244,7 @@ private func apiRequest(
   .eraseToEffect()
 }
 
-private func apiRequestAsync(
+private func apiRequest(
   accessToken: AccessToken?,
   baseUrl: URL,
   route: ServerRoute.Api.Route,

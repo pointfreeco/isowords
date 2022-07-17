@@ -62,7 +62,7 @@ class TurnBasedTests: XCTestCase {
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
         // TODO: asyncOverride
-        $0.apiClient.apiRequestAsync = { @Sendable route in
+        $0.apiClient.apiRequest = { @Sendable route in
           switch route {
           case .dailyChallenge(.today):
             return try (JSONEncoder().encode(dailyChallenges), .init())
@@ -333,7 +333,7 @@ class TurnBasedTests: XCTestCase {
         $0.apiClient.authenticate = { _ in .mock }
         $0.build.number = { 42 }
         $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.apiRequestAsync = { @Sendable route in
+        $0.apiClient.apiRequest = { @Sendable route in
           switch route {
           case .dailyChallenge(.today):
             return try (JSONEncoder().encode(dailyChallenges), .init())
@@ -445,7 +445,7 @@ class TurnBasedTests: XCTestCase {
       environment: update(.didFinishLaunching) {
         $0.apiClient.authenticate = { _ in .mock }
         $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.apiRequestAsync = { @Sendable route in
+        $0.apiClient.apiRequest = { @Sendable route in
           switch route {
           case .dailyChallenge(.today):
             return try (JSONEncoder().encode(dailyChallenges), .init())

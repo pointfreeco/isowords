@@ -194,7 +194,7 @@ public let dailyChallengeReducer = Reducer<
             await send(
               .fetchTodaysDailyChallengeResponse(
                 TaskResult {
-                  try await environment.apiClient.apiRequestAsync(
+                  try await environment.apiClient.apiRequest(
                     route: .dailyChallenge(.today(language: .en)),
                     as: [FetchTodaysDailyChallengeResponse].self
                   )

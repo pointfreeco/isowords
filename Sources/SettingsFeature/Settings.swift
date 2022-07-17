@@ -351,7 +351,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .binding(\.$sendDailyChallengeReminder):
       return .task { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
-        _ = try await environment.apiClient.apiRequestAsync(
+        _ = try await environment.apiClient.apiRequest(
           route: .push(
             .updateSetting(
               .init(
@@ -369,7 +369,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .binding(\.$sendDailyChallengeSummary):
       return .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
-        _ = try await environment.apiClient.apiRequestAsync(
+        _ = try await environment.apiClient.apiRequest(
           route: .push(
             .updateSetting(
               .init(

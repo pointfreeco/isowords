@@ -113,7 +113,7 @@ extension ApiClient {
     let session = Session(baseUrl: baseUrl, middleware: middleware, router: router)
 
     self.init(
-      apiRequestAsync: { try await session.apiRequest(route: $0) },
+      apiRequest: { try await session.apiRequest(route: $0) },
       authenticate: { try await session.authenticate(request: $0) },
       baseUrl: { baseUrl },
       baseUrlAsync: { await session.baseUrl },

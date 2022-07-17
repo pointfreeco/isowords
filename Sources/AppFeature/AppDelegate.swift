@@ -102,7 +102,7 @@ let appDelegateReducer = Reducer<
     let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
     return .fireAndForget {
       let settings = await environment.userNotifications.getNotificationSettingsAsync()
-      _ = try await environment.apiClient.apiRequestAsync(
+      _ = try await environment.apiClient.apiRequest(
         route: .push(
           .register(
             .init(

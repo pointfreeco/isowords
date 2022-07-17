@@ -196,7 +196,7 @@ public let leaderboardReducer = Reducer<
       return .task {
         await .fetchWordResponse(
           TaskResult {
-            try await environment.apiClient.apiRequestAsync(
+            try await environment.apiClient.apiRequest(
               route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
               as: FetchVocabWordResponse.self
             )
@@ -321,7 +321,7 @@ extension ApiClient {
     gameMode: GameMode,
     timeScope: TimeScope
   ) async throws -> ResultEnvelope {
-    let response = try await self.apiRequestAsync(
+    let response = try await self.apiRequest(
       route: .leaderboard(
         .fetch(
           gameMode: gameMode,
@@ -357,7 +357,7 @@ extension ApiClient {
     gameMode: GameMode,
     timeScope: TimeScope
   ) async throws -> ResultEnvelope {
-    let response = try await self.apiRequestAsync(
+    let response = try await self.apiRequest(
       route: .leaderboard(
         .vocab(
           .fetch(
@@ -410,7 +410,7 @@ extension ResultEnvelope.Result {
               reducer: leaderboardReducer,
               environment: LeaderboardEnvironment(
                 apiClient: update(.noop) {
-                  $0.apiRequestAsync = { @Sendable route in
+                  $0.apiRequest = { @Sendable route in
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
                       try await Task.sleep(nanoseconds: NSEC_PER_SEC)
