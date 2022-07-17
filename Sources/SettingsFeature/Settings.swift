@@ -556,7 +556,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .restoreButtonTapped:
       state.isRestoring = true
-      return .fireAndForget { await environment.storeKit.restoreCompletedTransactionsAsync() }
+      return .fireAndForget { await environment.storeKit.restoreCompletedTransactions() }
 
     case .stats:
       return .none

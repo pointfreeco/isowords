@@ -88,7 +88,7 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
-    environment.storeKit.restoreCompletedTransactionsAsync = {
+    environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
     environment.storeKit.fetchProducts = { _ in
@@ -143,7 +143,7 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
-    environment.storeKit.restoreCompletedTransactionsAsync = {
+    environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
     environment.storeKit.fetchProducts = { _ in
@@ -193,7 +193,7 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
-    environment.storeKit.restoreCompletedTransactionsAsync = {
+    environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
     environment.storeKit.fetchProducts = { _ in

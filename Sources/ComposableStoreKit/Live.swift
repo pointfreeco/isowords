@@ -71,12 +71,7 @@ extension StoreKitClient {
         else { return }
         await SKStoreReviewController.requestReview(in: windowScene)
       },
-      restoreCompletedTransactions: {
-        .fireAndForget {
-          SKPaymentQueue.default().restoreCompletedTransactions()
-        }
-      },
-      restoreCompletedTransactionsAsync: { SKPaymentQueue.default().restoreCompletedTransactions() }
+      restoreCompletedTransactions: { SKPaymentQueue.default().restoreCompletedTransactions() }
     )
   }
 }

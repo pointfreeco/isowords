@@ -13,8 +13,7 @@ public struct StoreKitClient {
   @available(*, deprecated) public var observer: Effect<PaymentTransactionObserverEvent, Never>
   public var observerAsync: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
   public var requestReview: @Sendable () async -> Void
-  @available(*, deprecated) public var restoreCompletedTransactions: () -> Effect<Never, Never>
-  public var restoreCompletedTransactionsAsync: @Sendable () async -> Void
+  public var restoreCompletedTransactions: @Sendable () async -> Void
 
   public enum PaymentTransactionObserverEvent: Equatable {
     case removedTransactions([PaymentTransaction])

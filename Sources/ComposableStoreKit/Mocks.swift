@@ -12,8 +12,7 @@ extension StoreKitClient {
     observer: .none,
     observerAsync: { AsyncStream { _ in } },
     requestReview: {},
-    restoreCompletedTransactions: { .none },
-    restoreCompletedTransactionsAsync: {}
+    restoreCompletedTransactions: {}
   )
 }
 
@@ -38,8 +37,7 @@ extension StoreKitClient {
       observer: .failing("\(Self.self).observer is unimplemented"),
       observerAsync: XCTUnimplemented("\(Self.self).observerAsync"),
       requestReview: XCTUnimplemented("\(Self.self).requestReviewAsync"),
-      restoreCompletedTransactions: { .failing("\(Self.self).fireAndForget is unimplemented") },
-      restoreCompletedTransactionsAsync: XCTUnimplemented(
+      restoreCompletedTransactions: XCTUnimplemented(
         "\(Self.self).restoreCompletedTransactionsAsync"
       )
     )
