@@ -253,7 +253,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           apiClient: $0.apiClient,
           applicationClient: $0.applicationClient,
           build: $0.build,
-          mainQueue: $0.mainQueue,
           serverConfig: $0.serverConfig,
           userDefaults: $0.userDefaults
         )

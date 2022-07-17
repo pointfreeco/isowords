@@ -21,7 +21,6 @@ class ChangelogFeatureTests: XCTestCase {
       withResponse: .ok(changelog)
     )
     environment.build.number = { 42 }
-    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: ChangelogState(),
@@ -29,7 +28,7 @@ class ChangelogFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    await store.send(.task) {
       $0.currentBuild = 42
       $0.isRequestInFlight = true
     }
@@ -63,7 +62,6 @@ class ChangelogFeatureTests: XCTestCase {
       withResponse: .ok(changelog)
     )
     environment.build.number = { 40 }
-    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: ChangelogState(),
@@ -71,7 +69,7 @@ class ChangelogFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    await store.send(.task) {
       $0.currentBuild = 40
       $0.isRequestInFlight = true
     }
@@ -101,7 +99,6 @@ extension ChangelogEnvironment {
     apiClient: .failing,
     applicationClient: .failing,
     build: .failing,
-    mainQueue: .failing,
     serverConfig: .failing,
     userDefaults: .failing
   )
