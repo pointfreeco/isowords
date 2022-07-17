@@ -134,12 +134,11 @@ public enum HomeAction: BindableAction, Equatable {
   case matchesLoaded(TaskResult<[ActiveTurnBasedMatch]>)
   case multiplayer(MultiplayerAction)
   case nagBannerFeature(NagBannerFeatureAction)
-  case onAppear
-  case onDisappear
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
   case solo(SoloAction)
+  case task
   case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
 
   public enum GameButtonAction: Equatable {
@@ -476,20 +475,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case .multiplayer:
       return .none
 
-    case .onDisappear:
-      return .cancel(id: ListenerId.self)
-
-    case .onAppear:
-      return .run { send in
-        await withTaskCancellation(id: AuthenticationId.self, cancelInFlight: true) {
-          await authenticate(send: send, environment: environment)
-        }
-        await withTaskCancellation(id: ListenerId.self) {
-          await listen(send: send, environment: environment)
-        }
-      }
-      .animation()
-
     case let .serverConfigResponse(serverConfig):
       state.hasChangelog = serverConfig.newestBuild > environment.build.number()
       return .none
@@ -534,6 +519,13 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case .solo:
       return .none
+
+    case .task:
+      return .run { send in
+        await authenticate(send: send, environment: environment)
+        await listen(send: send, environment: environment)
+      }
+      .animation()
 
     case .weekInReviewResponse(.failure):
       return .none
@@ -702,8 +694,7 @@ public struct HomeView: View {
           )
         }
     )
-    .onAppear { self.viewStore.send(.onAppear) }
-    .onDisappear { self.viewStore.send(.onDisappear) }
+    .task { await self.viewStore.send(.task).finish() }
   }
 }
 
@@ -726,9 +717,6 @@ extension GameCenterClient {
     return (activeMatches, hasPastTurnBasedGames)
   }
 }
-
-private enum ListenerId {}
-private enum AuthenticationId {}
 
 private struct CubeIconView: View {
   let action: () -> Void

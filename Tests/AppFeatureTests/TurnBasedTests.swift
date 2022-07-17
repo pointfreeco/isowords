@@ -113,7 +113,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.home(.onAppear))
+    await store.send(.home(.task))
 
     await store.receive(.home(.authenticationResponse(.mock)))
     await store.receive(.home(.serverConfigResponse(.init()))) {
@@ -362,7 +362,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.home(.onAppear))
+    await store.send(.home(.task))
 
     await self.backgroundQueue.advance()
     await store.receive(.home(.authenticationResponse(.mock)))
@@ -476,7 +476,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.home(.onAppear))
+    await store.send(.home(.task))
     await store.receive(.home(.authenticationResponse(.mock)))
 
     await store.receive(.home(.serverConfigResponse(.init()))) {
