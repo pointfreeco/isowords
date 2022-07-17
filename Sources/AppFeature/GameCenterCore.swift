@@ -169,9 +169,9 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             )
             state.game = newGame
 
-            return environment.database
-              .saveGame(.init(gameState: newGame))
-              .fireAndForget()
+            return .fireAndForget {
+              try await environment.database.saveGameAsync(.init(gameState: newGame))
+            }
 
           case let .gameCenter(
             .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive)))):

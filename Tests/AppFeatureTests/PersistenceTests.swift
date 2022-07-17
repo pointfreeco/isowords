@@ -252,6 +252,7 @@ class PersistenceTests: XCTestCase {
         $0.bottomMenu = nil
       }
     }
+    .finish()
 
     XCTAssertNoDifference(didArchiveGame, true)
   }
