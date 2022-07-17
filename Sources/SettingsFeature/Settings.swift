@@ -183,7 +183,7 @@ public enum SettingsAction: BindableAction, Equatable {
   case restoreButtonTapped
   case stats(StatsAction)
   case tappedProduct(StoreKitClient.Product)
-  case userNotificationAuthorizationResponse(Result<Bool, NSError>)
+  case userNotificationAuthorizationResponse(TaskResult<Bool>)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 }
 
@@ -310,10 +310,10 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     switch action {
     case .binding(\.$developer.currentBaseUrl):
-      return .merge(
-        environment.apiClient.setBaseUrl(state.developer.currentBaseUrl.url).fireAndForget(),
-        environment.apiClient.logout().fireAndForget()
-      )
+      return .fireAndForget { [url = state.developer.currentBaseUrl.url] in
+        await environment.apiClient.setBaseUrlAsync(url)
+        await environment.apiClient.logoutAsync()
+      }
 
     case .binding(\.$enableNotifications):
       guard
@@ -328,10 +328,14 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       switch userNotificationSettings.authorizationStatus {
       case .notDetermined, .provisional:
         state.enableNotifications = true
-        return environment.userNotifications.requestAuthorization([.alert, .sound])
-          .mapError { $0 as NSError }
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(SettingsAction.userNotificationAuthorizationResponse)
+        return .task {
+          await .userNotificationAuthorizationResponse(
+            TaskResult {
+              try await environment.userNotifications.requestAuthorizationAsync([.alert, .sound])
+            }
+          )
+        }
+        .animation()
 
       case .denied:
         state.alert = .userNotificationAuthorizationDenied
@@ -340,7 +344,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
       case .authorized:
         state.enableNotifications = true
-        return .init(value: .userNotificationAuthorizationResponse(.success(true)))
+        return .task { .userNotificationAuthorizationResponse(.success(true)) }
 
       case .ephemeral:
         state.enableNotifications = true

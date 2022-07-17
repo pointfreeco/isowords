@@ -67,7 +67,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = .init(
       value: .init(authorizationStatus: .notDetermined)
     )
-    environment.userNotifications.requestAuthorization = { _ in .init(value: true) }
+    environment.userNotifications.requestAuthorizationAsync = { _ in true }
     environment.remoteNotifications.register = {
       .fireAndForget {
         didRegisterForRemoteNotifications = true
@@ -112,7 +112,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = .init(
       value: .init(authorizationStatus: .notDetermined)
     )
-    environment.userNotifications.requestAuthorization = { _ in .init(value: false) }
+    environment.userNotifications.requestAuthorizationAsync = { _ in false }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -434,12 +434,8 @@ class SettingsFeatureTests: XCTestCase {
     var didLogout = false
 
     var environment = SettingsEnvironment.failing
-    environment.apiClient.logout = { .fireAndForget { didLogout = true } }
-    environment.apiClient.setBaseUrl = { newValue in
-      .fireAndForget {
-        setBaseUrl = newValue
-      }
-    }
+    environment.apiClient.logoutAsync = { didLogout = true }
+    environment.apiClient.setBaseUrlAsync = { setBaseUrl = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),
