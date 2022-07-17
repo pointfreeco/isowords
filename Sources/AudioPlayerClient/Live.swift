@@ -32,6 +32,7 @@ extension AudioPlayerClient {
 
     let audioEngine: AVAudioEngine
     let bundles: [Bundle]
+    var musicVolume: Float = 1.0
     var players: [Sound: Player] = [:]
     let soundEffectsNode: AVAudioMixerNode
 
@@ -88,6 +89,7 @@ extension AudioPlayerClient {
       case let .music(player):
         player.currentTime = 0
         player.numberOfLoops = loop ? -1 : 0
+        player.volume = self.musicVolume
         player.play()
 
       case let .soundEffect(node, buffer):
@@ -135,6 +137,7 @@ extension AudioPlayerClient {
     }
 
     func setMusicVolume(to volume: Float) {
+      self.musicVolume = volume
       for (sound, _) in self.players where sound.category == .music {
         try? self.setVolume(of: sound, to: volume)
       }
