@@ -198,10 +198,11 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
     }
   }
 )
-.onChange(of: { $0.game?.gameOver != nil }) { isGameOver, state, _, environment in
-  Effect(value: .gameOverDelay)
-    .delay(for: 2, scheduler: environment.mainQueue)
-    .eraseToEffect()
+.onChange(of: { $0.game?.gameOver != nil }) { _, _, _, environment in
+  .task {
+    try await environment.mainQueue.sleep(for: .seconds(2))
+    return .gameOverDelay
+  }
 }
 
 public struct DemoView: View {
