@@ -335,7 +335,9 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
                 ),
                 animation: .default
               )
-            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(completedGame: completedGame) {
+            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+              completedGame: completedGame
+            ) {
               await send(
                 .submitGameResponse(
                   TaskResult {
@@ -354,9 +356,8 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             try await environment.mainRunLoop.sleep(for: .seconds(1))
             let playedGamesCount = try await environment.database
               .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
-            let isFullGamePurchased = await
-            environment.apiClient
-              .currentPlayerAsync()?.appleReceipt != nil
+            let isFullGamePurchased =
+              await environment.apiClient.currentPlayerAsync()?.appleReceipt != nil
             guard
               !isFullGamePurchased,
               shouldShowInterstitial(
