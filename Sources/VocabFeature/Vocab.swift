@@ -34,7 +34,7 @@ public struct VocabState: Equatable {
 
 public enum VocabAction: Equatable {
   case dismissCubePreview
-  case gamesResponse(Result<VocabState.GamesResponse, NSError>)
+  case gamesResponse(TaskResult<VocabState.GamesResponse>)
   case preview(CubePreviewAction)
   case task
   case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
@@ -133,10 +133,16 @@ public let vocabReducer = Reducer<
       return .none
 
     case let .wordTapped(word):
-      return environment.database.fetchGamesForWord(word.letters)
-        .map { .init(games: $0, word: word.letters) }
-        .mapError { $0 as NSError }
-        .catchToEffect(VocabAction.gamesResponse)
+      return .task {
+        await .gamesResponse(
+          TaskResult {
+            .init(
+              games: try await environment.database.fetchGamesForWordAsync(word.letters),
+              word: word.letters
+            )
+          }
+        )
+      }
     }
   }
 )
