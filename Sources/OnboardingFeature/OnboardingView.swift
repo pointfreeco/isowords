@@ -234,7 +234,7 @@ public let onboardingReducer = Reducer<
 
   case .delegate(.getStarted):
     return .fireAndForget {
-      await environment.userDefaults.setHasShownFirstLaunchOnboardingAsync(true)
+      await environment.userDefaults.setHasShownFirstLaunchOnboarding(true)
       await environment.audioPlayer.stopAsync(.onboardingBgMusic)
       await Task.cancel(id: DelayedNextStepId.self)
     }

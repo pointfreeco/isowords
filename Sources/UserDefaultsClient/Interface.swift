@@ -21,11 +21,7 @@ public struct UserDefaultsClient {
     self.boolForKey(hasShownFirstLaunchOnboardingKey)
   }
 
-  @available(*, deprecated) public func setHasShownFirstLaunchOnboarding(_ bool: Bool) -> Effect<Never, Never> {
-    self.setBool(bool, hasShownFirstLaunchOnboardingKey)
-  }
-
-  public func setHasShownFirstLaunchOnboardingAsync(_ bool: Bool) async {
+  public func setHasShownFirstLaunchOnboarding(_ bool: Bool) async {
     await self.setBoolAsync(bool, hasShownFirstLaunchOnboardingKey)
   }
 
