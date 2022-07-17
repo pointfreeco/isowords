@@ -106,7 +106,7 @@ public let dailyChallengeReducer = Reducer<
     ._pullback(
       state: (\DailyChallengeState.route).appending(path: /DailyChallengeState.Route.results),
       action: /DailyChallengeAction.dailyChallengeResults,
-      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
+      environment: { .init(apiClient: $0.apiClient) }
     ),
 
   notificationsAuthAlertReducer

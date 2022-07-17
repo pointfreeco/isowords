@@ -73,8 +73,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
 
     let clientEnvironment = DailyChallengeResultsEnvironment(
-      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment), router: .test),
-      mainQueue: .immediate
+      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment), router: .test)
     )
 
     let store = TestStore(

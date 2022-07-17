@@ -28,22 +28,18 @@ public enum DailyChallengeResultsAction: Equatable {
 
 public struct DailyChallengeResultsEnvironment {
   public var apiClient: ApiClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
-    apiClient: ApiClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
+    apiClient: ApiClient
   ) {
     self.apiClient = apiClient
-    self.mainQueue = mainQueue
   }
 }
 
 #if DEBUG
   extension DailyChallengeResultsEnvironment {
     public static let failing = Self(
-      apiClient: .failing,
-      mainQueue: .failing("mainQueue")
+      apiClient: .failing
     )
   }
 #endif
