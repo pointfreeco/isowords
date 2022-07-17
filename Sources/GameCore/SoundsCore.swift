@@ -116,8 +116,9 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             .remainder
         )
 
-        return environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
-          .fireAndForget()
+        return .fireAndForget {
+          await environment.audioPlayer.playAsync(AudioPlayerClient.Sound.allSubmits[firstIndex])
+        }
       }
       .selectionSounds(
         audioPlayer: \.audioPlayer,
