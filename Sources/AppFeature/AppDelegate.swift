@@ -29,7 +29,7 @@ struct AppDelegateEnvironment {
   var fileClient: FileClient
   var mainQueue: AnySchedulerOf<DispatchQueue>
   var remoteNotifications: RemoteNotificationsClient
-  var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
+  var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   var userNotifications: UserNotificationClient
 
   #if DEBUG
@@ -42,7 +42,7 @@ struct AppDelegateEnvironment {
       fileClient: .failing,
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
-      setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       userNotifications: .failing
     )
   #endif
@@ -134,7 +134,7 @@ let appDelegateReducer = Reducer<
           : state.musicVolume
       )
       async let setUI: Void =
-        await environment.setUserInterfaceStyleAsync(state.colorScheme.userInterfaceStyle)
+        await environment.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
     }
   }
 }

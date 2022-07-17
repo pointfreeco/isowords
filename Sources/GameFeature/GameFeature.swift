@@ -44,7 +44,7 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
             mainQueue: $0.mainQueue,
             remoteNotifications: $0.remoteNotifications,
             serverConfig: $0.serverConfig,
-            setUserInterfaceStyleAsync: $0.setUserInterfaceStyleAsync,
+            setUserInterfaceStyle: $0.setUserInterfaceStyle,
             storeKit: $0.storeKit,
             userDefaults: $0.userDefaults,
             userNotifications: $0.userNotifications

@@ -59,7 +59,7 @@ struct HomeFeaturePreviewApp: App {
               mainRunLoop: .main,
               remoteNotifications: .noop,
               serverConfig: .noop,
-              setUserInterfaceStyleAsync: { _ in },
+              setUserInterfaceStyle: { _ in },
               storeKit: .noop,
               timeZone: { TimeZone.current },
               userDefaults: .noop,

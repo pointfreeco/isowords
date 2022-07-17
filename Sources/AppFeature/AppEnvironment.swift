@@ -36,7 +36,7 @@ public struct AppEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
+  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var timeZone: () -> TimeZone
   public var userDefaults: UserDefaultsClient
@@ -59,7 +59,7 @@ public struct AppEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
+    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     timeZone: @escaping () -> TimeZone,
     userDefaults: UserDefaultsClient,
@@ -81,7 +81,7 @@ public struct AppEnvironment {
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
+    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.storeKit = storeKit
     self.timeZone = timeZone
     self.userDefaults = userDefaults
@@ -106,7 +106,7 @@ public struct AppEnvironment {
       mainRunLoop: .unimplemented("mainRunLoop"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       storeKit: .failing,
       timeZone: XCTUnimplemented("\(Self.self).timeZone"),
       userDefaults: .failing,
@@ -130,7 +130,7 @@ public struct AppEnvironment {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyleAsync: { _ in },
+      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       timeZone: { .autoupdatingCurrent },
       userDefaults: .noop,

@@ -327,7 +327,7 @@ class SettingsFeatureTests: XCTestCase {
     var overriddenUserInterfaceStyle: UIUserInterfaceStyle!
 
     var environment = self.defaultEnvironment
-    environment.setUserInterfaceStyleAsync = { overriddenUserInterfaceStyle = $0 }
+    environment.setUserInterfaceStyle = { overriddenUserInterfaceStyle = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),

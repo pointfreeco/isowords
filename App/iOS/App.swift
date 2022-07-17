@@ -100,7 +100,7 @@ extension AppEnvironment {
       mainRunLoop: .main,
       remoteNotifications: .live,
       serverConfig: .live(apiClient: apiClient, build: build),
-      setUserInterfaceStyleAsync: { userInterfaceStyle in
+      setUserInterfaceStyle: { userInterfaceStyle in
         await MainActor.run {
           guard
             let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })

@@ -200,8 +200,7 @@ public struct SettingsEnvironment {
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  @available(*, deprecated)
-  public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
+  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
   public var userNotifications: UserNotificationClient
@@ -219,7 +218,7 @@ public struct SettingsEnvironment {
     mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
+    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
     userNotifications: UserNotificationClient
@@ -236,7 +235,7 @@ public struct SettingsEnvironment {
     self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
+    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.storeKit = storeKit
     self.userDefaults = userDefaults
     self.userNotifications = userNotifications
@@ -260,7 +259,7 @@ public struct SettingsEnvironment {
       mainQueue: .failing("mainQueue"),
       remoteNotifications: .failing,
       serverConfig: .failing,
-      setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       storeKit: .failing,
       userDefaults: .failing,
       userNotifications: .failing
@@ -279,7 +278,7 @@ public struct SettingsEnvironment {
       mainQueue: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyleAsync: { _ in },
+      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       userDefaults: .noop,
       userNotifications: .noop
@@ -396,7 +395,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .binding(\.$userSettings.colorScheme):
       return .fireAndForget { [style = state.userSettings.colorScheme.userInterfaceStyle] in
-        await environment.setUserInterfaceStyleAsync(style)
+        await environment.setUserInterfaceStyle(style)
       }
 
     case .binding(\.$userSettings.musicVolume):
