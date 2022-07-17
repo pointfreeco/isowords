@@ -306,7 +306,7 @@ public let onboardingReducer = Reducer<
     )
 
   case .getStartedButtonTapped:
-    return .init(value: .delegate(.getStarted))
+    return .task { .delegate(.getStarted) }
 
   case .nextButtonTapped:
     state.step.next()
