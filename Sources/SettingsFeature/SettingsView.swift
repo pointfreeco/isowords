@@ -172,12 +172,9 @@ public struct SettingsView: View {
       backgroundColor: .adaptiveWhite,
       foregroundColor: .hex(self.colorScheme == .dark ? 0x7d7d7d : 0x393939),
       title: Text("Settings"),
-      navPresentationStyle: self.navPresentationStyle,
-      onDismiss: {
-        self.viewStore.send(.onDismiss)
-      }
+      navPresentationStyle: self.navPresentationStyle
     )
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
     .alert(self.store.scope(state: \.alert), dismiss: .set(\.$alert, nil))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])

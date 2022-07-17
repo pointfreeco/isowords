@@ -76,7 +76,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
@@ -94,7 +94,7 @@ class SettingsFeatureTests: XCTestCase {
 
     XCTAssert(didRegisterForRemoteNotifications)
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testEnableNotifications_NotDetermined_DenyAuthorization() async {
@@ -116,7 +116,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
@@ -134,7 +134,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.enableNotifications = false
     }
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testNotifications_PreviouslyGranted() async {
@@ -156,7 +156,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
@@ -171,7 +171,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.enableNotifications = false
     }
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testNotifications_PreviouslyDenied() async {
@@ -201,7 +201,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
@@ -223,7 +223,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.alert = nil
     }
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testNotifications_DebounceRemoteSettingsUpdates() async {
@@ -254,7 +254,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
@@ -278,7 +278,7 @@ class SettingsFeatureTests: XCTestCase {
 
     await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   // MARK: - Sounds
@@ -382,7 +382,7 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
@@ -394,7 +394,7 @@ class SettingsFeatureTests: XCTestCase {
     }
     XCTAssertNoDifference(overriddenIconName, nil)
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   // MARK: - Developer

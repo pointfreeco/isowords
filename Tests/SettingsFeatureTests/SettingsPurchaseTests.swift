@@ -48,16 +48,16 @@ class SettingsPurchaseTests: XCTestCase {
       environment: environment
     )
 
-    await await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
-    await await store.receive(
+    await store.receive(
       .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
     ) {
       $0.fullGameProduct = .success(.fullGame)
     }
-    await await store.send(.tappedProduct(.fullGame)) {
+    await store.send(.tappedProduct(.fullGame)) {
       $0.isPurchasing = true
     }
     XCTAssertNoDifference(didAddPaymentProductIdentifier, "xyz.isowords.full_game")
@@ -73,7 +73,7 @@ class SettingsPurchaseTests: XCTestCase {
     await store.receive(SettingsAction.currentPlayerRefreshed(.success(.blobWithPurchase))) {
       $0.fullGamePurchasedAt = .mock
     }
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testRestore_HappyPath() async throws {
@@ -102,7 +102,7 @@ class SettingsPurchaseTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
@@ -128,7 +128,7 @@ class SettingsPurchaseTests: XCTestCase {
     await store.receive(SettingsAction.currentPlayerRefreshed(.success(.blobWithPurchase))) {
       $0.fullGamePurchasedAt = .mock
     }
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testRestore_NoPurchasesPath() async throws {
@@ -157,7 +157,7 @@ class SettingsPurchaseTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
@@ -178,7 +178,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.alert = .noRestoredPurchases
     }
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 
   func testRestore_ErrorPath() async throws {
@@ -207,7 +207,7 @@ class SettingsPurchaseTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
@@ -230,7 +230,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.alert = .restoredPurchasesFailed
     }
 
-    await store.send(.onDismiss)
+    await task.cancel()
   }
 }
 

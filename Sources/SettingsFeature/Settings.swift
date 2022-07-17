@@ -174,8 +174,6 @@ public enum SettingsAction: BindableAction, Equatable {
   case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
   case didBecomeActive
   case leaveUsAReviewButtonTapped
-  case onAppear
-  case onDismiss
   case openSettingButtonTapped
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case productsResponse(Result<StoreKitClient.ProductsResponse, NSError>)
@@ -183,6 +181,7 @@ public enum SettingsAction: BindableAction, Equatable {
   case restoreButtonTapped
   case stats(StatsAction)
   case tappedProduct(StoreKitClient.Product)
+  case task
   case userNotificationAuthorizationResponse(TaskResult<Bool>)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 }
@@ -302,9 +301,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   ),
 
   Reducer { state, action, environment in
-    struct DidBecomeActiveId: Hashable {}
-    struct PaymentObserverId: Hashable {}
-    enum UpdateRemoteSettingsId {}
+    enum UpdateRemoteSettingsID {}
 
     switch action {
     case .binding(\.$developer.currentBaseUrl):
@@ -368,7 +365,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
         )
       }
-      .debounce(id: UpdateRemoteSettingsId.self, for: 1, scheduler: environment.mainQueue)
+      .debounce(id: UpdateRemoteSettingsID.self, for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.$sendDailyChallengeSummary):
       return .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
@@ -386,7 +383,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
         )
       }
-      .debounce(id: UpdateRemoteSettingsId.self, for: 1, scheduler: environment.mainQueue)
+      .debounce(id: UpdateRemoteSettingsID.self, for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.$userSettings.appIcon):
       return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
@@ -434,58 +431,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         _ = await environment.applicationClient
           .openAsync(environment.serverConfig.config().appStoreReviewUrl, [:])
       }
-
-    case .onAppear:
-      state.fullGamePurchasedAt =
-        environment.apiClient.currentPlayer()?
-        .appleReceipt?
-        .receipt
-        .originalPurchaseDate
-      state.buildNumber = environment.build.number()
-      state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
-      state.stats.isHapticsEnabled = state.userSettings.enableHaptics
-      state.userSettings.appIcon = environment.applicationClient.alternateIconName()
-        .flatMap(AppIcon.init(rawValue:))
-
-      if let baseUrl = DeveloperSettings.BaseUrl(
-        rawValue: environment.apiClient.baseUrl().absoluteString)
-      {
-        state.developer.currentBaseUrl = baseUrl
-      }
-
-      return .merge(
-        state.isFullGamePurchased
-        ? .none
-        : environment.storeKit
-          .fetchProducts([
-            environment.serverConfig.config().productIdentifiers.fullGame
-          ])
-          .mapError { $0 as NSError }
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(SettingsAction.productsResponse),
-
-        environment.storeKit.observer
-          .receive(on: environment.mainQueue.animation())
-          .map(SettingsAction.paymentTransaction)
-          .eraseToEffect()
-          .cancellable(id: PaymentObserverId()),
-
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainQueue.animation())
-          .eraseToEffect()
-          .map(SettingsAction.userNotificationSettingsResponse),
-
-        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
-          .map { _ in .didBecomeActive }
-          .eraseToEffect()
-          .cancellable(id: DidBecomeActiveId())
-      )
-
-    case .onDismiss:
-      return .merge(
-        .cancel(id: DidBecomeActiveId()),
-        .cancel(id: PaymentObserverId())
-      )
 
     case .paymentTransaction(.removedTransactions):
       state.isPurchasing = false
@@ -569,6 +514,50 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         payment.quantity = 1
         await environment.storeKit.addPayment(payment)
       }
+
+    case .task:
+      state.fullGamePurchasedAt =
+        environment.apiClient.currentPlayer()?
+        .appleReceipt?
+        .receipt
+        .originalPurchaseDate
+      state.buildNumber = environment.build.number()
+      state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
+      state.stats.isHapticsEnabled = state.userSettings.enableHaptics
+      state.userSettings.appIcon = environment.applicationClient.alternateIconName()
+        .flatMap(AppIcon.init(rawValue:))
+
+      if let baseUrl = DeveloperSettings.BaseUrl(
+        rawValue: environment.apiClient.baseUrl().absoluteString)
+      {
+        state.developer.currentBaseUrl = baseUrl
+      }
+
+      return .merge(
+        state.isFullGamePurchased
+        ? .none
+        : environment.storeKit
+          .fetchProducts([
+            environment.serverConfig.config().productIdentifiers.fullGame
+          ])
+          .mapError { $0 as NSError }
+          .receive(on: environment.mainQueue.animation())
+          .catchToEffect(SettingsAction.productsResponse),
+
+        environment.storeKit.observer
+          .receive(on: environment.mainQueue.animation())
+          .map(SettingsAction.paymentTransaction)
+          .eraseToEffect(),
+
+        environment.userNotifications.getNotificationSettings
+          .receive(on: environment.mainQueue.animation())
+          .eraseToEffect()
+          .map(SettingsAction.userNotificationSettingsResponse),
+
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+          .map { _ in .didBecomeActive }
+          .eraseToEffect()
+      )
 
     case let .userNotificationAuthorizationResponse(.success(granted)):
       state.enableNotifications = granted
