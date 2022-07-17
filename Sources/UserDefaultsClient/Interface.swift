@@ -33,11 +33,7 @@ public struct UserDefaultsClient {
     self.doubleForKey(installationTimeKey)
   }
 
-  @available(*, deprecated) public func setInstallationTime(_ double: Double) -> Effect<Never, Never> {
-    self.setDouble(double, installationTimeKey)
-  }
-
-  public func setInstallationTimeAsync(_ double: Double) async {
+  public func setInstallationTime(_ double: Double) async {
     await self.setDoubleAsync(double, installationTimeKey)
   }
 
