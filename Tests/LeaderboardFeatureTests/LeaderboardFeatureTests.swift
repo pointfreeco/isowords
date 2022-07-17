@@ -117,7 +117,7 @@ class LeaderboardFeatureTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    await store.send(.vocab(.onAppear)) {
+    await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }

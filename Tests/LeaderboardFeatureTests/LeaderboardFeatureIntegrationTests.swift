@@ -48,7 +48,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    await store.send(.solo(.onAppear)) {
+    await store.send(.solo(.task)) {
       $0.solo.isLoading = true
       $0.solo.resultEnvelope = .placeholder
     }
@@ -107,7 +107,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    await store.send(.vocab(.onAppear)) {
+    await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }

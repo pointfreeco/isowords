@@ -36,9 +36,9 @@ public enum LeaderboardResultsAction<TimeScope> {
   case dismissTimeScopeMenu
   case gameModeButtonTapped(GameMode)
   case resultsResponse(TaskResult<ResultEnvelope>)
-  case onAppear
   case tappedRow(id: UUID)
   case tappedTimeScopeLabel
+  case task
   case timeScopeChanged(TimeScope)
 }
 
@@ -77,18 +77,6 @@ extension Reducer {
           )
         }
 
-      case .onAppear:
-        state.isLoading = true
-        state.isTimeScopeMenuVisible = false
-        state.resultEnvelope = .placeholder
-
-        return .task { [gameMode = state.gameMode, timeScope = state.timeScope] in
-          await .resultsResponse(
-            TaskResult { try await environment.loadResults(gameMode, timeScope) }
-          )
-        }
-        .animation()
-
       case .resultsResponse(.failure):
         state.isLoading = false
         state.resultEnvelope = nil
@@ -105,6 +93,18 @@ extension Reducer {
       case .tappedTimeScopeLabel:
         state.isTimeScopeMenuVisible.toggle()
         return .none
+
+      case .task:
+        state.isLoading = true
+        state.isTimeScopeMenuVisible = false
+        state.resultEnvelope = .placeholder
+
+        return .task { [gameMode = state.gameMode, timeScope = state.timeScope] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
+        .animation()
 
       case let .timeScopeChanged(timeScope):
         state.isLoading = true
@@ -302,7 +302,7 @@ where
       alignment: .topTrailing
 
     )
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
   }
 }
 

@@ -82,7 +82,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       environment: clientEnvironment
     )
 
-    await store.send(.leaderboardResults(.onAppear)) {
+    await store.send(.leaderboardResults(.task)) {
       $0.leaderboardResults.isLoading = true
       $0.leaderboardResults.resultEnvelope = .placeholder
     }

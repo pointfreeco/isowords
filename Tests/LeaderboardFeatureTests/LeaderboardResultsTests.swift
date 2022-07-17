@@ -18,7 +18,7 @@ class LeaderboardTests: XCTestCase {
       environment: .happyPath
     )
 
-    await store.send(.onAppear) {
+    await store.send(.task) {
       $0.isLoading = true
       $0.resultEnvelope = .placeholder
     }
@@ -77,7 +77,7 @@ class LeaderboardTests: XCTestCase {
       )
     )
 
-    await store.send(.onAppear) {
+    await store.send(.task) {
       $0.isLoading = true
     }
     await store.receive(.resultsResponse(.failure(ApiError(error: SomeError())))) {
