@@ -6,13 +6,14 @@ import XCTest
 @MainActor
 class GameCoreTests: XCTestCase {
   func testForfeitTurnBasedGame() async {
-    var didEndMatchInTurn = false
+    let didEndMatchInTurn = SendableState(false)
 
     var environment = GameEnvironment.failing
     environment.audioPlayer.stopAsync = { _ in }
-    environment.database.saveGame = { _ in .none }
     environment.gameCenter.localPlayer.localPlayerAsync = { .authenticated }
-    environment.gameCenter.turnBasedMatch.endMatchInTurnAsync = { _ in didEndMatchInTurn = true }
+    environment.gameCenter.turnBasedMatch.endMatchInTurnAsync = { _ in
+      await didEndMatchInTurn.set(true)
+    }
 
     var gameState = GameState(inProgressGame: .mock)
     gameState.gameContext = .turnBased(
@@ -57,8 +58,7 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    XCTAssertNoDifference(didEndMatchInTurn, true)
-
+    await didEndMatchInTurn.modify { XCTAssertNoDifference($0, true) }
     await store.finish()
   }
 }
