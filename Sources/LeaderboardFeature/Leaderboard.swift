@@ -66,7 +66,7 @@ public struct LeaderboardState: Equatable {
 public enum LeaderboardAction: Equatable {
   case cubePreview(CubePreviewAction)
   case dismissCubePreview
-  case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
+  case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
   case scopeTapped(LeaderboardScope)
   case solo(LeaderboardResultsAction<TimeScope>)
   case vocab(LeaderboardResultsAction<TimeScope>)
@@ -190,17 +190,22 @@ public let leaderboardReducer = Reducer<
       return .none
 
     case let .vocab(.tappedRow(id)):
-      struct CancelId: Hashable {}
+      enum CancelID {}
 
       guard let resultEnvelope = state.vocab.resultEnvelope
       else { return .none }
-      return environment.apiClient.apiRequest(
-        route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
-        as: FetchVocabWordResponse.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(LeaderboardAction.fetchWordResponse)
-      .cancellable(id: CancelId(), cancelInFlight: true)
+
+      return .task {
+        await .fetchWordResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequestAsync(
+              route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
+              as: FetchVocabWordResponse.self
+            )
+          }
+        )
+      }
+      .cancellable(id: CancelID.self, cancelInFlight: true)
 
     case .vocab:
       return .none
