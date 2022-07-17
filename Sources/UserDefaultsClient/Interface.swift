@@ -41,15 +41,7 @@ public struct UserDefaultsClient {
     await self.setDoubleAsync(double, installationTimeKey)
   }
 
-  @available(*, deprecated) public func incrementMultiplayerOpensCount() -> Effect<Int, Never> {
-    let incremented = self.integerForKey(multiplayerOpensCount) + 1
-    return .concatenate(
-      self.setInteger(incremented, multiplayerOpensCount).fireAndForget(),
-      .init(value: incremented)
-    )
-  }
-
-  public func incrementMultiplayerOpensCountAsync() async -> Int {
+  public func incrementMultiplayerOpensCount() async -> Int {
     let incremented = self.integerForKey(multiplayerOpensCount) + 1
     await self.setIntegerAsync(incremented, multiplayerOpensCount)
     return incremented

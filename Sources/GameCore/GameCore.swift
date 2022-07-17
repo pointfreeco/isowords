@@ -982,7 +982,7 @@ extension Effect where Output == GameAction, Failure == Never {
         if gameContext.isTurnBased {
           group.addTask {
             let playedGamesCount = await environment.userDefaults
-              .incrementMultiplayerOpensCountAsync()
+              .incrementMultiplayerOpensCount()
             let isFullGamePurchased =
               await
               environment.apiClient
