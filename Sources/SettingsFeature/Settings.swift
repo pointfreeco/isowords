@@ -542,30 +542,31 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       return .none
 
     case .reportABugButtonTapped:
-      var components = URLComponents()
-      components.scheme = "mailto"
-      components.path = "support@pointfree.co"
-      components.queryItems = [
-        URLQueryItem(name: "subject", value: "I found a bug in isowords"),
-        URLQueryItem(
-          name: "body",
-          value: """
+      return .fireAndForget {
+        let currentPlayer = await environment.apiClient.currentPlayerAsync()
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "support@pointfree.co"
+        components.queryItems = [
+          URLQueryItem(name: "subject", value: "I found a bug in isowords"),
+          URLQueryItem(
+            name: "body",
+            value: """
 
 
-            ---
-            Build: \(environment.build.number()) (\(environment.build.gitSha()))
-            \(environment.apiClient.currentPlayer()?.player.id.rawValue.uuidString ?? "")
-            """
-        ),
-      ]
+              ---
+              Build: \(environment.build.number()) (\(environment.build.gitSha()))
+              \(currentPlayer?.player.id.rawValue.uuidString ?? "")
+              """
+          ),
+        ]
 
-      return environment.applicationClient.open(components.url!, [:])
-        .fireAndForget()
+        _ = await environment.applicationClient.openAsync(components.url!, [:])
+      }
 
     case .restoreButtonTapped:
       state.isRestoring = true
-      return environment.storeKit.restoreCompletedTransactions()
-        .fireAndForget()
+      return .fireAndForget { await environment.storeKit.restoreCompletedTransactionsAsync() }
 
     case .stats:
       return .none

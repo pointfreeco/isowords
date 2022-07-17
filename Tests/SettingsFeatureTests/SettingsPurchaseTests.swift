@@ -90,10 +90,8 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
-    environment.storeKit.restoreCompletedTransactions = {
-      .fireAndForget {
-        didRestoreCompletedTransactions = true
-      }
+    environment.storeKit.restoreCompletedTransactionsAsync = {
+      didRestoreCompletedTransactions = true
     }
     environment.storeKit.fetchProducts = { _ in
       .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
@@ -146,10 +144,8 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
-    environment.storeKit.restoreCompletedTransactions = {
-      .fireAndForget {
-        didRestoreCompletedTransactions = true
-      }
+    environment.storeKit.restoreCompletedTransactionsAsync = {
+      didRestoreCompletedTransactions = true
     }
     environment.storeKit.fetchProducts = { _ in
       .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
@@ -198,10 +194,8 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
-    environment.storeKit.restoreCompletedTransactions = {
-      .fireAndForget {
-        didRestoreCompletedTransactions = true
-      }
+    environment.storeKit.restoreCompletedTransactionsAsync = {
+      didRestoreCompletedTransactions = true
     }
     environment.storeKit.fetchProducts = { _ in
       .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
