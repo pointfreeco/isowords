@@ -33,7 +33,7 @@ extension StoreKitClient {
       fetchProductsAsync: XCTUnimplemented("\(Self.self).fetchProductsAsync"),
       finishTransaction: XCTUnimplemented("\(Self.self).finishTransaction"),
       observer: .failing("\(Self.self).observer is unimplemented"),
-      observerAsync: XCTUnimplemented("\(Self.self).observerAsync"),
+      observerAsync: XCTUnimplemented("\(Self.self).observerAsync", placeholder: .finished),
       requestReview: XCTUnimplemented("\(Self.self).requestReviewAsync"),
       restoreCompletedTransactions: XCTUnimplemented(
         "\(Self.self).restoreCompletedTransactionsAsync"

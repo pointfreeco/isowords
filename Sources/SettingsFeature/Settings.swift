@@ -176,7 +176,7 @@ public enum SettingsAction: BindableAction, Equatable {
   case leaveUsAReviewButtonTapped
   case openSettingButtonTapped
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-  case productsResponse(Result<StoreKitClient.ProductsResponse, NSError>)
+  case productsResponse(TaskResult<StoreKitClient.ProductsResponse>)
   case reportABugButtonTapped
   case restoreButtonTapped
   case stats(StatsAction)
@@ -534,20 +534,30 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       }
 
       return .merge(
-        state.isFullGamePurchased
-        ? .none
-        : environment.storeKit
-          .fetchProducts([
-            environment.serverConfig.config().productIdentifiers.fullGame
-          ])
-          .mapError { $0 as NSError }
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(SettingsAction.productsResponse),
+        .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+              for await event in environment.storeKit.observerAsync() {
+                await send(.paymentTransaction(event), animation: .default)
+              }
+            }
 
-        environment.storeKit.observer
-          .receive(on: environment.mainQueue.animation())
-          .map(SettingsAction.paymentTransaction)
-          .eraseToEffect(),
+            if shouldFetchProducts {
+              group.addTask {
+                await send(
+                  .productsResponse(
+                    TaskResult {
+                      try await environment.storeKit.fetchProductsAsync([
+                        environment.serverConfig.config().productIdentifiers.fullGame
+                      ])
+                    }
+                  ),
+                  animation: .default
+                )
+              }
+            }
+          }
+        },
 
         environment.userNotifications.getNotificationSettings
           .receive(on: environment.mainQueue.animation())

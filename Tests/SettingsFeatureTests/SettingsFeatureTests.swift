@@ -18,8 +18,10 @@ class SettingsFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.backgroundQueue = .immediate
     environment.fileClient.saveAsync = { @Sendable _, _ in }
-    environment.storeKit.fetchProducts = { _ in .none }
-    environment.storeKit.observer = .run { _ in AnyCancellable {} }
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [])
+    }
+    environment.storeKit.observerAsync =  { .finished }
     return environment
   }
 

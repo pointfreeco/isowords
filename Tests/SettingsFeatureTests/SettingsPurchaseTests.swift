@@ -24,9 +24,8 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testUpgrade_HappyPath() async throws {
     var didAddPaymentProductIdentifier: String? = nil
-    let storeKitObserver = PassthroughSubject<
-      StoreKitClient.PaymentTransactionObserverEvent, Never
-    >()
+    let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
+      .streamWithContinuation()
 
     var environment = self.defaultEnvironment
     environment.serverConfig.config = {
@@ -37,10 +36,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.addPayment = { payment in
       didAddPaymentProductIdentifier = payment.productIdentifier
     }
-    environment.storeKit.fetchProducts = { _ in
-      .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = storeKitObserver.eraseToEffect()
+    environment.storeKit.observerAsync = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -61,16 +60,16 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isPurchasing = true
     }
     XCTAssertNoDifference(didAddPaymentProductIdentifier, "xyz.isowords.full_game")
-    storeKitObserver.send(.updatedTransactions([.purchasing]))
-    storeKitObserver.send(.updatedTransactions([.purchased]))
-    storeKitObserver.send(.removedTransactions([.purchased]))
+    storeKitObserver.continuation.yield(.updatedTransactions([.purchasing]))
+    storeKitObserver.continuation.yield(.updatedTransactions([.purchased]))
+    storeKitObserver.continuation.yield(.removedTransactions([.purchased]))
 
-    await store.receive(SettingsAction.paymentTransaction(.updatedTransactions([.purchasing])))
-    await store.receive(SettingsAction.paymentTransaction(.updatedTransactions([.purchased])))
-    await store.receive(SettingsAction.paymentTransaction(.removedTransactions([.purchased]))) {
+    await store.receive(.paymentTransaction(.updatedTransactions([.purchasing])))
+    await store.receive(.paymentTransaction(.updatedTransactions([.purchased])))
+    await store.receive(.paymentTransaction(.removedTransactions([.purchased]))) {
       $0.isPurchasing = false
     }
-    await store.receive(SettingsAction.currentPlayerRefreshed(.success(.blobWithPurchase))) {
+    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase))) {
       $0.fullGamePurchasedAt = .mock
     }
     await task.cancel()
@@ -78,9 +77,8 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testRestore_HappyPath() async throws {
     var didRestoreCompletedTransactions = false
-    let storeKitObserver = PassthroughSubject<
-      StoreKitClient.PaymentTransactionObserverEvent, Never
-    >()
+    let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
+      .streamWithContinuation()
 
     var environment = self.defaultEnvironment
     environment.serverConfig.config = {
@@ -91,10 +89,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
-    environment.storeKit.fetchProducts = { _ in
-      .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = storeKitObserver.eraseToEffect()
+    environment.storeKit.observerAsync = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -116,16 +114,19 @@ class SettingsPurchaseTests: XCTestCase {
     }
 
     XCTAssertNoDifference(didRestoreCompletedTransactions, true)
-    storeKitObserver.send(.updatedTransactions([.restored]))
-    storeKitObserver.send(.removedTransactions([.restored]))
-    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: [.restored]))
+    storeKitObserver.continuation.yield(.updatedTransactions([.restored]))
+    storeKitObserver.continuation.yield(.removedTransactions([.restored]))
+    storeKitObserver.continuation.yield(
+      .restoreCompletedTransactionsFinished(transactions: [.restored]))
 
-    await store.receive(SettingsAction.paymentTransaction(.updatedTransactions([.restored])))
-    await store.receive(SettingsAction.paymentTransaction(.removedTransactions([.restored])))
-    await store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored]))) {
+    await store.receive(.paymentTransaction(.updatedTransactions([.restored])))
+    await store.receive(.paymentTransaction(.removedTransactions([.restored])))
+    await store.receive(
+      .paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored]))
+    ) {
       $0.isRestoring = false
     }
-    await store.receive(SettingsAction.currentPlayerRefreshed(.success(.blobWithPurchase))) {
+    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase))) {
       $0.fullGamePurchasedAt = .mock
     }
     await task.cancel()
@@ -133,9 +134,8 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testRestore_NoPurchasesPath() async throws {
     var didRestoreCompletedTransactions = false
-    let storeKitObserver = PassthroughSubject<
-      StoreKitClient.PaymentTransactionObserverEvent, Never
-    >()
+    let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
+      .streamWithContinuation()
 
     var environment = self.defaultEnvironment
     environment.serverConfig.config = {
@@ -146,10 +146,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
-    environment.storeKit.fetchProducts = { _ in
-      .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = storeKitObserver.eraseToEffect()
+    environment.storeKit.observerAsync = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -171,9 +171,11 @@ class SettingsPurchaseTests: XCTestCase {
     }
 
     XCTAssertNoDifference(didRestoreCompletedTransactions, true)
-    storeKitObserver.send(.restoreCompletedTransactionsFinished(transactions: []))
+    storeKitObserver.continuation.yield(.restoreCompletedTransactionsFinished(transactions: []))
 
-    await store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: []))) {
+    await store.receive(
+      .paymentTransaction(.restoreCompletedTransactionsFinished(transactions: []))
+    ) {
       $0.isRestoring = false
       $0.alert = .noRestoredPurchases
     }
@@ -183,9 +185,8 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testRestore_ErrorPath() async throws {
     var didRestoreCompletedTransactions = false
-    let storeKitObserver = PassthroughSubject<
-      StoreKitClient.PaymentTransactionObserverEvent, Never
-    >()
+    let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
+      .streamWithContinuation()
 
     var environment = self.defaultEnvironment
     environment.serverConfig.config = {
@@ -196,10 +197,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
-    environment.storeKit.fetchProducts = { _ in
-      .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = storeKitObserver.eraseToEffect()
+    environment.storeKit.observerAsync = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -223,9 +224,12 @@ class SettingsPurchaseTests: XCTestCase {
     XCTAssertNoDifference(didRestoreCompletedTransactions, true)
 
     let restoreCompletedTransactionsError = NSError(domain: "", code: 1)
-    storeKitObserver.send(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
+    storeKitObserver.continuation
+      .yield(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
 
-    await store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))) {
+    await store.receive(
+      .paymentTransaction(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
+    ) {
       $0.isRestoring = false
       $0.alert = .restoredPurchasesFailed
     }
