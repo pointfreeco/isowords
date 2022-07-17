@@ -172,12 +172,12 @@ class TurnBasedTests: XCTestCase {
     }
     let gameTask = await store.send(.currentGame(.game(.task)))
 
-    await store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
     await store.receive(.currentGame(.game(.gameLoaded))) {
       try XCTUnwrap(&$0.game) {
         $0.isGameLoaded = true
       }
     }
+    await store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
 
     await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()

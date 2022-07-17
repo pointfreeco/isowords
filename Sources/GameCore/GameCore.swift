@@ -160,11 +160,11 @@ public enum GameAction: Equatable {
   case gameLoaded
   case gameOver(GameOverAction)
   case lowPowerModeChanged(Bool)
-  case matchesLoaded(Result<[TurnBasedMatch], NSError>)
+  case matchesLoaded(TaskResult<[TurnBasedMatch]>)
   case menuButtonTapped
   case task
   case pan(UIGestureRecognizer.State, PanData?)
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
+  case savedGamesLoaded(TaskResult<SavedGamesState>)
   case settingsButtonTapped
   case submitButtonTapped(reaction: Move.Reaction?)
   case tap(UIGestureRecognizer.State, IndexedCubeFace?)
