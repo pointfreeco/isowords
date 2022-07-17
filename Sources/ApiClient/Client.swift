@@ -63,40 +63,6 @@ public struct ApiClient {
 
   public struct Unit: Codable {}
 
-  @available(*, deprecated) public func apiRequest(
-    route: ServerRoute.Api.Route,
-    file: StaticString = #file,
-    line: UInt = #line
-  ) -> Effect<Unit, ApiError> {
-    self.apiRequest(route: route, as: Unit.self, file: file, line: line)
-  }
-
-  @available(*, deprecated) public func apiRequest<A: Decodable>(
-    route: ServerRoute.Api.Route,
-    as: A.Type,
-    file: StaticString = #file,
-    line: UInt = #line
-  ) -> Effect<A, ApiError> {
-    self.apiRequest(route)
-      .handleEvents(
-        receiveOutput: {
-          #if DEBUG
-            print(
-              """
-                API: route: \(route), \
-                status: \(($0.response as? HTTPURLResponse)?.statusCode ?? 0), \
-                receive data: \(String(decoding: $0.data, as: UTF8.self))
-              """
-            )
-          #endif
-        }
-      )
-      .map { data, _ in data }
-      .apiDecode(as: A.self, file: file, line: line)
-      .print("API")
-      .eraseToEffect()
-  }
-
   public func apiRequestAsync(
     route: ServerRoute.Api.Route,
     file: StaticString = #file,

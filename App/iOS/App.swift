@@ -125,9 +125,8 @@ extension ServerConfigClient {
   static func live(apiClient: ApiClient, build: Build) -> Self {
     .live(
       fetch: {
-        apiClient.apiRequest(route: .config(build: build.number()), as: ServerConfig.self)
-          .mapError { $0 as Error }
-          .eraseToEffect()
+        try await apiClient
+          .apiRequestAsync(route: .config(build: build.number()), as: ServerConfig.self)
       }
     )
   }

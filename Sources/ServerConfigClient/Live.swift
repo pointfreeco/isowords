@@ -3,26 +3,26 @@ import ServerConfig
 
 extension ServerConfigClient {
   public static func live(
-    fetch: @escaping () -> Effect<ServerConfig, Error>
+    fetch: @escaping @Sendable () async throws -> ServerConfig
   ) -> Self {
     var currentConfig =
       (UserDefaults.standard.object(forKey: serverConfigKey) as? Data)
       .flatMap { try? jsonDecoder.decode(ServerConfig.self, from: $0) }
-      ?? ServerConfig()
-    let effect = fetch()
-      .handleEvents(
-        receiveOutput: {
-          currentConfig = $0
-          guard let data = try? jsonEncoder.encode(currentConfig)
-          else { return }
-          UserDefaults.standard.set(data, forKey: serverConfigKey)
-        }
-      )
-      .eraseToEffect()
+    ?? ServerConfig() {
+      didSet {
+        guard let data = try? jsonEncoder.encode(currentConfig)
+        else { return }
+        UserDefaults.standard.set(data, forKey: serverConfigKey)
+      }
+    }
 
     return Self(
       config: { currentConfig },
-      refresh: { try await effect.values.first(where: { _ in true }) ?? .init() }
+      refresh: {
+        let config = try await fetch()
+        currentConfig = config
+        return config
+      }
     )
   }
 }
