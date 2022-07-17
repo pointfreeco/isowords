@@ -808,7 +808,7 @@ class TurnBasedTests: XCTestCase {
     var notificationBannerRequest: GameCenterClient.NotificationBannerRequest?
     let environment = update(AppEnvironment.failing) {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.gameCenter.showNotificationBannerAsync = { notificationBannerRequest = $0 }
+      $0.gameCenter.showNotificationBanner = { notificationBannerRequest = $0 }
       $0.gameCenter.turnBasedMatch.loadMatches = { .none }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()

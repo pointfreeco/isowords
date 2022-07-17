@@ -3,8 +3,7 @@ extension GameCenterClient {
     gameCenterViewController: .noop,
     localPlayer: .noop,
     reportAchievements: { _ in },
-    showNotificationBanner: { _ in .none },
-    showNotificationBannerAsync: { _ in },
+    showNotificationBanner: { _ in },
     turnBasedMatch: .noop,
     turnBasedMatchmakerViewController: .noop
   )
@@ -88,10 +87,7 @@ extension TurnBasedMatchmakerViewControllerClient {
       gameCenterViewController: .failing,
       localPlayer: .failing,
       reportAchievements: XCTUnimplemented("\(Self.self).reportAchievements"),
-      showNotificationBanner: { _ in
-        .failing("\(Self.self).showNotificationBanner is unimplemented")
-      },
-      showNotificationBannerAsync: XCTUnimplemented("\(Self.self).showNotificationBannerAsync"),
+      showNotificationBanner: XCTUnimplemented("\(Self.self).showNotificationBanner"),
       turnBasedMatch: .failing,
       turnBasedMatchmakerViewController: .failing
     )

@@ -113,7 +113,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             else { return .none }
 
             return .fireAndForget {
-              await environment.gameCenter.showNotificationBannerAsync(
+              await environment.gameCenter.showNotificationBanner(
                 .init(title: match.message, message: nil)
               )
             }

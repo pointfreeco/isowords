@@ -10,14 +10,7 @@ extension GameCenterClient {
       gameCenterViewController: .live,
       localPlayer: .live,
       reportAchievements: { try await GKAchievement.report($0) },
-      showNotificationBanner: { request in
-        .future { callback in
-          GKNotificationBanner.show(withTitle: request.title, message: request.message) {
-            callback(.success(()))
-          }
-        }
-      },
-      showNotificationBannerAsync: {
+      showNotificationBanner: {
         await GKNotificationBanner.show(withTitle: $0.title, message: $0.message)
       },
       turnBasedMatch: .live,
