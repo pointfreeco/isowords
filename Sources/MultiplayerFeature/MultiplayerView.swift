@@ -63,13 +63,7 @@ public let multiplayerReducer = Reducer<
     ._pullback(
       state: (\MultiplayerState.route).appending(path: /MultiplayerState.Route.pastGames),
       action: /MultiplayerAction.pastGames,
-      environment: {
-        PastGamesEnvironment(
-          backgroundQueue: $0.backgroundQueue,
-          gameCenter: $0.gameCenter,
-          mainQueue: $0.mainQueue
-        )
-      }
+      environment: { PastGamesEnvironment(gameCenter: $0.gameCenter) }
     ),
 
   .init { state, action, environment in

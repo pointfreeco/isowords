@@ -12,10 +12,8 @@ import XCTest
 class PastGamesTests: XCTestCase {
   func testLoadMatches() async {
     var environment = PastGamesEnvironment.failing
-    environment.backgroundQueue = .immediate
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatch.loadMatches = { .init(value: [match]) }
-    environment.mainQueue = .immediate
+    environment.gameCenter.turnBasedMatch.loadMatchesAsync = { [match] }
 
     let store = TestStore(
       initialState: PastGamesState(),
@@ -23,7 +21,7 @@ class PastGamesTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await store.receive(.matchesResponse(.success([pastGameState]))) {
       $0.pastGames = [pastGameState]
@@ -33,7 +31,6 @@ class PastGamesTests: XCTestCase {
   func testOpenMatch() async {
     var environment = PastGamesEnvironment.failing
     environment.gameCenter.turnBasedMatch.loadAsync = { _ in match }
-    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: PastGamesState(pastGames: [pastGameState]),
@@ -50,7 +47,6 @@ class PastGamesTests: XCTestCase {
 
   func testRematch() async {
     var environment = PastGamesEnvironment.failing
-    environment.mainQueue = .immediate
     environment.gameCenter.turnBasedMatch.rematchAsync = { _ in match }
 
     let store = TestStore(
@@ -78,7 +74,6 @@ class PastGamesTests: XCTestCase {
     struct RematchFailure: Error, Equatable {}
 
     var environment = PastGamesEnvironment.failing
-    environment.mainQueue = .immediate
     environment.gameCenter.turnBasedMatch.rematchAsync = { _ in throw RematchFailure() }
 
     let store = TestStore(
@@ -107,11 +102,7 @@ class PastGamesTests: XCTestCase {
 }
 
 extension PastGamesEnvironment {
-  static let failing = Self(
-    backgroundQueue: .failing("backgroundQueue"),
-    gameCenter: .failing,
-    mainQueue: .failing("mainQueue")
-  )
+  static let failing = Self(gameCenter: .failing)
 }
 
 private let pastGameState = PastGameState(

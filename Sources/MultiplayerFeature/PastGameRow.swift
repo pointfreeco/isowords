@@ -50,7 +50,6 @@ public enum PastGameAction: Equatable {
 
 struct PastGameEnvironment {
   var gameCenter: GameCenterClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
 }
 
 let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment> {

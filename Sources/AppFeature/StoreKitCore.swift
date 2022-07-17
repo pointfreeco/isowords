@@ -77,6 +77,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
         default:
           return .none
         }
-      })
+      }
+    )
   }
 }
