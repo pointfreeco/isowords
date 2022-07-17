@@ -35,9 +35,9 @@ public struct VocabState: Equatable {
 public enum VocabAction: Equatable {
   case dismissCubePreview
   case gamesResponse(Result<VocabState.GamesResponse, NSError>)
-  case onAppear
   case preview(CubePreviewAction)
-  case vocabResponse(Result<LocalDatabaseClient.Vocab, NSError>)
+  case task
+  case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
   case wordTapped(LocalDatabaseClient.Vocab.Word)
 }
 
@@ -117,13 +117,13 @@ public let vocabReducer = Reducer<
       )
       return .none
 
-    case .onAppear:
-      return environment.database.fetchVocab
-        .mapError { $0 as NSError }
-        .catchToEffect(VocabAction.vocabResponse)
-
     case .preview:
       return .none
+
+    case .task:
+      return .task {
+        await .vocabResponse(TaskResult { try await environment.database.fetchVocabAsync() })
+      }
 
     case let .vocabResponse(.success(vocab)):
       state.vocab = vocab
@@ -180,7 +180,7 @@ public struct VocabView: View {
           }
         }
       }
-      .onAppear { viewStore.send(.onAppear) }
+      .task { await viewStore.send(.task).finish() }
       .sheet(
         isPresented: viewStore.binding(
           get: { $0.cubePreview != nil },
