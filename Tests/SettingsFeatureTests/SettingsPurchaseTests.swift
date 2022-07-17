@@ -33,7 +33,7 @@ class SettingsPurchaseTests: XCTestCase {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
+    environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
     environment.storeKit.addPaymentAsync = { payment in
       didAddPaymentProductIdentifier = payment.productIdentifier
     }
@@ -87,7 +87,7 @@ class SettingsPurchaseTests: XCTestCase {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
+    environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
     environment.storeKit.restoreCompletedTransactionsAsync = {
       didRestoreCompletedTransactions = true
     }
@@ -122,11 +122,12 @@ class SettingsPurchaseTests: XCTestCase {
 
     await store.receive(SettingsAction.paymentTransaction(.updatedTransactions([.restored])))
     await store.receive(SettingsAction.paymentTransaction(.removedTransactions([.restored])))
-    await store.receive(SettingsAction.currentPlayerRefreshed(.success(.blobWithPurchase))) {
+    await store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored]))) {
       $0.isRestoring = false
+    }
+    await store.receive(SettingsAction.currentPlayerRefreshed(.success(.blobWithPurchase))) {
       $0.fullGamePurchasedAt = .mock
     }
-    await store.receive(SettingsAction.paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored])))
     await store.send(.onDismiss)
   }
 

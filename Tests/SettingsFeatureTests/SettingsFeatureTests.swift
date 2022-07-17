@@ -230,18 +230,12 @@ class SettingsFeatureTests: XCTestCase {
     let mainQueue = DispatchQueue.test
 
     var environment = self.defaultEnvironment
-    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
-    environment.apiClient.override(
-      route: .push(
-        .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: true))
-      ),
-      withResponse: .none
-    )
+    environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
     environment.apiClient.override(
       route: .push(
         .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
       ),
-      withResponse: .none
+      withResponse: .ok([:])
     )
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate

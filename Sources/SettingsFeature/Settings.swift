@@ -171,7 +171,7 @@ public struct SettingsState: Equatable {
 
 public enum SettingsAction: BindableAction, Equatable {
   case binding(BindingAction<SettingsState>)
-  case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, ApiError>)
+  case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
   case didBecomeActive
   case leaveUsAReviewButtonTapped
   case onAppear
@@ -312,7 +312,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   Reducer { state, action, environment in
     struct DidBecomeActiveId: Hashable {}
     struct PaymentObserverId: Hashable {}
-    struct UpdateRemoteSettingsId: Hashable {}
+    enum UpdateRemoteSettingsId {}
 
     switch action {
     case .binding(\.$developer.currentBaseUrl):
@@ -361,40 +361,40 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       }
 
     case .binding(\.$sendDailyChallengeReminder):
-      return Effect.concatenate(
-        environment.apiClient.apiRequest(
+      return .task { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
+        _ = try await environment.apiClient.apiRequestAsync(
           route: .push(
             .updateSetting(
               .init(
                 notificationType: .dailyChallengeEndsSoon,
-                sendNotifications: state.sendDailyChallengeReminder
+                sendNotifications: sendDailyChallengeReminder
               )
             )
           )
         )
-        .fireAndForget(),
-        environment.apiClient.refreshCurrentPlayer()
-          .catchToEffect(SettingsAction.currentPlayerRefreshed)
-      )
-      .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
+        return await .currentPlayerRefreshed(
+          TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
+        )
+      }
+      .debounce(id: UpdateRemoteSettingsId.self, for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.$sendDailyChallengeSummary):
-      return Effect.concatenate(
-        environment.apiClient.apiRequest(
+      return .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
+        _ = try await environment.apiClient.apiRequestAsync(
           route: .push(
             .updateSetting(
               .init(
                 notificationType: .dailyChallengeReport,
-                sendNotifications: state.sendDailyChallengeSummary
+                sendNotifications: sendDailyChallengeSummary
               )
             )
           )
         )
-        .fireAndForget(),
-        environment.apiClient.refreshCurrentPlayer()
-          .catchToEffect(SettingsAction.currentPlayerRefreshed)
-      )
-      .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
+        return await .currentPlayerRefreshed(
+          TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
+        )
+      }
+      .debounce(id: UpdateRemoteSettingsId.self, for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.$userSettings.appIcon):
       return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
@@ -502,9 +502,12 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .paymentTransaction(.removedTransactions):
       state.isPurchasing = false
-      return environment.apiClient.refreshCurrentPlayer()
-        .receive(on: environment.mainQueue.animation())
-        .catchToEffect(SettingsAction.currentPlayerRefreshed)
+      return .task {
+        await .currentPlayerRefreshed(
+          TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
+        )
+      }
+      .animation()
 
     case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
       state.isRestoring = false
@@ -599,10 +602,10 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 )
 .debug()
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
-  struct SaveDebounceId: Hashable {}
+  enum SaveDebounceId {}
 
   return .fireAndForget { try await environment.fileClient.saveUserSettingsAsync(userSettings) }
-    .debounce(id: SaveDebounceId(), for: .seconds(1), scheduler: environment.mainQueue)
+    .debounce(id: SaveDebounceId.self, for: .seconds(1), scheduler: environment.mainQueue)
 }
 
 extension AlertState where Action == SettingsAction {
