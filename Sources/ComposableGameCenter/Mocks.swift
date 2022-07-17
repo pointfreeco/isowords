@@ -2,8 +2,7 @@ extension GameCenterClient {
   public static let noop = Self(
     gameCenterViewController: .noop,
     localPlayer: .noop,
-    reportAchievements: { _ in .none },
-    reportAchievementsAsync: { _ in },
+    reportAchievements: { _ in },
     showNotificationBanner: { _ in .none },
     showNotificationBannerAsync: { _ in },
     turnBasedMatch: .noop,
@@ -88,8 +87,7 @@ extension TurnBasedMatchmakerViewControllerClient {
     public static let failing = Self(
       gameCenterViewController: .failing,
       localPlayer: .failing,
-      reportAchievements: { _ in .failing("\(Self.self).reportAchievements is unimplemented") },
-      reportAchievementsAsync: XCTUnimplemented("\(Self.self).reportAchievementsAsync"),
+      reportAchievements: XCTUnimplemented("\(Self.self).reportAchievements"),
       showNotificationBanner: { _ in
         .failing("\(Self.self).showNotificationBanner is unimplemented")
       },

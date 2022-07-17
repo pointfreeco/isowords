@@ -9,14 +9,7 @@ extension GameCenterClient {
     return Self(
       gameCenterViewController: .live,
       localPlayer: .live,
-      reportAchievements: { achievements in
-        .future { callback in
-          GKAchievement.report(achievements) { error in
-            callback(error.map(Result.failure) ?? .success(()))
-          }
-        }
-      },
-      reportAchievementsAsync: { try await GKAchievement.report($0) },
+      reportAchievements: { try await GKAchievement.report($0) },
       showNotificationBanner: { request in
         .future { callback in
           GKNotificationBanner.show(withTitle: request.title, message: request.message) {

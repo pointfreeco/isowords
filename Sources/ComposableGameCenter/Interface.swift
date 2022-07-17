@@ -6,8 +6,7 @@ import Tagged
 public struct GameCenterClient {
   public var gameCenterViewController: GameCenterViewControllerClient
   public var localPlayer: LocalPlayerClient
-  @available(*, deprecated) public var reportAchievements: ([GKAchievement]) -> Effect<Void, Error>
-  public var reportAchievementsAsync: @Sendable ([GKAchievement]) async throws -> Void
+  public var reportAchievements: @Sendable ([GKAchievement]) async throws -> Void
   @available(*, deprecated) public var showNotificationBanner: (NotificationBannerRequest) -> Effect<Void, Never>
   public var showNotificationBannerAsync: @Sendable (NotificationBannerRequest) async -> Void
   public var turnBasedMatch: TurnBasedMatchClient
