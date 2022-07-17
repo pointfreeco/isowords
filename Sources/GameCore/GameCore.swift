@@ -351,8 +351,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return state.gameOver(environment: environment)
 
       case .exitButtonTapped:
-        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
-          .fireAndForget()
+        return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
 
       case .forfeitGameButtonTapped:
         state.alert = .init(
@@ -377,8 +376,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
           .map { GameAction.timerTick($0.date) }
 
       case .gameOver(.delegate(.close)):
-        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
-          .fireAndForget()
+        return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
 
       case let .gameOver(.delegate(.startGame(inProgressGame))):
         state = .init(inProgressGame: inProgressGame)
@@ -1008,19 +1006,17 @@ extension UpgradeInterstitialFeature.GameContext {
   }
 }
 
-extension Effect where Output == Never, Failure == Never {
+extension Effect where Failure == Never {
   public static func gameTearDownEffects(audioPlayer: AudioPlayerClient) -> Self {
-    .merge(
-      .cancel(id: InterstitialId.self),
-      .cancel(id: ListenerId.self),
-      .cancel(id: LowPowerModeId.self),
-      .cancel(id: TimerId.self),
-      .fireAndForget {
-        for music in AudioPlayerClient.Sound.allMusic {
-          await audioPlayer.stopAsync(music)
-        }
+    .fireAndForget {
+      await Task.cancel(id: InterstitialId.self)
+      await Task.cancel(id: ListenerId.self)
+      await Task.cancel(id: LowPowerModeId.self)
+      await Task.cancel(id: TimerId.self)
+      for music in AudioPlayerClient.Sound.allMusic {
+        await audioPlayer.stopAsync(music)
       }
-    )
+    }
   }
 }
 
