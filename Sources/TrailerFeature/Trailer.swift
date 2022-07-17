@@ -115,7 +115,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
 
         // Fade the cube in after a second
         await send(.set(\.$opacity, 1), animation: .easeInOut(duration: fadeInDuration))
-        try await environment.mainQueue.sleep(for: .seconds(1))
+        try await environment.mainQueue.sleep(for: firstWordDelay)
 
         // Play each word
         for (wordIndex, word) in replayableWords.enumerated() {
@@ -124,13 +124,13 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             let face = IndexedCubeFace(index: character.index, side: character.side)
 
             // Move the nub to the face being played
-            try await environment.mainQueue.sleep(
-              for: moveNubDelay(wordIndex: wordIndex, characterIndex: characterIndex)
-            )
             await send(
               .set(\.$nub.location, .face(face)),
               withDuration: moveNubToFaceDuration,
               options: .curveEaseInOut
+            )
+            try await environment.mainQueue.sleep(
+              for: moveNubDelay(characterIndex: characterIndex)
             )
 
             let duration = Double.random(
@@ -173,12 +173,13 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           )
 
           // Submit the word
+          try await environment.mainQueue.sleep(for: .seconds(0.1))
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
               await send(.set(\.$nub.isPressed, true), withDuration: 0.3)
             }
             group.addTask {
-              try await environment.mainQueue.sleep(for: .seconds(0.1))
+              try await environment.mainQueue.sleep(for: .seconds(0.2))
               await send(.game(.submitButtonTapped(reaction: nil)))
               try await environment.mainQueue.sleep(for: .seconds(0.3))
               await send(.set(\.$nub.isPressed, false), withDuration: 0.3 )
@@ -324,13 +325,8 @@ public struct TrailerView: View {
   }
 }
 
-private func moveNubDelay(
-  wordIndex: Int,
-  characterIndex: Int
-) -> DispatchQueue.SchedulerTimeType.Stride {
-  if wordIndex == 0 && characterIndex == 0 {
-    return firstWordDelay
-  } else if characterIndex == 0 {
+private func moveNubDelay(characterIndex: Int) -> DispatchQueue.SchedulerTimeType.Stride {
+  if characterIndex == 0 {
     return firstCharacterDelay
   } else {
     return 0
