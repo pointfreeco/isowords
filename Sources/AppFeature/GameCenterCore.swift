@@ -44,7 +44,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 settings: state.home.settings
               )
               return .fireAndForget {
-                await environment.gameCenter.turnBasedMatchmakerViewController.dismissAsync()
+                await environment.gameCenter.turnBasedMatchmakerViewController.dismiss()
                 try await environment.gameCenter.turnBasedMatch.saveCurrentTurnAsync(
                   match.matchId,
                   Data(
@@ -87,7 +87,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 settings: state.home.settings
               )
               return .fireAndForget { [turnBasedMatchData] in
-                await environment.gameCenter.turnBasedMatchmakerViewController.dismissAsync()
+                await environment.gameCenter.turnBasedMatchmakerViewController.dismiss()
                 if gameState.isYourTurn {
                   var turnBasedMatchData = turnBasedMatchData
                   turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date

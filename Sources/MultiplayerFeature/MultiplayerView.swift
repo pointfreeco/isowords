@@ -74,7 +74,7 @@ public let multiplayerReducer = Reducer<
     case .startButtonTapped:
       return .fireAndForget {
         if await environment.gameCenter.localPlayer.localPlayerAsync().isAuthenticated {
-          try await environment.gameCenter.turnBasedMatchmakerViewController.presentAsync(false)
+          try await environment.gameCenter.turnBasedMatchmakerViewController.present(false)
         } else {
           await environment.gameCenter.localPlayer.presentAuthenticationViewControllerAsync()
         }

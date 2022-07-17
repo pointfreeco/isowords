@@ -23,10 +23,8 @@ public struct GameCenterClient {
 }
 
 public struct GameCenterViewControllerClient {
-  @available(*, deprecated) public var present: Effect<DelegateEvent, Never>
-  public var presentAsync: @Sendable () async -> Void
-  @available(*, deprecated) public var dismiss: Effect<Never, Never>
-  public var dismissAsync: @Sendable () async -> Void
+  public var present: @Sendable () async -> Void
+  public var dismiss: @Sendable () async -> Void
 
   public enum DelegateEvent: Equatable {
     case didFinish
@@ -158,17 +156,15 @@ public struct TurnBasedMatchClient {
 }
 
 public struct TurnBasedMatchmakerViewControllerClient {
-  @available(*, deprecated) public var present: (_ showExistingMatches: Bool) -> Effect<DelegateEvent, Never>
-  public var presentAsync: @Sendable (_ showExistingMatches: Bool) async throws -> Void
-  @available(*, deprecated) public var dismiss: Effect<Never, Never>
-  public var dismissAsync: @Sendable () async -> Void
+  public var present: @Sendable (_ showExistingMatches: Bool) async throws -> Void
+  public var dismiss: @Sendable () async -> Void
 
   public enum DelegateEvent: Equatable {
     case wasCancelled
     case didFailWithError(NSError)
   }
 
-  public func present(showExistingMatches: Bool = true) -> Effect<DelegateEvent, Never> {
-    self.present(showExistingMatches)
+  public func present(showExistingMatches: Bool = true) async throws {
+    try await self.present(showExistingMatches)
   }
 }

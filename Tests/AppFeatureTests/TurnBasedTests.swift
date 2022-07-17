@@ -99,10 +99,8 @@ class TurnBasedTests: XCTestCase {
           return .none
         }
         $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in didSaveCurrentTurn = true }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = .none
-        $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
-        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in .none }
-        $0.gameCenter.turnBasedMatchmakerViewController.presentAsync = { _ in }
+        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
+        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in }
         $0.lowPowerMode.startAsync = { .never }
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
@@ -353,7 +351,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
+        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }
         $0.timeZone = { .newYork }
       }
@@ -465,7 +463,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
+        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }
         $0.timeZone = { .newYork }
       }
@@ -710,7 +708,7 @@ class TurnBasedTests: XCTestCase {
         return newMatch
       }
       $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
-      $0.gameCenter.turnBasedMatchmakerViewController.dismissAsync = {}
+      $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }

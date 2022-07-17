@@ -11,10 +11,8 @@ extension GameCenterClient {
 
 extension GameCenterViewControllerClient {
   public static let noop = Self(
-    present: .none,
-    presentAsync: {},
-    dismiss: .none,
-    dismissAsync: {}
+    present: {},
+    dismiss: {}
   )
 }
 
@@ -72,10 +70,8 @@ extension TurnBasedMatchClient {
 
 extension TurnBasedMatchmakerViewControllerClient {
   public static let noop = Self(
-    present: { _ in .none },
-    presentAsync: { _ in },
-    dismiss: .none,
-    dismissAsync: {}
+    present: { _ in },
+    dismiss: {}
   )
 }
 
@@ -95,10 +91,8 @@ extension TurnBasedMatchmakerViewControllerClient {
 
   extension GameCenterViewControllerClient {
     public static let failing = Self(
-      present: .failing("\(Self.self).present is unimplemented"),
-      presentAsync: XCTUnimplemented("\(Self.self).presentAsync"),
-      dismiss: .failing("\(Self.self).dismiss is unimplemented"),
-      dismissAsync: XCTUnimplemented("\(Self.self).dismissAsync")
+      present: XCTUnimplemented("\(Self.self).present"),
+      dismiss: XCTUnimplemented("\(Self.self).dismiss")
     )
   }
 
@@ -152,10 +146,8 @@ extension TurnBasedMatchmakerViewControllerClient {
 
   extension TurnBasedMatchmakerViewControllerClient {
     public static let failing = Self(
-      present: { _ in .failing("\(Self.self).present is unimplemented") },
-      presentAsync: XCTUnimplemented("\(Self.self).presentAsync"),
-      dismiss: .failing("\(Self.self).dismiss is unimplemented"),
-      dismissAsync: XCTUnimplemented("\(Self.self).dismissAsync")
+      present: XCTUnimplemented("\(Self.self).present"),
+      dismiss: XCTUnimplemented("\(Self.self).dismiss")
     )
   }
 #endif

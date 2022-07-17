@@ -69,40 +69,8 @@ extension GameCenterViewControllerClient {
     let presenter = Presenter()
 
     return Self(
-      present: .run { subscriber in
-        final class Delegate: NSObject, GKGameCenterControllerDelegate {
-          let subscriber: Effect<DelegateEvent, Never>.Subscriber
-
-          init(subscriber: Effect<DelegateEvent, Never>.Subscriber) {
-            self.subscriber = subscriber
-          }
-
-          func gameCenterViewControllerDidFinish(
-            _ gameCenterViewController: GKGameCenterViewController
-          ) {
-            self.subscriber.send(.didFinish)
-            self.subscriber.send(completion: .finished)
-          }
-        }
-
-        let viewController = GKGameCenterViewController()
-        Self.viewController = viewController
-        var delegate: Optional = Delegate(subscriber: subscriber)
-        viewController.gameCenterDelegate = delegate
-        viewController.present()
-
-        return AnyCancellable {
-          delegate = nil
-          viewController.dismiss()
-        }
-      },
-      presentAsync: { await presenter.present() },
-      dismiss: .fireAndForget {
-        guard let viewController = Self.viewController else { return }
-        viewController.dismiss()
-        Self.viewController = nil
-      },
-      dismissAsync: { await presenter.dismiss() }
+      present: { await presenter.present() },
+      dismiss: { await presenter.dismiss() }
     )
   }
 
@@ -502,67 +470,76 @@ extension TurnBasedMatchClient {
 
 @available(iOSApplicationExtension, unavailable)
 extension TurnBasedMatchmakerViewControllerClient {
-  public static let live = Self(
-    present: { showExistingMatches in
-      .run { subscriber in
-        class Delegate: NSObject, GKTurnBasedMatchmakerViewControllerDelegate {
-          let subscriber: Effect<DelegateEvent, Never>.Subscriber
+  public static var live: Self {
+    actor Presenter {
+      var viewController: GKTurnBasedMatchmakerViewController?
 
-          init(subscriber: Effect<DelegateEvent, Never>.Subscriber) {
-            self.subscriber = subscriber
+      func present(showExistingMatches: Bool) async {
+        final class Delegate: NSObject, GKTurnBasedMatchmakerViewControllerDelegate {
+          let continuation: AsyncStream<DelegateEvent>.Continuation
+
+          init(continuation: AsyncStream<DelegateEvent>.Continuation) {
+            self.continuation = continuation
           }
 
           func turnBasedMatchmakerViewControllerWasCancelled(
             _ viewController: GKTurnBasedMatchmakerViewController
           ) {
-            self.subscriber.send(.wasCancelled)
-            self.subscriber.send(completion: .finished)
+            self.continuation.yield(.wasCancelled)
+            self.continuation.finish()
           }
 
           func turnBasedMatchmakerViewController(
             _ viewController: GKTurnBasedMatchmakerViewController, didFailWithError error: Error
           ) {
-            self.subscriber.send(.didFailWithError(error as NSError))
-            self.subscriber.send(completion: .finished)
+            self.continuation.yield(.didFailWithError(error as NSError))
+            self.continuation.finish()
           }
         }
 
+        await self.dismiss()
+
         let matchRequest = GKMatchRequest()
-        matchRequest.inviteMessage = "Let’s play isowords!"  // TODO: Pass in/localize
+        matchRequest.inviteMessage = "Let's play isowords!"
         matchRequest.maxPlayers = 2
         matchRequest.minPlayers = 2
-        matchRequest.recipientResponseHandler = { player, response in
 
+        let viewController: GKTurnBasedMatchmakerViewController = await MainActor.run {
+          let viewController = GKTurnBasedMatchmakerViewController(matchRequest: matchRequest)
+          viewController.showExistingMatches = showExistingMatches
+          return viewController
         }
+        self.viewController = viewController
 
-        let viewController = GKTurnBasedMatchmakerViewController(matchRequest: matchRequest)
-        viewController.showExistingMatches = showExistingMatches
-        Self.viewController = viewController
-        var delegate: Optional = Delegate(subscriber: subscriber)
-        viewController.turnBasedMatchmakerDelegate = delegate
-        viewController.present()
-
-        return AnyCancellable {
-          delegate = nil
-          viewController.dismiss()
-          Self.viewController = nil
+        _ = await AsyncStream<DelegateEvent> { continuation in
+          Task {
+            await MainActor.run {
+              let delegate = Delegate(continuation: continuation)
+              continuation.onTermination = { _ in
+                _ = delegate
+              }
+              viewController.turnBasedMatchmakerDelegate = delegate
+              viewController.present()
+            }
+          }
         }
+        .first(where: { _ in true })
       }
-    },
-    presentAsync: { showExistingMatches in
 
-    },
-    dismiss: .fireAndForget {
-      guard let viewController = Self.viewController else { return }
-      viewController.dismiss()
-      Self.viewController = nil
-    },
-    dismissAsync: {
-
+      func dismiss() async {
+        guard let viewController = self.viewController else { return }
+        await viewController.dismiss()
+        self.viewController = nil
+      }
     }
-  )
 
-  private static var viewController: GKTurnBasedMatchmakerViewController?
+    let presenter = Presenter()
+
+    return Self(
+      present: { await presenter.present(showExistingMatches: $0) },
+      dismiss: { await presenter.dismiss() }
+    )
+  }
 }
 
 private let invalidStateError = NSError(domain: "co.pointfree", code: -1)
