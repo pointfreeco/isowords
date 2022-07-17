@@ -5,7 +5,7 @@ import StoreKit
 public struct StoreKitClient {
   @available(*, deprecated) public var addPayment: (SKPayment) -> Effect<Never, Never>
   public var addPaymentAsync: @Sendable (SKPayment) async -> Void
-  @available(*, deprecated) public var appStoreReceiptURL: @Sendable () -> URL?
+  public var appStoreReceiptURL: @Sendable () -> URL?
   public var isAuthorizedForPayments: @Sendable () -> Bool
   @available(*, deprecated) public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>
   public var fetchProductsAsync: @Sendable (Set<String>) async throws -> ProductsResponse

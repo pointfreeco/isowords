@@ -21,6 +21,7 @@ extension AppEnvironment {
     $0.mainRunLoop = .immediate
     $0.serverConfig.refreshAsync = { .init() }
     $0.storeKit.observer = .none
+    $0.storeKit.observerAsync = { .finished }
     $0.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")
     $0.userDefaults.override(double: 0, forKey: "installationTimeKey")
     let defaults = $0.userDefaults
