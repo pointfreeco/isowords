@@ -23,7 +23,7 @@ public struct DailyChallengeResultsState: Equatable {
 public enum DailyChallengeResultsAction: Equatable {
   case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
   case loadHistory
-  case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, ApiError>)
+  case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
 }
 
 public struct DailyChallengeResultsEnvironment {
@@ -86,7 +86,7 @@ public let dailyChallengeResultsReducer = Reducer<
       guard
         state.leaderboardResults.isTimeScopeMenuVisible
       else { return .none }
-      return .init(value: .loadHistory)
+      return .task { .loadHistory }
 
     case .leaderboardResults:
       return .none
@@ -96,21 +96,18 @@ public let dailyChallengeResultsReducer = Reducer<
         state.history = nil
       }
 
-      struct CancelId: Hashable {}
-      return environment.apiClient.apiRequest(
-        route: .dailyChallenge(
-          .results(
-            .history(
-              gameMode: state.leaderboardResults.gameMode,
-              language: .en
+      enum CancelID {}
+      return .task { [gameMode = state.leaderboardResults.gameMode] in
+        await .fetchHistoryResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequestAsync(
+              route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
+              as: DailyChallengeHistoryResponse.self
             )
-          )
-        ),
-        as: DailyChallengeHistoryResponse.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(DailyChallengeResultsAction.fetchHistoryResponse)
-      .cancellable(id: CancelId(), cancelInFlight: true)
+          }
+        )
+      }
+      .cancellable(id: CancelID.self, cancelInFlight: true)
     }
   }
 )
