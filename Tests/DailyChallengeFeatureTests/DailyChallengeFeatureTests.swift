@@ -159,17 +159,11 @@ class DailyChallengeFeatureTests: XCTestCase {
     var didRegisterForRemoteNotifications = false
 
     var environment = DailyChallengeEnvironment.failing
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .authorized)
-    )
-    environment.userNotifications.requestAuthorization = { options in
-      .init(value: true)
+    environment.userNotifications.getNotificationSettingsAsync = {
+      .init(authorizationStatus: .authorized)
     }
-    environment.remoteNotifications.register = {
-      .fireAndForget {
-        didRegisterForRemoteNotifications = true
-      }
-    }
+    environment.userNotifications.requestAuthorizationAsync = { _ in true }
+    environment.remoteNotifications.registerAsync = { didRegisterForRemoteNotifications = true }
     environment.mainRunLoop = .immediate
 
     let store = TestStore(
@@ -198,12 +192,10 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   func testNotifications_DenyAccess() async {
     var environment = DailyChallengeEnvironment.failing
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .denied)
-    )
-    environment.userNotifications.requestAuthorization = { options in
-      .init(value: false)
+    environment.userNotifications.getNotificationSettingsAsync = {
+      .init(authorizationStatus: .denied)
     }
+    environment.userNotifications.requestAuthorizationAsync = { _ in false }
     environment.mainRunLoop = .immediate
 
     let store = TestStore(

@@ -32,7 +32,7 @@ class PastGamesTests: XCTestCase {
 
   func testOpenMatch() async {
     var environment = PastGamesEnvironment.failing
-    environment.gameCenter.turnBasedMatch.load = { _ in .init(value: match) }
+    environment.gameCenter.turnBasedMatch.loadAsync = { _ in match }
     environment.mainQueue = .immediate
 
     let store = TestStore(
@@ -51,7 +51,7 @@ class PastGamesTests: XCTestCase {
   func testRematch() async {
     var environment = PastGamesEnvironment.failing
     environment.mainQueue = .immediate
-    environment.gameCenter.turnBasedMatch.rematch = { _ in .init(value: match) }
+    environment.gameCenter.turnBasedMatch.rematchAsync = { _ in match }
 
     let store = TestStore(
       initialState: PastGamesState(pastGames: [pastGameState]),
@@ -79,7 +79,7 @@ class PastGamesTests: XCTestCase {
 
     var environment = PastGamesEnvironment.failing
     environment.mainQueue = .immediate
-    environment.gameCenter.turnBasedMatch.rematch = { _ in .init(error: RematchFailure()) }
+    environment.gameCenter.turnBasedMatch.rematchAsync = { _ in throw RematchFailure() }
 
     let store = TestStore(
       initialState: PastGamesState(pastGames: [pastGameState]),
@@ -93,7 +93,7 @@ class PastGamesTests: XCTestCase {
       }
     }
 
-    await store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure() as NSError)))) {
+    await store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure())))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
         $0.alert = .init(
