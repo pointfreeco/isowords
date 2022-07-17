@@ -104,15 +104,15 @@ public let upgradeInterstitialReducer = Reducer<
       break
     }
 
-    return event.isFullGamePurchased(
+    guard event.isFullGamePurchased(
       identifier: environment.serverConfig.config().productIdentifiers.fullGame
     )
-      ? .merge(
-        .cancel(id: StoreKitObserverID.self),
-        .cancel(id: TimerID.self),
-        Effect(value: .delegate(.fullGamePurchased))
-      )
-      : .none
+    else { return .none }
+    return .task {
+      await Task.cancel(id: StoreKitObserverID.self)
+      await Task.cancel(id: TimerID.self)
+      return .delegate(.fullGamePurchased)
+    }
 
   case .onAppear:
     state.upgradeInterstitialDuration =
@@ -154,12 +154,12 @@ public let upgradeInterstitialReducer = Reducer<
 
   case .upgradeButtonTapped:
     state.isPurchasing = true
-
-    let payment = SKMutablePayment()
-    payment.productIdentifier = environment.serverConfig.config().productIdentifiers.fullGame
-    payment.quantity = 1
-    return environment.storeKit.addPayment(payment)
-      .fireAndForget()
+    return .fireAndForget {
+      let payment = SKMutablePayment()
+      payment.productIdentifier = environment.serverConfig.config().productIdentifiers.fullGame
+      payment.quantity = 1
+      await environment.storeKit.addPaymentAsync(payment)
+    }
   }
 }
 

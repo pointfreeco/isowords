@@ -39,10 +39,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.storeKit.addPayment = { payment in
-      paymentAdded = payment
-      return .none
-    }
+    environment.storeKit.addPaymentAsync = { paymentAdded = $0 }
     environment.storeKit.observer = observer.eraseToEffect()
     environment.storeKit.fetchProducts = { _ in
       .init(
