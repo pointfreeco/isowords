@@ -129,11 +129,11 @@ public let cubePreviewReducer = Reducer<
           let moveDuration = Double.random(in: (0.6...0.8))
 
           // Move the nub to the face
-          await MainActor.run {
-            UIView.animate(withDuration: moveDuration, delay: 0, options: .curveEaseInOut) {
-              send(.set(\.$nub.location, .face(face)), animation: .default)
-            }
-          }
+          await send(
+            .set(\.$nub.location, .face(face)),
+            withDuration: moveDuration,
+            delay: 0, options: .curveEaseInOut
+          )
 
           // Pause a bit to allow the nub to animate to the face
           try await environment.mainQueue.sleep(
@@ -153,11 +153,13 @@ public let cubePreviewReducer = Reducer<
         await send(.set(\.$nub.isPressed, false))
 
         // Move the nub off the screen
-        await MainActor.run {
-          UIView.animate(withDuration: 1, delay: 0, options: .curveEaseInOut) {
-            send(.set(\.$nub.location, .offScreenRight), animation: .default)
-          }
-        }
+        await send(
+          .set(\.$nub.location, .offScreenRight),
+          withDuration: 1,
+          delay: 0,
+          options: .curveEaseInOut
+        )
+
       case let .removedCube(index):
         break
       }

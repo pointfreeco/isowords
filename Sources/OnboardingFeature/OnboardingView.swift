@@ -225,6 +225,7 @@ public let onboardingReducer = Reducer<
 
     return .fireAndForget {
       await environment.audioPlayer.play(.uiSfxTap)
+      await Task.cancel(id: DelayedNextStepID.self)
     }
 
   case .delayedNextStep:
@@ -235,7 +236,7 @@ public let onboardingReducer = Reducer<
     return .fireAndForget {
       await environment.userDefaults.setHasShownFirstLaunchOnboarding(true)
       await environment.audioPlayer.stop(.onboardingBgMusic)
-      await Task.cancel(id: DelayedNextStepId.self)
+      await Task.cancel(id: DelayedNextStepID.self)
     }
 
   case .game where state.step.isCongratsStep:
@@ -347,17 +348,18 @@ public let onboardingReducer = Reducer<
     return .run { [step = state.step, presentationStyle = state.presentationStyle] send in
       await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
       _ = try environment.dictionary.load(.en)
-
-      if step == OnboardingState.Step.allCases[0] {
-        try await withTaskCancellation(id: DelayedNextStepId.self) {
-          try await environment.mainQueue.sleep(for: .seconds(firstStepDelay))
-          await send(.delayedNextStep, animation: .default)
-        }
-      }
-
       await environment.audioPlayer.play(
         presentationStyle == .demo ? .timedGameBgLoop1 : .onboardingBgMusic
       )
+
+      if step == OnboardingState.Step.allCases[0] {
+        await withTaskCancellation(id: DelayedNextStepID.self) {
+          do {
+            try await environment.mainQueue.sleep(for: .seconds(firstStepDelay))
+            await send(.delayedNextStep, animation: .default)
+          } catch {}
+        }
+      }
     }
   }
 }
@@ -518,7 +520,7 @@ private let onboardingGameReducer = gameReducer(
   isHapticsEnabled: { _ in true }
 )
 
-private enum DelayedNextStepId: Hashable {}
+private enum DelayedNextStepID: Hashable {}
 
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {
