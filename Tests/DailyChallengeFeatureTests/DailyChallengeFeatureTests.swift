@@ -17,9 +17,9 @@ class DailyChallengeFeatureTests: XCTestCase {
       withResponse: .ok([FetchTodaysDailyChallengeResponse.played])
     )
     environment.mainRunLoop = .immediate
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .authorized)
-    )
+    environment.userNotifications.getNotificationSettingsAsync = {
+      .init(authorizationStatus: .authorized)
+    }
 
     let store = TestStore(
       initialState: .init(),
@@ -29,12 +29,11 @@ class DailyChallengeFeatureTests: XCTestCase {
 
     await store.send(.onAppear)
 
-    await store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
-      $0.dailyChallenges = [.played]
-    }
-
     await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+    }
+    await store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
+      $0.dailyChallenges = [.played]
     }
   }
 

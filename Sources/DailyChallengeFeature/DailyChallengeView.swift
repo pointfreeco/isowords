@@ -60,7 +60,7 @@ public enum DailyChallengeAction: Equatable {
   case dailyChallengeResults(DailyChallengeResultsAction)
   case delegate(DelegateAction)
   case dismissAlert
-  case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case gameButtonTapped(GameMode)
   case onAppear
   case notificationButtonTapped
@@ -174,19 +174,31 @@ public let dailyChallengeReducer = Reducer<
       .catchToEffect(DailyChallengeAction.startDailyChallengeResponse)
 
     case .onAppear:
-      return .merge(
-        environment.apiClient.apiRequest(
-          route: .dailyChallenge(.today(language: .en)),
-          as: [FetchTodaysDailyChallengeResponse].self
-        )
-        .receive(on: environment.mainRunLoop.animation())
-        .catchToEffect(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
+      return .run { send in
+        await withTaskGroup(of: Void.self) { group in
+          group.addTask {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettingsAsync()
+              )
+            )
+          }
 
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
-          .map(DailyChallengeAction.userNotificationSettingsResponse)
-          .eraseToEffect()
-      )
+          group.addTask {
+            await send(
+              .fetchTodaysDailyChallengeResponse(
+                TaskResult {
+                  try await environment.apiClient.apiRequestAsync(
+                    route: .dailyChallenge(.today(language: .en)),
+                    as: [FetchTodaysDailyChallengeResponse].self
+                  )
+                }
+              ),
+              animation: .default
+            )
+          }
+        }
+      }
 
     case .notificationButtonTapped:
       state.notificationsAuthAlert = .init()
@@ -224,7 +236,7 @@ public let dailyChallengeReducer = Reducer<
 
     case let .startDailyChallengeResponse(.success(inProgressGame)):
       state.gameModeIsLoading = nil
-      return .init(value: .delegate(.startGame(inProgressGame)))
+      return .task { .delegate(.startGame(inProgressGame)) }
 
     case let .userNotificationSettingsResponse(settings):
       state.userNotificationSettings = settings
