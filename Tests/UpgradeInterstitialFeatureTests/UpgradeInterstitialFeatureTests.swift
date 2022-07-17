@@ -16,7 +16,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   func testUpgrade() async {
     var paymentAdded: SKPayment?
 
-    let observer = PassthroughSubject<StoreKitClient.PaymentTransactionObserverEvent, Never>()
+    let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
+      .streamWithContinuation()
 
     let transactions = [
       StoreKitClient.PaymentTransaction(
@@ -40,13 +41,11 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.addPaymentAsync = { paymentAdded = $0 }
-    environment.storeKit.observer = observer.eraseToEffect()
-    environment.storeKit.fetchProducts = { _ in
+    environment.storeKit.observerAsync = { observer.stream }
+    environment.storeKit.fetchProductsAsync = { _ in
       .init(
-        value: .init(
-          invalidProductIdentifiers: [],
-          products: [fullGameProduct]
-        )
+        invalidProductIdentifiers: [],
+        products: [fullGameProduct]
       )
     }
 
@@ -69,7 +68,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       $0.isPurchasing = true
     }
 
-    observer.send(.updatedTransactions(transactions))
+    observer.continuation.yield(.updatedTransactions(transactions))
     XCTAssertNoDifference(paymentAdded?.productIdentifier, "co.pointfree.isowords_testing.full_game")
 
     await store.receive(.paymentTransaction(.updatedTransactions(transactions)))
@@ -80,8 +79,10 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
-    environment.storeKit.observer = .none
-    environment.storeKit.fetchProducts = { _ in .none }
+    environment.storeKit.observerAsync = { .finished }
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [])
+    }
 
     let store = TestStore(
       initialState: .init(),
@@ -115,8 +116,10 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.storeKit.observer = .none
-    environment.storeKit.fetchProducts = { _ in .none }
+    environment.storeKit.observerAsync = { .finished }
+    environment.storeKit.fetchProductsAsync = { _ in
+      .init(invalidProductIdentifiers: [], products: [])
+    }
 
     let store = TestStore(
       initialState: .init(isDismissable: true),

@@ -118,33 +118,38 @@ public let upgradeInterstitialReducer = Reducer<
     state.upgradeInterstitialDuration =
       environment.serverConfig.config().upgradeInterstitial.duration
 
-    return .merge(
-      environment.storeKit.observer
-        .receive(on: environment.mainRunLoop.animation())
-        .map(UpgradeInterstitialAction.paymentTransaction)
-        .eraseToEffect()
-        .cancellable(id: StoreKitObserverID.self),
+    return .run { [isDismissable = state.isDismissable] send in
+      await withThrowingTaskGroup(of: Void.self) { group in
+        group.addTask {
+          await withTaskCancellation(id: StoreKitObserverID.self) {
+            for await event in environment.storeKit.observerAsync() {
+              await send(.paymentTransaction(event), animation: .default)
+            }
+          }
+        }
 
-      environment.storeKit.fetchProducts([
-        environment.serverConfig.config().productIdentifiers.fullGame
-      ])
-      .ignoreFailure()
-      .compactMap { response in
-        response.products.first { product in
-          product.productIdentifier == environment.serverConfig.config().productIdentifiers.fullGame
+        group.addTask {
+          let response = try await environment.storeKit.fetchProductsAsync([
+            environment.serverConfig.config().productIdentifiers.fullGame
+          ])
+          guard let product = response.products.first(where: { product in
+            product.productIdentifier == environment.serverConfig.config().productIdentifiers.fullGame
+          })
+          else { return }
+          await send(.fullGameProductResponse(product), animation: .default)
+        }
+
+        if !isDismissable {
+          group.addTask {
+            await withTaskCancellation(id: TimerID.self) {
+              for await _ in environment.mainRunLoop.timer(interval: 1) {
+                await send(.timerTick, animation: .default)
+              }
+            }
+          }
         }
       }
-      .receive(on: environment.mainRunLoop.animation())
-      .map(UpgradeInterstitialAction.fullGameProductResponse)
-      .eraseToEffect(),
-
-      !state.isDismissable
-      ? Effect.timer(id: TimerID.self, every: 1, on: environment.mainRunLoop.animation())
-          .map { _ in UpgradeInterstitialAction.timerTick }
-          .eraseToEffect()
-          .cancellable(id: TimerID.self)
-        : .none
-    )
+    }
 
   case .timerTick:
     state.secondsPassedCount += 1
