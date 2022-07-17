@@ -391,9 +391,9 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       .debounce(id: UpdateRemoteSettingsId(), for: 1, scheduler: environment.mainQueue)
 
     case .binding(\.$userSettings.appIcon):
-      return environment.applicationClient
-        .setAlternateIconName(state.userSettings.appIcon?.rawValue)
-        .fireAndForget()
+      return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
+        try await environment.applicationClient.setAlternateIconNameAsync(appIcon)
+      }
 
     case .binding(\.$userSettings.colorScheme):
       return environment.setUserInterfaceStyle(state.userSettings.colorScheme.userInterfaceStyle)

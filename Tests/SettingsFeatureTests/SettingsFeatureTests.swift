@@ -370,11 +370,7 @@ class SettingsFeatureTests: XCTestCase {
     var overriddenIconName: String!
 
     var environment = self.defaultEnvironment
-    environment.applicationClient.setAlternateIconName = { newValue in
-      .fireAndForget {
-        overriddenIconName = newValue
-      }
-    }
+    environment.applicationClient.setAlternateIconNameAsync = { overriddenIconName = $0 }
     environment.fileClient.save = { _, _ in .none }
 
     let store = TestStore(
@@ -394,11 +390,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { "icon-2" }
-    environment.applicationClient.setAlternateIconName = { newValue in
-      .fireAndForget {
-        overriddenIconName = newValue
-      }
-    }
+    environment.applicationClient.setAlternateIconNameAsync = { overriddenIconName = $0 }
     environment.backgroundQueue = .immediate
     environment.fileClient.save = { _, _ in .none }
     environment.mainQueue = .immediate
