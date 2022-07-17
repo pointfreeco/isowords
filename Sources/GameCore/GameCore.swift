@@ -373,7 +373,8 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
             """
             Forfeiting will end the game and your opponent will win. Are you sure you want to \
             forfeit?
-            """),
+            """
+          ),
           primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
           secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
         )
@@ -384,9 +385,11 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
 
       case .gameLoaded:
         state.isGameLoaded = true
-        return Effect<RunLoop.SchedulerTimeType, Never>
-          .timer(id: TimerId.self, every: 1, on: environment.mainRunLoop)
-          .map { GameAction.timerTick($0.date) }
+        return .run { send in
+          for await instant in environment.mainRunLoop.timer(interval: .seconds(1)) {
+            await send(.timerTick(instant.date))
+          }
+        }
 
       case .gameOver(.delegate(.close)):
         return .gameTearDownEffects(audioPlayer: environment.audioPlayer)
