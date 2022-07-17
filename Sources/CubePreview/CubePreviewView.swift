@@ -182,7 +182,6 @@ public let cubePreviewReducer = Reducer<
   puzzle: \.cubes,
   selectedWord: \.selectedCubeFaces
 )
-// TODO: cancel effects on dismiss
 
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
