@@ -68,11 +68,7 @@ class SettingsFeatureTests: XCTestCase {
       value: .init(authorizationStatus: .notDetermined)
     )
     environment.userNotifications.requestAuthorizationAsync = { _ in true }
-    environment.remoteNotifications.register = {
-      .fireAndForget {
-        didRegisterForRemoteNotifications = true
-      }
-    }
+    environment.remoteNotifications.registerAsync = { didRegisterForRemoteNotifications = true }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -298,6 +294,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.audioPlayer.setGlobalVolumeForMusicAsync = { setMusicVolume = $0 }
+    environment.fileClient.saveAsync = { @Sendable _, _ in }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -317,6 +314,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.audioPlayer.setGlobalVolumeForSoundEffectsAsync = { setSoundEffectsVolume = $0 }
+    environment.fileClient.saveAsync = { @Sendable _, _ in }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -338,6 +336,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.setUserInterfaceStyleAsync = { overriddenUserInterfaceStyle = $0 }
+    environment.fileClient.saveAsync = { @Sendable _, _ in }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -361,7 +360,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.applicationClient.setAlternateIconNameAsync = { overriddenIconName = $0 }
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.saveAsync = { @Sendable _, _ in }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -382,7 +381,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.applicationClient.alternateIconName = { "icon-2" }
     environment.applicationClient.setAlternateIconNameAsync = { overriddenIconName = $0 }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.saveAsync = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
@@ -483,6 +482,7 @@ class SettingsFeatureTests: XCTestCase {
       reducer: settingsReducer,
       environment: self.defaultEnvironment
     )
+    store.environment.fileClient.saveAsync = { @Sendable _, _ in }
 
     await store.send(.set(\.$userSettings.enableGyroMotion, false)) {
       $0.userSettings.enableGyroMotion = false
@@ -498,6 +498,7 @@ class SettingsFeatureTests: XCTestCase {
       reducer: settingsReducer,
       environment: self.defaultEnvironment
     )
+    store.environment.fileClient.saveAsync = { @Sendable _, _ in }
 
     await store.send(.set(\.$userSettings.enableHaptics, false)) {
       $0.userSettings.enableHaptics = false

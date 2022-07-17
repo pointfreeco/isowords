@@ -34,10 +34,8 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
-    environment.storeKit.addPayment = { payment in
-      .fireAndForget {
-        didAddPaymentProductIdentifier = payment.productIdentifier
-      }
+    environment.storeKit.addPaymentAsync = { payment in
+      didAddPaymentProductIdentifier = payment.productIdentifier
     }
     environment.storeKit.fetchProducts = { _ in
       .init(value: .init(invalidProductIdentifiers: [], products: [.fullGame]))

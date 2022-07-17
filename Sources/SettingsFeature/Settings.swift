@@ -573,17 +573,17 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case let .tappedProduct(product):
       state.isPurchasing = true
-      let payment = SKMutablePayment()
-      payment.productIdentifier = product.productIdentifier
-      payment.quantity = 1
-      return environment.storeKit.addPayment(payment)
-        .fireAndForget()
+      return .fireAndForget {
+        let payment = SKMutablePayment()
+        payment.productIdentifier = product.productIdentifier
+        payment.quantity = 1
+        await environment.storeKit.addPaymentAsync(payment)
+      }
 
     case let .userNotificationAuthorizationResponse(.success(granted)):
       state.enableNotifications = granted
       return granted
-        ? environment.remoteNotifications.register()
-          .fireAndForget()
+        ? .fireAndForget { await environment.remoteNotifications.registerAsync() }
         : .none
 
     case .userNotificationAuthorizationResponse:
@@ -601,9 +601,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
   struct SaveDebounceId: Hashable {}
 
-  return environment.fileClient
-    .saveUserSettings(userSettings: userSettings, on: environment.backgroundQueue)
-    .fireAndForget()
+  return .fireAndForget { try await environment.fileClient.saveUserSettingsAsync(userSettings) }
     .debounce(id: SaveDebounceId(), for: .seconds(1), scheduler: environment.mainQueue)
 }
 
