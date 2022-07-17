@@ -380,7 +380,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
           .matchesLoaded(
             TaskResult {
               let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
-                .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
+                .loadActiveMatches(now: environment.mainRunLoop.now.date)
 
               await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
 
@@ -707,7 +707,7 @@ extension HomeState {
 }
 
 extension GameCenterClient {
-  fileprivate func loadActiveMatchesAsync(
+  fileprivate func loadActiveMatches(
     now: Date
   ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
     let localPlayer = await self.localPlayer.localPlayerAsync()
@@ -797,7 +797,7 @@ private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async 
     .matchesLoaded(
       TaskResult {
         let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
-          .loadActiveMatchesAsync(now: environment.mainRunLoop.now.date)
+          .loadActiveMatches(now: environment.mainRunLoop.now.date)
 
         await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
 
@@ -814,7 +814,7 @@ private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async 
         .matchesLoaded(
           TaskResult {
             let (activeMatches, hasPastTurnBasedGames) =
-            try await environment.gameCenter.loadActiveMatchesAsync(
+            try await environment.gameCenter.loadActiveMatches(
               now: environment.mainRunLoop.now.date
             )
             await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
