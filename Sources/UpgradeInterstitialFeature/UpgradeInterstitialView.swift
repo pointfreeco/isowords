@@ -73,8 +73,8 @@ public let upgradeInterstitialReducer = Reducer<
   UpgradeInterstitialState, UpgradeInterstitialAction, UpgradeInterstitialEnvironment
 > { state, action, environment in
 
-  struct StoreKitObserverId: Hashable {}
-  struct TimerId: Hashable {}
+  enum StoreKitObserverID {}
+  enum TimerID {}
 
   switch action {
   case .delegate:
@@ -85,13 +85,12 @@ public let upgradeInterstitialReducer = Reducer<
     return .none
 
   case .maybeLaterButtonTapped:
-    return .merge(
-      .cancel(id: StoreKitObserverId()),
-      .cancel(id: TimerId()),
-      Effect(value: .delegate(.close))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect()
-    )
+    return .task {
+      await Task.cancel(id: StoreKitObserverID.self)
+      await Task.cancel(id: TimerID.self)
+      return .delegate(.close)
+    }
+    .animation()
 
   case let .paymentTransaction(event):
     switch event {
@@ -109,8 +108,8 @@ public let upgradeInterstitialReducer = Reducer<
       identifier: environment.serverConfig.config().productIdentifiers.fullGame
     )
       ? .merge(
-        .cancel(id: StoreKitObserverId()),
-        .cancel(id: TimerId()),
+        .cancel(id: StoreKitObserverID.self),
+        .cancel(id: TimerID.self),
         Effect(value: .delegate(.fullGamePurchased))
       )
       : .none
@@ -124,7 +123,7 @@ public let upgradeInterstitialReducer = Reducer<
         .receive(on: environment.mainRunLoop.animation())
         .map(UpgradeInterstitialAction.paymentTransaction)
         .eraseToEffect()
-        .cancellable(id: StoreKitObserverId()),
+        .cancellable(id: StoreKitObserverID.self),
 
       environment.storeKit.fetchProducts([
         environment.serverConfig.config().productIdentifiers.fullGame
@@ -140,17 +139,17 @@ public let upgradeInterstitialReducer = Reducer<
       .eraseToEffect(),
 
       !state.isDismissable
-        ? Effect.timer(id: TimerId(), every: 1, on: environment.mainRunLoop.animation())
+      ? Effect.timer(id: TimerID.self, every: 1, on: environment.mainRunLoop.animation())
           .map { _ in UpgradeInterstitialAction.timerTick }
           .eraseToEffect()
-          .cancellable(id: TimerId())
+          .cancellable(id: TimerID.self)
         : .none
     )
 
   case .timerTick:
     state.secondsPassedCount += 1
     return state.secondsPassedCount == state.upgradeInterstitialDuration
-      ? .cancel(id: TimerId())
+    ? .cancel(id: TimerID.self)
       : .none
 
   case .upgradeButtonTapped:

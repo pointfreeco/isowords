@@ -96,6 +96,7 @@ extension AppEnvironment {
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
       setUserInterfaceStyle: self.setUserInterfaceStyle,
+      setUserInterfaceStyleAsync: self.setUserInterfaceStyleAsync,
       storeKit: self.storeKit,
       userDefaults: self.userDefaults,
       userNotifications: self.userNotifications
@@ -120,6 +121,7 @@ extension AppEnvironment {
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
       setUserInterfaceStyle: self.setUserInterfaceStyle,
+      setUserInterfaceStyleAsync: self.setUserInterfaceStyleAsync,
       storeKit: self.storeKit,
       timeZone: self.timeZone,
       userDefaults: self.userDefaults,

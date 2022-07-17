@@ -145,6 +145,7 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
         remoteNotifications: .noop,
         serverConfig: .noop,
         setUserInterfaceStyle: { _ in .none },
+        setUserInterfaceStyleAsync: { _ in },
         storeKit: .noop,
         userDefaults: .noop,
         userNotifications: .noop

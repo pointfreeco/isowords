@@ -9,10 +9,11 @@ import XCTest
 
 @testable import ServerConfigClient
 
+@MainActor
 class UpgradeInterstitialFeatureTests: XCTestCase {
   let scheduler = RunLoop.test
 
-  func testUpgrade() {
+  func testUpgrade() async {
     var paymentAdded: SKPayment?
 
     let observer = PassthroughSubject<StoreKitClient.PaymentTransactionObserverEvent, Never>()
@@ -58,27 +59,27 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
 
-    store.receive(.fullGameProductResponse(fullGameProduct)) {
+    await store.receive(.fullGameProductResponse(fullGameProduct)) {
       $0.fullGameProduct = fullGameProduct
     }
 
-    store.receive(.timerTick) {
+    await store.receive(.timerTick) {
       $0.secondsPassedCount = 1
     }
-    store.send(.upgradeButtonTapped) {
+    await store.send(.upgradeButtonTapped) {
       $0.isPurchasing = true
     }
 
     observer.send(.updatedTransactions(transactions))
     XCTAssertNoDifference(paymentAdded?.productIdentifier, "co.pointfree.isowords_testing.full_game")
 
-    store.receive(.paymentTransaction(.updatedTransactions(transactions)))
-    store.receive(.delegate(.fullGamePurchased))
+    await store.receive(.paymentTransaction(.updatedTransactions(transactions)))
+    await store.receive(.delegate(.fullGamePurchased))
   }
 
-  func testWaitAndDismiss() {
+  func testWaitAndDismiss() async {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
@@ -91,29 +92,29 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    await store.send(.onAppear)
 
-    self.scheduler.advance(by: .seconds(1))
-    store.receive(.timerTick) { $0.secondsPassedCount = 1 }
+    await self.scheduler.advance(by: .seconds(1))
+    await store.receive(.timerTick) { $0.secondsPassedCount = 1 }
 
-    self.scheduler.advance(by: .seconds(15))
-    store.receive(.timerTick) { $0.secondsPassedCount = 2 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 3 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 4 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 5 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 6 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 7 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 8 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 9 }
-    store.receive(.timerTick) { $0.secondsPassedCount = 10 }
+    await self.scheduler.advance(by: .seconds(15))
+    await store.receive(.timerTick) { $0.secondsPassedCount = 2 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 3 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 4 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 5 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 6 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 7 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 8 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 9 }
+    await store.receive(.timerTick) { $0.secondsPassedCount = 10 }
 
-    self.scheduler.run()
+    await self.scheduler.run()
 
-    store.send(.maybeLaterButtonTapped)
-    store.receive(.delegate(.close))
+    await store.send(.maybeLaterButtonTapped)
+    await store.receive(.delegate(.close))
   }
 
-  func testMaybeLater_Dismissable() {
+  func testMaybeLater_Dismissable() async  {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
@@ -126,9 +127,9 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
-    store.send(.maybeLaterButtonTapped)
-    store.receive(.delegate(.close))
+    await store.send(.onAppear)
+    await store.send(.maybeLaterButtonTapped)
+    await store.receive(.delegate(.close))
   }
 }
 

@@ -455,19 +455,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       state.userSettings.appIcon = environment.applicationClient.alternateIconName()
         .flatMap(AppIcon.init(rawValue:))
 
-      let loadProductsEffect: Effect<SettingsAction, Never>
-      if state.isFullGamePurchased {
-        loadProductsEffect = .none
-      } else {
-        loadProductsEffect = environment.storeKit
-          .fetchProducts([
-            environment.serverConfig.config().productIdentifiers.fullGame
-          ])
-          .mapError { $0 as NSError }
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(SettingsAction.productsResponse)
-      }
-
       if let baseUrl = DeveloperSettings.BaseUrl(
         rawValue: environment.apiClient.baseUrl().absoluteString)
       {
@@ -475,7 +462,15 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       }
 
       return .merge(
-        loadProductsEffect,
+        state.isFullGamePurchased
+        ? .none
+        : environment.storeKit
+          .fetchProducts([
+            environment.serverConfig.config().productIdentifiers.fullGame
+          ])
+          .mapError { $0 as NSError }
+          .receive(on: environment.mainQueue.animation())
+          .catchToEffect(SettingsAction.productsResponse),
 
         environment.storeKit.observer
           .receive(on: environment.mainQueue.animation())
@@ -611,29 +606,20 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 extension AlertState where Action == SettingsAction {
   static let userNotificationAuthorizationDenied = Self(
     title: .init("Permission Denied"),
-    message: .init(
-      """
-      Turn on notifications in iOS settings.
-      """),
+    message: .init("Turn on notifications in iOS settings."),
     primaryButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil))),
     secondaryButton: .default(.init("Open Settings"), action: .send(.openSettingButtonTapped))
   )
 
   static let restoredPurchasesFailed = Self(
     title: .init("Error"),
-    message: .init(
-      """
-      We couldn’t restore purchases, please try again.
-      """),
+    message: .init("We couldn’t restore purchases, please try again."),
     dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
   )
 
   static let noRestoredPurchases = Self(
     title: .init("No Purchases"),
-    message: .init(
-      """
-      No purchases were found to restore.
-      """),
+    message: .init("No purchases were found to restore."),
     dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
   )
 }

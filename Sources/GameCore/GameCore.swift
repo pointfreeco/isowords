@@ -202,7 +202,9 @@ public struct GameEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
+  @available(*, deprecated)
   public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
+  public var setUserInterfaceStyleAsync: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
   public var userNotifications: UserNotificationClient
@@ -224,6 +226,7 @@ public struct GameEnvironment {
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
     setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
+    setUserInterfaceStyleAsync: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
     userNotifications: UserNotificationClient
@@ -244,6 +247,7 @@ public struct GameEnvironment {
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
     self.setUserInterfaceStyle = setUserInterfaceStyle
+    self.setUserInterfaceStyleAsync = setUserInterfaceStyleAsync
     self.storeKit = storeKit
     self.userDefaults = userDefaults
     self.userNotifications = userNotifications
@@ -893,6 +897,8 @@ func menuTitle(state: GameState) -> TextState {
 }
 
 #if DEBUG
+  import XCTestDynamicOverlay
+
   extension GameEnvironment {
     public static let failing = Self(
       apiClient: .failing,
@@ -913,6 +919,7 @@ func menuTitle(state: GameState) -> TextState {
       setUserInterfaceStyle: { _ in
         .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
       },
+      setUserInterfaceStyleAsync: XCTUnimplemented("\(Self.self).setUserInterfaceStyleAsync"),
       storeKit: .failing,
       userDefaults: .failing,
       userNotifications: .failing
@@ -935,6 +942,7 @@ func menuTitle(state: GameState) -> TextState {
       remoteNotifications: .noop,
       serverConfig: .noop,
       setUserInterfaceStyle: { _ in .none },
+      setUserInterfaceStyleAsync: { _ in },
       storeKit: .noop,
       userDefaults: .noop,
       userNotifications: .noop
