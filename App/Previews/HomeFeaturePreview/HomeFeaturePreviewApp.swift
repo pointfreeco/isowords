@@ -51,9 +51,7 @@ struct HomeFeaturePreviewApp: App {
               deviceId: .noop,
               feedbackGenerator: .live,
               fileClient: .live,
-              gameCenter: update(.noop) {
-                $0.localPlayer.authenticate = .init(value: nil)
-              },
+              gameCenter: .noop,
               lowPowerMode: .live,
               mainQueue: .main,
               mainRunLoop: .main,

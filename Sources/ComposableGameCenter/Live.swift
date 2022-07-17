@@ -129,23 +129,8 @@ extension LocalPlayerClient {
     var localPlayer: GKLocalPlayer { .local }
 
     return Self(
-      authenticate:
-        Effect
-        .run { subscriber in
-          localPlayer.authenticateHandler = { viewController, error in
-            subscriber.send(error.map { $0 as NSError })
-            if viewController != nil {
-              Self.viewController = viewController
-            }
-          }
-          return AnyCancellable {
-            Self.viewController?.dismiss()
-            Self.viewController = nil
-          }
-        }
-        .shareReplay(1)
-        .eraseToEffect(),
-      authenticateAsync: {
+      // TODO: Used to use `shareReplay(1)` here. Bring back using some local `SendableState`?
+      authenticate: {
         _ = try await AsyncThrowingStream<Void, Error> { continuation in
           localPlayer.authenticateHandler = { viewController, error in
             if let error = error {

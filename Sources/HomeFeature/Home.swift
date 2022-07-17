@@ -752,7 +752,7 @@ private struct ShakeEffect: GeometryEffect {
 
 private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async {
   do {
-    try await environment.gameCenter.localPlayer.authenticateAsync()
+    try await environment.gameCenter.localPlayer.authenticate()
 
     let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
     let currentPlayerEnvelope = try await environment.apiClient.authenticateAsync(

@@ -22,8 +22,7 @@ extension GameCenterViewControllerClient {
 
 extension LocalPlayerClient {
   public static let noop = Self(
-    authenticate: .none,
-    authenticateAsync: {},
+    authenticate: {},
     listener: .none,
     listenerAsync: { AsyncStream { _ in } },
     localPlayer: {
@@ -112,8 +111,7 @@ extension TurnBasedMatchmakerViewControllerClient {
 
   extension LocalPlayerClient {
     public static let failing = Self(
-      authenticate: .failing("\(Self.self).authenticate is unimplemented"),
-      authenticateAsync: XCTUnimplemented("\(Self.self).authenticateAsync"),
+      authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       listener: .failing("\(Self.self).listener is unimplemented"),
       listenerAsync: XCTUnimplemented("\(Self.self).listenerAsync", placeholder: .finished),
       localPlayer: {

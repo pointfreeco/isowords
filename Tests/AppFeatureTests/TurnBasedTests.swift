@@ -87,7 +87,7 @@ class TurnBasedTests: XCTestCase {
         $0.feedbackGenerator = .noop
         $0.fileClient.saveAsync = { @Sendable _, _ in }
         $0.fileClient.load = { _ in .none }
-        $0.gameCenter.localPlayer.authenticateAsync = {}
+        $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
@@ -347,8 +347,7 @@ class TurnBasedTests: XCTestCase {
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.deviceId.id = { .deviceId }
         $0.fileClient.saveAsync = { @Sendable _, _ in }
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.authenticateAsync = {}
+        $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
@@ -462,8 +461,7 @@ class TurnBasedTests: XCTestCase {
         $0.build.number = { 42 }
         $0.deviceId.id = { .deviceId }
         $0.fileClient.saveAsync = { _, _ in }
-        $0.gameCenter.localPlayer.authenticate = .init(value: nil)
-        $0.gameCenter.localPlayer.authenticateAsync = {}
+        $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }

@@ -122,7 +122,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
           switch action {
           case .appDelegate(.didFinishLaunching):
             return .run { send in
-              try await environment.gameCenter.localPlayer.authenticateAsync()
+              try await environment.gameCenter.localPlayer.authenticate()
               for await event in environment.gameCenter.localPlayer.listenerAsync() {
                 await send(.gameCenter(.listener(event)))
               }
