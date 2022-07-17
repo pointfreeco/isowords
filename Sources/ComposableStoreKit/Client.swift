@@ -3,8 +3,7 @@ import ComposableArchitecture
 import StoreKit
 
 public struct StoreKitClient {
-  @available(*, deprecated) public var addPayment: (SKPayment) -> Effect<Never, Never>
-  public var addPaymentAsync: @Sendable (SKPayment) async -> Void
+  public var addPayment: @Sendable (SKPayment) async -> Void
   public var appStoreReceiptURL: @Sendable () -> URL?
   public var isAuthorizedForPayments: @Sendable () -> Bool
   @available(*, deprecated) public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>

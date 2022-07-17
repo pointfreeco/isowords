@@ -567,7 +567,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         let payment = SKMutablePayment()
         payment.productIdentifier = product.productIdentifier
         payment.quantity = 1
-        await environment.storeKit.addPaymentAsync(payment)
+        await environment.storeKit.addPayment(payment)
       }
 
     case let .userNotificationAuthorizationResponse(.success(granted)):

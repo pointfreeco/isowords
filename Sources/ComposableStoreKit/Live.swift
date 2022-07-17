@@ -6,12 +6,7 @@ import StoreKit
 extension StoreKitClient {
   public static func live() -> Self {
     return Self(
-      addPayment: { payment in
-        .fireAndForget {
-          SKPaymentQueue.default().add(payment)
-        }
-      },
-      addPaymentAsync: { SKPaymentQueue.default().add($0) },
+      addPayment: { SKPaymentQueue.default().add($0) },
       appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
       isAuthorizedForPayments: { SKPaymentQueue.canMakePayments() },
       fetchProducts: { products in

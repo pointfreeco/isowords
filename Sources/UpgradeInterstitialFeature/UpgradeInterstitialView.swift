@@ -163,7 +163,7 @@ public let upgradeInterstitialReducer = Reducer<
       let payment = SKMutablePayment()
       payment.productIdentifier = environment.serverConfig.config().productIdentifiers.fullGame
       payment.quantity = 1
-      await environment.storeKit.addPaymentAsync(payment)
+      await environment.storeKit.addPayment(payment)
     }
   }
 }

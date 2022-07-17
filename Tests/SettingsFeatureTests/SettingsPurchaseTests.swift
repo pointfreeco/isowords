@@ -34,7 +34,7 @@ class SettingsPurchaseTests: XCTestCase {
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
     environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
-    environment.storeKit.addPaymentAsync = { payment in
+    environment.storeKit.addPayment = { payment in
       didAddPaymentProductIdentifier = payment.productIdentifier
     }
     environment.storeKit.fetchProducts = { _ in

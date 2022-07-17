@@ -2,8 +2,7 @@ import ComposableArchitecture
 
 extension StoreKitClient {
   public static let noop = Self(
-    addPayment: { _ in .none },
-    addPaymentAsync: { _ in },
+    addPayment: { _ in },
     appStoreReceiptURL: { nil },
     isAuthorizedForPayments: { false },
     fetchProducts: { _ in .none },
@@ -21,8 +20,7 @@ extension StoreKitClient {
 
   extension StoreKitClient {
     public static let failing = Self(
-      addPayment: { _ in .failing("\(Self.self).addPayment is unimplemented") },
-      addPaymentAsync: XCTUnimplemented("\(Self.self).addPaymentAsync"),
+      addPayment: XCTUnimplemented("\(Self.self).addPaymentAsync"),
       appStoreReceiptURL: {
         XCTFail("\(Self.self).appStoreReceiptURL is unimplemented")
         return nil
