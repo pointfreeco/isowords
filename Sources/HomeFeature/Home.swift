@@ -807,7 +807,7 @@ private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async 
     animation: .default
   )
 
-  for await event in environment.gameCenter.localPlayer.listenerAsync() {
+  for await event in environment.gameCenter.localPlayer.listener() {
     switch event {
     case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
       await send(

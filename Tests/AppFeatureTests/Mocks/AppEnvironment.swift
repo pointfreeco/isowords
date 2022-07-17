@@ -15,7 +15,7 @@ extension AppEnvironment {
     $0.dictionary.load = { _ in false }
     $0.fileClient.loadAsync = { @Sendable _ in try await Task.never() }
     $0.gameCenter.localPlayer.authenticate = {}
-    $0.gameCenter.localPlayer.listenerAsync = { .finished }
+    $0.gameCenter.localPlayer.listener = { .finished }
     $0.mainQueue = .immediate
     $0.mainRunLoop = .immediate
     $0.serverConfig.refresh = { .init() }

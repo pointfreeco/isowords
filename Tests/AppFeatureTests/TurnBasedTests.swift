@@ -88,7 +88,7 @@ class TurnBasedTests: XCTestCase {
         $0.fileClient.saveAsync = { @Sendable _, _ in }
         $0.fileClient.load = { _ in .none }
         $0.gameCenter.localPlayer.authenticate = {}
-        $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
+        $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
@@ -347,7 +347,7 @@ class TurnBasedTests: XCTestCase {
         $0.deviceId.id = { .deviceId }
         $0.fileClient.saveAsync = { @Sendable _, _ in }
         $0.gameCenter.localPlayer.authenticate = {}
-        $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
+        $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
@@ -460,7 +460,7 @@ class TurnBasedTests: XCTestCase {
         $0.deviceId.id = { .deviceId }
         $0.fileClient.saveAsync = { _, _ in }
         $0.gameCenter.localPlayer.authenticate = {}
-        $0.gameCenter.localPlayer.listenerAsync = { listener.stream }
+        $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }

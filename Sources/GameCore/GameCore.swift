@@ -1104,7 +1104,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
     case .task:
       return .run { send in
-        for await event in environment.gameCenter.localPlayer.listenerAsync() {
+        for await event in environment.gameCenter.localPlayer.listener() {
           await send(.gameCenter(.listener(event)))
         }
       }
