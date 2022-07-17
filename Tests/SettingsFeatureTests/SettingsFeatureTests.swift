@@ -295,11 +295,7 @@ class SettingsFeatureTests: XCTestCase {
     var setMusicVolume: Float!
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForMusic = { newValue in
-      .fireAndForget {
-        setMusicVolume = newValue
-      }
-    }
+    environment.audioPlayer.setGlobalVolumeForMusicAsync = { setMusicVolume = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -318,11 +314,7 @@ class SettingsFeatureTests: XCTestCase {
     var setSoundEffectsVolume: Float!
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForSoundEffects = { newValue in
-      .fireAndForget {
-        setSoundEffectsVolume = newValue
-      }
-    }
+    environment.audioPlayer.setGlobalVolumeForSoundEffectsAsync = { setSoundEffectsVolume = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -343,11 +335,7 @@ class SettingsFeatureTests: XCTestCase {
     var overriddenUserInterfaceStyle: UIUserInterfaceStyle!
 
     var environment = self.defaultEnvironment
-    environment.setUserInterfaceStyle = { newValue in
-      .fireAndForget {
-        overriddenUserInterfaceStyle = newValue
-      }
-    }
+    environment.setUserInterfaceStyleAsync = { overriddenUserInterfaceStyle = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),
