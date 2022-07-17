@@ -272,7 +272,7 @@ public let onboardingReducer = Reducer<
   case let .game(.doubleTap(index: index)):
     guard state.step == .some(.step19_DoubleTapToRemove)
     else { return .none }
-    return .init(value: .game(.confirmRemoveCube(index)))
+    return .task { .game(.confirmRemoveCube(index)) }
 
   case let .game(.tap(gestureState, .some(indexedCubeFace))):
     let index =
@@ -396,17 +396,20 @@ public let onboardingReducer = Reducer<
     return .none
 
   case .step13_Congrats:
-    return Effect(value: .delayedNextStep)
-      .delay(for: 3, scheduler: environment.mainQueue.animation())
-      .eraseToEffect()
+    return .task {
+      try await environment.mainQueue.sleep(for: .seconds(3))
+      return .delayedNextStep
+    }
+    .animation()
 
   case .step6_Congrats,
     .step9_Congrats,
     .step17_Congrats,
     .step20_Congrats:
-    return Effect(value: .delayedNextStep)
-      .delay(for: 2, scheduler: environment.mainQueue.animation())
-      .eraseToEffect()
+    return .task {
+      try await environment.mainQueue.sleep(for: .seconds(2))
+      return .delayedNextStep
+    }
   }
 }
 
