@@ -35,10 +35,9 @@ public struct AudioPlayerClient {
 
   public func filteredSounds(doNotInclude doNotIncludeSounds: [AudioPlayerClient.Sound]) -> Self {
     var client = self
-    client.play = { sound in
+    client.playAsync = { sound in
       guard doNotIncludeSounds.contains(sound)
-      else { return self.play(sound) }
-      return .none
+      else { return await self.playAsync(sound) }
     }
     return client
   }
