@@ -51,7 +51,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
             for transaction in otherTransactions {
               switch transaction.transactionState {
               case .failed:
-                await environment.storeKit.finishTransactionAsync(transaction)
+                await environment.storeKit.finishTransaction(transaction)
 
               case .deferred, .purchased, .purchasing, .restored:
                 return
@@ -67,7 +67,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
             for transaction in envelope.transactions
             where envelope.verifyEnvelope.verifiedProductIds
               .contains(where: { $0 == transaction.payment.productIdentifier }) {
-                await environment.storeKit.finishTransactionAsync(transaction)
+                await environment.storeKit.finishTransaction(transaction)
             }
           }
 

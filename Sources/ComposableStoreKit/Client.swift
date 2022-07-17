@@ -9,8 +9,7 @@ public struct StoreKitClient {
   public var isAuthorizedForPayments: @Sendable () -> Bool
   @available(*, deprecated) public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>
   public var fetchProductsAsync: @Sendable (Set<String>) async throws -> ProductsResponse
-  @available(*, deprecated) public var finishTransaction: (PaymentTransaction) -> Effect<Never, Never>
-  public var finishTransactionAsync: @Sendable (PaymentTransaction) async -> Void
+  public var finishTransaction: @Sendable (PaymentTransaction) async -> Void
   @available(*, deprecated) public var observer: Effect<PaymentTransactionObserverEvent, Never>
   public var observerAsync: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
   @available(*, deprecated) public var requestReview: () -> Effect<Never, Never>

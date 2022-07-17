@@ -44,15 +44,6 @@ extension StoreKitClient {
         return response
       },
       finishTransaction: { transaction in
-        .fireAndForget {
-          guard let skTransaction = transaction.rawValue else {
-            assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
-            return
-          }
-          SKPaymentQueue.default().finishTransaction(skTransaction)
-        }
-      },
-      finishTransactionAsync: { transaction in
         guard let skTransaction = transaction.rawValue else {
           assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
           return
