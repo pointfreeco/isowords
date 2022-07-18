@@ -584,7 +584,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         }
       )
     )
-    async let sendWeekInReviewResponse: Void = await send(
+    async let sendWeekInReviewResponse: Void = send(
       .weekInReviewResponse(
         TaskResult {
           try await environment.apiClient.apiRequest(
@@ -696,7 +696,7 @@ public struct HomeView: View {
             }
             .font(.system(size: 24))
             .foregroundColor(self.colorScheme == .dark ? .hex(0xF2E29F) : .isowordsBlack)
-            .adaptivePadding([.leading, .trailing])
+            .adaptivePadding(.horizontal)
 
             DailyChallengeHeaderView(store: self.store)
               .screenEdgePadding(.horizontal)
