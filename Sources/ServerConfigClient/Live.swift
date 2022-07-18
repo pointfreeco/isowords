@@ -5,22 +5,17 @@ extension ServerConfigClient {
   public static func live(
     fetch: @escaping @Sendable () async throws -> ServerConfig
   ) -> Self {
-    var currentConfig =
-      (UserDefaults.standard.object(forKey: serverConfigKey) as? Data)
-      .flatMap { try? jsonDecoder.decode(ServerConfig.self, from: $0) }
-    ?? ServerConfig() {
-      didSet {
-        guard let data = try? jsonEncoder.encode(currentConfig)
-        else { return }
-        UserDefaults.standard.set(data, forKey: serverConfigKey)
-      }
-    }
-
-    return Self(
-      config: { currentConfig },
+    Self(
+      config: {
+        (UserDefaults.standard.object(forKey: serverConfigKey) as? Data)
+        .flatMap { try? jsonDecoder.decode(ServerConfig.self, from: $0) }
+        ?? ServerConfig()
+      },
       refresh: {
         let config = try await fetch()
-        currentConfig = config
+        if let data = try? jsonEncoder.encode(config) {
+          UserDefaults.standard.set(data, forKey: serverConfigKey)
+        }
         return config
       }
     )
