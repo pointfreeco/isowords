@@ -594,7 +594,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
   enum SaveDebounceID {}
 
-  return .fireAndForget { try await environment.fileClient.saveUserSettingsAsync(userSettings) }
+  return .fireAndForget { try await environment.fileClient.save(userSettings: userSettings) }
     .debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: environment.mainQueue)
 }
 

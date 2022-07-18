@@ -88,7 +88,7 @@ let appDelegateReducer = Reducer<
         group.addTask {
           await send(
             .userSettingsLoaded(
-              TaskResult { try await environment.fileClient.loadUserSettingsAsync() }
+              TaskResult { try await environment.fileClient.loadUserSettings() }
             )
           )
         }

@@ -85,8 +85,8 @@ class TurnBasedTests: XCTestCase {
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
-        $0.fileClient.saveAsync = { @Sendable _, _ in }
-        $0.fileClient.load = { _ in .none }
+        $0.fileClient.save = { @Sendable _, _ in }
+        $0.fileClient.load = { @Sendable _ in try await Task.never() }
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
@@ -337,7 +337,7 @@ class TurnBasedTests: XCTestCase {
         }
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.deviceId.id = { .deviceId }
-        $0.fileClient.saveAsync = { @Sendable _, _ in }
+        $0.fileClient.save = { @Sendable _, _ in }
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
@@ -448,7 +448,7 @@ class TurnBasedTests: XCTestCase {
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.build.number = { 42 }
         $0.deviceId.id = { .deviceId }
-        $0.fileClient.saveAsync = { _, _ in }
+        $0.fileClient.save = { _, _ in }
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
@@ -688,7 +688,7 @@ class TurnBasedTests: XCTestCase {
       $0.apiClient.currentPlayer = { nil }
       $0.apiClient.currentPlayerAsync = { nil }
       $0.dictionary.randomCubes = { _ in .mock }
-      $0.fileClient.load = { _ in .none }
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = {
         update(.authenticated) { $0.player = localParticipant.player! }
       }

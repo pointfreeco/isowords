@@ -4,11 +4,11 @@ import ComposableArchitecture
 
 extension FileClient {
   public func loadSavedGames() async throws -> SavedGamesState {
-    try await self.loadAsync(SavedGamesState.self, from: savedGamesFileName)
+    try await self.load(SavedGamesState.self, from: savedGamesFileName)
   }
 
   public func save(games: SavedGamesState) async throws {
-    try await self.saveAsync(games, to: savedGamesFileName)
+    try await self.save(games, to: savedGamesFileName)
   }
 }
 

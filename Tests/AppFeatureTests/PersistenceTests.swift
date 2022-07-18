@@ -38,7 +38,7 @@ class PersistenceTests: XCTestCase {
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
-        $0.fileClient.saveAsync = { _, data in saves.append(data) }
+        $0.fileClient.save = { _, data in saves.append(data) }
         $0.mainRunLoop = .immediate
         $0.mainQueue = .immediate
       }
@@ -163,7 +163,7 @@ class PersistenceTests: XCTestCase {
         $0.backgroundQueue = .immediate
         $0.database.saveGameAsync = { _ in didArchiveGame = true }
         $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-        $0.fileClient.saveAsync = { _, data in saves.append(data) }
+        $0.fileClient.save = { _, data in saves.append(data) }
         $0.mainQueue = .immediate
       }
     )
@@ -263,7 +263,7 @@ class PersistenceTests: XCTestCase {
       initialState: AppState(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.fileClient.override(load: savedGamesFileName, .init(value: savedGames))
+        $0.fileClient.override(load: savedGamesFileName, savedGames)
       }
     )
 

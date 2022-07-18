@@ -7,52 +7,19 @@ extension FileClient {
       .first!
 
     return Self(
-      delete: { fileName in
-        .fireAndForget {
-          try? FileManager.default.removeItem(
-            at:
-              documentDirectory
-              .appendingPathComponent(fileName)
-              .appendingPathExtension("json")
-          )
-        }
-      },
-      deleteAsync: {
+      delete: {
         try FileManager.default.removeItem(
           at: documentDirectory.appendingPathComponent($0).appendingPathExtension("json")
         )
       },
-      load: { fileName in
-        .catching {
-          try Data(
-            contentsOf:
-              documentDirectory
-              .appendingPathComponent(fileName)
-              .appendingPathExtension("json")
-          )
-        }
-      },
-      loadAsync: {
+      load: {
         try Data(
           contentsOf: documentDirectory.appendingPathComponent($0).appendingPathExtension("json")
         )
       },
-      save: { fileName, data in
-        .fireAndForget {
-          _ = try? data.write(
-            to:
-              documentDirectory
-              .appendingPathComponent(fileName)
-              .appendingPathExtension("json")
-          )
-        }
-      },
-      saveAsync: {
+      save: {
         try $1.write(
-          to:
-            documentDirectory
-            .appendingPathComponent($0)
-            .appendingPathExtension("json")
+          to: documentDirectory.appendingPathComponent($0).appendingPathExtension("json")
         )
       }
     )

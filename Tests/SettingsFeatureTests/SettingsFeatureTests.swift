@@ -18,7 +18,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.build.number = { 42 }
     environment.mainQueue = .immediate
     environment.backgroundQueue = .immediate
-    environment.fileClient.saveAsync = { @Sendable _, _ in }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.storeKit.fetchProductsAsync = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
@@ -63,7 +63,7 @@ class SettingsFeatureTests: XCTestCase {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
@@ -104,7 +104,7 @@ class SettingsFeatureTests: XCTestCase {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
@@ -144,7 +144,7 @@ class SettingsFeatureTests: XCTestCase {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
@@ -190,7 +190,7 @@ class SettingsFeatureTests: XCTestCase {
       return true
     }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
@@ -242,7 +242,7 @@ class SettingsFeatureTests: XCTestCase {
     )
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = mainQueue.eraseToAnyScheduler()
     environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }

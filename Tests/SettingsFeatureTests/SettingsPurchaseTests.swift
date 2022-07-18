@@ -16,7 +16,7 @@ class SettingsPurchaseTests: XCTestCase {
     environment.build.number = { 42 }
     environment.mainQueue = .immediate
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }

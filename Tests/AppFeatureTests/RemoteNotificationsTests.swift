@@ -87,7 +87,7 @@ class RemoteNotificationsTests: XCTestCase {
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
 
     var environment = AppEnvironment.didFinishLaunching
-    environment.fileClient.saveAsync = { @Sendable _, _ in }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.userNotifications.delegateAsync = { delegate.stream }
 
     let inProgressGame = InProgressGame.mock

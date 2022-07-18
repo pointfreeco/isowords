@@ -13,7 +13,7 @@ extension AppEnvironment {
     $0.backgroundQueue = .immediate
     $0.database.migrateAsync = {}
     $0.dictionary.load = { _ in false }
-    $0.fileClient.loadAsync = { @Sendable _ in try await Task.never() }
+    $0.fileClient.load = { @Sendable _ in try await Task.never() }
     $0.gameCenter.localPlayer.authenticate = {}
     $0.gameCenter.localPlayer.listener = { .finished }
     $0.mainQueue = .immediate
