@@ -147,6 +147,26 @@ public struct GameOverEnvironment {
       userNotifications: .failing
     )
   #endif
+
+  func requestReviewAsync() async throws {
+    let stats = try await self.database.fetchStats()
+    let hasRequestedReviewBefore =
+      self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey) != 0
+    let timeSinceLastReviewRequest =
+      self.mainRunLoop.now.date.timeIntervalSince1970
+      - self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
+    let weekInSeconds: Double = 60 * 60 * 24 * 7
+
+    if stats.gamesPlayed >= 3
+      && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
+    {
+      await self.storeKit.requestReview()
+      await self.userDefaults.setDouble(
+        self.mainRunLoop.now.date.timeIntervalSince1970,
+        lastReviewRequestTimeIntervalKey
+      )
+    }
+  }
 }
 
 public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvironment>.combine(
@@ -522,10 +542,9 @@ public struct GameOverView: View {
               foregroundColor: self.colorScheme == .dark ? .isowordsBlack : self.color
             )
           )
-          .padding([.bottom], .grid(self.viewStore.isDemo ? 30 : 0))
+          .padding(.bottom, .grid(self.viewStore.isDemo ? 30 : 0))
         }
-        .padding([.vertical], .grid(12))
-
+        .padding(.vertical, .grid(12))
       }
 
       IfLetStore(
@@ -572,9 +591,9 @@ public struct GameOverView: View {
       }
         ?? Text("Loading your rank!")
     }
-    .animation(nil)
+    .animation(.default, value: result)
     .adaptiveFont(.matter, size: 52)
-    .adaptivePadding([.leading, .trailing])
+    .adaptivePadding(.horizontal)
     .minimumScaleFactor(0.01)
     .lineLimit(2)
     .multilineTextAlignment(.center)
@@ -615,8 +634,8 @@ public struct GameOverView: View {
           Text("\(self.viewStore.yourWords.count)")
         }
       }
-      .adaptivePadding([.leading, .trailing])
-      .animation(nil)
+      .adaptivePadding(.horizontal)
+      .animation(.default, value: result)
 
       self.wordList
 
@@ -651,7 +670,7 @@ public struct GameOverView: View {
             .disabled(self.viewStore.gameModeIsLoading != nil)
           }
         }
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
       }
     }
     .adaptiveFont(.matterMedium, size: 16)
@@ -665,7 +684,7 @@ public struct GameOverView: View {
         + Text(praise(mode: self.viewStore.gameMode, score: self.viewStore.yourScore))
     }
     .adaptiveFont(.matter, size: 52)
-    .adaptivePadding([.leading, .trailing])
+    .adaptivePadding(.horizontal)
     .minimumScaleFactor(0.01)
     .lineLimit(2)
     .multilineTextAlignment(.center)
@@ -686,17 +705,20 @@ public struct GameOverView: View {
               let rank = (/GameOverState.RankSummary.leaderboard)
                 .extract(from: self.viewStore.summary)?[timeScope]
               Text(
-                "\((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \(rank?.outOf ?? 0)"
+                """
+                \((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \
+                \(rank?.outOf ?? 0)
+                """
               )
               .redacted(reason: rank == nil ? .placeholder : [])
             }
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(nil)
+        .animation(.default, value: self.viewStore.summary)
       }
       .adaptiveFont(.matterMedium, size: 16)
-      .adaptivePadding([.leading, .trailing])
+      .adaptivePadding(.horizontal)
       .overlay(
         self.viewStore.showConfetti
           ? Confetti(
@@ -712,7 +734,7 @@ public struct GameOverView: View {
         VStack(spacing: self.adaptiveSize.pad(8)) {
           Text("Play again")
             .adaptiveFont(.matterMedium, size: 16)
-            .adaptivePadding([.leading, .trailing])
+            .adaptivePadding(.horizontal)
             .frame(maxWidth: .infinity, alignment: .leading)
 
           LazyVGrid(
@@ -741,13 +763,13 @@ public struct GameOverView: View {
               action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
             )
           }
-          .adaptivePadding([.leading, .trailing])
+          .adaptivePadding(.horizontal)
         }
       }
     }
   }
 
-  struct DividerId: Hashable {}
+  struct DividerID: Hashable {}
 
   @State var containerWidth: CGFloat = 0
   @State var dividerOffset: CGFloat = 0
@@ -809,7 +831,7 @@ public struct GameOverView: View {
                 .clipShape(Circle())
             }
             .frame(maxWidth: .infinity)
-            .padding([.leading, .trailing], .grid(2))
+            .padding(.horizontal, .grid(2))
 
             Divider()
               .frame(height: 2)
@@ -827,13 +849,13 @@ public struct GameOverView: View {
             .padding(.top, self.viewStore.words.first?.isYourWord == .some(true) ? 0 : .grid(6))
             .padding(.grid(2))
           }
-          .padding([.top, .bottom])
+          .padding(.vertical)
           .frame(maxWidth: .infinity)
 
           Divider()
             .frame(width: 2)
             .background((self.colorScheme == .dark ? self.color : .isowordsBlack).opacity(0.2))
-            .id(DividerId())
+            .id(DividerID())
 
           VStack(alignment: .leading) {
             HStack {
@@ -859,7 +881,7 @@ public struct GameOverView: View {
               }
             }
             .frame(maxWidth: .infinity)
-            .padding([.leading, .trailing], .grid(2))
+            .padding(.horizontal, .grid(2))
 
             Divider()
               .frame(height: 2)
@@ -884,14 +906,14 @@ public struct GameOverView: View {
             .padding(.top, self.viewStore.words.first?.isYourWord == .some(true) ? .grid(6) : 0)
             .padding(.grid(2))
           }
-          .padding([.top, .bottom])
+          .padding(.vertical)
           .frame(maxWidth: .infinity)
         }
         .fixedSize()
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .frame(width: UIScreen.main.bounds.size.width)
         .offset(x: (containerWidth / 2) - self.dividerOffset + (self.dragOffset / 2))
-        .padding([.top, .bottom])
+        .padding(.vertical)
         .gesture(
           DragGesture()
             .onChanged { self.dragOffset = $0.translation.width }
@@ -930,7 +952,7 @@ public struct GameOverView: View {
     VStack(spacing: self.adaptiveSize.pad(12)) {
       Text("Your words")
         .adaptiveFont(.matterMedium, size: 16)
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .frame(maxWidth: .infinity, alignment: .leading)
 
       ScrollView(.horizontal, showsIndicators: false) {
@@ -943,7 +965,7 @@ public struct GameOverView: View {
             )
           }
         }
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
       }
     }
   }
@@ -982,7 +1004,7 @@ private struct WordView: View {
       .offset(x: 8, y: -8)
     }
     .frame(maxWidth: .infinity, alignment: self.word.isYourWord ? .trailing : .leading)
-    .padding([.leading, .trailing], .grid(1))
+    .padding(.horizontal, .grid(1))
     .fixedSize()
   }
 
@@ -1015,29 +1037,6 @@ extension CompletedMatch {
     case (.lost, _), (.quit, _): return "Shucks."
     case (.tied, .tied): return "Do-over!"
     default: return "Game over"
-    }
-  }
-}
-
-extension GameOverEnvironment {
-  func requestReviewAsync() async throws {
-    let stats = try await self.database.fetchStats()
-    let hasRequestedReviewBefore =
-      self.userDefaults
-      .doubleForKey(lastReviewRequestTimeIntervalKey) != 0
-    let timeSinceLastReviewRequest =
-      self.mainRunLoop.now.date.timeIntervalSince1970
-      - self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
-    let weekInSeconds: Double = 60 * 60 * 24 * 7
-
-    if stats.gamesPlayed >= 3
-      && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
-    {
-      await self.storeKit.requestReview()
-      await self.userDefaults.setDouble(
-        self.mainRunLoop.now.date.timeIntervalSince1970,
-        lastReviewRequestTimeIntervalKey
-      )
     }
   }
 }

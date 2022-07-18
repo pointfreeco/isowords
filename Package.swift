@@ -7,8 +7,10 @@ import PackageDescription
 var package = Package(
   name: "isowords",
   platforms: [
-    .macOS(.v10_15),
     .iOS(.v15),
+    .macOS(.v12),
+    .tvOS(.v15),
+    .watchOS(.v8),
   ],
   products: [
     .library(name: "Build", targets: ["Build"]),
