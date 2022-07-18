@@ -12,7 +12,7 @@ extension StoreKitClient {
       fetchProducts: { products in
         let stream = AsyncThrowingStream<ProductsResponse, Error> { continuation in
           let request = SKProductsRequest(productIdentifiers: products)
-          let delegate = ProductRequestAsync(continuation: continuation)
+          let delegate = ProductRequest(continuation: continuation)
           request.delegate = delegate
           request.start()
           continuation.onTermination = { _ in
@@ -33,7 +33,7 @@ extension StoreKitClient {
       },
       observer: {
         AsyncStream { continuation in
-          let observer = ObserverAsync(continuation: continuation)
+          let observer = Observer(continuation: continuation)
           SKPaymentQueue.default().add(observer)
           continuation.onTermination = { _ in SKPaymentQueue.default().remove(observer) }
         }
@@ -49,28 +49,6 @@ extension StoreKitClient {
 }
 
 private class ProductRequest: NSObject, SKProductsRequestDelegate {
-  let subscriber: Effect<StoreKitClient.ProductsResponse, Error>.Subscriber
-
-  init(subscriber: Effect<StoreKitClient.ProductsResponse, Error>.Subscriber) {
-    self.subscriber = subscriber
-  }
-
-  func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-    self.subscriber.send(
-      .init(
-        invalidProductIdentifiers: response.invalidProductIdentifiers,
-        products: response.products.map(StoreKitClient.Product.init(rawValue:))
-      )
-    )
-    self.subscriber.send(completion: .finished)
-  }
-
-  func request(_ request: SKRequest, didFailWithError error: Error) {
-    self.subscriber.send(completion: .failure(error))
-  }
-}
-
-private class ProductRequestAsync: NSObject, SKProductsRequestDelegate {
   let continuation: AsyncThrowingStream<StoreKitClient.ProductsResponse, Error>.Continuation
 
   init(continuation: AsyncThrowingStream<StoreKitClient.ProductsResponse, Error>.Continuation) {
@@ -93,48 +71,6 @@ private class ProductRequestAsync: NSObject, SKProductsRequestDelegate {
 }
 
 private class Observer: NSObject, SKPaymentTransactionObserver {
-  let subscriber: Effect<StoreKitClient.PaymentTransactionObserverEvent, Never>.Subscriber
-
-  init(subscriber: Effect<StoreKitClient.PaymentTransactionObserverEvent, Never>.Subscriber) {
-    self.subscriber = subscriber
-  }
-
-  func paymentQueue(
-    _ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]
-  ) {
-    self.subscriber.send(
-      .updatedTransactions(
-        transactions.map(StoreKitClient.PaymentTransaction.init(rawValue:))
-      )
-    )
-  }
-
-  func paymentQueue(
-    _ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]
-  ) {
-    self.subscriber.send(
-      .removedTransactions(
-        transactions.map(StoreKitClient.PaymentTransaction.init(rawValue:))
-      )
-    )
-  }
-
-  func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-    self.subscriber.send(
-      .restoreCompletedTransactionsFinished(
-        transactions: queue.transactions.map(StoreKitClient.PaymentTransaction.init)
-      )
-    )
-  }
-
-  func paymentQueue(
-    _ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error
-  ) {
-    self.subscriber.send(.restoreCompletedTransactionsFailed(error as NSError))
-  }
-}
-
-private class ObserverAsync: NSObject, SKPaymentTransactionObserver {
   let continuation: AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>.Continuation
 
   init(continuation: AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>.Continuation) {
