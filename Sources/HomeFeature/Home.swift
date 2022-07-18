@@ -67,7 +67,7 @@ public struct HomeState: Equatable {
   public var changelog: ChangelogState?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
   public var hasChangelog: Bool
-  @BindableState public var hasPastTurnBasedGames: Bool
+  public var hasPastTurnBasedGames: Bool
   public var nagBanner: NagBannerState?
   public var route: HomeRoute?
   public var savedGames: SavedGamesState {
@@ -125,10 +125,10 @@ public struct HomeState: Equatable {
   }
 }
 
-public enum HomeAction: BindableAction, Equatable {
+public enum HomeAction: Equatable {
+  case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
-  case binding(BindingAction<HomeState>)
   case changelog(ChangelogAction)
   case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
@@ -137,7 +137,6 @@ public enum HomeAction: BindableAction, Equatable {
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
-  case matchesLoaded(TaskResult<[ActiveTurnBasedMatch]>)
   case multiplayer(MultiplayerAction)
   case nagBannerFeature(NagBannerFeatureAction)
   case serverConfigResponse(ServerConfig)
@@ -152,6 +151,11 @@ public enum HomeAction: BindableAction, Equatable {
     case multiplayer
     case solo
   }
+}
+
+public struct ActiveMatchResponse: Equatable {
+  public let matches: [ActiveTurnBasedMatch]
+  public let hasPastTurnBasedGames: Bool
 }
 
 public struct HomeEnvironment {
@@ -356,6 +360,14 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
   .init { state, action, environment in
     switch action {
+    case let .activeMatchesResponse(.success(response)):
+      state.hasPastTurnBasedGames = response.hasPastTurnBasedGames
+      state.turnBasedMatches = response.matches
+      return .none
+
+    case .activeMatchesResponse(.failure):
+      return .none
+
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
       return .run { send in
         let localPlayer = environment.gameCenter.localPlayer.localPlayer()
@@ -383,14 +395,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         } catch {}
 
         await send(
-          .matchesLoaded(
+          .activeMatchesResponse(
             TaskResult {
-              let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
+              try await environment.gameCenter
                 .loadActiveMatches(now: environment.mainRunLoop.now.date)
-
-              await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
-
-              return activeMatches
             }
           ),
           animation: .default
@@ -437,9 +445,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
       return .none
 
-    case .binding:
-      return .none
-
     case .changelog:
       return .none
 
@@ -469,13 +474,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .none
 
     case .leaderboard:
-      return .none
-
-    case .matchesLoaded(.failure):
-      return .none
-
-    case let .matchesLoaded(.success(matches)):
-      state.turnBasedMatches = matches
       return .none
 
     case .multiplayer:
@@ -530,6 +528,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       return .run { send in
         try await authenticate(send: send, environment: environment)
         await listen(send: send, environment: environment)
+      } catch: { _, _ in
       }
       .animation()
 
@@ -542,19 +541,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     }
   }
 )
-.binding()
-
-extension GameCenterClient {
-  fileprivate func loadActiveMatches(
-    now: Date
-  ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
-    let localPlayer = self.localPlayer.localPlayer()
-    let matches = try await self.turnBasedMatch.loadMatches()
-    let activeMatches = matches.activeMatches(for: localPlayer, at: now)
-    let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
-    return (activeMatches, hasPastTurnBasedGames)
-  }
-}
 
 private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async throws {
   try await environment.gameCenter.localPlayer.authenticate()
@@ -566,8 +552,8 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         deviceId: .init(rawValue: environment.deviceId.id()),
         displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
         gameCenterLocalPlayerId: localPlayer.isAuthenticated
-          ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
-          : nil,
+        ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+        : nil,
         timeZone: environment.timeZone().identifier
       )
     )
@@ -600,14 +586,10 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
 
 private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async {
   await send(
-    .matchesLoaded(
+    .activeMatchesResponse(
       TaskResult {
-        let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
+        try await environment.gameCenter
           .loadActiveMatches(now: environment.mainRunLoop.now.date)
-
-        await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
-
-        return activeMatches
       }
     ),
     animation: .default
@@ -617,20 +599,29 @@ private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async 
     switch event {
     case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
       await send(
-        .matchesLoaded(
+        .activeMatchesResponse(
           TaskResult {
-            let (activeMatches, hasPastTurnBasedGames) =
-              try await environment.gameCenter.loadActiveMatches(
-                now: environment.mainRunLoop.now.date
-              )
-            await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
-            return activeMatches
+            try await environment.gameCenter
+              .loadActiveMatches(now: environment.mainRunLoop.now.date)
           }
-        )
+        ),
+        animation: .default
       )
     default:
       break
     }
+  }
+}
+
+extension GameCenterClient {
+  fileprivate func loadActiveMatches(
+    now: Date
+  ) async throws -> ActiveMatchResponse {
+    let localPlayer = self.localPlayer.localPlayer()
+    let matches = try await self.turnBasedMatch.loadMatches()
+    let activeMatches = matches.activeMatches(for: localPlayer, at: now)
+    let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
+    return ActiveMatchResponse(matches: activeMatches, hasPastTurnBasedGames: hasPastTurnBasedGames)
   }
 }
 
