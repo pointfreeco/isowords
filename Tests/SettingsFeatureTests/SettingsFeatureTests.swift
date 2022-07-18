@@ -181,10 +181,10 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
-    environment.applicationClient.openSettingsURLStringAsync = {
+    environment.applicationClient.openSettingsURLString = {
       "settings:isowords//isowords/settings"
     }
-    environment.applicationClient.openAsync = { url, _ in
+    environment.applicationClient.open = { url, _ in
       openedUrl = url
       return true
     }
@@ -351,7 +351,7 @@ class SettingsFeatureTests: XCTestCase {
     var overriddenIconName: String!
 
     var environment = self.defaultEnvironment
-    environment.applicationClient.setAlternateIconNameAsync = { overriddenIconName = $0 }
+    environment.applicationClient.setAlternateIconName = { overriddenIconName = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -370,7 +370,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { "icon-2" }
-    environment.applicationClient.setAlternateIconNameAsync = { overriddenIconName = $0 }
+    environment.applicationClient.setAlternateIconName = { overriddenIconName = $0 }
     environment.backgroundQueue = .immediate
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }

@@ -161,7 +161,7 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
 
     case .fullVersionButtonTapped:
       return .fireAndForget {
-        _ = await environment.applicationClient.openAsync(ServerConfig().appStoreUrl, [:])
+        _ = await environment.applicationClient.open(ServerConfig().appStoreUrl, [:])
       }
 
     case .game(.gameOver(.submitGameResponse(.success))):

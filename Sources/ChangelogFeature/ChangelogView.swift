@@ -120,7 +120,7 @@ public let changelogReducer = Reducer<
 
     case .updateButtonTapped:
       return .fireAndForget {
-        _ = await environment.applicationClient.openAsync(
+        _ = await environment.applicationClient.open(
           environment.serverConfig.config().appStoreUrl.absoluteURL,
           [:]
         )

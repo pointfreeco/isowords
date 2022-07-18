@@ -8,16 +8,10 @@ extension UIApplicationClient {
         XCTFail("\(Self.self).alternateIconName is unimplemented")
         return nil
       },
-      alternateIconNameAsync: XCTUnimplemented("\(Self.self).alternateIconName"),
-      open: { _, _ in .failing("\(Self.self).open is unimplemented") },
-      openAsync: XCTUnimplemented("\(Self.self).openAsync", placeholder: false),
-      openSettingsURLString: {
-        XCTFail("\(Self.self).openSettingsURLString is unimplemented")
-        return ""
-      },
-      openSettingsURLStringAsync: XCTUnimplemented("\(Self.self).openSettingsURLStringAsync"),
-      setAlternateIconName: { _ in .failing("\(Self.self).setAlternateIconName is unimplemented") },
-      setAlternateIconNameAsync: XCTUnimplemented("\(Self.self).setAlternateIconNameAsync"),
+      alternateIconNameAsync: XCTUnimplemented("\(Self.self).alternateIconNameAsync"),
+      open: XCTUnimplemented("\(Self.self).open", placeholder: false),
+      openSettingsURLString: XCTUnimplemented("\(Self.self).openSettingsURLString"),
+      setAlternateIconName: XCTUnimplemented("\(Self.self).setAlternateIconName"),
       supportsAlternateIcons: {
         XCTFail("\(Self.self).supportsAlternateIcons is unimplemented")
         return false
@@ -31,12 +25,9 @@ extension UIApplicationClient {
   public static let noop = Self(
     alternateIconName: { nil },
     alternateIconNameAsync: { nil },
-    open: { _, _ in .none },
-    openAsync: { _, _ in false},
+    open: { _, _ in false},
     openSettingsURLString: { "settings://isowords/settings" },
-    openSettingsURLStringAsync: { "settings://isowords/settings" },
-    setAlternateIconName: { _ in .none },
-    setAlternateIconNameAsync: { _ in },
+    setAlternateIconName: { _ in },
     supportsAlternateIcons: { true },
     supportsAlternateIconsAsync: { true }
   )

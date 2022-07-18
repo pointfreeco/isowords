@@ -387,7 +387,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .binding(\.$userSettings.appIcon):
       return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
-        try await environment.applicationClient.setAlternateIconNameAsync(appIcon)
+        try await environment.applicationClient.setAlternateIconName(appIcon)
       }
 
     case .binding(\.$userSettings.colorScheme):
@@ -429,7 +429,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case .leaveUsAReviewButtonTapped:
       return .fireAndForget {
         _ = await environment.applicationClient
-          .openAsync(environment.serverConfig.config().appStoreReviewUrl, [:])
+          .open(environment.serverConfig.config().appStoreReviewUrl, [:])
       }
 
     case .paymentTransaction(.removedTransactions):
@@ -457,9 +457,9 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case .openSettingButtonTapped:
       return .fireAndForget {
         guard
-          let url = await URL(string: environment.applicationClient.openSettingsURLStringAsync())
+          let url = await URL(string: environment.applicationClient.openSettingsURLString())
         else { return }
-        _ = await environment.applicationClient.openAsync(url, [:])
+        _ = await environment.applicationClient.open(url, [:])
       }
 
     case let .productsResponse(.success(response)):
@@ -496,7 +496,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           ),
         ]
 
-        _ = await environment.applicationClient.openAsync(components.url!, [:])
+        _ = await environment.applicationClient.open(components.url!, [:])
       }
 
     case .restoreButtonTapped:
