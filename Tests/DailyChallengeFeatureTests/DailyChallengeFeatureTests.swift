@@ -86,7 +86,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       }
     )
     struct FileNotFound: Error {}
-    environment.fileClient.load = { _ in throw FileNotFound() }
+    environment.fileClient.load = { @Sendable _ in throw FileNotFound() }
 
     let store = TestStore(
       initialState: DailyChallengeState(dailyChallenges: [.notStarted]),
@@ -114,7 +114,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     ]
 
     var environment = DailyChallengeEnvironment.failing
-    environment.fileClient.load = { [inProgressGame] _ in
+    environment.fileClient.load = { @Sendable [inProgressGame] _ in
       try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
     }
     environment.mainRunLoop = .immediate
@@ -155,14 +155,14 @@ class DailyChallengeFeatureTests: XCTestCase {
   }
 
   func testNotifications_GrantAccess() async {
-    var didRegisterForRemoteNotifications = false
+    let didRegisterForRemoteNotifications = SendableState(false)
 
     var environment = DailyChallengeEnvironment.failing
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
     environment.userNotifications.requestAuthorization = { _ in true }
-    environment.remoteNotifications.register = { didRegisterForRemoteNotifications = true }
+    environment.remoteNotifications.register = { await didRegisterForRemoteNotifications.set(true) }
     environment.mainRunLoop = .immediate
 
     let store = TestStore(
@@ -184,7 +184,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    XCTAssertNoDifference(didRegisterForRemoteNotifications, true)
+    await didRegisterForRemoteNotifications.modify { XCTAssertNoDifference($0, true) }
   }
 
   func testNotifications_DenyAccess() async {

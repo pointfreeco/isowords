@@ -14,8 +14,8 @@ extension ApiClient {
     middleware: @escaping Middleware<StatusLineOpen, ResponseEnded, Prelude.Unit, Data>,
     router: ServerRouter
   ) {
+    // TODO: Fix sync interfaces or migrate fully to async
     var currentPlayer: CurrentPlayerEnvelope?
-
     var baseUrl = URL(string: "/")!
 
     actor Session {
