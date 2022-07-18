@@ -232,36 +232,6 @@ extension LocalPlayerClient {
 
 extension TurnBasedMatchClient {
   public static let live = Self(
-    endMatchInTurn: { request in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: request.matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.failure(error ?? invalidStateError))
-            return
-          }
-          match.message = request.message
-          match.participants.forEach { participant in
-            if participant.status == .active, let player = participant.player {
-              let matchOutcome =
-                request.localPlayerMatchOutcome == .tied
-                ? .tied
-                : player.gamePlayerID == request.localPlayerId.rawValue
-                  ? request.localPlayerMatchOutcome
-                  : request.localPlayerMatchOutcome == .won
-                    ? .lost
-                    : .won
-              participant.matchOutcome = matchOutcome
-              if match.currentParticipant == participant {
-                match.currentParticipant?.matchOutcome = matchOutcome
-              }
-            }
-          }
-          match.endMatchInTurn(withMatch: request.matchData) { error in
-            callback(error.map(Result.failure) ?? .success(()))
-          }
-        }
-      }
-    },
     endMatchInTurnAsync: { request in
       let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
       match.message = request.message
@@ -283,23 +253,6 @@ extension TurnBasedMatchClient {
       }
       try await match.endMatchInTurn(withMatch: request.matchData)
     },
-    endTurn: { request in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: request.matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.failure(error ?? invalidStateError))
-            return
-          }
-          match.message = request.message
-          match.endTurn(
-            withNextParticipants: match.participants
-              .filter { $0.player?.gamePlayerID != match.currentParticipant?.player?.gamePlayerID },
-            turnTimeout: GKTurnTimeoutDefault,
-            match: request.matchData
-          ) { error in callback(error.map(Result.failure) ?? .success(())) }
-        }
-      }
-    },
     endTurnAsync: { request in
       let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
       match.message = request.message
@@ -310,50 +263,11 @@ extension TurnBasedMatchClient {
         match: request.matchData
       )
     },
-    load: { matchId in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
-          callback(
-            match.map { .success(.init(rawValue: $0)) }
-              ?? .failure(error ?? invalidStateError)
-          )
-        }
-      }
-    },
     loadAsync: { matchId in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       return try await TurnBasedMatch(rawValue: GKTurnBasedMatch.load(withID: matchId.rawValue))
     },
-    loadMatches: {
-      .future { callback in
-        GKTurnBasedMatch.loadMatches { matches, error in
-          callback(
-            matches.map { .success($0.map(TurnBasedMatch.init(rawValue:))) }
-              ?? .failure(error ?? invalidStateError)
-          )
-        }
-      }
-    },
-    loadMatchesAsync: {
-      try await GKTurnBasedMatch.loadMatches().map(TurnBasedMatch.init(rawValue:))
-    },
-    participantQuitInTurn: { matchId, matchData in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.success(error))
-            return
-          }
-          match.participantQuitInTurn(
-            with: .quit,
-            nextParticipants: match.participants
-              .filter { $0.player?.gamePlayerID != match.currentParticipant?.player?.gamePlayerID },
-            turnTimeout: 0,
-            match: matchData
-          ) { callback(.success($0)) }
-        }
-      }
-    },
+    loadMatchesAsync: { try await GKTurnBasedMatch.loadMatches().map(TurnBasedMatch.init) },
     participantQuitInTurnAsync: { matchId, matchData in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       try await match.participantQuitInTurn(
@@ -364,58 +278,13 @@ extension TurnBasedMatchClient {
         match: matchData
       )
     },
-    participantQuitOutOfTurn: { matchId in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.success(error))
-            return
-          }
-          match.participantQuitOutOfTurn(with: .quit) {
-            callback(.success($0))
-          }
-        }
-      }
-    },
     participantQuitOutOfTurnAsync: { matchId in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       try await match.participantQuitOutOfTurn(with: .quit)
     },
-    rematch: { matchId in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.failure(error ?? invalidStateError))
-            return
-          }
-          match.rematch { match, error in
-            callback(
-              match.map { .success(.init(rawValue: $0)) }
-                ?? .failure(error ?? invalidStateError)
-            )
-          }
-        }
-      }
-    },
     rematchAsync: { matchId in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       return try await TurnBasedMatch(rawValue: match.rematch())
-    },
-    remove: { match in
-      .future { callback in
-        guard let turnBasedMatch = match.rawValue
-        else {
-          struct RawValueWasNil: Error {}
-          callback(.failure(RawValueWasNil()))
-          return
-        }
-        turnBasedMatch.remove { error in
-          callback(
-            error.map(Result.failure)
-              ?? .success(())
-          )
-        }
-      }
     },
     removeAsync: { match in
       guard let turnBasedMatch = match.rawValue
@@ -425,37 +294,9 @@ extension TurnBasedMatchClient {
       }
       try await turnBasedMatch.remove()
     },
-    saveCurrentTurn: { matchId, matchData in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.failure(error ?? invalidStateError))
-            return
-          }
-          match.saveCurrentTurn(withMatch: matchData) { error in
-            callback(error.map(Result.failure) ?? .success(()))
-          }
-        }
-      }
-    },
     saveCurrentTurnAsync: { matchId, matchData in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       try await match.saveCurrentTurn(withMatch: matchData)
-    },
-    sendReminder: { request in
-      .future { callback in
-        GKTurnBasedMatch.load(withID: request.matchId.rawValue) { match, error in
-          guard let match = match else {
-            callback(.failure(error ?? invalidStateError))
-            return
-          }
-          match.sendReminder(
-            to: request.participantsAtIndices.map { match.participants[$0] },
-            localizableMessageKey: request.key,
-            arguments: request.arguments
-          ) { error in callback(error.map(Result.failure) ?? .success(())) }
-        }
-      }
     },
     sendReminderAsync: { request in
       let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)

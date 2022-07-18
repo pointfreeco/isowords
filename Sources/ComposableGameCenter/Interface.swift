@@ -71,25 +71,15 @@ public struct LocalPlayerClient {
 }
 
 public struct TurnBasedMatchClient {
-  @available(*, deprecated) public var endMatchInTurn: (EndMatchInTurnRequest) -> Effect<Void, Error>
   public var endMatchInTurnAsync: @Sendable (EndMatchInTurnRequest) async throws -> Void
-  @available(*, deprecated) public var endTurn: (EndTurnRequest) -> Effect<Void, Error>
   public var endTurnAsync: @Sendable (EndTurnRequest) async throws -> Void
-  @available(*, deprecated) public var load: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
   public var loadAsync : @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
-  @available(*, deprecated) public var loadMatches: () -> Effect<[TurnBasedMatch], Error>
   public var loadMatchesAsync: @Sendable () async throws -> [TurnBasedMatch]
-  @available(*, deprecated) public var participantQuitInTurn: (TurnBasedMatch.Id, Data) -> Effect<Error?, Never>
   public var participantQuitInTurnAsync: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
-  @available(*, deprecated) public var participantQuitOutOfTurn: (TurnBasedMatch.Id) -> Effect<Error?, Never>
   public var participantQuitOutOfTurnAsync: @Sendable (TurnBasedMatch.Id) async throws -> Void
-  @available(*, deprecated) public var rematch: (TurnBasedMatch.Id) -> Effect<TurnBasedMatch, Error>
   public var rematchAsync: @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
-  @available(*, deprecated) public var remove: (TurnBasedMatch) -> Effect<Void, Error>
   public var removeAsync: @Sendable (TurnBasedMatch) async throws -> Void
-  @available(*, deprecated) public var saveCurrentTurn: (TurnBasedMatch.Id, Data) -> Effect<Void, Error>
   public var saveCurrentTurnAsync: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
-  @available(*, deprecated) public var sendReminder: (SendReminderRequest) -> Effect<Void, Error>
   public var sendReminderAsync: @Sendable (SendReminderRequest) async throws -> Void
 
   public struct EndMatchInTurnRequest: Equatable {

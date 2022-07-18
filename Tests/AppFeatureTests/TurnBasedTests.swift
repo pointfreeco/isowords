@@ -92,12 +92,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
-          didSaveCurrentTurn = true
-          return .none
-        }
         $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in didSaveCurrentTurn = true }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in }
@@ -349,7 +344,6 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }
@@ -461,7 +455,6 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
-        $0.gameCenter.turnBasedMatch.loadMatches = { .init(value: []) }
         $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }
@@ -702,7 +695,6 @@ class TurnBasedTests: XCTestCase {
       $0.gameCenter.localPlayer.localPlayer = {
         update(.authenticated) { $0.player = localParticipant.player! }
       }
-      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
       $0.gameCenter.turnBasedMatch.rematchAsync = {
         didRematchWithId = $0
         return newMatch
@@ -807,7 +799,6 @@ class TurnBasedTests: XCTestCase {
     let environment = update(AppEnvironment.failing) {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.gameCenter.showNotificationBanner = { notificationBannerRequest = $0 }
-      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
@@ -867,7 +858,6 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.gameCenter.turnBasedMatch.loadMatches = { .none }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
