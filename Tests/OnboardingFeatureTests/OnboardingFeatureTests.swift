@@ -21,7 +21,7 @@ class OnboardingFeatureTests: XCTestCase {
     environment.feedbackGenerator = .noop
     environment.mainRunLoop = .immediate
     environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    environment.userDefaults.setBoolAsync = { value, key in
+    environment.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
       isFirstLaunchOnboardingKeySet = true
@@ -317,7 +317,7 @@ class OnboardingFeatureTests: XCTestCase {
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return true
     }
-    environment.userDefaults.setBoolAsync = { value, key in
+    environment.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
       isFirstLaunchOnboardingKeySet = true
@@ -355,7 +355,7 @@ class OnboardingFeatureTests: XCTestCase {
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return false
     }
-    environment.userDefaults.setBoolAsync = { value, key in
+    environment.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
       isFirstLaunchOnboardingKeySet = true

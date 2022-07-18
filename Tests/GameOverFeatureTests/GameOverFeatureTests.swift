@@ -275,7 +275,7 @@ class GameOverFeatureTests: XCTestCase {
       await requestReviewCount.modify { $0 += 1 }
     }
     environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
-    environment.userDefaults.setDoubleAsync = { double, key in
+    environment.userDefaults.setDouble = { double, key in
       if key == "last-review-request-timeinterval" {
         await lastReviewRequestTimeIntervalSet.set(double)
       }

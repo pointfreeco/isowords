@@ -24,7 +24,7 @@ extension AppEnvironment {
     $0.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")
     $0.userDefaults.override(double: 0, forKey: "installationTimeKey")
     let defaults = $0.userDefaults
-    $0.userDefaults.setDoubleAsync = { _, _ in }
+    $0.userDefaults.setDouble = { _, _ in }
     $0.userNotifications.delegateAsync = { .finished }
     $0.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)

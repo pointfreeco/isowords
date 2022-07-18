@@ -99,7 +99,7 @@ class TurnBasedTests: XCTestCase {
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
         $0.serverConfig.refresh = { .init() }
-        $0.userDefaults.setIntegerAsync = { _, _ in }
+        $0.userDefaults.setInteger = { _, _ in }
         $0.timeZone = { .newYork }
       }
     )
@@ -160,7 +160,6 @@ class TurnBasedTests: XCTestCase {
     store.environment.userDefaults.setInteger = { int, key in
       XCTAssertNoDifference(int, 1)
       XCTAssertNoDifference(key, "multiplayerOpensCount")
-      return .none
     }
     let gameTask = await store.send(.currentGame(.game(.task)))
 

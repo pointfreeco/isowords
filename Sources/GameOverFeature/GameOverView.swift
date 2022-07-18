@@ -1034,7 +1034,7 @@ extension GameOverEnvironment {
       && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
     {
       await self.storeKit.requestReview()
-      await self.userDefaults.setDoubleAsync(
+      await self.userDefaults.setDouble(
         self.mainRunLoop.now.date.timeIntervalSince1970,
         lastReviewRequestTimeIntervalKey
       )
