@@ -10,5 +10,5 @@ public func registerForRemoteNotificationsAsync(
   let settings = await userNotifications.getNotificationSettings()
   guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
   else { return }
-  await remoteNotifications.registerAsync()
+  await remoteNotifications.register()
 }

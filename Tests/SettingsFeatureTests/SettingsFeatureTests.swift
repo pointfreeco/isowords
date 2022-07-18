@@ -71,7 +71,7 @@ class SettingsFeatureTests: XCTestCase {
       .init(authorizationStatus: .notDetermined)
     }
     environment.userNotifications.requestAuthorizationAsync = { _ in true }
-    environment.remoteNotifications.registerAsync = { didRegisterForRemoteNotifications = true }
+    environment.remoteNotifications.register = { didRegisterForRemoteNotifications = true }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -146,7 +146,6 @@ class SettingsFeatureTests: XCTestCase {
     environment.backgroundQueue = .immediate
     environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
-    environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
     environment.userNotifications.getNotificationSettings = {
@@ -244,7 +243,6 @@ class SettingsFeatureTests: XCTestCase {
     environment.backgroundQueue = .immediate
     environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = mainQueue.eraseToAnyScheduler()
-    environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
     environment.userNotifications.getNotificationSettings = {

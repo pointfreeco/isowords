@@ -17,7 +17,7 @@ class RemoteNotificationsTests: XCTestCase {
 
     var environment = AppEnvironment.didFinishLaunching
     environment.build.number = { 80 }
-    environment.remoteNotifications.registerAsync = {
+    environment.remoteNotifications.register = {
       await didRegisterForRemoteNotifications.set(true)
     }
     environment.userNotifications.getNotificationSettings = {

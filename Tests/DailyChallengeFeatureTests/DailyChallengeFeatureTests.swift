@@ -162,7 +162,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       .init(authorizationStatus: .authorized)
     }
     environment.userNotifications.requestAuthorizationAsync = { _ in true }
-    environment.remoteNotifications.registerAsync = { didRegisterForRemoteNotifications = true }
+    environment.remoteNotifications.register = { didRegisterForRemoteNotifications = true }
     environment.mainRunLoop = .immediate
 
     let store = TestStore(

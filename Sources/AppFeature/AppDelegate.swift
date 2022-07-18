@@ -74,7 +74,7 @@ let appDelegateReducer = Reducer<
           default:
             return
           }
-          await environment.remoteNotifications.registerAsync()
+          await environment.remoteNotifications.register()
         }
 
         group.addTask {

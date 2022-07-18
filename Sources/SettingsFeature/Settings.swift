@@ -576,7 +576,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case let .userNotificationAuthorizationResponse(.success(granted)):
       state.enableNotifications = granted
       return granted
-        ? .fireAndForget { await environment.remoteNotifications.registerAsync() }
+        ? .fireAndForget { await environment.remoteNotifications.register() }
         : .none
 
     case .userNotificationAuthorizationResponse:
