@@ -474,26 +474,24 @@ extension TurnBasedMatchmakerViewControllerClient {
     actor Presenter {
       var viewController: GKTurnBasedMatchmakerViewController?
 
-      func present(showExistingMatches: Bool) async {
+      func present(showExistingMatches: Bool) async throws {
         final class Delegate: NSObject, GKTurnBasedMatchmakerViewControllerDelegate {
-          let continuation: AsyncStream<DelegateEvent>.Continuation
+          let continuation: AsyncThrowingStream<Void, Error>.Continuation
 
-          init(continuation: AsyncStream<DelegateEvent>.Continuation) {
+          init(continuation: AsyncThrowingStream<Void, Error>.Continuation) {
             self.continuation = continuation
           }
 
           func turnBasedMatchmakerViewControllerWasCancelled(
             _ viewController: GKTurnBasedMatchmakerViewController
           ) {
-            self.continuation.yield(.wasCancelled)
-            self.continuation.finish()
+            self.continuation.finish(throwing: CancellationError())
           }
 
           func turnBasedMatchmakerViewController(
             _ viewController: GKTurnBasedMatchmakerViewController, didFailWithError error: Error
           ) {
-            self.continuation.yield(.didFailWithError(error as NSError))
-            self.continuation.finish()
+            self.continuation.finish(throwing: error)
           }
         }
 
@@ -511,12 +509,13 @@ extension TurnBasedMatchmakerViewControllerClient {
         }
         self.viewController = viewController
 
-        _ = await AsyncStream<DelegateEvent> { continuation in
+        _ = try await AsyncThrowingStream<Void, Error> { continuation in
           Task {
             await MainActor.run {
               let delegate = Delegate(continuation: continuation)
               continuation.onTermination = { _ in
                 _ = delegate
+                Task { await self.dismiss() }
               }
               viewController.turnBasedMatchmakerDelegate = delegate
               viewController.present()
@@ -536,7 +535,7 @@ extension TurnBasedMatchmakerViewControllerClient {
     let presenter = Presenter()
 
     return Self(
-      present: { await presenter.present(showExistingMatches: $0) },
+      present: { try await presenter.present(showExistingMatches: $0) },
       dismiss: { await presenter.dismiss() }
     )
   }

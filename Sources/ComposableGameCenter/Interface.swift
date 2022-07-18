@@ -25,10 +25,6 @@ public struct GameCenterClient {
 public struct GameCenterViewControllerClient {
   public var present: @Sendable () async -> Void
   public var dismiss: @Sendable () async -> Void
-
-  public enum DelegateEvent: Equatable {
-    case didFinish
-  }
 }
 
 public struct LocalPlayerClient {
@@ -158,11 +154,6 @@ public struct TurnBasedMatchClient {
 public struct TurnBasedMatchmakerViewControllerClient {
   public var present: @Sendable (_ showExistingMatches: Bool) async throws -> Void
   public var dismiss: @Sendable () async -> Void
-
-  public enum DelegateEvent: Equatable {
-    case wasCancelled
-    case didFailWithError(NSError)
-  }
 
   public func present(showExistingMatches: Bool = true) async throws {
     try await self.present(showExistingMatches)
