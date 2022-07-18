@@ -10,7 +10,7 @@ class MultiplayerFeatureTests: XCTestCase {
 
     var environment = MultiplayerEnvironment.failing
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatchmakerViewController.present = { _ in
+    environment.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
       await didPresentMatchmakerViewController.set(true)
     }
 

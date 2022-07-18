@@ -58,7 +58,7 @@ class SettingsFeatureTests: XCTestCase {
   // MARK: - Notifications
 
   func testEnableNotifications_NotDetermined_GrantAuthorization() async {
-    var didRegisterForRemoteNotifications = false
+    let didRegisterForRemoteNotifications = SendableState(false)
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
@@ -71,7 +71,7 @@ class SettingsFeatureTests: XCTestCase {
       .init(authorizationStatus: .notDetermined)
     }
     environment.userNotifications.requestAuthorization = { _ in true }
-    environment.remoteNotifications.register = { didRegisterForRemoteNotifications = true }
+    environment.remoteNotifications.register = { await didRegisterForRemoteNotifications.set(true) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -95,7 +95,7 @@ class SettingsFeatureTests: XCTestCase {
 
     await store.receive(.userNotificationAuthorizationResponse(.success(true)))
 
-    XCTAssert(didRegisterForRemoteNotifications)
+    await didRegisterForRemoteNotifications.modify { XCTAssert($0) }
 
     await task.cancel()
   }
@@ -177,7 +177,7 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testNotifications_PreviouslyDenied() async {
-    var openedUrl: URL!
+    let openedUrl = SendableState<URL?>()
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
@@ -185,7 +185,7 @@ class SettingsFeatureTests: XCTestCase {
       "settings:isowords//isowords/settings"
     }
     environment.applicationClient.open = { url, _ in
-      openedUrl = url
+      await openedUrl.set(url)
       return true
     }
     environment.backgroundQueue = .immediate
@@ -219,7 +219,9 @@ class SettingsFeatureTests: XCTestCase {
 
     await store.send(.openSettingButtonTapped)
 
-    XCTAssertNoDifference(openedUrl, URL(string: "settings:isowords//isowords/settings")!)
+    await openedUrl.modify {
+      XCTAssertNoDifference($0, URL(string: "settings:isowords//isowords/settings")!)
+    }
 
     await store.send(.set(\.$alert, nil)) {
       $0.alert = nil
@@ -285,10 +287,10 @@ class SettingsFeatureTests: XCTestCase {
   // MARK: - Sounds
 
   func testSetMusicVolume() async {
-    var setMusicVolume: Float!
+    let setMusicVolume = SendableState<Float?>()
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForMusic = { setMusicVolume = $0 }
+    environment.audioPlayer.setGlobalVolumeForMusic = { await setMusicVolume.set($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -300,14 +302,14 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.musicVolume = 0.5
     }
 
-    XCTAssertNoDifference(setMusicVolume, 0.5)
+    await setMusicVolume.modify { XCTAssertNoDifference($0, 0.5) }
   }
 
   func testSetSoundEffectsVolume() async {
-    var setSoundEffectsVolume: Float!
+    let setSoundEffectsVolume = SendableState<Float?>()
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForSoundEffects = { setSoundEffectsVolume = $0 }
+    environment.audioPlayer.setGlobalVolumeForSoundEffects = { await setSoundEffectsVolume.set($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -319,16 +321,16 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
-    XCTAssertNoDifference(setSoundEffectsVolume, 0.5)
+    await setSoundEffectsVolume.modify { XCTAssertNoDifference($0, 0.5) }
   }
 
   // MARK: - Appearance
 
   func testSetColorScheme() async {
-    var overriddenUserInterfaceStyle: UIUserInterfaceStyle!
+    let overriddenUserInterfaceStyle = SendableState<UIUserInterfaceStyle?>()
 
     var environment = self.defaultEnvironment
-    environment.setUserInterfaceStyle = { overriddenUserInterfaceStyle = $0 }
+    environment.setUserInterfaceStyle = { await overriddenUserInterfaceStyle.set($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -339,19 +341,19 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.$userSettings.colorScheme, .light)) {
       $0.userSettings.colorScheme = .light
     }
-    XCTAssertNoDifference(overriddenUserInterfaceStyle, .light)
+    await overriddenUserInterfaceStyle.modify { XCTAssertNoDifference($0, .light) }
 
     await store.send(.set(\.$userSettings.colorScheme, .system)) {
       $0.userSettings.colorScheme = .system
     }
-    XCTAssertNoDifference(overriddenUserInterfaceStyle, .unspecified)
+    await overriddenUserInterfaceStyle.modify { XCTAssertNoDifference($0, .unspecified) }
   }
 
   func testSetAppIcon() async {
-    var overriddenIconName: String!
+    let overriddenIconName = SendableState<String?>()
 
     var environment = self.defaultEnvironment
-    environment.applicationClient.setAlternateIconName = { overriddenIconName = $0 }
+    environment.applicationClient.setAlternateIconName = { await overriddenIconName.set($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -362,15 +364,15 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.$userSettings.appIcon, .icon2)) {
       $0.userSettings.appIcon = .icon2
     }
-    XCTAssertNoDifference(overriddenIconName, "icon-2")
+    await overriddenIconName.modify { XCTAssertNoDifference($0, "icon-2") }
   }
 
   func testUnsetAppIcon() async {
-    var overriddenIconName: String?
+    let overriddenIconName = SendableState<String?>()
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { "icon-2" }
-    environment.applicationClient.setAlternateIconName = { overriddenIconName = $0 }
+    environment.applicationClient.setAlternateIconName = { await overriddenIconName.set($0) }
     environment.backgroundQueue = .immediate
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
@@ -395,7 +397,7 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.$userSettings.appIcon, nil)) {
       $0.userSettings.appIcon = nil
     }
-    XCTAssertNoDifference(overriddenIconName, nil)
+    await overriddenIconName.modify { XCTAssertNoDifference($0, nil) }
 
     await task.cancel()
   }
@@ -403,12 +405,12 @@ class SettingsFeatureTests: XCTestCase {
   // MARK: - Developer
 
   func testSetApiBaseUrl() async {
-    var setBaseUrl: URL!
-    var didLogout = false
+    let setBaseUrl = SendableState<URL?>()
+    let didLogout = SendableState(false)
 
     var environment = SettingsEnvironment.failing
-    environment.apiClient.logout = { didLogout = true }
-    environment.apiClient.setBaseUrl = { setBaseUrl = $0 }
+    environment.apiClient.logout = { await didLogout.set(true) }
+    environment.apiClient.setBaseUrl = { await setBaseUrl.set($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -419,8 +421,8 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.$developer.currentBaseUrl, .localhost)) {
       $0.developer.currentBaseUrl = .localhost
     }
-    XCTAssertNoDifference(setBaseUrl, URL(string: "http://localhost:9876")!)
-    XCTAssertNoDifference(didLogout, true)
+    await setBaseUrl.modify { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
+    await didLogout.modify { XCTAssertNoDifference($0, true) }
   }
 
   func testToggleEnableCubeShadow() async {
