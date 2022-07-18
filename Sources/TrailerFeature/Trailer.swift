@@ -133,23 +133,15 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
               for: moveNubDelay(characterIndex: characterIndex)
             )
 
-            let duration = Double.random(
-              in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)
+            try await environment.mainQueue.sleep(
+              for: .seconds(.random(in: (0.3*moveNubToFaceDuration)...(0.7*moveNubToFaceDuration)))
             )
-            await withThrowingTaskGroup(of: Void.self) { group in
-              // Press the nub on the first character
-              if characterIndex == 0 {
-                group.addTask {
-                  try await environment.mainQueue.sleep(for: .seconds(duration))
-                  await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
-                }
-              }
-              // Select the cube face
-              group.addTask {
-                try await environment.mainQueue.sleep(for: .seconds(duration))
-                await send(.game(.tap(.began, face)), animation: .default)
-              }
+            // Press the nub on the first character
+            if characterIndex == 0 {
+              await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
             }
+            // Select the cube face
+            await send(.game(.tap(.began, face)), animation: .default)
           }
 
           // Release the  nub when the last character is played
