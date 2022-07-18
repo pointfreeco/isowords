@@ -4,7 +4,7 @@ import UIKit
 extension Send {
   public func callAsFunction(
     _ action: Action,
-    withDuration duration: TimeInterval,
+    animateWithDuration duration: TimeInterval,
     delay: TimeInterval = 0,
     options animationOptions: UIView.AnimationOptions = []
   ) {

@@ -126,7 +126,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             // Move the nub to the face being played
             await send(
               .set(\.$nub.location, .face(face)),
-              withDuration: moveNubToFaceDuration,
+              animateWithDuration: moveNubToFaceDuration,
               options: .curveEaseInOut
             )
             try await environment.mainQueue.sleep(
@@ -141,7 +141,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
               if characterIndex == 0 {
                 group.addTask {
                   try await environment.mainQueue.sleep(for: .seconds(duration))
-                  await send(.set(\.$nub.isPressed, true), withDuration: 0.3)
+                  await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
                 }
               }
               // Select the cube face
@@ -153,13 +153,13 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           }
 
           // Release the  nub when the last character is played
-          await send(.set(\.$nub.isPressed, false), withDuration: 0.3)
+          await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
 
           // Move the nub to the submit button
           try await environment.mainQueue.sleep(for: .seconds(0.3))
           await send(
             .set(\.$nub.location, .submitButton),
-            withDuration: moveNubToSubmitButtonDuration,
+            animateWithDuration: moveNubToSubmitButtonDuration,
             options: .curveEaseInOut
           )
 
@@ -177,13 +177,13 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           try await environment.mainQueue.sleep(for: .seconds(0.1))
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
-              await send(.set(\.$nub.isPressed, true), withDuration: 0.3)
+              await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
             }
             group.addTask {
               try await environment.mainQueue.sleep(for: .seconds(0.2))
               await send(.game(.submitButtonTapped(reaction: nil)))
               try await environment.mainQueue.sleep(for: .seconds(0.3))
-              await send(.set(\.$nub.isPressed, false), withDuration: 0.3 )
+              await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3 )
             }
           }
         }
@@ -192,7 +192,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
         try await environment.mainQueue.sleep(for: .seconds(0.3))
         await send(
           .set(\.$nub.location, .offScreenBottom),
-          withDuration: moveNubOffScreenDuration,
+          animateWithDuration: moveNubOffScreenDuration,
           options: .curveEaseInOut
         )
 
