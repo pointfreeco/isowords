@@ -84,11 +84,8 @@ public let upgradeInterstitialReducer = Reducer<
     return .none
 
   case .maybeLaterButtonTapped:
-    return .task {
-      await Task.cancel(id: TimerID.self)
-      return .delegate(.close)
-    }
-    .animation()
+    return .task { .delegate(.close) }
+      .animation()
 
   case let .paymentTransaction(event):
     switch event {
@@ -108,10 +105,7 @@ public let upgradeInterstitialReducer = Reducer<
       identifier: environment.serverConfig.config().productIdentifiers.fullGame
     )
     else { return .none }
-    return .task {
-      await Task.cancel(id: TimerID.self)
-      return .delegate(.fullGamePurchased)
-    }
+    return .task { .delegate(.fullGamePurchased) }
 
   case .task:
     state.upgradeInterstitialDuration =
@@ -164,6 +158,7 @@ public let upgradeInterstitialReducer = Reducer<
     }
   }
 }
+.debug()
 
 public struct UpgradeInterstitialView: View {
   @Environment(\.colorScheme) var colorScheme
