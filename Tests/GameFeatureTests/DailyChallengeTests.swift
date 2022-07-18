@@ -29,7 +29,7 @@ class DailyChallengeTests: XCTestCase {
 
     let environment = update(GameEnvironment.failing) {
       $0.audioPlayer.stop = { _ in }
-      $0.database.saveGameAsync = { _ in didSave = true }
+      $0.database.saveGame = { _ in didSave = true }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
@@ -79,7 +79,7 @@ class DailyChallengeTests: XCTestCase {
     var didSave = false
     let environment = update(GameEnvironment.failing) {
       $0.audioPlayer.stop = { _ in }
-      $0.database.saveGameAsync = { _ in didSave = true }
+      $0.database.saveGame = { _ in didSave = true }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate

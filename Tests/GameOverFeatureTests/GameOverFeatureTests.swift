@@ -39,7 +39,7 @@ class GameOverFeatureTests: XCTestCase {
         ])
       }
     )
-    environment.database.playedGamesCountAsync = { _ in 0 }
+    environment.database.playedGamesCount = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = {
@@ -152,7 +152,7 @@ class GameOverFeatureTests: XCTestCase {
         ])
       }
     )
-    environment.database.playedGamesCountAsync = { _ in 0 }
+    environment.database.playedGamesCount = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = {
@@ -213,7 +213,7 @@ class GameOverFeatureTests: XCTestCase {
       ),
       withResponse: { try await OK(["turnBased": true]) }
     )
-    environment.database.playedGamesCountAsync = { _ in 10 }
+    environment.database.playedGamesCount = { _ in 10 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = {
@@ -260,7 +260,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     var environment = GameOverEnvironment.failing
-    environment.database.fetchStatsAsync = {
+    environment.database.fetchStats = {
       LocalDatabaseClient.Stats(
         averageWordLength: nil,
         gamesPlayed: 1,
@@ -295,7 +295,7 @@ class GameOverFeatureTests: XCTestCase {
     await lastReviewRequestTimeIntervalSet.modify { XCTAssertNoDifference($0, nil) }
 
     // Assert that once the player plays enough games then a review request is made
-    store.environment.database.fetchStatsAsync = {
+    store.environment.database.fetchStats = {
       .init(
         averageWordLength: nil,
         gamesPlayed: 3,
@@ -345,7 +345,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
-    environment.database.playedGamesCountAsync = { _ in 6 }
+    environment.database.playedGamesCount = { _ in 6 }
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(
@@ -388,7 +388,7 @@ class GameOverFeatureTests: XCTestCase {
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
-    environment.database.playedGamesCountAsync = { _ in 5 }
+    environment.database.playedGamesCount = { _ in 5 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.override(

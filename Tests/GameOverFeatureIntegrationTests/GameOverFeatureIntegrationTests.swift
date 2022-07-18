@@ -45,7 +45,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       middleware: siteMiddleware(environment: serverEnvironment),
       router: .test
     )
-    environment.database.playedGamesCountAsync = { _ in 0 }
+    environment.database.playedGamesCount = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.userNotifications.getNotificationSettings = {

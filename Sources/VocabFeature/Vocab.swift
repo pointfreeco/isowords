@@ -122,7 +122,7 @@ public let vocabReducer = Reducer<
 
     case .task:
       return .task {
-        await .vocabResponse(TaskResult { try await environment.database.fetchVocabAsync() })
+        await .vocabResponse(TaskResult { try await environment.database.fetchVocab() })
       }
 
     case let .vocabResponse(.success(vocab)):
@@ -137,7 +137,7 @@ public let vocabReducer = Reducer<
         await .gamesResponse(
           TaskResult {
             .init(
-              games: try await environment.database.fetchGamesForWordAsync(word.letters),
+              games: try await environment.database.fetchGamesForWord(word.letters),
               word: word.letters
             )
           }

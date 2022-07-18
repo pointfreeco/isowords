@@ -163,7 +163,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             state.game = newGame
 
             return .fireAndForget {
-              try await environment.database.saveGameAsync(.init(gameState: newGame))
+              try await environment.database.saveGame(.init(gameState: newGame))
             }
 
           case let .gameCenter(

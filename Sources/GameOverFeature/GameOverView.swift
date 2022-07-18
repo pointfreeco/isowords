@@ -355,7 +355,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           group.addTask {
             try await environment.mainRunLoop.sleep(for: .seconds(1))
             let playedGamesCount = try await environment.database
-              .playedGamesCountAsync(.init(gameContext: completedGame.gameContext))
+              .playedGamesCount(.init(gameContext: completedGame.gameContext))
             let isFullGamePurchased =
               await environment.apiClient.currentPlayerAsync()?.appleReceipt != nil
             guard
@@ -1021,7 +1021,7 @@ extension CompletedMatch {
 
 extension GameOverEnvironment {
   func requestReviewAsync() async throws {
-    let stats = try await self.database.fetchStatsAsync()
+    let stats = try await self.database.fetchStats()
     let hasRequestedReviewBefore =
       self.userDefaults
       .doubleForKey(lastReviewRequestTimeIntervalKey) != 0

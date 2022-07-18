@@ -11,7 +11,7 @@ extension AppEnvironment {
   static let didFinishLaunching = update(failing) {
     $0.audioPlayer.load = { _ in }
     $0.backgroundQueue = .immediate
-    $0.database.migrateAsync = {}
+    $0.database.migrate = {}
     $0.dictionary.load = { _ in false }
     $0.fileClient.load = { @Sendable _ in try await Task.never() }
     $0.gameCenter.localPlayer.authenticate = {}

@@ -116,7 +116,7 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
 
     case .onAppear:
       return .task {
-        await .statsResponse(TaskResult { try await environment.database.fetchStatsAsync() })
+        await .statsResponse(TaskResult { try await environment.database.fetchStats() })
       }
 
     case let .statsResponse(.failure(error)):

@@ -161,7 +161,7 @@ class PersistenceTests: XCTestCase {
       environment: update(.failing) {
         $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
-        $0.database.saveGameAsync = { _ in didArchiveGame = true }
+        $0.database.saveGame = { _ in didArchiveGame = true }
         $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
         $0.fileClient.save = { _, data in saves.append(data) }
         $0.mainQueue = .immediate
@@ -217,7 +217,7 @@ class PersistenceTests: XCTestCase {
       reducer: appReducer,
       environment: update(.failing) {
         $0.audioPlayer.stop = { _ in }
-        $0.database.saveGameAsync = { _ in didArchiveGame = true }
+        $0.database.saveGame = { _ in didArchiveGame = true }
         $0.mainQueue = .immediate
       }
     )

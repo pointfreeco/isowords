@@ -783,7 +783,7 @@ extension GameState {
     switch self.gameContext {
     case .dailyChallenge, .shared, .solo:
       return .fireAndForget { [self] in
-        try await environment.database.saveGameAsync(.init(gameState: self))
+        try await environment.database.saveGame(.init(gameState: self))
       }
 
     case let .turnBased(turnBasedMatch):
@@ -1146,7 +1146,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                       message: "Game over! Let’s see how you did!"
                     )
                   )
-                  try await environment.database.saveGameAsync(completedGame)
+                  try await environment.database.saveGame(completedGame)
                 }
               } else {
                 switch move.type {

@@ -16,26 +16,18 @@ extension LocalDatabaseClient {
       return _db.uncheckedValue.wrappedValue!
     }
     return Self(
-      fetchGamesForWord: { word in .catching { try db().fetchGames(for: word) } },
-      fetchGamesForWordAsync: { try db().fetchGames(for: $0) },
-      fetchStats: .catching { try db().fetchStats() },
-      fetchStatsAsync: { try db().fetchStats() },
-      fetchVocab: .catching { try db().fetchVocab() },
-      fetchVocabAsync: { try db().fetchVocab() },
-      migrate: .catching { try db().migrate() },
-      migrateAsync: { try db().migrate() },
-      playedGamesCount: { gameContext in
-        .catching { try db().playedGamesCount(gameContext: gameContext) }
-      },
-      playedGamesCountAsync: { try db().playedGamesCount(gameContext: $0) },
-      saveGame: { game in .catching { try db().saveGame(game) } },
-      saveGameAsync: { try db().saveGame($0) }
+      fetchGamesForWord: { try db().fetchGames(for: $0) },
+      fetchStats: { try db().fetchStats() },
+      fetchVocab: { try db().fetchVocab() },
+      migrate: { try db().migrate() },
+      playedGamesCount: { try db().playedGamesCount(gameContext: $0) },
+      saveGame: { try db().saveGame($0) }
     )
   }
 
   public static func autoMigratingLive(path: URL) -> Self {
     let client = Self.live(path: path)
-    _ = client.migrate.sink(receiveCompletion: { _ in }, receiveValue: {})
+    Task { try await client.migrate() }
     return client
   }
 }

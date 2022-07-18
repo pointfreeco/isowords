@@ -221,7 +221,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     }
 
     return .run { send in
-      async let migrate: Void = environment.database.migrateAsync()
+      async let migrate: Void = environment.database.migrate()
       if environment.userDefaults.installationTime <= 0 {
         async let setInstallationTime: Void = environment.userDefaults.setInstallationTime(
           environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
