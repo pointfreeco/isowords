@@ -142,7 +142,7 @@ public let cubePreviewReducer = Reducer<
 
           // Press the nub on the first character
           if faceIndex == 0 {
-            await send(.set(\.$nub.isPressed, true), animation: .default)
+            await send(.set(\.$nub.isPressed, true), withDuration: 0.3)
           }
 
           // Select the faces that have been tapped so far
@@ -150,7 +150,7 @@ public let cubePreviewReducer = Reducer<
         }
 
         // Un-press the nub once finished selecting all faces
-        await send(.set(\.$nub.isPressed, false))
+        await send(.set(\.$nub.isPressed, false), withDuration: 0.3)
 
         // Move the nub off the screen
         await send(
