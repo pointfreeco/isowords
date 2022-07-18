@@ -312,7 +312,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
 
         return .merge(
           .fireAndForget {
-            let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
+            let localPlayer = environment.gameCenter.localPlayer.localPlayer()
             let currentParticipantIsLocalPlayer =
               match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 

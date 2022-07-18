@@ -90,7 +90,6 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.endTurn = { didEndTurnWithRequest = $0 }
         $0.gameCenter.turnBasedMatch.loadMatches = { [] }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in didSaveCurrentTurn = true }
@@ -342,7 +341,6 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
         $0.gameCenter.turnBasedMatch.loadMatches = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
@@ -454,7 +452,6 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
         $0.gameCenter.turnBasedMatch.loadMatches = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }

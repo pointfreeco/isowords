@@ -9,7 +9,7 @@ class MultiplayerFeatureTests: XCTestCase {
     let didPresentMatchmakerViewController = SendableState(false)
 
     var environment = MultiplayerEnvironment.failing
-    environment.gameCenter.localPlayer.localPlayerAsync = { .authenticated }
+    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
     environment.gameCenter.turnBasedMatchmakerViewController.present = { _ in
       await didPresentMatchmakerViewController.set(true)
     }
@@ -28,8 +28,8 @@ class MultiplayerFeatureTests: XCTestCase {
     let didPresentAuthentication = SendableState(false)
 
     var environment = MultiplayerEnvironment.failing
-    environment.gameCenter.localPlayer.localPlayerAsync = { .notAuthenticated }
-    environment.gameCenter.localPlayer.presentAuthenticationViewControllerAsync = {
+    environment.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
+    environment.gameCenter.localPlayer.presentAuthenticationViewController = {
       await didPresentAuthentication.set(true)
     }
 

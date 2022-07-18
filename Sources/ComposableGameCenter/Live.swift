@@ -203,15 +203,7 @@ extension LocalPlayerClient {
         }
       },
       localPlayer: { .init(rawValue: localPlayer) },
-      localPlayerAsync: { .init(rawValue: localPlayer) },
-      presentAuthenticationViewController: .run { _ in
-        Self.viewController?.present()
-        return AnyCancellable {
-          Self.viewController?.dismiss()
-          Self.viewController = nil
-        }
-      },
-      presentAuthenticationViewControllerAsync: {
+      presentAuthenticationViewController: {
         await Self.viewController?.present()
         await AsyncStream<Void> { continuation in
           continuation.onTermination = { _ in

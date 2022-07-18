@@ -352,7 +352,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     switch action {
     case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
       return .run { send in
-        let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
+        let localPlayer = environment.gameCenter.localPlayer.localPlayer()
 
         do {
           let match = try await environment.gameCenter.turnBasedMatch.load(matchId)
@@ -710,7 +710,7 @@ extension GameCenterClient {
   fileprivate func loadActiveMatches(
     now: Date
   ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
-    let localPlayer = await self.localPlayer.localPlayerAsync()
+    let localPlayer = self.localPlayer.localPlayer()
     let matches = try await self.turnBasedMatch.loadMatches()
     let activeMatches = matches.activeMatches(for: localPlayer, at: now)
     let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
