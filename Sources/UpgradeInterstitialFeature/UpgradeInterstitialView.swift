@@ -98,8 +98,10 @@ public let upgradeInterstitialReducer = Reducer<
       break
     case .restoreCompletedTransactionsFinished:
       state.isPurchasing = false
-    case .updatedTransactions:
-      break
+    case let .updatedTransactions(transactions):
+      if transactions.contains(where: { $0.error != nil }) {
+        state.isPurchasing = false
+      }
     }
 
     guard event.isFullGamePurchased(
