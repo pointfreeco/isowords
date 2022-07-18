@@ -14,7 +14,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   let scheduler = RunLoop.test
 
   func testUpgrade() async {
-    let paymentAdded = SendableState<SKPayment?>()
+    let paymentAdded = ActorIsolated<String?>(nil)
 
     let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .streamWithContinuation()
@@ -40,7 +40,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.storeKit.addPayment = { await paymentAdded.set($0) }
+    environment.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
     environment.storeKit.observer = { observer.stream }
     environment.storeKit.fetchProducts = { _ in
       .init(
@@ -69,8 +69,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     }
 
     observer.continuation.yield(.updatedTransactions(transactions))
-    await paymentAdded.modify {
-      XCTAssertNoDifference($0?.productIdentifier, "co.pointfree.isowords_testing.full_game")
+    await paymentAdded.withValue {
+      XCTAssertNoDifference($0, "co.pointfree.isowords_testing.full_game")
     }
 
     await store.receive(.paymentTransaction(.updatedTransactions(transactions)))

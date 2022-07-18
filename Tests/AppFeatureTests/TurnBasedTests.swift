@@ -119,8 +119,9 @@ class TurnBasedTests: XCTestCase {
 
     await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
-    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    await store.receive(.home(.matchesLoaded(.success([]))))
+    await store.receive(
+      .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
+    )
 
     await store.send(.home(.multiplayer(.startButtonTapped)))
 
@@ -362,8 +363,9 @@ class TurnBasedTests: XCTestCase {
       $0.home.weekInReview = weekInReview
     }
 
-    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    await store.receive(.home(.matchesLoaded(.success([]))))
+    await store.receive(
+      .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
+    )
 
     listener.continuation
       .yield(.turnBased(.receivedTurnEventForMatch(.inProgress, didBecomeActive: true)))
@@ -471,8 +473,9 @@ class TurnBasedTests: XCTestCase {
       $0.home.weekInReview = weekInReview
     }
     await self.backgroundQueue.advance()
-    await store.receive(.home(.set(\.$hasPastTurnBasedGames, false)))
-    await store.receive(.home(.matchesLoaded(.success([]))))
+    await store.receive(
+      .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
+    )
 
     listener.continuation
       .yield(.turnBased(.receivedTurnEventForMatch(.forfeited, didBecomeActive: true)))

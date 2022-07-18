@@ -155,14 +155,16 @@ class DailyChallengeFeatureTests: XCTestCase {
   }
 
   func testNotifications_GrantAccess() async {
-    let didRegisterForRemoteNotifications = SendableState(false)
+    let didRegisterForRemoteNotifications = ActorIsolated(false)
 
     var environment = DailyChallengeEnvironment.failing
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
     environment.userNotifications.requestAuthorization = { _ in true }
-    environment.remoteNotifications.register = { await didRegisterForRemoteNotifications.set(true) }
+    environment.remoteNotifications.register = {
+      await didRegisterForRemoteNotifications.setValue(true)
+    }
     environment.mainRunLoop = .immediate
 
     let store = TestStore(
@@ -184,7 +186,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    await didRegisterForRemoteNotifications.modify { XCTAssertNoDifference($0, true) }
+    await didRegisterForRemoteNotifications.withValue { XCTAssertNoDifference($0, true) }
   }
 
   func testNotifications_DenyAccess() async {

@@ -6,12 +6,12 @@ import XCTest
 @MainActor
 class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterAuthenticated() async {
-    let didPresentMatchmakerViewController = SendableState(false)
+    let didPresentMatchmakerViewController = ActorIsolated(false)
 
     var environment = MultiplayerEnvironment.failing
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
     environment.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
-      await didPresentMatchmakerViewController.set(true)
+      await didPresentMatchmakerViewController.setValue(true)
     }
 
     let store = TestStore(
@@ -21,16 +21,16 @@ class MultiplayerFeatureTests: XCTestCase {
     )
 
     await store.send(.startButtonTapped)
-    await didPresentMatchmakerViewController.modify { XCTAssertNoDifference($0, true) }
+    await didPresentMatchmakerViewController.withValue { XCTAssertNoDifference($0, true) }
   }
 
   func testStartGame_GameCenterNotAuthenticated() async {
-    let didPresentAuthentication = SendableState(false)
+    let didPresentAuthentication = ActorIsolated(false)
 
     var environment = MultiplayerEnvironment.failing
     environment.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
     environment.gameCenter.localPlayer.presentAuthenticationViewController = {
-      await didPresentAuthentication.set(true)
+      await didPresentAuthentication.setValue(true)
     }
 
     let store = TestStore(
@@ -40,7 +40,7 @@ class MultiplayerFeatureTests: XCTestCase {
     )
 
     await store.send(.startButtonTapped)
-    await didPresentAuthentication.modify { XCTAssertNoDifference($0, true) }
+    await didPresentAuthentication.withValue { XCTAssertNoDifference($0, true) }
   }
 
   func testNavigateToPastGames() async {

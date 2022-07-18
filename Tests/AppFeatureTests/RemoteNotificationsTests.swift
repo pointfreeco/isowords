@@ -12,19 +12,19 @@ import XCTest
 @MainActor
 class RemoteNotificationsTests: XCTestCase {
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
-    let didRegisterForRemoteNotifications = SendableState(false)
-    let requestedAuthorizationOptions: SendableState<UNAuthorizationOptions?> = .init()
+    let didRegisterForRemoteNotifications = ActorIsolated(false)
+    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
 
     var environment = AppEnvironment.didFinishLaunching
     environment.build.number = { 80 }
     environment.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.set(true)
+      await didRegisterForRemoteNotifications.setValue(true)
     }
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
     environment.userNotifications.requestAuthorization = { options in
-      await requestedAuthorizationOptions.set(options)
+      await requestedAuthorizationOptions.setValue(options)
       return true
     }
 
@@ -37,8 +37,8 @@ class RemoteNotificationsTests: XCTestCase {
     // Register remote notifications on .didFinishLaunching
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
-    await requestedAuthorizationOptions.modify { XCTAssertNoDifference($0, [.alert, .sound]) }
-    await didRegisterForRemoteNotifications.modify { XCTAssertTrue($0) }
+    await requestedAuthorizationOptions.withValue { XCTAssertNoDifference($0, [.alert, .sound]) }
+    await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
 
     store.environment.apiClient.override(
       route: .push(
@@ -51,10 +51,10 @@ class RemoteNotificationsTests: XCTestCase {
 
     // Register remote notifications on .didChangeScenePhase(.active)
 
-    await didRegisterForRemoteNotifications.set(false)
+    await didRegisterForRemoteNotifications.setValue(false)
 
     await store.send(.didChangeScenePhase(.active))
-    await didRegisterForRemoteNotifications.modify { XCTAssertTrue($0) }
+    await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
 
     store.environment.apiClient.override(
       route: .push(

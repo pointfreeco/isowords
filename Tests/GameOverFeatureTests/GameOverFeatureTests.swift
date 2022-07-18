@@ -245,8 +245,8 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testRequestReviewOnClose() async {
-    let lastReviewRequestTimeIntervalSet = SendableState<Double?>()
-    let requestReviewCount = SendableState(0)
+    let lastReviewRequestTimeIntervalSet = ActorIsolated<Double?>(nil)
+    let requestReviewCount = ActorIsolated(0)
 
     let completedGame = CompletedGame(
       cubes: .mock,
@@ -272,12 +272,12 @@ class GameOverFeatureTests: XCTestCase {
     }
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.storeKit.requestReview = {
-      await requestReviewCount.modify { $0 += 1 }
+      await requestReviewCount.withValue { $0 += 1 }
     }
     environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
     environment.userDefaults.setDouble = { double, key in
       if key == "last-review-request-timeinterval" {
-        await lastReviewRequestTimeIntervalSet.set(double)
+        await lastReviewRequestTimeIntervalSet.setValue(double)
       }
     }
 
@@ -291,8 +291,8 @@ class GameOverFeatureTests: XCTestCase {
     await store.send(.closeButtonTapped)
     await store.receive(.delegate(.close))
     await self.mainRunLoop.advance()
-    await requestReviewCount.modify { XCTAssertNoDifference($0, 0) }
-    await lastReviewRequestTimeIntervalSet.modify { XCTAssertNoDifference($0, nil) }
+    await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
+    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
 
     // Assert that once the player plays enough games then a review request is made
     store.environment.database.fetchStats = {
@@ -307,15 +307,15 @@ class GameOverFeatureTests: XCTestCase {
     }
     await store.send(.closeButtonTapped).finish()
     await store.receive(.delegate(.close))
-    await requestReviewCount.modify { XCTAssertNoDifference($0, 1) }
-    await lastReviewRequestTimeIntervalSet.modify { XCTAssertNoDifference($0, 0) }
+    await requestReviewCount.withValue { XCTAssertNoDifference($0, 1) }
+    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
     await self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     await store.send(.closeButtonTapped).finish()
     await store.receive(.delegate(.close))
-    await requestReviewCount.modify { XCTAssertNoDifference($0, 2) }
-    await lastReviewRequestTimeIntervalSet.modify { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
+    await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
+    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
   }
 
   func testAutoCloseWhenNoWordsPlayed() async throws {

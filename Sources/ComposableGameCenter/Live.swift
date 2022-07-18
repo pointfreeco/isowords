@@ -84,7 +84,7 @@
       var localPlayer: GKLocalPlayer { .local }
 
       return Self(
-        // TODO: Used to use `shareReplay(1)` here. Bring back using some local `SendableState`?
+        // TODO: Used to use `shareReplay(1)` here. Bring back using some local `ActorIsolated`?
         authenticate: {
           _ = try await AsyncThrowingStream<Void, Error> { continuation in
             localPlayer.authenticateHandler = { viewController, error in
