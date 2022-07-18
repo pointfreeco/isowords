@@ -135,13 +135,7 @@ extension ApiClient {
       baseUrlAsync: { await session.baseUrl },
       currentPlayer: { currentPlayer },
       currentPlayerAsync: { await session.currentPlayer },
-      logout: {
-        .fireAndForget {
-          currentPlayer = nil
-          Task { await session.logout() }
-        }
-      },
-      logoutAsync: { await session.logout() },
+      logout: { await session.logout() },
       refreshCurrentPlayer: {
         ApiClientLive.apiRequest(
           accessToken: currentPlayer?.player.accessToken,

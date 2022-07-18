@@ -119,13 +119,7 @@ extension ApiClient {
       baseUrlAsync: { await session.baseUrl },
       currentPlayer: { currentPlayer },
       currentPlayerAsync: { await session.currentPlayer },
-      logout: {
-        .fireAndForget {
-          currentPlayer = nil
-          Task { await session.logout() }
-        }
-      },
-      logoutAsync: { await session.logout() },
+      logout: { await session.logout() },
       refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
       request: { try await session.request(route: $0) },

@@ -409,7 +409,7 @@ class SettingsFeatureTests: XCTestCase {
     var didLogout = false
 
     var environment = SettingsEnvironment.failing
-    environment.apiClient.logoutAsync = { didLogout = true }
+    environment.apiClient.logout = { didLogout = true }
     environment.apiClient.setBaseUrlAsync = { setBaseUrl = $0 }
 
     let store = TestStore(

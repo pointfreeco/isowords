@@ -307,7 +307,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
     case .binding(\.$developer.currentBaseUrl):
       return .fireAndForget { [url = state.developer.currentBaseUrl.url] in
         await environment.apiClient.setBaseUrlAsync(url)
-        await environment.apiClient.logoutAsync()
+        await environment.apiClient.logout()
       }
 
     case .binding(\.$enableNotifications):

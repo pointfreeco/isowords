@@ -11,8 +11,7 @@ public struct ApiClient {
   public var baseUrlAsync: @Sendable () async -> URL
   @available(*, deprecated) public var currentPlayer: () -> CurrentPlayerEnvelope?
   public var currentPlayerAsync: @Sendable () async -> CurrentPlayerEnvelope?
-  @available(*, deprecated) public var logout: () -> Effect<Never, Never>
-  public var logoutAsync: @Sendable () async -> Void
+  public var logout: @Sendable () async -> Void
   @available(*, deprecated) public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
   public var refreshCurrentPlayerAsync: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
@@ -27,8 +26,7 @@ public struct ApiClient {
     baseUrlAsync: @escaping @Sendable () async -> URL,
     currentPlayer: @escaping () -> CurrentPlayerEnvelope?,
     currentPlayerAsync: @escaping @Sendable () async -> CurrentPlayerEnvelope?,
-    logout: @escaping () -> Effect<Never, Never>,
-    logoutAsync: @escaping @Sendable () async -> Void,
+    logout: @escaping @Sendable () async -> Void,
     refreshCurrentPlayer: @escaping () -> Effect<CurrentPlayerEnvelope, ApiError>,
     refreshCurrentPlayerAsync: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
     request: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
@@ -42,7 +40,6 @@ public struct ApiClient {
     self.currentPlayer = currentPlayer
     self.currentPlayerAsync = currentPlayerAsync
     self.logout = logout
-    self.logoutAsync = logoutAsync
     self.refreshCurrentPlayer = refreshCurrentPlayer
     self.refreshCurrentPlayerAsync = refreshCurrentPlayerAsync
     self.request = request
@@ -149,8 +146,7 @@ public struct ApiClient {
       baseUrlAsync: XCTUnimplemented("\(Self.self).baseUrlAsync", placeholder: URL(string: "/")!),
       currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
       currentPlayerAsync: XCTUnimplemented("\(Self.self).currentPlayerAsync"),
-      logout: { .failing("\(Self.self).logout is unimplemented") },
-      logoutAsync: XCTUnimplemented("\(Self.self).logoutAsync"),
+      logout: XCTUnimplemented("\(Self.self).logout"),
       refreshCurrentPlayer: { .failing("\(Self.self).refreshCurrentPlayer is unimplemented") },
       refreshCurrentPlayerAsync: XCTUnimplemented("\(Self.self).refreshCurrentPlayerAsync"),
       request: XCTUnimplemented("\(Self.self).request"),
@@ -198,8 +194,7 @@ extension ApiClient {
     baseUrlAsync: { URL(string: "/")! },
     currentPlayer: { nil },
     currentPlayerAsync: { nil },
-    logout: { .none },
-    logoutAsync: {},
+    logout: {},
     refreshCurrentPlayer: { .none },
     refreshCurrentPlayerAsync: { try await Task.never() },
     request: { _ in try await Task.never() },
