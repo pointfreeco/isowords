@@ -27,8 +27,8 @@ class TurnBasedTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testNewGame() async throws {
-    var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
-    var didSaveCurrentTurn = false
+    let didEndTurnWithRequest = ActorIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
+    let didSaveCurrentTurn = ActorIsolated(false)
     let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
@@ -89,11 +89,13 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.endTurn = { didEndTurnWithRequest = $0 }
+        $0.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
         $0.gameCenter.turnBasedMatch.loadMatches = { [] }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in didSaveCurrentTurn = true }
+        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
+          await didSaveCurrentTurn.setValue(true)
+        }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in }
+        $0.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in }
         $0.lowPowerMode.start = { .never }
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
@@ -173,7 +175,7 @@ class TurnBasedTests: XCTestCase {
     await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
 
-    XCTAssert(didSaveCurrentTurn)
+    await didSaveCurrentTurn.withValue { XCTAssert($0) }
 
     let index = LatticePoint(x: .two, y: .two, z: .two)
     let C = IndexedCubeFace(index: index, side: .top)
@@ -256,15 +258,16 @@ class TurnBasedTests: XCTestCase {
 
     await store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
-
+    }
+    try await didEndTurnWithRequest.withValue {
       XCTAssertNoDifference(
-        didEndTurnWithRequest,
+        $0,
         .init(
           for: newMatch.matchId,
           matchData: Data(
             turnBasedMatchData: TurnBasedMatchData(
-              context: try XCTUnwrap($0.currentGame.game?.turnBasedContext),
-              gameState: try XCTUnwrap($0.game),
+              context: try XCTUnwrap(store.state.currentGame.game?.turnBasedContext),
+              gameState: try XCTUnwrap(store.state.game),
               playerId: currentPlayer.player.id
             )
           ),
@@ -448,7 +451,7 @@ class TurnBasedTests: XCTestCase {
         $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
         $0.build.number = { 42 }
         $0.deviceId.id = { .deviceId }
-        $0.fileClient.save = { _, _ in }
+        $0.fileClient.save = { @Sendable _, _ in }
         $0.gameCenter.localPlayer.authenticate = {}
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
@@ -523,8 +526,8 @@ class TurnBasedTests: XCTestCase {
     await didFinishLaunchingTask.cancel()
   }
 
-  func testRemovingCubes() async {
-    var didEndTurnWithRequest: TurnBasedMatchClient.EndTurnRequest?
+  func testRemovingCubes() async throws {
+    let didEndTurnWithRequest = ActorIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
     let match = update(TurnBasedMatch.inProgress) {
       $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
       $0.participants = [.local, .remote]
@@ -536,7 +539,7 @@ class TurnBasedTests: XCTestCase {
       $0.audioPlayer.play = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
       $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
-      $0.gameCenter.turnBasedMatch.endTurn = { didEndTurnWithRequest = $0 }
+      $0.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
 
@@ -592,7 +595,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
+    store.environment.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
     await store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
       $0.game = updatedGameState
@@ -644,7 +647,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
+    store.environment.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
     await store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
       $0.game = updatedGameState
@@ -658,20 +661,22 @@ class TurnBasedTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
 
-    XCTAssertNoDifference(
-      didEndTurnWithRequest,
-      .init(
-        for: match.matchId,
-        matchData: Data(
-          turnBasedMatchData: TurnBasedMatchData(
-            context: try XCTUnwrap(store.state.game?.turnBasedContext),
-            gameState: try XCTUnwrap(store.state.game),
-            playerId: nil
-          )
-        ),
-        message: "Blob removed cubes!"
+    try await didEndTurnWithRequest.withValue {
+      XCTAssertNoDifference(
+        $0,
+        .init(
+          for: match.matchId,
+          matchData: Data(
+            turnBasedMatchData: TurnBasedMatchData(
+              context: try XCTUnwrap(store.state.game?.turnBasedContext),
+              gameState: try XCTUnwrap(store.state.game),
+              playerId: nil
+            )
+          ),
+          message: "Blob removed cubes!"
+        )
       )
-    )
+    }
   }
 
   func testRematch() async {
@@ -681,7 +686,7 @@ class TurnBasedTests: XCTestCase {
       $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
       $0.participants = [localParticipant, .remote]
     }
-    var didRematchWithId: TurnBasedMatch.Id?
+    let didRematchWithId = ActorIsolated<TurnBasedMatch.Id?>(nil)
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
@@ -694,7 +699,7 @@ class TurnBasedTests: XCTestCase {
         update(.authenticated) { $0.player = localParticipant.player! }
       }
       $0.gameCenter.turnBasedMatch.rematch = {
-        didRematchWithId = $0
+        await didRematchWithId.setValue($0)
         return newMatch
       }
       $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
@@ -733,7 +738,7 @@ class TurnBasedTests: XCTestCase {
     await store.send(.currentGame(.game(.gameOver(.rematchButtonTapped)))) {
       $0.game = nil
     }
-    XCTAssertNoDifference(didRematchWithId, match.matchId)
+    await didRematchWithId.withValue { XCTAssertNoDifference($0, match.matchId) }
     await self.mainQueue.advance()
 
     await store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
@@ -793,10 +798,10 @@ class TurnBasedTests: XCTestCase {
       $0.message = "Blob played ABC!"
     }
 
-    var notificationBannerRequest: GameCenterClient.NotificationBannerRequest?
+    let notificationBannerRequest = ActorIsolated<GameCenterClient.NotificationBannerRequest?>(nil)
     let environment = update(AppEnvironment.failing) {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.gameCenter.showNotificationBanner = { notificationBannerRequest = $0 }
+      $0.gameCenter.showNotificationBanner = { await notificationBannerRequest.setValue($0) }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
@@ -814,13 +819,15 @@ class TurnBasedTests: XCTestCase {
     )
 
     await self.mainQueue.advance()
-    XCTAssertNoDifference(
-      notificationBannerRequest,
-      GameCenterClient.NotificationBannerRequest(
-        title: "Blob played ABC!",
-        message: nil
+    await notificationBannerRequest.withValue {
+      XCTAssertNoDifference(
+        $0,
+        GameCenterClient.NotificationBannerRequest(
+          title: "Blob played ABC!",
+          message: nil
+        )
       )
-    )
+    }
   }
 
   func testGameCenterNotification_DoesNotShow() async {

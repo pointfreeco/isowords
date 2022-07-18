@@ -25,11 +25,11 @@ class DailyChallengeTests: XCTestCase {
       ])
     )
 
-    var didSave = false
+    let didSave = ActorIsolated(false)
 
     let environment = update(GameEnvironment.failing) {
       $0.audioPlayer.stop = { _ in }
-      $0.database.saveGame = { _ in didSave = true }
+      $0.database.saveGame = { _ in await didSave.setValue(true) }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
@@ -60,7 +60,7 @@ class DailyChallengeTests: XCTestCase {
       }
     }
 
-    XCTAssertNoDifference(didSave, true)
+    await didSave.withValue { XCTAssert($0) }
   }
 
   func testLeaveUnlimitedDailyChallenge() async {
@@ -76,10 +76,11 @@ class DailyChallengeTests: XCTestCase {
       ])
     )
 
-    var didSave = false
+    let didSave = ActorIsolated(false)
+
     let environment = update(GameEnvironment.failing) {
       $0.audioPlayer.stop = { _ in }
-      $0.database.saveGame = { _ in didSave = true }
+      $0.database.saveGame = { _ in await didSave.setValue(true) }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
@@ -110,6 +111,6 @@ class DailyChallengeTests: XCTestCase {
       }
     }
 
-    XCTAssertNoDifference(didSave, true)
+    await didSave.withValue { XCTAssert($0) }
   }
 }

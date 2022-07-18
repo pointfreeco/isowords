@@ -23,8 +23,8 @@ import XCTest
 
 @MainActor
 class PersistenceTests: XCTestCase {
-  func testUnlimitedSaveAndQuit() async {
-    var saves: [Data] = []
+  func testUnlimitedSaveAndQuit() async throws {
+    let saves = ActorIsolated<[Data]>([])
 
     let store = TestStore(
       initialState: .init(
@@ -38,7 +38,7 @@ class PersistenceTests: XCTestCase {
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
-        $0.fileClient.save = { _, data in saves.append(data) }
+        $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
         $0.mainRunLoop = .immediate
         $0.mainQueue = .immediate
       }
@@ -143,14 +143,16 @@ class PersistenceTests: XCTestCase {
         appState.home.savedGames.unlimited = InProgressGame(gameState: game)
       }
       appState.game = nil
-      XCTAssertNoDifference(2, saves.count)
-      XCTAssertNoDifference(saves.last, try JSONEncoder().encode(appState.home.savedGames))
+    }
+    try await saves.withValue {
+      XCTAssertNoDifference(2, $0.count)
+      XCTAssertNoDifference($0.last, try JSONEncoder().encode(store.state.home.savedGames))
     }
   }
 
   func testUnlimitedAbandon() async throws {
-    var didArchiveGame = false
-    var saves: [Data] = []
+    let didArchiveGame = ActorIsolated(false)
+    let saves = ActorIsolated<[Data]>([])
 
     let store = TestStore(
       initialState: AppState(
@@ -161,9 +163,9 @@ class PersistenceTests: XCTestCase {
       environment: update(.failing) {
         $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
-        $0.database.saveGame = { _ in didArchiveGame = true }
+        $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
         $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-        $0.fileClient.save = { _, data in saves.append(data) }
+        $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
         $0.mainQueue = .immediate
       }
     )
@@ -205,19 +207,21 @@ class PersistenceTests: XCTestCase {
       $0.home.savedGames.unlimited = nil
     }
 
-    XCTAssertNoDifference(didArchiveGame, true)
-    XCTAssertNoDifference(saves, [try JSONEncoder().encode(SavedGamesState())])
+    await didArchiveGame.withValue { XCTAssert($0) }
+    try await saves.withValue {
+      XCTAssertNoDifference($0, [try JSONEncoder().encode(SavedGamesState())])
+    }
   }
 
   func testTimedAbandon() async {
-    var didArchiveGame = false
+    let didArchiveGame = ActorIsolated(false)
 
     let store = TestStore(
       initialState: AppState(game: update(.mock) { $0.gameMode = .timed }),
       reducer: appReducer,
       environment: update(.failing) {
         $0.audioPlayer.stop = { _ in }
-        $0.database.saveGame = { _ in didArchiveGame = true }
+        $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
         $0.mainQueue = .immediate
       }
     )
@@ -254,7 +258,7 @@ class PersistenceTests: XCTestCase {
     }
     .finish()
 
-    XCTAssertNoDifference(didArchiveGame, true)
+    await didArchiveGame.withValue { XCTAssert($0) }
   }
 
   func testUnlimitedResume() async {

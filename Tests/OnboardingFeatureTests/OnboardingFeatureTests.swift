@@ -9,7 +9,7 @@ class OnboardingFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
 
   func testBasics_FirstLaunch() async {
-    var isFirstLaunchOnboardingKeySet = false
+    let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
     
     var environment = OnboardingEnvironment.failing
     environment.audioPlayer = .noop
@@ -24,7 +24,7 @@ class OnboardingFeatureTests: XCTestCase {
     environment.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
-      isFirstLaunchOnboardingKeySet = true
+      await isFirstLaunchOnboardingKeySet.setValue(true)
     }
 
     let store = TestStore(
@@ -302,11 +302,11 @@ class OnboardingFeatureTests: XCTestCase {
     await store.send(.getStartedButtonTapped)
     await store.receive(.delegate(.getStarted))
 
-    XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
+    await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
 
   func testSkip_HasSeenOnboardingBefore() async {
-    var isFirstLaunchOnboardingKeySet = false
+    let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
     var environment = OnboardingEnvironment.failing
     environment.audioPlayer = .noop
@@ -320,7 +320,7 @@ class OnboardingFeatureTests: XCTestCase {
     environment.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
-      isFirstLaunchOnboardingKeySet = true
+      await isFirstLaunchOnboardingKeySet.setValue(true)
     }
 
     let store = TestStore(
@@ -340,11 +340,11 @@ class OnboardingFeatureTests: XCTestCase {
 
     await store.receive(.delegate(.getStarted))
 
-    XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
+    await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
 
   func testSkip_HasNotSeenOnboardingBefore() async {
-    var isFirstLaunchOnboardingKeySet = false
+    let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
     var environment = OnboardingEnvironment.failing
     environment.audioPlayer = .noop
@@ -358,7 +358,7 @@ class OnboardingFeatureTests: XCTestCase {
     environment.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
-      isFirstLaunchOnboardingKeySet = true
+      await isFirstLaunchOnboardingKeySet.setValue(true)
     }
 
     let store = TestStore(
@@ -398,7 +398,7 @@ class OnboardingFeatureTests: XCTestCase {
     await store.send(.getStartedButtonTapped)
     await store.receive(.delegate(.getStarted))
 
-    XCTAssertNoDifference(isFirstLaunchOnboardingKeySet, true)
+    await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
 }
 
