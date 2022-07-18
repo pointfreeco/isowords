@@ -353,14 +353,11 @@ public let onboardingReducer = Reducer<
       )
 
       if step == OnboardingState.Step.allCases[0] {
-        await withTaskCancellation(id: DelayedNextStepID.self) {
-          do {
-            try await environment.mainQueue.sleep(for: .seconds(firstStepDelay))
-            await send(.delayedNextStep, animation: .default)
-          } catch {}
-        }
+        try await environment.mainQueue.sleep(for: .seconds(firstStepDelay))
+        await send(.delayedNextStep, animation: .default)
       }
     }
+    .cancellable(id: DelayedNextStepID.self)
   }
 }
 .onChange(of: \.game.selectedWordString) { selectedWord, state, _, _ in

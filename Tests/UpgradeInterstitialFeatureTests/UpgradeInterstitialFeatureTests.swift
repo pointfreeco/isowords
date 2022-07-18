@@ -55,7 +55,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.task)
+    let task = await store.send(.task)
 
     await store.receive(.fullGameProductResponse(fullGameProduct)) {
       $0.fullGameProduct = fullGameProduct
@@ -75,6 +75,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
     await store.receive(.paymentTransaction(.updatedTransactions(transactions)))
     await store.receive(.delegate(.fullGamePurchased))
+
+    await task.cancel()
   }
 
   func testWaitAndDismiss() async {
