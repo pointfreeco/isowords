@@ -522,7 +522,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case .task:
       return .run { send in
-        await authenticate(send: send, environment: environment)
+        try await authenticate(send: send, environment: environment)
         await listen(send: send, environment: environment)
       }
       .animation()
@@ -735,7 +735,7 @@ private struct CubeIconView: View {
       Image(systemName: "cube.fill")
         .font(.system(size: 24))
         .modifier(ShakeEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
-        .animation(.easeInOut(duration: 1))
+        .animation(.easeInOut(duration: 1), value: self.shake)
     }
   }
 }
@@ -750,11 +750,11 @@ private struct ShakeEffect: GeometryEffect {
   }
 }
 
-private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async {
-  do {
-    try await environment.gameCenter.localPlayer.authenticate()
+private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async throws {
+  try await environment.gameCenter.localPlayer.authenticate()
 
-    let localPlayer = await environment.gameCenter.localPlayer.localPlayer()
+  do {
+    let localPlayer = environment.gameCenter.localPlayer.localPlayer()
     let currentPlayerEnvelope = try await environment.apiClient.authenticate(
       .init(
         deviceId: .init(rawValue: environment.deviceId.id()),
