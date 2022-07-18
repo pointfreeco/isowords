@@ -23,7 +23,7 @@ class RemoteNotificationsTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
-    environment.userNotifications.requestAuthorizationAsync = { options in
+    environment.userNotifications.requestAuthorization = { options in
       await requestedAuthorizationOptions.set(options)
       return true
     }
@@ -88,7 +88,7 @@ class RemoteNotificationsTests: XCTestCase {
 
     var environment = AppEnvironment.didFinishLaunching
     environment.fileClient.save = { @Sendable _, _ in }
-    environment.userNotifications.delegateAsync = { delegate.stream }
+    environment.userNotifications.delegate = { delegate.stream }
 
     let inProgressGame = InProgressGame.mock
 

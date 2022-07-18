@@ -28,7 +28,7 @@ class UserNotificationsTests: XCTestCase {
       initialState: .init(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.userNotifications.delegateAsync = { delegate.stream }
+        $0.userNotifications.delegate = { delegate.stream }
       }
     )
 
@@ -67,7 +67,7 @@ class UserNotificationsTests: XCTestCase {
       initialState: .init(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.userNotifications.delegateAsync = { delegate.stream }
+        $0.userNotifications.delegate = { delegate.stream }
       }
     )
 

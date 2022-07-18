@@ -326,7 +326,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         return .task {
           await .userNotificationAuthorizationResponse(
             TaskResult {
-              try await environment.userNotifications.requestAuthorizationAsync([.alert, .sound])
+              try await environment.userNotifications.requestAuthorization([.alert, .sound])
             }
           )
         }

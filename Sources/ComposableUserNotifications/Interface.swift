@@ -3,18 +3,13 @@ import ComposableArchitecture
 import UserNotifications
 
 public struct UserNotificationClient {
-  @available(*, deprecated) public var add: (UNNotificationRequest) -> Effect<Void, Error>
-  public var addAsync: @Sendable (UNNotificationRequest) async throws -> Void
-  @available(*, deprecated) public var delegate: Effect<DelegateEvent, Never>
-  public var delegateAsync: @Sendable () -> AsyncStream<DelegateEvent>
+  public var add: @Sendable (UNNotificationRequest) async throws -> Void
+  public var delegate: @Sendable () -> AsyncStream<DelegateEvent>
   public var getNotificationSettings: @Sendable () async -> Notification.Settings
-  @available(*, deprecated) public var removeDeliveredNotificationsWithIdentifiers: ([String]) -> Effect<Never, Never>
-  public var removeDeliveredNotificationsWithIdentifiersAsync: @Sendable ([String]) async -> Void
-  @available(*, deprecated) public var removePendingNotificationRequestsWithIdentifiers: ([String]) -> Effect<Never, Never>
-  public var removePendingNotificationRequestsWithIdentifiersAsync:
+  public var removeDeliveredNotificationsWithIdentifiers: @Sendable ([String]) async -> Void
+  public var removePendingNotificationRequestsWithIdentifiers:
     @Sendable ([String]) async -> Void
-  @available(*, deprecated) public var requestAuthorization: (UNAuthorizationOptions) -> Effect<Bool, Error>
-  public var requestAuthorizationAsync: @Sendable (UNAuthorizationOptions) async throws -> Bool
+  public var requestAuthorization: @Sendable (UNAuthorizationOptions) async throws -> Bool
 
   public enum DelegateEvent: Equatable {
     case didReceiveResponse(Notification.Response, completionHandler: @Sendable () -> Void)

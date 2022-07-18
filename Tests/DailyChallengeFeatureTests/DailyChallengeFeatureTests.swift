@@ -114,7 +114,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     ]
 
     var environment = DailyChallengeEnvironment.failing
-    environment.fileClient.load = { asdf in
+    environment.fileClient.load = { [inProgressGame] _ in
       try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
     }
     environment.mainRunLoop = .immediate
@@ -161,7 +161,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
     }
-    environment.userNotifications.requestAuthorizationAsync = { _ in true }
+    environment.userNotifications.requestAuthorization = { _ in true }
     environment.remoteNotifications.register = { didRegisterForRemoteNotifications = true }
     environment.mainRunLoop = .immediate
 
@@ -177,9 +177,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
     await store.receive(
       .notificationsAuthAlert(
-        .delegate(
-          .didChooseNotificationSettings(.init(authorizationStatus: .authorized))
-        )
+        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
       )
     ) {
       $0.notificationsAuthAlert = nil
@@ -194,7 +192,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .denied)
     }
-    environment.userNotifications.requestAuthorizationAsync = { _ in false }
+    environment.userNotifications.requestAuthorization = { _ in false }
     environment.mainRunLoop = .immediate
 
     let store = TestStore(
@@ -209,9 +207,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
     await store.receive(
       .notificationsAuthAlert(
-        .delegate(
-          .didChooseNotificationSettings(.init(authorizationStatus: .denied))
-        )
+        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
       )
     ) {
       $0.notificationsAuthAlert = nil

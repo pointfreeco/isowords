@@ -373,5 +373,3 @@ extension TurnBasedMatchmakerViewControllerClient {
     )
   }
 }
-
-private let invalidStateError = NSError(domain: "co.pointfree", code: -1)

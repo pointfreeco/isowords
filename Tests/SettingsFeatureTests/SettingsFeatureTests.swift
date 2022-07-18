@@ -70,7 +70,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .notDetermined)
     }
-    environment.userNotifications.requestAuthorizationAsync = { _ in true }
+    environment.userNotifications.requestAuthorization = { _ in true }
     environment.remoteNotifications.register = { didRegisterForRemoteNotifications = true }
 
     let store = TestStore(
@@ -111,7 +111,7 @@ class SettingsFeatureTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .notDetermined)
     }
-    environment.userNotifications.requestAuthorizationAsync = { _ in false }
+    environment.userNotifications.requestAuthorization = { _ in false }
 
     let store = TestStore(
       initialState: SettingsState(),

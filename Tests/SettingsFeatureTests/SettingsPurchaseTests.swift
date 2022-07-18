@@ -20,7 +20,6 @@ class SettingsPurchaseTests: XCTestCase {
     environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
-    environment.userNotifications.requestAuthorization = { _ in .init(value: false) }
     return environment
   }
 

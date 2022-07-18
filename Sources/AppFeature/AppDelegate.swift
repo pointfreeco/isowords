@@ -56,7 +56,7 @@ let appDelegateReducer = Reducer<
     return .run { send in
       await withThrowingTaskGroup(of: Void.self) { group in
         group.addTask {
-          for await event in environment.userNotifications.delegateAsync() {
+          for await event in environment.userNotifications.delegate() {
             await send(.userNotifications(event))
           }
         }
@@ -66,10 +66,10 @@ let appDelegateReducer = Reducer<
           switch settings.authorizationStatus {
           case .authorized:
             guard
-              try await environment.userNotifications.requestAuthorizationAsync([.alert, .sound])
+              try await environment.userNotifications.requestAuthorization([.alert, .sound])
             else { return }
           case .notDetermined, .provisional:
-            guard try await environment.userNotifications.requestAuthorizationAsync(.provisional)
+            guard try await environment.userNotifications.requestAuthorization(.provisional)
             else { return }
           default:
             return

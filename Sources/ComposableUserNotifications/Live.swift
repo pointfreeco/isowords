@@ -4,30 +4,8 @@ import UserNotifications
 
 extension UserNotificationClient {
   public static let live = Self(
-    add: { request in
-      .future { callback in
-        UNUserNotificationCenter.current().add(request) { error in
-          if let error = error {
-            callback(.failure(error))
-          } else {
-            callback(.success(()))
-          }
-        }
-      }
-    },
-    addAsync: { try await UNUserNotificationCenter.current().add($0) },
-    delegate:
-      Effect
-      .run { subscriber in
-        var delegate: Optional = _Delegate(subscriber: subscriber)
-        UNUserNotificationCenter.current().delegate = delegate
-        return AnyCancellable {
-          delegate = nil
-        }
-      }
-      .share()
-      .eraseToEffect(),
-    delegateAsync: {
+    add: { try await UNUserNotificationCenter.current().add($0) },
+    delegate: {
       AsyncStream { continuation in
         let delegate = Delegate(continuation: continuation)
         UNUserNotificationCenter.current().delegate = delegate
@@ -39,37 +17,13 @@ extension UserNotificationClient {
         rawValue: UNUserNotificationCenter.current().notificationSettings()
       )
     },
-    removeDeliveredNotificationsWithIdentifiers: { identifiers in
-      .fireAndForget {
-        UNUserNotificationCenter.current()
-          .removeDeliveredNotifications(withIdentifiers: identifiers)
-      }
-    },
-    removeDeliveredNotificationsWithIdentifiersAsync: {
+    removeDeliveredNotificationsWithIdentifiers: {
       UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: $0)
     },
-    removePendingNotificationRequestsWithIdentifiers: { identifiers in
-      .fireAndForget {
-        UNUserNotificationCenter.current()
-          .removePendingNotificationRequests(withIdentifiers: identifiers)
-      }
-    },
-    removePendingNotificationRequestsWithIdentifiersAsync: {
+    removePendingNotificationRequestsWithIdentifiers: {
       UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: $0)
     },
-    requestAuthorization: { options in
-      .future { callback in
-        UNUserNotificationCenter.current()
-          .requestAuthorization(options: options) { granted, error in
-            if let error = error {
-              callback(.failure(error))
-            } else {
-              callback(.success(granted))
-            }
-          }
-      }
-    },
-    requestAuthorizationAsync: {
+    requestAuthorization: {
       try await UNUserNotificationCenter.current().requestAuthorization(options: $0)
     }
   )
