@@ -123,16 +123,7 @@ extension ApiClient {
       refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
       request: { try await session.request(route: $0) },
-      setBaseUrl: { url in
-        .fireAndForget {
-          baseUrl = url
-          Task { await session.setBaseUrl(url) }  // TODO: remove
-        }
-      },
-      setBaseUrlAsync: {
-        await session.setBaseUrl($0)
-//        baseUrl = $0  // TODO: remove
-      }
+      setBaseUrl: { await session.setBaseUrl($0) }
     )
   }
 }

@@ -410,7 +410,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var environment = SettingsEnvironment.failing
     environment.apiClient.logout = { didLogout = true }
-    environment.apiClient.setBaseUrlAsync = { setBaseUrl = $0 }
+    environment.apiClient.setBaseUrl = { setBaseUrl = $0 }
 
     let store = TestStore(
       initialState: SettingsState(),

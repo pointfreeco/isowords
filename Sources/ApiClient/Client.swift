@@ -15,8 +15,7 @@ public struct ApiClient {
   @available(*, deprecated) public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
   public var refreshCurrentPlayerAsync: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
-  @available(*, deprecated) public var setBaseUrl: (URL) -> Effect<Never, Never>
-  public var setBaseUrlAsync: @Sendable (URL) async -> Void
+  public var setBaseUrl: @Sendable (URL) async -> Void
 
   public init(
     apiRequest: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse),
@@ -30,8 +29,7 @@ public struct ApiClient {
     refreshCurrentPlayer: @escaping () -> Effect<CurrentPlayerEnvelope, ApiError>,
     refreshCurrentPlayerAsync: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
     request: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
-    setBaseUrl: @escaping (URL) -> Effect<Never, Never>,
-    setBaseUrlAsync: @escaping @Sendable (URL) async -> Void
+    setBaseUrl: @escaping @Sendable (URL) async -> Void
   ) {
     self.apiRequest = apiRequest
     self.authenticate = authenticate
@@ -44,7 +42,6 @@ public struct ApiClient {
     self.refreshCurrentPlayerAsync = refreshCurrentPlayerAsync
     self.request = request
     self.setBaseUrl = setBaseUrl
-    self.setBaseUrlAsync = setBaseUrlAsync
   }
 
   public struct Unit: Codable {}
@@ -150,8 +147,7 @@ public struct ApiClient {
       refreshCurrentPlayer: { .failing("\(Self.self).refreshCurrentPlayer is unimplemented") },
       refreshCurrentPlayerAsync: XCTUnimplemented("\(Self.self).refreshCurrentPlayerAsync"),
       request: XCTUnimplemented("\(Self.self).request"),
-      setBaseUrl: { _ in .failing("ApiClient.setBaseUrl is unimplemented") },
-      setBaseUrlAsync: XCTUnimplemented("ApiClient.setBaseUrlAsync")
+      setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
     )
 
     public mutating func override(
@@ -198,8 +194,7 @@ extension ApiClient {
     refreshCurrentPlayer: { .none },
     refreshCurrentPlayerAsync: { try await Task.never() },
     request: { _ in try await Task.never() },
-    setBaseUrl: { _ in .none },
-    setBaseUrlAsync: { _ in }
+    setBaseUrl: { _ in }
   )
 }
 
