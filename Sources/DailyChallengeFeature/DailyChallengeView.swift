@@ -62,11 +62,11 @@ public enum DailyChallengeAction: Equatable {
   case dismissAlert
   case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case gameButtonTapped(GameMode)
-  case onAppear
   case notificationButtonTapped
   case notificationsAuthAlert(NotificationsAuthAlertAction)
   case setNavigation(tag: DailyChallengeState.Route.Tag?)
   case startDailyChallengeResponse(TaskResult<InProgressGame>)
+  case task
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
   public enum DelegateAction: Equatable {
@@ -179,33 +179,6 @@ public let dailyChallengeReducer = Reducer<
         )
       }
 
-    case .onAppear:
-      return .run { send in
-        await withTaskGroup(of: Void.self) { group in
-          group.addTask {
-            await send(
-              .userNotificationSettingsResponse(
-                environment.userNotifications.getNotificationSettings()
-              )
-            )
-          }
-
-          group.addTask {
-            await send(
-              .fetchTodaysDailyChallengeResponse(
-                TaskResult {
-                  try await environment.apiClient.apiRequest(
-                    route: .dailyChallenge(.today(language: .en)),
-                    as: [FetchTodaysDailyChallengeResponse].self
-                  )
-                }
-              ),
-              animation: .default
-            )
-          }
-        }
-      }
-
     case .notificationButtonTapped:
       state.notificationsAuthAlert = .init()
       return .none
@@ -246,6 +219,33 @@ public let dailyChallengeReducer = Reducer<
     case let .startDailyChallengeResponse(.success(inProgressGame)):
       state.gameModeIsLoading = nil
       return .task { .delegate(.startGame(inProgressGame)) }
+
+    case .task:
+      return .run { send in
+        await withTaskGroup(of: Void.self) { group in
+          group.addTask {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettings()
+              )
+            )
+          }
+
+          group.addTask {
+            await send(
+              .fetchTodaysDailyChallengeResponse(
+                TaskResult {
+                  try await environment.apiClient.apiRequest(
+                    route: .dailyChallenge(.today(language: .en)),
+                    as: [FetchTodaysDailyChallengeResponse].self
+                  )
+                }
+              ),
+              animation: .default
+            )
+          }
+        }
+      }
 
     case let .userNotificationSettingsResponse(settings):
       state.userNotificationSettings = settings
@@ -416,7 +416,7 @@ public struct DailyChallengeView: View {
         .foregroundColor((self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge))
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
-      .onAppear { self.viewStore.send(.onAppear) }
+      .task { await self.viewStore.send(.task).finish() }
       .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,

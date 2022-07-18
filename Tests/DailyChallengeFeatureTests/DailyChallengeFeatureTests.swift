@@ -28,7 +28,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
