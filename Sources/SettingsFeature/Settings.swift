@@ -537,7 +537,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
         .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
           await withTaskGroup(of: Void.self) { group in
             group.addTask {
-              for await event in environment.storeKit.observerAsync() {
+              for await event in environment.storeKit.observer() {
                 await send(.paymentTransaction(event), animation: .default)
               }
             }
@@ -547,7 +547,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
                 await send(
                   .productsResponse(
                     TaskResult {
-                      try await environment.storeKit.fetchProductsAsync([
+                      try await environment.storeKit.fetchProducts([
                         environment.serverConfig.config().productIdentifiers.fullGame
                       ])
                     }

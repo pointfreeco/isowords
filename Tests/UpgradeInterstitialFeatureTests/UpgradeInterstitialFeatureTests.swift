@@ -41,8 +41,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.addPayment = { paymentAdded = $0 }
-    environment.storeKit.observerAsync = { observer.stream }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.observer = { observer.stream }
+    environment.storeKit.fetchProducts = { _ in
       .init(
         invalidProductIdentifiers: [],
         products: [fullGameProduct]
@@ -79,8 +79,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
-    environment.storeKit.observerAsync = { .finished }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.observer = { .finished }
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
 
@@ -116,8 +116,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     var environment = UpgradeInterstitialEnvironment.failing
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.storeKit.observerAsync = { .finished }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.observer = { .finished }
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
 

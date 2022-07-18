@@ -38,10 +38,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.addPayment = { payment in
       didAddPaymentProductIdentifier = payment.productIdentifier
     }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observerAsync = { storeKitObserver.stream }
+    environment.storeKit.observer = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -91,10 +91,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observerAsync = { storeKitObserver.stream }
+    environment.storeKit.observer = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -147,10 +147,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observerAsync = { storeKitObserver.stream }
+    environment.storeKit.observer = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -197,10 +197,10 @@ class SettingsPurchaseTests: XCTestCase {
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observerAsync = { storeKitObserver.stream }
+    environment.storeKit.observer = { storeKitObserver.stream }
 
     let store = TestStore(
       initialState: SettingsState(),

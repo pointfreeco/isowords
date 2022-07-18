@@ -6,11 +6,9 @@ public struct StoreKitClient {
   public var addPayment: @Sendable (SKPayment) async -> Void
   public var appStoreReceiptURL: @Sendable () -> URL?
   public var isAuthorizedForPayments: @Sendable () -> Bool
-  @available(*, deprecated) public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>
-  public var fetchProductsAsync: @Sendable (Set<String>) async throws -> ProductsResponse
+  public var fetchProducts: @Sendable (Set<String>) async throws -> ProductsResponse
   public var finishTransaction: @Sendable (PaymentTransaction) async -> Void
-  @available(*, deprecated) public var observer: Effect<PaymentTransactionObserverEvent, Never>
-  public var observerAsync: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
+  public var observer: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
   public var requestReview: @Sendable () async -> Void
   public var restoreCompletedTransactions: @Sendable () async -> Void
 

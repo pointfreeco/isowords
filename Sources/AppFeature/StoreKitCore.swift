@@ -18,7 +18,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
         switch action {
         case .appDelegate(.didFinishLaunching):
           return .run { send in
-            for await event in environment.storeKit.observerAsync() {
+            for await event in environment.storeKit.observer() {
               await send(.paymentTransaction(event))
             }
           }

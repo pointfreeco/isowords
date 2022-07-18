@@ -5,11 +5,9 @@ extension StoreKitClient {
     addPayment: { _ in },
     appStoreReceiptURL: { nil },
     isAuthorizedForPayments: { false },
-    fetchProducts: { _ in .none },
-    fetchProductsAsync: { _ in try await Task.never() },
+    fetchProducts: { _ in try await Task.never() },
     finishTransaction: { _ in },
-    observer: .none,
-    observerAsync: { AsyncStream { _ in } },
+    observer: { AsyncStream { _ in } },
     requestReview: {},
     restoreCompletedTransactions: {}
   )
@@ -20,23 +18,17 @@ extension StoreKitClient {
 
   extension StoreKitClient {
     public static let failing = Self(
-      addPayment: XCTUnimplemented("\(Self.self).addPaymentAsync"),
-      appStoreReceiptURL: {
-        XCTFail("\(Self.self).appStoreReceiptURL is unimplemented")
-        return nil
-      },
-      isAuthorizedForPayments: {
-        XCTFail("\(Self.self).isAuthorizedForPayments is unimplemented")
-        return false
-      },
-      fetchProducts: { _ in .failing("\(Self.self).fetchProducts is unimplemented") },
-      fetchProductsAsync: XCTUnimplemented("\(Self.self).fetchProductsAsync"),
+      addPayment: XCTUnimplemented("\(Self.self).addPayment"),
+      appStoreReceiptURL: XCTUnimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
+      isAuthorizedForPayments: XCTUnimplemented(
+        "\(Self.self).isAuthorizedForPayments", placeholder: false
+      ),
+      fetchProducts: XCTUnimplemented("\(Self.self).fetchProducts"),
       finishTransaction: XCTUnimplemented("\(Self.self).finishTransaction"),
-      observer: .failing("\(Self.self).observer is unimplemented"),
-      observerAsync: XCTUnimplemented("\(Self.self).observerAsync", placeholder: .finished),
-      requestReview: XCTUnimplemented("\(Self.self).requestReviewAsync"),
+      observer: XCTUnimplemented("\(Self.self).observer", placeholder: .finished),
+      requestReview: XCTUnimplemented("\(Self.self).requestReview"),
       restoreCompletedTransactions: XCTUnimplemented(
-        "\(Self.self).restoreCompletedTransactionsAsync"
+        "\(Self.self).restoreCompletedTransactions"
       )
     )
   }

@@ -10,20 +10,6 @@ extension StoreKitClient {
       appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
       isAuthorizedForPayments: { SKPaymentQueue.canMakePayments() },
       fetchProducts: { products in
-        .run { subscriber in
-          let request = SKProductsRequest(productIdentifiers: products)
-          var delegate: ProductRequest? = ProductRequest(subscriber: subscriber)
-          request.delegate = delegate
-          request.start()
-
-          return AnyCancellable {
-            request.cancel()
-            request.delegate = nil
-            delegate = nil
-          }
-        }
-      },
-      fetchProductsAsync: { products in
         let stream = AsyncThrowingStream<ProductsResponse, Error> { continuation in
           let request = SKProductsRequest(productIdentifiers: products)
           let delegate = ProductRequestAsync(continuation: continuation)
@@ -45,16 +31,7 @@ extension StoreKitClient {
         }
         SKPaymentQueue.default().finishTransaction(skTransaction)
       },
-      observer: Effect.run { subscriber in
-        let observer = Observer(subscriber: subscriber)
-        SKPaymentQueue.default().add(observer)
-        return AnyCancellable {
-          SKPaymentQueue.default().remove(observer)
-        }
-      }
-      .share()
-      .eraseToEffect(),
-      observerAsync: {
+      observer: {
         AsyncStream { continuation in
           let observer = ObserverAsync(continuation: continuation)
           SKPaymentQueue.default().add(observer)

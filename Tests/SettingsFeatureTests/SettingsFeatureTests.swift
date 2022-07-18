@@ -19,10 +19,10 @@ class SettingsFeatureTests: XCTestCase {
     environment.mainQueue = .immediate
     environment.backgroundQueue = .immediate
     environment.fileClient.save = { @Sendable _, _ in }
-    environment.storeKit.fetchProductsAsync = { _ in
+    environment.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
-    environment.storeKit.observerAsync =  { .finished }
+    environment.storeKit.observer =  { .finished }
     return environment
   }
 

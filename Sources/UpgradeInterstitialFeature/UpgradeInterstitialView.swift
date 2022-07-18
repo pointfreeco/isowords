@@ -122,14 +122,14 @@ public let upgradeInterstitialReducer = Reducer<
       await withThrowingTaskGroup(of: Void.self) { group in
         group.addTask {
           await withTaskCancellation(id: StoreKitObserverID.self) {
-            for await event in environment.storeKit.observerAsync() {
+            for await event in environment.storeKit.observer() {
               await send(.paymentTransaction(event), animation: .default)
             }
           }
         }
 
         group.addTask {
-          let response = try await environment.storeKit.fetchProductsAsync([
+          let response = try await environment.storeKit.fetchProducts([
             environment.serverConfig.config().productIdentifiers.fullGame
           ])
           guard let product = response.products.first(where: { product in
