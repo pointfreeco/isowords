@@ -86,9 +86,9 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              return .fireAndForget { [turnBasedMatchData] in
+              return .fireAndForget { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] in
                 await environment.gameCenter.turnBasedMatchmakerViewController.dismiss()
-                if gameState.isYourTurn {
+                if isYourTurn {
                   var turnBasedMatchData = turnBasedMatchData
                   turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
                   try await environment.gameCenter.turnBasedMatch.saveCurrentTurn(
