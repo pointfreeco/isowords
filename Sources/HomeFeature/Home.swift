@@ -560,7 +560,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
     await send(.authenticationResponse(currentPlayerEnvelope))
     try await send(.serverConfigResponse(environment.serverConfig.refresh()))
 
-    async let sendDailyChallengeResponse: Void = send(
+    async let dailyChallengeResponse: Void = send(
       .dailyChallengeResponse(
         TaskResult {
           try await environment.apiClient.apiRequest(
@@ -570,7 +570,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         }
       )
     )
-    async let sendWeekInReviewResponse: Void = send(
+    async let weekInReviewResponse: Void = send(
       .weekInReviewResponse(
         TaskResult {
           try await environment.apiClient.apiRequest(
@@ -580,32 +580,30 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         }
       )
     )
-    _ = await (sendDailyChallengeResponse, sendWeekInReviewResponse)
+    async let activeMatchesResponse: Void = send(
+      .activeMatchesResponse(
+        TaskResult {
+          try await environment.gameCenter
+            .loadActiveMatches(now: environment.mainRunLoop.now.date)
+        }
+      )
+    )
+    _ = await (dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse)
   } catch {}
 }
 
 private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async {
-  await send(
-    .activeMatchesResponse(
-      TaskResult {
-        try await environment.gameCenter
-          .loadActiveMatches(now: environment.mainRunLoop.now.date)
-      }
-    ),
-    animation: .default
-  )
-
   for await event in environment.gameCenter.localPlayer.listener() {
     switch event {
-    case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
+    case .turnBased(.matchEnded),
+         .turnBased(.receivedTurnEventForMatch):
       await send(
         .activeMatchesResponse(
           TaskResult {
             try await environment.gameCenter
               .loadActiveMatches(now: environment.mainRunLoop.now.date)
           }
-        ),
-        animation: .default
+        )
       )
     default:
       break
