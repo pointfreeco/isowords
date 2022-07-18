@@ -95,7 +95,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in didSaveCurrentTurn = true }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in }
-        $0.lowPowerMode.startAsync = { .never }
+        $0.lowPowerMode.start = { .never }
         $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.serverConfig.config = { .init() }
         $0.serverConfig.refresh = { .init() }

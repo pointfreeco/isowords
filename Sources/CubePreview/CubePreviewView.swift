@@ -115,7 +115,7 @@ public let cubePreviewReducer = Reducer<
     return .run { [move = state.moves[state.moveIndex]] send in
       await send(
         .lowPowerModeResponse(
-          await environment.lowPowerMode.startAsync().first(where: { _ in true }) ?? false
+          await environment.lowPowerMode.start().first(where: { _ in true }) ?? false
         )
       )
 

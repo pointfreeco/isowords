@@ -415,7 +415,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return .run { [gameContext = state.gameContext] send in
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
-              for await isLowPower in await environment.lowPowerMode.startAsync() {
+              for await isLowPower in await environment.lowPowerMode.start() {
                 await send(.lowPowerModeChanged(isLowPower))
               }
             }
