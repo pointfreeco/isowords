@@ -117,6 +117,12 @@ public struct HomeState: Equatable {
     self.turnBasedMatches = turnBasedMatches
     self.weekInReview = weekInReview
   }
+
+  var hasActiveGames: Bool {
+    self.savedGames.dailyChallengeUnlimited != nil
+      || self.savedGames.unlimited != nil
+      || !self.turnBasedMatches.isEmpty
+  }
 }
 
 public enum HomeAction: BindableAction, Equatable {
@@ -538,6 +544,96 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 )
 .binding()
 
+extension GameCenterClient {
+  fileprivate func loadActiveMatches(
+    now: Date
+  ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
+    let localPlayer = self.localPlayer.localPlayer()
+    let matches = try await self.turnBasedMatch.loadMatches()
+    let activeMatches = matches.activeMatches(for: localPlayer, at: now)
+    let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
+    return (activeMatches, hasPastTurnBasedGames)
+  }
+}
+
+private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async throws {
+  try await environment.gameCenter.localPlayer.authenticate()
+
+  do {
+    let localPlayer = environment.gameCenter.localPlayer.localPlayer()
+    let currentPlayerEnvelope = try await environment.apiClient.authenticate(
+      .init(
+        deviceId: .init(rawValue: environment.deviceId.id()),
+        displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
+        gameCenterLocalPlayerId: localPlayer.isAuthenticated
+          ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+          : nil,
+        timeZone: environment.timeZone().identifier
+      )
+    )
+    await send(.authenticationResponse(currentPlayerEnvelope))
+    try await send(.serverConfigResponse(environment.serverConfig.refresh()))
+
+    async let sendDailyChallengeResponse: Void = send(
+      .dailyChallengeResponse(
+        TaskResult {
+          try await environment.apiClient.apiRequest(
+            route: .dailyChallenge(.today(language: .en)),
+            as: [FetchTodaysDailyChallengeResponse].self
+          )
+        }
+      )
+    )
+    async let sendWeekInReviewResponse: Void = await send(
+      .weekInReviewResponse(
+        TaskResult {
+          try await environment.apiClient.apiRequest(
+            route: .leaderboard(.weekInReview(language: .en)),
+            as: FetchWeekInReviewResponse.self
+          )
+        }
+      )
+    )
+    _ = await (sendDailyChallengeResponse, sendWeekInReviewResponse)
+  } catch {}
+}
+
+private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async {
+  await send(
+    .matchesLoaded(
+      TaskResult {
+        let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
+          .loadActiveMatches(now: environment.mainRunLoop.now.date)
+
+        await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+
+        return activeMatches
+      }
+    ),
+    animation: .default
+  )
+
+  for await event in environment.gameCenter.localPlayer.listener() {
+    switch event {
+    case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
+      await send(
+        .matchesLoaded(
+          TaskResult {
+            let (activeMatches, hasPastTurnBasedGames) =
+              try await environment.gameCenter.loadActiveMatches(
+                now: environment.mainRunLoop.now.date
+              )
+            await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
+            return activeMatches
+          }
+        )
+      )
+    default:
+      break
+    }
+  }
+}
+
 public struct HomeView: View {
   struct ViewState: Equatable {
     let hasActiveGames: Bool
@@ -629,7 +725,7 @@ public struct HomeView: View {
           LeaderboardLinkView(store: self.store)
             .screenEdgePadding(.horizontal)
         }
-        .adaptivePadding([.top, .bottom], .grid(4))
+        .adaptivePadding(.vertical, .grid(4))
         .background(
           self.colorScheme == .dark
             ? AnyView(Color.isowordsBlack)
@@ -698,26 +794,6 @@ public struct HomeView: View {
   }
 }
 
-extension HomeState {
-  var hasActiveGames: Bool {
-    self.savedGames.dailyChallengeUnlimited != nil
-      || self.savedGames.unlimited != nil
-      || !self.turnBasedMatches.isEmpty
-  }
-}
-
-extension GameCenterClient {
-  fileprivate func loadActiveMatches(
-    now: Date
-  ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
-    let localPlayer = self.localPlayer.localPlayer()
-    let matches = try await self.turnBasedMatch.loadMatches()
-    let activeMatches = matches.activeMatches(for: localPlayer, at: now)
-    let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
-    return (activeMatches, hasPastTurnBasedGames)
-  }
-}
-
 private struct CubeIconView: View {
   let action: () -> Void
   let shake: Bool
@@ -747,84 +823,6 @@ private struct ShakeEffect: GeometryEffect {
     ProjectionTransform(
       CGAffineTransform(rotationAngle: -.pi / 30 * sin(animatableData * .pi * 10))
     )
-  }
-}
-
-private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async throws {
-  try await environment.gameCenter.localPlayer.authenticate()
-
-  do {
-    let localPlayer = environment.gameCenter.localPlayer.localPlayer()
-    let currentPlayerEnvelope = try await environment.apiClient.authenticate(
-      .init(
-        deviceId: .init(rawValue: environment.deviceId.id()),
-        displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
-        gameCenterLocalPlayerId: localPlayer.isAuthenticated
-        ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
-        : nil,
-        timeZone: environment.timeZone().identifier
-      )
-    )
-    await send(.authenticationResponse(currentPlayerEnvelope))
-    try await send(.serverConfigResponse(environment.serverConfig.refresh()))
-
-    async let sendDailyChallengeResponse: Void = send(
-      .dailyChallengeResponse(
-        TaskResult {
-          try await environment.apiClient.apiRequest(
-            route: .dailyChallenge(.today(language: .en)),
-            as: [FetchTodaysDailyChallengeResponse].self
-          )
-        }
-      )
-    )
-    async let sendWeekInReviewResponse: Void = await send(
-      .weekInReviewResponse(
-        TaskResult {
-          try await environment.apiClient.apiRequest(
-            route: .leaderboard(.weekInReview(language: .en)),
-            as: FetchWeekInReviewResponse.self
-          )
-        }
-      )
-    )
-    _ = await (sendDailyChallengeResponse, sendWeekInReviewResponse)
-  } catch {}
-}
-
-private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async {
-  await send(
-    .matchesLoaded(
-      TaskResult {
-        let (activeMatches, hasPastTurnBasedGames) = try await environment.gameCenter
-          .loadActiveMatches(now: environment.mainRunLoop.now.date)
-
-        await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
-
-        return activeMatches
-      }
-    ),
-    animation: .default
-  )
-
-  for await event in environment.gameCenter.localPlayer.listener() {
-    switch event {
-    case .turnBased(.matchEnded), .turnBased(.receivedTurnEventForMatch):
-      await send(
-        .matchesLoaded(
-          TaskResult {
-            let (activeMatches, hasPastTurnBasedGames) =
-            try await environment.gameCenter.loadActiveMatches(
-              now: environment.mainRunLoop.now.date
-            )
-            await send(.set(\.$hasPastTurnBasedGames, hasPastTurnBasedGames))
-            return activeMatches
-          }
-        )
-      )
-    default:
-      break
-    }
   }
 }
 
