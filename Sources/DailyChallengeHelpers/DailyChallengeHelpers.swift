@@ -24,7 +24,7 @@ public func startDailyChallengeAsync(
 
   guard
     challenge.dailyChallenge.gameMode == .unlimited,
-    let game = try? await fileClient.loadSavedGamesAsync().dailyChallengeUnlimited
+    let game = try? await fileClient.loadSavedGames().dailyChallengeUnlimited
   else {
     do {
       return try await InProgressGame(

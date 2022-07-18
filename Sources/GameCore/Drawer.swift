@@ -17,7 +17,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         group.addTask {
           await send(
             .savedGamesLoaded(
-              TaskResult { try await environment.fileClient.loadSavedGamesAsync() }
+              TaskResult { try await environment.fileClient.loadSavedGames() }
             ),
             animation: .default
           )

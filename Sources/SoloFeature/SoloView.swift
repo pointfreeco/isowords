@@ -40,7 +40,7 @@ public let soloReducer = Reducer<SoloState, SoloAction, SoloEnvironment> {
 
   case .onAppear:
     return .task {
-      await .savedGamesLoaded(TaskResult { try await environment.fileClient.loadSavedGamesAsync() })
+      await .savedGamesLoaded(TaskResult { try await environment.fileClient.loadSavedGames() })
     }
 
   case .savedGamesLoaded(.failure):

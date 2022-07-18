@@ -207,7 +207,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
       .onChange(of: \.home.savedGames) { savedGames, _, action, environment in
         if case .savedGamesLoaded(.success) = action { return .none }
         return .fireAndForget {
-          try await environment.fileClient.saveGamesAsync(games: savedGames)
+          try await environment.fileClient.save(games: savedGames)
         }
       }
   }
@@ -229,7 +229,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       }
       await send(
         .savedGamesLoaded(
-          TaskResult { try await environment.fileClient.loadSavedGamesAsync() }
+          TaskResult { try await environment.fileClient.loadSavedGames() }
         )
       )
     }
@@ -358,7 +358,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     {
       state.home.savedGames.dailyChallengeUnlimited = nil
       return .fireAndForget { [savedGames = state.home.savedGames] in
-        try await environment.fileClient.saveGamesAsync(games: savedGames)
+        try await environment.fileClient.save(games: savedGames)
       }
     }
     return .none
