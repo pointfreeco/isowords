@@ -42,8 +42,8 @@ public enum UpgradeInterstitialAction: Equatable {
   case delegate(DelegateAction)
   case fullGameProductResponse(StoreKitClient.Product)
   case maybeLaterButtonTapped
-  case onAppear
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
+  case task
   case timerTick
   case upgradeButtonTapped
 
@@ -73,7 +73,6 @@ public let upgradeInterstitialReducer = Reducer<
   UpgradeInterstitialState, UpgradeInterstitialAction, UpgradeInterstitialEnvironment
 > { state, action, environment in
 
-  enum StoreKitObserverID {}
   enum TimerID {}
 
   switch action {
@@ -86,7 +85,6 @@ public let upgradeInterstitialReducer = Reducer<
 
   case .maybeLaterButtonTapped:
     return .task {
-      await Task.cancel(id: StoreKitObserverID.self)
       await Task.cancel(id: TimerID.self)
       return .delegate(.close)
     }
@@ -109,22 +107,19 @@ public let upgradeInterstitialReducer = Reducer<
     )
     else { return .none }
     return .task {
-      await Task.cancel(id: StoreKitObserverID.self)
       await Task.cancel(id: TimerID.self)
       return .delegate(.fullGamePurchased)
     }
 
-  case .onAppear:
+  case .task:
     state.upgradeInterstitialDuration =
       environment.serverConfig.config().upgradeInterstitial.duration
 
     return .run { [isDismissable = state.isDismissable] send in
       await withThrowingTaskGroup(of: Void.self) { group in
         group.addTask {
-          await withTaskCancellation(id: StoreKitObserverID.self) {
-            for await event in environment.storeKit.observer() {
-              await send(.paymentTransaction(event), animation: .default)
-            }
+          for await event in environment.storeKit.observer() {
+            await send(.paymentTransaction(event), animation: .default)
           }
         }
 
@@ -154,7 +149,7 @@ public let upgradeInterstitialReducer = Reducer<
   case .timerTick:
     state.secondsPassedCount += 1
     return state.secondsPassedCount == state.upgradeInterstitialDuration
-    ? .cancel(id: TimerID.self)
+      ? .cancel(id: TimerID.self)
       : .none
 
   case .upgradeButtonTapped:
@@ -270,7 +265,7 @@ public struct UpgradeInterstitialView: View {
         }
       }
       .adaptivePadding()
-      .onAppear { viewStore.send(.onAppear) }
+      .task { await viewStore.send(.task).finish() }
       .applying {
         if self.colorScheme == .dark {
           $0.background(

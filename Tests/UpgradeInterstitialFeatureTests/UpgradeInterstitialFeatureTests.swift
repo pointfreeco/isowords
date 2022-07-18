@@ -55,7 +55,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await store.receive(.fullGameProductResponse(fullGameProduct)) {
       $0.fullGameProduct = fullGameProduct
@@ -90,7 +90,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
 
     await self.scheduler.advance(by: .seconds(1))
     await store.receive(.timerTick) { $0.secondsPassedCount = 1 }
@@ -127,7 +127,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       environment: environment
     )
 
-    await store.send(.onAppear)
+    await store.send(.task)
     await store.send(.maybeLaterButtonTapped)
     await store.receive(.delegate(.close))
   }

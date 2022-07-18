@@ -88,7 +88,7 @@ public let cubePreviewReducer = Reducer<
   CubePreviewEnvironment
 > { state, action, environment in
 
-  enum SelectionId {}
+  enum SelectionID {}
 
   switch action {
   case .binding:
@@ -109,7 +109,7 @@ public let cubePreviewReducer = Reducer<
     case .removedCube:
       break
     }
-    return .cancel(id: SelectionId.self)
+    return .cancel(id: SelectionID.self)
 
   case .task:
     return .run { [move = state.moves[state.moveIndex]] send in
@@ -164,7 +164,7 @@ public let cubePreviewReducer = Reducer<
         break
       }
     }
-    .cancellable(id: SelectionId.self)
+    .cancellable(id: SelectionID.self)
   }
 }
 .binding()

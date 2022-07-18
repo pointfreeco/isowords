@@ -18,8 +18,8 @@ public struct SoloState: Equatable {
 
 public enum SoloAction: Equatable {
   case gameButtonTapped(GameMode)
-  case onAppear
   case savedGamesLoaded(TaskResult<SavedGamesState>)
+  case task
 }
 
 public struct SoloEnvironment {
@@ -38,17 +38,17 @@ public let soloReducer = Reducer<SoloState, SoloAction, SoloEnvironment> {
   case .gameButtonTapped:
     return .none
 
-  case .onAppear:
-    return .task {
-      await .savedGamesLoaded(TaskResult { try await environment.fileClient.loadSavedGames() })
-    }
-
   case .savedGamesLoaded(.failure):
     return .none
 
   case let .savedGamesLoaded(.success(savedGameState)):
     state.inProgressGame = savedGameState.unlimited
     return .none
+
+  case .task:
+    return .task {
+      await .savedGamesLoaded(TaskResult { try await environment.fileClient.loadSavedGames() })
+    }
   }
 }
 
@@ -116,7 +116,7 @@ public struct SoloView: View {
       }
       .adaptivePadding([.vertical])
       .screenEdgePadding(.horizontal)
-      .onAppear { viewStore.send(.onAppear) }
+      .task { await viewStore.send(.task).finish() }
     }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
