@@ -12,7 +12,7 @@ extension Reducer {
       of: trigger,
       perform: { _, state, _, environment in
         guard isEnabled(state) else { return .none }
-        return .fireAndForget { await feedbackGenerator(environment).selectionChangedAsync() }
+        return .fireAndForget { await feedbackGenerator(environment).selectionChanged() }
       }
     )
   }

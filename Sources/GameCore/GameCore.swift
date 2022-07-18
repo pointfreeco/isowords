@@ -1072,12 +1072,12 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           turnBasedContext: state.turnBasedContext
         )
         return .fireAndForget {
-          await environment.feedbackGenerator.selectionChangedAsync()
+          await environment.feedbackGenerator.selectionChanged()
           try await environment.gameCenter.turnBasedMatch.remove(match)
         }
       }
 
-      return .fireAndForget { await environment.feedbackGenerator.selectionChangedAsync() }
+      return .fireAndForget { await environment.feedbackGenerator.selectionChanged() }
 
     case let .gameCenter(.turnBasedMatchResponse(.success(match))):
       guard
