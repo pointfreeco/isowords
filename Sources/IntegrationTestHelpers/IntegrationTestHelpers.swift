@@ -120,7 +120,6 @@ extension ApiClient {
       currentPlayer: { currentPlayer },
       currentPlayerAsync: { await session.currentPlayer },
       logout: { await session.logout() },
-      refreshCurrentPlayer: { currentPlayer.map(Effect.init(value:)) ?? .none },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
       request: { try await session.request(route: $0) },
       setBaseUrl: { await session.setBaseUrl($0) }

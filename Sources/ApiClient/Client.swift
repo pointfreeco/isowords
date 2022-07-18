@@ -12,7 +12,6 @@ public struct ApiClient {
   @available(*, deprecated) public var currentPlayer: () -> CurrentPlayerEnvelope?
   public var currentPlayerAsync: @Sendable () async -> CurrentPlayerEnvelope?
   public var logout: @Sendable () async -> Void
-  @available(*, deprecated) public var refreshCurrentPlayer: () -> Effect<CurrentPlayerEnvelope, ApiError>
   public var refreshCurrentPlayerAsync: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
   public var setBaseUrl: @Sendable (URL) async -> Void
@@ -26,7 +25,6 @@ public struct ApiClient {
     currentPlayer: @escaping () -> CurrentPlayerEnvelope?,
     currentPlayerAsync: @escaping @Sendable () async -> CurrentPlayerEnvelope?,
     logout: @escaping @Sendable () async -> Void,
-    refreshCurrentPlayer: @escaping () -> Effect<CurrentPlayerEnvelope, ApiError>,
     refreshCurrentPlayerAsync: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
     request: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
     setBaseUrl: @escaping @Sendable (URL) async -> Void
@@ -38,7 +36,6 @@ public struct ApiClient {
     self.currentPlayer = currentPlayer
     self.currentPlayerAsync = currentPlayerAsync
     self.logout = logout
-    self.refreshCurrentPlayer = refreshCurrentPlayer
     self.refreshCurrentPlayerAsync = refreshCurrentPlayerAsync
     self.request = request
     self.setBaseUrl = setBaseUrl
@@ -144,7 +141,6 @@ public struct ApiClient {
       currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
       currentPlayerAsync: XCTUnimplemented("\(Self.self).currentPlayerAsync"),
       logout: XCTUnimplemented("\(Self.self).logout"),
-      refreshCurrentPlayer: { .failing("\(Self.self).refreshCurrentPlayer is unimplemented") },
       refreshCurrentPlayerAsync: XCTUnimplemented("\(Self.self).refreshCurrentPlayerAsync"),
       request: XCTUnimplemented("\(Self.self).request"),
       setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
@@ -191,7 +187,6 @@ extension ApiClient {
     currentPlayer: { nil },
     currentPlayerAsync: { nil },
     logout: {},
-    refreshCurrentPlayer: { .none },
     refreshCurrentPlayerAsync: { try await Task.never() },
     request: { _ in try await Task.never() },
     setBaseUrl: { _ in }

@@ -136,25 +136,6 @@ extension ApiClient {
       currentPlayer: { currentPlayer },
       currentPlayerAsync: { await session.currentPlayer },
       logout: { await session.logout() },
-      refreshCurrentPlayer: {
-        ApiClientLive.apiRequest(
-          accessToken: currentPlayer?.player.accessToken,
-          baseUrl: baseUrl,
-          route: .currentPlayer,
-          router: router
-        )
-        .map { data, _ in data }
-        .apiDecode(as: CurrentPlayerEnvelope.self)
-        .handleEvents(
-          receiveOutput: { newPlayer in
-            DispatchQueue.main.async {
-              currentPlayer = newPlayer
-              Task { await session.setCurrentPlayer(newPlayer) }
-            }
-          }
-        )
-        .eraseToEffect()
-      },
       refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
       request: { try await session.request(route: $0) },
       setBaseUrl: { await session.setBaseUrl($0) }

@@ -144,7 +144,6 @@ class SettingsPurchaseTests: XCTestCase {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
@@ -195,7 +194,6 @@ class SettingsPurchaseTests: XCTestCase {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithoutPurchase) }
     environment.storeKit.restoreCompletedTransactions = {
       didRestoreCompletedTransactions = true
     }
