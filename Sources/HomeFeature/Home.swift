@@ -355,13 +355,13 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         let localPlayer = await environment.gameCenter.localPlayer.localPlayerAsync()
 
         do {
-          let match = try await environment.gameCenter.turnBasedMatch.loadAsync(matchId)
+          let match = try await environment.gameCenter.turnBasedMatch.load(matchId)
           let currentParticipantIsLocalPlayer =
             match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
           if currentParticipantIsLocalPlayer {
             try await environment.gameCenter.turnBasedMatch
-              .endMatchInTurnAsync(
+              .endMatchInTurn(
                 .init(
                   for: match.matchId,
                   matchData: match.matchData ?? Data(),
@@ -372,7 +372,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
               )
           } else {
             try await environment.gameCenter.turnBasedMatch
-              .participantQuitOutOfTurnAsync(match.matchId)
+              .participantQuitOutOfTurn(match.matchId)
           }
         } catch {}
 
@@ -398,7 +398,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex))):
       return .fireAndForget {
-        try await environment.gameCenter.turnBasedMatch.sendReminderAsync(
+        try await environment.gameCenter.turnBasedMatch.sendReminder(
           .init(
             for: matchId,
             to: [otherPlayerIndex.rawValue],
@@ -711,7 +711,7 @@ extension GameCenterClient {
     now: Date
   ) async throws -> ([ActiveTurnBasedMatch], hasPastTurnBasedGames: Bool) {
     let localPlayer = await self.localPlayer.localPlayerAsync()
-    let matches = try await self.turnBasedMatch.loadMatchesAsync()
+    let matches = try await self.turnBasedMatch.loadMatches()
     let activeMatches = matches.activeMatches(for: localPlayer, at: now)
     let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
     return (activeMatches, hasPastTurnBasedGames)

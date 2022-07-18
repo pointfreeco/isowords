@@ -232,7 +232,7 @@ extension LocalPlayerClient {
 
 extension TurnBasedMatchClient {
   public static let live = Self(
-    endMatchInTurnAsync: { request in
+    endMatchInTurn: { request in
       let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
       match.message = request.message
       match.participants.forEach { participant in
@@ -253,7 +253,7 @@ extension TurnBasedMatchClient {
       }
       try await match.endMatchInTurn(withMatch: request.matchData)
     },
-    endTurnAsync: { request in
+    endTurn: { request in
       let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
       match.message = request.message
       try await match.endTurn(
@@ -263,12 +263,12 @@ extension TurnBasedMatchClient {
         match: request.matchData
       )
     },
-    loadAsync: { matchId in
+    load: { matchId in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       return try await TurnBasedMatch(rawValue: GKTurnBasedMatch.load(withID: matchId.rawValue))
     },
-    loadMatchesAsync: { try await GKTurnBasedMatch.loadMatches().map(TurnBasedMatch.init) },
-    participantQuitInTurnAsync: { matchId, matchData in
+    loadMatches: { try await GKTurnBasedMatch.loadMatches().map(TurnBasedMatch.init) },
+    participantQuitInTurn: { matchId, matchData in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       try await match.participantQuitInTurn(
         with: .quit,
@@ -278,15 +278,15 @@ extension TurnBasedMatchClient {
         match: matchData
       )
     },
-    participantQuitOutOfTurnAsync: { matchId in
+    participantQuitOutOfTurn: { matchId in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       try await match.participantQuitOutOfTurn(with: .quit)
     },
-    rematchAsync: { matchId in
+    rematch: { matchId in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       return try await TurnBasedMatch(rawValue: match.rematch())
     },
-    removeAsync: { match in
+    remove: { match in
       guard let turnBasedMatch = match.rawValue
       else {
         struct RawValueWasNil: Error {}
@@ -294,11 +294,11 @@ extension TurnBasedMatchClient {
       }
       try await turnBasedMatch.remove()
     },
-    saveCurrentTurnAsync: { matchId, matchData in
+    saveCurrentTurn: { matchId, matchData in
       let match = try await GKTurnBasedMatch.load(withID: matchId.rawValue)
       try await match.saveCurrentTurn(withMatch: matchData)
     },
-    sendReminderAsync: { request in
+    sendReminder: { request in
       let match = try await GKTurnBasedMatch.load(withID: request.matchId.rawValue)
       try await match.sendReminder(
         to: request.participantsAtIndices.map { match.participants[$0] },

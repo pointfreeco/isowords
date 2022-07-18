@@ -71,19 +71,18 @@ public struct LocalPlayerClient {
 }
 
 public struct TurnBasedMatchClient {
-  public var endMatchInTurnAsync: @Sendable (EndMatchInTurnRequest) async throws -> Void
-  public var endTurnAsync: @Sendable (EndTurnRequest) async throws -> Void
-  public var loadAsync : @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
-  public var loadMatchesAsync: @Sendable () async throws -> [TurnBasedMatch]
-  public var participantQuitInTurnAsync: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
-  public var participantQuitOutOfTurnAsync: @Sendable (TurnBasedMatch.Id) async throws -> Void
-  public var rematchAsync: @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
-  public var removeAsync: @Sendable (TurnBasedMatch) async throws -> Void
-  public var saveCurrentTurnAsync: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
-  public var sendReminderAsync: @Sendable (SendReminderRequest) async throws -> Void
+  public var endMatchInTurn: @Sendable (EndMatchInTurnRequest) async throws -> Void
+  public var endTurn: @Sendable (EndTurnRequest) async throws -> Void
+  public var load: @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
+  public var loadMatches: @Sendable () async throws -> [TurnBasedMatch]
+  public var participantQuitInTurn: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
+  public var participantQuitOutOfTurn: @Sendable (TurnBasedMatch.Id) async throws -> Void
+  public var rematch: @Sendable (TurnBasedMatch.Id) async throws -> TurnBasedMatch
+  public var remove: @Sendable (TurnBasedMatch) async throws -> Void
+  public var saveCurrentTurn: @Sendable (TurnBasedMatch.Id, Data) async throws -> Void
+  public var sendReminder: @Sendable (SendReminderRequest) async throws -> Void
 
   public struct EndMatchInTurnRequest: Equatable {
-    // TODO: public var matchOutcomes: [GKTurnBasedMatch.Outcome] or [String: GKTurnBasedMatch.Outcome]
     public var localPlayerMatchOutcome: GKTurnBasedMatch.Outcome
     public var localPlayerId: Player.Id
     public var matchId: TurnBasedMatch.Id

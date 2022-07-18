@@ -85,14 +85,14 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     state.isRematchRequestInFlight = true
     return .task { [matchId = state.matchId] in
       await .rematchResponse(
-        TaskResult { try await environment.gameCenter.turnBasedMatch.rematchAsync(matchId) }
+        TaskResult { try await environment.gameCenter.turnBasedMatch.rematch(matchId) }
       )
     }
 
   case .tappedRow:
     return .task { [matchId = state.matchId] in
       await .matchResponse(
-        TaskResult { try await environment.gameCenter.turnBasedMatch.loadAsync(matchId) }
+        TaskResult { try await environment.gameCenter.turnBasedMatch.load(matchId) }
       )
     }
   }

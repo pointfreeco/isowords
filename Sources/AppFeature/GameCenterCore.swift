@@ -45,7 +45,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               )
               return .fireAndForget {
                 await environment.gameCenter.turnBasedMatchmakerViewController.dismiss()
-                try await environment.gameCenter.turnBasedMatch.saveCurrentTurnAsync(
+                try await environment.gameCenter.turnBasedMatch.saveCurrentTurn(
                   match.matchId,
                   Data(
                     turnBasedMatchData: .init(
@@ -91,7 +91,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 if gameState.isYourTurn {
                   var turnBasedMatchData = turnBasedMatchData
                   turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
-                  try await environment.gameCenter.turnBasedMatch.saveCurrentTurnAsync(
+                  try await environment.gameCenter.turnBasedMatch.saveCurrentTurn(
                     match.matchId,
                     Data(turnBasedMatchData: turnBasedMatchData)
                   )
@@ -140,7 +140,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               await .gameCenter(
                 .rematchResponse(
                   TaskResult {
-                    try await environment.gameCenter.turnBasedMatch.rematchAsync(
+                    try await environment.gameCenter.turnBasedMatch.rematch(
                       turnBasedMatch.match.matchId
                     )
                   }
@@ -172,7 +172,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
           case let .gameCenter(.listener(.turnBased(.wantsToQuitMatch(match)))):
             return .fireAndForget {
-              try await environment.gameCenter.turnBasedMatch.endMatchInTurnAsync(
+              try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
                 .init(
                   for: match.matchId,
                   matchData: match.matchData ?? Data(),
@@ -198,7 +198,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               await .gameCenter(
                 .rematchResponse(
                   TaskResult {
-                    try await environment.gameCenter.turnBasedMatch.rematchAsync(matchId)
+                    try await environment.gameCenter.turnBasedMatch.rematch(matchId)
                   }
                 )
               )

@@ -13,7 +13,7 @@ class PastGamesTests: XCTestCase {
   func testLoadMatches() async {
     var environment = PastGamesEnvironment.failing
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatch.loadMatchesAsync = { [match] }
+    environment.gameCenter.turnBasedMatch.loadMatches = { [match] }
 
     let store = TestStore(
       initialState: PastGamesState(),
@@ -30,7 +30,7 @@ class PastGamesTests: XCTestCase {
 
   func testOpenMatch() async {
     var environment = PastGamesEnvironment.failing
-    environment.gameCenter.turnBasedMatch.loadAsync = { _ in match }
+    environment.gameCenter.turnBasedMatch.load = { _ in match }
 
     let store = TestStore(
       initialState: PastGamesState(pastGames: [pastGameState]),
@@ -47,7 +47,7 @@ class PastGamesTests: XCTestCase {
 
   func testRematch() async {
     var environment = PastGamesEnvironment.failing
-    environment.gameCenter.turnBasedMatch.rematchAsync = { _ in match }
+    environment.gameCenter.turnBasedMatch.rematch = { _ in match }
 
     let store = TestStore(
       initialState: PastGamesState(pastGames: [pastGameState]),
@@ -74,7 +74,7 @@ class PastGamesTests: XCTestCase {
     struct RematchFailure: Error, Equatable {}
 
     var environment = PastGamesEnvironment.failing
-    environment.gameCenter.turnBasedMatch.rematchAsync = { _ in throw RematchFailure() }
+    environment.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
 
     let store = TestStore(
       initialState: PastGamesState(pastGames: [pastGameState]),

@@ -8,7 +8,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         group.addTask {
           await send(
             .matchesLoaded(
-              TaskResult { try await environment.gameCenter.turnBasedMatch.loadMatchesAsync() }
+              TaskResult { try await environment.gameCenter.turnBasedMatch.loadMatches() }
             ),
             animation: .default
           )

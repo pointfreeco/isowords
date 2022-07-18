@@ -317,7 +317,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
               match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
             if currentParticipantIsLocalPlayer {
-              try await environment.gameCenter.turnBasedMatch.endMatchInTurnAsync(
+              try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
                 .init(
                   for: match.matchId,
                   matchData: match.matchData ?? Data(),
@@ -328,7 +328,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
               )
             } else {
               try await environment.gameCenter.turnBasedMatch
-                .participantQuitOutOfTurnAsync(match.matchId)
+                .participantQuitOutOfTurn(match.matchId)
             }
           },
 
@@ -1073,7 +1073,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         )
         return .fireAndForget {
           await environment.feedbackGenerator.selectionChangedAsync()
-          try await environment.gameCenter.turnBasedMatch.removeAsync(match)
+          try await environment.gameCenter.turnBasedMatch.remove(match)
         }
       }
 
@@ -1137,7 +1137,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                     turnBasedContext: turnBasedContext
                   )
                 {
-                  try await environment.gameCenter.turnBasedMatch.endMatchInTurnAsync(
+                  try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
                     .init(
                       for: turnBasedContext.match.matchId,
                       matchData: matchData,
@@ -1157,7 +1157,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                       == turnBasedContext.localPlayerIndex
 
                   if shouldEndTurn {
-                    try await environment.gameCenter.turnBasedMatch.endTurnAsync(
+                    try await environment.gameCenter.turnBasedMatch.endTurn(
                       .init(
                         for: turnBasedContext.match.matchId,
                         matchData: matchData,
@@ -1166,7 +1166,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                     )
                   } else {
                     try await environment.gameCenter.turnBasedMatch
-                      .saveCurrentTurnAsync(turnBasedContext.match.matchId, matchData)
+                      .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
                   }
 
                 case let .playedWord(cubeFaces):
@@ -1174,7 +1174,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                   let score = SharedModels.score(word)
                   let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
 
-                  try await environment.gameCenter.turnBasedMatch.endTurnAsync(
+                  try await environment.gameCenter.turnBasedMatch.endTurn(
                     .init(
                       for: turnBasedContext.match.matchId,
                       matchData: matchData,
@@ -1187,7 +1187,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
                 }
               }
               return try await environment.gameCenter.turnBasedMatch
-                .loadAsync(turnBasedContext.match.matchId)
+                .load(turnBasedContext.match.matchId)
             }
           )
         )

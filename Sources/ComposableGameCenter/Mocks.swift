@@ -45,16 +45,16 @@ extension LocalPlayerClient {
 
 extension TurnBasedMatchClient {
   public static let noop = Self(
-    endMatchInTurnAsync: { _ in },
-    endTurnAsync: { _ in },
-    loadAsync: { _ in try await Task.never() },
-    loadMatchesAsync: { [] },
-    participantQuitInTurnAsync: { _, _ in },
-    participantQuitOutOfTurnAsync: { _ in },
-    rematchAsync: { _ in try await Task.never() },
-    removeAsync: { _ in },
-    saveCurrentTurnAsync: { _, _ in },
-    sendReminderAsync: { _ in }
+    endMatchInTurn: { _ in },
+    endTurn: { _ in },
+    load: { _ in try await Task.never() },
+    loadMatches: { [] },
+    participantQuitInTurn: { _, _ in },
+    participantQuitOutOfTurn: { _ in },
+    rematch: { _ in try await Task.never() },
+    remove: { _ in },
+    saveCurrentTurn: { _, _ in },
+    sendReminder: { _ in }
   )
 }
 
@@ -107,16 +107,16 @@ extension TurnBasedMatchmakerViewControllerClient {
 
   extension TurnBasedMatchClient {
     public static let failing = Self(
-      endMatchInTurnAsync: XCTUnimplemented("\(Self.self).endMatchInTurnAsync"),
-      endTurnAsync: XCTUnimplemented("\(Self.self).endTurnAsync"),
-      loadAsync: XCTUnimplemented("\(Self.self).loadAsync"),
-      loadMatchesAsync: XCTUnimplemented("\(Self.self).loadMatchesAsync"),
-      participantQuitInTurnAsync: XCTUnimplemented("\(Self.self).participantQuitInTurnAsync"),
-      participantQuitOutOfTurnAsync: XCTUnimplemented("\(Self.self).participantQuitOutOfTurnAsync"),
-      rematchAsync: XCTUnimplemented("\(Self.self).rematchAsync"),
-      removeAsync: XCTUnimplemented("\(Self.self).removeAsync"),
-      saveCurrentTurnAsync: XCTUnimplemented("\(Self.self).saveCurrentTurnAsync"),
-      sendReminderAsync: XCTUnimplemented("\(Self.self).sendReminderAsync")
+      endMatchInTurn: XCTUnimplemented("\(Self.self).endMatchInTurn"),
+      endTurn: XCTUnimplemented("\(Self.self).endTurn"),
+      load: XCTUnimplemented("\(Self.self).load"),
+      loadMatches: XCTUnimplemented("\(Self.self).loadMatches"),
+      participantQuitInTurn: XCTUnimplemented("\(Self.self).participantQuitInTurn"),
+      participantQuitOutOfTurn: XCTUnimplemented("\(Self.self).participantQuitOutOfTurn"),
+      rematch: XCTUnimplemented("\(Self.self).rematch"),
+      remove: XCTUnimplemented("\(Self.self).remove"),
+      saveCurrentTurn: XCTUnimplemented("\(Self.self).saveCurrentTurn"),
+      sendReminder: XCTUnimplemented("\(Self.self).sendReminder")
     )
   }
 

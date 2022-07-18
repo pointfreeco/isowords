@@ -43,7 +43,7 @@ let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnviron
         await .matchesResponse(
           TaskResult {
             try await environment.gameCenter.turnBasedMatch
-              .loadMatchesAsync()
+              .loadMatches()
               .compactMap { match in
                 PastGameState(
                   turnBasedMatch: match,

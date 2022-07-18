@@ -91,9 +91,9 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
-        $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
-        $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in didSaveCurrentTurn = true }
+        $0.gameCenter.turnBasedMatch.endTurn = { didEndTurnWithRequest = $0 }
+        $0.gameCenter.turnBasedMatch.loadMatches = { [] }
+        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in didSaveCurrentTurn = true }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.gameCenter.turnBasedMatchmakerViewController.present = { _ in }
         $0.lowPowerMode.startAsync = { .never }
@@ -254,7 +254,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.loadAsync = { _ in updatedMatch }
+    store.environment.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
 
     await store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
@@ -343,8 +343,8 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
-        $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
+        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
+        $0.gameCenter.turnBasedMatch.loadMatches = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }
         $0.timeZone = { .newYork }
@@ -455,7 +455,7 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.localPlayer.localPlayerAsync = { .mock }
-        $0.gameCenter.turnBasedMatch.loadMatchesAsync = { [] }
+        $0.gameCenter.turnBasedMatch.loadMatches = { [] }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.serverConfig.config = { .init() }
         $0.timeZone = { .newYork }
@@ -537,8 +537,8 @@ class TurnBasedTests: XCTestCase {
       $0.apiClient.currentPlayerAsync = { nil }
       $0.audioPlayer.play = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
-      $0.gameCenter.turnBasedMatch.endTurnAsync = { didEndTurnWithRequest = $0 }
+      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
+      $0.gameCenter.turnBasedMatch.endTurn = { didEndTurnWithRequest = $0 }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
 
@@ -594,7 +594,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.loadAsync = { _ in updatedMatch }
+    store.environment.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
 
     await store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
       $0.game = updatedGameState
@@ -646,7 +646,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.loadAsync = { _ in updatedMatch }
+    store.environment.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
 
     await store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
       $0.game = updatedGameState
@@ -695,11 +695,11 @@ class TurnBasedTests: XCTestCase {
       $0.gameCenter.localPlayer.localPlayer = {
         update(.authenticated) { $0.player = localParticipant.player! }
       }
-      $0.gameCenter.turnBasedMatch.rematchAsync = {
+      $0.gameCenter.turnBasedMatch.rematch = {
         didRematchWithId = $0
         return newMatch
       }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurnAsync = { _, _ in }
+      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
       $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()

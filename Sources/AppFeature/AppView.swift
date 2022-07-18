@@ -303,7 +303,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     let .home(.activeGames(.turnBasedGameTapped(matchId))):
     return .run { send in
       do {
-        let match = try await environment.gameCenter.turnBasedMatch.loadAsync(matchId)
+        let match = try await environment.gameCenter.turnBasedMatch.load(matchId)
         await send(
           .gameCenter(
             .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: true)))
