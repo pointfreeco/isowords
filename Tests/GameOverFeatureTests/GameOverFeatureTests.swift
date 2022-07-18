@@ -383,7 +383,7 @@ class GameOverFeatureTests: XCTestCase {
     await task.cancel()
   }
 
-  func testSkipUpgradeIfLessThan10GamesPlayed() async {
+  func testSkipUpgradeIfLessThan6GamesPlayed() async {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
