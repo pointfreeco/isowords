@@ -39,9 +39,12 @@ extension StoreKitClient {
         }
       },
       requestReview: {
-        guard let windowScene = await UIApplication.shared.windows.first?.windowScene
+        guard
+          let scene = await UIApplication.shared.connectedScenes
+            .first(where: { $0 is UIWindowScene })
+        as? UIWindowScene
         else { return }
-        await SKStoreReviewController.requestReview(in: windowScene)
+        await SKStoreReviewController.requestReview(in: scene)
       },
       restoreCompletedTransactions: { SKPaymentQueue.default().restoreCompletedTransactions() }
     )
