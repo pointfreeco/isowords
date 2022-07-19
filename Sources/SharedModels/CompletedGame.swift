@@ -1,7 +1,7 @@
 import Foundation
 import Tagged
 
-public struct CompletedGame: Codable, Equatable {
+public struct CompletedGame: Codable, Equatable, Sendable {
   public var cubes: ArchivablePuzzle
   public var gameContext: GameContext
   public var gameMode: GameMode
@@ -22,7 +22,7 @@ public struct CompletedGame: Codable, Equatable {
     case secondsPlayed
   }
 
-  public enum GameContext: Codable, Equatable {
+  public enum GameContext: Codable, Equatable, Sendable {
     case dailyChallenge(DailyChallenge.Id)
     case shared(SharedGame.Code)
     case solo

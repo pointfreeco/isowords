@@ -21,7 +21,7 @@ public struct CubeFace: Codable, Equatable {
     )
   }
 
-  public enum Side: Int, CaseIterable, Codable, Equatable, Hashable {
+  public enum Side: Int, CaseIterable, Codable, Hashable, Sendable {
     case top = 0
     case left = 1
     case right = 2

@@ -29,6 +29,7 @@ class TurnBasedTests: XCTestCase {
   func testNewGame() async throws {
     let didEndTurnWithRequest = ActorIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
     let didSaveCurrentTurn = ActorIsolated(false)
+
     let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }

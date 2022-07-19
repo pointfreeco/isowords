@@ -35,7 +35,7 @@ struct SettingsPreviewApp: App {
               lowPowerMode: .live,
               mainQueue: .main,
               remoteNotifications: .live,
-              serverConfig: ServerConfigClient.live(fetch: { .init(value: .init()) }),
+              serverConfig: ServerConfigClient.live(fetch: { .init() }),
               setUserInterfaceStyle: { userInterfaceStyle in
                 await MainActor.run {
                   guard

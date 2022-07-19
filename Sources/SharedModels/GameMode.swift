@@ -1,4 +1,4 @@
-public enum GameMode: String, CaseIterable, Codable, Equatable, Hashable, Identifiable {
+public enum GameMode: String, CaseIterable, Codable, Hashable, Identifiable, Sendable {
   case timed
   case unlimited
 

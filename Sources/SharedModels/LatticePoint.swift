@@ -1,7 +1,7 @@
 import CustomDump
 
-public struct LatticePoint: Codable, Equatable, Hashable {
-  public enum Index: Int, CaseIterable, Codable, Comparable {
+public struct LatticePoint: Codable, Hashable, Sendable {
+  public enum Index: Int, CaseIterable, Codable, Comparable, Sendable {
     case zero = 0
     case one = 1
     case two = 2

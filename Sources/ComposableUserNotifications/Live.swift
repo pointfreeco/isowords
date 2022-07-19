@@ -62,7 +62,7 @@ extension UserNotificationClient {
       withCompletionHandler completionHandler: @escaping () -> Void
     ) {
       self.continuation.yield(
-        .didReceiveResponse(.init(rawValue: response), completionHandler: completionHandler)
+        .didReceiveResponse(.init(rawValue: response)) { completionHandler() }
       )
     }
 
@@ -82,51 +82,7 @@ extension UserNotificationClient {
         @escaping (UNNotificationPresentationOptions) -> Void
     ) {
       self.continuation.yield(
-        .willPresentNotification(
-          .init(rawValue: notification),
-          completionHandler: completionHandler
-        )
-      )
-    }
-  }
-
-  fileprivate class _Delegate: NSObject, UNUserNotificationCenterDelegate {
-    let subscriber: Effect<UserNotificationClient.DelegateEvent, Never>.Subscriber
-
-    init(subscriber: Effect<UserNotificationClient.DelegateEvent, Never>.Subscriber) {
-      self.subscriber = subscriber
-    }
-
-    func userNotificationCenter(
-      _ center: UNUserNotificationCenter,
-      didReceive response: UNNotificationResponse,
-      withCompletionHandler completionHandler: @escaping () -> Void
-    ) {
-      self.subscriber.send(
-        .didReceiveResponse(.init(rawValue: response), completionHandler: completionHandler)
-      )
-    }
-
-    func userNotificationCenter(
-      _ center: UNUserNotificationCenter,
-      openSettingsFor notification: UNNotification?
-    ) {
-      self.subscriber.send(
-        .openSettingsForNotification(notification.map(Notification.init(rawValue:)))
-      )
-    }
-
-    func userNotificationCenter(
-      _ center: UNUserNotificationCenter,
-      willPresent notification: UNNotification,
-      withCompletionHandler completionHandler:
-        @escaping (UNNotificationPresentationOptions) -> Void
-    ) {
-      self.subscriber.send(
-        .willPresentNotification(
-          .init(rawValue: notification),
-          completionHandler: completionHandler
-        )
+        .willPresentNotification(.init(rawValue: notification)) { completionHandler($0) }
       )
     }
   }

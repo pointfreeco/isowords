@@ -57,12 +57,12 @@ public enum ServerRoute: Equatable {
       case sharedGame(SharedGame)
       case verifyReceipt(Data)
 
-      public enum DailyChallenge: Equatable {
+      public enum DailyChallenge: Equatable, Sendable {
         case results(Results)
         case start(gameMode: GameMode, language: Language)
         case today(language: Language)
 
-        public enum Results: Equatable {
+        public enum Results: Equatable, Sendable {
           case fetch(
             gameMode: GameMode, gameNumber: SharedModels.DailyChallenge.GameNumber?,
             language: Language)
@@ -70,10 +70,10 @@ public enum ServerRoute: Equatable {
         }
       }
 
-      public enum Games: Equatable {
+      public enum Games: Equatable, Sendable {
         case submit(SubmitRequest)
 
-        public struct SubmitRequest: Codable, Equatable {
+        public struct SubmitRequest: Codable, Equatable, Sendable {
           public let gameContext: GameContext
           public let moves: Moves
 
@@ -85,13 +85,13 @@ public enum ServerRoute: Equatable {
             self.moves = moves
           }
 
-          public enum GameContext: Codable, Equatable {
+          public enum GameContext: Codable, Equatable, Sendable {
             case dailyChallenge(SharedModels.DailyChallenge.Id)
             case shared(SharedModels.SharedGame.Code)
             case solo(Solo)
             case turnBased(TurnBased)
 
-            public struct Solo: Codable, Equatable {
+            public struct Solo: Codable, Equatable, Sendable {
               public let gameMode: GameMode
               public let language: Language
               public let puzzle: ArchivablePuzzle
@@ -107,7 +107,7 @@ public enum ServerRoute: Equatable {
               }
             }
 
-            public struct TurnBased: Codable, Equatable {
+            public struct TurnBased: Codable, Equatable, Sendable {
               public let gameMode: GameMode
               public let language: Language
               public let playerIndexToId: [Move.PlayerIndex: Player.Id]
@@ -143,22 +143,22 @@ public enum ServerRoute: Equatable {
         }
       }
 
-      public enum Leaderboard: Equatable {
+      public enum Leaderboard: Equatable, Sendable {
         case fetch(gameMode: GameMode, language: Language, timeScope: TimeScope)
         case vocab(Vocab)
         case weekInReview(language: Language)
 
-        public enum Vocab: Equatable {
+        public enum Vocab: Equatable, Sendable {
           case fetch(language: Language, timeScope: TimeScope)
           case fetchWord(wordId: Word.Id)
         }
       }
 
-      public enum Push: Equatable {
+      public enum Push: Equatable, Sendable {
         case register(Register)
         case updateSetting(Setting)
 
-        public struct Register: Codable, Equatable {
+        public struct Register: Codable, Equatable, Sendable {
           public let authorizationStatus: PushAuthorizationStatus
           public let build: Build.Number
           public let token: String
@@ -174,7 +174,7 @@ public enum ServerRoute: Equatable {
           }
         }
 
-        public struct Setting: Codable, Equatable {
+        public struct Setting: Codable, Equatable, Sendable {
           public let notificationType: PushNotificationContent.CodingKeys
           public let sendNotifications: Bool
 
@@ -188,7 +188,7 @@ public enum ServerRoute: Equatable {
         }
       }
 
-      public enum SharedGame: Equatable {
+      public enum SharedGame: Equatable, Sendable {
         case fetch(SharedModels.SharedGame.Code)
         case share(CompletedGame)
       }

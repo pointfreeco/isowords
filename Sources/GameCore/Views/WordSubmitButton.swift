@@ -214,10 +214,8 @@ public struct WordSubmitButton: View {
         ? Color.isowordsBlack.opacity(0.4)
         : nil
     )
-    .animation(.default)
-    .onTapGesture {
-      self.viewStore.send(.backgroundTapped, animation: .default)
-    }
+    .animation(.default, value: self.viewStore.wordSubmitButton.areReactionsOpen)
+    .onTapGesture { self.viewStore.send(.backgroundTapped, animation: .default) }
   }
 }
 
@@ -246,7 +244,8 @@ struct ReactionsView: View {
       .opacity(self.viewStore.areReactionsOpen ? 1 : 0)
       .offset(x: offset.x, y: offset.y)
       .animation(
-        Animation.default.delay(Double(idx) / Double(self.viewStore.favoriteReactions.count * 10))
+        .default.delay(Double(idx) / Double(self.viewStore.favoriteReactions.count * 10)),
+        value: self.viewStore.areReactionsOpen
       )
     }
   }
