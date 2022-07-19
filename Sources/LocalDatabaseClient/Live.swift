@@ -5,15 +5,15 @@ import Sqlite
 
 extension LocalDatabaseClient {
   public static func live(path: URL) -> Self {
-    let _db = UncheckedSendable<Box<Sqlite?>>(wrappedValue: .init(wrappedValue: nil))
+    let _db = UncheckedSendable(Box<Sqlite?>(wrappedValue: nil))
     @Sendable func db() throws -> Sqlite {
-      if _db.uncheckedValue.wrappedValue == nil {
+      if _db.value.wrappedValue == nil {
         try! FileManager.default.createDirectory(
           at: path.deletingLastPathComponent(), withIntermediateDirectories: true
         )
-        _db.uncheckedValue.wrappedValue = try Sqlite(path: path.absoluteString)
+        _db.value.wrappedValue = try Sqlite(path: path.absoluteString)
       }
-      return _db.uncheckedValue.wrappedValue!
+      return _db.value.wrappedValue!
     }
     return Self(
       fetchGamesForWord: { try db().fetchGames(for: $0) },

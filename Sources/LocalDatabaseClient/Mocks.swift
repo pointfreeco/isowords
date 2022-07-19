@@ -11,7 +11,7 @@ class Box<Value> {
 
 extension LocalDatabaseClient {
   public static var mock: Self {
-    let games = UncheckedSendable(wrappedValue: Box(wrappedValue: [CompletedGame]()))
+    let games = UncheckedSendable(Box(wrappedValue: [CompletedGame]()))
 
     return Self(
       fetchGamesForWord: { _ in [] },
@@ -19,7 +19,7 @@ extension LocalDatabaseClient {
       fetchVocab: { Vocab(words: []) },
       migrate: {},
       playedGamesCount: { _ in 10 },
-      saveGame: { games.uncheckedValue.wrappedValue.append($0) }
+      saveGame: { games.value.wrappedValue.append($0) }
     )
   }
 
