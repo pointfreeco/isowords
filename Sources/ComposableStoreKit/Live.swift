@@ -15,8 +15,8 @@ extension StoreKitClient {
           let delegate = ProductRequest(continuation: continuation)
           request.delegate = delegate
           request.start()
-          continuation.onTermination = { _ in
-            request.cancel()
+          continuation.onTermination = { [request = UncheckedSendable(wrappedValue: request)] _ in
+            request.wrappedValue.cancel()
             _ = delegate
           }
         }
