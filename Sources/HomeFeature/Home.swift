@@ -543,7 +543,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 )
 
 private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async throws {
-  try await environment.gameCenter.localPlayer.authenticate()
+  try? await environment.gameCenter.localPlayer.authenticate()
 
   do {
     let localPlayer = environment.gameCenter.localPlayer.localPlayer()
