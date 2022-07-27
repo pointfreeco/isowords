@@ -174,6 +174,7 @@ public enum SettingsAction: BindableAction, Equatable {
   case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
   case didBecomeActive
   case leaveUsAReviewButtonTapped
+  case onDismiss
   case openSettingButtonTapped
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case productsResponse(TaskResult<StoreKitClient.ProductsResponse>)
@@ -301,6 +302,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   ),
 
   Reducer { state, action, environment in
+    enum PaymentObserverID {}
     enum UpdateRemoteSettingsID {}
 
     switch action {
@@ -432,6 +434,9 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           .open(environment.serverConfig.config().appStoreReviewUrl, [:])
       }
 
+    case .onDismiss:
+      return .cancel(id: PaymentObserverID.self)
+
     case .paymentTransaction(.removedTransactions):
       state.isPurchasing = false
       return .task {
@@ -451,7 +456,10 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       state.alert = .restoredPurchasesFailed
       return .none
 
-    case .paymentTransaction:
+    case let .paymentTransaction(.updatedTransactions(transactions)):
+      if transactions.contains(where: { $0.error != nil }) {
+        state.isPurchasing = false
+      }
       return .none
 
     case .openSettingButtonTapped:
@@ -535,37 +543,36 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
       return .merge(
         .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
-          await withTaskGroup(of: Void.self) { group in
-            group.addTask {
+          Task {
+            await withTaskCancellation(id: PaymentObserverID.self, cancelInFlight: true) {
               for await event in environment.storeKit.observer() {
                 await send(.paymentTransaction(event), animation: .default)
               }
             }
-
-            if shouldFetchProducts {
-              group.addTask {
-                await send(
-                  .productsResponse(
-                    TaskResult {
-                      try await environment.storeKit.fetchProducts([
-                        environment.serverConfig.config().productIdentifiers.fullGame
-                      ])
-                    }
-                  ),
-                  animation: .default
-                )
-              }
-            }
-
-            group.addTask {
-              await send(
-                .userNotificationSettingsResponse(
-                  environment.userNotifications.getNotificationSettings()
-                ),
-                animation: .default
-              )
-            }
+            print("settings cancellation")
           }
+
+          async let productsResponse: Void = shouldFetchProducts
+          ? send(
+            .productsResponse(
+              TaskResult {
+                try await environment.storeKit.fetchProducts([
+                  environment.serverConfig.config().productIdentifiers.fullGame
+                ])
+              }
+            ),
+            animation: .default
+          )
+          : ()
+
+          async let settingsResponse: Void = send(
+            .userNotificationSettingsResponse(
+              environment.userNotifications.getNotificationSettings()
+            ),
+            animation: .default
+          )
+
+          _ = await (productsResponse, settingsResponse)
         },
 
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)

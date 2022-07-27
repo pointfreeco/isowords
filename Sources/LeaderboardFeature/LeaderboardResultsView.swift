@@ -76,6 +76,7 @@ extension Reducer {
             TaskResult { try await environment.loadResults(gameMode, timeScope) }
           )
         }
+        .animation()
 
       case .resultsResponse(.failure):
         state.isLoading = false

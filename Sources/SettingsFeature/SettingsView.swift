@@ -172,7 +172,8 @@ public struct SettingsView: View {
       backgroundColor: .adaptiveWhite,
       foregroundColor: .hex(self.colorScheme == .dark ? 0x7d7d7d : 0x393939),
       title: Text("Settings"),
-      navPresentationStyle: self.navPresentationStyle
+      navPresentationStyle: self.navPresentationStyle,
+      onDismiss: { self.viewStore.send(.onDismiss) }
     )
     .task { await self.viewStore.send(.task).finish() }
     .alert(self.store.scope(state: \.alert), dismiss: .set(\.$alert, nil))
