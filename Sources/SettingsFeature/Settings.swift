@@ -549,7 +549,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
                 await send(.paymentTransaction(event), animation: .default)
               }
             }
-            print("settings cancellation")
           }
 
           async let productsResponse: Void = shouldFetchProducts

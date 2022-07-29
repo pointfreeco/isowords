@@ -215,7 +215,6 @@ where
           }
 
           self.subtitle
-            .animation(nil)
             .adaptiveFont(.matterMedium, size: 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.init(top: .grid(4), leading: .grid(5), bottom: .grid(3), trailing: .grid(5)))
@@ -228,12 +227,11 @@ where
                 ResultRow(color: self.color, result: result)
               }
             }
-            .animation(nil)
 
             if let result = self.viewStore.resultEnvelope?.nonContiguousResult {
               Image(systemName: "ellipsis")
                 .opacity(0.4)
-                .adaptivePadding([.top, .bottom], .grid(5))
+                .adaptivePadding(.vertical, .grid(5))
                 .adaptiveFont(.matterMedium, size: 16)
 
               Button(action: { self.viewStore.send(.tappedRow(id: result.id)) }) {
@@ -256,7 +254,6 @@ where
         }
         .disabled(self.viewStore.isLoading)
         .redacted(reason: self.viewStore.isLoading ? .placeholder : [])
-        .animation(nil)
       }
       .background(self.color)
       .foregroundColor(.isowordsBlack)

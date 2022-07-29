@@ -49,7 +49,7 @@ extension ApiClient {
   // games to the leaderboards.
   static var appClip: Self {
     var apiClient = ApiClient.noop
-    apiClient.request = { route in
+    apiClient.request = { @Sendable route in
       switch route {
       case .api,
         .appSiteAssociation,
