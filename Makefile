@@ -203,7 +203,7 @@ run-server-linux:
 		--build
 
 test-server-linux:
-	docker run --rm -v "$(PWD):$(PWD)" -w "$(PWD)" swift:5.5 bash Bootstrap/test.sh
+	docker run --rm -v "$(PWD):$(PWD)" -w "$(PWD)" swift:5.6.2-focal bash Bootstrap/test.sh
 
 clean-server: clean-db
 
