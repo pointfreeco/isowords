@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "89b0a0a5f110e77272fb5a775064a31bfc1f155c",
-          "version": "3.18.0"
+          "revision": "b7901df0611d3d7e869fa345020b3d0ae817c32d",
+          "version": "3.19.1"
         }
       },
       {
@@ -150,8 +150,8 @@
         "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
           "branch": null,
-          "revision": "1c1408bf8fc21be93713e897d2badf500ea38419",
-          "version": "2.3.1"
+          "revision": "53be78637ecd165d1ddedc4e20de69b8f43ec3b7",
+          "version": "2.3.2"
         }
       },
       {

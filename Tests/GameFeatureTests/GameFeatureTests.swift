@@ -65,6 +65,7 @@ class GameFeatureTests: XCTestCase {
         )
       ]
     }
+    await store.finish()
   }
 
   func testDoubleTapRemoveCube_MultipleSelectedFaces() async {
