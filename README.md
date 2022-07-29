@@ -84,7 +84,12 @@ For example, [here](https://github.com/pointfreeco/isowords/blob/main/App/Previe
 
 This repo contains both the client and server code for running the entire [isowords](https://www.isowords.xyz) application, as well as an extensive test suite. To get things running:
 
-1. Make sure [`git-lfs`](https://git-lfs.github.com) is installed so that app assets (images, etc.) can be fetched.
+1. Make sure [`git-lfs`](https://git-lfs.github.com) is installed so that app assets (images, etc.) can be fetched. For example, with [Homebrew](https://brew.sh):
+
+    ```sh
+    $ brew install git-lfs  # Download and install Git LFS
+    $ git lfs install       # Set up Git LFS for your user
+    ```
 1. Grab the code:
     ```sh
     git clone https://github.com/pointfreeco/isowords
