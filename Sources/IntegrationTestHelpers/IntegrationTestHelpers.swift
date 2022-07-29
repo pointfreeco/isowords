@@ -7,6 +7,7 @@ import HttpPipeline
 import Prelude
 import ServerRouter
 import SharedModels
+import TcaHelpers
 import TestHelpers
 
 extension ApiClient {
@@ -19,8 +20,8 @@ extension ApiClient {
     var baseUrl = URL(string: "/")!
 
     actor Session {
-      var baseUrl: URL
-      var currentPlayer: CurrentPlayerEnvelope?
+      nonisolated let baseUrl: Isolated<URL>
+      nonisolated let currentPlayer = Isolated<CurrentPlayerEnvelope?>(nil)
       private let middleware: Middleware<StatusLineOpen, ResponseEnded, Prelude.Unit, Data>
       private let router: ServerRouter
 
@@ -29,7 +30,7 @@ extension ApiClient {
         middleware: @escaping Middleware<StatusLineOpen, ResponseEnded, Prelude.Unit, Data>,
         router: ServerRouter
       ) {
-        self.baseUrl = baseUrl
+        self.baseUrl = Isolated(baseUrl)
         self.middleware = middleware
         self.router = router
       }
@@ -66,7 +67,7 @@ extension ApiClient {
             from: middleware(connection(from: request)).perform().data
           )
           // Why aren't we assigning the envelope here?
-          currentPlayer = .init(appleReceipt: nil, player: .blob)
+          self.currentPlayer.value = .init(appleReceipt: nil, player: .blob)
           return envelope
         } catch {
           throw ApiError(error: error)
@@ -74,11 +75,11 @@ extension ApiClient {
       }
 
       func logout() {
-        self.currentPlayer = nil
+        self.currentPlayer.value = nil
       }
 
       func refreshCurrentPlayer() async throws -> CurrentPlayerEnvelope {
-        guard let currentPlayer = self.currentPlayer
+        guard let currentPlayer = self.currentPlayer.value
         else { throw URLError(.unknown) }
         return currentPlayer
       }
@@ -102,11 +103,11 @@ extension ApiClient {
       }
 
       func setBaseUrl(_ url: URL) {
-        self.baseUrl = url
+        self.baseUrl.value = url
       }
 
       fileprivate func setCurrentPlayer(_ player: CurrentPlayerEnvelope) {
-        self.currentPlayer = player
+        self.currentPlayer.value = player
       }
     }
 
@@ -115,12 +116,10 @@ extension ApiClient {
     self.init(
       apiRequest: { try await session.apiRequest(route: $0) },
       authenticate: { try await session.authenticate(request: $0) },
-      baseUrl: { baseUrl },
-      baseUrlAsync: { await session.baseUrl },
-      currentPlayer: { currentPlayer },
-      currentPlayerAsync: { await session.currentPlayer },
+      baseUrl: { session.baseUrl.value },
+      currentPlayer: { session.currentPlayer.value },
       logout: { await session.logout() },
-      refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
+      refreshCurrentPlayer: { try await session.refreshCurrentPlayer() },
       request: { try await session.request(route: $0) },
       setBaseUrl: { await session.setBaseUrl($0) }
     )

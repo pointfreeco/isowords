@@ -364,7 +364,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           )
         )
         return await .currentPlayerRefreshed(
-          TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
+          TaskResult { try await environment.apiClient.refreshCurrentPlayer() }
         )
       }
       .debounce(id: UpdateRemoteSettingsID.self, for: 1, scheduler: environment.mainQueue)
@@ -382,7 +382,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
           )
         )
         return await .currentPlayerRefreshed(
-          TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
+          TaskResult { try await environment.apiClient.refreshCurrentPlayer() }
         )
       }
       .debounce(id: UpdateRemoteSettingsID.self, for: 1, scheduler: environment.mainQueue)
@@ -441,7 +441,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
       state.isPurchasing = false
       return .task {
         await .currentPlayerRefreshed(
-          TaskResult { try await environment.apiClient.refreshCurrentPlayerAsync() }
+          TaskResult { try await environment.apiClient.refreshCurrentPlayer() }
         )
       }
       .animation()
@@ -486,7 +486,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .reportABugButtonTapped:
       return .fireAndForget {
-        let currentPlayer = await environment.apiClient.currentPlayerAsync()
+        let currentPlayer = environment.apiClient.currentPlayer()
         var components = URLComponents()
         components.scheme = "mailto"
         components.path = "support@pointfree.co"

@@ -7,12 +7,10 @@ public struct ApiClient {
   public var apiRequest: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
-  @available(*, deprecated) public var baseUrl: () -> URL
-  public var baseUrlAsync: @Sendable () async -> URL
-  @available(*, deprecated) public var currentPlayer: () -> CurrentPlayerEnvelope?
-  public var currentPlayerAsync: @Sendable () async -> CurrentPlayerEnvelope?
+  public var baseUrl: @Sendable () -> URL
+  public var currentPlayer: @Sendable() -> CurrentPlayerEnvelope?
   public var logout: @Sendable () async -> Void
-  public var refreshCurrentPlayerAsync: @Sendable () async throws -> CurrentPlayerEnvelope
+  public var refreshCurrentPlayer: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
   public var setBaseUrl: @Sendable (URL) async -> Void
 
@@ -20,23 +18,19 @@ public struct ApiClient {
     apiRequest: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse),
     authenticate: @escaping @Sendable (ServerRoute.AuthenticateRequest) async throws ->
       CurrentPlayerEnvelope,
-    baseUrl: @escaping () -> URL,
-    baseUrlAsync: @escaping @Sendable () async -> URL,
-    currentPlayer: @escaping () -> CurrentPlayerEnvelope?,
-    currentPlayerAsync: @escaping @Sendable () async -> CurrentPlayerEnvelope?,
+    baseUrl: @escaping @Sendable () -> URL,
+    currentPlayer: @escaping @Sendable () -> CurrentPlayerEnvelope?,
     logout: @escaping @Sendable () async -> Void,
-    refreshCurrentPlayerAsync: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
+    refreshCurrentPlayer: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
     request: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
     setBaseUrl: @escaping @Sendable (URL) async -> Void
   ) {
     self.apiRequest = apiRequest
     self.authenticate = authenticate
     self.baseUrl = baseUrl
-    self.baseUrlAsync = baseUrlAsync
     self.currentPlayer = currentPlayer
-    self.currentPlayerAsync = currentPlayerAsync
     self.logout = logout
-    self.refreshCurrentPlayerAsync = refreshCurrentPlayerAsync
+    self.refreshCurrentPlayer = refreshCurrentPlayer
     self.request = request
     self.setBaseUrl = setBaseUrl
   }
@@ -137,11 +131,9 @@ public struct ApiClient {
       apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
       authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
-      baseUrlAsync: XCTUnimplemented("\(Self.self).baseUrlAsync", placeholder: URL(string: "/")!),
       currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
-      currentPlayerAsync: XCTUnimplemented("\(Self.self).currentPlayerAsync"),
       logout: XCTUnimplemented("\(Self.self).logout"),
-      refreshCurrentPlayerAsync: XCTUnimplemented("\(Self.self).refreshCurrentPlayerAsync"),
+      refreshCurrentPlayer: XCTUnimplemented("\(Self.self).refreshCurrentPlayer"),
       request: XCTUnimplemented("\(Self.self).request"),
       setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
     )
@@ -151,7 +143,7 @@ public struct ApiClient {
       withResponse response: @escaping @Sendable () async throws -> (Data, URLResponse)
     ) {
       let fulfill = expectation(description: "route")
-      self.apiRequest = { [self] route in
+      self.apiRequest = { @Sendable [self] route in
         if route == matchingRoute {
           fulfill()
           return try await response()
@@ -166,7 +158,7 @@ public struct ApiClient {
       withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
     ) {
       let fulfill = expectation(description: "route")
-      self.apiRequest = { [self] route in
+      self.apiRequest = { @Sendable [self] route in
         if let value = matchingRoute.extract(from: route) {
           fulfill()
           return try await response(value)
@@ -183,11 +175,9 @@ extension ApiClient {
     apiRequest: { _ in try await Task.never() },
     authenticate: { _ in try await Task.never() },
     baseUrl: { URL(string: "/")! },
-    baseUrlAsync: { URL(string: "/")! },
     currentPlayer: { nil },
-    currentPlayerAsync: { nil },
     logout: {},
-    refreshCurrentPlayerAsync: { try await Task.never() },
+    refreshCurrentPlayer: { try await Task.never() },
     request: { _ in try await Task.never() },
     setBaseUrl: { _ in }
   )

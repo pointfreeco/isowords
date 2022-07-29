@@ -51,7 +51,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                     turnBasedMatchData: .init(
                       context: context,
                       gameState: game,
-                      playerId: environment.apiClient.currentPlayerAsync()?.player.id
+                      playerId: environment.apiClient.currentPlayer()?.player.id
                     )
                   )
                 )

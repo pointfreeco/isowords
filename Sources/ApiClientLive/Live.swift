@@ -4,6 +4,7 @@ import ComposableArchitecture
 import Foundation
 import ServerRouter
 import SharedModels
+import TcaHelpers
 
 private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
 private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
@@ -15,13 +16,9 @@ extension ApiClient {
   ) -> Self {
 
     #if DEBUG
-      var baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl {
-        didSet {
-          UserDefaults.standard.set(baseUrl, forKey: baseUrlKey)
-        }
-      }
+      let baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl
     #else
-      var baseUrl = URL(string: "https://www.isowords.xyz")!
+      let baseUrl = URL(string: "https://www.isowords.xyz")!
     #endif
 
     let router = ServerRouter(
@@ -32,42 +29,35 @@ extension ApiClient {
       sha256: sha256
     )
 
-    var currentPlayer = UserDefaults.standard.data(forKey: currentUserEnvelopeKey)
-      .flatMap({ try? decoder.decode(CurrentPlayerEnvelope.self, from: $0) })
-    {
-      didSet {
-        UserDefaults.standard.set(
-          currentPlayer.flatMap { try? encoder.encode($0) },
-          forKey: currentUserEnvelopeKey
-        )
-      }
-    }
-
     actor Session {
-      var baseUrl: URL {
-        didSet {
-          UserDefaults.standard.set(self.baseUrl, forKey: baseUrlKey)
-        }
-      }
-      var currentPlayer: CurrentPlayerEnvelope? {
-        didSet {
-          UserDefaults.standard.set(
-            self.currentPlayer.flatMap { try? encoder.encode($0) },
-            forKey: currentUserEnvelopeKey
-          )
-        }
-      }
+      nonisolated let baseUrl: Isolated<URL>
+      nonisolated let currentPlayer: Isolated<CurrentPlayerEnvelope?>
       private let router: ServerRouter
 
       init(baseUrl: URL, router: ServerRouter) {
-        self.baseUrl = baseUrl
+        self.baseUrl = Isolated(
+          baseUrl,
+          didSet: { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: baseUrlKey)
+          }
+        )
         self.router = router
+        self.currentPlayer = Isolated(
+          UserDefaults.standard.data(forKey: currentUserEnvelopeKey)
+            .flatMap({ try? decoder.decode(CurrentPlayerEnvelope.self, from: $0) }),
+          didSet: { _, newValue in
+            UserDefaults.standard.set(
+              newValue.flatMap { try? encoder.encode($0) },
+              forKey: currentUserEnvelopeKey
+            )
+          }
+        )
       }
 
       func apiRequest(route: ServerRoute.Api.Route) async throws -> (Data, URLResponse) {
         try await ApiClientLive.apiRequest(
-          accessToken: self.currentPlayer?.player.accessToken,
-          baseUrl: self.baseUrl,
+          accessToken: self.currentPlayer.value?.player.accessToken,
+          baseUrl: self.baseUrl.value,
           route: route,
           router: self.router
         )
@@ -77,7 +67,7 @@ extension ApiClient {
         -> CurrentPlayerEnvelope
       {
         let (data, _) = try await ApiClientLive.request(
-          baseUrl: baseUrl,
+          baseUrl: self.baseUrl.value,
           route: .authenticate(
             .init(
               deviceId: request.deviceId,
@@ -89,40 +79,40 @@ extension ApiClient {
           router: router
         )
         let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
-        self.currentPlayer = currentPlayer
+        self.currentPlayer.value = currentPlayer
         return currentPlayer
       }
 
       func logout() {
-        self.currentPlayer = nil
+        self.currentPlayer.value = nil
       }
 
       func refreshCurrentPlayer() async throws -> CurrentPlayerEnvelope {
         let (data, _) = try await ApiClientLive.apiRequest(
-          accessToken: currentPlayer?.player.accessToken,
-          baseUrl: self.baseUrl,
+          accessToken: self.currentPlayer.value?.player.accessToken,
+          baseUrl: self.baseUrl.value,
           route: .currentPlayer,
           router: self.router
         )
         let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
-        self.currentPlayer = currentPlayer
+        self.currentPlayer.value = currentPlayer
         return currentPlayer
       }
 
       func request(route: ServerRoute) async throws -> (Data, URLResponse) {
         try await ApiClientLive.request(
-          baseUrl: self.baseUrl,
+          baseUrl: self.baseUrl.value,
           route: route,
           router: self.router
         )
       }
 
       func setBaseUrl(_ url: URL) {
-        self.baseUrl = url
+        self.baseUrl.value = url
       }
 
       fileprivate func setCurrentPlayer(_ player: CurrentPlayerEnvelope) {
-        self.currentPlayer = player
+        self.currentPlayer.value = player
       }
     }
 
@@ -131,12 +121,10 @@ extension ApiClient {
     return Self(
       apiRequest: { try await session.apiRequest(route: $0) },
       authenticate: { try await session.authenticate(request: $0) },
-      baseUrl: { baseUrl },
-      baseUrlAsync: { await session.baseUrl },
-      currentPlayer: { currentPlayer },
-      currentPlayerAsync: { await session.currentPlayer },
+      baseUrl: { session.baseUrl.value },
+      currentPlayer: { session.currentPlayer.value },
       logout: { await session.logout() },
-      refreshCurrentPlayerAsync: { try await session.refreshCurrentPlayer() },
+      refreshCurrentPlayer: { try await session.refreshCurrentPlayer() },
       request: { try await session.request(route: $0) },
       setBaseUrl: { await session.setBaseUrl($0) }
     )

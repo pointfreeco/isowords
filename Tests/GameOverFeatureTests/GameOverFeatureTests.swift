@@ -17,7 +17,7 @@ class GameOverFeatureTests: XCTestCase {
   func testSubmitLeaderboardScore() async throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
       route: .games(
         .submit(
@@ -113,7 +113,7 @@ class GameOverFeatureTests: XCTestCase {
 
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
       route: .games(
         .submit(
@@ -194,7 +194,7 @@ class GameOverFeatureTests: XCTestCase {
   func testTurnBased_TrackLeaderboards() async throws {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: .mock, player: .blob) }
+    environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
       route: .games(
         .submit(
@@ -343,7 +343,7 @@ class GameOverFeatureTests: XCTestCase {
   func testShowUpgradeInterstitial() async {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
+    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
     environment.database.playedGamesCount = { _ in 6 }
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
@@ -386,7 +386,7 @@ class GameOverFeatureTests: XCTestCase {
   func testSkipUpgradeIfLessThan6GamesPlayed() async {
     var environment = GameOverEnvironment.failing
     environment.audioPlayer = .noop
-    environment.apiClient.currentPlayerAsync = { .init(appleReceipt: nil, player: .blob) }
+    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
     environment.database.playedGamesCount = { _ in 5 }
     environment.mainRunLoop = .immediate

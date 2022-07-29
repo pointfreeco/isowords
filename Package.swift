@@ -266,6 +266,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "ServerRouter",
         "SharedModels",
+        "TcaHelpers",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "Overture"),
         .product(name: "Tagged", package: "swift-tagged"),

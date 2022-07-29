@@ -424,10 +424,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
               group.addTask {
                 let playedGamesCount = await environment.userDefaults
                   .incrementMultiplayerOpensCount()
-                let isFullGamePurchased =
-                  await
-                  environment.apiClient
-                  .currentPlayerAsync()?.appleReceipt != nil
+                let isFullGamePurchased = environment.apiClient.currentPlayer()?.appleReceipt != nil
                 guard
                   !isFullGamePurchased,
                   shouldShowInterstitial(

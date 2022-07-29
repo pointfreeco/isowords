@@ -236,7 +236,7 @@ class SettingsFeatureTests: XCTestCase {
     let mainQueue = DispatchQueue.test
 
     var environment = self.defaultEnvironment
-    environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
+    environment.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
     environment.apiClient.override(
       route: .push(
         .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))

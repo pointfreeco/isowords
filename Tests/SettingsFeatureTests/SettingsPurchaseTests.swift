@@ -33,7 +33,7 @@ class SettingsPurchaseTests: XCTestCase {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
+    environment.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
     environment.storeKit.addPayment = {
       await didAddPaymentProductIdentifier.setValue($0.productIdentifier)
     }
@@ -88,7 +88,7 @@ class SettingsPurchaseTests: XCTestCase {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
     environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayerAsync = { .blobWithPurchase }
+    environment.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
     environment.storeKit.restoreCompletedTransactions = {
       await didRestoreCompletedTransactions.setValue(true)
     }

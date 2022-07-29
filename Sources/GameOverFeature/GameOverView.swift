@@ -377,7 +377,7 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
             let playedGamesCount = try await environment.database
               .playedGamesCount(.init(gameContext: completedGame.gameContext))
             let isFullGamePurchased =
-              await environment.apiClient.currentPlayerAsync()?.appleReceipt != nil
+              environment.apiClient.currentPlayer()?.appleReceipt != nil
             guard
               !isFullGamePurchased,
               shouldShowInterstitial(

@@ -75,7 +75,6 @@ class TurnBasedTests: XCTestCase {
         }
         $0.apiClient.authenticate = { _ in .mock }
         $0.apiClient.currentPlayer = { currentPlayer }
-        $0.apiClient.currentPlayerAsync = { currentPlayer }
         $0.audioPlayer.loop = { _ in }
         $0.audioPlayer.play = { _ in }
         $0.audioPlayer.stop = { _ in }
@@ -536,7 +535,6 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
-      $0.apiClient.currentPlayerAsync = { nil }
       $0.audioPlayer.play = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
       $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
@@ -693,7 +691,6 @@ class TurnBasedTests: XCTestCase {
 
     let environment = update(AppEnvironment.failing) {
       $0.apiClient.currentPlayer = { nil }
-      $0.apiClient.currentPlayerAsync = { nil }
       $0.dictionary.randomCubes = { _ in .mock }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = {
