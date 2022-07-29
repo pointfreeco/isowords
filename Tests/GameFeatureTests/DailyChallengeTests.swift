@@ -110,6 +110,7 @@ class DailyChallengeTests: XCTestCase {
         )
       }
     }
+    .finish()
 
     await didSave.withValue { XCTAssert($0) }
   }
