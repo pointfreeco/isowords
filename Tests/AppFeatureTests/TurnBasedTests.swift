@@ -30,7 +30,7 @@ class TurnBasedTests: XCTestCase {
     let didEndTurnWithRequest = ActorIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
     let didSaveCurrentTurn = ActorIsolated(false)
 
-    let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
+    let listener = AsyncStreamProducer<LocalPlayerClient.ListenerEvent>()
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
@@ -106,7 +106,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.home(.task))
+    let homeTask = await store.send(.home(.task))
 
     await store.receive(.home(.authenticationResponse(.mock)))
     await store.receive(.home(.serverConfigResponse(.init()))) {
@@ -163,6 +163,9 @@ class TurnBasedTests: XCTestCase {
       XCTAssertNoDifference(int, 1)
       XCTAssertNoDifference(key, "multiplayerOpensCount")
     }
+    await store.receive(
+      .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
+    )
     let gameTask = await store.send(.currentGame(.game(.task)))
 
     await store.receive(.currentGame(.game(.gameLoaded))) {
@@ -292,11 +295,12 @@ class TurnBasedTests: XCTestCase {
     }
 
     await gameTask.cancel()
+    await homeTask.cancel()
     await didFinishLaunchingTask.cancel()
   }
 
   func testResumeGame() async {
-    let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
+    let listener = AsyncStreamProducer<LocalPlayerClient.ListenerEvent>()
 
     let dailyChallenges = [
       FetchTodaysDailyChallengeResponse(
@@ -352,7 +356,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.home(.task))
+    let homeTask = await store.send(.home(.task))
 
     await self.backgroundQueue.advance()
     await store.receive(.home(.authenticationResponse(.mock)))
@@ -401,14 +405,18 @@ class TurnBasedTests: XCTestCase {
         )
       ) { $0.gameCurrentTime = self.mainRunLoop.now.date }
     }
+    await store.receive(
+      .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
+    )
 
     await self.backgroundQueue.advance()
 
+    await homeTask.cancel()
     await didFinishLaunchingTask.cancel()
   }
 
   func testResumeForfeitedGame() async {
-    let listener = AsyncStream<LocalPlayerClient.ListenerEvent>.streamWithContinuation()
+    let listener = AsyncStreamProducer<LocalPlayerClient.ListenerEvent>()
 
     let dailyChallenges = [
       FetchTodaysDailyChallengeResponse(
@@ -463,7 +471,7 @@ class TurnBasedTests: XCTestCase {
     )
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.home(.task))
+    let homeTask = await store.send(.home(.task))
     await store.receive(.home(.authenticationResponse(.mock)))
 
     await store.receive(.home(.serverConfigResponse(.init()))) {
@@ -520,9 +528,13 @@ class TurnBasedTests: XCTestCase {
       )
       $0.game = gameState
     }
+    await store.receive(
+      .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
+    )
 
     await self.backgroundQueue.advance()
 
+    await homeTask.cancel()
     await didFinishLaunchingTask.cancel()
   }
 
