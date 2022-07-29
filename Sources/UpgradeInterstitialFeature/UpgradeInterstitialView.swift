@@ -158,7 +158,6 @@ public let upgradeInterstitialReducer = Reducer<
     }
   }
 }
-.debug()
 
 public struct UpgradeInterstitialView: View {
   @Environment(\.colorScheme) var colorScheme

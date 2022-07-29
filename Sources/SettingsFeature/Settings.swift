@@ -596,7 +596,6 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
   }
   .binding()
 )
-.debug()
 .onChange(of: \.userSettings) { userSettings, _, _, environment in
   enum SaveDebounceID {}
 
