@@ -124,13 +124,13 @@ class SettingsPurchaseTests: XCTestCase {
 
     await store.receive(.paymentTransaction(.updatedTransactions([.restored])))
     await store.receive(.paymentTransaction(.removedTransactions([.restored])))
+    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase))) {
+      $0.fullGamePurchasedAt = .mock
+    }
     await store.receive(
       .paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored]))
     ) {
       $0.isRestoring = false
-    }
-    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase))) {
-      $0.fullGamePurchasedAt = .mock
     }
     await task.cancel()
   }
