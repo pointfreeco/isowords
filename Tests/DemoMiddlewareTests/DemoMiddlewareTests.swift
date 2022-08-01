@@ -17,7 +17,7 @@ import XCTest
 
 class DemoMiddlewareTests: XCTestCase {
   func testBasics() throws {
-    var environment = ServerEnvironment.failing
+    var environment = ServerEnvironment.unimplemented
     environment.database.fetchLeaderboardSummary = { request in
       switch request.timeScope {
       case .allTime:

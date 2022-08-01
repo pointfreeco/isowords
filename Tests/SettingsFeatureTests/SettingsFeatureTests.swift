@@ -12,7 +12,7 @@ import XCTest
 @MainActor
 class SettingsFeatureTests: XCTestCase {
   var defaultEnvironment: SettingsEnvironment {
-    var environment = SettingsEnvironment.failing
+    var environment = SettingsEnvironment.unimplemented
     environment.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     environment.apiClient.currentPlayer = { .some(.init(appleReceipt: .mock, player: .blob)) }
     environment.build.number = { 42 }
@@ -412,7 +412,7 @@ class SettingsFeatureTests: XCTestCase {
     let setBaseUrl = ActorIsolated<URL?>(nil)
     let didLogout = ActorIsolated(false)
 
-    var environment = SettingsEnvironment.failing
+    var environment = SettingsEnvironment.unimplemented
     environment.apiClient.logout = { await didLogout.setValue(true) }
     environment.apiClient.setBaseUrl = { await setBaseUrl.setValue($0) }
 
@@ -433,7 +433,7 @@ class SettingsFeatureTests: XCTestCase {
     let store = TestStore(
       initialState: SettingsState(enableCubeShadow: true),
       reducer: settingsReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
     await store.send(.set(\.$enableCubeShadow, false)) {
@@ -448,7 +448,7 @@ class SettingsFeatureTests: XCTestCase {
     let store = TestStore(
       initialState: SettingsState(cubeShadowRadius: 5),
       reducer: settingsReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
     await store.send(.set(\.$cubeShadowRadius, 20)) {
@@ -463,7 +463,7 @@ class SettingsFeatureTests: XCTestCase {
     let store = TestStore(
       initialState: SettingsState(showSceneStatistics: false),
       reducer: settingsReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
     await store.send(.set(\.$showSceneStatistics, true)) {

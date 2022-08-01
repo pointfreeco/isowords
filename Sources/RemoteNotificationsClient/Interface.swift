@@ -18,7 +18,7 @@ extension RemoteNotificationsClient {
   import XCTestDynamicOverlay
 
   extension RemoteNotificationsClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       isRegistered: XCTUnimplemented("\(Self.self).isRegistered", placeholder: false),
       register: XCTUnimplemented("\(Self.self).register"),
       unregister: XCTUnimplemented("\(Self.self).unregister")

@@ -14,7 +14,7 @@ extension LowPowerModeClient {
   )
 
   #if DEBUG
-    public static let failing = Self(
+    public static let unimplemented = Self(
       start: XCTUnimplemented("\(Self.self).start")
     )
     public static var backAndForth: Self {

@@ -36,15 +36,9 @@ public struct Build {
   import XCTestDynamicOverlay
 
   extension Build {
-    public static let failing = Self(
-      gitSha: {
-        XCTFail("\(Self.self).gitSha is unimplemented")
-        return ""
-      },
-      number: {
-        XCTFail("\(Self.self).number is unimplemented")
-        return 0
-      }
+    public static let unimplemented = Self(
+      gitSha: XCTUnimplemented("\(Self.self).gitSha"),
+      number: XCTUnimplemented("\(Self.self).number")
     )
   }
 #endif

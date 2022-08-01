@@ -17,7 +17,7 @@ extension UserDefaultsClient {
   import XCTestDynamicOverlay
 
   extension UserDefaultsClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       boolForKey: XCTUnimplemented("\(Self.self).boolForKey", placeholder: false),
       dataForKey: XCTUnimplemented("\(Self.self).dataForKey", placeholder: nil),
       doubleForKey: XCTUnimplemented("\(Self.self).doubleForKey", placeholder: 0),

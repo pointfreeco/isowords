@@ -13,7 +13,7 @@ extension UserNotificationClient {
   import XCTestDynamicOverlay
 
   extension UserNotificationClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       add: XCTUnimplemented("\(Self.self).add"),
       delegate: XCTUnimplemented("\(Self.self).delegate", placeholder: .finished),
       getNotificationSettings: XCTUnimplemented(

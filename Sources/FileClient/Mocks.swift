@@ -11,7 +11,7 @@ extension FileClient {
   )
 
   #if DEBUG
-    public static let failing = Self(
+    public static let unimplemented = Self(
       delete: XCTUnimplemented("\(Self.self).deleteAsync"),
       load: XCTUnimplemented("\(Self.self).loadAsync"),
       save: XCTUnimplemented("\(Self.self).saveAsync")

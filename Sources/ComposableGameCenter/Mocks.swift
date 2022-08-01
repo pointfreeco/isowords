@@ -59,25 +59,25 @@ extension TurnBasedMatchmakerViewControllerClient {
   import XCTestDynamicOverlay
 
   extension GameCenterClient {
-    public static let failing = Self(
-      gameCenterViewController: .failing,
-      localPlayer: .failing,
+    public static let unimplemented = Self(
+      gameCenterViewController: .unimplemented,
+      localPlayer: .unimplemented,
       reportAchievements: XCTUnimplemented("\(Self.self).reportAchievements"),
       showNotificationBanner: XCTUnimplemented("\(Self.self).showNotificationBanner"),
-      turnBasedMatch: .failing,
-      turnBasedMatchmakerViewController: .failing
+      turnBasedMatch: .unimplemented,
+      turnBasedMatchmakerViewController: .unimplemented
     )
   }
 
   extension GameCenterViewControllerClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       present: XCTUnimplemented("\(Self.self).present"),
       dismiss: XCTUnimplemented("\(Self.self).dismiss")
     )
   }
 
   extension LocalPlayerClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       listener: XCTUnimplemented("\(Self.self).listener", placeholder: .finished),
       localPlayer: XCTUnimplemented("\(Self.self).localPlayer", placeholder: .notAuthenticated),
@@ -88,7 +88,7 @@ extension TurnBasedMatchmakerViewControllerClient {
   }
 
   extension TurnBasedMatchClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       endMatchInTurn: XCTUnimplemented("\(Self.self).endMatchInTurn"),
       endTurn: XCTUnimplemented("\(Self.self).endTurn"),
       load: XCTUnimplemented("\(Self.self).load"),
@@ -103,7 +103,7 @@ extension TurnBasedMatchmakerViewControllerClient {
   }
 
   extension TurnBasedMatchmakerViewControllerClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       present: XCTUnimplemented("\(Self.self).present"),
       dismiss: XCTUnimplemented("\(Self.self).dismiss")
     )

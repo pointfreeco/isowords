@@ -89,28 +89,28 @@ public struct AppEnvironment {
   }
 
   #if DEBUG
-    public static let failing = Self(
-      apiClient: .failing,
-      applicationClient: .failing,
-      audioPlayer: .failing,
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      applicationClient: .unimplemented,
+      audioPlayer: .unimplemented,
       backgroundQueue: .unimplemented("backgroundQueue"),
-      build: .failing,
-      database: .failing,
-      deviceId: .failing,
-      dictionary: .failing,
-      feedbackGenerator: .failing,
-      fileClient: .failing,
-      gameCenter: .failing,
-      lowPowerMode: .failing,
+      build: .unimplemented,
+      database: .unimplemented,
+      deviceId: .unimplemented,
+      dictionary: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      fileClient: .unimplemented,
+      gameCenter: .unimplemented,
+      lowPowerMode: .unimplemented,
       mainQueue: .unimplemented("mainQueue"),
       mainRunLoop: .unimplemented("mainRunLoop"),
-      remoteNotifications: .failing,
-      serverConfig: .failing,
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
       setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
-      storeKit: .failing,
+      storeKit: .unimplemented,
       timeZone: XCTUnimplemented("\(Self.self).timeZone"),
-      userDefaults: .failing,
-      userNotifications: .failing
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
 
     public static let noop = Self(

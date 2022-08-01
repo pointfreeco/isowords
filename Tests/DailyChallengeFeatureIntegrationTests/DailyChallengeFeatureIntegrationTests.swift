@@ -57,7 +57,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       rank: 1
     )
 
-    let serverEnvironment = update(ServerEnvironment.failing) {
+    let serverEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(currentPlayer) }
       $0.database.fetchDailyChallengeResults = { request in
         switch request.gameMode {

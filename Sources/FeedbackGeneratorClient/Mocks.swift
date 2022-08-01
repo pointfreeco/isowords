@@ -2,7 +2,7 @@ import XCTestDynamicOverlay
 
 extension FeedbackGeneratorClient {
   #if DEBUG
-    public static let failing = Self(
+    public static let unimplemented = Self(
       prepare: XCTUnimplemented("\(Self.self).prepare"),
       selectionChanged: XCTUnimplemented("\(Self.self).selectionChanged")
     )

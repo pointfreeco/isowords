@@ -321,16 +321,13 @@ public struct ServerRouter: ParserPrinter {
       sha256: { $0 }
     )
 
-    public static let failing = Self(
-      date: {
-        XCTFail("\(Self.self).date is unimplemented")
-        return .init()
-      },
+    public static let unimplemented = Self(
+      date: XCTUnimplemented("\(Self.self).date", placeholder: Date()),
       decoder: jsonDecoder,
       encoder: jsonEncoder,
       secrets: ["SECRET_DEADBEEF"],
       sha256: {
-        XCTFail("\(Self.self).sha256 is unimplemented")
+        XCTFail("Unimplemented: \(Self.self).sha256")
         return $0
       }
     )

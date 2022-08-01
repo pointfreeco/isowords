@@ -70,7 +70,7 @@ class RemoteNotificationsTests: XCTestCase {
 
   func testRegisterForRemoteNotifications_NotAuthorized() async {
     var environment = AppEnvironment.didFinishLaunching
-    environment.remoteNotifications = .failing
+    environment.remoteNotifications = .unimplemented
 
     let store = TestStore(
       initialState: AppState(),

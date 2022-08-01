@@ -17,7 +17,7 @@ class GameFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testRemoveCubeMove() async {
-    let environment = update(GameEnvironment.failing) {
+    let environment = update(GameEnvironment.unimplemented) {
       $0.audioPlayer.play = { _ in }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
@@ -69,7 +69,7 @@ class GameFeatureTests: XCTestCase {
   }
 
   func testDoubleTapRemoveCube_MultipleSelectedFaces() async {
-    let environment = update(GameEnvironment.failing) {
+    let environment = update(GameEnvironment.unimplemented) {
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()

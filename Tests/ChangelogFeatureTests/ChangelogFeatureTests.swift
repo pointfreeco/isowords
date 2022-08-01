@@ -16,7 +16,7 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    var environment = ChangelogEnvironment.failing
+    var environment = ChangelogEnvironment.unimplemented
     environment.apiClient.override(
       route: .changelog(build: 42),
       withResponse: { try await OK(changelog) }
@@ -57,7 +57,7 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    var environment = ChangelogEnvironment.failing
+    var environment = ChangelogEnvironment.unimplemented
     environment.apiClient.override(
       route: .changelog(build: 40),
       withResponse: { try await OK(changelog) }
@@ -96,11 +96,11 @@ class ChangelogFeatureTests: XCTestCase {
 }
 
 extension ChangelogEnvironment {
-  static let failing = Self(
-    apiClient: .failing,
-    applicationClient: .failing,
-    build: .failing,
-    serverConfig: .failing,
-    userDefaults: .failing
+  static let unimplemented = Self(
+    apiClient: .unimplemented,
+    applicationClient: .unimplemented,
+    build: .unimplemented,
+    serverConfig: .unimplemented,
+    userDefaults: .unimplemented
   )
 }

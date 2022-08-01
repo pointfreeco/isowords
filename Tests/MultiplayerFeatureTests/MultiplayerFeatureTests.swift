@@ -8,7 +8,7 @@ class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterAuthenticated() async {
     let didPresentMatchmakerViewController = ActorIsolated(false)
 
-    var environment = MultiplayerEnvironment.failing
+    var environment = MultiplayerEnvironment.unimplemented
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
     environment.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
       await didPresentMatchmakerViewController.setValue(true)
@@ -27,7 +27,7 @@ class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterNotAuthenticated() async {
     let didPresentAuthentication = ActorIsolated(false)
 
-    var environment = MultiplayerEnvironment.failing
+    var environment = MultiplayerEnvironment.unimplemented
     environment.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
     environment.gameCenter.localPlayer.presentAuthenticationViewController = {
       await didPresentAuthentication.setValue(true)
@@ -47,7 +47,7 @@ class MultiplayerFeatureTests: XCTestCase {
     let store = TestStore(
       initialState: MultiplayerState(hasPastGames: true),
       reducer: multiplayerReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
     await store.send(.setNavigation(tag: .pastGames)) {
@@ -60,9 +60,9 @@ class MultiplayerFeatureTests: XCTestCase {
 }
 
 extension MultiplayerEnvironment {
-  static let failing = Self(
-    backgroundQueue: .failing("backgroundQueue"),
-    gameCenter: .failing,
-    mainQueue: .failing("mainQueue")
+  static let unimplemented = Self(
+    backgroundQueue: .unimplemented("backgroundQueue"),
+    gameCenter: .unimplemented,
+    mainQueue: .unimplemented("mainQueue")
   )
 }

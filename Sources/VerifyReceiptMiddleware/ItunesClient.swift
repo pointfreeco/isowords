@@ -59,9 +59,9 @@ extension ItunesClient {
 
 #if DEBUG
   extension ItunesClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       verify: { _, _ in
-        .failing("\(Self.self).verify is unimplemented")
+        .unimplemented("\(Self.self).verify")
       }
     )
   }

@@ -8,7 +8,7 @@ import SettingsFeature
 import UserDefaultsClient
 
 extension AppEnvironment {
-  static let didFinishLaunching = update(failing) {
+  static let didFinishLaunching = update(unimplemented) {
     $0.audioPlayer.load = { _ in }
     $0.backgroundQueue = .immediate
     $0.database.migrate = {}

@@ -15,7 +15,7 @@ class LeaderboardFeatureTests: XCTestCase {
     let store = TestStore(
       initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
     await store.send(.scopeTapped(.vocab)) {
@@ -31,7 +31,7 @@ class LeaderboardFeatureTests: XCTestCase {
       initialState: .init(isHapticsEnabled: false, settings: .init()),
       reducer: leaderboardReducer,
       environment: .init(
-        apiClient: .failing,
+        apiClient: .unimplemented,
         audioPlayer: .noop,
         feedbackGenerator: .noop,
         lowPowerMode: .false,
@@ -90,7 +90,7 @@ class LeaderboardFeatureTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(ServerEnvironment.failing) {
+    let siteEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure([vocabEntry])
@@ -102,7 +102,7 @@ class LeaderboardFeatureTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
+    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }

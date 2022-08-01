@@ -15,7 +15,7 @@ class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testSubmitLeaderboardScore() async throws {
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
@@ -111,7 +111,7 @@ class GameOverFeatureTests: XCTestCase {
       ),
     ]
 
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
@@ -192,7 +192,7 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testTurnBased_TrackLeaderboards() async throws {
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
@@ -259,7 +259,7 @@ class GameOverFeatureTests: XCTestCase {
       secondsPlayed: 0
     )
 
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.database.fetchStats = {
       LocalDatabaseClient.Stats(
         averageWordLength: nil,
@@ -333,7 +333,7 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
     await store.send(.task)
@@ -341,7 +341,7 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testShowUpgradeInterstitial() async {
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
@@ -384,7 +384,7 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testSkipUpgradeIfLessThan6GamesPlayed() async {
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
     environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }

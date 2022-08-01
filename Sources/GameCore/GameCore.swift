@@ -942,26 +942,26 @@ func menuTitle(state: GameState) -> TextState {
   import XCTestDynamicOverlay
 
   extension GameEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      applicationClient: .failing,
-      audioPlayer: .failing,
-      backgroundQueue: .failing("backgroundQueue"),
-      build: .failing,
-      database: .failing,
-      dictionary: .failing,
-      feedbackGenerator: .failing,
-      fileClient: .failing,
-      gameCenter: .failing,
-      lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue"),
-      mainRunLoop: .failing("mainRunLoop"),
-      remoteNotifications: .failing,
-      serverConfig: .failing,
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      applicationClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      backgroundQueue: .unimplemented("backgroundQueue"),
+      build: .unimplemented,
+      database: .unimplemented,
+      dictionary: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      fileClient: .unimplemented,
+      gameCenter: .unimplemented,
+      lowPowerMode: .unimplemented,
+      mainQueue: .unimplemented("mainQueue"),
+      mainRunLoop: .unimplemented("mainRunLoop"),
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
       setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
-      storeKit: .failing,
-      userDefaults: .failing,
-      userNotifications: .failing
+      storeKit: .unimplemented,
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
 
     public static let noop = Self(

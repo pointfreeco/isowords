@@ -24,7 +24,7 @@ extension LocalDatabaseClient {
   }
 
   #if DEBUG
-    public static let failing = Self(
+    public static let unimplemented = Self(
       fetchGamesForWord: XCTUnimplemented("\(Self.self).fetchGamesForWord"),
       fetchStats: XCTUnimplemented("\(Self.self).fetchStats"),
       fetchVocab: XCTUnimplemented("\(Self.self).fetchVocab"),

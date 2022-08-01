@@ -11,7 +11,7 @@ class OnboardingFeatureTests: XCTestCase {
   func testBasics_FirstLaunch() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
     
-    var environment = OnboardingEnvironment.failing
+    var environment = OnboardingEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.backgroundQueue = .immediate
     environment.dictionary.load = { _ in true }
@@ -308,7 +308,7 @@ class OnboardingFeatureTests: XCTestCase {
   func testSkip_HasSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
-    var environment = OnboardingEnvironment.failing
+    var environment = OnboardingEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.backgroundQueue = .immediate
     environment.dictionary.load = { _ in true }
@@ -346,7 +346,7 @@ class OnboardingFeatureTests: XCTestCase {
   func testSkip_HasNotSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
-    var environment = OnboardingEnvironment.failing
+    var environment = OnboardingEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.backgroundQueue = .immediate
     environment.dictionary.load = { _ in true }
@@ -403,14 +403,14 @@ class OnboardingFeatureTests: XCTestCase {
 }
 
 extension OnboardingEnvironment {
-  static let failing = Self(
-    audioPlayer: .failing,
-    backgroundQueue: .failing("backgroundQueue"),
-    dictionary: .failing,
-    feedbackGenerator: .failing,
-    lowPowerMode: .failing,
-    mainQueue: .failing("mainQueue"),
-    mainRunLoop: .failing,
-    userDefaults: .failing
+  static let unimplemented = Self(
+    audioPlayer: .unimplemented,
+    backgroundQueue: .unimplemented("backgroundQueue"),
+    dictionary: .unimplemented,
+    feedbackGenerator: .unimplemented,
+    lowPowerMode: .unimplemented,
+    mainQueue: .unimplemented("mainQueue"),
+    mainRunLoop: .unimplemented,
+    userDefaults: .unimplemented
   )
 }

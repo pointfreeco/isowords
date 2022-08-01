@@ -545,7 +545,7 @@ class TurnBasedTests: XCTestCase {
       $0.participants = [.local, .remote]
     }
 
-    let environment = update(AppEnvironment.failing) {
+    let environment = update(AppEnvironment.unimplemented) {
       $0.apiClient.currentPlayer = { nil }
       $0.audioPlayer.play = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .mock }
@@ -701,7 +701,7 @@ class TurnBasedTests: XCTestCase {
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
-    let environment = update(AppEnvironment.failing) {
+    let environment = update(AppEnvironment.unimplemented) {
       $0.apiClient.currentPlayer = { nil }
       $0.dictionary.randomCubes = { _ in .mock }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
@@ -809,7 +809,7 @@ class TurnBasedTests: XCTestCase {
     }
 
     let notificationBannerRequest = ActorIsolated<GameCenterClient.NotificationBannerRequest?>(nil)
-    let environment = update(AppEnvironment.failing) {
+    let environment = update(AppEnvironment.unimplemented) {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.gameCenter.showNotificationBanner = { await notificationBannerRequest.setValue($0) }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
@@ -871,7 +871,7 @@ class TurnBasedTests: XCTestCase {
       $0.message = "Let's play!"
     }
 
-    let environment = update(AppEnvironment.failing) {
+    let environment = update(AppEnvironment.unimplemented) {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()

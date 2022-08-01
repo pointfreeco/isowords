@@ -26,7 +26,7 @@ class FetchWeekInReviewMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.failing) {
+      environment: update(.unimplemented) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.fetchLeaderboardWeeklyRanks = { _, _ in
           pure([

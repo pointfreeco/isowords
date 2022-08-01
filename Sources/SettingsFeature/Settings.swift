@@ -246,23 +246,23 @@ public struct SettingsEnvironment {
   import XCTestDynamicOverlay
 
   extension SettingsEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      applicationClient: .failing,
-      audioPlayer: .failing,
-      backgroundQueue: .failing("backgroundQueue"),
-      build: .failing,
-      database: .failing,
-      feedbackGenerator: .failing,
-      fileClient: .failing,
-      lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue"),
-      remoteNotifications: .failing,
-      serverConfig: .failing,
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      applicationClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      backgroundQueue: .unimplemented("backgroundQueue"),
+      build: .unimplemented,
+      database: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      fileClient: .unimplemented,
+      lowPowerMode: .unimplemented,
+      mainQueue: .unimplemented("mainQueue"),
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
       setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
-      storeKit: .failing,
-      userDefaults: .failing,
-      userNotifications: .failing
+      storeKit: .unimplemented,
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
 
     public static let noop = Self(

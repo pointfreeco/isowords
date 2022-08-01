@@ -53,7 +53,7 @@
 //      }
 //    )
 //
-//    let environment = update(AppEnvironment.failing) {
+//    let environment = update(AppEnvironment.unimplemented) {
 //      $0.apiClient.request = { route in
 //        switch route {
 //        case .sharedGame(.fetch):

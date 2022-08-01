@@ -29,7 +29,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(ServerEnvironment.failing) {
+    let siteEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchRankedLeaderboardScores = { _ in
         pure(fetchLeaderboardsEntries)
@@ -37,7 +37,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
+    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }
@@ -88,7 +88,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(ServerEnvironment.failing) {
+    let siteEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure(fetchVocabEntries)
@@ -96,7 +96,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
+    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }

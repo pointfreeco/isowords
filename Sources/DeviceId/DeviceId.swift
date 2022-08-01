@@ -25,11 +25,8 @@ extension DeviceIdentifier {
   import XCTestDynamicOverlay
 
   extension DeviceIdentifier {
-    public static let failing = Self(
-      id: {
-        XCTFail("\(Self.self).id is unimplemented")
-        return UUID()
-      }
+    public static let unimplemented = Self(
+      id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
     )
 
     public static let noop = Self(

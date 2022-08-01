@@ -13,7 +13,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       .lastWeek: .init(outOf: 1_000, rank: 100),
       .lastDay: .init(outOf: 100, rank: 10),
     ]
-    var serverEnvironment = ServerEnvironment.failing
+    var serverEnvironment = ServerEnvironment.unimplemented
     serverEnvironment.database.fetchPlayerByAccessToken = { _ in
       .init(value: .blob)
     }
@@ -39,7 +39,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
     serverEnvironment.dictionary.contains = { _, _ in true }
     serverEnvironment.router = .test
 
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient = .init(
       middleware: siteMiddleware(environment: serverEnvironment),

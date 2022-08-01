@@ -4,75 +4,75 @@ import XCTestDynamicOverlay
 
 #if DEBUG
   extension DatabaseClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       completeDailyChallenge: { _, _ in
-        .failing("\(Self.self).completeDailyChallenge is unimplemented")
+        .unimplemented("\(Self.self).completeDailyChallenge")
       },
       createTodaysDailyChallenge: { _ in
-        .failing("\(Self.self).createTodaysDailyChallenge is unimplemented")
+        .unimplemented("\(Self.self).createTodaysDailyChallenge")
       },
       fetchActiveDailyChallengeArns: {
-        .failing("\(Self.self).fetchActiveDailyChallengeArns is unimplemented")
+        .unimplemented("\(Self.self).fetchActiveDailyChallengeArns")
       },
-      fetchAppleReceipt: { _ in .failing("\(Self.self).fetchAppleReceipt is unimplemented") },
+      fetchAppleReceipt: { _ in .unimplemented("\(Self.self).fetchAppleReceipt") },
       fetchDailyChallengeById: { _ in
-        .failing("\(Self.self).fetchDailyChallengeById is unimplemented")
+        .unimplemented("\(Self.self).fetchDailyChallengeById")
       },
       fetchDailyChallengeHistory: { _ in
-        .failing("\(Self.self).fetchDailyChallengeHistory is unimplemented")
+        .unimplemented("\(Self.self).fetchDailyChallengeHistory")
       },
       fetchDailyChallengeReport: { _ in
-        .failing("\(Self.self).fetchDailyChallengeReport is unimplemented")
+        .unimplemented("\(Self.self).fetchDailyChallengeReport")
       },
       fetchDailyChallengeResult: { _ in
-        .failing("\(Self.self).fetchDailyChallengeResult is unimplemented")
+        .unimplemented("\(Self.self).fetchDailyChallengeResult")
       },
       fetchDailyChallengeResults: { _ in
-        .failing("\(Self.self).fetchDailyChallengeResults is unimplemented")
+        .unimplemented("\(Self.self).fetchDailyChallengeResults")
       },
       fetchLeaderboardSummary: { _ in
-        .failing("\(Self.self).fetchLeaderboardSummary is unimplemented")
+        .unimplemented("\(Self.self).fetchLeaderboardSummary")
       },
       fetchLeaderboardWeeklyRanks: { _, _ in
-        .failing("\(Self.self).fetchLeaderboardWeeklyRanks is unimplemented")
+        .unimplemented("\(Self.self).fetchLeaderboardWeeklyRanks")
       },
       fetchLeaderboardWeeklyWord: { _, _ in
-        .failing("\(Self.self).fetchLeaderboardWeeklyWord is unimplemented")
+        .unimplemented("\(Self.self).fetchLeaderboardWeeklyWord")
       },
       fetchPlayerByAccessToken: { _ in
-        .failing("\(Self.self).fetchPlayerByAccessToken is unimplemented")
+        .unimplemented("\(Self.self).fetchPlayerByAccessToken")
       },
-      fetchPlayerByDeviceId: { _ in .failing("\(Self.self).fetchPlayerByDeviceId is unimplemented")
+      fetchPlayerByDeviceId: { _ in .unimplemented("\(Self.self).fetchPlayerByDeviceId")
       },
       fetchPlayerByGameCenterLocalPlayerId: { _ in
-        .failing("\(Self.self).fetchPlayerByGameCenterLocalPlayerId is unimplemented")
+        .unimplemented("\(Self.self).fetchPlayerByGameCenterLocalPlayerId")
       },
       fetchRankedLeaderboardScores: { _ in
-        .failing("\(Self.self).fetchRankedLeaderboardScores is unimplemented")
+        .unimplemented("\(Self.self).fetchRankedLeaderboardScores")
       },
-      fetchSharedGame: { _ in .failing("\(Self.self).fetchSharedGame is unimplemented") },
+      fetchSharedGame: { _ in .unimplemented("\(Self.self).fetchSharedGame") },
       fetchTodaysDailyChallenges: { _ in
-        .failing("\(Self.self).fetchTodaysDailyChallenges is unimplemented")
+        .unimplemented("\(Self.self).fetchTodaysDailyChallenges")
       },
       fetchVocabLeaderboard: { _, _, _ in
-        .failing("\(Self.self).fetchVocabLeaderboard is unimplemented")
+        .unimplemented("\(Self.self).fetchVocabLeaderboard")
       },
       fetchVocabLeaderboardWord: { _ in
-        .failing("\(Self.self).fetchVocabLeaderboardWord is unimplemented")
+        .unimplemented("\(Self.self).fetchVocabLeaderboardWord")
       },
-      insertPlayer: { _ in .failing("\(Self.self).insertPlayer is unimplemented") },
-      insertPushToken: { _ in .failing("\(Self.self).insertPushToken is unimplemented") },
-      insertSharedGame: { _, _ in .failing("\(Self.self).insertSharedGame is unimplemented") },
-      migrate: { .failing("\(Self.self).migrate is unimplemented") },
-      shutdown: { .failing("\(Self.self).shutdown is unimplemented") },
-      startDailyChallenge: { _, _ in .failing("\(Self.self).startDailyChallenge is unimplemented")
+      insertPlayer: { _ in .unimplemented("\(Self.self).insertPlayer") },
+      insertPushToken: { _ in .unimplemented("\(Self.self).insertPushToken") },
+      insertSharedGame: { _, _ in .unimplemented("\(Self.self).insertSharedGame") },
+      migrate: { .unimplemented("\(Self.self).migrate") },
+      shutdown: { .unimplemented("\(Self.self).shutdown") },
+      startDailyChallenge: { _, _ in .unimplemented("\(Self.self).startDailyChallenge")
       },
       submitLeaderboardScore: { _ in
-        .failing("\(Self.self).submitLeaderboardScore is unimplemented")
+        .unimplemented("\(Self.self).submitLeaderboardScore")
       },
-      updateAppleReceipt: { _, _ in .failing("\(Self.self).updateAppleReceipt is unimplemented") },
-      updatePlayer: { _ in .failing("\(Self.self).updatePlayer is unimplemented") },
-      updatePushSetting: { _, _, _ in .failing("\(Self.self).updatePushSetting is unimplemented") }
+      updateAppleReceipt: { _, _ in .unimplemented("\(Self.self).updateAppleReceipt") },
+      updatePlayer: { _ in .unimplemented("\(Self.self).updatePlayer") },
+      updatePushSetting: { _, _, _ in .unimplemented("\(Self.self).updatePushSetting") }
     )
   }
 #endif

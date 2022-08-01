@@ -134,17 +134,17 @@ public struct GameOverEnvironment {
   }
 
   #if DEBUG
-    public static let failing = Self(
-      apiClient: .failing,
-      audioPlayer: .failing,
-      database: .failing,
-      fileClient: .failing,
-      mainRunLoop: .failing,
-      remoteNotifications: .failing,
-      serverConfig: .failing,
-      storeKit: .failing,
-      userDefaults: .failing,
-      userNotifications: .failing
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      database: .unimplemented,
+      fileClient: .unimplemented,
+      mainRunLoop: .unimplemented,
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
+      storeKit: .unimplemented,
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
   #endif
 

@@ -31,7 +31,7 @@ class PersistenceTests: XCTestCase {
         home: .init(route: .solo(.init()))
       ),
       reducer: appReducer,
-      environment: update(.failing) {
+      environment: update(.unimplemented) {
         $0.audioPlayer.play = { _ in }
         $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
@@ -160,7 +160,7 @@ class PersistenceTests: XCTestCase {
         home: HomeState(savedGames: SavedGamesState(unlimited: .mock))
       ),
       reducer: appReducer,
-      environment: update(.failing) {
+      environment: update(.unimplemented) {
         $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
         $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
@@ -219,7 +219,7 @@ class PersistenceTests: XCTestCase {
     let store = TestStore(
       initialState: AppState(game: update(.mock) { $0.gameMode = .timed }),
       reducer: appReducer,
-      environment: update(.failing) {
+      environment: update(.unimplemented) {
         $0.audioPlayer.stop = { _ in }
         $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
         $0.mainQueue = .immediate
@@ -304,7 +304,7 @@ class PersistenceTests: XCTestCase {
         )
       ),
       reducer: appReducer,
-      environment: update(.failing) {
+      environment: update(.unimplemented) {
         $0.audioPlayer.stop = { _ in }
       }
     )

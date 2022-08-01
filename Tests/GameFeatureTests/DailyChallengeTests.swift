@@ -27,7 +27,7 @@ class DailyChallengeTests: XCTestCase {
 
     let didSave = ActorIsolated(false)
 
-    let environment = update(GameEnvironment.failing) {
+    let environment = update(GameEnvironment.unimplemented) {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didSave.setValue(true) }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
@@ -78,7 +78,7 @@ class DailyChallengeTests: XCTestCase {
 
     let didSave = ActorIsolated(false)
 
-    let environment = update(GameEnvironment.failing) {
+    let environment = update(GameEnvironment.unimplemented) {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didSave.setValue(true) }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }

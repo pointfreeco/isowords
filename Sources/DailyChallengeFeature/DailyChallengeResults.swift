@@ -38,8 +38,8 @@ public struct DailyChallengeResultsEnvironment {
 
 #if DEBUG
   extension DailyChallengeResultsEnvironment {
-    public static let failing = Self(
-      apiClient: .failing
+    public static let unimplemented = Self(
+      apiClient: .unimplemented
     )
   }
 #endif

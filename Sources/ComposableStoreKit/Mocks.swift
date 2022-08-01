@@ -17,7 +17,7 @@ extension StoreKitClient {
   import XCTestDynamicOverlay
 
   extension StoreKitClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       addPayment: XCTUnimplemented("\(Self.self).addPayment"),
       appStoreReceiptURL: XCTUnimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
       isAuthorizedForPayments: XCTUnimplemented(

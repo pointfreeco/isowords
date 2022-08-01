@@ -96,12 +96,12 @@ public struct LeaderboardEnvironment {
 
 #if DEBUG
   extension LeaderboardEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      audioPlayer: .failing,
-      feedbackGenerator: .failing,
-      lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue")
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      lowPowerMode: .unimplemented,
+      mainQueue: .unimplemented("mainQueue")
     )
   }
 #endif

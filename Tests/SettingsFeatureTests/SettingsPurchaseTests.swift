@@ -10,7 +10,7 @@ import XCTest
 @MainActor
 class SettingsPurchaseTests: XCTestCase {
   var defaultEnvironment: SettingsEnvironment {
-    var environment = SettingsEnvironment.failing
+    var environment = SettingsEnvironment.unimplemented
     environment.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     environment.applicationClient.alternateIconName = { nil }
     environment.build.number = { 42 }

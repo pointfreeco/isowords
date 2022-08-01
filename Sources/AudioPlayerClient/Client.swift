@@ -52,7 +52,7 @@ extension AudioPlayerClient {
   import XCTestDynamicOverlay
 
   extension AudioPlayerClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       load: XCTUnimplemented("\(Self.self).load"),
       loop: XCTUnimplemented("\(Self.self).loop"),
       play: XCTUnimplemented("\(Self.self).play"),

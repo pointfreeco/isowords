@@ -11,11 +11,8 @@ extension ServerConfigClient {
   import XCTestDynamicOverlay
 
   extension ServerConfigClient {
-    public static let failing = Self(
-      config: {
-        XCTFail("\(Self.self).config is unimplemented")
-        return .init()
-      },
+    public static let unimplemented = Self(
+      config: XCTUnimplemented("\(Self.self).config", placeholder: ServerConfig()),
       refresh: XCTUnimplemented("\(Self.self).refresh")
     )
   }

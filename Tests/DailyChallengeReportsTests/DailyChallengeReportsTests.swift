@@ -14,7 +14,7 @@ class DailyChallengeReportsTests: XCTestCase {
     var pushes: [(targetArn: EndpointArn, payload: AnyEncodable)] = []
 
     try sendDailyChallengeReports(
-      database: update(.failing) {
+      database: update(.unimplemented) {
         $0.fetchDailyChallengeReport = { request in
           switch request.gameMode {
           case .timed:
@@ -54,7 +54,7 @@ class DailyChallengeReportsTests: XCTestCase {
           }
         }
       },
-      sns: update(.failing) {
+      sns: update(.unimplemented) {
         $0._publish = {
           pushes.append(($0, $1))
           return pure(.init(response: .init(result: .init(messageId: "message-deadbeef"))))

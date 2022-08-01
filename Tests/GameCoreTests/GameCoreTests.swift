@@ -8,7 +8,7 @@ class GameCoreTests: XCTestCase {
   func testForfeitTurnBasedGame() async {
     let didEndMatchInTurn = ActorIsolated(false)
 
-    var environment = GameEnvironment.failing
+    var environment = GameEnvironment.unimplemented
     environment.audioPlayer.stop = { _ in }
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
     environment.gameCenter.turnBasedMatch.endMatchInTurn = { _ in

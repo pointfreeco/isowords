@@ -37,7 +37,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       )
     ]
 
-    var environment = UpgradeInterstitialEnvironment.failing
+    var environment = UpgradeInterstitialEnvironment.unimplemented
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
@@ -80,7 +80,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   }
 
   func testWaitAndDismiss() async {
-    var environment = UpgradeInterstitialEnvironment.failing
+    var environment = UpgradeInterstitialEnvironment.unimplemented
     environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = { .finished }
@@ -117,7 +117,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   }
 
   func testMaybeLater_Dismissable() async  {
-    var environment = UpgradeInterstitialEnvironment.failing
+    var environment = UpgradeInterstitialEnvironment.unimplemented
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
     environment.storeKit.observer = { .finished }
@@ -149,9 +149,9 @@ let fullGameProduct = StoreKitClient.Product(
 )
 
 extension UpgradeInterstitialEnvironment {
-  static let failing = Self(
-    mainRunLoop: .failing("mainRunLoop"),
-    serverConfig: .failing,
-    storeKit: .failing
+  static let unimplemented = Self(
+    mainRunLoop: .unimplemented("mainRunLoop"),
+    serverConfig: .unimplemented,
+    storeKit: .unimplemented
   )
 }

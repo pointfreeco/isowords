@@ -127,7 +127,7 @@ public struct ApiClient {
   import XCTestDynamicOverlay
 
   extension ApiClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
       authenticate: XCTUnimplemented("\(Self.self).authenticate"),
       baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),

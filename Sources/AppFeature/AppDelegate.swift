@@ -33,17 +33,17 @@ struct AppDelegateEnvironment {
   var userNotifications: UserNotificationClient
 
   #if DEBUG
-    static let failing = Self(
-      apiClient: .failing,
-      audioPlayer: .failing,
-      backgroundQueue: .failing("backgroundQueue"),
-      build: .failing,
-      dictionary: .failing,
-      fileClient: .failing,
-      mainQueue: .failing("mainQueue"),
-      remoteNotifications: .failing,
+    static let unimplemented = Self(
+      apiClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      backgroundQueue: .unimplemented("backgroundQueue"),
+      build: .unimplemented,
+      dictionary: .unimplemented,
+      fileClient: .unimplemented,
+      mainQueue: .unimplemented("mainQueue"),
+      remoteNotifications: .unimplemented,
       setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
-      userNotifications: .failing
+      userNotifications: .unimplemented
     )
   #endif
 }
