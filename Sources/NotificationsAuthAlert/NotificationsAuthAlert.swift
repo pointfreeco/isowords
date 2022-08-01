@@ -7,79 +7,65 @@ import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
-public struct NotificationsAuthAlertState: Equatable {
-  public init() {}
-}
+public struct NotificationsAuthAlert: ReducerProtocol {
+  public struct State: Equatable {
+    public init() {}
+  }
 
-public enum NotificationsAuthAlertAction: Equatable {
-  case closeButtonTapped
-  case delegate(DelegateAction)
-  case turnOnNotificationsButtonTapped
+  public enum Action: Equatable {
+    case closeButtonTapped
+    case delegate(DelegateAction)
+    case turnOnNotificationsButtonTapped
+  }
 
   public enum DelegateAction: Equatable {
     case close
     case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
   }
-}
 
-public struct NotificationsAuthAlertEnvironment {
-  var mainRunLoop: AnySchedulerOf<RunLoop>
-  var remoteNotifications: RemoteNotificationsClient
-  var userNotifications: UserNotificationClient
+  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.remoteNotifications) var remoteNotifications
+  @Dependency(\.userNotifications) var userNotifications
 
-  public init(
-    mainRunLoop: AnySchedulerOf<RunLoop>,
-    remoteNotifications: RemoteNotificationsClient,
-    userNotifications: UserNotificationClient
-  ) {
-    self.mainRunLoop = mainRunLoop
-    self.remoteNotifications = remoteNotifications
-    self.userNotifications = userNotifications
-  }
-}
+  public init() {}
 
-public let notificationsAuthAlertReducer = Reducer<
-  NotificationsAuthAlertState,
-  NotificationsAuthAlertAction,
-  NotificationsAuthAlertEnvironment
-> { state, action, environment in
-  switch action {
-  case .closeButtonTapped:
-    return .task { .delegate(.close) }.animation()
+  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+    switch action {
+    case .closeButtonTapped:
+      return .task { .delegate(.close) }.animation()
 
-  case .delegate:
-    return .none
+    case .delegate:
+      return .none
 
-  case .turnOnNotificationsButtonTapped:
-    return .run { send in
-      if try await environment.userNotifications.requestAuthorization([.alert, .sound]) {
-        await registerForRemoteNotificationsAsync(
-          remoteNotifications: environment.remoteNotifications,
-          userNotifications: environment.userNotifications
+    case .turnOnNotificationsButtonTapped:
+      return .run { send in
+        if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
+          await registerForRemoteNotificationsAsync(
+            remoteNotifications: self.remoteNotifications,
+            userNotifications: self.userNotifications
+          )
+        }
+        await send(
+          .delegate(
+            .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
+          ),
+          animation: .default
         )
       }
-      await send(
-        .delegate(
-          .didChooseNotificationSettings(
-            environment.userNotifications.getNotificationSettings()
-          )
-        ),
-        animation: .default
-      )
     }
   }
 }
 
 extension View {
   public func notificationsAlert(
-    store: Store<NotificationsAuthAlertState?, NotificationsAuthAlertAction>
+    store: Store<NotificationsAuthAlert.State?, NotificationsAuthAlert.Action>
   ) -> some View {
     ZStack {
       self
 
       IfLetStore(
         store,
-        then: NotificationsAuthAlert.init(store:)
+        then: NotificationsAuthAlertView.init(store:)
       )
       // NB: This is necessary so that when the alert is animated away it stays above `self`.
       .zIndex(1)
@@ -87,8 +73,8 @@ extension View {
   }
 }
 
-struct NotificationsAuthAlert: View {
-  let store: Store<NotificationsAuthAlertState, NotificationsAuthAlertAction>
+struct NotificationsAuthAlertView: View {
+  let store: StoreOf<NotificationsAuthAlert>
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
@@ -134,15 +120,10 @@ struct NotificationsAuthAlert: View {
 
 struct NotificationMenu_Previews: PreviewProvider {
   static var previews: some View {
-    NotificationsAuthAlert(
+    NotificationsAuthAlertView(
       store: Store(
-        initialState: NotificationsAuthAlertState(),
-        reducer: notificationsAuthAlertReducer,
-        environment: NotificationsAuthAlertEnvironment(
-          mainRunLoop: .main,
-          remoteNotifications: .noop,
-          userNotifications: .noop
-        )
+        initialState: NotificationsAuthAlert.State(),
+        reducer: NotificationsAuthAlert()
       )
     )
   }

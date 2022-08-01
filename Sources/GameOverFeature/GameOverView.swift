@@ -33,7 +33,7 @@ public struct GameOverState: Equatable {
   public var isDemo: Bool
   public var isNotificationMenuPresented: Bool
   public var isViewEnabled: Bool
-  public var notificationsAuthAlert: NotificationsAuthAlertState?
+  public var notificationsAuthAlert: NotificationsAuthAlert.State?
   public var showConfetti: Bool
   public var summary: RankSummary?
   public var turnBasedContext: TurnBasedContext?
@@ -47,7 +47,7 @@ public struct GameOverState: Equatable {
     isDemo: Bool,
     isNotificationMenuPresented: Bool = false,
     isViewEnabled: Bool = false,
-    notificationsAuthAlert: NotificationsAuthAlertState? = nil,
+    notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
     showConfetti: Bool = false,
     summary: RankSummary? = nil,
     turnBasedContext: TurnBasedContext? = nil,
@@ -81,7 +81,7 @@ public enum GameOverAction: Equatable {
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
   case gameButtonTapped(GameMode)
-  case notificationsAuthAlert(NotificationsAuthAlertAction)
+  case notificationsAuthAlert(NotificationsAuthAlert.Action)
   case rematchButtonTapped
   case showConfetti
   case startDailyChallengeResponse(TaskResult<InProgressGame>)
@@ -170,19 +170,14 @@ public struct GameOverEnvironment {
 }
 
 public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvironment>.combine(
-  notificationsAuthAlertReducer
-    .optional()
-    .pullback(
-      state: \.notificationsAuthAlert,
-      action: /GameOverAction.notificationsAuthAlert,
-      environment: {
-        NotificationsAuthAlertEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          remoteNotifications: $0.remoteNotifications,
-          userNotifications: $0.userNotifications
-        )
+  Reducer(
+    EmptyReducer()
+      .ifLet(
+        state: \.notificationsAuthAlert, action: /GameOverAction.notificationsAuthAlert
+      ) {
+        NotificationsAuthAlert()
       }
-    ),
+  ),
 
   upgradeInterstitialReducer
     .optional()

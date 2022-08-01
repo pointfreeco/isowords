@@ -19,7 +19,7 @@ public struct DailyChallengeState: Equatable {
   public var gameModeIsLoading: GameMode?
   public var inProgressDailyChallengeUnlimited: InProgressGame?
   public var route: Route?
-  public var notificationsAuthAlert: NotificationsAuthAlertState?
+  public var notificationsAuthAlert: NotificationsAuthAlert.State?
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
   public enum Route: Equatable {
@@ -43,7 +43,7 @@ public struct DailyChallengeState: Equatable {
     gameModeIsLoading: GameMode? = nil,
     inProgressDailyChallengeUnlimited: InProgressGame? = nil,
     route: Route? = nil,
-    notificationsAuthAlert: NotificationsAuthAlertState? = nil,
+    notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
     userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
   ) {
     self.alert = alert
@@ -63,7 +63,7 @@ public enum DailyChallengeAction: Equatable {
   case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case gameButtonTapped(GameMode)
   case notificationButtonTapped
-  case notificationsAuthAlert(NotificationsAuthAlertAction)
+  case notificationsAuthAlert(NotificationsAuthAlert.Action)
   case setNavigation(tag: DailyChallengeState.Route.Tag?)
   case startDailyChallengeResponse(TaskResult<InProgressGame>)
   case task
@@ -109,19 +109,14 @@ public let dailyChallengeReducer = Reducer<
       environment: { .init(apiClient: $0.apiClient) }
     ),
 
-  notificationsAuthAlertReducer
-    .optional()
-    .pullback(
-      state: \.notificationsAuthAlert,
-      action: /DailyChallengeAction.notificationsAuthAlert,
-      environment: {
-        NotificationsAuthAlertEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          remoteNotifications: $0.remoteNotifications,
-          userNotifications: $0.userNotifications
-        )
+  Reducer(
+    EmptyReducer()
+      .ifLet(
+        state: \.notificationsAuthAlert, action: /DailyChallengeAction.notificationsAuthAlert
+      ) {
+        NotificationsAuthAlert()
       }
-    ),
+  ),
 
   Reducer<
     DailyChallengeState, DailyChallengeAction, DailyChallengeEnvironment
