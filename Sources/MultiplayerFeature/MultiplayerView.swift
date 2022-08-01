@@ -9,7 +9,7 @@ public struct MultiplayerState: Equatable {
   public var route: Route?
 
   public enum Route: Equatable {
-    case pastGames(PastGamesState)
+    case pastGames(PastGames.State)
 
     public enum Tag: Int {
       case pastGames
@@ -33,7 +33,7 @@ public struct MultiplayerState: Equatable {
 }
 
 public enum MultiplayerAction: Equatable {
-  case pastGames(PastGamesAction)
+  case pastGames(PastGames.Action)
   case setNavigation(tag: MultiplayerState.Route.Tag?)
   case startButtonTapped
 }
@@ -59,12 +59,16 @@ public let multiplayerReducer = Reducer<
   MultiplayerAction,
   MultiplayerEnvironment
 >.combine(
-  pastGamesReducer
-    ._pullback(
-      state: (\MultiplayerState.route).appending(path: /MultiplayerState.Route.pastGames),
-      action: /MultiplayerAction.pastGames,
-      environment: { PastGamesEnvironment(gameCenter: $0.gameCenter) }
-    ),
+  Reducer(
+    EmptyReducer().ifLet(state: \MultiplayerState.route, action: .self) {
+      EmptyReducer().ifLet(
+        state: /MultiplayerState.Route.pastGames,
+        action: /MultiplayerAction.pastGames
+      ) {
+        PastGames()
+      }
+    }
+  ),
 
   .init { state, action, environment in
     switch action {

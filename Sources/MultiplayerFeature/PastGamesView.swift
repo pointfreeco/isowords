@@ -5,66 +5,62 @@ import ComposableGameCenter
 import Styleguide
 import SwiftUI
 
-public struct PastGamesState: Equatable {
-  public var pastGames: IdentifiedArrayOf<PastGame.State> = []
-}
+public struct PastGames: ReducerProtocol {
+  public struct State: Equatable {
+    public var pastGames: IdentifiedArrayOf<PastGame.State> = []
+  }
 
-public enum PastGamesAction: Equatable {
-  case matchesResponse(TaskResult<[PastGame.State]>)
-  case pastGame(TurnBasedMatch.Id, PastGame.Action)
-  case task
-}
+  public enum Action: Equatable {
+    case matchesResponse(TaskResult<[PastGame.State]>)
+    case pastGame(TurnBasedMatch.Id, PastGame.Action)
+    case task
+  }
 
-public struct PastGamesEnvironment {
-  public var gameCenter: GameCenterClient
-}
+  @Dependency(\.gameCenter) var gameCenter
 
-let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnvironment>.combine(
-  Reducer(
-    EmptyReducer()
-      .forEach(state: \.pastGames, action: /PastGamesAction.pastGame) {
-        PastGame()
-      }
-  ),
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case let .matchesResponse(.success(matches)):
+        state.pastGames = IdentifiedArray(uniqueElements: matches)
+        return .none
 
-  .init { state, action, environment in
-    switch action {
-    case let .matchesResponse(.success(matches)):
-      state.pastGames = IdentifiedArray(uniqueElements: matches)
-      return .none
+      case .matchesResponse(.failure):
+        return .none
 
-    case .matchesResponse(.failure):
-      return .none
+      case .pastGame:
+        return .none
 
-    case .pastGame:
-      return .none
-
-    case .task:
-      return .task {
-        await .matchesResponse(
-          TaskResult {
-            try await environment.gameCenter.turnBasedMatch
-              .loadMatches()
-              .compactMap { match in
-                PastGame.State(
-                  turnBasedMatch: match,
-                  localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId
-                )
-              }
-              .sorted { $0.endDate > $1.endDate }
-          }
-        )
+      case .task:
+        return .task {
+          await .matchesResponse(
+            TaskResult {
+              try await self.gameCenter.turnBasedMatch
+                .loadMatches()
+                .compactMap { match in
+                  PastGame.State(
+                    turnBasedMatch: match,
+                    localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
+                  )
+                }
+                .sorted { $0.endDate > $1.endDate }
+            }
+          )
+        }
       }
     }
+    .forEach(state: \.pastGames, action: /Action.pastGame) {
+      PastGame()
+    }
   }
-)
+}
 
 struct PastGamesView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<PastGamesState, PastGamesAction>
-  @ObservedObject var viewStore: ViewStore<PastGamesState, PastGamesAction>
+  let store: StoreOf<PastGames>
+  @ObservedObject var viewStore: ViewStoreOf<PastGames>
 
-  init(store: Store<PastGamesState, PastGamesAction>) {
+  init(store: StoreOf<PastGames>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -74,7 +70,7 @@ struct PastGamesView: View {
       ForEachStore(
         self.store.scope(
           state: \.pastGames,
-          action: PastGamesAction.pastGame
+          action: PastGames.Action.pastGame
         ),
         content: { store in
           Group {
@@ -107,9 +103,8 @@ struct PastGamesView: View {
         NavigationView {
           PastGamesView(
             store: .init(
-              initialState: .init(pastGames: pastGames),
-              reducer: pastGamesReducer,
-              environment: .init(gameCenter: .noop)
+              initialState: PastGames.State(pastGames: pastGames),
+              reducer: PastGames()
             )
           )
         }

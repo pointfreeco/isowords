@@ -11,15 +11,13 @@ import XCTest
 @MainActor
 class PastGamesTests: XCTestCase {
   func testLoadMatches() async {
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatch.loadMatches = { [match] }
-
     let store = TestStore(
-      initialState: PastGamesState(),
-      reducer: pastGamesReducer,
-      environment: environment
+      initialState: PastGames.State(pastGames: [pastGameState]),
+      reducer: PastGames()
     )
+
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.gameCenter.turnBasedMatch.loadMatches = { [match] }
 
     await store.send(.task)
 
@@ -29,14 +27,12 @@ class PastGamesTests: XCTestCase {
   }
 
   func testOpenMatch() async {
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.turnBasedMatch.load = { _ in match }
-
     let store = TestStore(
-      initialState: PastGamesState(pastGames: [pastGameState]),
-      reducer: pastGamesReducer,
-      environment: environment
+      initialState: PastGames.State(pastGames: [pastGameState]),
+      reducer: PastGames()
     )
+
+    store.dependencies.gameCenter.turnBasedMatch.load = { _ in match }
 
     await store.send(.pastGame("id", .tappedRow))
 
@@ -46,14 +42,12 @@ class PastGamesTests: XCTestCase {
   }
 
   func testRematch() async {
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.turnBasedMatch.rematch = { _ in match }
-
     let store = TestStore(
-      initialState: PastGamesState(pastGames: [pastGameState]),
-      reducer: pastGamesReducer,
-      environment: environment
+      initialState: PastGames.State(pastGames: [pastGameState]),
+      reducer: PastGames()
     )
+
+    store.dependencies.gameCenter.turnBasedMatch.rematch = { _ in match }
 
     await store.send(.pastGame("id", .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
@@ -73,14 +67,12 @@ class PastGamesTests: XCTestCase {
   func testRematch_Failure() async {
     struct RematchFailure: Error, Equatable {}
 
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
-
     let store = TestStore(
-      initialState: PastGamesState(pastGames: [pastGameState]),
-      reducer: pastGamesReducer,
-      environment: environment
+      initialState: PastGames.State(pastGames: [pastGameState]),
+      reducer: PastGames()
     )
+
+    store.dependencies.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
 
     await store.send(.pastGame("id", .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
@@ -99,10 +91,6 @@ class PastGamesTests: XCTestCase {
       }
     }
   }
-}
-
-extension PastGamesEnvironment {
-  static let unimplemented = Self(gameCenter: .unimplemented)
 }
 
 private let pastGameState = PastGame.State(
