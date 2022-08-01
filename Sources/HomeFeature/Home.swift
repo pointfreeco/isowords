@@ -37,7 +37,7 @@ public enum HomeRoute: Equatable {
   case leaderboard(LeaderboardState)
   case multiplayer(MultiplayerState)
   case settings
-  case solo(SoloState)
+  case solo(Solo.State)
 
   public enum Tag: Int {
     case dailyChallenge
@@ -142,7 +142,7 @@ public enum HomeAction: Equatable {
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
-  case solo(SoloAction)
+  case solo(Solo.Action)
   case task
   case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
 
@@ -338,12 +338,16 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       }
     ),
 
-  soloReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.solo),
-      action: /HomeAction.solo,
-      environment: { .init(fileClient: $0.fileClient) }
-    ),
+  Reducer(
+    EmptyReducer().ifLet(state: \.route, action: .self) {
+      EmptyReducer().ifLet(
+        state: /HomeRoute.solo,
+        action: /HomeAction.solo
+      ) {
+        Solo()
+      }
+    }
+  ),
 
   .init { state, action, environment in
     switch action {
