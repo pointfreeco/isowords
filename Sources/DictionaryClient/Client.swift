@@ -1,4 +1,16 @@
+import Dependencies
 import SharedModels
+
+extension DependencyValues {
+  public var dictionary: DictionaryClient {
+    get { self[DictionaryClientKey.self] }
+    set { self[DictionaryClientKey.self] = newValue }
+  }
+
+  private enum DictionaryClientKey: DependencyKey {
+    static let testValue = DictionaryClient.unimplemented
+  }
+}
 
 public struct DictionaryClient {
   public var contains: (String, Language) -> Bool

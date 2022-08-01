@@ -4,7 +4,6 @@ import AppClipAudioLibrary
 import AppFeature
 import Build
 import ComposableArchitecture
-import CryptoKit
 import DictionarySqliteClient
 import ServerConfig
 import ServerConfigClient
@@ -107,18 +106,12 @@ extension AppEnvironment {
           scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
         }
       },
-      storeKit: .live(),
+      storeKit: .live,
       timeZone: { .autoupdatingCurrent },
       userDefaults: .live(),
       userNotifications: .live
     )
   }
-}
-
-extension ApiClient {
-  static let live = Self.live(
-    sha256: { Data(SHA256.hash(data: $0)) }
-  )
 }
 
 extension ServerConfigClient {

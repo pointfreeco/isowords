@@ -1,4 +1,17 @@
+import Dependencies
 import Foundation
+
+extension DependencyValues {
+  public var deviceId: DeviceIdentifier {
+    get { self[DeviceIdentifierKey.self] }
+    set { self[DeviceIdentifierKey.self] = newValue }
+  }
+
+  private enum DeviceIdentifierKey: LiveDependencyKey {
+    static let liveValue = DeviceIdentifier.live
+    static let testValue = DeviceIdentifier.unimplemented
+  }
+}
 
 public struct DeviceIdentifier {
   public var id: () -> UUID

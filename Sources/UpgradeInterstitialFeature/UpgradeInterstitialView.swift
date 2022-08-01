@@ -375,7 +375,7 @@ struct UpgradeInterstitialPreviews: PreviewProvider {
             environment: .init(
               mainRunLoop: .main,
               serverConfig: .noop,
-              storeKit: .live()
+              storeKit: .live
             )
           )
         )

@@ -1,6 +1,17 @@
 import ComposableArchitecture
 import Foundation
 
+extension DependencyValues {
+  public var userDefaults: UserDefaultsClient {
+    get { self[UserDefaultsClientKey.self] }
+    set { self[UserDefaultsClientKey.self] = newValue }
+  }
+
+  private enum UserDefaultsClientKey: DependencyKey {
+    static let testValue = UserDefaultsClient.unimplemented
+  }
+}
+
 public struct UserDefaultsClient {
   public var boolForKey: @Sendable (String) -> Bool
   public var dataForKey: @Sendable (String) -> Data?

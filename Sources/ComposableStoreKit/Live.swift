@@ -4,51 +4,49 @@ import StoreKit
 
 @available(iOSApplicationExtension, unavailable)
 extension StoreKitClient {
-  public static func live() -> Self {
-    return Self(
-      addPayment: { SKPaymentQueue.default().add($0) },
-      appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
-      isAuthorizedForPayments: { SKPaymentQueue.canMakePayments() },
-      fetchProducts: { products in
-        let stream = AsyncThrowingStream<ProductsResponse, Error> { continuation in
-          let request = SKProductsRequest(productIdentifiers: products)
-          let delegate = ProductRequest(continuation: continuation)
-          request.delegate = delegate
-          request.start()
-          continuation.onTermination = { [request = UncheckedSendable(request)] _ in
-            request.value.cancel()
-            _ = delegate
-          }
+  public static let live = Self(
+    addPayment: { SKPaymentQueue.default().add($0) },
+    appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
+    isAuthorizedForPayments: { SKPaymentQueue.canMakePayments() },
+    fetchProducts: { products in
+      let stream = AsyncThrowingStream<ProductsResponse, Error> { continuation in
+        let request = SKProductsRequest(productIdentifiers: products)
+        let delegate = ProductRequest(continuation: continuation)
+        request.delegate = delegate
+        request.start()
+        continuation.onTermination = { [request = UncheckedSendable(request)] _ in
+          request.value.cancel()
+          _ = delegate
         }
-        guard let response = try await stream.first(where: { _ in true })
-        else { throw CancellationError() }
-        return response
-      },
-      finishTransaction: { transaction in
-        guard let skTransaction = transaction.rawValue else {
-          assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
-          return
-        }
-        SKPaymentQueue.default().finishTransaction(skTransaction)
-      },
-      observer: {
-        AsyncStream { continuation in
-          let observer = Observer(continuation: continuation)
-          SKPaymentQueue.default().add(observer)
-          continuation.onTermination = { _ in SKPaymentQueue.default().remove(observer) }
-        }
-      },
-      requestReview: {
-        guard
-          let scene = await UIApplication.shared.connectedScenes
-            .first(where: { $0 is UIWindowScene })
-        as? UIWindowScene
-        else { return }
-        await SKStoreReviewController.requestReview(in: scene)
-      },
-      restoreCompletedTransactions: { SKPaymentQueue.default().restoreCompletedTransactions() }
-    )
-  }
+      }
+      guard let response = try await stream.first(where: { _ in true })
+      else { throw CancellationError() }
+      return response
+    },
+    finishTransaction: { transaction in
+      guard let skTransaction = transaction.rawValue else {
+        assertionFailure("The rawValue of this transaction should not be nil: \(transaction)")
+        return
+      }
+      SKPaymentQueue.default().finishTransaction(skTransaction)
+    },
+    observer: {
+      AsyncStream { continuation in
+        let observer = Observer(continuation: continuation)
+        SKPaymentQueue.default().add(observer)
+        continuation.onTermination = { _ in SKPaymentQueue.default().remove(observer) }
+      }
+    },
+    requestReview: {
+      guard
+        let scene = await UIApplication.shared.connectedScenes
+          .first(where: { $0 is UIWindowScene })
+          as? UIWindowScene
+      else { return }
+      await SKStoreReviewController.requestReview(in: scene)
+    },
+    restoreCompletedTransactions: { SKPaymentQueue.default().restoreCompletedTransactions() }
+  )
 }
 
 private class ProductRequest: NSObject, SKProductsRequestDelegate {

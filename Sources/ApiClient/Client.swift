@@ -3,6 +3,17 @@ import ComposableArchitecture
 import Foundation
 import SharedModels
 
+extension DependencyValues {
+  public var apiClient: ApiClient {
+    get { self[ApiClientKey.self] }
+    set { self[ApiClientKey.self] = newValue }
+  }
+
+  public enum ApiClientKey: DependencyKey {
+    public static let testValue = ApiClient.unimplemented
+  }
+}
+
 public struct ApiClient {
   public var apiRequest: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:

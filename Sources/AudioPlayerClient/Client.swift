@@ -1,5 +1,16 @@
 import ComposableArchitecture
 
+extension DependencyValues {
+  public var audioPlayer: AudioPlayerClient {
+    get { self[AudioPlayerClientKey.self] }
+    set { self[AudioPlayerClientKey.self] = newValue }
+  }
+
+  private enum AudioPlayerClientKey: DependencyKey {
+    static let testValue = AudioPlayerClient.unimplemented
+  }
+}
+
 public struct AudioPlayerClient {
   public var load: @Sendable ([Sound]) async -> Void
   public var loop: @Sendable (Sound) async -> Void

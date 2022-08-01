@@ -1,5 +1,17 @@
 import ComposableArchitecture
 
+extension DependencyValues {
+  public var remoteNotifications: RemoteNotificationsClient {
+    get { self[RemoteNotificationsClientKey.self] }
+    set { self[RemoteNotificationsClientKey.self] = newValue }
+  }
+
+  private enum RemoteNotificationsClientKey: LiveDependencyKey {
+    static let liveValue = RemoteNotificationsClient.live
+    static let testValue = RemoteNotificationsClient.unimplemented
+  }
+}
+
 public struct RemoteNotificationsClient {
   public var isRegistered: @Sendable () async -> Bool
   public var register: @Sendable () async -> Void

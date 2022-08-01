@@ -119,7 +119,7 @@ public struct GameFeatureView<Content>: View where Content: View {
               remoteNotifications: .noop,
               serverConfig: .noop,
               setUserInterfaceStyle: { _ in },
-              storeKit: .live(),
+              storeKit: .live,
               userDefaults: .noop,
               userNotifications: .live
             )

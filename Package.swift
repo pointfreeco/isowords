@@ -45,6 +45,7 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -60,6 +61,7 @@ var package = Package(
       name: "DictionaryClient",
       dependencies: [
         "SharedModels",
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -175,7 +177,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "concurrency-updates"
+      branch: "concurrency-updates-proto"
     )
   ])
   package.products.append(contentsOf: [
@@ -532,6 +534,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "DeviceId",
       dependencies: [
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
       ]
     ),
