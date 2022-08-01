@@ -35,7 +35,7 @@ import UserDefaultsClient
 public enum HomeRoute: Equatable {
   case dailyChallenge(DailyChallengeState)
   case leaderboard(LeaderboardState)
-  case multiplayer(MultiplayerState)
+  case multiplayer(Multiplayer.State)
   case settings
   case solo(Solo.State)
 
@@ -137,7 +137,7 @@ public enum HomeAction: Equatable {
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
-  case multiplayer(MultiplayerAction)
+  case multiplayer(Multiplayer.Action)
   case nagBannerFeature(NagBannerFeatureAction)
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
@@ -287,18 +287,16 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       }
     ),
 
-  multiplayerReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.multiplayer),
-      action: /HomeAction.multiplayer,
-      environment: {
-        .init(
-          backgroundQueue: $0.backgroundQueue,
-          gameCenter: $0.gameCenter,
-          mainQueue: $0.mainQueue
-        )
+  Reducer(
+    EmptyReducer().ifLet(state: \.route, action: .self) {
+      EmptyReducer().ifLet(
+        state: /HomeRoute.multiplayer,
+        action: /HomeAction.multiplayer
+      ) {
+        Multiplayer()
       }
-    ),
+    }
+  ),
 
   nagBannerFeatureReducer
     .pullback(
