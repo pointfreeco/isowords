@@ -271,6 +271,8 @@ class PersistenceTests: XCTestCase {
       }
     )
 
+    store.dependencies.didFinishLaunching()
+
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.receive(.savedGamesLoaded(.success(savedGames))) {
       $0.home.savedGames = savedGames

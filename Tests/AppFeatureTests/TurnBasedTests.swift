@@ -105,6 +105,8 @@ class TurnBasedTests: XCTestCase {
       }
     )
 
+    store.dependencies.didFinishLaunching()
+
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))
 
@@ -355,6 +357,8 @@ class TurnBasedTests: XCTestCase {
       }
     )
 
+    store.dependencies.didFinishLaunching()
+
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))
 
@@ -469,6 +473,8 @@ class TurnBasedTests: XCTestCase {
         $0.timeZone = { .newYork }
       }
     )
+
+    store.dependencies.didFinishLaunching()
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))

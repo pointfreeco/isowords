@@ -34,13 +34,26 @@ class RemoteNotificationsTests: XCTestCase {
       environment: environment
     )
 
+    store.dependencies.didFinishLaunching()
+    store.dependencies.build.number = { 80 }
+    store.dependencies.remoteNotifications.register = {
+      await didRegisterForRemoteNotifications.setValue(true)
+    }
+    store.dependencies.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .authorized)
+    }
+    store.dependencies.userNotifications.requestAuthorization = { options in
+      await requestedAuthorizationOptions.setValue(options)
+      return true
+    }
+
     // Register remote notifications on .didFinishLaunching
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await requestedAuthorizationOptions.withValue { XCTAssertNoDifference($0, [.alert, .sound]) }
     await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
 
-    store.environment.apiClient.override(
+    store.dependencies.apiClient.override(
       route: .push(
         .register(.init(authorizationStatus: .authorized, build: 80, token: "6465616462656566"))
       ),
@@ -56,7 +69,7 @@ class RemoteNotificationsTests: XCTestCase {
     await store.send(.didChangeScenePhase(.active))
     await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
 
-    store.environment.apiClient.override(
+    store.dependencies.apiClient.override(
       route: .push(
         .register(.init(authorizationStatus: .authorized, build: 80, token: "6261616462656566"))
       ),
@@ -78,17 +91,16 @@ class RemoteNotificationsTests: XCTestCase {
       environment: environment
     )
 
+    store.dependencies.didFinishLaunching()
+
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.send(.didChangeScenePhase(.active))
     await task.cancel()
   }
 
   func testReceiveNotification_dailyChallengeEndsSoon() async {
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
-
     var environment = AppEnvironment.didFinishLaunching
     environment.fileClient.save = { @Sendable _, _ in }
-    environment.userNotifications.delegate = { delegate.stream }
 
     let inProgressGame = InProgressGame.mock
 
@@ -99,6 +111,11 @@ class RemoteNotificationsTests: XCTestCase {
       reducer: appReducer,
       environment: environment
     )
+
+    store.dependencies.didFinishLaunching()
+
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    store.dependencies.userNotifications.delegate = { delegate.stream }
 
     let notification = UserNotificationClient.Notification(
       date: .mock,
