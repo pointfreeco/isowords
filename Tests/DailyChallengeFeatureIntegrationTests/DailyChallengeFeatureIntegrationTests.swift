@@ -72,14 +72,14 @@ class DailyChallengeFeatureTests: XCTestCase {
       }
     }
 
-    let clientEnvironment = DailyChallengeResultsEnvironment(
-      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment), router: .test)
-    )
-
     let store = TestStore(
       initialState: .init(),
-      reducer: dailyChallengeResultsReducer,
-      environment: clientEnvironment
+      reducer: DailyChallengeResults()
+    )
+
+    store.dependencies.apiClient = ApiClient(
+      middleware: siteMiddleware(environment: serverEnvironment),
+      router: .test
     )
 
     await store.send(.leaderboardResults(.task)) {

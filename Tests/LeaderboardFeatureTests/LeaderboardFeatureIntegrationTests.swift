@@ -37,16 +37,13 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
-      $0.apiClient = ApiClient(middleware: middleware, router: .test)
-      $0.mainQueue = .immediate
-    }
-
     let store = TestStore(
-      initialState: LeaderboardState(isHapticsEnabled: false, settings: .init()),
-      reducer: leaderboardReducer,
-      environment: leaderboardEnvironment
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
+      reducer: Leaderboard()
     )
+
+    store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
+    store.dependencies.mainQueue = .immediate
 
     await store.send(.solo(.task)) {
       $0.solo.isLoading = true
@@ -96,16 +93,13 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
-      $0.apiClient = ApiClient(middleware: middleware, router: .test)
-      $0.mainQueue = .immediate
-    }
-
     let store = TestStore(
-      initialState: LeaderboardState(isHapticsEnabled: false, settings: .init()),
-      reducer: leaderboardReducer,
-      environment: leaderboardEnvironment
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
+      reducer: Leaderboard()
     )
+
+    store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
+    store.dependencies.mainQueue = .immediate
 
     await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true

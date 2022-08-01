@@ -23,7 +23,7 @@ public struct DailyChallengeState: Equatable {
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
   public enum Route: Equatable {
-    case results(DailyChallengeResultsState)
+    case results(DailyChallengeResults.State)
 
     public enum Tag: Int {
       case results
@@ -57,7 +57,7 @@ public struct DailyChallengeState: Equatable {
 }
 
 public enum DailyChallengeAction: Equatable {
-  case dailyChallengeResults(DailyChallengeResultsAction)
+  case dailyChallengeResults(DailyChallengeResults.Action)
   case delegate(DelegateAction)
   case dismissAlert
   case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
@@ -102,15 +102,16 @@ public struct DailyChallengeEnvironment {
 public let dailyChallengeReducer = Reducer<
   DailyChallengeState, DailyChallengeAction, DailyChallengeEnvironment
 >.combine(
-  dailyChallengeResultsReducer
-    ._pullback(
-      state: (\DailyChallengeState.route).appending(path: /DailyChallengeState.Route.results),
-      action: /DailyChallengeAction.dailyChallengeResults,
-      environment: { .init(apiClient: $0.apiClient) }
-    ),
-
   Reducer(
     EmptyReducer()
+      .ifLet(state: \.route, action: .self) {
+        EmptyReducer().ifLet(
+          state: /DailyChallengeState.Route.results,
+          action: /DailyChallengeAction.dailyChallengeResults
+        ) {
+          DailyChallengeResults()
+        }
+      }
       .ifLet(
         state: \.notificationsAuthAlert, action: /DailyChallengeAction.notificationsAuthAlert
       ) {

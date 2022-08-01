@@ -13,9 +13,8 @@ import XCTest
 class LeaderboardFeatureTests: XCTestCase {
   func testScopeSwitcher() async {
     let store = TestStore(
-      initialState: .init(isHapticsEnabled: false, settings: .init()),
-      reducer: leaderboardReducer,
-      environment: .unimplemented
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
+      reducer: Leaderboard()
     )
 
     await store.send(.scopeTapped(.vocab)) {
@@ -28,17 +27,15 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testTimeScopeSynchronization() async {
     let store = TestStore(
-      initialState: .init(isHapticsEnabled: false, settings: .init()),
-      reducer: leaderboardReducer,
-      environment: .init(
-        apiClient: .unimplemented,
-        audioPlayer: .noop,
-        feedbackGenerator: .noop,
-        lowPowerMode: .false,
-        mainQueue: .immediate
-      )
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
+      reducer: Leaderboard()
     )
-    store.environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+
+    store.dependencies.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+    store.dependencies.audioPlayer = .noop
+    store.dependencies.feedbackGenerator = .noop
+    store.dependencies.lowPowerMode = .false
+    store.dependencies.mainQueue = .immediate
 
     let task1 = await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay
@@ -102,20 +99,17 @@ class LeaderboardFeatureTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
-      $0.apiClient = ApiClient(middleware: middleware, router: .test)
-      $0.mainQueue = .immediate
-    }
-
     let store = TestStore(
-      initialState: LeaderboardState(
+      initialState: Leaderboard.State(
         isHapticsEnabled: false,
         scope: .vocab,
         settings: .init()
       ),
-      reducer: leaderboardReducer,
-      environment: leaderboardEnvironment
+      reducer: Leaderboard()
     )
+
+    store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
+    store.dependencies.mainQueue = .immediate
 
     await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true

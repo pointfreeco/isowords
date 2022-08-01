@@ -34,7 +34,7 @@ import UserDefaultsClient
 
 public enum HomeRoute: Equatable {
   case dailyChallenge(DailyChallengeState)
-  case leaderboard(LeaderboardState)
+  case leaderboard(Leaderboard.State)
   case multiplayer(Multiplayer.State)
   case settings
   case solo(Solo.State)
@@ -136,7 +136,7 @@ public enum HomeAction: Equatable {
   case dismissChangelog
   case gameButtonTapped(GameButtonAction)
   case howToPlayButtonTapped
-  case leaderboard(LeaderboardAction)
+  case leaderboard(Leaderboard.Action)
   case multiplayer(Multiplayer.Action)
   case nagBannerFeature(NagBannerFeature.Action)
   case serverConfigResponse(ServerConfig)
@@ -272,23 +272,15 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       }
     ),
 
-  leaderboardReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.leaderboard),
-      action: /HomeAction.leaderboard,
-      environment: {
-        .init(
-          apiClient: $0.apiClient,
-          audioPlayer: $0.audioPlayer,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
   Reducer(
     EmptyReducer().ifLet(state: \.route, action: .self) {
+      EmptyReducer().ifLet(
+        state: /HomeRoute.leaderboard,
+        action: /HomeAction.leaderboard
+      ) {
+        Leaderboard()
+      }
+
       EmptyReducer().ifLet(
         state: /HomeRoute.multiplayer,
         action: /HomeAction.multiplayer

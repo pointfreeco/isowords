@@ -7,8 +7,8 @@ import SwiftUI
 
 var dailyChallengeAppStoreView: AnyView {
   let view = DailyChallengeResultsView(
-    store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>(
-      initialState: DailyChallengeResultsState(
+    store: Store(
+      initialState: DailyChallengeResults.State(
         history: nil,
         leaderboardResults: .init(
           gameMode: .timed,

@@ -7,13 +7,13 @@ import SwiftUI
 var leaderboardAppStoreView: AnyView {
   let view = LeaderboardView(
     store: Store(
-      initialState: LeaderboardState(
+      initialState: Leaderboard.State(
         cubePreview: nil,
         isAnimationReduced: false,
         isHapticsEnabled: true,
         scope: .vocab,
         settings: .init(),
-        solo: LeaderboardResultsState(
+        solo: LeaderboardResults.State(
           gameMode: .unlimited,
           isLoading: false,
           isTimeScopeMenuVisible: false,
@@ -23,7 +23,7 @@ var leaderboardAppStoreView: AnyView {
           ),
           timeScope: .lastWeek
         ),
-        vocab: LeaderboardResultsState(
+        vocab: LeaderboardResults.State(
           gameMode: .unlimited,
           isLoading: false,
           isTimeScopeMenuVisible: false,
