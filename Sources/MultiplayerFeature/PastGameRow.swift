@@ -5,105 +5,104 @@ import ComposableGameCenter
 import Styleguide
 import SwiftUI
 
-public struct PastGameState: Equatable, Identifiable {
-  public var alert: AlertState<PastGameAction>?
-  public var challengeeDisplayName: String
-  public var challengerDisplayName: String
-  public var challengeeScore: Int
-  public var challengerScore: Int
-  public var endDate: Date
-  public var isRematchRequestInFlight = false
-  public var matchId: TurnBasedMatch.Id
-  public var opponentDisplayName: String
+public struct PastGame: ReducerProtocol {
+  public struct State: Equatable, Identifiable {
+    public var alert: AlertState<Action>?
+    public var challengeeDisplayName: String
+    public var challengerDisplayName: String
+    public var challengeeScore: Int
+    public var challengerScore: Int
+    public var endDate: Date
+    public var isRematchRequestInFlight = false
+    public var matchId: TurnBasedMatch.Id
+    public var opponentDisplayName: String
 
-  public var id: TurnBasedMatch.Id {
-    self.matchId
-  }
+    public var id: TurnBasedMatch.Id {
+      self.matchId
+    }
 
-  enum Outcome: Equatable {
-    case challengee
-    case challenger
-    case tied
-  }
+    enum Outcome: Equatable {
+      case challengee
+      case challenger
+      case tied
+    }
 
-  var outcome: Outcome {
-    self.challengeeScore < self.challengerScore
+    var outcome: Outcome {
+      self.challengeeScore < self.challengerScore
       ? .challenger
       : self.challengeeScore > self.challengerScore
-        ? .challengee
-        : .tied
+      ? .challengee
+      : .tied
+    }
   }
-}
 
-public enum PastGameAction: Equatable {
-  case delegate(DelegateAction)
-  case dismissAlert
-  case matchResponse(TaskResult<TurnBasedMatch>)
-  case rematchButtonTapped
-  case rematchResponse(TaskResult<TurnBasedMatch>)
-  case tappedRow
+  public enum Action: Equatable {
+    case delegate(DelegateAction)
+    case dismissAlert
+    case matchResponse(TaskResult<TurnBasedMatch>)
+    case rematchButtonTapped
+    case rematchResponse(TaskResult<TurnBasedMatch>)
+    case tappedRow
+  }
 
   public enum DelegateAction: Equatable {
     case openMatch(TurnBasedMatch)
   }
-}
 
-struct PastGameEnvironment {
-  var gameCenter: GameCenterClient
-}
+  @Dependency(\.gameCenter) var gameCenter
 
-let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment> {
-  state, action, environment in
-  switch action {
-  case .delegate:
-    return .none
+  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+    switch action {
+    case .delegate:
+      return .none
 
-  case .dismissAlert:
-    state.alert = nil
-    return .none
+    case .dismissAlert:
+      state.alert = nil
+      return .none
 
-  case .matchResponse(.failure):
-    return .none
+    case .matchResponse(.failure):
+      return .none
 
-  case let .matchResponse(.success(match)):
-    return .task { .delegate(.openMatch(match)) }.animation()
+    case let .matchResponse(.success(match)):
+      return .task { .delegate(.openMatch(match)) }.animation()
 
-  case let .rematchResponse(.success(match)):
-    state.isRematchRequestInFlight = false
-    return .task { .delegate(.openMatch(match)) }.animation()
+    case let .rematchResponse(.success(match)):
+      state.isRematchRequestInFlight = false
+      return .task { .delegate(.openMatch(match)) }.animation()
 
-  case .rematchResponse(.failure):
-    state.isRematchRequestInFlight = false
-    state.alert = .init(
-      title: TextState("Error"),
-      message: TextState("We couldn’t start the rematch. Try again later."),
-      dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert))
-    )
-    return .none
-
-  case .rematchButtonTapped:
-    state.isRematchRequestInFlight = true
-    return .task { [matchId = state.matchId] in
-      await .rematchResponse(
-        TaskResult { try await environment.gameCenter.turnBasedMatch.rematch(matchId) }
+    case .rematchResponse(.failure):
+      state.isRematchRequestInFlight = false
+      state.alert = .init(
+        title: TextState("Error"),
+        message: TextState("We couldn’t start the rematch. Try again later."),
+        dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert))
       )
-    }
+      return .none
 
-  case .tappedRow:
-    return .task { [matchId = state.matchId] in
-      await .matchResponse(
-        TaskResult { try await environment.gameCenter.turnBasedMatch.load(matchId) }
-      )
+    case .rematchButtonTapped:
+      state.isRematchRequestInFlight = true
+      return .task { [matchId = state.matchId] in
+        await .rematchResponse(
+          TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+        )
+      }
+
+    case .tappedRow:
+      return .task { [matchId = state.matchId] in
+        await .matchResponse(
+          TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+        )
+      }
     }
   }
 }
 
 struct PastGameRow: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<PastGameState, PastGameAction>
-  @ObservedObject var viewStore: ViewStore<PastGameState, PastGameAction>
+  let store: StoreOf<PastGame>
+  @ObservedObject var viewStore: ViewStoreOf<PastGame>
 
-  init(store: Store<PastGameState, PastGameAction>) {
+  init(store: StoreOf<PastGame>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -182,7 +181,7 @@ struct PastGameRow: View {
   }
 }
 
-extension PastGameState {
+extension PastGame.State {
   init?(
     turnBasedMatch match: TurnBasedMatch,
     localPlayerId: Player.Id?

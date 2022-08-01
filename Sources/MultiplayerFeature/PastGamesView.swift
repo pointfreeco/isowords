@@ -6,12 +6,12 @@ import Styleguide
 import SwiftUI
 
 public struct PastGamesState: Equatable {
-  public var pastGames: IdentifiedArrayOf<PastGameState> = []
+  public var pastGames: IdentifiedArrayOf<PastGame.State> = []
 }
 
 public enum PastGamesAction: Equatable {
-  case matchesResponse(TaskResult<[PastGameState]>)
-  case pastGame(TurnBasedMatch.Id, PastGameAction)
+  case matchesResponse(TaskResult<[PastGame.State]>)
+  case pastGame(TurnBasedMatch.Id, PastGame.Action)
   case task
 }
 
@@ -20,10 +20,11 @@ public struct PastGamesEnvironment {
 }
 
 let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnvironment>.combine(
-  pastGameReducer.forEach(
-    state: \.pastGames,
-    action: /PastGamesAction.pastGame,
-    environment: { PastGameEnvironment(gameCenter: $0.gameCenter) }
+  Reducer(
+    EmptyReducer()
+      .forEach(state: \.pastGames, action: /PastGamesAction.pastGame) {
+        PastGame()
+      }
   ),
 
   .init { state, action, environment in
@@ -45,7 +46,7 @@ let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnviron
             try await environment.gameCenter.turnBasedMatch
               .loadMatches()
               .compactMap { match in
-                PastGameState(
+                PastGame.State(
                   turnBasedMatch: match,
                   localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId
                 )
@@ -116,7 +117,7 @@ struct PastGamesView: View {
     }
   }
 
-  let pastGames: IdentifiedArrayOf<PastGameState> = [
+  let pastGames: IdentifiedArrayOf<PastGame.State> = [
     .init(
       challengeeDisplayName: "Blob",
       challengerDisplayName: "Blob Jr",

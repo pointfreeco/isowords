@@ -105,7 +105,7 @@ extension PastGamesEnvironment {
   static let unimplemented = Self(gameCenter: .unimplemented)
 }
 
-private let pastGameState = PastGameState(
+private let pastGameState = PastGame.State(
   challengeeDisplayName: "Blob Jr.",
   challengerDisplayName: "Blob",
   challengeeScore: 0,
