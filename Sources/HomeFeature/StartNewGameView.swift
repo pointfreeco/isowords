@@ -6,9 +6,9 @@ import SwiftUI
 
 struct StartNewGameView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<HomeState, HomeAction>
+  let store: StoreOf<Home>
 
-  init(store: Store<HomeState, HomeAction>) {
+  init(store: StoreOf<Home>) {
     self.store = store
   }
 
@@ -23,14 +23,14 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.solo).extract(from:),
-              action: HomeAction.solo
+              state: (\Home.State.route).appending(path: /Home.Route.solo).extract(from:),
+              action: Home.Action.solo
             ),
             then: SoloView.init(store:)
           ),
-          tag: HomeRoute.Tag.solo,
+          tag: Home.Route.Tag.solo,
           selection: viewStore.binding(
-            send: HomeAction.setNavigation(tag:)
+            send: Home.Action.setNavigation(tag:)
           )
           .animation()
         ) {
@@ -50,15 +50,15 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.multiplayer).extract(from:),
-              action: HomeAction.multiplayer
+              state: (\Home.State.route).appending(path: /Home.Route.multiplayer).extract(from:),
+              action: Home.Action.multiplayer
             ),
             then: MultiplayerView.init(store:)
           ),
-          tag: HomeRoute.Tag.multiplayer,
+          tag: Home.Route.Tag.multiplayer,
           selection:
             viewStore
-            .binding(send: HomeAction.setNavigation(tag:))
+            .binding(send: Home.Action.setNavigation(tag:))
             .animation()
         ) {
           HStack {

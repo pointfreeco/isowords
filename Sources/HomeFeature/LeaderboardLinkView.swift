@@ -6,20 +6,20 @@ import SwiftUI
 
 struct LeaderboardLinkView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<HomeState, HomeAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, HomeAction>
+  let store: StoreOf<Home>
+  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
 
   struct ViewState: Equatable {
-    var tag: HomeRoute.Tag?
+    var tag: Home.Route.Tag?
     var weekInReview: FetchWeekInReviewResponse?
 
-    init(state: HomeState) {
+    init(state: Home.State) {
       self.tag = state.route?.tag
       self.weekInReview = state.weekInReview
     }
   }
 
-  init(store: Store<HomeState, HomeAction>) {
+  init(store: StoreOf<Home>) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
   }
@@ -45,7 +45,7 @@ struct LeaderboardLinkView: View {
         tag: self.tag,
         selection: self.viewStore.binding(
           get: \.tag,
-          send: HomeAction.setNavigation(tag:)
+          send: Home.Action.setNavigation(tag:)
         )
         .animation()
       ) {
@@ -69,13 +69,13 @@ struct LeaderboardLinkView: View {
     }
   }
 
-  var tag: HomeRoute.Tag { .leaderboard }
+  var tag: Home.Route.Tag { .leaderboard }
 
   var destination: some View {
     IfLetStore(
       self.store.scope(
-        state: (\HomeState.route).appending(path: /HomeRoute.leaderboard).extract(from:),
-        action: HomeAction.leaderboard
+        state: (\Home.State.route).appending(path: /Home.Route.leaderboard).extract(from:),
+        action: Home.Action.leaderboard
       ),
       then: LeaderboardView.init(store:)
     )

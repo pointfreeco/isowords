@@ -19,11 +19,11 @@ import SwiftUIHelpers
 public struct AppState: Equatable {
   public var game: GameState?
   public var onboarding: OnboardingState?
-  public var home: HomeState
+  public var home: Home.State
 
   public init(
     game: GameState? = nil,
-    home: HomeState = .init(),
+    home: Home.State = .init(),
     onboarding: OnboardingState? = nil
   ) {
     self.game = game
@@ -70,7 +70,7 @@ public enum AppAction: Equatable {
   case currentGame(GameFeatureAction)
   case didChangeScenePhase(ScenePhase)
   case gameCenter(GameCenterAction)
-  case home(HomeAction)
+  case home(Home.Action)
   case onboarding(OnboardingAction)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case savedGamesLoaded(TaskResult<SavedGamesState>)
@@ -100,30 +100,6 @@ extension AppEnvironment {
       userNotifications: self.userNotifications
     )
   }
-
-  var home: HomeEnvironment {
-    .init(
-      apiClient: self.apiClient,
-      applicationClient: self.applicationClient,
-      audioPlayer: self.audioPlayer,
-      backgroundQueue: self.backgroundQueue,
-      build: self.build,
-      database: self.database,
-      deviceId: self.deviceId,
-      feedbackGenerator: self.feedbackGenerator,
-      fileClient: self.fileClient,
-      gameCenter: self.gameCenter,
-      lowPowerMode: self.lowPowerMode,
-      mainQueue: self.mainQueue,
-      mainRunLoop: self.mainRunLoop,
-      remoteNotifications: self.remoteNotifications,
-      serverConfig: self.serverConfig,
-      storeKit: self.storeKit,
-      timeZone: self.timeZone,
-      userDefaults: self.userDefaults,
-      userNotifications: self.userNotifications
-    )
-  }
 }
 
 public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
@@ -140,12 +116,11 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
       environment: \.game
     ),
 
-  homeReducer
-    .pullback(
-      state: \AppState.home,
-      action: /AppAction.home,
-      environment: \.home
-    ),
+  Reducer(
+    Scope(state: \.home, action: /AppAction.home) {
+      Home()
+    }
+  ),
 
   onboardingReducer
     .optional()

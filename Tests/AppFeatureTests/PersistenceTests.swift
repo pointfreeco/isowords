@@ -157,7 +157,7 @@ class PersistenceTests: XCTestCase {
     let store = TestStore(
       initialState: AppState(
         game: update(.mock) { $0.gameMode = .unlimited },
-        home: HomeState(savedGames: SavedGamesState(unlimited: .mock))
+        home: Home.State(savedGames: SavedGamesState(unlimited: .mock))
       ),
       reducer: appReducer,
       environment: update(.unimplemented) {
@@ -298,7 +298,7 @@ class PersistenceTests: XCTestCase {
             )
           )
         },
-        home: HomeState(
+        home: Home.State(
           savedGames: SavedGamesState(
             dailyChallengeUnlimited: .mock,
             unlimited: .mock
