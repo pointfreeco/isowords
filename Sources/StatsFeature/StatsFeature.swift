@@ -8,18 +8,54 @@ import Styleguide
 import SwiftUI
 import VocabFeature
 
-public struct StatsState: Equatable {
-  public var averageWordLength: Double?
-  public var gamesPlayed: Int
-  public var highestScoringWord: LocalDatabaseClient.Stats.Word?
-  public var highScoreTimed: Int?
-  public var highScoreUnlimited: Int?
-  public var isAnimationReduced: Bool
-  public var isHapticsEnabled: Bool
-  public var longestWord: String?
-  public var route: Route?
-  public var secondsPlayed: Int
-  public var wordsFound: Int
+public struct Stats: ReducerProtocol {
+  public struct State: Equatable {
+    public var averageWordLength: Double?
+    public var gamesPlayed: Int
+    public var highestScoringWord: LocalDatabaseClient.Stats.Word?
+    public var highScoreTimed: Int?
+    public var highScoreUnlimited: Int?
+    public var isAnimationReduced: Bool
+    public var isHapticsEnabled: Bool
+    public var longestWord: String?
+    public var route: Route?
+    public var secondsPlayed: Int
+    public var wordsFound: Int
+
+    public init(
+      averageWordLength: Double? = nil,
+      gamesPlayed: Int = 0,
+      highestScoringWord: LocalDatabaseClient.Stats.Word? = nil,
+      highScoreTimed: Int? = nil,
+      highScoreUnlimited: Int? = nil,
+      isAnimationReduced: Bool = false,
+      isHapticsEnabled: Bool = true,
+      longestWord: String? = nil,
+      route: Route? = nil,
+      secondsPlayed: Int = 0,
+      wordsFound: Int = 0
+    ) {
+      self.averageWordLength = averageWordLength
+      self.gamesPlayed = gamesPlayed
+      self.highestScoringWord = highestScoringWord
+      self.highScoreTimed = highScoreTimed
+      self.highScoreUnlimited = highScoreUnlimited
+      self.isAnimationReduced = isAnimationReduced
+      self.isHapticsEnabled = isHapticsEnabled
+      self.longestWord = longestWord
+      self.route = route
+      self.secondsPlayed = secondsPlayed
+      self.wordsFound = wordsFound
+    }
+  }
+
+  public enum Action: Equatable {
+    case backButtonTapped
+    case setNavigation(tag: Route.Tag?)
+    case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
+    case task
+    case vocab(Vocab.Action)
+  }
 
   public enum Route: Equatable {
     case vocab(Vocab.State)
@@ -36,124 +72,69 @@ public struct StatsState: Equatable {
     }
   }
 
-  public init(
-    averageWordLength: Double? = nil,
-    gamesPlayed: Int = 0,
-    highestScoringWord: LocalDatabaseClient.Stats.Word? = nil,
-    highScoreTimed: Int? = nil,
-    highScoreUnlimited: Int? = nil,
-    isAnimationReduced: Bool = false,
-    isHapticsEnabled: Bool = true,
-    longestWord: String? = nil,
-    route: Route? = nil,
-    secondsPlayed: Int = 0,
-    wordsFound: Int = 0
-  ) {
-    self.averageWordLength = averageWordLength
-    self.gamesPlayed = gamesPlayed
-    self.highestScoringWord = highestScoringWord
-    self.highScoreTimed = highScoreTimed
-    self.highScoreUnlimited = highScoreUnlimited
-    self.isAnimationReduced = isAnimationReduced
-    self.isHapticsEnabled = isHapticsEnabled
-    self.longestWord = longestWord
-    self.route = route
-    self.secondsPlayed = secondsPlayed
-    self.wordsFound = wordsFound
-  }
-}
+  @Dependency(\.database) var database
 
-public enum StatsAction: Equatable {
-  case backButtonTapped
-  case setNavigation(tag: StatsState.Route.Tag?)
-  case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
-  case task
-  case vocab(Vocab.Action)
-}
+  public init() {}
 
-public struct StatsEnvironment {
-  var audioPlayer: AudioPlayerClient
-  var database: LocalDatabaseClient
-  var lowPowerMode: LowPowerModeClient
-  var feedbackGenerator: FeedbackGeneratorClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case .backButtonTapped:
+        return .none
 
-  public init(
-    audioPlayer: AudioPlayerClient,
-    database: LocalDatabaseClient,
-    feedbackGenerator: FeedbackGeneratorClient,
-    lowPowerMode: LowPowerModeClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.audioPlayer = audioPlayer
-    self.database = database
-    self.feedbackGenerator = feedbackGenerator
-    self.lowPowerMode = lowPowerMode
-    self.mainQueue = mainQueue
-  }
-}
+      case .statsResponse(.failure):
+        // TODO
+        return .none
 
-public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .combine(
-  Reducer(
-    EmptyReducer().ifLet(state: \.route, action: .self) {
+      case let .statsResponse(.success(stats)):
+        state.averageWordLength = stats.averageWordLength
+        state.gamesPlayed = stats.gamesPlayed
+        state.highestScoringWord = stats.highestScoringWord
+        state.highScoreTimed = stats.highScoreTimed
+        state.highScoreUnlimited = stats.highScoreUnlimited
+        state.longestWord = stats.longestWord
+        state.secondsPlayed = stats.secondsPlayed
+        state.wordsFound = stats.wordsFound
+        return .none
+
+      case .setNavigation(tag: .vocab):
+        state.route = .vocab(
+          .init(
+            isAnimationReduced: state.isAnimationReduced,
+            isHapticsEnabled: state.isHapticsEnabled
+          )
+        )
+        return .none
+
+      case .setNavigation(tag: .none):
+        state.route = nil
+        return .none
+
+      case .task:
+        return .task {
+          await .statsResponse(TaskResult { try await self.database.fetchStats() })
+        }
+
+      case .vocab:
+        return .none
+      }
+    }
+    .ifLet(state: \.route, action: .self) {
       EmptyReducer().ifLet(
-        state: /StatsState.Route.vocab,
-        action: /StatsAction.vocab
+        state: /Route.vocab,
+        action: /Action.vocab
       ) {
         Vocab()
       }
     }
-  ),
-
-  .init { state, action, environment in
-    switch action {
-    case .backButtonTapped:
-      return .none
-
-    case let .statsResponse(.failure(error)):
-      // TODO
-      return .none
-
-    case let .statsResponse(.success(stats)):
-      state.averageWordLength = stats.averageWordLength
-      state.gamesPlayed = stats.gamesPlayed
-      state.highestScoringWord = stats.highestScoringWord
-      state.highScoreTimed = stats.highScoreTimed
-      state.highScoreUnlimited = stats.highScoreUnlimited
-      state.longestWord = stats.longestWord
-      state.secondsPlayed = stats.secondsPlayed
-      state.wordsFound = stats.wordsFound
-      return .none
-
-    case .setNavigation(tag: .vocab):
-      state.route = .vocab(
-        .init(
-          isAnimationReduced: state.isAnimationReduced,
-          isHapticsEnabled: state.isHapticsEnabled
-        )
-      )
-      return .none
-
-    case .setNavigation(tag: .none):
-      state.route = nil
-      return .none
-
-    case .task:
-      return .task {
-        await .statsResponse(TaskResult { try await environment.database.fetchStats() })
-      }
-
-    case .vocab:
-      return .none
-    }
   }
-)
+}
 
 public struct StatsView: View {
-  let store: Store<StatsState, StatsAction>
-  @ObservedObject var viewStore: ViewStore<StatsState, StatsAction>
+  let store: StoreOf<Stats>
+  @ObservedObject var viewStore: ViewStoreOf<Stats>
 
-  public init(store: Store<StatsState, StatsAction>) {
+  public init(store: StoreOf<Stats>) {
     self.store = store
     self.viewStore = ViewStore(store)
   }
@@ -211,15 +192,15 @@ public struct StatsView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\StatsState.route).appending(path: /StatsState.Route.vocab).extract(from:),
-              action: StatsAction.vocab
+              state: (\Stats.State.route).appending(path: /Stats.Route.vocab).extract(from:),
+              action: Stats.Action.vocab
             ),
             then: VocabView.init(store:)
           ),
-          tag: StatsState.Route.Tag.vocab,
+          tag: Stats.Route.Tag.vocab,
           selection: self.viewStore.binding(
             get: \.route?.tag,
-            send: StatsAction.setNavigation(tag:)
+            send: Stats.Action.setNavigation(tag:)
           )
         ) {
           HStack {
@@ -290,7 +271,7 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
         NavigationView {
           StatsView(
             store: Store(
-              initialState: StatsState(
+              initialState: Stats.State(
                 averageWordLength: 5,
                 gamesPlayed: 1234,
                 highestScoringWord: .init(letters: "ENFEEBLINGS", score: 1022),
@@ -300,14 +281,7 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 secondsPlayed: 42000,
                 wordsFound: 200
               ),
-              reducer: statsReducer,
-              environment: StatsEnvironment(
-                audioPlayer: .noop,
-                database: .noop,
-                feedbackGenerator: .noop,
-                lowPowerMode: .false,
-                mainQueue: .main
-              )
+              reducer: Stats()
             )
           )
           .navigationBarHidden(true)

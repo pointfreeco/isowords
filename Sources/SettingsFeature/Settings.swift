@@ -122,7 +122,7 @@ public struct SettingsState: Equatable {
   @BindableState public var sendDailyChallengeReminder: Bool
   @BindableState public var sendDailyChallengeSummary: Bool
   @BindableState public var showSceneStatistics: Bool
-  public var stats: StatsState
+  public var stats: Stats.State
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
   @BindableState public var userSettings: UserSettings
 
@@ -142,7 +142,7 @@ public struct SettingsState: Equatable {
     sendDailyChallengeReminder: Bool = true,
     sendDailyChallengeSummary: Bool = true,
     showSceneStatistics: Bool = false,
-    stats: StatsState = .init(),
+    stats: Stats.State = .init(),
     userNotificationSettings: UserNotificationClient.Notification.Settings? = nil,
     userSettings: UserSettings = UserSettings()
   ) {
@@ -180,7 +180,7 @@ public enum SettingsAction: BindableAction, Equatable {
   case productsResponse(TaskResult<StoreKitClient.ProductsResponse>)
   case reportABugButtonTapped
   case restoreButtonTapped
-  case stats(StatsAction)
+  case stats(Stats.Action)
   case tappedProduct(StoreKitClient.Product)
   case task
   case userNotificationAuthorizationResponse(TaskResult<Bool>)
@@ -282,17 +282,9 @@ public struct SettingsEnvironment {
 #endif
 
 public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvironment>.combine(
-  statsReducer.pullback(
-    state: \.stats,
-    action: /SettingsAction.stats,
-    environment: {
-      StatsEnvironment(
-        audioPlayer: $0.audioPlayer,
-        database: $0.database,
-        feedbackGenerator: $0.feedbackGenerator,
-        lowPowerMode: $0.lowPowerMode,
-        mainQueue: $0.mainQueue
-      )
+  Reducer(
+    Scope(state: \.stats, action: /SettingsAction.stats) {
+      Stats()
     }
   ),
 
