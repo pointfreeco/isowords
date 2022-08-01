@@ -33,7 +33,7 @@ import UpgradeInterstitialFeature
 import UserDefaultsClient
 
 public enum HomeRoute: Equatable {
-  case dailyChallenge(DailyChallengeState)
+  case dailyChallenge(DailyChallengeReducer.State)
   case leaderboard(Leaderboard.State)
   case multiplayer(Multiplayer.State)
   case settings
@@ -131,7 +131,7 @@ public enum HomeAction: Equatable {
   case authenticationResponse(CurrentPlayerEnvelope)
   case changelog(ChangelogReducer.Action)
   case cubeButtonTapped
-  case dailyChallenge(DailyChallengeAction)
+  case dailyChallenge(DailyChallengeReducer.Action)
   case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case dismissChangelog
   case gameButtonTapped(GameButtonAction)
@@ -254,40 +254,33 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
       .ifLet(state: \.changelog, action: /HomeAction.changelog) {
         ChangelogReducer()
       }
-  ),
-
-  dailyChallengeReducer
-    ._pullback(
-      state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge),
-      action: /HomeAction.dailyChallenge,
-      environment: {
-        .init(
-          apiClient: $0.apiClient,
-          fileClient: $0.fileClient,
-          mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
-          remoteNotifications: $0.remoteNotifications,
-          userNotifications: $0.userNotifications
-        )
+      .ifLet(state: \.route, action: .self) {
+        EmptyReducer()
+          .ifLet(
+            state: /HomeRoute.dailyChallenge,
+            action: /HomeAction.dailyChallenge
+          ) {
+            DailyChallengeReducer()
+          }
+          .ifLet(
+            state: /HomeRoute.leaderboard,
+            action: /HomeAction.leaderboard
+          ) {
+            Leaderboard()
+          }
+          .ifLet(
+            state: /HomeRoute.multiplayer,
+            action: /HomeAction.multiplayer
+          ) {
+            Multiplayer()
+          }
+          .ifLet(
+            state: /HomeRoute.solo,
+            action: /HomeAction.solo
+          ) {
+            Solo()
+          }
       }
-    ),
-
-  Reducer(
-    EmptyReducer().ifLet(state: \.route, action: .self) {
-      EmptyReducer().ifLet(
-        state: /HomeRoute.leaderboard,
-        action: /HomeAction.leaderboard
-      ) {
-        Leaderboard()
-      }
-
-      EmptyReducer().ifLet(
-        state: /HomeRoute.multiplayer,
-        action: /HomeAction.multiplayer
-      ) {
-        Multiplayer()
-      }
-    }
   ),
 
   Reducer(
@@ -320,17 +313,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
         )
       }
     ),
-
-  Reducer(
-    EmptyReducer().ifLet(state: \.route, action: .self) {
-      EmptyReducer().ifLet(
-        state: /HomeRoute.solo,
-        action: /HomeAction.solo
-      ) {
-        Solo()
-      }
-    }
-  ),
 
   .init { state, action, environment in
     switch action {
