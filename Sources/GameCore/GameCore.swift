@@ -51,7 +51,7 @@ public struct GameState: Equatable {
   public var secondsPlayed: Int
   public var selectedWord: [IndexedCubeFace]
   public var selectedWordIsValid: Bool
-  public var upgradeInterstitial: UpgradeInterstitialState?
+  public var upgradeInterstitial: UpgradeInterstitial.State?
   public var wordSubmitButton: WordSubmitButtonState
 
   public init(
@@ -77,7 +77,7 @@ public struct GameState: Equatable {
     secondsPlayed: Int = 0,
     selectedWord: [IndexedCubeFace] = [],
     selectedWordIsValid: Bool = false,
-    upgradeInterstitial: UpgradeInterstitialState? = nil,
+    upgradeInterstitial: UpgradeInterstitial.State? = nil,
     wordSubmit: WordSubmitButtonState = .init()
   ) {
     self.activeGames = activeGames
@@ -170,7 +170,7 @@ public enum GameAction: Equatable {
   case tap(UIGestureRecognizer.State, IndexedCubeFace?)
   case timerTick(Date)
   case trayButtonTapped
-  case upgradeInterstitial(UpgradeInterstitialAction)
+  case upgradeInterstitial(UpgradeInterstitial.Action)
   case wordSubmitButton(WordSubmitButtonAction)
 
   public enum AlertAction: Equatable {
@@ -279,18 +279,12 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         }
       ),
 
-    upgradeInterstitialReducer
-      .optional()
-      .pullback(
-        state: \GameState.upgradeInterstitial,
-        action: /GameAction.upgradeInterstitial,
-        environment: {
-          UpgradeInterstitialEnvironment(
-            mainRunLoop: $0.mainRunLoop,
-            serverConfig: $0.serverConfig,
-            storeKit: $0.storeKit
-          )
-        }),
+    Reducer(
+      EmptyReducer()
+        .ifLet(state: \.upgradeInterstitial, action: /GameAction.upgradeInterstitial) {
+          UpgradeInterstitial()
+        }
+    ),
 
     .init { state, action, environment in
       switch action {

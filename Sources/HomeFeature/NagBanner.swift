@@ -7,12 +7,12 @@ import TcaHelpers
 import UpgradeInterstitialFeature
 
 public struct NagBannerState: Equatable {
-  var upgradeInterstitial: UpgradeInterstitialState? = nil
+  var upgradeInterstitial: UpgradeInterstitial.State? = nil
 }
 
 public enum NagBannerAction: Equatable {
   case tapped
-  case upgradeInterstitial(UpgradeInterstitialAction)
+  case upgradeInterstitial(UpgradeInterstitial.Action)
 }
 
 public enum NagBannerFeatureAction: Equatable {
@@ -55,18 +55,12 @@ let nagBannerFeatureReducer = Reducer<NagBannerState?, NagBannerFeatureAction, N
 
 private let nagBannerReducer = Reducer<NagBannerState, NagBannerAction, NagBannerEnvironment>
   .combine(
-    upgradeInterstitialReducer
-      ._pullback(
-        state: OptionalPath(\.upgradeInterstitial),
-        action: /NagBannerAction.upgradeInterstitial,
-        environment: {
-          UpgradeInterstitialEnvironment(
-            mainRunLoop: $0.mainRunLoop,
-            serverConfig: $0.serverConfig,
-            storeKit: $0.storeKit
-          )
+    Reducer(
+      EmptyReducer()
+        .ifLet(state: \.upgradeInterstitial, action: /NagBannerAction.upgradeInterstitial) {
+          UpgradeInterstitial()
         }
-      ),
+    ),
 
     .init { state, action, environment in
       switch action {

@@ -14,6 +14,11 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   let scheduler = RunLoop.test
 
   func testUpgrade() async {
+    let store = TestStore(
+      initialState: UpgradeInterstitial.State(),
+      reducer: UpgradeInterstitial()
+    )
+
     let paymentAdded = ActorIsolated<String?>(nil)
 
     let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -37,23 +42,16 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       )
     ]
 
-    var environment = UpgradeInterstitialEnvironment.unimplemented
-    environment.mainRunLoop = .immediate
-    environment.serverConfig.config = { .init() }
-    environment.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
-    environment.storeKit.observer = { observer.stream }
-    environment.storeKit.fetchProducts = { _ in
+    store.dependencies.mainRunLoop = .immediate
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
+    store.dependencies.storeKit.observer = { observer.stream }
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(
         invalidProductIdentifiers: [],
         products: [fullGameProduct]
       )
     }
-
-    let store = TestStore(
-      initialState: .init(),
-      reducer: upgradeInterstitialReducer,
-      environment: environment
-    )
 
     let task = await store.send(.task)
 
@@ -80,19 +78,17 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   }
 
   func testWaitAndDismiss() async {
-    var environment = UpgradeInterstitialEnvironment.unimplemented
-    environment.mainRunLoop = self.scheduler.eraseToAnyScheduler()
-    environment.serverConfig.config = { .init() }
-    environment.storeKit.observer = { .finished }
-    environment.storeKit.fetchProducts = { _ in
+    let store = TestStore(
+      initialState: UpgradeInterstitial.State(),
+      reducer: UpgradeInterstitial()
+    )
+
+    store.dependencies.mainRunLoop = self.scheduler.eraseToAnyScheduler()
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.storeKit.observer = { .finished }
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
-
-    let store = TestStore(
-      initialState: .init(),
-      reducer: upgradeInterstitialReducer,
-      environment: environment
-    )
 
     await store.send(.task)
 
@@ -117,19 +113,17 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   }
 
   func testMaybeLater_Dismissable() async  {
-    var environment = UpgradeInterstitialEnvironment.unimplemented
-    environment.mainRunLoop = .immediate
-    environment.serverConfig.config = { .init() }
-    environment.storeKit.observer = { .finished }
-    environment.storeKit.fetchProducts = { _ in
+    let store = TestStore(
+      initialState: UpgradeInterstitial.State(isDismissable: true),
+      reducer: UpgradeInterstitial()
+    )
+
+    store.dependencies.mainRunLoop = .immediate
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.storeKit.observer = { .finished }
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
-
-    let store = TestStore(
-      initialState: .init(isDismissable: true),
-      reducer: upgradeInterstitialReducer,
-      environment: environment
-    )
 
     await store.send(.task)
     await store.send(.maybeLaterButtonTapped)
@@ -147,11 +141,3 @@ let fullGameProduct = StoreKitClient.Product(
   priceLocale: .init(identifier: "en_US"),
   productIdentifier: "co.pointfree.isowords_testing.full_game"
 )
-
-extension UpgradeInterstitialEnvironment {
-  static let unimplemented = Self(
-    mainRunLoop: .unimplemented("mainRunLoop"),
-    serverConfig: .unimplemented,
-    storeKit: .unimplemented
-  )
-}

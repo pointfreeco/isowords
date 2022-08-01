@@ -37,7 +37,7 @@ public struct GameOverState: Equatable {
   public var showConfetti: Bool
   public var summary: RankSummary?
   public var turnBasedContext: TurnBasedContext?
-  public var upgradeInterstitial: UpgradeInterstitialState?
+  public var upgradeInterstitial: UpgradeInterstitial.State?
   public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
   public init(
@@ -51,7 +51,7 @@ public struct GameOverState: Equatable {
     showConfetti: Bool = false,
     summary: RankSummary? = nil,
     turnBasedContext: TurnBasedContext? = nil,
-    upgradeInterstitial: UpgradeInterstitialState? = nil,
+    upgradeInterstitial: UpgradeInterstitial.State? = nil,
     userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
   ) {
     self.completedGame = completedGame
@@ -87,7 +87,7 @@ public enum GameOverAction: Equatable {
   case startDailyChallengeResponse(TaskResult<InProgressGame>)
   case task
   case submitGameResponse(TaskResult<SubmitGameResponse>)
-  case upgradeInterstitial(UpgradeInterstitialAction)
+  case upgradeInterstitial(UpgradeInterstitial.Action)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
   public enum DelegateAction: Equatable {
@@ -172,26 +172,13 @@ public struct GameOverEnvironment {
 public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvironment>.combine(
   Reducer(
     EmptyReducer()
-      .ifLet(
-        state: \.notificationsAuthAlert, action: /GameOverAction.notificationsAuthAlert
-      ) {
+      .ifLet(state: \.notificationsAuthAlert, action: /GameOverAction.notificationsAuthAlert) {
         NotificationsAuthAlert()
       }
-  ),
-
-  upgradeInterstitialReducer
-    .optional()
-    .pullback(
-      state: \.upgradeInterstitial,
-      action: /GameOverAction.upgradeInterstitial,
-      environment: {
-        UpgradeInterstitialEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
+      .ifLet(state: \.upgradeInterstitial, action: /GameOverAction.upgradeInterstitial) {
+        UpgradeInterstitial()
       }
-    ),
+  ),
 
   Reducer { state, action, environment in
     switch action {
