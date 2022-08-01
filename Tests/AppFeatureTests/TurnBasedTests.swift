@@ -523,7 +523,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
       gameState.gameCurrentTime = self.mainRunLoop.now.date
-      gameState.gameOver = GameOverState(
+      gameState.gameOver = GameOver.State(
         completedGame: CompletedGame(gameState: gameState),
         isDemo: false,
         turnBasedContext: .init(
@@ -741,7 +741,7 @@ class TurnBasedTests: XCTestCase {
             gameStartTime: .mock
           )
         ) {
-          $0.gameOver = GameOverState(
+          $0.gameOver = GameOver.State(
             completedGame: CompletedGame(gameState: $0),
             isDemo: false
           )

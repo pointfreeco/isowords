@@ -37,7 +37,7 @@ public struct GameState: Equatable {
   public var gameContext: ClientModels.GameContext
   public var gameCurrentTime: Date
   public var gameMode: GameMode
-  public var gameOver: GameOverState?
+  public var gameOver: GameOver.State?
   public var gameStartTime: Date
   public var isDemo: Bool
   public var isGameLoaded: Bool
@@ -63,7 +63,7 @@ public struct GameState: Equatable {
     gameContext: ClientModels.GameContext,
     gameCurrentTime: Date,
     gameMode: GameMode,
-    gameOver: GameOverState? = nil,
+    gameOver: GameOver.State? = nil,
     gameStartTime: Date,
     isDemo: Bool = false,
     isGameLoaded: Bool = false,
@@ -158,7 +158,7 @@ public enum GameAction: Equatable {
   case forfeitGameButtonTapped
   case gameCenter(GameCenterAction)
   case gameLoaded
-  case gameOver(GameOverAction)
+  case gameOver(GameOver.Action)
   case lowPowerModeChanged(Bool)
   case matchesLoaded(TaskResult<[TurnBasedMatch]>)
   case menuButtonTapped
@@ -258,29 +258,11 @@ public func gameReducer<StatePath, Action, Environment>(
 ) -> Reducer<StatePath.Root, Action, Environment>
 where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
   Reducer.combine(
-    gameOverReducer
-      .optional()
-      .pullback(
-        state: \.gameOver,
-        action: /GameAction.gameOver,
-        environment: {
-          GameOverEnvironment(
-            apiClient: $0.apiClient,
-            audioPlayer: $0.audioPlayer,
-            database: $0.database,
-            fileClient: $0.fileClient,
-            mainRunLoop: $0.mainRunLoop,
-            remoteNotifications: $0.remoteNotifications,
-            serverConfig: $0.serverConfig,
-            storeKit: $0.storeKit,
-            userDefaults: $0.userDefaults,
-            userNotifications: $0.userNotifications
-          )
-        }
-      ),
-
     Reducer(
       EmptyReducer()
+        .ifLet(state: \.gameOver, action: /GameAction.gameOver) {
+          GameOver()
+        }
         .ifLet(state: \.upgradeInterstitial, action: /GameAction.upgradeInterstitial) {
           UpgradeInterstitial()
         }
@@ -763,7 +745,7 @@ extension GameState {
   mutating func gameOver(environment: GameEnvironment) -> Effect<GameAction, Never> {
     guard !self.isGameOver else { return .none }
     self.bottomMenu = nil
-    self.gameOver = GameOverState(
+    self.gameOver = GameOver.State(
       completedGame: CompletedGame(gameState: self),
       isDemo: self.isDemo
     )

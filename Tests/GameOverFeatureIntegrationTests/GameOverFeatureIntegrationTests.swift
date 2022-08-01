@@ -39,27 +39,25 @@ class GameOverFeatureIntegrationTests: XCTestCase {
     serverEnvironment.dictionary.contains = { _, _ in true }
     serverEnvironment.router = .test
 
-    var environment = GameOverEnvironment.unimplemented
-    environment.audioPlayer = .noop
-    environment.apiClient = .init(
-      middleware: siteMiddleware(environment: serverEnvironment),
-      router: .test
-    )
-    environment.database.playedGamesCount = { _ in 0 }
-    environment.mainRunLoop = .immediate
-    environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-    }
-
     let store = TestStore(
-      initialState: GameOverState(
+      initialState: GameOver.State(
         completedGame: .mock,
         isDemo: false
       ),
-      reducer: gameOverReducer,
-      environment: environment
+      reducer: GameOver()
     )
+
+    store.dependencies.audioPlayer = .noop
+    store.dependencies.apiClient = .init(
+      middleware: siteMiddleware(environment: serverEnvironment),
+      router: .test
+    )
+    store.dependencies.database.playedGamesCount = { _ in 0 }
+    store.dependencies.mainRunLoop = .immediate
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let task = await store.send(.task)
 

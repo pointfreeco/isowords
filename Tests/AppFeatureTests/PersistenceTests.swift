@@ -198,7 +198,7 @@ class PersistenceTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOverState(
+        $0.gameOver = GameOver.State(
           completedGame: .init(gameState: $0),
           isDemo: false
         )
@@ -249,7 +249,7 @@ class PersistenceTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOverState(
+        $0.gameOver = GameOver.State(
           completedGame: .init(gameState: $0),
           isDemo: false
         )
@@ -313,7 +313,7 @@ class PersistenceTests: XCTestCase {
 
     await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        var gameOver = GameOverState(
+        var gameOver = GameOver.State(
           completedGame: .init(gameState: $0),
           isDemo: false
         )
