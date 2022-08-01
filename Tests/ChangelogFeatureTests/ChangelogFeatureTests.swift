@@ -16,18 +16,16 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    var environment = ChangelogEnvironment.unimplemented
-    environment.apiClient.override(
+    let store = TestStore(
+      initialState: ChangelogReducer.State(),
+      reducer: ChangelogReducer()
+    )
+
+    store.dependencies.apiClient.override(
       route: .changelog(build: 42),
       withResponse: { try await OK(changelog) }
     )
-    environment.build.number = { 42 }
-
-    let store = TestStore(
-      initialState: ChangelogState(),
-      reducer: changelogReducer,
-      environment: environment
-    )
+    store.dependencies.build.number = { 42 }
 
     await store.send(.task) {
       $0.currentBuild = 42
@@ -57,18 +55,16 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    var environment = ChangelogEnvironment.unimplemented
-    environment.apiClient.override(
+    let store = TestStore(
+      initialState: ChangelogReducer.State(),
+      reducer: ChangelogReducer()
+    )
+
+    store.dependencies.apiClient.override(
       route: .changelog(build: 40),
       withResponse: { try await OK(changelog) }
     )
-    environment.build.number = { 40 }
-
-    let store = TestStore(
-      initialState: ChangelogState(),
-      reducer: changelogReducer,
-      environment: environment
-    )
+    store.dependencies.build.number = { 40 }
 
     await store.send(.task) {
       $0.currentBuild = 40
@@ -93,14 +89,4 @@ class ChangelogFeatureTests: XCTestCase {
       $0.isUpdateButtonVisible = true
     }
   }
-}
-
-extension ChangelogEnvironment {
-  static let unimplemented = Self(
-    apiClient: .unimplemented,
-    applicationClient: .unimplemented,
-    build: .unimplemented,
-    serverConfig: .unimplemented,
-    userDefaults: .unimplemented
-  )
 }

@@ -5,39 +5,37 @@ import Styleguide
 import SwiftUI
 import UIApplicationClient
 
-public struct ChangeState: Equatable, Identifiable {
-  public var change: Changelog.Change
-  public var isExpanded = false
+public struct Change: ReducerProtocol {
+  public struct State: Equatable, Identifiable {
+    public var change: Changelog.Change
+    public var isExpanded = false
 
-  public var id: Build.Number {
-    self.change.build
+    public var id: Build.Number {
+      self.change.build
+    }
   }
-}
 
-public enum ChangeAction: Equatable {
-  case showButtonTapped
-}
+  public enum Action: Equatable {
+    case showButtonTapped
+  }
 
-public struct ChangeEnvironment {
-  public var applicationClient: UIApplicationClient
-  public var serverConfig: ServerConfigClient
-}
+  @Dependency(\.applicationClient) var applicationClient
+  @Dependency(\.serverConfig) var serverConfig
 
-let changeReducer = Reducer<
-  ChangeState,
-  ChangeAction,
-  ChangeEnvironment
-> { state, action, environment in
-  switch action {
-  case .showButtonTapped:
-    state.isExpanded.toggle()
-    return .none
+  public init() {}
+
+  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+    switch action {
+    case .showButtonTapped:
+      state.isExpanded.toggle()
+      return .none
+    }
   }
 }
 
 struct ChangeView: View {
   var currentBuild: Build.Number
-  let store: Store<ChangeState, ChangeAction>
+  let store: StoreOf<Change>
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
@@ -67,7 +65,7 @@ struct ChangeView: View {
           Text(viewStore.change.log)
         }
       }
-      .adaptivePadding([.vertical])
+      .adaptivePadding(.vertical)
     }
     .buttonStyle(PlainButtonStyle())
   }

@@ -9,141 +9,116 @@ import TcaHelpers
 import UIApplicationClient
 import UserDefaultsClient
 
-public struct ChangelogState: Equatable {
-  public var changelog: IdentifiedArrayOf<ChangeState>
-  public var currentBuild: Build.Number
-  public var isRequestInFlight: Bool
-  public var isUpdateButtonVisible: Bool
+public struct ChangelogReducer: ReducerProtocol {
+  public struct State: Equatable {
+    public var changelog: IdentifiedArrayOf<Change.State>
+    public var currentBuild: Build.Number
+    public var isRequestInFlight: Bool
+    public var isUpdateButtonVisible: Bool
 
-  public init(
-    changelog: IdentifiedArrayOf<ChangeState> = [],
-    currentBuild: Build.Number = 0,
-    isRequestInFlight: Bool = false,
-    isUpdateButtonVisible: Bool = false
-  ) {
-    self.changelog = changelog
-    self.currentBuild = currentBuild
-    self.isRequestInFlight = isRequestInFlight
-    self.isUpdateButtonVisible = isUpdateButtonVisible
-  }
-}
-
-public enum ChangelogAction: Equatable {
-  case change(id: Build.Number, action: ChangeAction)
-  case changelogResponse(TaskResult<Changelog>)
-  case task
-  case updateButtonTapped
-}
-
-public struct ChangelogEnvironment {
-  public var apiClient: ApiClient
-  public var applicationClient: UIApplicationClient
-  public var build: Build
-  public var serverConfig: ServerConfigClient
-  public var userDefaults: UserDefaultsClient
-
-  public init(
-    apiClient: ApiClient,
-    applicationClient: UIApplicationClient,
-    build: Build,
-    serverConfig: ServerConfigClient,
-    userDefaults: UserDefaultsClient
-  ) {
-    self.apiClient = apiClient
-    self.applicationClient = applicationClient
-    self.build = build
-    self.serverConfig = serverConfig
-    self.userDefaults = userDefaults
-  }
-}
-
-public let changelogReducer = Reducer<
-  ChangelogState,
-  ChangelogAction,
-  ChangelogEnvironment
->.combine(
-  changeReducer
-    .forEach(
-      state: \ChangelogState.changelog,
-      action: /ChangelogAction.change(id:action:),
-      environment: {
-        ChangeEnvironment(
-          applicationClient: $0.applicationClient,
-          serverConfig: $0.serverConfig
-        )
-      }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case .change:
-      return .none
-
-    case let .changelogResponse(.success(changelog)):
-      state.changelog = IdentifiedArray(
-        uniqueElements:
-          changelog
-          .changes
-          .sorted(by: { $0.build > $1.build })
-          .enumerated()
-          .map { offset, change in
-            ChangeState(
-              change: change,
-              isExpanded: offset == 0 || environment.build.number() <= change.build
-            )
-          }
-      )
-      state.isRequestInFlight = false
-      state.isUpdateButtonVisible =
-        environment.build.number() < (changelog.changes.map(\.build).max() ?? 0)
-
-      return .none
-
-    case .changelogResponse(.failure):
-      state.isRequestInFlight = false
-      return .none
-
-    case .task:
-      state.currentBuild = environment.build.number()
-      state.isRequestInFlight = true
-
-      return .task {
-        await .changelogResponse(
-          TaskResult {
-            try await environment.apiClient.apiRequest(
-              route: .changelog(build: environment.build.number()),
-              as: Changelog.self
-            )
-          }
-        )
-      }
-
-    case .updateButtonTapped:
-      return .fireAndForget {
-        _ = await environment.applicationClient.open(
-          environment.serverConfig.config().appStoreUrl.absoluteURL,
-          [:]
-        )
-      }
+    public init(
+      changelog: IdentifiedArrayOf<Change.State> = [],
+      currentBuild: Build.Number = 0,
+      isRequestInFlight: Bool = false,
+      isUpdateButtonVisible: Bool = false
+    ) {
+      self.changelog = changelog
+      self.currentBuild = currentBuild
+      self.isRequestInFlight = isRequestInFlight
+      self.isUpdateButtonVisible = isUpdateButtonVisible
     }
   }
-)
+
+  public enum Action: Equatable {
+    case change(id: Build.Number, action: Change.Action)
+    case changelogResponse(TaskResult<Changelog>)
+    case task
+    case updateButtonTapped
+  }
+
+  @Dependency(\.apiClient) var apiClient
+  @Dependency(\.applicationClient) var applicationClient
+  @Dependency(\.build) var build
+  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.userDefaults) var userDefaults
+
+  public init() {}
+
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case .change:
+        return .none
+
+      case let .changelogResponse(.success(changelog)):
+        state.changelog = IdentifiedArray(
+          uniqueElements:
+            changelog
+            .changes
+            .sorted(by: { $0.build > $1.build })
+            .enumerated()
+            .map { offset, change in
+              Change.State(
+                change: change,
+                isExpanded: offset == 0 || self.build.number() <= change.build
+              )
+            }
+        )
+        state.isRequestInFlight = false
+        state.isUpdateButtonVisible =
+        self.build.number() < (changelog.changes.map(\.build).max() ?? 0)
+
+        return .none
+
+      case .changelogResponse(.failure):
+        state.isRequestInFlight = false
+        return .none
+
+      case .task:
+        state.currentBuild = self.build.number()
+        state.isRequestInFlight = true
+
+        return .task {
+          await .changelogResponse(
+            TaskResult {
+              try await self.apiClient.apiRequest(
+                route: .changelog(build: self.build.number()),
+                as: Changelog.self
+              )
+            }
+          )
+        }
+
+      case .updateButtonTapped:
+        return .fireAndForget {
+          _ = await self.applicationClient.open(
+            self.serverConfig.config().appStoreUrl.absoluteURL,
+            [:]
+          )
+        }
+      }
+    }
+    .forEach(state: \.changelog, action: /Action.change(id:action:)) {
+      Change()
+    }
+  }
+}
 
 public struct ChangelogView: View {
-  let store: Store<ChangelogState, ChangelogAction>
+  let store: StoreOf<ChangelogReducer>
 
   struct ViewState: Equatable {
     let currentBuild: Build.Number
     let isUpdateButtonVisible: Bool
 
-    init(state: ChangelogState) {
+    init(state: ChangelogReducer.State) {
       self.currentBuild = state.currentBuild
       self.isUpdateButtonVisible = state.isUpdateButtonVisible
     }
   }
 
   public init(
-    store: Store<ChangelogState, ChangelogAction>
+    store: StoreOf<ChangelogReducer>
   ) {
     self.store = store
   }
@@ -168,7 +143,7 @@ public struct ChangelogView: View {
           ForEachStore(
             self.store.scope(
               state: { $0.changelog.filter { $0.change.build >= viewStore.currentBuild } },
-              action: ChangelogAction.change(id:action:)
+              action: ChangelogReducer.Action.change(id:action:)
             ),
             content: { ChangeView(currentBuild: viewStore.currentBuild, store: $0) }
           )
@@ -179,7 +154,7 @@ public struct ChangelogView: View {
           ForEachStore(
             self.store.scope(
               state: { $0.changelog.filter { $0.change.build < viewStore.currentBuild } },
-              action: ChangelogAction.change(id:action:)
+              action: ChangelogReducer.Action.change(id:action:)
             ),
             content: { ChangeView(currentBuild: viewStore.currentBuild, store: $0) }
           )
@@ -200,11 +175,11 @@ public struct ChangelogView: View {
       Preview {
         ChangelogView(
           store: .init(
-            initialState: .init(),
-            reducer: changelogReducer,
-            environment: ChangelogEnvironment(
-              apiClient: update(.noop) {
-                $0.override(
+            initialState: ChangelogReducer.State(),
+            reducer: ChangelogReducer()
+              .dependency(\.apiClient, {
+                var apiClient = ApiClient.noop
+                apiClient.override(
                   routeCase: /ServerRoute.Api.Route.changelog(build:),
                   withResponse: { _ in
                     try await OK(
@@ -220,16 +195,12 @@ public struct ChangelogView: View {
                     )
                   }
                 )
-              },
-              applicationClient: .noop,
-              build: update(.noop) {
-                $0.number = { 98 }
-              },
-              serverConfig: .noop,
-              userDefaults: update(.noop) {
-                $0.integerForKey = { _ in 98 }
-              }
-            )
+                return apiClient
+              }())
+              .dependency(\.applicationClient, .noop)
+              .dependency(\.build.number) { 98 }
+              .dependency(\.serverConfig, .noop)
+              .dependency(\.userDefaults.integerForKey) { _ in 98 }
           )
         )
         .navigationStyle(

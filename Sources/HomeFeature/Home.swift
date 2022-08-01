@@ -64,7 +64,7 @@ public enum HomeRoute: Equatable {
 }
 
 public struct HomeState: Equatable {
-  public var changelog: ChangelogState?
+  public var changelog: ChangelogReducer.State?
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
   public var hasChangelog: Bool
   public var hasPastTurnBasedGames: Bool
@@ -129,7 +129,7 @@ public enum HomeAction: Equatable {
   case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
   case activeGames(ActiveGamesAction)
   case authenticationResponse(CurrentPlayerEnvelope)
-  case changelog(ChangelogAction)
+  case changelog(ChangelogReducer.Action)
   case cubeButtonTapped
   case dailyChallenge(DailyChallengeAction)
   case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
@@ -249,20 +249,12 @@ public struct HomeEnvironment {
 #endif
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine(
-  changelogReducer
-    ._pullback(
-      state: OptionalPath(\.changelog),
-      action: /HomeAction.changelog,
-      environment: {
-        ChangelogEnvironment(
-          apiClient: $0.apiClient,
-          applicationClient: $0.applicationClient,
-          build: $0.build,
-          serverConfig: $0.serverConfig,
-          userDefaults: $0.userDefaults
-        )
+  Reducer(
+    EmptyReducer()
+      .ifLet(state: \.changelog, action: /HomeAction.changelog) {
+        ChangelogReducer()
       }
-    ),
+  ),
 
   dailyChallengeReducer
     ._pullback(
