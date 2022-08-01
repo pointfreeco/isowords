@@ -22,7 +22,7 @@ public struct StatsState: Equatable {
   public var wordsFound: Int
 
   public enum Route: Equatable {
-    case vocab(VocabState)
+    case vocab(Vocab.State)
 
     public enum Tag: Int {
       case vocab
@@ -68,7 +68,7 @@ public enum StatsAction: Equatable {
   case setNavigation(tag: StatsState.Route.Tag?)
   case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
   case task
-  case vocab(VocabAction)
+  case vocab(Vocab.Action)
 }
 
 public struct StatsEnvironment {
@@ -94,20 +94,16 @@ public struct StatsEnvironment {
 }
 
 public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .combine(
-  vocabReducer
-    ._pullback(
-      state: (\StatsState.route).appending(path: /StatsState.Route.vocab),
-      action: /StatsAction.vocab,
-      environment: {
-        VocabEnvironment(
-          audioPlayer: $0.audioPlayer,
-          database: $0.database,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
+  Reducer(
+    EmptyReducer().ifLet(state: \.route, action: .self) {
+      EmptyReducer().ifLet(
+        state: /StatsState.Route.vocab,
+        action: /StatsAction.vocab
+      ) {
+        Vocab()
       }
-    ),
+    }
+  ),
 
   .init { state, action, environment in
     switch action {
