@@ -3,10 +3,10 @@ import Styleguide
 import SwiftUI
 
 struct AccessibilitySettingsView: View {
-  let store: Store<SettingsState, SettingsAction>
-  @ObservedObject var viewStore: ViewStore<SettingsState, SettingsAction>
+  let store: StoreOf<Settings>
+  @ObservedObject var viewStore: ViewStoreOf<Settings>
 
-  init(store: Store<SettingsState, SettingsAction>) {
+  init(store: StoreOf<Settings>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -52,9 +52,8 @@ struct AccessibilitySettingsView: View {
         NavigationView {
           AccessibilitySettingsView(
             store: .init(
-              initialState: SettingsState(),
-              reducer: .empty,
-              environment: ()
+              initialState: Settings.State(),
+              reducer: EmptyReducer<Settings.State, Settings.Action>()
             )
           )
         }

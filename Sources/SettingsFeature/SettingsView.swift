@@ -12,16 +12,16 @@ public struct SettingsView: View {
   @Environment(\.colorScheme) var colorScheme
   let navPresentationStyle: NavPresentationStyle
   @State var isSharePresented = false
-  let store: Store<SettingsState, SettingsAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, SettingsAction>
+  let store: StoreOf<Settings>
+  @ObservedObject var viewStore: ViewStore<ViewState, Settings.Action>
 
   struct ViewState: Equatable {
     let buildNumber: Build.Number?
-    let fullGameProduct: Result<StoreKitClient.Product, SettingsState.ProductError>?
+    let fullGameProduct: Result<StoreKitClient.Product, Settings.State.ProductError>?
     let isFullGamePurchased: Bool
     let isPurchasing: Bool
 
-    init(state: SettingsState) {
+    init(state: Settings.State) {
       self.buildNumber = state.buildNumber
       self.fullGameProduct = state.fullGameProduct
       self.isFullGamePurchased = state.isFullGamePurchased
@@ -30,7 +30,7 @@ public struct SettingsView: View {
   }
 
   public init(
-    store: Store<SettingsState, SettingsAction>,
+    store: StoreOf<Settings>,
     navPresentationStyle: NavPresentationStyle
   ) {
     self.navPresentationStyle = navPresentationStyle
@@ -128,7 +128,7 @@ public struct SettingsView: View {
       )
       SettingsNavigationLink(
         destination: StatsView(
-          store: self.store.scope(state: \.stats, action: SettingsAction.stats)
+          store: self.store.scope(state: \.stats, action: Settings.Action.stats)
         ),
         title: "Stats"
       )
@@ -245,8 +245,8 @@ public struct SupportButtonStyle: ButtonStyle {
       Preview {
         NavigationView {
           SettingsView(
-            store: .init(
-              initialState: .init(
+            store: Store(
+              initialState: Settings.State(
                 fullGameProduct: .success(
                   StoreKitClient.Product(
                     downloadContentLengths: [],
@@ -260,12 +260,10 @@ public struct SupportButtonStyle: ButtonStyle {
                   )
                 )
               ),
-              reducer: settingsReducer,
-              environment: update(.noop) {
-                $0.apiClient.currentPlayer = {
+              reducer: Settings()
+                .dependency(\.apiClient.currentPlayer) {
                   .init(appleReceipt: .mock, player: .blob)
                 }
-              }
             ),
             navPresentationStyle: .navigation
           )

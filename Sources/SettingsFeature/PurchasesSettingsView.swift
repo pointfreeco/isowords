@@ -4,10 +4,10 @@ import Styleguide
 import SwiftUI
 
 struct PurchasesSettingsView: View {
-  let store: Store<SettingsState, SettingsAction>
-  @ObservedObject var viewStore: ViewStore<SettingsState, SettingsAction>
+  let store: StoreOf<Settings>
+  @ObservedObject var viewStore: ViewStoreOf<Settings>
 
-  init(store: Store<SettingsState, SettingsAction>) {
+  init(store: StoreOf<Settings>) {
     self.store = store
     self.viewStore = ViewStore(store)
   }
@@ -86,11 +86,10 @@ struct PurchasesSettingsView: View {
         NavigationView {
           PurchasesSettingsView(
             store: Store(
-              initialState: SettingsState(
+              initialState: Settings.State(
                 fullGamePurchasedAt: Date()
               ),
-              reducer: settingsReducer,
-              environment: .noop
+              reducer: Settings()
             )
           )
         }
@@ -98,9 +97,8 @@ struct PurchasesSettingsView: View {
         NavigationView {
           PurchasesSettingsView(
             store: Store(
-              initialState: SettingsState(),
-              reducer: settingsReducer,
-              environment: .noop
+              initialState: Settings.State(),
+              reducer: Settings()
             )
           )
         }

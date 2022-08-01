@@ -79,7 +79,7 @@ public struct HomeState: Equatable {
       self.route = .dailyChallenge(dailyChallengeState)
     }
   }
-  public var settings: SettingsState
+  public var settings: Settings.State
   public var turnBasedMatches: [ActiveTurnBasedMatch]
   public var weekInReview: FetchWeekInReviewResponse?
 
@@ -103,7 +103,7 @@ public struct HomeState: Equatable {
     nagBanner: NagBanner.State? = nil,
     route: HomeRoute? = nil,
     savedGames: SavedGamesState = SavedGamesState(),
-    settings: SettingsState = SettingsState(),
+    settings: Settings.State = .init(),
     turnBasedMatches: [ActiveTurnBasedMatch] = [],
     weekInReview: FetchWeekInReviewResponse? = nil
   ) {
@@ -141,7 +141,7 @@ public enum HomeAction: Equatable {
   case nagBannerFeature(NagBannerFeature.Action)
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
-  case settings(SettingsAction)
+  case settings(Settings.Action)
   case solo(Solo.Action)
   case task
   case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
@@ -284,35 +284,16 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
   ),
 
   Reducer(
-    Scope(state: \HomeState.nagBanner, action: /HomeAction.nagBannerFeature) {
+    Scope(state: \.nagBanner, action: /HomeAction.nagBannerFeature) {
       NagBannerFeature()
     }
   ),
 
-  settingsReducer
-    .pullback(
-      state: \HomeState.settings,
-      action: /HomeAction.settings,
-      environment: {
-        SettingsEnvironment(
-          apiClient: $0.apiClient,
-          applicationClient: $0.applicationClient,
-          audioPlayer: $0.audioPlayer,
-          backgroundQueue: $0.backgroundQueue,
-          build: $0.build,
-          database: $0.database,
-          feedbackGenerator: $0.feedbackGenerator,
-          fileClient: $0.fileClient,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue,
-          remoteNotifications: $0.remoteNotifications,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit,
-          userDefaults: $0.userDefaults,
-          userNotifications: $0.userNotifications
-        )
-      }
-    ),
+  Reducer(
+    Scope(state: \.settings, action: /HomeAction.settings) {
+      Settings()
+    }
+  ),
 
   .init { state, action, environment in
     switch action {

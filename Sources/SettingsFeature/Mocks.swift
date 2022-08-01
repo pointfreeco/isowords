@@ -1,5 +1,5 @@
 #if DEBUG
-  extension SettingsState {
+  extension Settings.State {
     public static let everythingOff = Self(
       userSettings: .init(
         enableGyroMotion: false,

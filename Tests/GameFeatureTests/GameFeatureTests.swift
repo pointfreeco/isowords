@@ -46,7 +46,7 @@ class GameFeatureTests: XCTestCase {
           moves: [],
           secondsPlayed: 0
         ),
-        settings: SettingsState()
+        settings: Settings.State()
       ),
       reducer: gameFeatureReducer,
       environment: environment
@@ -90,7 +90,7 @@ class GameFeatureTests: XCTestCase {
             .init(index: .init(x: .two, y: .two, z: .two), side: .right),
           ]
         ),
-        settings: SettingsState()
+        settings: Settings.State()
       ),
       reducer: gameFeatureReducer,
       environment: environment

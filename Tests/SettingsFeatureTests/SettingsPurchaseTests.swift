@@ -7,46 +7,44 @@ import XCTest
 @testable import ServerConfig
 @testable import SettingsFeature
 
-@MainActor
-class SettingsPurchaseTests: XCTestCase {
-  var defaultEnvironment: SettingsEnvironment {
-    var environment = SettingsEnvironment.unimplemented
-    environment.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
-    environment.applicationClient.alternateIconName = { nil }
-    environment.build.number = { 42 }
-    environment.mainQueue = .immediate
-    environment.backgroundQueue = .immediate
-    environment.fileClient.save = { @Sendable _, _ in }
-    environment.userNotifications.getNotificationSettings = {
+fileprivate extension DependencyValues {
+  mutating func setUpDefaults() {
+    self.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
+    self.applicationClient.alternateIconName = { nil }
+    self.build.number = { 42 }
+    self.mainQueue = .immediate
+    self.fileClient.save = { @Sendable _, _ in }
+    self.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
-    return environment
   }
+}
 
+@MainActor
+class SettingsPurchaseTests: XCTestCase {
   func testUpgrade_HappyPath() async throws {
+    let store = TestStore(
+      initialState: Settings.State(),
+      reducer: Settings()
+    )
+
     let didAddPaymentProductIdentifier = ActorIsolated<String?>(nil)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .streamWithContinuation()
 
-    var environment = self.defaultEnvironment
-    environment.serverConfig.config = {
+    store.dependencies.setUpDefaults()
+    store.dependencies.serverConfig.config = {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
-    environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
-    environment.storeKit.addPayment = {
+    store.dependencies.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
+    store.dependencies.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
+    store.dependencies.storeKit.addPayment = {
       await didAddPaymentProductIdentifier.setValue($0.productIdentifier)
     }
-    environment.storeKit.fetchProducts = { _ in
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = { storeKitObserver.stream }
-
-    let store = TestStore(
-      initialState: SettingsState(),
-      reducer: settingsReducer,
-      environment: environment
-    )
+    store.dependencies.storeKit.observer = { storeKitObserver.stream }
 
     let task = await store.send(.task) {
       $0.buildNumber = 42
@@ -79,29 +77,28 @@ class SettingsPurchaseTests: XCTestCase {
   }
 
   func testRestore_HappyPath() async throws {
+    let store = TestStore(
+      initialState: Settings.State(),
+      reducer: Settings()
+    )
+
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .streamWithContinuation()
 
-    var environment = self.defaultEnvironment
-    environment.serverConfig.config = {
+    store.dependencies.setUpDefaults()
+    store.dependencies.serverConfig.config = {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
-    environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
-    environment.storeKit.restoreCompletedTransactions = {
+    store.dependencies.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
+    store.dependencies.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
+    store.dependencies.storeKit.restoreCompletedTransactions = {
       await didRestoreCompletedTransactions.setValue(true)
     }
-    environment.storeKit.fetchProducts = { _ in
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = { storeKitObserver.stream }
-
-    let store = TestStore(
-      initialState: SettingsState(),
-      reducer: settingsReducer,
-      environment: environment
-    )
+    store.dependencies.storeKit.observer = { storeKitObserver.stream }
 
     let task = await store.send(.task) {
       $0.buildNumber = 42
@@ -135,28 +132,27 @@ class SettingsPurchaseTests: XCTestCase {
   }
 
   func testRestore_NoPurchasesPath() async throws {
+    let store = TestStore(
+      initialState: Settings.State(),
+      reducer: Settings()
+    )
+
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .streamWithContinuation()
 
-    var environment = self.defaultEnvironment
-    environment.serverConfig.config = {
+    store.dependencies.setUpDefaults()
+    store.dependencies.serverConfig.config = {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
-    environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.storeKit.restoreCompletedTransactions = {
+    store.dependencies.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
+    store.dependencies.storeKit.restoreCompletedTransactions = {
       await didRestoreCompletedTransactions.setValue(true)
     }
-    environment.storeKit.fetchProducts = { _ in
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = { storeKitObserver.stream }
-
-    let store = TestStore(
-      initialState: SettingsState(),
-      reducer: settingsReducer,
-      environment: environment
-    )
+    store.dependencies.storeKit.observer = { storeKitObserver.stream }
 
     let task = await store.send(.task) {
       $0.buildNumber = 42
@@ -185,28 +181,27 @@ class SettingsPurchaseTests: XCTestCase {
   }
 
   func testRestore_ErrorPath() async throws {
+    let store = TestStore(
+      initialState: Settings.State(),
+      reducer: Settings()
+    )
+
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .streamWithContinuation()
 
-    var environment = self.defaultEnvironment
-    environment.serverConfig.config = {
+    store.dependencies.setUpDefaults()
+    store.dependencies.serverConfig.config = {
       .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
     }
-    environment.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
-    environment.storeKit.restoreCompletedTransactions = {
+    store.dependencies.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
+    store.dependencies.storeKit.restoreCompletedTransactions = {
       await didRestoreCompletedTransactions.setValue(true)
     }
-    environment.storeKit.fetchProducts = { _ in
+    store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [.fullGame])
     }
-    environment.storeKit.observer = { storeKitObserver.stream }
-
-    let store = TestStore(
-      initialState: SettingsState(),
-      reducer: settingsReducer,
-      environment: environment
-    )
+    store.dependencies.storeKit.observer = { storeKitObserver.stream }
 
     let task = await store.send(.task) {
       $0.buildNumber = 42
