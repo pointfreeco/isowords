@@ -50,8 +50,8 @@ public struct Build {
 
   extension Build {
     public static let unimplemented = Self(
-      gitSha: XCTUnimplemented("\(Self.self).gitSha"),
-      number: XCTUnimplemented("\(Self.self).number")
+      gitSha: XCTUnimplemented("\(Self.self).gitSha", placeholder: "deadbeef"),
+      number: XCTUnimplemented("\(Self.self).number", placeholder: 0)
     )
   }
 #endif

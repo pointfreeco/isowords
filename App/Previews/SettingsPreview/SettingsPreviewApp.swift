@@ -36,15 +36,6 @@ struct SettingsPreviewApp: App {
               mainQueue: .main,
               remoteNotifications: .live,
               serverConfig: ServerConfigClient.live(fetch: { .init() }),
-              setUserInterfaceStyle: { userInterfaceStyle in
-                await MainActor.run {
-                  guard
-                    let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
-                      as? UIWindowScene
-                  else { return }
-                  scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
-                }
-              },
               storeKit: .live(),
               userDefaults: .live(),
               userNotifications: .live

@@ -89,7 +89,6 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
         mainRunLoop: $0.mainRunLoop,
         remoteNotifications: .noop,
         serverConfig: .noop,
-        setUserInterfaceStyle: { _ in },
         storeKit: .noop,
         userDefaults: .noop,
         userNotifications: .noop

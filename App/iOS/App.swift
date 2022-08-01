@@ -97,15 +97,6 @@ extension AppEnvironment {
       mainRunLoop: .main,
       remoteNotifications: .live,
       serverConfig: .live(apiClient: apiClient, build: build),
-      setUserInterfaceStyle: { userInterfaceStyle in
-        await MainActor.run {
-          guard
-            let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
-              as? UIWindowScene
-          else { return }
-          scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
-        }
-      },
       storeKit: .live,
       timeZone: { .autoupdatingCurrent },
       userDefaults: .live(),

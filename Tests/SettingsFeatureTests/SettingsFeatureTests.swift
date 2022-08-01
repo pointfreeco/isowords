@@ -334,7 +334,9 @@ class SettingsFeatureTests: XCTestCase {
     let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
 
     var environment = self.defaultEnvironment
-    environment.setUserInterfaceStyle = { await overriddenUserInterfaceStyle.setValue($0) }
+    environment.applicationClient.setUserInterfaceStyle = {
+      await overriddenUserInterfaceStyle.setValue($0)
+    }
 
     let store = TestStore(
       initialState: SettingsState(),

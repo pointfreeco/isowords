@@ -21,6 +21,7 @@ public struct UIApplicationClient {
   public var openSettingsURLString: @Sendable () async -> String
   public var setAlternateIconName: @Sendable (String?) async throws -> Void
   // TODO: Should these endpoints be merged and `@MainActor`? Should `Reducer` be `@MainActor`?
+  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   @available(*, deprecated) public var supportsAlternateIcons: () -> Bool
   public var supportsAlternateIconsAsync: @Sendable () async -> Bool
 }

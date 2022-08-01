@@ -9,6 +9,7 @@ extension UIApplicationClient {
       open: XCTUnimplemented("\(Self.self).open", placeholder: false),
       openSettingsURLString: XCTUnimplemented("\(Self.self).openSettingsURLString"),
       setAlternateIconName: XCTUnimplemented("\(Self.self).setAlternateIconName"),
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       supportsAlternateIcons: XCTUnimplemented(
         "\(Self.self).supportsAlternateIcons", placeholder: false
       ),
@@ -24,6 +25,7 @@ extension UIApplicationClient {
     open: { _, _ in false},
     openSettingsURLString: { "settings://isowords/settings" },
     setAlternateIconName: { _ in },
+    setUserInterfaceStyle: { _ in },
     supportsAlternateIcons: { true },
     supportsAlternateIconsAsync: { true }
   )

@@ -66,7 +66,7 @@ public struct AppState: Equatable {
 }
 
 public enum AppAction: Equatable {
-  case appDelegate(AppDelegateAction)
+  case appDelegate(AppDelegateReducer.Action)
   case currentGame(GameFeatureAction)
   case didChangeScenePhase(ScenePhase)
   case gameCenter(GameCenterAction)
@@ -95,7 +95,6 @@ extension AppEnvironment {
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
-      setUserInterfaceStyle: self.setUserInterfaceStyle,
       storeKit: self.storeKit,
       userDefaults: self.userDefaults,
       userNotifications: self.userNotifications
@@ -119,7 +118,6 @@ extension AppEnvironment {
       mainRunLoop: self.mainRunLoop,
       remoteNotifications: self.remoteNotifications,
       serverConfig: self.serverConfig,
-      setUserInterfaceStyle: self.setUserInterfaceStyle,
       storeKit: self.storeKit,
       timeZone: self.timeZone,
       userDefaults: self.userDefaults,
@@ -129,25 +127,11 @@ extension AppEnvironment {
 }
 
 public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
-  appDelegateReducer
-    .pullback(
-      state: \.home.settings.userSettings,
-      action: /AppAction.appDelegate,
-      environment: {
-        .init(
-          apiClient: $0.apiClient,
-          audioPlayer: $0.audioPlayer,
-          backgroundQueue: $0.backgroundQueue,
-          build: $0.build,
-          dictionary: $0.dictionary,
-          fileClient: $0.fileClient,
-          mainQueue: $0.mainQueue,
-          remoteNotifications: $0.remoteNotifications,
-          setUserInterfaceStyle: $0.setUserInterfaceStyle,
-          userNotifications: $0.userNotifications
-        )
-      }
-    ),
+  Reducer(
+    Scope(state: \.home.settings.userSettings, action: /AppAction.appDelegate) {
+      AppDelegateReducer()
+    }
+  ),
 
   gameFeatureReducer
     .pullback(

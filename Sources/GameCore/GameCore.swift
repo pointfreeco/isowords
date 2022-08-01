@@ -201,7 +201,6 @@ public struct GameEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
   public var userNotifications: UserNotificationClient
@@ -222,7 +221,6 @@ public struct GameEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
     userNotifications: UserNotificationClient
@@ -242,7 +240,6 @@ public struct GameEnvironment {
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.storeKit = storeKit
     self.userDefaults = userDefaults
     self.userNotifications = userNotifications
@@ -958,7 +955,6 @@ func menuTitle(state: GameState) -> TextState {
       mainRunLoop: .unimplemented("mainRunLoop"),
       remoteNotifications: .unimplemented,
       serverConfig: .unimplemented,
-      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       storeKit: .unimplemented,
       userDefaults: .unimplemented,
       userNotifications: .unimplemented
@@ -980,7 +976,6 @@ func menuTitle(state: GameState) -> TextState {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       userDefaults: .noop,
       userNotifications: .noop

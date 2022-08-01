@@ -36,7 +36,6 @@ public struct AppEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var timeZone: () -> TimeZone
   public var userDefaults: UserDefaultsClient
@@ -59,7 +58,6 @@ public struct AppEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     timeZone: @escaping () -> TimeZone,
     userDefaults: UserDefaultsClient,
@@ -81,7 +79,6 @@ public struct AppEnvironment {
     self.mainRunLoop = mainRunLoop
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.storeKit = storeKit
     self.timeZone = timeZone
     self.userDefaults = userDefaults
@@ -106,7 +103,6 @@ public struct AppEnvironment {
       mainRunLoop: .unimplemented("mainRunLoop"),
       remoteNotifications: .unimplemented,
       serverConfig: .unimplemented,
-      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       storeKit: .unimplemented,
       timeZone: XCTUnimplemented("\(Self.self).timeZone"),
       userDefaults: .unimplemented,
@@ -130,7 +126,6 @@ public struct AppEnvironment {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       timeZone: { .autoupdatingCurrent },
       userDefaults: .noop,

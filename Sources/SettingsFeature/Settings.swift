@@ -200,7 +200,6 @@ public struct SettingsEnvironment {
   public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
   public var userNotifications: UserNotificationClient
@@ -218,7 +217,6 @@ public struct SettingsEnvironment {
     mainQueue: AnySchedulerOf<DispatchQueue>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
     userNotifications: UserNotificationClient
@@ -235,7 +233,6 @@ public struct SettingsEnvironment {
     self.mainQueue = mainQueue
     self.remoteNotifications = remoteNotifications
     self.serverConfig = serverConfig
-    self.setUserInterfaceStyle = setUserInterfaceStyle
     self.storeKit = storeKit
     self.userDefaults = userDefaults
     self.userNotifications = userNotifications
@@ -259,7 +256,6 @@ public struct SettingsEnvironment {
       mainQueue: .unimplemented("mainQueue"),
       remoteNotifications: .unimplemented,
       serverConfig: .unimplemented,
-      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
       storeKit: .unimplemented,
       userDefaults: .unimplemented,
       userNotifications: .unimplemented
@@ -278,7 +274,6 @@ public struct SettingsEnvironment {
       mainQueue: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       userDefaults: .noop,
       userNotifications: .noop
@@ -394,7 +389,7 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
 
     case .binding(\.$userSettings.colorScheme):
       return .fireAndForget { [style = state.userSettings.colorScheme.userInterfaceStyle] in
-        await environment.setUserInterfaceStyle(style)
+        await environment.applicationClient.setUserInterfaceStyle(style)
       }
 
     case .binding(\.$userSettings.musicVolume):
