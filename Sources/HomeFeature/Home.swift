@@ -68,7 +68,7 @@ public struct HomeState: Equatable {
   public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
   public var hasChangelog: Bool
   public var hasPastTurnBasedGames: Bool
-  public var nagBanner: NagBannerState?
+  public var nagBanner: NagBanner.State?
   public var route: HomeRoute?
   public var savedGames: SavedGamesState {
     didSet {
@@ -100,7 +100,7 @@ public struct HomeState: Equatable {
     dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
     hasChangelog: Bool = false,
     hasPastTurnBasedGames: Bool = false,
-    nagBanner: NagBannerState? = nil,
+    nagBanner: NagBanner.State? = nil,
     route: HomeRoute? = nil,
     savedGames: SavedGamesState = SavedGamesState(),
     settings: SettingsState = SettingsState(),
@@ -138,7 +138,7 @@ public enum HomeAction: Equatable {
   case howToPlayButtonTapped
   case leaderboard(LeaderboardAction)
   case multiplayer(Multiplayer.Action)
-  case nagBannerFeature(NagBannerFeatureAction)
+  case nagBannerFeature(NagBannerFeature.Action)
   case serverConfigResponse(ServerConfig)
   case setNavigation(tag: HomeRoute.Tag?)
   case settings(SettingsAction)
@@ -298,18 +298,11 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     }
   ),
 
-  nagBannerFeatureReducer
-    .pullback(
-      state: \HomeState.nagBanner,
-      action: /HomeAction.nagBannerFeature,
-      environment: {
-        NagBannerEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
-      }
-    ),
+  Reducer(
+    Scope(state: \HomeState.nagBanner, action: /HomeAction.nagBannerFeature) {
+      NagBannerFeature()
+    }
+  ),
 
   settingsReducer
     .pullback(
@@ -740,7 +733,7 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      NagBannerFeature(
+      NagBannerFeatureView(
         store: self.store.scope(
           state: \.nagBanner,
           action: HomeAction.nagBannerFeature
