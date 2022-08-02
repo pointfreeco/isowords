@@ -35,7 +35,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct Leaderboard: ReducerProtocol {
   public struct State: Equatable {
-    public var cubePreview: CubePreviewState?
+    public var cubePreview: CubePreview.State?
     public var isAnimationReduced: Bool
     public var isHapticsEnabled: Bool
     public var scope: LeaderboardScope = .games
@@ -46,7 +46,7 @@ public struct Leaderboard: ReducerProtocol {
     public var isCubePreviewPresented: Bool { self.cubePreview != nil }
 
     public init(
-      cubePreview: CubePreviewState? = nil,
+      cubePreview: CubePreview.State? = nil,
       isAnimationReduced: Bool = false,
       isHapticsEnabled: Bool,
       scope: LeaderboardScope = .games,
@@ -65,7 +65,7 @@ public struct Leaderboard: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case cubePreview(CubePreviewAction)
+    case cubePreview(CubePreview.Action)
     case dismissCubePreview
     case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
     case scopeTapped(LeaderboardScope)
@@ -95,7 +95,7 @@ public struct Leaderboard: ReducerProtocol {
         return .none
 
       case let .fetchWordResponse(.success(response)):
-        state.cubePreview = CubePreviewState(
+        state.cubePreview = CubePreview.State(
           cubes: response.puzzle,
           isAnimationReduced: state.isAnimationReduced,
           isHapticsEnabled: state.isHapticsEnabled,
@@ -146,15 +146,7 @@ public struct Leaderboard: ReducerProtocol {
       }
     }
     .ifLet(state: \.cubePreview, action: /Action.cubePreview) {
-      Reduce(
-        cubePreviewReducer,
-        environment: CubePreviewEnvironment(
-          audioPlayer: self.audioPlayer,
-          feedbackGenerator: self.feedbackGenerator,
-          lowPowerMode: self.lowPowerMode,
-          mainQueue: self.mainQueue
-        )
-      )
+      CubePreview()
     }
 
     Scope(state: \.solo, action: /Action.solo) {

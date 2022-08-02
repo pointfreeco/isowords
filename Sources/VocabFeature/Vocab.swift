@@ -10,13 +10,13 @@ import SwiftUI
 
 public struct Vocab: ReducerProtocol {
   public struct State: Equatable {
-    var cubePreview: CubePreviewState?
+    var cubePreview: CubePreview.State?
     var isAnimationReduced: Bool
     var isHapticsEnabled: Bool
     var vocab: LocalDatabaseClient.Vocab?
 
     public init(
-      cubePreview: CubePreviewState? = nil,
+      cubePreview: CubePreview.State? = nil,
       isAnimationReduced: Bool,
       isHapticsEnabled: Bool,
       vocab: LocalDatabaseClient.Vocab? = nil
@@ -36,17 +36,13 @@ public struct Vocab: ReducerProtocol {
   public enum Action: Equatable {
     case dismissCubePreview
     case gamesResponse(TaskResult<State.GamesResponse>)
-    case preview(CubePreviewAction)
+    case preview(CubePreview.Action)
     case task
     case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
   }
 
-  @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
-  @Dependency(\.feedbackGenerator) var feedbackGenerator
-  @Dependency(\.lowPowerMode) var lowPowerMode
-  @Dependency(\.mainQueue) var mainQueue
 
   public init() {}
 
@@ -75,7 +71,7 @@ public struct Vocab: ReducerProtocol {
         guard let moveIndex = possibleMoveIndex
         else { return .none }
 
-        state.cubePreview = .init(
+        state.cubePreview = CubePreview.State(
           cubes: game.completedGame.cubes,
           isAnimationReduced: state.isAnimationReduced,
           isHapticsEnabled: state.isHapticsEnabled,
@@ -114,15 +110,7 @@ public struct Vocab: ReducerProtocol {
       }
     }
     .ifLet(state: \.cubePreview, action: /Action.preview) {
-      Reduce(
-        cubePreviewReducer,
-        environment: CubePreviewEnvironment(
-          audioPlayer: self.audioPlayer,
-          feedbackGenerator: self.feedbackGenerator,
-          lowPowerMode: self.lowPowerMode,
-          mainQueue: self.mainQueue
-        )
-      )
+      CubePreview()
     }
   }
 }
