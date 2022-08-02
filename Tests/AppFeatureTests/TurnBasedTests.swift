@@ -134,7 +134,7 @@ class TurnBasedTests: XCTestCase {
     await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
 
-    let initialGameState = GameState(
+    let initialGameState = Game.State(
       inProgressGame: InProgressGame(
         cubes: .mock,
         gameContext: .turnBased(
@@ -391,7 +391,7 @@ class TurnBasedTests: XCTestCase {
       )
     ) {
       $0.game = update(
-        GameState(
+        Game.State(
           inProgressGame: InProgressGame(
             cubes: .mock,
             gameContext: .turnBased(
@@ -506,7 +506,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     ) {
-      var gameState = GameState(
+      var gameState = Game.State(
         inProgressGame: InProgressGame(
           cubes: .mock,
           gameContext: .turnBased(
@@ -560,7 +560,7 @@ class TurnBasedTests: XCTestCase {
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
 
-    let initialGameState = GameState(
+    let initialGameState = Game.State(
       cubes: .mock,
       gameContext: .turnBased(
         .init(
@@ -727,7 +727,7 @@ class TurnBasedTests: XCTestCase {
     let store = TestStore(
       initialState: AppState(
         game: update(
-          GameState(
+          Game.State(
             cubes: .mock,
             gameContext: .turnBased(
               .init(
@@ -758,8 +758,8 @@ class TurnBasedTests: XCTestCase {
     await self.mainQueue.advance()
 
     await store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
-      $0.currentGame = GameFeatureState(
-        game: GameState(
+      $0.currentGame = GameFeature.State(
+        game: Game.State(
           cubes: .mock,
           gameContext: .turnBased(
             .init(

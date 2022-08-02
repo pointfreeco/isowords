@@ -8,14 +8,7 @@ class GameCoreTests: XCTestCase {
   func testForfeitTurnBasedGame() async {
     let didEndMatchInTurn = ActorIsolated(false)
 
-    var environment = GameEnvironment.unimplemented
-    environment.audioPlayer.stop = { _ in }
-    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
-      await didEndMatchInTurn.setValue(true)
-    }
-
-    var gameState = GameState(inProgressGame: .mock)
+    var gameState = Game.State(inProgressGame: .mock)
     gameState.gameContext = .turnBased(
       TurnBasedContext(
         localPlayer: .mock,
@@ -26,14 +19,14 @@ class GameCoreTests: XCTestCase {
 
     let store = TestStore(
       initialState: gameState,
-      reducer: gameReducer(
-        state: \.self,
-        action: /.self,
-        environment: { $0 },
-        isHapticsEnabled: { _ in false }
-      ),
-      environment: environment
+      reducer: Game()
     )
+
+    store.dependencies.audioPlayer.stop = { _ in }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
+      await didEndMatchInTurn.setValue(true)
+    }
 
     await store.send(.forfeitGameButtonTapped) {
       $0.alert = .init(

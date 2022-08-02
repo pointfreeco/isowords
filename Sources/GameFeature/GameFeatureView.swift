@@ -5,11 +5,11 @@ import SwiftUI
 
 public struct GameFeatureView<Content>: View where Content: View {
   let content: Content
-  let store: Store<GameFeatureState, GameFeatureAction>
+  let store: StoreOf<GameFeature>
 
   public init(
     content: Content,
-    store: Store<GameFeatureState, GameFeatureAction>
+    store: StoreOf<GameFeature>
   ) {
     self.content = content
     self.store = store
@@ -25,7 +25,7 @@ public struct GameFeatureView<Content>: View where Content: View {
           GameView(
             content: self.content,
             isAnimationReduced: viewStore.state,
-            store: store.scope(state: { $0 }, action: GameFeatureAction.game)
+            store: store.scope(state: { $0 }, action: GameFeature.Action.game)
           )
         }
       }
@@ -43,7 +43,7 @@ public struct GameFeatureView<Content>: View where Content: View {
               SettingsView(
                 store: self.store.scope(
                   state: \.settings,
-                  action: GameFeatureAction.settings
+                  action: GameFeature.Action.settings
                 ),
                 navPresentationStyle: .modal
               )
@@ -66,8 +66,8 @@ public struct GameFeatureView<Content>: View where Content: View {
         GameFeatureView(
           content: Text("Cube"),
           store: Store(
-            initialState: GameFeatureState(
-              game: GameState(
+            initialState: GameFeature.State(
+              game: Game.State(
                 cubes: update(randomCubes(for: isowordsLetter).run()) {
                   $0.2.2.2 = Cube(
                     left: .init(letter: "C", side: .left),
@@ -101,27 +101,7 @@ public struct GameFeatureView<Content>: View where Content: View {
               ),
               settings: .init()
             ),
-            reducer: gameFeatureReducer,
-            environment: .init(
-              apiClient: .noop,
-              applicationClient: .live,
-              audioPlayer: .noop,
-              backgroundQueue: DispatchQueue.global().eraseToAnyScheduler(),
-              build: .noop,
-              database: .inMemory,
-              dictionary: .everyString,
-              feedbackGenerator: .live,
-              fileClient: .noop,
-              gameCenter: .live,
-              lowPowerMode: .live,
-              mainQueue: .main,
-              mainRunLoop: .main,
-              remoteNotifications: .noop,
-              serverConfig: .noop,
-              storeKit: .live,
-              userDefaults: .noop,
-              userNotifications: .live
-            )
+            reducer: GameFeature()
           )
         )
       }

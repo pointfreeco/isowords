@@ -10,12 +10,12 @@ import SwiftUI
 import TcaHelpers
 
 public struct TrailerState: Equatable {
-  var game: GameState
+  var game: Game.State
   @BindableState var nub: CubeSceneView.ViewState.NubState
   @BindableState var opacity: Double
 
   public init(
-    game: GameState,
+    game: Game.State,
     nub: CubeSceneView.ViewState.NubState = .init(),
     opacity: Double = 0
   ) {

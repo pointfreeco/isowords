@@ -1,6 +1,6 @@
 import ComposableArchitecture
 
-public protocol Path {
+public protocol Path<Root, Value> {
   associatedtype Root
   associatedtype Value
   func extract(from root: Root) -> Value?
@@ -157,6 +157,71 @@ extension OptionalPath where Root == Value {
 extension OptionalPath where Root == Value? {
   public static var some: OptionalPath {
     .init(/Optional.some)
+  }
+}
+
+extension ReducerProtocol {
+  public func _ifLet<
+    Wrapped: ReducerProtocol,
+    StatePath: Path<State, Wrapped.State>,
+    ActionPath: Path<Action, Wrapped.Action>
+  >(
+    state toWrappedState: StatePath,
+    action toWrappedAction: ActionPath,
+    @ReducerBuilderOf<Wrapped> then wrapped: () -> Wrapped,
+    file: StaticString = #file,
+    line: UInt = #line
+  ) -> some ReducerProtocol<State, Action> {
+    OptionalPathReducer(
+      upstream: self,
+      wrapped: wrapped(),
+      toWrappedState: toWrappedState,
+      toWrappedAction: toWrappedAction
+    )
+  }
+}
+
+struct OptionalPathReducer<
+  StatePath: Path,
+  ActionPath: Path,
+  Upstream: ReducerProtocol<StatePath.Root, ActionPath.Root>,
+  Wrapped: ReducerProtocol<StatePath.Value, ActionPath.Value>
+>: ReducerProtocol {
+  let upstream: Upstream
+  let wrapped: Wrapped
+  let toWrappedState: StatePath
+  let toWrappedAction: ActionPath
+
+  public func reduce(
+    into state: inout Upstream.State, action: Upstream.Action
+  ) -> Effect<Upstream.Action, Never> {
+    return .merge(
+      self.reduceWrapped(into: &state, action: action),
+      self.upstream.reduce(into: &state, action: action)
+    )
+  }
+
+  func reduceWrapped(
+    into state: inout Upstream.State, action: Upstream.Action
+  ) -> Effect<Upstream.Action, Never> {
+    guard let wrappedAction = self.toWrappedAction.extract(from: action)
+    else { return Effect<Action, Never>.none }
+
+    guard var wrappedState = self.toWrappedState.extract(from: state)
+    else {
+      // TODO: Runtime warning
+      return .none
+    }
+
+    let effect =
+    self.wrapped.reduce(into: &wrappedState, action: wrappedAction)
+      .map { wrappedAction -> Action in
+        var action = action
+        self.toWrappedAction.set(into: &action, wrappedAction)
+        return action
+      }
+    self.toWrappedState.set(into: &state, wrappedState)
+    return effect
   }
 }
 

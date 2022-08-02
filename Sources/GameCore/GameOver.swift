@@ -5,7 +5,7 @@ import SharedModels
 struct GameOverLogic: ReducerProtocol {
   @Dependency(\.database) var database
 
-  func reduce(into state: inout GameState, action: GameAction) -> Effect<GameAction, Never> {
+  func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
     var allCubesRemoved: Bool {
       state.cubes.allSatisfy {
         $0.allSatisfy {
@@ -23,8 +23,6 @@ struct GameOverLogic: ReducerProtocol {
         || timesUp
         || allCubesRemoved
     else { return .none }
-
-    var effects: [Effect<GameAction, Never>] = []
 
     state.bottomMenu = nil
     state.gameOver = GameOver.State(

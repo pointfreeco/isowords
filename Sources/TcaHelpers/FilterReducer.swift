@@ -1,11 +1,19 @@
 import ComposableArchitecture
 
-extension Reducer {
-  public func filter(_ predicate: @escaping (State, Action) -> Bool) -> Self {
-    Self { state, action, environment in
-      predicate(state, action)
-        ? self.run(&state, action, environment)
-        : .none
-    }
+extension ReducerProtocol {
+  public func filter(_ predicate: @escaping (State, Action) -> Bool) -> FilterReducer<Self> {
+    FilterReducer(upstream: self, predicate: predicate)
+  }
+}
+
+public struct FilterReducer<Upstream: ReducerProtocol>: ReducerProtocol {
+  let upstream: Upstream
+  let predicate: (Upstream.State, Upstream.Action) -> Bool
+
+  public func reduce(
+    into state: inout Upstream.State, action: Upstream.Action
+  ) -> Effect<Upstream.Action, Never> {
+    guard self.predicate(state, action) else { return .none }
+    return self.upstream.reduce(into: &state, action: action)
   }
 }

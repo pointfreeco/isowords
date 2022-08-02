@@ -8,9 +8,9 @@ struct PlayersAndScoresView: View {
   @Environment(\.opponentImage) var defaultOpponentImage
   @Environment(\.yourImage) var defaultYourImage
   @State var opponentImage: UIImage?
-  let store: Store<GameState, GameAction>
+  let store: StoreOf<Game>
   @State var yourImage: UIImage?
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
     let isYourTurn: Bool
@@ -19,7 +19,7 @@ struct PlayersAndScoresView: View {
     let you: ComposableGameCenter.Player?
     let yourScore: Int
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.isYourTurn = state.isYourTurn
       self.opponent = state.turnBasedContext?.otherParticipant?.player
       self.you = state.turnBasedContext?.localPlayer.player
@@ -34,7 +34,7 @@ struct PlayersAndScoresView: View {
   }
 
   public init(
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))

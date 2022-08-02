@@ -20,9 +20,9 @@ public struct GameView<Content>: View where Content: View {
   @Environment(\.deviceState) var deviceState
   let content: Content
   let isAnimationReduced: Bool
-  let store: Store<GameState, GameAction>
+  let store: StoreOf<Game>
   var trayHeight: CGFloat { ActiveGamesView.height + (16 + self.adaptiveSize.padding) * 2 }
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
     let isDailyChallenge: Bool
@@ -31,7 +31,7 @@ public struct GameView<Content>: View where Content: View {
     let isTrayVisible: Bool
     let selectedWordString: String
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.isDailyChallenge = state.dailyChallengeId != nil
       self.isGameLoaded = state.isGameLoaded
       self.isNavVisible = state.isNavVisible
@@ -43,7 +43,7 @@ public struct GameView<Content>: View where Content: View {
   public init(
     content: Content,
     isAnimationReduced: Bool,
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.content = content
     self.isAnimationReduced = isAnimationReduced
@@ -94,7 +94,7 @@ public struct GameView<Content>: View where Content: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.wordSubmitButtonFeature,
-                action: GameAction.wordSubmitButton
+                action: Game.Action.wordSubmitButton
               )
             )
             .ignoresSafeArea()
@@ -108,7 +108,7 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: GameAction.activeGames),
+            store: self.store.scope(state: \.activeGames, action: Game.Action.activeGames),
             showMenuItems: false
           )
           .adaptivePadding([.top, .bottom], 8)
@@ -133,7 +133,7 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.gameOver, action: GameAction.gameOver),
+          self.store.scope(state: \.gameOver, action: Game.Action.gameOver),
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -148,7 +148,7 @@ public struct GameView<Content>: View where Content: View {
         IfLetStore(
           self.store.scope(
             state: \.upgradeInterstitial,
-            action: GameAction.upgradeInterstitial
+            action: Game.Action.upgradeInterstitial
           ),
           then: { store in
             UpgradeInterstitialView(store: store)
@@ -180,7 +180,7 @@ public struct GameView<Content>: View where Content: View {
       )
       .bottomMenu(self.store.scope(state: \.bottomMenu))
       .alert(
-        self.store.scope(state: \.alert, action: GameAction.alert),
+        self.store.scope(state: \.alert, action: Game.Action.alert),
         dismiss: .dismiss
       )
     }

@@ -32,7 +32,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                   playerIndexToId: [:]
                 )
               )
-              let game = GameState(
+              let game = Game.State(
                 cubes: environment.dictionary.randomCubes(.en),
                 gameContext: .turnBased(context),
                 gameCurrentTime: environment.mainRunLoop.now.date,
@@ -63,7 +63,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             }
 
             if didBecomeActive {
-              var gameState = GameState(
+              var gameState = Game.State(
                 gameCurrentTime: environment.mainRunLoop.now.date,
                 localPlayer: environment.gameCenter.localPlayer.localPlayer(),
                 turnBasedMatch: match,
@@ -154,7 +154,7 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               let turnBasedMatchData = match.matchData?.turnBasedMatchData
             else { return .none }
 
-            let newGame = GameState(
+            let newGame = Game.State(
               gameCurrentTime: environment.mainRunLoop.now.date,
               localPlayer: environment.gameCenter.localPlayer.localPlayer(),
               turnBasedMatch: match,

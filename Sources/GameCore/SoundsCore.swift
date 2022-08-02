@@ -11,7 +11,7 @@ struct GameSounds: ReducerProtocol {
 
   enum CubeShakingID {}
 
-  var body: some ReducerProtocol<GameState, GameAction> {
+  var body: some ReducerProtocolOf<Game> {
     Reduce { state, action in
       switch action {
       case .task:
@@ -133,7 +133,7 @@ struct GameSounds: ReducerProtocol {
   }
 }
 
-extension GameState {
+extension Game.State {
   func hasBeenPlayed(word: String) -> Bool {
     self.moves.contains {
       guard case let .playedWord(faces) = $0.type else { return false }

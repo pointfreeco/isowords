@@ -3,15 +3,15 @@ import Styleguide
 import SwiftUI
 
 struct GameNavView: View {
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  let store: StoreOf<Game>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
     let isTrayAvailable: Bool
     let isTrayVisible: Bool
     let trayTitle: String
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.isTrayAvailable = state.isTrayAvailable
       self.isTrayVisible = state.isTrayVisible
       self.trayTitle = state.displayTitle
@@ -19,7 +19,7 @@ struct GameNavView: View {
   }
 
   public init(
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))

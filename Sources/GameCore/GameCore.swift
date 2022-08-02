@@ -28,150 +28,152 @@ import UIApplicationClient
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-public struct GameState: Equatable {
-  public var activeGames: ActiveGamesState
-  public var alert: AlertState<GameAction.AlertAction>?
-  public var bottomMenu: BottomMenuState<GameAction>?
-  public var cubes: Puzzle
-  public var cubeStartedShakingAt: Date?
-  public var gameContext: ClientModels.GameContext
-  public var gameCurrentTime: Date
-  public var gameMode: GameMode
-  public var gameOver: GameOver.State?
-  public var gameStartTime: Date
-  public var isDemo: Bool
-  public var isGameLoaded: Bool
-  public var isOnLowPowerMode: Bool
-  public var isPanning: Bool
-  public var isSettingsPresented: Bool
-  public var isTrayVisible: Bool
-  public var language: Language
-  public var moves: Moves
-  public var optimisticallySelectedFace: IndexedCubeFace?
-  public var secondsPlayed: Int
-  public var selectedWord: [IndexedCubeFace]
-  public var selectedWordIsValid: Bool
-  public var upgradeInterstitial: UpgradeInterstitial.State?
-  public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
+public struct Game: ReducerProtocol {
+  public struct State: Equatable {
+    public var activeGames: ActiveGamesState
+    public var alert: AlertState<AlertAction>?
+    public var bottomMenu: BottomMenuState<Action>?
+    public var cubes: Puzzle
+    public var cubeStartedShakingAt: Date?
+    public var gameContext: ClientModels.GameContext
+    public var gameCurrentTime: Date
+    public var gameMode: GameMode
+    public var gameOver: GameOver.State?
+    public var gameStartTime: Date
+    public var isDemo: Bool
+    public var isGameLoaded: Bool
+    public var isOnLowPowerMode: Bool
+    public var isPanning: Bool
+    public var isSettingsPresented: Bool
+    public var isTrayVisible: Bool
+    public var language: Language
+    public var moves: Moves
+    public var optimisticallySelectedFace: IndexedCubeFace?
+    public var secondsPlayed: Int
+    public var selectedWord: [IndexedCubeFace]
+    public var selectedWordIsValid: Bool
+    public var upgradeInterstitial: UpgradeInterstitial.State?
+    public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
-  public init(
-    activeGames: ActiveGamesState = .init(),
-    alert: AlertState<GameAction.AlertAction>? = nil,
-    bottomMenu: BottomMenuState<GameAction>? = nil,
-    cubes: Puzzle,
-    cubeStartedShakingAt: Date? = nil,
-    gameContext: ClientModels.GameContext,
-    gameCurrentTime: Date,
-    gameMode: GameMode,
-    gameOver: GameOver.State? = nil,
-    gameStartTime: Date,
-    isDemo: Bool = false,
-    isGameLoaded: Bool = false,
-    isPanning: Bool = false,
-    isOnLowPowerMode: Bool = false,
-    isSettingsPresented: Bool = false,
-    isTrayVisible: Bool = false,
-    language: Language = .en,
-    moves: Moves = [],
-    optimisticallySelectedFace: IndexedCubeFace? = nil,
-    secondsPlayed: Int = 0,
-    selectedWord: [IndexedCubeFace] = [],
-    selectedWordIsValid: Bool = false,
-    upgradeInterstitial: UpgradeInterstitial.State? = nil,
-    wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
-  ) {
-    self.activeGames = activeGames
-    self.alert = alert
-    self.bottomMenu = bottomMenu
-    self.cubes = cubes
-    self.cubeStartedShakingAt = cubeStartedShakingAt
-    self.gameContext = gameContext
-    self.gameCurrentTime = gameCurrentTime
-    self.gameMode = gameMode
-    self.gameOver = gameOver
-    self.gameStartTime = gameStartTime
-    self.isDemo = isDemo
-    self.isGameLoaded = isGameLoaded
-    self.isOnLowPowerMode = isOnLowPowerMode
-    self.isPanning = isPanning
-    self.isSettingsPresented = isSettingsPresented
-    self.isTrayVisible = isTrayVisible
-    self.language = language
-    self.moves = moves
-    self.optimisticallySelectedFace = optimisticallySelectedFace
-    self.secondsPlayed = secondsPlayed
-    self.selectedWord = selectedWord
-    self.selectedWordIsValid = selectedWordIsValid
-    self.upgradeInterstitial = upgradeInterstitial
-    self.wordSubmitButton = wordSubmit
-  }
-
-  public var dailyChallengeId: DailyChallenge.Id? {
-    guard case let .dailyChallenge(id) = self.gameContext else { return nil }
-    return id
-  }
-
-  public var isNavVisible: Bool {
-    !self.isDemo
-  }
-
-  public var isTrayAvailable: Bool {
-    self.gameMode != .timed && !self.activeGames.isEmpty
-  }
-
-  public var turnBasedContext: TurnBasedContext? {
-    get {
-      guard case let .turnBased(context) = self.gameContext else { return nil }
-      return context
+    public init(
+      activeGames: ActiveGamesState = .init(),
+      alert: AlertState<AlertAction>? = nil,
+      bottomMenu: BottomMenuState<Action>? = nil,
+      cubes: Puzzle,
+      cubeStartedShakingAt: Date? = nil,
+      gameContext: ClientModels.GameContext,
+      gameCurrentTime: Date,
+      gameMode: GameMode,
+      gameOver: GameOver.State? = nil,
+      gameStartTime: Date,
+      isDemo: Bool = false,
+      isGameLoaded: Bool = false,
+      isPanning: Bool = false,
+      isOnLowPowerMode: Bool = false,
+      isSettingsPresented: Bool = false,
+      isTrayVisible: Bool = false,
+      language: Language = .en,
+      moves: Moves = [],
+      optimisticallySelectedFace: IndexedCubeFace? = nil,
+      secondsPlayed: Int = 0,
+      selectedWord: [IndexedCubeFace] = [],
+      selectedWordIsValid: Bool = false,
+      upgradeInterstitial: UpgradeInterstitial.State? = nil,
+      wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
+    ) {
+      self.activeGames = activeGames
+      self.alert = alert
+      self.bottomMenu = bottomMenu
+      self.cubes = cubes
+      self.cubeStartedShakingAt = cubeStartedShakingAt
+      self.gameContext = gameContext
+      self.gameCurrentTime = gameCurrentTime
+      self.gameMode = gameMode
+      self.gameOver = gameOver
+      self.gameStartTime = gameStartTime
+      self.isDemo = isDemo
+      self.isGameLoaded = isGameLoaded
+      self.isOnLowPowerMode = isOnLowPowerMode
+      self.isPanning = isPanning
+      self.isSettingsPresented = isSettingsPresented
+      self.isTrayVisible = isTrayVisible
+      self.language = language
+      self.moves = moves
+      self.optimisticallySelectedFace = optimisticallySelectedFace
+      self.secondsPlayed = secondsPlayed
+      self.selectedWord = selectedWord
+      self.selectedWordIsValid = selectedWordIsValid
+      self.upgradeInterstitial = upgradeInterstitial
+      self.wordSubmitButton = wordSubmit
     }
-    set {
-      guard let newValue = newValue else { return }
-      self.gameContext = .turnBased(newValue)
+
+    public var dailyChallengeId: DailyChallenge.Id? {
+      guard case let .dailyChallenge(id) = self.gameContext else { return nil }
+      return id
+    }
+
+    public var isNavVisible: Bool {
+      !self.isDemo
+    }
+
+    public var isTrayAvailable: Bool {
+      self.gameMode != .timed && !self.activeGames.isEmpty
+    }
+
+    public var turnBasedContext: TurnBasedContext? {
+      get {
+        guard case let .turnBased(context) = self.gameContext else { return nil }
+        return context
+      }
+      set {
+        guard let newValue = newValue else { return }
+        self.gameContext = .turnBased(newValue)
+      }
+    }
+
+    public var wordSubmitButtonFeature: WordSubmitButtonFeature.State {
+      get {
+        .init(
+          isSelectedWordValid: self.selectedWordIsValid,
+          isTurnBasedMatch: self.turnBasedContext != nil,
+          isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
+          wordSubmitButton: self.wordSubmitButton
+        )
+      }
+      set {
+        self.wordSubmitButton = newValue.wordSubmitButton
+      }
     }
   }
 
-  public var wordSubmitButtonFeature: WordSubmitButtonFeature.State {
-    get {
-      .init(
-        isSelectedWordValid: self.selectedWordIsValid,
-        isTurnBasedMatch: self.turnBasedContext != nil,
-        isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
-        wordSubmitButton: self.wordSubmitButton
-      )
-    }
-    set {
-      self.wordSubmitButton = newValue.wordSubmitButton
-    }
+  public enum Action: Equatable {
+    case activeGames(ActiveGamesAction)
+    case alert(AlertAction)
+    case cancelButtonTapped
+    case confirmRemoveCube(LatticePoint)
+    case delayedShowUpgradeInterstitial
+    case dismissBottomMenu
+    case doubleTap(index: LatticePoint)
+    case endGameButtonTapped
+    case exitButtonTapped
+    case forfeitGameButtonTapped
+    case gameCenter(GameCenterAction)
+    case gameLoaded
+    case gameOver(GameOver.Action)
+    case lowPowerModeChanged(Bool)
+    case matchesLoaded(TaskResult<[TurnBasedMatch]>)
+    case menuButtonTapped
+    case task
+    case pan(UIGestureRecognizer.State, PanData?)
+    case savedGamesLoaded(TaskResult<SavedGamesState>)
+    case settingsButtonTapped
+    case submitButtonTapped(reaction: Move.Reaction?)
+    case tap(UIGestureRecognizer.State, IndexedCubeFace?)
+    case timerTick(Date)
+    case trayButtonTapped
+    case upgradeInterstitial(UpgradeInterstitial.Action)
+    case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
-}
-
-public enum GameAction: Equatable {
-  case activeGames(ActiveGamesAction)
-  case alert(AlertAction)
-  case cancelButtonTapped
-  case confirmRemoveCube(LatticePoint)
-  case delayedShowUpgradeInterstitial
-  case dismissBottomMenu
-  case doubleTap(index: LatticePoint)
-  case endGameButtonTapped
-  case exitButtonTapped
-  case forfeitGameButtonTapped
-  case gameCenter(GameCenterAction)
-  case gameLoaded
-  case gameOver(GameOver.Action)
-  case lowPowerModeChanged(Bool)
-  case matchesLoaded(TaskResult<[TurnBasedMatch]>)
-  case menuButtonTapped
-  case task
-  case pan(UIGestureRecognizer.State, PanData?)
-  case savedGamesLoaded(TaskResult<SavedGamesState>)
-  case settingsButtonTapped
-  case submitButtonTapped(reaction: Move.Reaction?)
-  case tap(UIGestureRecognizer.State, IndexedCubeFace?)
-  case timerTick(Date)
-  case trayButtonTapped
-  case upgradeInterstitial(UpgradeInterstitial.Action)
-  case wordSubmitButton(WordSubmitButtonFeature.Action)
 
   public enum AlertAction: Equatable {
     case dismiss
@@ -183,92 +185,49 @@ public enum GameAction: Equatable {
     case listener(LocalPlayerClient.ListenerEvent)
     case turnBasedMatchResponse(TaskResult<TurnBasedMatch>)
   }
-}
 
-public struct GameEnvironment {
-  public var apiClient: ApiClient
-  public var applicationClient: UIApplicationClient
-  public var audioPlayer: AudioPlayerClient
-  public var backgroundQueue: AnySchedulerOf<DispatchQueue>
-  public var build: Build
-  public var database: LocalDatabaseClient
-  public var dictionary: DictionaryClient
-  public var feedbackGenerator: FeedbackGeneratorClient
-  public var fileClient: FileClient
-  public var gameCenter: GameCenterClient
-  public var lowPowerMode: LowPowerModeClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
-  public var remoteNotifications: RemoteNotificationsClient
-  public var serverConfig: ServerConfigClient
-  public var storeKit: StoreKitClient
-  public var userDefaults: UserDefaultsClient
-  public var userNotifications: UserNotificationClient
+  @Dependency(\.apiClient) var apiClient
+  @Dependency(\.applicationClient) var applicationClient
+  @Dependency(\.audioPlayer) var audioPlayer
+  @Dependency(\.build) var build
+  @Dependency(\.database) var database
+  @Dependency(\.dictionary) var dictionary
+  @Dependency(\.feedbackGenerator) var feedbackGenerator
+  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.gameCenter) var gameCenter
+  @Dependency(\.lowPowerMode) var lowPowerMode
+  @Dependency(\.mainQueue) var mainQueue
+  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.remoteNotifications) var remoteNotifications
+  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.storeKit) var storeKit
+  @Dependency(\.userDefaults) var userDefaults
+  @Dependency(\.userNotifications) var userNotifications
 
-  public init(
-    apiClient: ApiClient,
-    applicationClient: UIApplicationClient,
-    audioPlayer: AudioPlayerClient,
-    backgroundQueue: AnySchedulerOf<DispatchQueue>,
-    build: Build,
-    database: LocalDatabaseClient,
-    dictionary: DictionaryClient,
-    feedbackGenerator: FeedbackGeneratorClient,
-    fileClient: FileClient,
-    gameCenter: GameCenterClient,
-    lowPowerMode: LowPowerModeClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
-    remoteNotifications: RemoteNotificationsClient,
-    serverConfig: ServerConfigClient,
-    storeKit: StoreKitClient,
-    userDefaults: UserDefaultsClient,
-    userNotifications: UserNotificationClient
-  ) {
-    self.apiClient = apiClient
-    self.applicationClient = applicationClient
-    self.audioPlayer = audioPlayer
-    self.backgroundQueue = backgroundQueue
-    self.build = build
-    self.database = database
-    self.dictionary = dictionary
-    self.feedbackGenerator = feedbackGenerator
-    self.fileClient = fileClient
-    self.gameCenter = gameCenter
-    self.lowPowerMode = lowPowerMode
-    self.mainQueue = mainQueue
-    self.mainRunLoop = mainRunLoop
-    self.remoteNotifications = remoteNotifications
-    self.serverConfig = serverConfig
-    self.storeKit = storeKit
-    self.userDefaults = userDefaults
-    self.userNotifications = userNotifications
+  public init() {}
+
+  func date() -> Date { self.mainRunLoop.now.date }
+
+  public var body: some ReducerProtocol<State, Action> {
+    self.core
+      .onChange(of: \.selectedWord) { selectedWord, state, _ in
+        state.selectedWordIsValid =
+        !state.selectedWordHasAlreadyBeenPlayed
+        && self.dictionary.contains(state.selectedWordString, state.language)
+        return .none
+      }
+      .filterActionsForYourTurn()
+      .ifLet(state: \.gameOver, action: /Action.gameOver) {
+        GameOver()
+      }
+      .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
+      }
   }
 
-  func date() -> Date {
-    self.mainRunLoop.now.date
-  }
-}
-
-public func gameReducer<StatePath, Action, Environment>(
-  state: StatePath,
-  action: CasePath<Action, GameAction>,
-  environment: @escaping (Environment) -> GameEnvironment,
-  isHapticsEnabled: @escaping (StatePath.Root) -> Bool
-) -> Reducer<StatePath.Root, Action, Environment>
-where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
-  Reducer.combine(
-    Reducer(
-      EmptyReducer()
-        .ifLet(state: \.gameOver, action: /GameAction.gameOver) {
-          GameOver()
-        }
-        .ifLet(state: \.upgradeInterstitial, action: /GameAction.upgradeInterstitial) {
-          UpgradeInterstitial()
-        }
-    ),
-
-    .init { state, action, environment in
+  @ReducerBuilderOf<Self>
+  var core: some ReducerProtocolOf<Self> {
+    Reduce { state, action in
       switch action {
       case .activeGames:
         return .none
@@ -284,12 +243,12 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         else { return .none }
 
         return .fireAndForget {
-          let localPlayer = environment.gameCenter.localPlayer.localPlayer()
+          let localPlayer = self.gameCenter.localPlayer.localPlayer()
           let currentParticipantIsLocalPlayer =
           match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
           if currentParticipantIsLocalPlayer {
-            try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
+            try await self.gameCenter.turnBasedMatch.endMatchInTurn(
               .init(
                 for: match.matchId,
                 matchData: match.matchData ?? Data(),
@@ -299,7 +258,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
               )
             )
           } else {
-            try await environment.gameCenter.turnBasedMatch
+            try await self.gameCenter.turnBasedMatch
               .participantQuitOutOfTurn(match.matchId)
           }
         }
@@ -310,7 +269,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
 
       case let .confirmRemoveCube(index):
         state.bottomMenu = nil
-        state.removeCube(at: index, playedAt: environment.date())
+        state.removeCube(at: index, playedAt: self.date())
         state.selectedWord = []
         return .none
 
@@ -354,7 +313,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
       case .gameLoaded:
         state.isGameLoaded = true
         return .run { send in
-          for await instant in environment.mainRunLoop.timer(interval: .seconds(1)) {
+          for await instant in self.mainRunLoop.timer(interval: .seconds(1)) {
             await send(.timerTick(instant.date))
           }
         }
@@ -382,41 +341,41 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
 
       case .task:
         guard !state.isGameOver else { return .none }
-        state.gameCurrentTime = environment.date()
+        state.gameCurrentTime = self.date()
 
         return .run { [gameContext = state.gameContext] send in
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
-              for await isLowPower in await environment.lowPowerMode.start() {
+              for await isLowPower in await self.lowPowerMode.start() {
                 await send(.lowPowerModeChanged(isLowPower))
               }
             }
 
             if gameContext.isTurnBased {
               group.addTask {
-                let playedGamesCount = await environment.userDefaults
+                let playedGamesCount = await self.userDefaults
                   .incrementMultiplayerOpensCount()
-                let isFullGamePurchased = environment.apiClient.currentPlayer()?.appleReceipt != nil
+                let isFullGamePurchased = self.apiClient.currentPlayer()?.appleReceipt != nil
                 guard
                   !isFullGamePurchased,
                   shouldShowInterstitial(
                     gamePlayedCount: playedGamesCount,
                     gameContext: .init(gameContext: gameContext),
-                    serverConfig: environment.serverConfig.config()
+                    serverConfig: self.serverConfig.config()
                   )
                 else { return }
-                try await environment.mainRunLoop.sleep(for: .seconds(3))
+                try await self.mainRunLoop.sleep(for: .seconds(3))
                 await send(.delayedShowUpgradeInterstitial, animation: .default)
               }
             }
 
             group.addTask {
-              try await environment.mainQueue.sleep(for: 0.5)
+              try await self.mainQueue.sleep(for: 0.5)
               await send(.gameLoaded)
             }
           }
           for music in AudioPlayerClient.Sound.allMusic {
-            await environment.audioPlayer.stop(music)
+            await self.audioPlayer.stop(music)
           }
         }
 
@@ -428,8 +387,8 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         guard panData.normalizedPoint.isAwayFromCorners else { return .none }
 
         if let lastLetter = state.selectedWord.last,
-          !lastLetter.isTouching(panData.cubeFaceState),
-          !state.selectedWord.contains(panData.cubeFaceState)
+           !lastLetter.isTouching(panData.cubeFaceState),
+           !state.selectedWord.contains(panData.cubeFaceState)
         {
           return .none
         }
@@ -464,10 +423,40 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
 
       case let .submitButtonTapped(reaction: reaction),
         let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
-        return state.playSelectedWord(
-          with: reaction,
-          environment: environment
+
+        let move = Move(
+          playedAt: self.mainRunLoop.now.date,
+          playerIndex: state.turnBasedContext?.localPlayerIndex,
+          reactions: zip(state.turnBasedContext?.localPlayerIndex, reaction)
+            .map { [$0: $1] },
+          score: state.selectedWordScore,
+          type: .playedWord(state.selectedWord)
         )
+
+        let result = verify(
+          move: move,
+          on: &state.cubes,
+          isValidWord: { self.dictionary.contains($0, state.language) },
+          previousMoves: state.moves
+        )
+
+        defer { state.selectedWord = [] }
+
+        guard result != nil else { return .none }
+
+        state.moves.append(move)
+
+        return .fireAndForget { [state] in
+          await withThrowingTaskGroup(of: Void.self) { group in
+            for face in state.selectedWord where !state.cubes[face.index].isInPlay {
+              group.addTask {
+                try await self.mainQueue
+                  .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
+                await self.audioPlayer.play(.cubeRemove)
+              }
+            }
+          }
+        }
 
       case let .tap(.began, face):
         state.optimisticallySelectedFace = nil
@@ -491,7 +480,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         } else {
           // If tapping on a face not connected to the previously selected face, deselect everything
           if let lastLetter = state.selectedWord.last,
-            !lastLetter.isTouching(face)
+             !lastLetter.isTouching(face)
           {
             state.selectedWord = []
           } else {
@@ -524,7 +513,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return .none
 
       case .tap(.cancelled, _),
-        .tap(.failed, _):
+          .tap(.failed, _):
         state.optimisticallySelectedFace = nil
         return .none
 
@@ -542,7 +531,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return .none
 
       case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
+          .upgradeInterstitial(.delegate(.fullGamePurchased)):
         state.upgradeInterstitial = nil
         return .none
 
@@ -553,34 +542,46 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return .none
       }
     }
-  )
-  .combined(
-    with: Reducer(
-      Scope(state: \.wordSubmitButtonFeature, action: /GameAction.wordSubmitButton) {
-        WordSubmitButtonFeature()
-      }
-    )
-  )
-  .onChange(of: \.selectedWord) { selectedWord, state, _, environment in
-    state.selectedWordIsValid =
-      !state.selectedWordHasAlreadyBeenPlayed
-      && environment.dictionary.contains(state.selectedWordString, state.language)
-    return .none
+    Scope(state: \.wordSubmitButtonFeature, action: /Action.wordSubmitButton) {
+      WordSubmitButtonFeature()
+    }
+    GameOverLogic()
+    TurnBasedLogic()
+    ActiveGamesTray()
+    GameSounds()
   }
-  .combined(with: Reducer(GameOverLogic()))
-  .combined(with: Reducer(TurnBasedLogic()))
-  .combined(with: Reducer(ActiveGamesTray()))
-  .combined(with: Reducer(GameSounds()))
-  .filterActionsForYourTurn()
-  ._pullback(state: state, action: action, environment: environment)
-  .haptics(
-    feedbackGenerator: { environment($0).feedbackGenerator },
-    isEnabled: isHapticsEnabled,
-    triggerOnChangeOf: { state.extract(from: $0)?.selectedWord }
-  )
 }
 
-extension GameState {
+public struct IntegratedGame<StatePath: TcaHelpers.Path, Action>: ReducerProtocol
+where StatePath.Value == Game.State {
+  public typealias State = StatePath.Root
+
+  let toGameState: StatePath
+  let toGameAction: CasePath<Action, Game.Action>
+  let isHapticsEnabled: (StatePath.Root) -> Bool
+
+  public init(
+    state toGameState: StatePath,
+    action toGameAction: CasePath<Action, Game.Action>,
+    isHapticsEnabled: @escaping (StatePath.Root) -> Bool
+  ) {
+    self.toGameState = toGameState
+    self.toGameAction = toGameAction
+    self.isHapticsEnabled = isHapticsEnabled
+  }
+
+  public var body: some ReducerProtocol<State, Action> {
+    EmptyReducer()._ifLet(state: self.toGameState, action: self.toGameAction) {
+      Game()
+    }
+    .haptics(
+      isEnabled: self.isHapticsEnabled,
+      triggerOnChangeOf: { self.toGameState.extract(from: $0)?.selectedWord }
+    )
+  }
+}
+
+extension Game.State {
   public var displayTitle: String {
     switch self.gameContext {
     case .dailyChallenge:
@@ -646,7 +647,7 @@ extension GameState {
     })
   }
 
-  mutating func tryToRemoveCube(at index: LatticePoint) -> Effect<GameAction, Never> {
+  mutating func tryToRemoveCube(at index: LatticePoint) -> Effect<Game.Action, Never> {
     guard self.canRemoveCube else { return .none }
 
     // Don't show menu for timed games.
@@ -690,45 +691,6 @@ extension GameState {
     else { return }
 
     self.moves.append(move)
-  }
-
-  mutating func playSelectedWord(
-    with reaction: Move.Reaction?,
-    environment: GameEnvironment
-  ) -> Effect<GameAction, Never> {
-    let move = Move(
-      playedAt: environment.mainRunLoop.now.date,
-      playerIndex: self.turnBasedContext?.localPlayerIndex,
-      reactions: zip(self.turnBasedContext?.localPlayerIndex, reaction)
-        .map { [$0: $1] },
-      score: self.selectedWordScore,
-      type: .playedWord(self.selectedWord)
-    )
-
-    let result = verify(
-      move: move,
-      on: &self.cubes,
-      isValidWord: { environment.dictionary.contains($0, self.language) },
-      previousMoves: self.moves
-    )
-
-    defer { self.selectedWord = [] }
-
-    guard result != nil else { return .none }
-
-    self.moves.append(move)
-
-    return .fireAndForget { [self] in
-      await withThrowingTaskGroup(of: Void.self) { group in
-        for face in self.selectedWord where !self.cubes[face.index].isInPlay {
-          group.addTask {
-            try await environment.mainQueue
-              .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
-            await environment.audioPlayer.play(.cubeRemove)
-          }
-        }
-      }
-    }
   }
 
   var canRemoveCube: Bool {
@@ -790,7 +752,7 @@ extension GameState {
 extension TurnBasedMatchData {
   public init(
     context: TurnBasedContext,
-    gameState: GameState,
+    gameState: Game.State,
     playerId: SharedModels.Player.Id?
   ) {
     var metadata = context.metadata
@@ -807,10 +769,10 @@ extension TurnBasedMatchData {
   }
 }
 
-extension BottomMenuState where Action == GameAction {
+extension BottomMenuState where Action == Game.Action {
   public static func removeCube(
     index: LatticePoint,
-    state: GameState,
+    state: Game.State,
     isTurnEndingRemoval: Bool
   ) -> Self {
     BottomMenuState(
@@ -829,7 +791,7 @@ extension BottomMenuState where Action == GameAction {
     )
   }
 
-  static func gameMenu(state: GameState) -> Self {
+  static func gameMenu(state: Game.State) -> Self {
     var menu = BottomMenuState(title: menuTitle(state: state))
     menu.onDismiss = .init(action: .dismissBottomMenu, animation: .default)
 
@@ -876,57 +838,9 @@ extension Image {
   static let exit = Self(uiImage: UIImage(named: "exit", in: Bundle.module, with: nil)!)
 }
 
-func menuTitle(state: GameState) -> TextState {
+func menuTitle(state: Game.State) -> TextState {
   .init(state.displayTitle)
 }
-
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension GameEnvironment {
-    public static let unimplemented = Self(
-      apiClient: .unimplemented,
-      applicationClient: .unimplemented,
-      audioPlayer: .unimplemented,
-      backgroundQueue: .unimplemented("backgroundQueue"),
-      build: .unimplemented,
-      database: .unimplemented,
-      dictionary: .unimplemented,
-      feedbackGenerator: .unimplemented,
-      fileClient: .unimplemented,
-      gameCenter: .unimplemented,
-      lowPowerMode: .unimplemented,
-      mainQueue: .unimplemented("mainQueue"),
-      mainRunLoop: .unimplemented("mainRunLoop"),
-      remoteNotifications: .unimplemented,
-      serverConfig: .unimplemented,
-      storeKit: .unimplemented,
-      userDefaults: .unimplemented,
-      userNotifications: .unimplemented
-    )
-
-    public static let noop = Self(
-      apiClient: .noop,
-      applicationClient: .noop,
-      audioPlayer: .noop,
-      backgroundQueue: .immediate,
-      build: .noop,
-      database: .noop,
-      dictionary: .everyString,
-      feedbackGenerator: .noop,
-      fileClient: .noop,
-      gameCenter: .noop,
-      lowPowerMode: .false,
-      mainQueue: .immediate,
-      mainRunLoop: .immediate,
-      remoteNotifications: .noop,
-      serverConfig: .noop,
-      storeKit: .noop,
-      userDefaults: .noop,
-      userNotifications: .noop
-    )
-  }
-#endif
 
 extension UpgradeInterstitialFeature.GameContext {
   fileprivate init(gameContext: ClientModels.GameContext) {
@@ -952,7 +866,7 @@ extension CGPoint {
 }
 
 extension CompletedGame {
-  public init(gameState: GameState) {
+  public init(gameState: Game.State) {
     self.init(
       cubes: .init(cubes: gameState.cubes),
       gameContext: gameState.gameContext.completedGameContext,

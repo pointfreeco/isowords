@@ -170,7 +170,7 @@ class RemoteNotificationsTests: XCTestCase {
         )
       )
     ) {
-      $0.game = GameState(inProgressGame: inProgressGame)
+      $0.game = Game.State(inProgressGame: inProgressGame)
       $0.home.savedGames.unlimited = inProgressGame
     }
     XCTAssert(didReceiveResponseCompletionHandlerCalled)

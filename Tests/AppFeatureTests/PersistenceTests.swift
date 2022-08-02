@@ -50,7 +50,7 @@ class PersistenceTests: XCTestCase {
     let B = IndexedCubeFace(index: index, side: .right)
 
     await store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
-      $0.game = GameState(
+      $0.game = Game.State(
         cubes: .mock,
         gameContext: .solo,
         gameCurrentTime: RunLoop.immediate.now.date,
@@ -281,7 +281,7 @@ class PersistenceTests: XCTestCase {
       $0.home.route = .solo(.init(inProgressGame: .mock))
     }
     await store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
-      $0.game = GameState(inProgressGame: .mock)
+      $0.game = Game.State(inProgressGame: .mock)
     }
     await task.cancel()
   }

@@ -17,12 +17,12 @@ import SwiftUI
 import SwiftUIHelpers
 
 public struct AppState: Equatable {
-  public var game: GameState?
+  public var game: Game.State?
   public var onboarding: Onboarding.State?
   public var home: Home.State
 
   public init(
-    game: GameState? = nil,
+    game: Game.State? = nil,
     home: Home.State = .init(),
     onboarding: Onboarding.State? = nil
   ) {
@@ -31,9 +31,9 @@ public struct AppState: Equatable {
     self.onboarding = onboarding
   }
 
-  public var currentGame: GameFeatureState {
+  public var currentGame: GameFeature.State {
     get {
-      GameFeatureState(game: self.game, settings: self.home.settings)
+      GameFeature.State(game: self.game, settings: self.home.settings)
     }
     set {
       let oldValue = self
@@ -67,7 +67,7 @@ public struct AppState: Equatable {
 
 public enum AppAction: Equatable {
   case appDelegate(AppDelegateReducer.Action)
-  case currentGame(GameFeatureAction)
+  case currentGame(GameFeature.Action)
   case didChangeScenePhase(ScenePhase)
   case gameCenter(GameCenterAction)
   case home(Home.Action)
@@ -77,31 +77,6 @@ public enum AppAction: Equatable {
   case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
 }
 
-extension AppEnvironment {
-  var game: GameEnvironment {
-    .init(
-      apiClient: self.apiClient,
-      applicationClient: self.applicationClient,
-      audioPlayer: self.audioPlayer,
-      backgroundQueue: self.backgroundQueue,
-      build: self.build,
-      database: self.database,
-      dictionary: self.dictionary,
-      feedbackGenerator: self.feedbackGenerator,
-      fileClient: self.fileClient,
-      gameCenter: self.gameCenter,
-      lowPowerMode: self.lowPowerMode,
-      mainQueue: self.mainQueue,
-      mainRunLoop: self.mainRunLoop,
-      remoteNotifications: self.remoteNotifications,
-      serverConfig: self.serverConfig,
-      storeKit: self.storeKit,
-      userDefaults: self.userDefaults,
-      userNotifications: self.userNotifications
-    )
-  }
-}
-
 public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
   Reducer(
     Scope(state: \.home.settings.userSettings, action: /AppAction.appDelegate) {
@@ -109,12 +84,11 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
     }
   ),
 
-  gameFeatureReducer
-    .pullback(
-      state: \AppState.currentGame,
-      action: /AppAction.currentGame,
-      environment: \.game
-    ),
+  Reducer(
+    Scope(state: \.currentGame, action: /AppAction.currentGame) {
+      GameFeature()
+    }
+  ),
 
   Reducer(
     Scope(state: \.home, action: /AppAction.home) {
@@ -193,8 +167,8 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       switch pushNotificationContent {
       case .dailyChallengeEndsSoon:
         if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
-          state.currentGame = GameFeatureState(
-            game: GameState(inProgressGame: inProgressGame),
+          state.currentGame = GameFeature.State(
+            game: Game.State(inProgressGame: inProgressGame),
             settings: state.home.settings
           )
         } else {
@@ -231,7 +205,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     else { return .none }
 
     state.currentGame = .init(
-      game: GameState(inProgressGame: inProgressGame),
+      game: Game.State(inProgressGame: inProgressGame),
       settings: state.home.settings
     )
     return .none
@@ -242,7 +216,7 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     else { return .none }
 
     state.currentGame = .init(
-      game: GameState(inProgressGame: inProgressGame),
+      game: Game.State(inProgressGame: inProgressGame),
       settings: state.home.settings
     )
     return .none
@@ -282,8 +256,8 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     .home(.solo(.gameButtonTapped(.unlimited))):
     state.game =
       state.home.savedGames.unlimited
-      .map { GameState(inProgressGame: $0) }
-      ?? GameState(
+      .map { Game.State(inProgressGame: $0) }
+      ?? Game.State(
         cubes: environment.dictionary.randomCubes(.en),
         gameContext: .solo,
         gameCurrentTime: environment.mainRunLoop.now.date,

@@ -4,21 +4,21 @@ import SharedModels
 import SwiftUI
 
 struct GameHeaderView: View {
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  let store: StoreOf<Game>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
     let isTurnBasedGame: Bool
     let selectedWordString: String
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.isTurnBasedGame = state.turnBasedContext != nil
       self.selectedWordString = state.selectedWordString
     }
   }
 
   public init(
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
@@ -36,8 +36,8 @@ struct GameHeaderView: View {
 
 struct ScoreView: View {
   @Environment(\.deviceState) var deviceState
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  let store: StoreOf<Game>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   @State var isTimeAccented = false
 
@@ -51,7 +51,7 @@ struct ScoreView: View {
     let selectedWordScore: Int
     let selectedWordString: String
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.currentScore = state.currentScore
       self.gameContext = state.gameContext
       self.gameMode = state.gameMode
@@ -64,7 +64,7 @@ struct ScoreView: View {
   }
 
   public init(
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))

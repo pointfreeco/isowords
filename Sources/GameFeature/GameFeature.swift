@@ -5,41 +5,38 @@ import ComposableArchitecture
 import SettingsFeature
 import TcaHelpers
 
-public struct GameFeatureState: Equatable {
-  public var game: GameState?
-  public var settings: Settings.State
+public struct GameFeature: ReducerProtocol {
+  public struct State: Equatable {
+    public var game: Game.State?
+    public var settings: Settings.State
 
-  public init(
-    game: GameState?,
-    settings: Settings.State
-  ) {
-    self.game = game
-    self.settings = settings
+    public init(
+      game: Game.State?,
+      settings: Settings.State
+    ) {
+      self.game = game
+      self.settings = settings
+    }
   }
-}
 
-public enum GameFeatureAction: Equatable {
-  case dismissSettings
-  case game(GameAction)
-  case settings(Settings.Action)
-}
+  public enum Action: Equatable {
+    case dismissSettings
+    case game(Game.Action)
+    case settings(Settings.Action)
+  }
 
-public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, GameEnvironment>
-  .combine(
-    Reducer(
-      Scope(state: \.settings, action: /GameFeatureAction.settings) {
-        Settings()
-      }
-    ),
+  public init() {}
 
-    gameReducer(
+  public var body: some ReducerProtocol<State, Action> {
+    Scope(state: \.settings, action: /Action.settings) {
+      Settings()
+    }
+    IntegratedGame(
       state: OptionalPath(\.game),
-      action: /GameFeatureAction.game,
-      environment: { $0 },
+      action: /Action.game,
       isHapticsEnabled: \.settings.userSettings.enableHaptics
-    ),
-
-    .init { state, action, environment in
+    )
+    Reduce { state, action in
       switch action {
       case .dismissSettings:
         state.game?.isSettingsPresented = false
@@ -49,4 +46,5 @@ public let gameFeatureReducer = Reducer<GameFeatureState, GameFeatureAction, Gam
         return .none
       }
     }
-  )
+  }
+}

@@ -6,13 +6,13 @@ import SwiftUI
 public struct GameFooterView: View {
   let isAnimationReduced: Bool
   let isLeftToRight: Bool
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  let store: StoreOf<Game>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
     let selectedWordString: String
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.selectedWordString = state.selectedWordString
     }
   }
@@ -20,7 +20,7 @@ public struct GameFooterView: View {
   public init(
     isAnimationReduced: Bool,
     isLeftToRight: Bool = false,
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.isAnimationReduced = isAnimationReduced
     self.isLeftToRight = isLeftToRight
@@ -55,12 +55,12 @@ public struct WordListView: View {
   }
 
   let isLeftToRight: Bool
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  let store: StoreOf<Game>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   public init(
     isLeftToRight: Bool = false,
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
@@ -154,7 +154,7 @@ public struct WordListView: View {
 }
 
 extension WordListView.ViewState {
-  init(state: GameState) {
+  init(state: Game.State) {
     self.isTurnBasedGame = state.turnBasedContext != nil
     self.isYourTurn = state.isYourTurn
     self.words = state.playedWords

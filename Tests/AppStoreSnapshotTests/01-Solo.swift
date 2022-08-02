@@ -57,8 +57,8 @@ var gameplayAppStoreView: AnyView {
   let vocab = try! JSONDecoder().decode(FetchVocabWordResponse.self, from: Data(json.utf8))
   let moves = Moves(vocab.moves.prefix(upTo: vocab.moveIndex))
 
-  let state = GameFeatureState(
-    game: GameState(
+  let state = GameFeature.State(
+    game: Game.State(
       activeGames: ActiveGamesState(),
       bottomMenu: nil,
       cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
@@ -86,10 +86,9 @@ var gameplayAppStoreView: AnyView {
     ),
     settings: .init()
   )
-  let store = Store<GameFeatureState, GameFeatureAction>(
+  let store = StoreOf<GameFeature>(
     initialState: state,
-    reducer: .empty,
-    environment: ()
+    reducer: EmptyReducer()
   )
   let view = GameFeatureView(
     content: CubeView(

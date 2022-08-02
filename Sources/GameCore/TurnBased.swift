@@ -10,7 +10,7 @@ struct TurnBasedLogic: ReducerProtocol {
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop) var mainRunLoop
 
-  func reduce(into state: inout GameState, action: GameAction) -> Effect<GameAction, Never> {
+  func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
     guard let turnBasedContext = state.turnBasedContext
     else { return .none }
 
@@ -24,7 +24,7 @@ struct TurnBasedLogic: ReducerProtocol {
       guard let turnBasedMatchData = match.matchData?.turnBasedMatchData
       else { return .none }
 
-      state = GameState(
+      state = Game.State(
         gameCurrentTime: self.mainRunLoop.now.date,
         localPlayer: turnBasedContext.localPlayer,
         turnBasedMatch: match,
@@ -54,7 +54,7 @@ struct TurnBasedLogic: ReducerProtocol {
         let turnBasedMatchData = match.matchData?.turnBasedMatchData
       else { return .none }
 
-      var gameState = GameState(
+      var gameState = Game.State(
         gameCurrentTime: self.mainRunLoop.now.date,
         localPlayer: self.gameCenter.localPlayer.localPlayer(),
         turnBasedMatch: match,
@@ -167,8 +167,8 @@ struct TurnBasedLogic: ReducerProtocol {
   }
 }
 
-extension Reducer where State == GameState, Action == GameAction, Environment == GameEnvironment {
-  func filterActionsForYourTurn() -> Self {
+extension ReducerProtocol where State == Game.State, Action == Game.Action {
+  func filterActionsForYourTurn() -> some ReducerProtocol<State, Action> {
     self.filter { state, action in
       switch action {
       case .pan,

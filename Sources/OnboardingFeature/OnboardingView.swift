@@ -15,13 +15,13 @@ import UserDefaultsClient
 public struct Onboarding: ReducerProtocol {
   public struct State: Equatable {
     public var alert: AlertState<AlertAction>?
-    public var game: GameState
+    public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
 
     public init(
       alert: AlertState<AlertAction>? = nil,
-      game: GameState = .onboarding,
+      game: Game.State = .onboarding,
       presentationStyle: PresentationStyle,
       step: Step = Step.allCases.first!
     ) {
@@ -136,7 +136,7 @@ public struct Onboarding: ReducerProtocol {
     case alert(AlertAction)
     case delayedNextStep
     case delegate(DelegateAction)
-    case game(GameAction)
+    case game(Game.Action)
     case getStartedButtonTapped
     case nextButtonTapped
     case skipButtonTapped
@@ -351,36 +351,22 @@ public struct Onboarding: ReducerProtocol {
   }
 
   var gameReducer: some ReducerProtocol<State, Action> {
-    Reduce(
-      GameCore.gameReducer(
-        state: \State.game,
-        action: /Action.game,
-        environment: {
-          GameEnvironment(
-            apiClient: .noop,
-            applicationClient: .noop,
-            audioPlayer: self.audioPlayer,
-            backgroundQueue: .global(qos: .background),
-            build: .noop,
-            database: .noop,
-            dictionary: self.dictionary,
-            feedbackGenerator: self.feedbackGenerator,
-            fileClient: .noop,
-            gameCenter: .noop,
-            lowPowerMode: self.lowPowerMode,
-            mainQueue: self.mainQueue,
-            mainRunLoop: self.mainRunLoop,
-            remoteNotifications: .noop,
-            serverConfig: .noop,
-            storeKit: .noop,
-            userDefaults: self.userDefaults,
-            userNotifications: .noop
-          )
-        },
-        isHapticsEnabled: { _ in true }
-      ),
-      environment: ()
+    IntegratedGame(
+      state: \State.game,
+      action: /Action.game,
+      isHapticsEnabled: { _ in true }
     )
+    .dependency(\.apiClient, .noop)
+    .dependency(\.applicationClient, .noop)
+    .dependency(\.audioPlayer, self.audioPlayer)
+    .dependency(\.build, .noop)
+    .dependency(\.database, .noop)
+    .dependency(\.fileClient, .noop)
+    .dependency(\.gameCenter, .noop)
+    .dependency(\.remoteNotifications, .noop)
+    .dependency(\.serverConfig, .noop)
+    .dependency(\.storeKit, .noop)
+    .dependency(\.userNotifications, .noop)
   }
 }
 

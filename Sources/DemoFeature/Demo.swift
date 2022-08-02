@@ -31,11 +31,11 @@ public struct DemoState: Equatable {
   }
 
   public enum Step: Equatable {
-    case game(GameState)
+    case game(Game.State)
     case onboarding(Onboarding.State)
   }
 
-  var game: GameState? {
+  var game: Game.State? {
     get {
       guard case let .game(game) = self.step
       else { return nil }
@@ -54,7 +54,7 @@ public struct DemoState: Equatable {
 public enum DemoAction: Equatable {
   case appStoreOverlay(isPresented: Bool)
   case fullVersionButtonTapped
-  case game(GameAction)
+  case game(Game.Action)
   case gameOverDelay
   case onAppear
   case onboarding(Onboarding.Action)
@@ -113,32 +113,20 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
     }
   ),
 
-  gameReducer(
-    state: OptionalPath(\DemoState.game),
-    action: /DemoAction.game,
-    environment: {
-      GameEnvironment(
-        apiClient: $0.apiClient,
-        applicationClient: $0.applicationClient,
-        audioPlayer: $0.audioPlayer,
-        backgroundQueue: $0.backgroundQueue,
-        build: $0.build,
-        database: .noop,
-        dictionary: $0.dictionary,
-        feedbackGenerator: $0.feedbackGenerator,
-        fileClient: .noop,
-        gameCenter: .noop,
-        lowPowerMode: $0.lowPowerMode,
-        mainQueue: $0.mainQueue,
-        mainRunLoop: $0.mainRunLoop,
-        remoteNotifications: .noop,
-        serverConfig: .noop,
-        storeKit: .noop,
-        userDefaults: .noop,
-        userNotifications: .noop
-      )
-    },
-    isHapticsEnabled: { _ in true }
+  Reducer(
+    IntegratedGame(
+      state: OptionalPath(\.game),
+      action: /DemoAction.game,
+      isHapticsEnabled: { _ in true }
+    )
+    .dependency(\.database, .noop)
+    .dependency(\.fileClient, .noop)
+    .dependency(\.gameCenter, .noop)
+    .dependency(\.remoteNotifications, .noop)
+    .dependency(\.serverConfig, .noop)
+    .dependency(\.storeKit, .noop)
+    .dependency(\.userDefaults, .noop)
+    .dependency(\.userNotifications, .noop)
   ),
 
   .init { state, action, environment in
