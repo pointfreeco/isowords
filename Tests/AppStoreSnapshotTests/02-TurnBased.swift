@@ -49,7 +49,7 @@ var turnBasedAppStoreView: AnyView {
         ?? [],
       selectedWordIsValid: true,
       upgradeInterstitial: nil,
-      wordSubmit: WordSubmitButtonState()
+      wordSubmit: WordSubmitButtonFeature.ButtonState()
     ),
     settings: .init()
   )

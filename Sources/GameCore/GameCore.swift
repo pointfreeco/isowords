@@ -52,7 +52,7 @@ public struct GameState: Equatable {
   public var selectedWord: [IndexedCubeFace]
   public var selectedWordIsValid: Bool
   public var upgradeInterstitial: UpgradeInterstitial.State?
-  public var wordSubmitButton: WordSubmitButtonState
+  public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
   public init(
     activeGames: ActiveGamesState = .init(),
@@ -78,7 +78,7 @@ public struct GameState: Equatable {
     selectedWord: [IndexedCubeFace] = [],
     selectedWordIsValid: Bool = false,
     upgradeInterstitial: UpgradeInterstitial.State? = nil,
-    wordSubmit: WordSubmitButtonState = .init()
+    wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
   ) {
     self.activeGames = activeGames
     self.alert = alert
@@ -130,7 +130,7 @@ public struct GameState: Equatable {
     }
   }
 
-  public var wordSubmitButtonFeature: WordSubmitButtonFeatureState {
+  public var wordSubmitButtonFeature: WordSubmitButtonFeature.State {
     get {
       .init(
         isSelectedWordValid: self.selectedWordIsValid,
@@ -171,7 +171,7 @@ public enum GameAction: Equatable {
   case timerTick(Date)
   case trayButtonTapped
   case upgradeInterstitial(UpgradeInterstitial.Action)
-  case wordSubmitButton(WordSubmitButtonAction)
+  case wordSubmitButton(WordSubmitButtonFeature.Action)
 
   public enum AlertAction: Equatable {
     case dismiss
@@ -556,19 +556,11 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
     }
   )
   .combined(
-    with:
-      wordSubmitReducer
-      .pullback(
-        state: \.wordSubmitButtonFeature,
-        action: /GameAction.wordSubmitButton,
-        environment: {
-          .init(
-            audioPlayer: $0.audioPlayer,
-            feedbackGenerator: $0.feedbackGenerator,
-            mainQueue: $0.mainQueue
-          )
-        }
-      )
+    with: Reducer(
+      Scope(state: \.wordSubmitButtonFeature, action: /GameAction.wordSubmitButton) {
+        WordSubmitButtonFeature()
+      }
+    )
   )
   .onChange(of: \.selectedWord) { selectedWord, state, _, environment in
     state.selectedWordIsValid =
