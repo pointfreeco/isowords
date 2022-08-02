@@ -572,7 +572,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
   .combined(with: .gameOverAfterRemovingAllCubes)
   .combined(with: .gameOverAfterTimeExpires)
   .combined(with: .turnBasedMatch)
-  .combined(with: .activeGamesTray)
+  .combined(with: Reducer(ActiveGamesTray()))
   .sounds()
   .filterActionsForYourTurn()
   ._pullback(state: state, action: action, environment: environment)
