@@ -32,7 +32,7 @@ public struct DemoState: Equatable {
 
   public enum Step: Equatable {
     case game(GameState)
-    case onboarding(OnboardingState)
+    case onboarding(Onboarding.State)
   }
 
   var game: GameState? {
@@ -57,7 +57,7 @@ public enum DemoAction: Equatable {
   case game(GameAction)
   case gameOverDelay
   case onAppear
-  case onboarding(OnboardingAction)
+  case onboarding(Onboarding.Action)
 }
 
 public struct DemoEnvironment {
@@ -101,28 +101,17 @@ public struct DemoEnvironment {
 }
 
 public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine(
-  onboardingReducer
-    .pullback(
-      state: /DemoState.Step.onboarding,
-      action: /DemoAction.onboarding,
-      environment: {
-        OnboardingEnvironment(
-          audioPlayer: $0.audioPlayer,
-          backgroundQueue: $0.backgroundQueue,
-          dictionary: $0.dictionary,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
-          userDefaults: $0.userDefaults
-        )
-      }
-    )
-    .pullback(
-      state: \DemoState.step,
-      action: /.self,
-      environment: { $0 }
-    ),
+  Reducer(
+    Scope(state: \.step, action: .self) {
+      EmptyReducer()
+        .ifLet(
+          state: /DemoState.Step.onboarding,
+          action: /DemoAction.onboarding
+        ) {
+          Onboarding()
+        }
+    }
+  ),
 
   gameReducer(
     state: OptionalPath(\DemoState.game),

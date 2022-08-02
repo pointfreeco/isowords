@@ -18,13 +18,13 @@ import SwiftUIHelpers
 
 public struct AppState: Equatable {
   public var game: GameState?
-  public var onboarding: OnboardingState?
+  public var onboarding: Onboarding.State?
   public var home: Home.State
 
   public init(
     game: GameState? = nil,
     home: Home.State = .init(),
-    onboarding: OnboardingState? = nil
+    onboarding: Onboarding.State? = nil
   ) {
     self.game = game
     self.home = home
@@ -54,7 +54,7 @@ public struct AppState: Equatable {
     self.game == nil
   }
 
-  var firstLaunchOnboarding: OnboardingState? {
+  var firstLaunchOnboarding: Onboarding.State? {
     switch self.onboarding?.presentationStyle {
     case .some(.demo), .some(.help), .none:
       return nil
@@ -71,7 +71,7 @@ public enum AppAction: Equatable {
   case didChangeScenePhase(ScenePhase)
   case gameCenter(GameCenterAction)
   case home(Home.Action)
-  case onboarding(OnboardingAction)
+  case onboarding(Onboarding.Action)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
   case savedGamesLoaded(TaskResult<SavedGamesState>)
   case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
@@ -122,23 +122,12 @@ public let appReducer = Reducer<AppState, AppAction, AppEnvironment>.combine(
     }
   ),
 
-  onboardingReducer
-    .optional()
-    .pullback(
-      state: \.onboarding,
-      action: /AppAction.onboarding,
-      environment: {
-        OnboardingEnvironment(
-          audioPlayer: $0.audioPlayer,
-          backgroundQueue: $0.backgroundQueue,
-          dictionary: $0.dictionary,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue,
-          mainRunLoop: $0.mainRunLoop,
-          userDefaults: $0.userDefaults
-        )
-      }),
+  Reducer(
+    EmptyReducer()
+      .ifLet(state: \.onboarding, action: /AppAction.onboarding) {
+        Onboarding()
+      }
+  ),
 
   appReducerCore
 )
