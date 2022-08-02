@@ -283,30 +283,26 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         guard let match = state.turnBasedContext?.match
         else { return .none }
 
-        return .merge(
-          .fireAndForget {
-            let localPlayer = environment.gameCenter.localPlayer.localPlayer()
-            let currentParticipantIsLocalPlayer =
-              match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+        return .fireAndForget {
+          let localPlayer = environment.gameCenter.localPlayer.localPlayer()
+          let currentParticipantIsLocalPlayer =
+          match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
-            if currentParticipantIsLocalPlayer {
-              try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
-                .init(
-                  for: match.matchId,
-                  matchData: match.matchData ?? Data(),
-                  localPlayerId: localPlayer.gamePlayerId,
-                  localPlayerMatchOutcome: .quit,
-                  message: "\(localPlayer.displayName) forfeited the match."
-                )
+          if currentParticipantIsLocalPlayer {
+            try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
+              .init(
+                for: match.matchId,
+                matchData: match.matchData ?? Data(),
+                localPlayerId: localPlayer.gamePlayerId,
+                localPlayerMatchOutcome: .quit,
+                message: "\(localPlayer.displayName) forfeited the match."
               )
-            } else {
-              try await environment.gameCenter.turnBasedMatch
-                .participantQuitOutOfTurn(match.matchId)
-            }
-          },
-
-          state.gameOver(environment: environment)
-        )
+            )
+          } else {
+            try await environment.gameCenter.turnBasedMatch
+              .participantQuitOutOfTurn(match.matchId)
+          }
+        }
 
       case .cancelButtonTapped:
         state.selectedWord = []
@@ -330,7 +326,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return .none
 
       case .endGameButtonTapped:
-        return state.gameOver(environment: environment)
+        return .none
 
       case .exitButtonTapped:
         return .none
@@ -569,8 +565,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
     return .none
   }
   .combined(with: .removingCubesWithDoubleTap)
-  .combined(with: .gameOverAfterRemovingAllCubes)
-  .combined(with: .gameOverAfterTimeExpires)
+  .combined(with: Reducer(GameOverLogic()))
   .combined(with: Reducer(TurnBasedLogic()))
   .combined(with: Reducer(ActiveGamesTray()))
   .sounds()
@@ -731,26 +726,6 @@ extension GameState {
           }
         }
       }
-    }
-  }
-
-  mutating func gameOver(environment: GameEnvironment) -> Effect<GameAction, Never> {
-    guard !self.isGameOver else { return .none }
-    self.bottomMenu = nil
-    self.gameOver = GameOver.State(
-      completedGame: CompletedGame(gameState: self),
-      isDemo: self.isDemo
-    )
-
-    switch self.gameContext {
-    case .dailyChallenge, .shared, .solo:
-      return .fireAndForget { [self] in
-        try await environment.database.saveGame(.init(gameState: self))
-      }
-
-    case let .turnBased(turnBasedMatch):
-      self.gameOver?.turnBasedContext = turnBasedMatch
-      return .none
     }
   }
 
@@ -973,31 +948,6 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       state.selectedWord.count <= 1
     else { return .none }
     return state.tryToRemoveCube(at: index)
-  }
-
-  static let gameOverAfterRemovingAllCubes = Self { state, _, environment in
-    // TODO: reconsider this. should only be called once
-    let allCubesRemoved = state.cubes.allSatisfy {
-      $0.allSatisfy {
-        $0.allSatisfy { !$0.isInPlay }
-      }
-    }
-
-    return allCubesRemoved
-      ? state.gameOver(environment: environment)
-      : .none
-  }
-
-  static let gameOverAfterTimeExpires = Self { state, action, environment in
-    switch state.gameMode {
-    case .timed:
-      return state.secondsPlayed >= state.gameMode.seconds
-        ? state.gameOver(environment: environment)
-        : .none
-
-    case .unlimited:
-      return .none
-    }
   }
 }
 
