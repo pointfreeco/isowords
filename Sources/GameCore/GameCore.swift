@@ -325,7 +325,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
       case let .doubleTap(index):
         guard state.selectedWord.count <= 1
         else { return .none }
-        
+
         return state.tryToRemoveCube(at: index)
 
       case .endGameButtonTapped:
@@ -570,7 +570,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
   .combined(with: Reducer(GameOverLogic()))
   .combined(with: Reducer(TurnBasedLogic()))
   .combined(with: Reducer(ActiveGamesTray()))
-  .sounds()
+  .combined(with: Reducer(GameSounds()))
   .filterActionsForYourTurn()
   ._pullback(state: state, action: action, environment: environment)
   .haptics(
