@@ -322,8 +322,11 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         state.bottomMenu = nil
         return .none
 
-      case .doubleTap:
-        return .none
+      case let .doubleTap(index):
+        guard state.selectedWord.count <= 1
+        else { return .none }
+        
+        return state.tryToRemoveCube(at: index)
 
       case .endGameButtonTapped:
         return .none
@@ -564,7 +567,6 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
       && environment.dictionary.contains(state.selectedWordString, state.language)
     return .none
   }
-  .combined(with: .removingCubesWithDoubleTap)
   .combined(with: Reducer(GameOverLogic()))
   .combined(with: Reducer(TurnBasedLogic()))
   .combined(with: Reducer(ActiveGamesTray()))
@@ -938,16 +940,6 @@ extension UpgradeInterstitialFeature.GameContext {
     case .turnBased:
       self = .turnBased
     }
-  }
-}
-
-extension Reducer where State == GameState, Action == GameAction, Environment == GameEnvironment {
-  static let removingCubesWithDoubleTap: Self = Self { state, action, _ in
-    guard
-      case let .doubleTap(index) = action,
-      state.selectedWord.count <= 1
-    else { return .none }
-    return state.tryToRemoveCube(at: index)
   }
 }
 
