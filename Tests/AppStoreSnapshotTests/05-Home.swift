@@ -46,7 +46,6 @@ var homeAppStoreView: AnyView {
         ],
         hasPastTurnBasedGames: true,
         nagBanner: nil,
-        route: nil,
         savedGames: SavedGamesState(
           dailyChallengeUnlimited: InProgressGame(
             cubes: .mock,

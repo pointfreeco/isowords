@@ -38,7 +38,94 @@ public struct ActiveMatchResponse: Equatable {
 }
 
 public struct Home: ReducerProtocol {
-  public enum Route: Equatable {
+  public struct State: Equatable {
+    public var changelog: ChangelogReducer.State?
+    public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
+    public var destination: DestinationState?
+    public var hasChangelog: Bool
+    public var hasPastTurnBasedGames: Bool
+    public var nagBanner: NagBanner.State?
+    public var savedGames: SavedGamesState {
+      didSet {
+        guard case var .dailyChallenge(dailyChallengeState) = self.destination
+        else { return }
+        dailyChallengeState.inProgressDailyChallengeUnlimited =
+        self.savedGames.dailyChallengeUnlimited
+        self.destination = .dailyChallenge(dailyChallengeState)
+      }
+    }
+    public var settings: Settings.State
+    public var turnBasedMatches: [ActiveTurnBasedMatch]
+    public var weekInReview: FetchWeekInReviewResponse?
+
+    public var activeGames: ActiveGamesState {
+      get {
+        .init(
+          savedGames: self.savedGames,
+          turnBasedMatches: self.turnBasedMatches
+        )
+      }
+      set {
+        self.savedGames = newValue.savedGames
+        self.turnBasedMatches = newValue.turnBasedMatches
+      }
+    }
+
+    public init(
+      dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
+      hasChangelog: Bool = false,
+      hasPastTurnBasedGames: Bool = false,
+      nagBanner: NagBanner.State? = nil,
+      destination: DestinationState? = nil,
+      savedGames: SavedGamesState = SavedGamesState(),
+      settings: Settings.State = .init(),
+      turnBasedMatches: [ActiveTurnBasedMatch] = [],
+      weekInReview: FetchWeekInReviewResponse? = nil
+    ) {
+      self.dailyChallenges = dailyChallenges
+      self.destination = destination
+      self.hasChangelog = hasChangelog
+      self.hasPastTurnBasedGames = hasPastTurnBasedGames
+      self.nagBanner = nagBanner
+      self.savedGames = savedGames
+      self.settings = settings
+      self.turnBasedMatches = turnBasedMatches
+      self.weekInReview = weekInReview
+    }
+
+    var hasActiveGames: Bool {
+      self.savedGames.dailyChallengeUnlimited != nil
+      || self.savedGames.unlimited != nil
+      || !self.turnBasedMatches.isEmpty
+    }
+  }
+
+  public enum Action: Equatable {
+    case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
+    case activeGames(ActiveGamesAction)
+    case authenticationResponse(CurrentPlayerEnvelope)
+    case changelog(ChangelogReducer.Action)
+    case cubeButtonTapped
+    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case destination(DestinationAction)
+    case dismissChangelog
+    case gameButtonTapped(GameButtonAction)
+    case howToPlayButtonTapped
+    case nagBannerFeature(NagBannerFeature.Action)
+    case serverConfigResponse(ServerConfig)
+    case setNavigation(tag: DestinationState.Tag?)
+    case settings(Settings.Action)
+    case task
+    case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
+  }
+
+  public enum GameButtonAction: Equatable {
+    case dailyChallenge
+    case multiplayer
+    case solo
+  }
+
+  public enum DestinationState: Equatable {
     case dailyChallenge(DailyChallengeReducer.State)
     case leaderboard(Leaderboard.State)
     case multiplayer(Multiplayer.State)
@@ -69,94 +156,11 @@ public struct Home: ReducerProtocol {
     }
   }
 
-  public struct State: Equatable {
-    public var changelog: ChangelogReducer.State?
-    public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    public var hasChangelog: Bool
-    public var hasPastTurnBasedGames: Bool
-    public var nagBanner: NagBanner.State?
-    public var route: Route?
-    public var savedGames: SavedGamesState {
-      didSet {
-        guard case var .dailyChallenge(dailyChallengeState) = self.route
-        else { return }
-        dailyChallengeState.inProgressDailyChallengeUnlimited =
-        self.savedGames.dailyChallengeUnlimited
-        self.route = .dailyChallenge(dailyChallengeState)
-      }
-    }
-    public var settings: Settings.State
-    public var turnBasedMatches: [ActiveTurnBasedMatch]
-    public var weekInReview: FetchWeekInReviewResponse?
-
-    public var activeGames: ActiveGamesState {
-      get {
-        .init(
-          savedGames: self.savedGames,
-          turnBasedMatches: self.turnBasedMatches
-        )
-      }
-      set {
-        self.savedGames = newValue.savedGames
-        self.turnBasedMatches = newValue.turnBasedMatches
-      }
-    }
-
-    public init(
-      dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
-      hasChangelog: Bool = false,
-      hasPastTurnBasedGames: Bool = false,
-      nagBanner: NagBanner.State? = nil,
-      route: Route? = nil,
-      savedGames: SavedGamesState = SavedGamesState(),
-      settings: Settings.State = .init(),
-      turnBasedMatches: [ActiveTurnBasedMatch] = [],
-      weekInReview: FetchWeekInReviewResponse? = nil
-    ) {
-      self.dailyChallenges = dailyChallenges
-      self.hasChangelog = hasChangelog
-      self.hasPastTurnBasedGames = hasPastTurnBasedGames
-      self.nagBanner = nagBanner
-      self.route = route
-      self.savedGames = savedGames
-      self.settings = settings
-      self.turnBasedMatches = turnBasedMatches
-      self.weekInReview = weekInReview
-    }
-
-    var hasActiveGames: Bool {
-      self.savedGames.dailyChallengeUnlimited != nil
-      || self.savedGames.unlimited != nil
-      || !self.turnBasedMatches.isEmpty
-    }
-  }
-
-  public enum Action: Equatable {
-    case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
-    case activeGames(ActiveGamesAction)
-    case authenticationResponse(CurrentPlayerEnvelope)
-    case changelog(ChangelogReducer.Action)
-    case cubeButtonTapped
+  public enum DestinationAction: Equatable {
     case dailyChallenge(DailyChallengeReducer.Action)
-    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
-    case dismissChangelog
-    case gameButtonTapped(GameButtonAction)
-    case howToPlayButtonTapped
     case leaderboard(Leaderboard.Action)
     case multiplayer(Multiplayer.Action)
-    case nagBannerFeature(NagBannerFeature.Action)
-    case serverConfigResponse(ServerConfig)
-    case setNavigation(tag: Route.Tag?)
-    case settings(Settings.Action)
     case solo(Solo.Action)
-    case task
-    case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
-  }
-
-  public enum GameButtonAction: Equatable {
-    case dailyChallenge
-    case multiplayer
-    case solo
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -265,7 +269,16 @@ public struct Home: ReducerProtocol {
         state.changelog = .init()
         return .none
 
-      case .dailyChallenge:
+      case .destination(.dailyChallenge):
+        return .none
+
+      case .destination(.leaderboard):
+        return .none
+
+      case .destination(.multiplayer):
+        return .none
+
+      case .destination(.solo):
         return .none
 
       case let .dailyChallengeResponse(.success(dailyChallenges)):
@@ -286,12 +299,6 @@ public struct Home: ReducerProtocol {
       case .howToPlayButtonTapped:
         return .none
 
-      case .leaderboard:
-        return .none
-
-      case .multiplayer:
-        return .none
-
       case let .serverConfigResponse(serverConfig):
         state.hasChangelog = serverConfig.newestBuild > self.build.number()
         return .none
@@ -299,14 +306,14 @@ public struct Home: ReducerProtocol {
       case let .setNavigation(tag: tag):
         switch tag {
         case .dailyChallenge:
-          state.route = .dailyChallenge(
+          state.destination = .dailyChallenge(
             .init(
               dailyChallenges: state.dailyChallenges ?? [],
               inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
             )
           )
         case .leaderboard:
-          state.route = .leaderboard(
+          state.destination = .leaderboard(
             .init(
               isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
               isHapticsEnabled: state.settings.userSettings.enableHaptics,
@@ -318,13 +325,13 @@ public struct Home: ReducerProtocol {
             )
           )
         case .multiplayer:
-          state.route = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
+          state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
         case .settings:
-          state.route = .settings
+          state.destination = .settings
         case .solo:
-          state.route = .solo(.init(inProgressGame: state.savedGames.unlimited))
+          state.destination = .solo(.init(inProgressGame: state.savedGames.unlimited))
         case .none:
-          state.route = .none
+          state.destination = .none
         }
         return .none
 
@@ -332,9 +339,6 @@ public struct Home: ReducerProtocol {
         return .none
 
       case .settings:
-        return .none
-
-      case .solo:
         return .none
 
       case .task:
@@ -356,29 +360,29 @@ public struct Home: ReducerProtocol {
     .ifLet(state: \.changelog, action: /Action.changelog) {
       ChangelogReducer()
     }
-    .ifLet(state: \.route, action: .self) {
+    .ifLet(state: \.destination, action: /Action.destination) {
       EmptyReducer()
         .ifLet(
-          state: /Route.dailyChallenge,
-          action: /Action.dailyChallenge
+          state: /DestinationState.dailyChallenge,
+          action: /DestinationAction.dailyChallenge
         ) {
           DailyChallengeReducer()
         }
         .ifLet(
-          state: /Route.leaderboard,
-          action: /Action.leaderboard
+          state: /DestinationState.leaderboard,
+          action: /DestinationAction.leaderboard
         ) {
           Leaderboard()
         }
         .ifLet(
-          state: /Route.multiplayer,
-          action: /Action.multiplayer
+          state: /DestinationState.multiplayer,
+          action: /DestinationAction.multiplayer
         ) {
           Multiplayer()
         }
         .ifLet(
-          state: /Route.solo,
-          action: /Action.solo
+          state: /DestinationState.solo,
+          action: /DestinationAction.solo
         ) {
           Solo()
         }
@@ -386,9 +390,6 @@ public struct Home: ReducerProtocol {
 
     Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
       NagBannerFeature()
-    }
-    Scope(state: \.settings, action: /Action.settings) {
-      Settings()
     }
   }
 
@@ -481,7 +482,7 @@ public struct HomeView: View {
     let hasChangelog: Bool
     let isChangelogVisible: Bool
     let isNagBannerVisible: Bool
-    let tag: Home.Route.Tag?
+    let tag: Home.DestinationState.Tag?
 
     init(state: Home.State) {
       self.hasActiveGames =
@@ -491,7 +492,7 @@ public struct HomeView: View {
       self.hasChangelog = state.hasChangelog
       self.isChangelogVisible = state.changelog != nil
       self.isNagBannerVisible = state.nagBanner != nil
-      self.tag = state.route?.tag
+      self.tag = state.destination?.tag
     }
   }
 
@@ -528,7 +529,7 @@ public struct HomeView: View {
                   ),
                   navPresentationStyle: .navigation
                 ),
-                tag: Home.Route.Tag.settings,
+                tag: Home.DestinationState.Tag.settings,
                 selection: viewStore.binding(get: \.tag, send: Home.Action.setNavigation(tag:))
                   .animation()
               ) {

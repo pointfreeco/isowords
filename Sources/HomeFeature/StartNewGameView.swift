@@ -13,7 +13,7 @@ struct StartNewGameView: View {
   }
 
   var body: some View {
-    WithViewStore(self.store.scope(state: \.route?.tag)) { viewStore in
+    WithViewStore(self.store.scope(state: \.destination?.tag)) { viewStore in
       VStack(alignment: .leading) {
         Text("Start a game")
           .adaptiveFont(.matterMedium, size: 16)
@@ -23,12 +23,13 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\Home.State.route).appending(path: /Home.Route.solo).extract(from:),
-              action: Home.Action.solo
+              state: (\Home.State.destination).appending(path: /Home.DestinationState.solo)
+                .extract(from:),
+              action: { .destination(.solo($0)) }
             ),
             then: SoloView.init(store:)
           ),
-          tag: Home.Route.Tag.solo,
+          tag: Home.DestinationState.Tag.solo,
           selection: viewStore.binding(
             send: Home.Action.setNavigation(tag:)
           )
@@ -50,12 +51,13 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\Home.State.route).appending(path: /Home.Route.multiplayer).extract(from:),
-              action: Home.Action.multiplayer
+              state: (\Home.State.destination).appending(path: /Home.DestinationState.multiplayer)
+                .extract(from:),
+              action: { .destination(.multiplayer($0)) }
             ),
             then: MultiplayerView.init(store:)
           ),
-          tag: Home.Route.Tag.multiplayer,
+          tag: Home.DestinationState.Tag.multiplayer,
           selection:
             viewStore
             .binding(send: Home.Action.setNavigation(tag:))

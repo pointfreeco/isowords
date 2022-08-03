@@ -12,11 +12,31 @@ import SwiftUI
 import UIApplicationClient
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
-  let store = Store(
-    initialState: .init(),
-    reducer: appReducer,
-    environment: .live
-  )
+  let store: StoreOf<AppReducer> = {
+    let apiClient = ApiClient.live
+    let build = Build.live
+
+    return Store(
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
+        .dependency(
+          \.audioPlayer, .live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
+        )
+        .dependency(
+          \.database, .live(
+            path: FileManager.default
+              .urls(for: .documentDirectory, in: .userDomainMask)
+              .first!
+              .appendingPathComponent("co.pointfree.Isowords")
+              .appendingPathComponent("Isowords.sqlite3")
+          )
+        )
+        .dependency(\.dictionary, .sqlite())
+        .dependency(\.serverConfig, .live(apiClient: apiClient, build: build))
+        .dependency(\.userDefaults, .live())
+    )
+  }()
+  
   lazy var viewStore = ViewStore(
     self.store.scope(state: { _ in () }),
     removeDuplicates: ==
@@ -61,47 +81,6 @@ struct IsowordsApp: App {
     .onChange(of: self.scenePhase) {
       self.appDelegate.viewStore.send(.didChangeScenePhase($0))
     }
-  }
-}
-
-extension AppEnvironment {
-  static var live: Self {
-    let apiClient = ApiClient.live
-    let build = Build.live
-
-    return Self(
-      apiClient: apiClient,
-      applicationClient: .live,
-      audioPlayer: .live(
-        bundles: [
-          AppAudioLibrary.bundle,
-          AppClipAudioLibrary.bundle,
-        ]
-      ),
-      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
-      build: build,
-      database: .live(
-        path: FileManager.default
-          .urls(for: .documentDirectory, in: .userDomainMask)
-          .first!
-          .appendingPathComponent("co.pointfree.Isowords")
-          .appendingPathComponent("Isowords.sqlite3")
-      ),
-      deviceId: .live,
-      dictionary: .sqlite(),
-      feedbackGenerator: .live,
-      fileClient: .live,
-      gameCenter: .live,
-      lowPowerMode: .live,
-      mainQueue: .main,
-      mainRunLoop: .main,
-      remoteNotifications: .live,
-      serverConfig: .live(apiClient: apiClient, build: build),
-      storeKit: .live,
-      timeZone: { .autoupdatingCurrent },
-      userDefaults: .live(),
-      userNotifications: .live
-    )
   }
 }
 

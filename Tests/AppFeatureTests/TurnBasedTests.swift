@@ -57,55 +57,52 @@ class TurnBasedTests: XCTestCase {
     ]
     let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
     let store = TestStore(
-      initialState: .init(
-        home: .init(route: .multiplayer(.init(hasPastGames: false)))
+      initialState: AppReducer.State(
+        home: .init(destination: .multiplayer(.init(hasPastGames: false)))
       ),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        // TODO: asyncOverride
-        $0.apiClient.apiRequest = { @Sendable route in
-          switch route {
-          case .dailyChallenge(.today):
-            return try (JSONEncoder().encode(dailyChallenges), .init())
-          case .leaderboard(.weekInReview):
-            return try (JSONEncoder().encode(weekInReview), .init())
-          default:
-            return try await Task.never()
-          }
-        }
-        $0.apiClient.authenticate = { _ in .mock }
-        $0.apiClient.currentPlayer = { currentPlayer }
-        $0.audioPlayer.loop = { _ in }
-        $0.audioPlayer.play = { _ in }
-        $0.audioPlayer.stop = { _ in }
-        $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
-        $0.build.number = { 42 }
-        $0.deviceId.id = { .deviceId }
-        $0.dictionary.contains = { word, _ in word == "CAB" }
-        $0.dictionary.randomCubes = { _ in .mock }
-        $0.feedbackGenerator = .noop
-        $0.fileClient.save = { @Sendable _, _ in }
-        $0.fileClient.load = { @Sendable _ in try await Task.never() }
-        $0.gameCenter.localPlayer.authenticate = {}
-        $0.gameCenter.localPlayer.listener = { listener.stream }
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
-        $0.gameCenter.turnBasedMatch.loadMatches = { [] }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
-          await didSaveCurrentTurn.setValue(true)
-        }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in }
-        $0.lowPowerMode.start = { .never }
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-        $0.serverConfig.config = { .init() }
-        $0.serverConfig.refresh = { .init() }
-        $0.userDefaults.setInteger = { _, _ in }
-        $0.timeZone = { .newYork }
-      }
+      reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
+
+    store.dependencies.apiClient.apiRequest = { @Sendable route in
+      switch route {
+      case .dailyChallenge(.today):
+        return try (JSONEncoder().encode(dailyChallenges), .init())
+      case .leaderboard(.weekInReview):
+        return try (JSONEncoder().encode(weekInReview), .init())
+      default:
+        return try await Task.never()
+      }
+    }
+    store.dependencies.apiClient.authenticate = { _ in .mock }
+    store.dependencies.apiClient.currentPlayer = { currentPlayer }
+    store.dependencies.audioPlayer.loop = { _ in }
+    store.dependencies.audioPlayer.play = { _ in }
+    store.dependencies.audioPlayer.stop = { _ in }
+    store.dependencies.build.number = { 42 }
+    store.dependencies.deviceId.id = { .deviceId }
+    store.dependencies.dictionary.contains = { word, _ in word == "CAB" }
+    store.dependencies.dictionary.randomCubes = { _ in .mock }
+    store.dependencies.feedbackGenerator = .noop
+    store.dependencies.fileClient.save = { @Sendable _, _ in }
+    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
+    store.dependencies.gameCenter.localPlayer.authenticate = {}
+    store.dependencies.gameCenter.localPlayer.listener = { listener.stream }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
+    store.dependencies.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
+    store.dependencies.gameCenter.turnBasedMatch.loadMatches = { [] }
+    store.dependencies.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in
+      await didSaveCurrentTurn.setValue(true)
+    }
+    store.dependencies.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
+    store.dependencies.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in }
+    store.dependencies.lowPowerMode.start = { .never }
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.serverConfig.refresh = { .init() }
+    store.dependencies.userDefaults.setInteger = { _, _ in }
+    store.dependencies.timeZone = .newYork
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))
@@ -127,7 +124,7 @@ class TurnBasedTests: XCTestCase {
       .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
     )
 
-    await store.send(.home(.multiplayer(.startButtonTapped)))
+    await store.send(.home(.destination(.multiplayer(.startButtonTapped))))
 
     listener.continuation
       .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
@@ -156,12 +153,12 @@ class TurnBasedTests: XCTestCase {
       $0.game = initialGameState
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
-          $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
+          $0.metadata.lastOpenedAt = store.dependencies.mainRunLoop.now.date
         }
       }
     }
-    store.environment.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
-    store.environment.userDefaults.setInteger = { int, key in
+    store.dependencies.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
+    store.dependencies.userDefaults.setInteger = { int, key in
       XCTAssertNoDifference(int, 1)
       XCTAssertNoDifference(key, "multiplayerOpensCount")
     }
@@ -239,7 +236,7 @@ class TurnBasedTests: XCTestCase {
       $0.cubes[index].right.useCount = 1
       $0.cubes[index].top.useCount = 1
       try XCTUnwrap(&$0.turnBasedContext) {
-        $0.metadata.lastOpenedAt = store.environment.mainRunLoop.now.date
+        $0.metadata.lastOpenedAt = store.dependencies.mainRunLoop.now.date
       }
     }
     let updatedMatch = update(newMatch) {
@@ -250,7 +247,7 @@ class TurnBasedTests: XCTestCase {
             localPlayer: .mock,
             match: newMatch,
             metadata: .init(
-              lastOpenedAt: store.environment.mainRunLoop.now.date,
+              lastOpenedAt: store.dependencies.mainRunLoop.now.date,
               playerIndexToId: [0: currentPlayer.player.id]
             )
           ),
@@ -259,7 +256,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
+    store.dependencies.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
 
     await store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
       $0.game = updatedGameState
@@ -289,7 +286,7 @@ class TurnBasedTests: XCTestCase {
           localPlayer: .mock,
           match: updatedMatch,
           metadata: .init(
-            lastOpenedAt: store.environment.mainRunLoop.now.date,
+            lastOpenedAt: store.dependencies.mainRunLoop.now.date,
             playerIndexToId: [0: currentPlayer.player.id]
           )
         )
@@ -327,37 +324,34 @@ class TurnBasedTests: XCTestCase {
     let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
 
     let store = TestStore(
-      initialState: .init(),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.apiClient.authenticate = { _ in .mock }
-        $0.build.number = { 42 }
-        $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.apiRequest = { @Sendable route in
-          switch route {
-          case .dailyChallenge(.today):
-            return try (JSONEncoder().encode(dailyChallenges), .init())
-          case .leaderboard(.weekInReview):
-            return try (JSONEncoder().encode(weekInReview), .init())
-          default:
-            return try await Task.never()
-          }
-        }
-        $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
-        $0.deviceId.id = { .deviceId }
-        $0.fileClient.save = { @Sendable _, _ in }
-        $0.gameCenter.localPlayer.authenticate = {}
-        $0.gameCenter.localPlayer.listener = { listener.stream }
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
-        $0.gameCenter.turnBasedMatch.loadMatches = { [] }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.serverConfig.config = { .init() }
-        $0.timeZone = { .newYork }
-      }
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
+    store.dependencies.apiClient.authenticate = { _ in .mock }
+    store.dependencies.build.number = { 42 }
+    store.dependencies.apiClient.currentPlayer = { nil }
+    store.dependencies.apiClient.apiRequest = { @Sendable route in
+      switch route {
+      case .dailyChallenge(.today):
+        return try (JSONEncoder().encode(dailyChallenges), .init())
+      case .leaderboard(.weekInReview):
+        return try (JSONEncoder().encode(weekInReview), .init())
+      default:
+        return try await Task.never()
+      }
+    }
+    store.dependencies.deviceId.id = { .deviceId }
+    store.dependencies.fileClient.save = { @Sendable _, _ in }
+    store.dependencies.gameCenter.localPlayer.authenticate = {}
+    store.dependencies.gameCenter.localPlayer.listener = { listener.stream }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
+    store.dependencies.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
+    store.dependencies.gameCenter.turnBasedMatch.loadMatches = { [] }
+    store.dependencies.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.timeZone = .newYork
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))
@@ -445,36 +439,33 @@ class TurnBasedTests: XCTestCase {
     let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
 
     let store = TestStore(
-      initialState: .init(),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.apiClient.authenticate = { _ in .mock }
-        $0.apiClient.currentPlayer = { nil }
-        $0.apiClient.apiRequest = { @Sendable route in
-          switch route {
-          case .dailyChallenge(.today):
-            return try (JSONEncoder().encode(dailyChallenges), .init())
-          case .leaderboard(.weekInReview):
-            return try (JSONEncoder().encode(weekInReview), .init())
-          default:
-            return try await Task.never()
-          }
-        }
-        $0.backgroundQueue = self.backgroundQueue.eraseToAnyScheduler()
-        $0.build.number = { 42 }
-        $0.deviceId.id = { .deviceId }
-        $0.fileClient.save = { @Sendable _, _ in }
-        $0.gameCenter.localPlayer.authenticate = {}
-        $0.gameCenter.localPlayer.listener = { listener.stream }
-        $0.gameCenter.localPlayer.localPlayer = { .mock }
-        $0.gameCenter.turnBasedMatch.loadMatches = { [] }
-        $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.serverConfig.config = { .init() }
-        $0.timeZone = { .newYork }
-      }
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
+    store.dependencies.apiClient.authenticate = { _ in .mock }
+    store.dependencies.apiClient.currentPlayer = { nil }
+    store.dependencies.apiClient.apiRequest = { @Sendable route in
+      switch route {
+      case .dailyChallenge(.today):
+        return try (JSONEncoder().encode(dailyChallenges), .init())
+      case .leaderboard(.weekInReview):
+        return try (JSONEncoder().encode(weekInReview), .init())
+      default:
+        return try await Task.never()
+      }
+    }
+    store.dependencies.build.number = { 42 }
+    store.dependencies.deviceId.id = { .deviceId }
+    store.dependencies.fileClient.save = { @Sendable _, _ in }
+    store.dependencies.gameCenter.localPlayer.authenticate = {}
+    store.dependencies.gameCenter.localPlayer.listener = { listener.stream }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
+    store.dependencies.gameCenter.turnBasedMatch.loadMatches = { [] }
+    store.dependencies.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
+    store.dependencies.serverConfig.config = { .init() }
+    store.dependencies.timeZone = .newYork
 
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))
@@ -551,15 +542,6 @@ class TurnBasedTests: XCTestCase {
       $0.participants = [.local, .remote]
     }
 
-    let environment = update(AppEnvironment.unimplemented) {
-      $0.apiClient.currentPlayer = { nil }
-      $0.audioPlayer.play = { _ in }
-      $0.gameCenter.localPlayer.localPlayer = { .mock }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
-      $0.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
     let initialGameState = Game.State(
       cubes: .mock,
       gameContext: .turnBased(
@@ -575,10 +557,16 @@ class TurnBasedTests: XCTestCase {
       secondsPlayed: 0
     )
     let store = TestStore(
-      initialState: AppState(game: initialGameState),
-      reducer: appReducer,
-      environment: environment
+      initialState: AppReducer.State(game: initialGameState),
+      reducer: AppReducer()
     )
+
+    store.dependencies.apiClient.currentPlayer = { nil }
+    store.dependencies.audioPlayer.play = { _ in }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
+    store.dependencies.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
+    store.dependencies.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(.currentGame(.game(.doubleTap(index: .zero)))) {
       try XCTUnwrap(&$0.game) {
@@ -612,7 +600,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
+    store.dependencies.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
     await store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
       $0.game = updatedGameState
@@ -664,7 +652,7 @@ class TurnBasedTests: XCTestCase {
         )
       )
     }
-    store.environment.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
+    store.dependencies.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
     await store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
       $0.game = updatedGameState
@@ -707,25 +695,8 @@ class TurnBasedTests: XCTestCase {
 
     let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
 
-    let environment = update(AppEnvironment.unimplemented) {
-      $0.apiClient.currentPlayer = { nil }
-      $0.dictionary.randomCubes = { _ in .mock }
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
-      $0.gameCenter.localPlayer.localPlayer = {
-        update(.authenticated) { $0.player = localParticipant.player! }
-      }
-      $0.gameCenter.turnBasedMatch.rematch = {
-        await didRematchWithId.setValue($0)
-        return newMatch
-      }
-      $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
-      $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
     let store = TestStore(
-      initialState: AppState(
+      initialState: AppReducer.State(
         game: update(
           Game.State(
             cubes: .mock,
@@ -747,9 +718,23 @@ class TurnBasedTests: XCTestCase {
           )
         }
       ),
-      reducer: appReducer,
-      environment: environment
+      reducer: AppReducer()
     )
+
+    store.dependencies.apiClient.currentPlayer = { nil }
+    store.dependencies.dictionary.randomCubes = { _ in .mock }
+    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
+    store.dependencies.gameCenter.localPlayer.localPlayer = {
+      update(.authenticated) { $0.player = localParticipant.player! }
+    }
+    store.dependencies.gameCenter.turnBasedMatch.rematch = {
+      await didRematchWithId.setValue($0)
+      return newMatch
+    }
+    store.dependencies.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
+    store.dependencies.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
+    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(.currentGame(.game(.gameOver(.rematchButtonTapped)))) {
       $0.game = nil
@@ -815,18 +800,16 @@ class TurnBasedTests: XCTestCase {
     }
 
     let notificationBannerRequest = ActorIsolated<GameCenterClient.NotificationBannerRequest?>(nil)
-    let environment = update(AppEnvironment.unimplemented) {
-      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.gameCenter.showNotificationBanner = { await notificationBannerRequest.setValue($0) }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
 
     let store = TestStore(
-      initialState: AppState(),
-      reducer: appReducer,
-      environment: environment
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
     )
+
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.gameCenter.showNotificationBanner = { await notificationBannerRequest.setValue($0) }
+    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(
       .gameCenter(
@@ -877,17 +860,14 @@ class TurnBasedTests: XCTestCase {
       $0.message = "Let's play!"
     }
 
-    let environment = update(AppEnvironment.unimplemented) {
-      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
     let store = TestStore(
-      initialState: AppState(),
-      reducer: appReducer,
-      environment: environment
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
     )
+
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(
       .gameCenter(

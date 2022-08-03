@@ -15,23 +15,9 @@ class RemoteNotificationsTests: XCTestCase {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
 
-    var environment = AppEnvironment.didFinishLaunching
-    environment.build.number = { 80 }
-    environment.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
-    }
-    environment.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
-    }
-    environment.userNotifications.requestAuthorization = { options in
-      await requestedAuthorizationOptions.setValue(options)
-      return true
-    }
-
     let store = TestStore(
-      initialState: AppState(),
-      reducer: appReducer,
-      environment: environment
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
@@ -82,13 +68,9 @@ class RemoteNotificationsTests: XCTestCase {
   }
 
   func testRegisterForRemoteNotifications_NotAuthorized() async {
-    var environment = AppEnvironment.didFinishLaunching
-    environment.remoteNotifications = .unimplemented
-
     let store = TestStore(
-      initialState: AppState(),
-      reducer: appReducer,
-      environment: environment
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
@@ -99,20 +81,17 @@ class RemoteNotificationsTests: XCTestCase {
   }
 
   func testReceiveNotification_dailyChallengeEndsSoon() async {
-    var environment = AppEnvironment.didFinishLaunching
-    environment.fileClient.save = { @Sendable _, _ in }
-
     let inProgressGame = InProgressGame.mock
 
     let store = TestStore(
-      initialState: update(AppState()) {
+      initialState: update(AppReducer.State()) {
         $0.home.savedGames.dailyChallengeUnlimited = inProgressGame
       },
-      reducer: appReducer,
-      environment: environment
+      reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
+    store.dependencies.fileClient.save = { @Sendable _, _ in }
 
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
     store.dependencies.userNotifications.delegate = { delegate.stream }
