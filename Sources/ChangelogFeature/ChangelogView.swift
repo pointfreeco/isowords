@@ -5,9 +5,7 @@ import ServerConfigClient
 import SharedModels
 import Styleguide
 import SwiftUI
-import TcaHelpers
 import UIApplicationClient
-import UserDefaultsClient
 
 public struct ChangelogReducer: ReducerProtocol {
   public struct State: Equatable {
@@ -40,7 +38,6 @@ public struct ChangelogReducer: ReducerProtocol {
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.build) var build
   @Dependency(\.serverConfig) var serverConfig
-  @Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 
@@ -200,7 +197,6 @@ public struct ChangelogView: View {
               .dependency(\.applicationClient, .noop)
               .dependency(\.build.number) { 98 }
               .dependency(\.serverConfig, .noop)
-              .dependency(\.userDefaults.integerForKey) { _ in 98 }
           )
         )
         .navigationStyle(

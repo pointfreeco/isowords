@@ -1,8 +1,5 @@
-import ClientModels
-import Combine
 import ComposableArchitecture
 import ComposableGameCenter
-import Styleguide
 import SwiftUI
 
 public struct PastGame: ReducerProtocol {

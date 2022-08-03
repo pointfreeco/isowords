@@ -1,14 +1,9 @@
 import ApiClient
-import AudioPlayerClient
 import ComposableArchitecture
 import CubeCore
 import CubePreview
-import FeedbackGeneratorClient
-import LowPowerModeClient
 import SharedModels
-import Styleguide
 import SwiftUI
-import TcaHelpers
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games
@@ -74,10 +69,6 @@ public struct Leaderboard: ReducerProtocol {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.feedbackGenerator) var feedbackGenerator
-  @Dependency(\.lowPowerMode) var lowPowerMode
-  @Dependency(\.mainQueue) var mainQueue
 
   public init() {}
 

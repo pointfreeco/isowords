@@ -1,22 +1,12 @@
-import ApiClient
 import AudioPlayerClient
-import Build
 import ComposableArchitecture
 import CubeCore
-import DictionaryClient
-import FeedbackGeneratorClient
 import GameCore
-import GameOverFeature
-import LowPowerModeClient
 import OnboardingFeature
 import ServerConfig
-import SharedModels
 import StoreKit
-import Styleguide
 import SwiftUI
 import TcaHelpers
-import UIApplicationClient
-import UserDefaultsClient
 
 public struct Demo: ReducerProtocol {
   public struct State: Equatable {
@@ -61,16 +51,11 @@ public struct Demo: ReducerProtocol {
     case onboarding(Onboarding.Action)
   }
 
-  @Dependency(\.apiClient) var apiClient
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.build) var build
   @Dependency(\.dictionary) var dictionary
-  @Dependency(\.feedbackGenerator) var feedbackGenerator
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 

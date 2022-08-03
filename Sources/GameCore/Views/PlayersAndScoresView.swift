@@ -1,8 +1,6 @@
 import ComposableArchitecture
 import ComposableGameCenter
-import SharedSwiftUIEnvironment
 import SwiftUI
-import SwiftUIHelpers
 
 struct PlayersAndScoresView: View {
   @Environment(\.opponentImage) var defaultOpponentImage

@@ -1,14 +1,10 @@
-import ApiClient
 import ClientModels
 import ComposableArchitecture
 import ComposableUserNotifications
 import DailyChallengeHelpers
 import DateHelpers
-import FileClient
-import NotificationHelpers
 import NotificationsAuthAlert
 import Overture
-import RemoteNotificationsClient
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -81,9 +77,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}

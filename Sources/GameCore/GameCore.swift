@@ -1,32 +1,19 @@
 import ActiveGamesFeature
-import ApiClient
 import AudioPlayerClient
 import BottomMenu
-import Build
-import CasePaths
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
-import ComposableStoreKit
-import ComposableUserNotifications
 import CubeCore
 import DictionaryClient
-import FeedbackGeneratorClient
-import FileClient
 import GameOverFeature
-import Gen
 import HapticsCore
-import LocalDatabaseClient
 import LowPowerModeClient
 import Overture
-import RemoteNotificationsClient
-import ServerConfigClient
 import SharedModels
 import SwiftUI
 import TcaHelpers
-import UIApplicationClient
 import UpgradeInterstitialFeature
-import UserDefaultsClient
 
 public struct Game: ReducerProtocol {
   public struct State: Equatable {
@@ -187,22 +174,14 @@ public struct Game: ReducerProtocol {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.build) var build
-  @Dependency(\.database) var database
   @Dependency(\.dictionary) var dictionary
-  @Dependency(\.feedbackGenerator) var feedbackGenerator
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.serverConfig) var serverConfig
-  @Dependency(\.storeKit) var storeKit
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
 

@@ -1,25 +1,13 @@
 import ApiClient
-import AudioPlayerClient
 import Build
 import ComposableArchitecture
 import ComposableStoreKit
 import ComposableUserNotifications
-import FeedbackGeneratorClient
-import FileClient
-import LocalDatabaseClient
-import LowPowerModeClient
 import RemoteNotificationsClient
-import SceneKit
-import ServerConfigClient
 import SharedModels
 import StatsFeature
 import StoreKit
-import SwiftUI
-import SwiftUIHelpers
-import TcaHelpers
 import UIApplicationClient
-import UserDefaultsClient
-import UserNotifications
 
 public struct UserSettings: Codable, Equatable {
   public var appIcon: AppIcon?
@@ -192,15 +180,11 @@ public struct Settings: ReducerProtocol {
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build) var build
-  @Dependency(\.database) var database
-  @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.serverConfig) var serverConfig
   @Dependency(\.storeKit) var storeKit
-  @Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}

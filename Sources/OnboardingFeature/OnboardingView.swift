@@ -11,6 +11,7 @@ import SharedModels
 import Styleguide
 import SwiftUI
 import UserDefaultsClient
+import UIApplicationClient
 
 public struct Onboarding: ReducerProtocol {
   public struct State: Equatable {

@@ -1,7 +1,6 @@
 import AudioPlayerClient
 import ComposableArchitecture
 import SelectionSoundsCore
-import SharedModels
 
 extension ReducerProtocolOf<Game> {
   func sounds() -> GameSounds<Self> {

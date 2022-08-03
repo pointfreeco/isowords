@@ -6,7 +6,6 @@ import StatsFeature
 import Styleguide
 import SwiftUI
 import SwiftUIHelpers
-import UserDefaultsClient
 
 public struct SettingsView: View {
   @Environment(\.colorScheme) var colorScheme

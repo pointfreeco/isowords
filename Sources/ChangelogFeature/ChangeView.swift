@@ -1,9 +1,7 @@
 import Build
 import ComposableArchitecture
 import ServerConfigClient
-import Styleguide
 import SwiftUI
-import UIApplicationClient
 
 public struct Change: ReducerProtocol {
   public struct State: Equatable, Identifiable {
@@ -18,9 +16,6 @@ public struct Change: ReducerProtocol {
   public enum Action: Equatable {
     case showButtonTapped
   }
-
-  @Dependency(\.applicationClient) var applicationClient
-  @Dependency(\.serverConfig) var serverConfig
 
   public init() {}
 

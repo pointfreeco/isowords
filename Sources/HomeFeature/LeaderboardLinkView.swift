@@ -1,7 +1,6 @@
 import ComposableArchitecture
 import LeaderboardFeature
 import SharedModels
-import Styleguide
 import SwiftUI
 
 struct LeaderboardLinkView: View {
