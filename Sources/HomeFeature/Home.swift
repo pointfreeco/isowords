@@ -12,6 +12,7 @@ import SettingsFeature
 import SharedModels
 import SoloFeature
 import SwiftUI
+import UserDefaultsClient
 
 public struct ActiveMatchResponse: Equatable {
   public let matches: [ActiveTurnBasedMatch]
