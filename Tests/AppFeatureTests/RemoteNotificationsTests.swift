@@ -12,13 +12,13 @@ import XCTest
 @MainActor
 class RemoteNotificationsTests: XCTestCase {
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
-    let didRegisterForRemoteNotifications = ActorIsolated(false)
-    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
-
     let store = TestStore(
       initialState: AppReducer.State(),
       reducer: AppReducer()
     )
+
+    let didRegisterForRemoteNotifications = ActorIsolated(false)
+    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
 
     store.dependencies.didFinishLaunching()
     store.dependencies.build.number = { 80 }
@@ -68,15 +68,29 @@ class RemoteNotificationsTests: XCTestCase {
   }
 
   func testRegisterForRemoteNotifications_NotAuthorized() async {
+    let didRegisterForRemoteNotifications = ActorIsolated(false)
+    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
+
     let store = TestStore(
       initialState: AppReducer.State(),
       reducer: AppReducer()
     )
 
     store.dependencies.didFinishLaunching()
+    store.dependencies.remoteNotifications.register = {
+      await didRegisterForRemoteNotifications.setValue(true)
+    }
+    store.dependencies.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .notDetermined)
+    }
+    store.dependencies.userNotifications.requestAuthorization = { options in
+      await requestedAuthorizationOptions.setValue(options)
+      return true
+    }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.send(.didChangeScenePhase(.active))
+
     await task.cancel()
   }
 

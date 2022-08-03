@@ -12,7 +12,7 @@ import XCTest
 class PastGamesTests: XCTestCase {
   func testLoadMatches() async {
     let store = TestStore(
-      initialState: PastGames.State(pastGames: [pastGameState]),
+      initialState: PastGames.State(),
       reducer: PastGames()
     )
 

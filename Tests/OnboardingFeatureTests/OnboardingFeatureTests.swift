@@ -4,6 +4,14 @@ import XCTest
 
 @testable import OnboardingFeature
 
+struct SchedulerDateGenerator: DateGenerator {
+  let scheduler: AnySchedulerOf<RunLoop>
+
+  func callAsFunction() -> Date {
+    self.scheduler.now.date
+  }
+}
+
 @MainActor
 class OnboardingFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
@@ -23,6 +31,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
     store.dependencies.feedbackGenerator = .noop
     store.dependencies.mainRunLoop = .immediate
+    store.dependencies.date = SchedulerDateGenerator(scheduler: store.dependencies.mainRunLoop)
     store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
     store.dependencies.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")

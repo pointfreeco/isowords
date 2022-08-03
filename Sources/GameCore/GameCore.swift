@@ -223,6 +223,7 @@ public struct Game: ReducerProtocol {
       .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
         UpgradeInterstitial()
       }
+      .sounds()
   }
 
   @ReducerBuilderOf<Self>
@@ -548,7 +549,6 @@ public struct Game: ReducerProtocol {
     GameOverLogic()
     TurnBasedLogic()
     ActiveGamesTray()
-    GameSounds()
   }
 }
 
