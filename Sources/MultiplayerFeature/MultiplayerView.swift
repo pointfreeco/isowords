@@ -6,25 +6,25 @@ import TcaHelpers
 
 public struct Multiplayer: ReducerProtocol {
   public struct State: Equatable {
+    public var destination: DestinationState?
     public var hasPastGames: Bool
-    public var route: Route?
 
     public init(
-      hasPastGames: Bool,
-      route: Route? = nil
+      destination: DestinationState? = nil,
+      hasPastGames: Bool
     ) {
+      self.destination = destination
       self.hasPastGames = hasPastGames
-      self.route = route
     }
   }
 
   public enum Action: Equatable {
-    case pastGames(PastGames.Action)
-    case setNavigation(tag: Route.Tag?)
+    case destination(DestinationAction)
+    case setNavigation(tag: DestinationState.Tag?)
     case startButtonTapped
   }
 
-  public enum Route: Equatable {
+  public enum DestinationState: Equatable {
     case pastGames(PastGames.State)
 
     public enum Tag: Int {
@@ -39,6 +39,10 @@ public struct Multiplayer: ReducerProtocol {
     }
   }
 
+  public enum DestinationAction: Equatable {
+    case pastGames(PastGames.Action)
+  }
+
   @Dependency(\.gameCenter) var gameCenter
 
   public init() {}
@@ -46,7 +50,7 @@ public struct Multiplayer: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
-      case .pastGames:
+      case .destination(.pastGames):
         return .none
 
       case .startButtonTapped:
@@ -59,18 +63,18 @@ public struct Multiplayer: ReducerProtocol {
         }
 
       case .setNavigation(tag: .pastGames):
-        state.route = .pastGames(.init())
+        state.destination = .pastGames(.init())
         return .none
 
       case .setNavigation(tag: .none):
-        state.route = nil
+        state.destination = nil
         return .none
       }
     }
-    .ifLet(state: \State.route, action: .self) {
+    .ifLet(state: \State.destination, action: /Action.destination) {
       EmptyReducer().ifLet(
-        state: /Route.pastGames,
-        action: /Action.pastGames
+        state: /DestinationState.pastGames,
+        action: /DestinationAction.pastGames
       ) {
         PastGames()
       }
@@ -90,12 +94,12 @@ public struct MultiplayerView: View {
   }
 
   struct ViewState: Equatable {
+    let destinationTag: Multiplayer.DestinationState.Tag?
     let hasPastGames: Bool
-    let routeTag: Multiplayer.Route.Tag?
 
     init(state: Multiplayer.State) {
+      self.destinationTag = state.destination?.tag
       self.hasPastGames = state.hasPastGames
-      self.routeTag = state.route?.tag
     }
   }
 
@@ -140,16 +144,16 @@ public struct MultiplayerView: View {
           NavigationLink(
             destination: IfLetStore(
               self.store.scope(
-                state: (\Multiplayer.State.route)
-                  .appending(path: /Multiplayer.Route.pastGames)
+                state: (\Multiplayer.State.destination)
+                  .appending(path: /Multiplayer.DestinationState.pastGames)
                   .extract(from:),
-                action: Multiplayer.Action.pastGames
+                action: { .destination(.pastGames($0)) }
               ),
               then: { PastGamesView(store: $0) }
             ),
-            tag: Multiplayer.Route.Tag.pastGames,
+            tag: Multiplayer.DestinationState.Tag.pastGames,
             selection: viewStore.binding(
-              get: \.routeTag,
+              get: \.destinationTag,
               send: Multiplayer.Action.setNavigation
             )
           ) {

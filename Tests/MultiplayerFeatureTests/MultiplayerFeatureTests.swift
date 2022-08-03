@@ -44,10 +44,10 @@ class MultiplayerFeatureTests: XCTestCase {
     )
 
     await store.send(.setNavigation(tag: .pastGames)) {
-      $0.route = .pastGames(.init(pastGames: []))
+      $0.destination = .pastGames(.init(pastGames: []))
     }
     await store.send(.setNavigation(tag: nil)) {
-      $0.route = nil
+      $0.destination = nil
     }
   }
 }
