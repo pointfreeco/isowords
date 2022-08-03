@@ -91,6 +91,37 @@ public struct AppReducer: ReducerProtocol {
   public init() {}
 
   public var body: some ReducerProtocol<State, Action> {
+    self.core
+      .ifLet(state: \.onboarding, action: /Action.onboarding) {
+        Onboarding()
+      }
+      .onChange(of: \.game?.moves) { moves, state, _ in
+        guard let game = state.game, game.isSavable
+        else { return .none }
+
+        switch (game.gameContext, game.gameMode) {
+        case (.dailyChallenge, .unlimited):
+          state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
+        case (.shared, .unlimited), (.solo, .unlimited):
+          state.home.savedGames.unlimited = InProgressGame(gameState: game)
+        case (.turnBased, _), (_, .timed):
+          return .none
+        }
+        return .none
+      }
+      .onChange(of: \.home.savedGames) { savedGames, _, action in
+        if case .savedGamesLoaded(.success) = action { return .none }
+        return .fireAndForget {
+          try await self.fileClient.save(games: savedGames)
+        }
+      }
+
+    GameCenterLogic()
+    StoreKitLogic()
+  }
+
+  @ReducerBuilder<State, Action>
+  var core: some ReducerProtocol<State, Action> {
     Scope(state: \.home.settings.userSettings, action: /Action.appDelegate) {
       AppDelegateReducer()
     }
@@ -100,7 +131,6 @@ public struct AppReducer: ReducerProtocol {
     Scope(state: \.home, action: /Action.home) {
       Home()
     }
-
     Reduce { state, action in
       switch action {
       case .appDelegate(.didFinishLaunching):
@@ -299,35 +329,8 @@ public struct AppReducer: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.onboarding, action: /Action.onboarding) {
-      Onboarding()
-    }
-    .onChange(of: \.game?.moves) { moves, state, _ in
-      guard let game = state.game, game.isSavable
-      else { return .none }
-
-      switch (game.gameContext, game.gameMode) {
-      case (.dailyChallenge, .unlimited):
-        state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
-      case (.shared, .unlimited), (.solo, .unlimited):
-        state.home.savedGames.unlimited = InProgressGame(gameState: game)
-      case (.turnBased, _), (_, .timed):
-        return .none
-      }
-      return .none
-    }
-    .onChange(of: \.home.savedGames) { savedGames, _, action in
-      if case .savedGamesLoaded(.success) = action { return .none }
-      return .fireAndForget {
-        try await self.fileClient.save(games: savedGames)
-      }
-    }
-
-    GameCenterLogic()
-    StoreKitLogic()
   }
 }
-
 
 public struct AppView: View {
   let store: StoreOf<AppReducer>

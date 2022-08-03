@@ -6,7 +6,7 @@ extension ReducerProtocol {
     perform additionalEffects: @escaping (LocalState, inout State, Action) -> Effect<
       Action, Never
     >
-  ) -> some ReducerProtocol<State, Action> {
+  ) -> ChangeReducer<Self, LocalState> {
     self.onChange(of: toLocalState) { additionalEffects($1, &$2, $3) }
   }
 
@@ -15,51 +15,28 @@ extension ReducerProtocol {
     perform additionalEffects: @escaping (LocalState, LocalState, inout State, Action) -> Effect<
       Action, Never
     >
-  ) -> some ReducerProtocol<State, Action> {
-    Reduce { state, action in
-      let previousLocalState = toLocalState(state)
-      let effects = self.reduce(into: &state, action: action)
-      let localState = toLocalState(state)
-
-      return previousLocalState != localState
-        ? .merge(effects, additionalEffects(previousLocalState, localState, &state, action))
-        : effects
-    }
+  ) -> ChangeReducer<Self, LocalState> {
+    ChangeReducer(upstream: self, toLocalState: toLocalState, perform: additionalEffects)
   }
 }
 
-extension Reducer {
-  public func onChange<LocalState>(
-    of toLocalState: @escaping (State) -> LocalState,
-    perform additionalEffects: @escaping (LocalState, inout State, Action, Environment) -> Effect<
-      Action, Never
+public struct ChangeReducer<Upstream: ReducerProtocol, LocalState: Equatable>: ReducerProtocol {
+  let upstream: Upstream
+  let toLocalState: (Upstream.State) -> LocalState
+  let perform:
+    (LocalState, LocalState, inout Upstream.State, Upstream.Action) -> Effect<
+      Upstream.Action, Never
     >
-  ) -> Self where LocalState: Equatable {
-    .init { state, action, environment in
-      let previousLocalState = toLocalState(state)
-      let effects = self.run(&state, action, environment)
-      let localState = toLocalState(state)
 
-      return previousLocalState != localState
-        ? .merge(effects, additionalEffects(localState, &state, action, environment))
-        : effects
-    }
-  }
+  public func reduce(into state: inout Upstream.State, action: Upstream.Action) -> Effect<
+    Upstream.Action, Never
+  > {
+    let previousLocalState = self.toLocalState(state)
+    let effects = self.upstream.reduce(into: &state, action: action)
+    let localState = self.toLocalState(state)
 
-  public func onChange<LocalState>(
-    of toLocalState: @escaping (State) -> LocalState,
-    perform additionalEffects: @escaping (LocalState, LocalState, inout State, Action, Environment)
-      -> Effect<Action, Never>
-  ) -> Self where LocalState: Equatable {
-    .init { state, action, environment in
-      let previousLocalState = toLocalState(state)
-      let effects = self.run(&state, action, environment)
-      let localState = toLocalState(state)
-
-      return previousLocalState != localState
-        ? .merge(
-          effects, additionalEffects(previousLocalState, localState, &state, action, environment))
-        : effects
-    }
+    return previousLocalState != localState
+      ? .merge(effects, self.perform(previousLocalState, localState, &state, action))
+      : effects
   }
 }

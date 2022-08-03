@@ -62,47 +62,6 @@ public struct SelectionSounds<Upstream: ReducerProtocol>: ReducerProtocol {
   }
 }
 
-extension Reducer {
-  public func selectionSounds(
-    audioPlayer: @escaping (Environment) -> AudioPlayerClient,
-    contains: @escaping (State, Environment, String) -> Bool,
-    hasBeenPlayed: @escaping (State, String) -> Bool,
-    puzzle: @escaping (State) -> Puzzle,
-    selectedWord: @escaping (State) -> [IndexedCubeFace]
-  ) -> Reducer {
-    self
-      .onChange(of: selectedWord) { previousSelection, selectedWord, state, _, environment in
-        return .fireAndForget { [state] in
-          if let noteIndex = noteIndex(
-            selectedWord: selectedWord,
-            cubes: puzzle(state),
-            notes: AudioPlayerClient.Sound.allNotes
-          ) {
-            await audioPlayer(environment).play(AudioPlayerClient.Sound.allNotes[noteIndex])
-          }
-
-          let selectedWordString = puzzle(state).string(from: selectedWord)
-          if !hasBeenPlayed(state, selectedWordString)
-            && contains(state, environment, selectedWordString)
-          {
-            let validCount = selectedWordString
-              .indices
-              .dropFirst(2)
-              .reduce(into: 0) { count, index in
-                count +=
-                  contains(state, environment, String(selectedWordString[...index]))
-                  ? 1
-                  : 0
-              }
-            if validCount > 0 {
-              await audioPlayer(environment).play(.validWord(level: validCount))
-            }
-          }
-        }
-      }
-  }
-}
-
 private func noteIndex(
   selectedWord: [IndexedCubeFace],
   cubes: Puzzle,
