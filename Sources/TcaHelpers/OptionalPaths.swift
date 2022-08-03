@@ -161,6 +161,7 @@ extension OptionalPath where Root == Value? {
 }
 
 extension ReducerProtocol {
+  @inlinable
   public func _ifLet<
     Wrapped: ReducerProtocol,
     StatePath: Path<State, Wrapped.State>,
@@ -171,7 +172,7 @@ extension ReducerProtocol {
     @ReducerBuilderOf<Wrapped> then wrapped: () -> Wrapped,
     file: StaticString = #file,
     line: UInt = #line
-  ) -> some ReducerProtocol<State, Action> {
+  ) -> OptionalPathReducer<StatePath, ActionPath, Self, Wrapped> {
     OptionalPathReducer(
       upstream: self,
       wrapped: wrapped(),
@@ -181,17 +182,32 @@ extension ReducerProtocol {
   }
 }
 
-struct OptionalPathReducer<
+public struct OptionalPathReducer<
   StatePath: Path,
   ActionPath: Path,
   Upstream: ReducerProtocol<StatePath.Root, ActionPath.Root>,
   Wrapped: ReducerProtocol<StatePath.Value, ActionPath.Value>
 >: ReducerProtocol {
+  @usableFromInline
   let upstream: Upstream
   let wrapped: Wrapped
   let toWrappedState: StatePath
   let toWrappedAction: ActionPath
 
+  @usableFromInline
+  init(
+    upstream: Upstream,
+    wrapped: Wrapped,
+    toWrappedState: StatePath,
+    toWrappedAction: ActionPath
+  ) {
+    self.upstream = upstream
+    self.wrapped = wrapped
+    self.toWrappedState = toWrappedState
+    self.toWrappedAction = toWrappedAction
+  }
+
+  @inlinable
   public func reduce(
     into state: inout Upstream.State, action: Upstream.Action
   ) -> Effect<Upstream.Action, Never> {
@@ -201,6 +217,7 @@ struct OptionalPathReducer<
     )
   }
 
+  @usableFromInline
   func reduceWrapped(
     into state: inout Upstream.State, action: Upstream.Action
   ) -> Effect<Upstream.Action, Never> {

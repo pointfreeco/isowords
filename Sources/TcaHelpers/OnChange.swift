@@ -1,6 +1,7 @@
 import ComposableArchitecture
 
 extension ReducerProtocol {
+  @inlinable
   public func onChange<LocalState: Equatable>(
     of toLocalState: @escaping (State) -> LocalState,
     perform additionalEffects: @escaping (LocalState, inout State, Action) -> Effect<
@@ -10,6 +11,7 @@ extension ReducerProtocol {
     self.onChange(of: toLocalState) { additionalEffects($1, &$2, $3) }
   }
 
+  @inlinable
   public func onChange<LocalState: Equatable>(
     of toLocalState: @escaping (State) -> LocalState,
     perform additionalEffects: @escaping (LocalState, LocalState, inout State, Action) -> Effect<
@@ -21,13 +23,32 @@ extension ReducerProtocol {
 }
 
 public struct ChangeReducer<Upstream: ReducerProtocol, LocalState: Equatable>: ReducerProtocol {
+  @usableFromInline
   let upstream: Upstream
+
+  @usableFromInline
   let toLocalState: (Upstream.State) -> LocalState
+
+  @usableFromInline
   let perform:
     (LocalState, LocalState, inout Upstream.State, Upstream.Action) -> Effect<
       Upstream.Action, Never
     >
 
+  @usableFromInline
+  init(
+    upstream: Upstream,
+    toLocalState: @escaping (Upstream.State) -> LocalState,
+    perform: @escaping (LocalState, LocalState, inout Upstream.State, Upstream.Action) -> Effect<
+      Upstream.Action, Never
+    >
+  ) {
+    self.upstream = upstream
+    self.toLocalState = toLocalState
+    self.perform = perform
+  }
+
+  @inlinable
   public func reduce(into state: inout Upstream.State, action: Upstream.Action) -> Effect<
     Upstream.Action, Never
   > {
