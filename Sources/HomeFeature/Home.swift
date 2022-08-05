@@ -527,7 +527,7 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
     case .task:
       return .run { send in
         async let authenticate: Void = authenticate(send: send, environment: environment)
-        await listen(send: send, environment: environment)
+        await listenForGameCenterEvents(send: send, environment: environment)
       }
       .animation()
 
@@ -551,13 +551,16 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         deviceId: .init(rawValue: environment.deviceId.id()),
         displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
         gameCenterLocalPlayerId: localPlayer.isAuthenticated
-        ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
-        : nil,
+          ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+          : nil,
         timeZone: environment.timeZone().identifier
       )
     )
     await send(.authenticationResponse(dump(currentPlayerEnvelope)))
-    try await send(.serverConfigResponse(environment.serverConfig.refresh()))
+
+    async let serverConfigResponse: Void = send(
+      .serverConfigResponse(environment.serverConfig.refresh())
+    )
 
     async let dailyChallengeResponse: Void = send(
       .dailyChallengeResponse(
@@ -587,15 +590,20 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         }
       )
     )
-    _ = await (dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse)
+    _ = try await (
+      serverConfigResponse,
+      dailyChallengeResponse,
+      weekInReviewResponse,
+      activeMatchesResponse
+    )
   } catch {}
 }
 
-private func listen(send: Send<HomeAction>, environment: HomeEnvironment) async {
+private func listenForGameCenterEvents(send: Send<HomeAction>, environment: HomeEnvironment) async {
   for await event in environment.gameCenter.localPlayer.listener() {
     switch event {
     case .turnBased(.matchEnded),
-         .turnBased(.receivedTurnEventForMatch):
+      .turnBased(.receivedTurnEventForMatch):
       await send(
         .activeMatchesResponse(
           TaskResult {
