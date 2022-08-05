@@ -1,4 +1,4 @@
-FROM swift:5.3 as build
+FROM swift:5.5 as build
 
 RUN apt-get --fix-missing update
 RUN apt-get install -y cmake libpq-dev libssl-dev libz-dev openssl python
