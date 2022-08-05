@@ -341,21 +341,6 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testShowUpgradeInterstitial() async {
-    var environment = GameOverEnvironment.unimplemented
-    environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
-    environment.database.playedGamesCount = { _ in 6 }
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    environment.serverConfig.config = { .init() }
-    environment.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
-      forKey: "last-review-request-timeinterval"
-    )
-    environment.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-    }
-
     let store = TestStore(
       initialState: GameOverState(
         completedGame: .init(
@@ -370,35 +355,29 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: environment
+      environment: .unimplemented
     )
 
+    store.environment.audioPlayer = .noop
+    store.environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    store.environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+    store.environment.database.playedGamesCount = { _ in 6 }
+    store.environment.mainRunLoop = .immediate
+    store.environment.serverConfig.config = { .init() }
+    store.environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
+    store.environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
+
     let task = await store.send(.task)
-    await self.mainRunLoop.advance(by: .seconds(1))
     await store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
     }
-    await self.mainRunLoop.advance(by: .seconds(1))
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
   }
 
   func testSkipUpgradeIfLessThan6GamesPlayed() async {
-    var environment = GameOverEnvironment.unimplemented
-    environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
-    environment.database.playedGamesCount = { _ in 5 }
-    environment.mainRunLoop = .immediate
-    environment.serverConfig.config = { .init() }
-    environment.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
-      forKey: "last-review-request-timeinterval"
-    )
-    environment.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-    }
-
     let store = TestStore(
       initialState: GameOverState(
         completedGame: .init(
@@ -413,8 +392,19 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: environment
+      environment: .unimplemented
     )
+
+    store.environment.audioPlayer = .noop
+    store.environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    store.environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+    store.environment.database.playedGamesCount = { _ in 5 }
+    store.environment.mainRunLoop = .immediate
+    store.environment.serverConfig.config = { .init() }
+    store.environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
+    store.environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let task = await store.send(.task)
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
