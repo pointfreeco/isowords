@@ -526,9 +526,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
 
     case .task:
       return .run { send in
-        try await authenticate(send: send, environment: environment)
+        async let authenticate: Void = authenticate(send: send, environment: environment)
         await listen(send: send, environment: environment)
-      } catch: { _, _ in
       }
       .animation()
 
@@ -542,10 +541,10 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment>.combine
   }
 )
 
-private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async throws {
-  try? await environment.gameCenter.localPlayer.authenticate()
-
+private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) async {
   do {
+    try? await environment.gameCenter.localPlayer.authenticate()
+
     let localPlayer = environment.gameCenter.localPlayer.localPlayer()
     let currentPlayerEnvelope = try await environment.apiClient.authenticate(
       .init(
@@ -557,7 +556,7 @@ private func authenticate(send: Send<HomeAction>, environment: HomeEnvironment) 
         timeZone: environment.timeZone().identifier
       )
     )
-    await send(.authenticationResponse(currentPlayerEnvelope))
+    await send(.authenticationResponse(dump(currentPlayerEnvelope)))
     try await send(.serverConfigResponse(environment.serverConfig.refresh()))
 
     async let dailyChallengeResponse: Void = send(
