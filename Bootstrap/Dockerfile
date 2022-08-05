@@ -26,7 +26,7 @@ RUN swift build \
   --product server \
   -Xswiftc -g
 
-FROM swift:5.3-slim
+FROM swift:5.5-slim
 
 RUN apt-get --fix-missing update
 RUN apt-get install -y libpq-dev libsqlite3-dev libssl-dev libz-dev openssl python
