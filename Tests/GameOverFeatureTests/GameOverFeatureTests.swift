@@ -364,7 +364,6 @@ class GameOverFeatureTests: XCTestCase {
     store.environment.database.playedGamesCount = { _ in 6 }
     store.environment.mainRunLoop = .immediate
     store.environment.serverConfig.config = { .init() }
-    store.environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
     store.environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
@@ -401,7 +400,6 @@ class GameOverFeatureTests: XCTestCase {
     store.environment.database.playedGamesCount = { _ in 5 }
     store.environment.mainRunLoop = .immediate
     store.environment.serverConfig.config = { .init() }
-    store.environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
     store.environment.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
