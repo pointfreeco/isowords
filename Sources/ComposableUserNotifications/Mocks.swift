@@ -1,3 +1,5 @@
+import XCTestDynamicOverlay
+
 extension UserNotificationClient {
   public static let noop = Self(
     add: { _ in },
@@ -9,22 +11,18 @@ extension UserNotificationClient {
   )
 }
 
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension UserNotificationClient {
-    public static let unimplemented = Self(
-      add: XCTUnimplemented("\(Self.self).add"),
-      delegate: XCTUnimplemented("\(Self.self).delegate", placeholder: .finished),
-      getNotificationSettings: XCTUnimplemented(
-        "\(Self.self).getNotificationSettings",
-        placeholder: Notification.Settings(authorizationStatus: .notDetermined)
-      ),
-      removeDeliveredNotificationsWithIdentifiers: XCTUnimplemented(
-        "\(Self.self).removeDeliveredNotificationsWithIdentifiers"),
-      removePendingNotificationRequestsWithIdentifiers: XCTUnimplemented(
-        "\(Self.self).removePendingNotificationRequestsWithIdentifiers"),
-      requestAuthorization: XCTUnimplemented("\(Self.self).requestAuthorization")
-    )
-  }
-#endif
+extension UserNotificationClient {
+  public static let unimplemented = Self(
+    add: XCTUnimplemented("\(Self.self).add"),
+    delegate: XCTUnimplemented("\(Self.self).delegate", placeholder: .finished),
+    getNotificationSettings: XCTUnimplemented(
+      "\(Self.self).getNotificationSettings",
+      placeholder: Notification.Settings(authorizationStatus: .notDetermined)
+    ),
+    removeDeliveredNotificationsWithIdentifiers: XCTUnimplemented(
+      "\(Self.self).removeDeliveredNotificationsWithIdentifiers"),
+    removePendingNotificationRequestsWithIdentifiers: XCTUnimplemented(
+      "\(Self.self).removePendingNotificationRequestsWithIdentifiers"),
+    requestAuthorization: XCTUnimplemented("\(Self.self).requestAuthorization")
+  )
+}

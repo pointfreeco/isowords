@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "TcaHelpers"
-               BuildableName = "TcaHelpers"
-               BlueprintName = "TcaHelpers"
+               BlueprintIdentifier = "Build"
+               BuildableName = "Build"
+               BlueprintName = "Build"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -50,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "TcaHelpers"
-            BuildableName = "TcaHelpers"
-            BlueprintName = "TcaHelpers"
+            BlueprintIdentifier = "Build"
+            BuildableName = "Build"
+            BlueprintName = "Build"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>

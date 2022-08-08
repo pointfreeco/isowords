@@ -21,7 +21,7 @@ extension DeviceIdentifier {
   public static let live = Self(
     id: {
       if let uuidString = NSUbiquitousKeyValueStore.default.string(forKey: deviceIdKey),
-        let uuid = UUID.init(uuidString: uuidString)
+         let uuid = UUID.init(uuidString: uuidString)
       {
 
         return uuid
@@ -34,18 +34,16 @@ extension DeviceIdentifier {
   )
 }
 
-#if DEBUG
-  import XCTestDynamicOverlay
+import XCTestDynamicOverlay
 
-  extension DeviceIdentifier {
-    public static let unimplemented = Self(
-      id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
-    )
-
-    public static let noop = Self(
-      id: { UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")! }
-    )
-  }
-#endif
+extension DeviceIdentifier {
+  public static let unimplemented = Self(
+    id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
+  )
+  
+  public static let noop = Self(
+    id: { UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")! }
+  )
+}
 
 private let deviceIdKey = "co.pointfree.device-id"

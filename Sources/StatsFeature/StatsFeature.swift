@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import LocalDatabaseClient
 import Styleguide
 import SwiftUI
 import VocabFeature

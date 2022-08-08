@@ -11,16 +11,12 @@ extension DictionaryClient {
   )
 }
 
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension DictionaryClient {
-    public static let unimplemented = Self(
-      contains: XCTUnimplemented("\(Self.self).contains", placeholder: false),
-      load: XCTUnimplemented("\(Self.self).load", placeholder: false),
-      lookup: XCTUnimplemented("\(Self.self).lookup"),
-      randomCubes: XCTUnimplemented("\(Self.self).randomCubes", placeholder: .mock),
-      unload: XCTUnimplemented("\(Self.self).unload")
-    )
-  }
-#endif
+extension DictionaryClient {
+  public static let unimplemented = Self(
+    contains: XCTUnimplemented("\(Self.self).contains", placeholder: false),
+    load: XCTUnimplemented("\(Self.self).load", placeholder: false),
+    lookup: XCTUnimplemented("\(Self.self).lookup"),
+    randomCubes: XCTUnimplemented("\(Self.self).randomCubes", placeholder: .mock),
+    unload: XCTUnimplemented("\(Self.self).unload")
+  )
+}

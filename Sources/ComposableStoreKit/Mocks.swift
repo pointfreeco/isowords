@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import XCTestDynamicOverlay
 
 extension StoreKitClient {
   public static let noop = Self(
@@ -13,23 +14,19 @@ extension StoreKitClient {
   )
 }
 
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension StoreKitClient {
-    public static let unimplemented = Self(
-      addPayment: XCTUnimplemented("\(Self.self).addPayment"),
-      appStoreReceiptURL: XCTUnimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
-      isAuthorizedForPayments: XCTUnimplemented(
-        "\(Self.self).isAuthorizedForPayments", placeholder: false
-      ),
-      fetchProducts: XCTUnimplemented("\(Self.self).fetchProducts"),
-      finishTransaction: XCTUnimplemented("\(Self.self).finishTransaction"),
-      observer: XCTUnimplemented("\(Self.self).observer", placeholder: .finished),
-      requestReview: XCTUnimplemented("\(Self.self).requestReview"),
-      restoreCompletedTransactions: XCTUnimplemented(
-        "\(Self.self).restoreCompletedTransactions"
-      )
+extension StoreKitClient {
+  public static let unimplemented = Self(
+    addPayment: XCTUnimplemented("\(Self.self).addPayment"),
+    appStoreReceiptURL: XCTUnimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
+    isAuthorizedForPayments: XCTUnimplemented(
+      "\(Self.self).isAuthorizedForPayments", placeholder: false
+    ),
+    fetchProducts: XCTUnimplemented("\(Self.self).fetchProducts"),
+    finishTransaction: XCTUnimplemented("\(Self.self).finishTransaction"),
+    observer: XCTUnimplemented("\(Self.self).observer", placeholder: .finished),
+    requestReview: XCTUnimplemented("\(Self.self).requestReview"),
+    restoreCompletedTransactions: XCTUnimplemented(
+      "\(Self.self).restoreCompletedTransactions"
     )
-  }
-#endif
+  )
+}

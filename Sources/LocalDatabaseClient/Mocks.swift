@@ -23,14 +23,12 @@ extension LocalDatabaseClient {
     )
   }
 
-  #if DEBUG
-    public static let unimplemented = Self(
-      fetchGamesForWord: XCTUnimplemented("\(Self.self).fetchGamesForWord"),
-      fetchStats: XCTUnimplemented("\(Self.self).fetchStats"),
-      fetchVocab: XCTUnimplemented("\(Self.self).fetchVocab"),
-      migrate: XCTUnimplemented("\(Self.self).migrate"),
-      playedGamesCount: XCTUnimplemented("\(Self.self).playedGamesCount"),
-      saveGame: XCTUnimplemented("\(Self.self).saveGame")
-    )
-  #endif
+  public static let unimplemented = Self(
+    fetchGamesForWord: XCTUnimplemented("\(Self.self).fetchGamesForWord"),
+    fetchStats: XCTUnimplemented("\(Self.self).fetchStats"),
+    fetchVocab: XCTUnimplemented("\(Self.self).fetchVocab"),
+    migrate: XCTUnimplemented("\(Self.self).migrate"),
+    playedGamesCount: XCTUnimplemented("\(Self.self).playedGamesCount"),
+    saveGame: XCTUnimplemented("\(Self.self).saveGame")
+  )
 }

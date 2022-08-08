@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import ChangelogFeature
 import ClientModels
 import ComposableArchitecture
+import ComposableGameCenter
 import DailyChallengeFeature
 import DeviceId
 import LeaderboardFeature
@@ -32,7 +33,7 @@ public struct Home: ReducerProtocol {
         guard case var .dailyChallenge(dailyChallengeState) = self.destination
         else { return }
         dailyChallengeState.inProgressDailyChallengeUnlimited =
-        self.savedGames.dailyChallengeUnlimited
+          self.savedGames.dailyChallengeUnlimited
         self.destination = .dailyChallenge(dailyChallengeState)
       }
     }
@@ -77,8 +78,8 @@ public struct Home: ReducerProtocol {
 
     var hasActiveGames: Bool {
       self.savedGames.dailyChallengeUnlimited != nil
-      || self.savedGames.unlimited != nil
-      || !self.turnBasedMatches.isEmpty
+        || self.savedGames.unlimited != nil
+        || !self.turnBasedMatches.isEmpty
     }
   }
 
@@ -175,7 +176,7 @@ public struct Home: ReducerProtocol {
           do {
             let match = try await self.gameCenter.turnBasedMatch.load(matchId)
             let currentParticipantIsLocalPlayer =
-            match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+              match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
             if currentParticipantIsLocalPlayer {
               try await self.gameCenter.turnBasedMatch
@@ -226,21 +227,21 @@ public struct Home: ReducerProtocol {
 
       case let .authenticationResponse(currentPlayerEnvelope):
         state.settings.sendDailyChallengeReminder =
-        currentPlayerEnvelope.player.sendDailyChallengeReminder
+          currentPlayerEnvelope.player.sendDailyChallengeReminder
         state.settings.sendDailyChallengeSummary =
-        currentPlayerEnvelope.player.sendDailyChallengeSummary
+          currentPlayerEnvelope.player.sendDailyChallengeSummary
 
         let now = self.mainRunLoop.now.date.timeIntervalSinceReferenceDate
         let itsNagTime =
-        Int(now - self.userDefaults.installationTime)
-        >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
+          Int(now - self.userDefaults.installationTime)
+          >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
         let isFullGamePurchased =
-        currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
+          currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
 
         state.nagBanner =
-        !isFullGamePurchased && itsNagTime
-        ? .init()
-        : nil
+          !isFullGamePurchased && itsNagTime
+          ? .init()
+          : nil
 
         return .none
 
@@ -385,8 +386,8 @@ public struct Home: ReducerProtocol {
           deviceId: .init(rawValue: self.deviceId.id()),
           displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
           gameCenterLocalPlayerId: localPlayer.isAuthenticated
-          ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
-          : nil,
+            ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
+            : nil,
           timeZone: self.timeZone.identifier
         )
       )
@@ -429,7 +430,7 @@ public struct Home: ReducerProtocol {
     for await event in self.gameCenter.localPlayer.listener() {
       switch event {
       case .turnBased(.matchEnded),
-           .turnBased(.receivedTurnEventForMatch):
+        .turnBased(.receivedTurnEventForMatch):
         await send(
           .activeMatchesResponse(
             TaskResult {

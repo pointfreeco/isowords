@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var audioPlayer: AudioPlayerClient {
@@ -18,7 +19,7 @@ public struct AudioPlayerClient {
   public var secondaryAudioShouldBeSilencedHint: @Sendable () async -> Bool
   public var setGlobalVolumeForMusic: @Sendable (Float) async -> Void
   public var setGlobalVolumeForSoundEffects: @Sendable (Float) async -> Void
-  public var setVolume: @Sendable (Sound, Float) async ->Void
+  public var setVolume: @Sendable (Sound, Float) async -> Void
   public var stop: @Sendable (Sound) async -> Void
 
   public struct Sound: Hashable {
@@ -59,23 +60,19 @@ extension AudioPlayerClient {
   )
 }
 
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension AudioPlayerClient {
-    public static let unimplemented = Self(
-      load: XCTUnimplemented("\(Self.self).load"),
-      loop: XCTUnimplemented("\(Self.self).loop"),
-      play: XCTUnimplemented("\(Self.self).play"),
-      secondaryAudioShouldBeSilencedHint: XCTUnimplemented(
-        "\(Self.self).secondaryAudioShouldBeSilencedHint", placeholder: false
-      ),
-      setGlobalVolumeForMusic: XCTUnimplemented("\(Self.self).setGlobalVolumeForMusic"),
-      setGlobalVolumeForSoundEffects: XCTUnimplemented(
-        "\(Self.self).setGlobalVolumeForSoundEffects"
-      ),
-      setVolume: XCTUnimplemented("\(Self.self).setVolume"),
-      stop: XCTUnimplemented("\(Self.self).stop")
-    )
-  }
-#endif
+extension AudioPlayerClient {
+  public static let unimplemented = Self(
+    load: XCTUnimplemented("\(Self.self).load"),
+    loop: XCTUnimplemented("\(Self.self).loop"),
+    play: XCTUnimplemented("\(Self.self).play"),
+    secondaryAudioShouldBeSilencedHint: XCTUnimplemented(
+      "\(Self.self).secondaryAudioShouldBeSilencedHint", placeholder: false
+    ),
+    setGlobalVolumeForMusic: XCTUnimplemented("\(Self.self).setGlobalVolumeForMusic"),
+    setGlobalVolumeForSoundEffects: XCTUnimplemented(
+      "\(Self.self).setGlobalVolumeForSoundEffects"
+    ),
+    setVolume: XCTUnimplemented("\(Self.self).setVolume"),
+    stop: XCTUnimplemented("\(Self.self).stop")
+  )
+}

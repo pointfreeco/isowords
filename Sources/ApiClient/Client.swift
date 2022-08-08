@@ -2,6 +2,8 @@ import Combine
 import ComposableArchitecture
 import Foundation
 import SharedModels
+import XCTestDebugSupport
+import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var apiClient: ApiClient {
@@ -19,7 +21,7 @@ public struct ApiClient {
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
   public var baseUrl: @Sendable () -> URL
-  public var currentPlayer: @Sendable() -> CurrentPlayerEnvelope?
+  public var currentPlayer: @Sendable () -> CurrentPlayerEnvelope?
   public var logout: @Sendable () async -> Void
   public var refreshCurrentPlayer: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
@@ -133,53 +135,48 @@ public struct ApiClient {
   }
 }
 
-#if DEBUG
-  import XCTestDebugSupport
-  import XCTestDynamicOverlay
+extension ApiClient {
+  public static let unimplemented = Self(
+    apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
+    authenticate: XCTUnimplemented("\(Self.self).authenticate"),
+    baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
+    currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
+    logout: XCTUnimplemented("\(Self.self).logout"),
+    refreshCurrentPlayer: XCTUnimplemented("\(Self.self).refreshCurrentPlayer"),
+    request: XCTUnimplemented("\(Self.self).request"),
+    setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
+  )
 
-  extension ApiClient {
-    public static let unimplemented = Self(
-      apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
-      authenticate: XCTUnimplemented("\(Self.self).authenticate"),
-      baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
-      currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
-      logout: XCTUnimplemented("\(Self.self).logout"),
-      refreshCurrentPlayer: XCTUnimplemented("\(Self.self).refreshCurrentPlayer"),
-      request: XCTUnimplemented("\(Self.self).request"),
-      setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
-    )
-
-    public mutating func override(
-      route matchingRoute: ServerRoute.Api.Route,
-      withResponse response: @escaping @Sendable () async throws -> (Data, URLResponse)
-    ) {
-      let fulfill = expectation(description: "route")
-      self.apiRequest = { @Sendable [self] route in
-        if route == matchingRoute {
-          fulfill()
-          return try await response()
-        } else {
-          return try await self.apiRequest(route)
-        }
-      }
-    }
-
-    public mutating func override<Value>(
-      routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
-      withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
-    ) {
-      let fulfill = expectation(description: "route")
-      self.apiRequest = { @Sendable [self] route in
-        if let value = matchingRoute.extract(from: route) {
-          fulfill()
-          return try await response(value)
-        } else {
-          return try await self.apiRequest(route)
-        }
+  public mutating func override(
+    route matchingRoute: ServerRoute.Api.Route,
+    withResponse response: @escaping @Sendable () async throws -> (Data, URLResponse)
+  ) {
+    let fulfill = expectation(description: "route")
+    self.apiRequest = { @Sendable [self] route in
+      if route == matchingRoute {
+        fulfill()
+        return try await response()
+      } else {
+        return try await self.apiRequest(route)
       }
     }
   }
-#endif
+
+  public mutating func override<Value>(
+    routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
+    withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
+  ) {
+    let fulfill = expectation(description: "route")
+    self.apiRequest = { @Sendable [self] route in
+      if let value = matchingRoute.extract(from: route) {
+        fulfill()
+        return try await response(value)
+      } else {
+        return try await self.apiRequest(route)
+      }
+    }
+  }
+}
 
 extension ApiClient {
   public static let noop = Self(

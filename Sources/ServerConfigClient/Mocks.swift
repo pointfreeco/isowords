@@ -1,4 +1,5 @@
 import ServerConfig
+import XCTestDynamicOverlay
 
 extension ServerConfigClient {
   public static let noop = Self(
@@ -7,13 +8,9 @@ extension ServerConfigClient {
   )
 }
 
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension ServerConfigClient {
-    public static let unimplemented = Self(
-      config: XCTUnimplemented("\(Self.self).config", placeholder: ServerConfig()),
-      refresh: XCTUnimplemented("\(Self.self).refresh")
-    )
-  }
-#endif
+extension ServerConfigClient {
+  public static let unimplemented = Self(
+    config: XCTUnimplemented("\(Self.self).config", placeholder: ServerConfig()),
+    refresh: XCTUnimplemented("\(Self.self).refresh")
+  )
+}
