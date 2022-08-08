@@ -173,10 +173,7 @@ var package = Package(
 // MARK: - client
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
-    .package(
-      url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "concurrency-updates"
-    )
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.39.0")
   ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
