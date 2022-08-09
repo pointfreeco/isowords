@@ -23,9 +23,9 @@
         "package": "combine-schedulers",
         "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
         "state": {
-          "branch": "concurrency-updates",
-          "revision": "9bfbc3940d24c3f397cd65fdbc70063b9e0d4b45",
-          "version": null
+          "branch": null,
+          "revision": "f7c8277f05f27a5bfb2f6ecccb0bad126ffcf472",
+          "version": "0.7.0"
         }
       },
       {
@@ -86,8 +86,8 @@
         "package": "swift-composable-architecture",
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
-          "branch": "concurrency-updates-proto",
-          "revision": "1e2a7c319ca8e850d1e059b9597c996577fe184e",
+          "branch": "protocol",
+          "revision": "d8e01d7f4e9c2a522cef8d97b10e73d6ca4cc6fb",
           "version": null
         }
       },
