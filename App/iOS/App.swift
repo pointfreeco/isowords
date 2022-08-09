@@ -85,6 +85,56 @@ struct IsowordsApp: App {
   }
 }
 
+extension AppEnvironment {
+  static var live: Self {
+    let apiClient = ApiClient.live
+    let build = Build.live
+
+    return Self(
+      apiClient: apiClient,
+      applicationClient: .live,
+      audioPlayer: .live(
+        bundles: [
+          AppAudioLibrary.bundle,
+          AppClipAudioLibrary.bundle,
+        ]
+      ),
+      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
+      build: build,
+      database: .live(
+        path: FileManager.default
+          .urls(for: .documentDirectory, in: .userDomainMask)
+          .first!
+          .appendingPathComponent("co.pointfree.Isowords")
+          .appendingPathComponent("Isowords.sqlite3")
+      ),
+      deviceId: .live,
+      dictionary: .sqlite(),
+      feedbackGenerator: .live,
+      fileClient: .live,
+      gameCenter: .live,
+      lowPowerMode: .live,
+      mainQueue: .main,
+      mainRunLoop: .main,
+      remoteNotifications: .live,
+      serverConfig: .live(apiClient: apiClient, build: build),
+      setUserInterfaceStyle: { userInterfaceStyle in
+        await MainActor.run {
+          guard
+            let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
+              as? UIWindowScene
+          else { return }
+          scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
+        }
+      },
+      storeKit: .live(),
+      timeZone: { .autoupdatingCurrent },
+      userDefaults: .live(),
+      userNotifications: .live
+    )
+  }
+}
+
 extension ServerConfigClient {
   static func live(apiClient: ApiClient, build: Build) -> Self {
     .live(

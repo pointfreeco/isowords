@@ -193,7 +193,6 @@ private func apiRequest(
       router: router
     )
   }
-  .eraseToEffect()
 }
 
 private func apiRequest(
