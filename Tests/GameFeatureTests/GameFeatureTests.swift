@@ -12,13 +12,14 @@ import XCTest
 
 @testable import GameFeature
 
+@MainActor
 class GameFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
-  func testRemoveCubeMove() {
-    let environment = update(GameEnvironment.failing) {
-      $0.audioPlayer.play = { _ in .none }
-      $0.fileClient.load = { _ in .none }
+  func testRemoveCubeMove() async {
+    let environment = update(GameEnvironment.unimplemented) {
+      $0.audioPlayer.play = { _ in }
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
@@ -51,8 +52,8 @@ class GameFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.doubleTap(index: .zero)))
-    store.receive(.game(.confirmRemoveCube(.zero))) {
+    await store.send(.game(.doubleTap(index: .zero)))
+    await store.receive(.game(.confirmRemoveCube(.zero))) {
       $0.game?.cubes.0.0.0.wasRemoved = true
       $0.game?.moves = [
         .init(
@@ -64,11 +65,12 @@ class GameFeatureTests: XCTestCase {
         )
       ]
     }
+    await store.finish()
   }
 
-  func testDoubleTapRemoveCube_MultipleSelectedFaces() {
-    let environment = update(GameEnvironment.failing) {
-      $0.fileClient.load = { _ in .none }
+  func testDoubleTapRemoveCube_MultipleSelectedFaces() async {
+    let environment = update(GameEnvironment.unimplemented) {
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
@@ -94,7 +96,7 @@ class GameFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.doubleTap(index: .zero)))
+    await store.send(.game(.doubleTap(index: .zero)))
   }
 
   func testIsYourTurn() {

@@ -10,27 +10,20 @@ public struct PastGamesState: Equatable {
 }
 
 public enum PastGamesAction: Equatable {
-  case matchesResponse(Result<[PastGameState], NSError>)
-  case onAppear
+  case matchesResponse(TaskResult<[PastGameState]>)
   case pastGame(TurnBasedMatch.Id, PastGameAction)
+  case task
 }
 
 public struct PastGamesEnvironment {
-  public var backgroundQueue: AnySchedulerOf<DispatchQueue>
   public var gameCenter: GameCenterClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
 }
 
 let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnvironment>.combine(
   pastGameReducer.forEach(
     state: \.pastGames,
     action: /PastGamesAction.pastGame,
-    environment: {
-      PastGameEnvironment(
-        gameCenter: $0.gameCenter,
-        mainQueue: $0.mainQueue
-      )
-    }
+    environment: { PastGameEnvironment(gameCenter: $0.gameCenter) }
   ),
 
   .init { state, action, environment in
@@ -42,24 +35,25 @@ let pastGamesReducer = Reducer<PastGamesState, PastGamesAction, PastGamesEnviron
     case .matchesResponse(.failure):
       return .none
 
-    case .onAppear:
-      return environment.gameCenter.turnBasedMatch.loadMatches()
-        .receive(on: environment.backgroundQueue)
-        .map { matches in
-          matches.compactMap { match in
-            PastGameState(
-              turnBasedMatch: match,
-              localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId
-            )
-          }
-          .sorted { $0.endDate > $1.endDate }
-        }
-        .mapError { $0 as NSError }
-        .receive(on: environment.mainQueue)
-        .catchToEffect(PastGamesAction.matchesResponse)
-
     case .pastGame:
       return .none
+
+    case .task:
+      return .task {
+        await .matchesResponse(
+          TaskResult {
+            try await environment.gameCenter.turnBasedMatch
+              .loadMatches()
+              .compactMap { match in
+                PastGameState(
+                  turnBasedMatch: match,
+                  localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId
+                )
+              }
+              .sorted { $0.endDate > $1.endDate }
+          }
+        )
+      }
     }
   }
 )
@@ -94,9 +88,7 @@ struct PastGamesView: View {
       )
       .padding()
     }
-    .onAppear {
-      viewStore.send(.onAppear)
-    }
+    .task { await viewStore.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
       foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,
@@ -116,11 +108,7 @@ struct PastGamesView: View {
             store: .init(
               initialState: .init(pastGames: pastGames),
               reducer: pastGamesReducer,
-              environment: .init(
-                backgroundQueue: DispatchQueue.global(qos: .userInitiated).eraseToAnyScheduler(),
-                gameCenter: .noop,
-                mainQueue: .main
-              )
+              environment: .init(gameCenter: .noop)
             )
           )
         }

@@ -30,8 +30,8 @@ public struct ChangelogState: Equatable {
 
 public enum ChangelogAction: Equatable {
   case change(id: Build.Number, action: ChangeAction)
-  case changelogResponse(Result<Changelog, ApiError>)
-  case onAppear
+  case changelogResponse(TaskResult<Changelog>)
+  case task
   case updateButtonTapped
 }
 
@@ -39,7 +39,6 @@ public struct ChangelogEnvironment {
   public var apiClient: ApiClient
   public var applicationClient: UIApplicationClient
   public var build: Build
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
   public var serverConfig: ServerConfigClient
   public var userDefaults: UserDefaultsClient
 
@@ -47,14 +46,12 @@ public struct ChangelogEnvironment {
     apiClient: ApiClient,
     applicationClient: UIApplicationClient,
     build: Build,
-    mainQueue: AnySchedulerOf<DispatchQueue>,
     serverConfig: ServerConfigClient,
     userDefaults: UserDefaultsClient
   ) {
     self.apiClient = apiClient
     self.applicationClient = applicationClient
     self.build = build
-    self.mainQueue = mainQueue
     self.serverConfig = serverConfig
     self.userDefaults = userDefaults
   }
@@ -106,23 +103,28 @@ public let changelogReducer = Reducer<
       state.isRequestInFlight = false
       return .none
 
-    case .onAppear:
+    case .task:
       state.currentBuild = environment.build.number()
       state.isRequestInFlight = true
 
-      return environment.apiClient.apiRequest(
-        route: .changelog(build: environment.build.number()),
-        as: Changelog.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(ChangelogAction.changelogResponse)
+      return .task {
+        await .changelogResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequest(
+              route: .changelog(build: environment.build.number()),
+              as: Changelog.self
+            )
+          }
+        )
+      }
 
     case .updateButtonTapped:
-      return environment.applicationClient.open(
-        environment.serverConfig.config().appStoreUrl.absoluteURL,
-        [:]
-      )
-      .fireAndForget()
+      return .fireAndForget {
+        _ = await environment.applicationClient.open(
+          environment.serverConfig.config().appStoreUrl.absoluteURL,
+          [:]
+        )
+      }
     }
   }
 )
@@ -184,7 +186,7 @@ public struct ChangelogView: View {
         }
         .padding()
       }
-      .onAppear { viewStore.send(.onAppear) }
+      .task { await viewStore.send(.task).finish() }
     }
   }
 }
@@ -205,7 +207,7 @@ public struct ChangelogView: View {
                 $0.override(
                   routeCase: /ServerRoute.Api.Route.changelog(build:),
                   withResponse: { _ in
-                    .ok(
+                    try await OK(
                       update(Changelog.current) {
                         $0.changes.append(
                           Changelog.Change(
@@ -223,7 +225,6 @@ public struct ChangelogView: View {
               build: update(.noop) {
                 $0.number = { 98 }
               },
-              mainQueue: .immediate,
               serverConfig: .noop,
               userDefaults: update(.noop) {
                 $0.integerForKey = { _ in 98 }

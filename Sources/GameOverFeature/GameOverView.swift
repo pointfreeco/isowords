@@ -76,17 +76,17 @@ public struct GameOverState: Equatable {
 
 public enum GameOverAction: Equatable {
   case closeButtonTapped
-  case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case delayedOnAppear
   case delayedShowUpgradeInterstitial
   case delegate(DelegateAction)
   case gameButtonTapped(GameMode)
-  case onAppear
   case notificationsAuthAlert(NotificationsAuthAlertAction)
   case rematchButtonTapped
   case showConfetti
-  case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
-  case submitGameResponse(Result<SubmitGameResponse, ApiError>)
+  case startDailyChallengeResponse(TaskResult<InProgressGame>)
+  case task
+  case submitGameResponse(TaskResult<SubmitGameResponse>)
   case upgradeInterstitial(UpgradeInterstitialAction)
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
@@ -134,19 +134,39 @@ public struct GameOverEnvironment {
   }
 
   #if DEBUG
-    public static let failing = Self(
-      apiClient: .failing,
-      audioPlayer: .failing,
-      database: .failing,
-      fileClient: .failing,
-      mainRunLoop: .failing,
-      remoteNotifications: .failing,
-      serverConfig: .failing,
-      storeKit: .failing,
-      userDefaults: .failing,
-      userNotifications: .failing
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      database: .unimplemented,
+      fileClient: .unimplemented,
+      mainRunLoop: .unimplemented,
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
+      storeKit: .unimplemented,
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
   #endif
+
+  func requestReviewAsync() async throws {
+    let stats = try await self.database.fetchStats()
+    let hasRequestedReviewBefore =
+      self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey) != 0
+    let timeSinceLastReviewRequest =
+      self.mainRunLoop.now.date.timeIntervalSince1970
+      - self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
+    let weekInSeconds: Double = 60 * 60 * 24 * 7
+
+    if stats.gamesPlayed >= 3
+      && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
+    {
+      await self.storeKit.requestReview()
+      await self.userDefaults.setDouble(
+        self.mainRunLoop.now.date.timeIntervalSince1970,
+        lastReviewRequestTimeIntervalKey
+      )
+    }
+  }
 }
 
 public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvironment>.combine(
@@ -179,13 +199,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     ),
 
   Reducer { state, action, environment in
-
-    //    var showConfetti: Effect<GameOverAction, Never> {
-    //      Effect(value: .showConfetti)
-    //        .delay(for: 1, scheduler: environment.mainQueue)
-    //        .eraseToEffect()
-    //    }
-
     switch action {
     case .closeButtonTapped:
       guard
@@ -193,10 +206,10 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
           .contains(state.userNotificationSettings?.authorizationStatus),
         case .dailyChallenge = state.completedGame.gameContext
       else {
-        return .merge(
-          .reviewRequestEffect(environment: environment),
-          Effect(value: .delegate(.close))
-        )
+        return .run { send in
+          try? await environment.requestReviewAsync()
+          await send(.delegate(.close))
+        }
       }
 
       state.notificationsAuthAlert = .init()
@@ -226,125 +239,41 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
     case let .gameButtonTapped(gameMode):
       switch state.completedGame.gameContext {
       case .dailyChallenge:
-        let challenge = state.dailyChallenges
-          .first(where: { $0.dailyChallenge.gameMode == gameMode })
-        state.gameModeIsLoading = challenge?.dailyChallenge.gameMode
-        return
-          challenge
-          .map {
-            startDailyChallenge(
-              $0,
-              apiClient: environment.apiClient,
-              date: { environment.mainRunLoop.now.date },
-              fileClient: environment.fileClient,
-              mainRunLoop: environment.mainRunLoop
-            )
-            .catchToEffect(GameOverAction.startDailyChallengeResponse)
-          }
-          ?? .none
+        state.gameModeIsLoading = gameMode  // TODO: Move below guard?
+        guard
+          let challenge = state.dailyChallenges
+            .first(where: { $0.dailyChallenge.gameMode == gameMode })
+        else { return .none }
+        return .task {
+          await .startDailyChallengeResponse(
+            TaskResult {
+              try await startDailyChallengeAsync(
+                challenge,
+                apiClient: environment.apiClient,
+                date: { environment.mainRunLoop.now.date },
+                fileClient: environment.fileClient
+              )
+            }
+          )
+        }
+
       case .shared:
         return .none
       case .solo:
-        return Effect(value: .delegate(.startSoloGame(gameMode)))
+        return .task { .delegate(.startSoloGame(gameMode)) }
       case .turnBased:
         return .none
       }
 
-    case .onAppear:
-      guard state.isDemo || state.completedGame.currentScore > 0
-      else {
-        return Effect(value: .delegate(.close))
-          .receive(on: ImmediateScheduler.shared.animation(.default))
-          .eraseToEffect()
-      }
-
-      let submitGameEffect: Effect<GameOverAction, Never>
-      if state.isDemo {
-        submitGameEffect = environment.apiClient.request(
-          route: .demo(
-            .submitGame(
-              .init(
-                gameMode: state.completedGame.gameMode,
-                score: state.completedGame.currentScore
-              )
-            )
-          ),
-          as: LeaderboardScoreResult.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .map(SubmitGameResponse.solo)
-        .catchToEffect(GameOverAction.submitGameResponse)
-      } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-        completedGame: state.completedGame)
-      {
-        submitGameEffect = environment.apiClient.apiRequest(
-          route: .games(.submit(request)),
-          as: SubmitGameResponse.self
-        )
-        .receive(on: environment.mainRunLoop.animation(.default))
-        .catchToEffect(GameOverAction.submitGameResponse)
-      } else {
-        submitGameEffect = .none
-      }
-
-      //      let turnBasedConfettiEffect = state.turnBasedContext?.localParticipant?.matchOutcome == .won
-      //        ? showConfetti
-      //        : .none
-
-      return .merge(
-        Effect(value: .delayedOnAppear)
-          .delay(for: 2, scheduler: environment.mainRunLoop)
-          .eraseToEffect(),
-
-        submitGameEffect,
-
-        //        turnBasedConfettiEffect,
-
-        Effect.showUpgradeInterstitial(
-          gameContext: .init(gameContext: state.completedGame.gameContext),
-          isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
-          serverConfig: environment.serverConfig.config(),
-          playedGamesCount: {
-            environment.database.playedGamesCount(
-              .init(gameContext: state.completedGame.gameContext)
-            )
-          }
-        )
-        .flatMap { showUpgrade in
-          showUpgrade
-            ? Effect(value: GameOverAction.delayedShowUpgradeInterstitial)
-              .delay(for: 1, scheduler: environment.mainRunLoop.animation(.easeIn))
-              .eraseToEffect()
-            : Effect<GameOverAction, Never>.none
-        }
-        .ignoreFailure()
-        .eraseToEffect(),
-
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
-          .map(GameOverAction.userNotificationSettingsResponse)
-          .eraseToEffect(),
-
-        environment.audioPlayer.loop(.gameOverMusicLoop)
-          .fireAndForget(),
-
-        environment.audioPlayer.play(.transitionIn)
-          .fireAndForget()
-      )
-
     case .notificationsAuthAlert(.delegate(.close)):
       state.notificationsAuthAlert = nil
-      return .merge(
-        Effect(value: .delegate(.close))
-          .receive(on: ImmediateScheduler.shared.animation())
-          .eraseToEffect(),
-        .reviewRequestEffect(environment: environment)
-      )
+      return .run { send in
+        try? await environment.requestReviewAsync()
+        await send(.delegate(.close), animation: .default)
+      }
 
     case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
-      return Effect(value: .delegate(.close))
-        .receive(on: ImmediateScheduler.shared.animation())
-        .eraseToEffect()
+      return .task { .delegate(.close) }.animation()
 
     case .notificationsAuthAlert:
       return .none
@@ -354,9 +283,6 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case .showConfetti:
       return .none
-    //      state.showConfetti = true
-    //      return environment.audioPlayer.play(.highScoreCelebration)
-    //        .fireAndForget()
 
     case .startDailyChallengeResponse(.failure):
       state.gameModeIsLoading = nil
@@ -364,23 +290,22 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
 
     case let .startDailyChallengeResponse(.success(inProgressGame)):
       state.gameModeIsLoading = nil
-      return .init(value: .delegate(.startGame(inProgressGame)))
+      return .task { .delegate(.startGame(inProgressGame)) }
 
     case let .submitGameResponse(.success(.dailyChallenge(result))):
       state.summary = .dailyChallenge(result)
 
-      return .merge(
-        //        result.rank.map { $0 <= 10 } == true
-        //          ? showConfetti
-        //          : .none,
-        environment.apiClient
-          .apiRequest(
-            route: .dailyChallenge(.today(language: .en)),
-            as: [FetchTodaysDailyChallengeResponse].self
-          )
-          .receive(on: environment.mainRunLoop.animation(.default))
-          .catchToEffect(GameOverAction.dailyChallengeResponse)
-      )
+      return .task {
+        await .dailyChallengeResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequest(
+              route: .dailyChallenge(.today(language: .en)),
+              as: [FetchTodaysDailyChallengeResponse].self
+            )
+          }
+        )
+      }
+      .animation()
 
     case let .submitGameResponse(.success(.shared(result))):
       return .none
@@ -395,15 +320,92 @@ public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvi
         )
       )
       return .none
-    //      return result.ranks.values.contains(where: { $0.rank <= 10 })
-    //        ? showConfetti
-    //        : .none
 
     case .submitGameResponse(.success(.turnBased)):
       return .none
 
     case .submitGameResponse(.failure):
       return .none
+
+    case .task:
+      return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+        guard isDemo || completedGame.currentScore > 0
+        else {
+          await send(.delegate(.close), animation: .default)
+          return
+        }
+
+        await environment.audioPlayer.play(.transitionIn)
+        await environment.audioPlayer.loop(.gameOverMusicLoop)
+
+        await withThrowingTaskGroup(of: Void.self) { group in
+          group.addTask {
+            if isDemo {
+              let request = ServerRoute.Demo.SubmitRequest(
+                gameMode: completedGame.gameMode,
+                score: completedGame.currentScore
+              )
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await .solo(
+                      environment.apiClient.request(
+                        route: .demo(.submitGame(request)),
+                        as: LeaderboardScoreResult.self
+                      )
+                    )
+                  }
+                ),
+                animation: .default
+              )
+            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+              completedGame: completedGame
+            ) {
+              await send(
+                .submitGameResponse(
+                  TaskResult {
+                    try await environment.apiClient.apiRequest(
+                      route: .games(.submit(request)),
+                      as: SubmitGameResponse.self
+                    )
+                  }
+                ),
+                animation: .default
+              )
+            }
+          }
+
+          group.addTask {
+            try await environment.mainRunLoop.sleep(for: .seconds(1))
+            let playedGamesCount = try await environment.database
+              .playedGamesCount(.init(gameContext: completedGame.gameContext))
+            let isFullGamePurchased =
+              environment.apiClient.currentPlayer()?.appleReceipt != nil
+            guard
+              !isFullGamePurchased,
+              shouldShowInterstitial(
+                gamePlayedCount: playedGamesCount,
+                gameContext: .init(gameContext: completedGame.gameContext),
+                serverConfig: environment.serverConfig.config()
+              )
+            else { return }
+            await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
+          }
+
+          group.addTask {
+            try await environment.mainRunLoop.sleep(for: .seconds(2))
+            await send(.delayedOnAppear)
+          }
+
+          group.addTask {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettings()
+              )
+            )
+          }
+        }
+      }
 
     case .upgradeInterstitial(.delegate(.close)),
       .upgradeInterstitial(.delegate(.fullGamePurchased)):
@@ -543,10 +545,9 @@ public struct GameOverView: View {
               foregroundColor: self.colorScheme == .dark ? .isowordsBlack : self.color
             )
           )
-          .padding([.bottom], .grid(self.viewStore.isDemo ? 30 : 0))
+          .padding(.bottom, .grid(self.viewStore.isDemo ? 30 : 0))
         }
-        .padding([.vertical], .grid(12))
-
+        .padding(.vertical, .grid(12))
       }
 
       IfLetStore(
@@ -565,7 +566,7 @@ public struct GameOverView: View {
       (self.colorScheme == .dark ? .isowordsBlack : self.color)
         .ignoresSafeArea()
     )
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
       store: self.store.scope(
         state: \.notificationsAuthAlert,
@@ -593,9 +594,9 @@ public struct GameOverView: View {
       }
         ?? Text("Loading your rank!")
     }
-    .animation(nil)
+    .animation(.default, value: result)
     .adaptiveFont(.matter, size: 52)
-    .adaptivePadding([.leading, .trailing])
+    .adaptivePadding(.horizontal)
     .minimumScaleFactor(0.01)
     .lineLimit(2)
     .multilineTextAlignment(.center)
@@ -636,8 +637,8 @@ public struct GameOverView: View {
           Text("\(self.viewStore.yourWords.count)")
         }
       }
-      .adaptivePadding([.leading, .trailing])
-      .animation(nil)
+      .adaptivePadding(.horizontal)
+      .animation(.default, value: result)
 
       self.wordList
 
@@ -672,7 +673,7 @@ public struct GameOverView: View {
             .disabled(self.viewStore.gameModeIsLoading != nil)
           }
         }
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
       }
     }
     .adaptiveFont(.matterMedium, size: 16)
@@ -686,7 +687,7 @@ public struct GameOverView: View {
         + Text(praise(mode: self.viewStore.gameMode, score: self.viewStore.yourScore))
     }
     .adaptiveFont(.matter, size: 52)
-    .adaptivePadding([.leading, .trailing])
+    .adaptivePadding(.horizontal)
     .minimumScaleFactor(0.01)
     .lineLimit(2)
     .multilineTextAlignment(.center)
@@ -707,17 +708,20 @@ public struct GameOverView: View {
               let rank = (/GameOverState.RankSummary.leaderboard)
                 .extract(from: self.viewStore.summary)?[timeScope]
               Text(
-                "\((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \(rank?.outOf ?? 0)"
+                """
+                \((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \
+                \(rank?.outOf ?? 0)
+                """
               )
               .redacted(reason: rank == nil ? .placeholder : [])
             }
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(nil)
+        .animation(.default, value: self.viewStore.summary)
       }
       .adaptiveFont(.matterMedium, size: 16)
-      .adaptivePadding([.leading, .trailing])
+      .adaptivePadding(.horizontal)
       .overlay(
         self.viewStore.showConfetti
           ? Confetti(
@@ -733,7 +737,7 @@ public struct GameOverView: View {
         VStack(spacing: self.adaptiveSize.pad(8)) {
           Text("Play again")
             .adaptiveFont(.matterMedium, size: 16)
-            .adaptivePadding([.leading, .trailing])
+            .adaptivePadding(.horizontal)
             .frame(maxWidth: .infinity, alignment: .leading)
 
           LazyVGrid(
@@ -762,13 +766,13 @@ public struct GameOverView: View {
               action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
             )
           }
-          .adaptivePadding([.leading, .trailing])
+          .adaptivePadding(.horizontal)
         }
       }
     }
   }
 
-  struct DividerId: Hashable {}
+  struct DividerID: Hashable {}
 
   @State var containerWidth: CGFloat = 0
   @State var dividerOffset: CGFloat = 0
@@ -830,7 +834,7 @@ public struct GameOverView: View {
                 .clipShape(Circle())
             }
             .frame(maxWidth: .infinity)
-            .padding([.leading, .trailing], .grid(2))
+            .padding(.horizontal, .grid(2))
 
             Divider()
               .frame(height: 2)
@@ -848,13 +852,13 @@ public struct GameOverView: View {
             .padding(.top, self.viewStore.words.first?.isYourWord == .some(true) ? 0 : .grid(6))
             .padding(.grid(2))
           }
-          .padding([.top, .bottom])
+          .padding(.vertical)
           .frame(maxWidth: .infinity)
 
           Divider()
             .frame(width: 2)
             .background((self.colorScheme == .dark ? self.color : .isowordsBlack).opacity(0.2))
-            .id(DividerId())
+            .id(DividerID())
 
           VStack(alignment: .leading) {
             HStack {
@@ -880,7 +884,7 @@ public struct GameOverView: View {
               }
             }
             .frame(maxWidth: .infinity)
-            .padding([.leading, .trailing], .grid(2))
+            .padding(.horizontal, .grid(2))
 
             Divider()
               .frame(height: 2)
@@ -905,14 +909,14 @@ public struct GameOverView: View {
             .padding(.top, self.viewStore.words.first?.isYourWord == .some(true) ? .grid(6) : 0)
             .padding(.grid(2))
           }
-          .padding([.top, .bottom])
+          .padding(.vertical)
           .frame(maxWidth: .infinity)
         }
         .fixedSize()
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .frame(width: UIScreen.main.bounds.size.width)
         .offset(x: (containerWidth / 2) - self.dividerOffset + (self.dragOffset / 2))
-        .padding([.top, .bottom])
+        .padding(.vertical)
         .gesture(
           DragGesture()
             .onChanged { self.dragOffset = $0.translation.width }
@@ -951,7 +955,7 @@ public struct GameOverView: View {
     VStack(spacing: self.adaptiveSize.pad(12)) {
       Text("Your words")
         .adaptiveFont(.matterMedium, size: 16)
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .frame(maxWidth: .infinity, alignment: .leading)
 
       ScrollView(.horizontal, showsIndicators: false) {
@@ -964,7 +968,7 @@ public struct GameOverView: View {
             )
           }
         }
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
       }
     }
   }
@@ -1003,7 +1007,7 @@ private struct WordView: View {
       .offset(x: 8, y: -8)
     }
     .frame(maxWidth: .infinity, alignment: self.word.isYourWord ? .trailing : .leading)
-    .padding([.leading, .trailing], .grid(1))
+    .padding(.horizontal, .grid(1))
     .fixedSize()
   }
 
@@ -1037,35 +1041,6 @@ extension CompletedMatch {
     case (.tied, .tied): return "Do-over!"
     default: return "Game over"
     }
-  }
-}
-
-extension Effect where Output == GameOverAction, Failure == Never {
-  static func reviewRequestEffect(environment: GameOverEnvironment) -> Self {
-    let hasRequestedReviewBefore =
-      environment.userDefaults
-      .doubleForKey(lastReviewRequestTimeIntervalKey) != 0
-    let timeSinceLastReviewRequest =
-      environment.mainRunLoop.now.date.timeIntervalSince1970
-      - environment.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
-    let weekInSeconds: Double = 60 * 60 * 24 * 7
-
-    return environment.database.fetchStats
-      .ignoreFailure()
-      .flatMap { stats in
-        stats.gamesPlayed >= 3
-          && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
-          ? Effect.merge(
-            environment.userDefaults.setDouble(
-              environment.mainRunLoop.now.date.timeIntervalSince1970,
-              lastReviewRequestTimeIntervalKey
-            )
-            .fireAndForget(),
-            environment.storeKit.requestReview().fireAndForget()
-          )
-          : Effect.none
-      }
-      .eraseToEffect()
   }
 }
 

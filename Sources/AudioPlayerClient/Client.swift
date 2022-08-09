@@ -1,14 +1,14 @@
 import ComposableArchitecture
 
 public struct AudioPlayerClient {
-  public var load: ([Sound]) -> Effect<Never, Never>
-  public var loop: (Sound) -> Effect<Never, Never>
-  public var play: (Sound) -> Effect<Never, Never>
-  public var secondaryAudioShouldBeSilencedHint: () -> Bool
-  public var setGlobalVolumeForMusic: (Float) -> Effect<Never, Never>
-  public var setGlobalVolumeForSoundEffects: (Float) -> Effect<Never, Never>
-  public var setVolume: (Sound, Float) -> Effect<Never, Never>
-  public var stop: (Sound) -> Effect<Never, Never>
+  public var load: @Sendable ([Sound]) async -> Void
+  public var loop: @Sendable (Sound) async -> Void
+  public var play: @Sendable (Sound) async -> Void
+  public var secondaryAudioShouldBeSilencedHint: @Sendable () async -> Bool
+  public var setGlobalVolumeForMusic: @Sendable (Float) async -> Void
+  public var setGlobalVolumeForSoundEffects: @Sendable (Float) async -> Void
+  public var setVolume: @Sendable (Sound, Float) async ->Void
+  public var stop: @Sendable (Sound) async -> Void
 
   public struct Sound: Hashable {
     public let category: Category
@@ -29,8 +29,7 @@ public struct AudioPlayerClient {
     var client = self
     client.play = { sound in
       guard doNotIncludeSounds.contains(sound)
-      else { return self.play(sound) }
-      return .none
+      else { return await self.play(sound) }
     }
     return client
   }
@@ -38,14 +37,14 @@ public struct AudioPlayerClient {
 
 extension AudioPlayerClient {
   public static let noop = Self(
-    load: { _ in .none },
-    loop: { _ in .none },
-    play: { _ in .none },
+    load: { _ in },
+    loop: { _ in },
+    play: { _ in },
     secondaryAudioShouldBeSilencedHint: { false },
-    setGlobalVolumeForMusic: { _ in .none },
-    setGlobalVolumeForSoundEffects: { _ in .none },
-    setVolume: { _, _ in .none },
-    stop: { _ in .none }
+    setGlobalVolumeForMusic: { _ in },
+    setGlobalVolumeForSoundEffects: { _ in },
+    setVolume: { _, _ in },
+    stop: { _ in }
   )
 }
 
@@ -53,22 +52,19 @@ extension AudioPlayerClient {
   import XCTestDynamicOverlay
 
   extension AudioPlayerClient {
-    public static let failing = Self(
-      load: { _ in .failing("\(Self.self).load is unimplemented") },
-      loop: { _ in .failing("\(Self.self).loop is unimplemented") },
-      play: { _ in .failing("\(Self.self).play is unimplemented") },
-      secondaryAudioShouldBeSilencedHint: {
-        XCTFail("\(Self.self).secondaryAudioShouldBeSilencedHint is unimplemented")
-        return false
-      },
-      setGlobalVolumeForMusic: { _ in
-        .failing("\(Self.self).setGlobalVolumeForMusic is unimplemented")
-      },
-      setGlobalVolumeForSoundEffects: { _ in
-        .failing("\(Self.self).setGlobalVolumeForSoundEffects is unimplemented")
-      },
-      setVolume: { _, _ in .failing("\(Self.self).setVolume is unimplemented") },
-      stop: { _ in .failing("\(Self.self).stop is unimplemented") }
+    public static let unimplemented = Self(
+      load: XCTUnimplemented("\(Self.self).load"),
+      loop: XCTUnimplemented("\(Self.self).loop"),
+      play: XCTUnimplemented("\(Self.self).play"),
+      secondaryAudioShouldBeSilencedHint: XCTUnimplemented(
+        "\(Self.self).secondaryAudioShouldBeSilencedHint", placeholder: false
+      ),
+      setGlobalVolumeForMusic: XCTUnimplemented("\(Self.self).setGlobalVolumeForMusic"),
+      setGlobalVolumeForSoundEffects: XCTUnimplemented(
+        "\(Self.self).setGlobalVolumeForSoundEffects"
+      ),
+      setVolume: XCTUnimplemented("\(Self.self).setVolume"),
+      stop: XCTUnimplemented("\(Self.self).stop")
     )
   }
 #endif

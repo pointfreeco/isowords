@@ -3,7 +3,7 @@ import ServerConfig
 extension ServerConfigClient {
   public static let noop = Self(
     config: { .init() },
-    refresh: { .none }
+    refresh: { try await Task.never() }
   )
 }
 
@@ -11,12 +11,9 @@ extension ServerConfigClient {
   import XCTestDynamicOverlay
 
   extension ServerConfigClient {
-    public static let failing = Self(
-      config: {
-        XCTFail("\(Self.self).config is unimplemented")
-        return .init()
-      },
-      refresh: { .failing("\(Self.self).refresh is unimplemented") }
+    public static let unimplemented = Self(
+      config: XCTUnimplemented("\(Self.self).config", placeholder: ServerConfig()),
+      refresh: XCTUnimplemented("\(Self.self).refresh")
     )
   }
 #endif

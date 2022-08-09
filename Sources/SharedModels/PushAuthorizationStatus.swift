@@ -1,4 +1,4 @@
-public struct PushAuthorizationStatus: RawRepresentable, Codable, Equatable {
+public struct PushAuthorizationStatus: RawRepresentable, Codable, Equatable, Sendable {
   public static let authorized = Self(rawValue: 2)
   public static let denied = Self(rawValue: 1)
   public static let ephemeral = Self(rawValue: 4)

@@ -80,6 +80,7 @@ extension Three: Encodable where Element: Encodable {
 
 extension Three: Equatable where Element: Equatable {}
 extension Three: Hashable where Element: Hashable {}
+extension Three: Sendable where Element: Sendable {}
 
 extension Three: CustomDumpReflectable {
   public var customDumpMirror: Mirror {

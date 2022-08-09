@@ -3,14 +3,14 @@ import ComposableArchitecture
 import StoreKit
 
 public struct StoreKitClient {
-  public var addPayment: (SKPayment) -> Effect<Never, Never>
-  public var appStoreReceiptURL: () -> URL?
-  public var isAuthorizedForPayments: () -> Bool
-  public var fetchProducts: (Set<String>) -> Effect<ProductsResponse, Error>
-  public var finishTransaction: (PaymentTransaction) -> Effect<Never, Never>
-  public var observer: Effect<PaymentTransactionObserverEvent, Never>
-  public var requestReview: () -> Effect<Never, Never>
-  public var restoreCompletedTransactions: () -> Effect<Never, Never>
+  public var addPayment: @Sendable (SKPayment) async -> Void
+  public var appStoreReceiptURL: @Sendable () -> URL?
+  public var isAuthorizedForPayments: @Sendable () -> Bool
+  public var fetchProducts: @Sendable (Set<String>) async throws -> ProductsResponse
+  public var finishTransaction: @Sendable (PaymentTransaction) async -> Void
+  public var observer: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
+  public var requestReview: @Sendable () async -> Void
+  public var restoreCompletedTransactions: @Sendable () async -> Void
 
   public enum PaymentTransactionObserverEvent: Equatable {
     case removedTransactions([PaymentTransaction])

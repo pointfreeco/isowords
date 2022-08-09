@@ -1,3 +1,4 @@
+import ApiClient
 import ComposableArchitecture
 import Overture
 import SharedModels
@@ -21,26 +22,26 @@ struct HomeFeaturePreviewApp: App {
             reducer: homeReducer,
             environment: HomeEnvironment(
               apiClient: update(.noop) {
-                $0.authenticate = { _ in
-                  .init(value: .init(appleReceipt: nil, player: .blob))
-                }
+                $0.authenticate = { _ in .init(appleReceipt: nil, player: .blob) }
                 $0.override(
                   route: .dailyChallenge(.today(language: .en)),
-                  withResponse: .ok([
-                    FetchTodaysDailyChallengeResponse(
-                      dailyChallenge: .init(
-                        endsAt: .init(),
-                        gameMode: .timed,
-                        id: .init(rawValue: UUID()),
-                        language: .en
-                      ),
-                      yourResult: .init(
-                        outOf: .random(in: 2000...4000),
-                        rank: 10,
-                        score: 3_000
+                  withResponse: {
+                    try await OK([
+                      FetchTodaysDailyChallengeResponse(
+                        dailyChallenge: .init(
+                          endsAt: .init(),
+                          gameMode: .timed,
+                          id: .init(rawValue: UUID()),
+                          language: .en
+                        ),
+                        yourResult: .init(
+                          outOf: .random(in: 2000...4000),
+                          rank: 10,
+                          score: 3_000
+                        )
                       )
-                    )
-                  ])
+                    ])
+                  }
                 )
               },
               applicationClient: .noop,
@@ -51,15 +52,13 @@ struct HomeFeaturePreviewApp: App {
               deviceId: .noop,
               feedbackGenerator: .live,
               fileClient: .live,
-              gameCenter: update(.noop) {
-                $0.localPlayer.authenticate = .init(value: nil)
-              },
+              gameCenter: .noop,
               lowPowerMode: .live,
               mainQueue: .main,
               mainRunLoop: .main,
               remoteNotifications: .noop,
               serverConfig: .noop,
-              setUserInterfaceStyle: { _ in .none },
+              setUserInterfaceStyle: { _ in },
               storeKit: .noop,
               timeZone: { TimeZone.current },
               userDefaults: .noop,

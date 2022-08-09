@@ -1,6 +1,6 @@
 import CustomDump
 
-public struct IndexedCubeFace: Codable, Equatable, Hashable {
+public struct IndexedCubeFace: Codable, Hashable, Sendable {
   public var index: LatticePoint
   public var side: CubeFace.Side
 

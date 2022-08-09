@@ -9,27 +9,24 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       .combined(
         with: .init { state, action, environment in
           switch action {
-          case .onAppear:
-            let soundEffect: Effect<Never, Never>
-            if state.gameMode == .timed {
-              soundEffect = environment.audioPlayer
-                .play(
-                  state.isDemo
-                    ? .timedGameBgLoop1
-                    : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
-                )
+          case .task:
+            return .fireAndForget { [gameMode = state.gameMode, isDemo = state.isDemo] in
+              if gameMode == .timed {
+                await environment.audioPlayer
+                  .play(
+                    isDemo
+                      ? .timedGameBgLoop1
+                      : [.timedGameBgLoop1, .timedGameBgLoop2].randomElement()!
+                  )
 
-            } else {
-              soundEffect = environment.audioPlayer
-                .loop([.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!)
+              } else {
+                await environment.audioPlayer
+                  .loop([.unlimitedGameBgLoop1, .unlimitedGameBgLoop2].randomElement()!)
+              }
             }
-            return
-              soundEffect
-              .fireAndForget()
 
           case .confirmRemoveCube:
-            return environment.audioPlayer.play(.cubeRemove)
-              .fireAndForget()
+            return .fireAndForget { await environment.audioPlayer.play(.cubeRemove) }
 
           default:
             return .none
@@ -37,27 +34,20 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         }
       )
       .onChange(of: { $0.gameOver == nil }) { _, _, _, environment in
-        .merge(
-          Effect
-            .merge(
-              AudioPlayerClient.Sound.allMusic
-                .filter { $0 != .gameOverMusicLoop }
-                .map(environment.audioPlayer.stop)
-            )
-            .fireAndForget(),
-
-          .cancel(id: CubeShakingId())
-        )
+        .fireAndForget {
+          await Task.cancel(id: CubeShakingID.self)
+          for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
+            await environment.audioPlayer.stop(music)
+          }
+        }
       }
       .onChange(of: \.secondsPlayed) { secondsPlayed, state, _, environment in
         if secondsPlayed == state.gameMode.seconds - 10 {
-          return environment.audioPlayer.play(.timed10SecWarning)
-            .fireAndForget()
+          return .fireAndForget { await environment.audioPlayer.play(.timed10SecWarning) }
         } else if secondsPlayed >= state.gameMode.seconds - 5
           && secondsPlayed <= state.gameMode.seconds
         {
-          return environment.audioPlayer.play(.timedCountdownTone)
-            .fireAndForget()
+          return .fireAndForget { await environment.audioPlayer.play(.timedCountdownTone) }
         } else {
           return .none
         }
@@ -72,19 +62,17 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
         switch action {
         case .submitButtonTapped, .wordSubmitButton(.delegate(.confirmSubmit)):
-          return environment.audioPlayer.play(.invalidWord)
-            .fireAndForget()
+          return .fireAndForget { await environment.audioPlayer.play(.invalidWord) }
 
         default:
-          return environment.audioPlayer.play(.cubeDeselect)
-            .fireAndForget()
+          return .fireAndForget { await environment.audioPlayer.play(.cubeDeselect) }
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, _, environment in
         guard !selectedWord.isEmpty
         else {
           state.cubeStartedShakingAt = nil
-          return .cancel(id: CubeShakingId())
+          return .cancel(id: CubeShakingID.self)
         }
 
         let previousWord = state.cubes.string(from: previousSelection)
@@ -101,21 +89,17 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         if cubeIsShaking {
           state.cubeStartedShakingAt = state.cubeStartedShakingAt ?? environment.date()
 
-          return cubeWasShaking
-            ? .none
-            : Effect.timer(
-              id: CubeShakingId(),
-              every: .seconds(2),
-              on: environment.mainQueue
-            )
-            .flatMap { _ in environment.audioPlayer.play(.cubeShake) }
-            .merge(with: environment.audioPlayer.play(.cubeShake))
-            .eraseToEffect()
-            .fireAndForget()
+          return cubeWasShaking ? .none : .fireAndForget {
+            await environment.audioPlayer.play(.cubeShake)
+            for await _ in environment.mainQueue.timer(interval: .seconds(2)) {
+              await environment.audioPlayer.play(.cubeShake)
+            }
+          }
+          .cancellable(id: CubeShakingID.self)
 
         } else {
           state.cubeStartedShakingAt = nil
-          return .cancel(id: CubeShakingId())
+          return .cancel(id: CubeShakingID.self)
         }
       }
       .onChange(of: \.moves.last) { lastMove, state, _, environment in
@@ -132,8 +116,9 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             .remainder
         )
 
-        return environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
-          .fireAndForget()
+        return .fireAndForget {
+          await environment.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
+        }
       }
       .selectionSounds(
         audioPlayer: \.audioPlayer,
@@ -149,7 +134,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
   }
 }
 
-private struct CubeShakingId: Hashable {}
+private enum CubeShakingID {}
 
 extension GameState {
   func hasBeenPlayed(word: String) -> Bool {

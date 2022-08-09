@@ -66,7 +66,7 @@ class LeaderboardMiddlewareIntegrationTests: XCTestCase {
         ])
       )
     ]
-    var environment = ServerEnvironment.failing
+    var environment = ServerEnvironment.unimplemented
     environment.database = self.database
     environment.dictionary = .everyString
     environment.router = .test

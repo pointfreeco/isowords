@@ -42,9 +42,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
-    self.viewStore.send(
-      .appDelegate(.didRegisterForRemoteNotifications(.failure(error as NSError)))
-    )
+    self.viewStore.send(.appDelegate(.didRegisterForRemoteNotifications(.failure(error))))
   }
 }
 
@@ -101,8 +99,12 @@ extension AppEnvironment {
       remoteNotifications: .live,
       serverConfig: .live(apiClient: apiClient, build: build),
       setUserInterfaceStyle: { userInterfaceStyle in
-        .fireAndForget {
-          UIApplication.shared.windows.first?.overrideUserInterfaceStyle = userInterfaceStyle
+        await MainActor.run {
+          guard
+            let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
+              as? UIWindowScene
+          else { return }
+          scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
         }
       },
       storeKit: .live(),
@@ -123,9 +125,8 @@ extension ServerConfigClient {
   static func live(apiClient: ApiClient, build: Build) -> Self {
     .live(
       fetch: {
-        apiClient.apiRequest(route: .config(build: build.number()), as: ServerConfig.self)
-          .mapError { $0 as Error }
-          .eraseToEffect()
+        try await apiClient
+          .apiRequest(route: .config(build: build.number()), as: ServerConfig.self)
       }
     )
   }

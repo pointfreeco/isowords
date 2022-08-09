@@ -1,4 +1,4 @@
-public enum TimeScope: String, CaseIterable, Codable {
+public enum TimeScope: String, CaseIterable, Codable, Sendable {
   case allTime
   case lastDay
   case lastWeek

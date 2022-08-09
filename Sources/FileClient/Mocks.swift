@@ -5,30 +5,27 @@ import XCTestDynamicOverlay
 
 extension FileClient {
   public static let noop = Self(
-    delete: { _ in .none },
-    load: { _ in .none },
-    save: { _, _ in .none }
+    delete: { _ in },
+    load: { _ in throw CancellationError() },
+    save: { _, _ in }
   )
 
   #if DEBUG
-    public static let failing = Self(
-      delete: { .failing("\(Self.self).delete(\($0)) is unimplemented") },
-      load: { .failing("\(Self.self).load(\($0)) is unimplemented") },
-      save: { file, _ in .failing("\(Self.self).save(\(file)) is unimplemented") }
+    public static let unimplemented = Self(
+      delete: XCTUnimplemented("\(Self.self).deleteAsync"),
+      load: XCTUnimplemented("\(Self.self).loadAsync"),
+      save: XCTUnimplemented("\(Self.self).saveAsync")
     )
   #endif
 
-  public mutating func override<A>(
-    load file: String, _ data: Effect<A, Error>
-  )
-  where A: Encodable {
+  public mutating func override<A: Encodable>(load file: String, _ data: A) {
     let fulfill = expectation(description: "FileClient.load(\(file))")
-    self.load = { [self] in
+    self.load = { @Sendable [self] in
       if $0 == file {
         fulfill()
-        return data.tryMap { try JSONEncoder().encode($0) }.eraseToEffect()
+        return try JSONEncoder().encode(data)
       } else {
-        return self.load($0)
+        return try await load($0)
       }
     }
   }

@@ -1,3 +1,4 @@
+import ApiClient
 import ComposableArchitecture
 import GameOverFeature
 import Overture
@@ -15,7 +16,7 @@ struct GameOverPreviewApp: App {
     WindowGroup {
       GameOverView(
         store: .solo
-          //        store: .multiplayer
+        // store: .multiplayer
       )
     }
   }
@@ -43,7 +44,7 @@ extension Store where State == GameOverState, Action == GameOverAction {
             routeCase: (/ServerRoute.Api.Route.games)
               .appending(path: /ServerRoute.Api.Route.Games.submit),
             withResponse: { _ in
-              Effect.ok(
+              try await OK(
                 SubmitGameResponse.solo(
                   .init(
                     ranks: [
@@ -54,8 +55,6 @@ extension Store where State == GameOverState, Action == GameOverAction {
                   )
                 )
               )
-              .delay(for: 1, scheduler: DispatchQueue.main)
-              .eraseToEffect()
             }
           )
         },

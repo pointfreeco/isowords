@@ -21,26 +21,24 @@ import XCTest
 @testable import SoloFeature
 @testable import UserDefaultsClient
 
+@MainActor
 class PersistenceTests: XCTestCase {
-  func testUnlimitedSaveAndQuit() {
-    var saves: [Data] = []
+  func testUnlimitedSaveAndQuit() async throws {
+    let saves = ActorIsolated<[Data]>([])
 
     let store = TestStore(
       initialState: .init(
         home: .init(route: .solo(.init()))
       ),
       reducer: appReducer,
-      environment: update(.failing) {
-        $0.audioPlayer.play = { _ in .none }
-        $0.audioPlayer.stop = { _ in .none }
+      environment: update(.unimplemented) {
+        $0.audioPlayer.play = { _ in }
+        $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
         $0.dictionary.contains = { word, _ in word == "CAB" }
         $0.dictionary.randomCubes = { _ in .mock }
         $0.feedbackGenerator = .noop
-        $0.fileClient.save = { _, data in
-          saves.append(data)
-          return .none
-        }
+        $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
         $0.mainRunLoop = .immediate
         $0.mainQueue = .immediate
       }
@@ -51,7 +49,7 @@ class PersistenceTests: XCTestCase {
     let A = IndexedCubeFace(index: index, side: .left)
     let B = IndexedCubeFace(index: index, side: .right)
 
-    store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
+    await store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
       $0.game = GameState(
         cubes: .mock,
         gameContext: .solo,
@@ -61,41 +59,41 @@ class PersistenceTests: XCTestCase {
       )
       $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
     }
-    store.send(.currentGame(.game(.tap(.began, C)))) {
+    await store.send(.currentGame(.game(.tap(.began, C)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = C
         $0.selectedWord = [C]
       }
     }
-    store.send(.currentGame(.game(.tap(.ended, C)))) {
+    await store.send(.currentGame(.game(.tap(.ended, C)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    store.send(.currentGame(.game(.tap(.began, A)))) {
+    await store.send(.currentGame(.game(.tap(.began, A)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = A
         $0.selectedWord = [C, A]
       }
     }
-    store.send(.currentGame(.game(.tap(.ended, A)))) {
+    await store.send(.currentGame(.game(.tap(.ended, A)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    store.send(.currentGame(.game(.tap(.began, B)))) {
+    await store.send(.currentGame(.game(.tap(.began, B)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = B
         $0.selectedWord = [C, A, B]
         $0.selectedWordIsValid = true
       }
     }
-    store.send(.currentGame(.game(.tap(.ended, B)))) {
+    await store.send(.currentGame(.game(.tap(.ended, B)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    store.send(.currentGame(.game(.submitButtonTapped(reaction: nil)))) {
+    await store.send(.currentGame(.game(.submitButtonTapped(reaction: nil)))) {
       try XCTUnwrap(&$0.game) {
         $0.moves = [
           .init(
@@ -114,7 +112,7 @@ class PersistenceTests: XCTestCase {
       }
       $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
     }
-    store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.currentGame(.game(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .init(
           title: .init("Solo"),
@@ -140,19 +138,21 @@ class PersistenceTests: XCTestCase {
         )
       }
     }
-    store.send(.currentGame(.game(.exitButtonTapped))) { appState in
+    await store.send(.currentGame(.game(.exitButtonTapped))) { appState in
       try XCTUnwrap(&appState.game) { game in
         appState.home.savedGames.unlimited = InProgressGame(gameState: game)
       }
       appState.game = nil
-      XCTAssertNoDifference(2, saves.count)
-      XCTAssertNoDifference(saves.last!, try JSONEncoder().encode(appState.home.savedGames))
+    }
+    try await saves.withValue {
+      XCTAssertNoDifference(2, $0.count)
+      XCTAssertNoDifference($0.last, try JSONEncoder().encode(store.state.home.savedGames))
     }
   }
 
-  func testUnlimitedAbandon() throws {
-    var didArchiveGame = false
-    var saves: [Data] = []
+  func testUnlimitedAbandon() async throws {
+    let didArchiveGame = ActorIsolated(false)
+    let saves = ActorIsolated<[Data]>([])
 
     let store = TestStore(
       initialState: AppState(
@@ -160,23 +160,17 @@ class PersistenceTests: XCTestCase {
         home: HomeState(savedGames: SavedGamesState(unlimited: .mock))
       ),
       reducer: appReducer,
-      environment: update(.failing) {
-        $0.audioPlayer.stop = { _ in .none }
+      environment: update(.unimplemented) {
+        $0.audioPlayer.stop = { _ in }
         $0.backgroundQueue = .immediate
-        $0.database.saveGame = { _ in
-          didArchiveGame = true
-          return .none
-        }
+        $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
         $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-        $0.fileClient.save = { _, data in
-          saves.append(data)
-          return .none
-        }
+        $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
         $0.mainQueue = .immediate
       }
     )
 
-    store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.currentGame(.game(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .init(
           title: .init("Solo"),
@@ -202,7 +196,7 @@ class PersistenceTests: XCTestCase {
         )
       }
     }
-    store.send(.currentGame(.game(.endGameButtonTapped))) {
+    await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: .init(gameState: $0),
@@ -213,27 +207,26 @@ class PersistenceTests: XCTestCase {
       $0.home.savedGames.unlimited = nil
     }
 
-    XCTAssertNoDifference(didArchiveGame, true)
-    XCTAssertNoDifference(saves, [try JSONEncoder().encode(SavedGamesState())])
+    await didArchiveGame.withValue { XCTAssert($0) }
+    try await saves.withValue {
+      XCTAssertNoDifference($0, [try JSONEncoder().encode(SavedGamesState())])
+    }
   }
 
-  func testTimedAbandon() {
-    var didArchiveGame = false
+  func testTimedAbandon() async {
+    let didArchiveGame = ActorIsolated(false)
 
     let store = TestStore(
       initialState: AppState(game: update(.mock) { $0.gameMode = .timed }),
       reducer: appReducer,
-      environment: update(.failing) {
-        $0.audioPlayer.stop = { _ in .none }
-        $0.database.saveGame = { _ in
-          didArchiveGame = true
-          return .none
-        }
+      environment: update(.unimplemented) {
+        $0.audioPlayer.stop = { _ in }
+        $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
         $0.mainQueue = .immediate
       }
     )
 
-    store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.currentGame(.game(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.bottomMenu = .init(
           title: .init("Solo"),
@@ -254,7 +247,7 @@ class PersistenceTests: XCTestCase {
         )
       }
     }
-    store.send(.currentGame(.game(.endGameButtonTapped))) {
+    await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: .init(gameState: $0),
@@ -263,33 +256,35 @@ class PersistenceTests: XCTestCase {
         $0.bottomMenu = nil
       }
     }
+    .finish()
 
-    XCTAssertNoDifference(didArchiveGame, true)
+    await didArchiveGame.withValue { XCTAssert($0) }
   }
 
-  func testUnlimitedResume() {
+  func testUnlimitedResume() async {
     let savedGames = SavedGamesState(dailyChallengeUnlimited: nil, unlimited: .mock)
     let store = TestStore(
       initialState: AppState(),
       reducer: appReducer,
       environment: update(.didFinishLaunching) {
-        $0.fileClient.override(load: savedGamesFileName, .init(value: savedGames))
+        $0.fileClient.override(load: savedGamesFileName, savedGames)
       }
     )
 
-    store.send(.appDelegate(.didFinishLaunching))
-    store.receive(.savedGamesLoaded(.success(savedGames))) {
+    let task = await store.send(.appDelegate(.didFinishLaunching))
+    await store.receive(.savedGamesLoaded(.success(savedGames))) {
       $0.home.savedGames = savedGames
     }
-    store.send(.home(.setNavigation(tag: .solo))) {
+    await store.send(.home(.setNavigation(tag: .solo))) {
       $0.home.route = .solo(.init(inProgressGame: .mock))
     }
-    store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
+    await store.send(.home(.solo(.gameButtonTapped(.unlimited)))) {
       $0.game = GameState(inProgressGame: .mock)
     }
+    await task.cancel()
   }
 
-  func testTurnBasedAbandon() {
+  func testTurnBasedAbandon() async {
     let store = TestStore(
       initialState: AppState(
         game: update(.mock) {
@@ -309,12 +304,12 @@ class PersistenceTests: XCTestCase {
         )
       ),
       reducer: appReducer,
-      environment: update(.failing) {
-        $0.audioPlayer.stop = { _ in .none }
+      environment: update(.unimplemented) {
+        $0.audioPlayer.stop = { _ in }
       }
     )
 
-    store.send(.currentGame(.game(.endGameButtonTapped))) {
+    await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         var gameOver = GameOverState(
           completedGame: .init(gameState: $0),

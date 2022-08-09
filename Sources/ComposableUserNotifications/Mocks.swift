@@ -1,11 +1,11 @@
 extension UserNotificationClient {
   public static let noop = Self(
-    add: { _ in .none },
-    delegate: .none,
-    getNotificationSettings: .none,
-    removeDeliveredNotificationsWithIdentifiers: { _ in .none },
-    removePendingNotificationRequestsWithIdentifiers: { _ in .none },
-    requestAuthorization: { _ in .none }
+    add: { _ in },
+    delegate: { AsyncStream { _ in } },
+    getNotificationSettings: { Notification.Settings(authorizationStatus: .notDetermined) },
+    removeDeliveredNotificationsWithIdentifiers: { _ in },
+    removePendingNotificationRequestsWithIdentifiers: { _ in },
+    requestAuthorization: { _ in false }
   )
 }
 
@@ -13,18 +13,18 @@ extension UserNotificationClient {
   import XCTestDynamicOverlay
 
   extension UserNotificationClient {
-    public static let failing = Self(
-      add: { _ in .failing("\(Self.self).add is not implemented") },
-      delegate: .failing("\(Self.self).delegate is not implemented"),
-      getNotificationSettings: .failing("\(Self.self).getNotificationSettings is not implemented"),
-      removeDeliveredNotificationsWithIdentifiers: { _ in
-        .failing("\(Self.self).removeDeliveredNotificationsWithIdentifiers is not implemented")
-      },
-      removePendingNotificationRequestsWithIdentifiers: { _ in
-        .failing("\(Self.self).removePendingNotificationRequestsWithIdentifiers is not implemented")
-      },
-      requestAuthorization: { _ in .failing("\(Self.self).requestAuthorization is not implemented")
-      }
+    public static let unimplemented = Self(
+      add: XCTUnimplemented("\(Self.self).add"),
+      delegate: XCTUnimplemented("\(Self.self).delegate", placeholder: .finished),
+      getNotificationSettings: XCTUnimplemented(
+        "\(Self.self).getNotificationSettings",
+        placeholder: Notification.Settings(authorizationStatus: .notDetermined)
+      ),
+      removeDeliveredNotificationsWithIdentifiers: XCTUnimplemented(
+        "\(Self.self).removeDeliveredNotificationsWithIdentifiers"),
+      removePendingNotificationRequestsWithIdentifiers: XCTUnimplemented(
+        "\(Self.self).removePendingNotificationRequestsWithIdentifiers"),
+      requestAuthorization: XCTUnimplemented("\(Self.self).requestAuthorization")
     )
   }
 #endif

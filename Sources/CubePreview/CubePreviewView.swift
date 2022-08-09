@@ -59,8 +59,8 @@ public enum CubePreviewAction: BindableAction, Equatable {
   case binding(BindingAction<CubePreviewState>)
   case cubeScene(CubeSceneView.ViewAction)
   case lowPowerModeResponse(Bool)
-  case onAppear
   case tap
+  case task
 }
 
 public struct CubePreviewEnvironment {
@@ -87,7 +87,8 @@ public let cubePreviewReducer = Reducer<
   CubePreviewAction,
   CubePreviewEnvironment
 > { state, action, environment in
-  struct SelectionId: Hashable {}
+
+  enum SelectionID {}
 
   switch action {
   case .binding:
@@ -100,70 +101,6 @@ public let cubePreviewReducer = Reducer<
     state.isOnLowPowerMode = isOn
     return .none
 
-  case .onAppear:
-    var effects: [Effect<CubePreviewAction, Never>] = [
-      environment.lowPowerMode.start
-        .prefix(1)
-        .map(CubePreviewAction.lowPowerModeResponse)
-        .eraseToEffect(),
-
-      Effect.none
-        .delay(for: 1, scheduler: environment.mainQueue)
-        .eraseToEffect(),
-    ]
-
-    var accumulatedSelectedFaces: [IndexedCubeFace] = []
-    let move = state.moves[state.moveIndex]
-    switch move.type {
-    case let .playedWord(faces):
-      for (faceIndex, face) in faces.enumerated() {
-        accumulatedSelectedFaces.append(face)
-        let moveDuration = Double.random(in: (0.6...0.8))
-
-        effects.append(
-          Effect(value: .set(\.$nub.location, .face(face)))
-            .receive(
-              on: environment.mainQueue
-                .animate(withDuration: moveDuration, options: .curveEaseInOut)
-            )
-            .eraseToEffect()
-        )
-
-        effects.append(
-          Effect.merge(
-            // Press the nub on the first character
-            faceIndex == 0 ? Effect(value: .set(\.$nub.isPressed, true)) : .none,
-
-            // Select the faces that have been tapped so far
-            Effect(value: .set(\.$selectedCubeFaces, accumulatedSelectedFaces))
-          )
-          .delay(
-            for: .seconds(
-              faceIndex == 0
-                ? moveDuration
-                : 0.5 * moveDuration
-            ),
-            scheduler: environment.mainQueue.animation()
-          )
-          .eraseToEffect()
-        )
-      }
-      effects.append(
-        Effect(value: .set(\.$nub.isPressed, false))
-      )
-      effects.append(
-        Effect(value: .set(\.$nub.location, .offScreenRight))
-          .receive(on: environment.mainQueue.animate(withDuration: 1))
-          .eraseToEffect()
-      )
-
-    case let .removedCube(index):
-      break
-    }
-
-    return Effect.concatenate(effects)
-      .cancellable(id: SelectionId())
-
   case .tap:
     state.nub.location = .offScreenRight
     switch state.moves[state.moveIndex].type {
@@ -172,7 +109,62 @@ public let cubePreviewReducer = Reducer<
     case .removedCube:
       break
     }
-    return .cancel(id: SelectionId())
+    return .cancel(id: SelectionID.self)
+
+  case .task:
+    return .run { [move = state.moves[state.moveIndex]] send in
+      await send(
+        .lowPowerModeResponse(
+          await environment.lowPowerMode.start().first(where: { _ in true }) ?? false
+        )
+      )
+
+      try await environment.mainQueue.sleep(for: .seconds(1))
+
+      var accumulatedSelectedFaces: [IndexedCubeFace] = []
+      switch move.type {
+      case let .playedWord(faces):
+        for (faceIndex, face) in faces.enumerated() {
+          accumulatedSelectedFaces.append(face)
+          let moveDuration = Double.random(in: (0.6...0.8))
+
+          // Move the nub to the face
+          await send(
+            .set(\.$nub.location, .face(face)),
+            animateWithDuration: moveDuration,
+            delay: 0, options: .curveEaseInOut
+          )
+
+          // Pause a bit to allow the nub to animate to the face
+          try await environment.mainQueue.sleep(
+            for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
+          )
+
+          // Press the nub on the first character
+          if faceIndex == 0 {
+            await send(.set(\.$nub.isPressed, true), animation: .default)
+          }
+
+          // Select the faces that have been tapped so far
+          await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
+        }
+
+        // Un-press the nub once finished selecting all faces
+        await send(.set(\.$nub.isPressed, false))
+
+        // Move the nub off the screen
+        await send(
+          .set(\.$nub.location, .offScreenRight),
+          animateWithDuration: 1,
+          delay: 0,
+          options: .curveEaseInOut
+        )
+
+      case let .removedCube(index):
+        break
+      }
+    }
+    .cancellable(id: SelectionID.self)
   }
 }
 .binding()
@@ -190,7 +182,6 @@ public let cubePreviewReducer = Reducer<
   puzzle: \.cubes,
   selectedWord: \.selectedCubeFaces
 )
-// TODO: cancel effects on dismiss
 
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
@@ -253,9 +244,7 @@ public struct CubePreviewView: View {
             action: CubePreviewAction.cubeScene
           )
         )
-        .onAppear {
-          self.viewStore.send(.onAppear)
-        }
+        .task { await self.viewStore.send(.task).finish() }
       }
       .background(
         self.viewStore.isAnimationReduced

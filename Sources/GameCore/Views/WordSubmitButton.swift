@@ -66,7 +66,7 @@ let wordSubmitReducer = Reducer<
   WordSubmitButtonFeatureState, WordSubmitButtonAction, WordSubmitEnvironment
 > { state, action, environment in
 
-  struct SubmitButtonPressedDelayId: Hashable {}
+  enum SubmitButtonPressedDelayID {}
 
   guard state.isYourTurn
   else { return .none }
@@ -74,67 +74,45 @@ let wordSubmitReducer = Reducer<
   switch action {
   case .backgroundTapped:
     state.wordSubmitButton.areReactionsOpen = false
-    return environment.audioPlayer.play(.uiSfxEmojiClose)
-      .fireAndForget()
+    return .fireAndForget { await environment.audioPlayer.play(.uiSfxEmojiClose) }
 
   case .delayedSubmitButtonPressed:
     state.wordSubmitButton.areReactionsOpen = true
-    return .merge(
-      environment.feedbackGenerator.selectionChanged()
-        .fireAndForget(),
-
-      environment.audioPlayer.play(.uiSfxEmojiOpen)
-        .fireAndForget()
-    )
+    return .fireAndForget {
+      await environment.feedbackGenerator.selectionChanged()
+      await environment.audioPlayer.play(.uiSfxEmojiOpen)
+    }
 
   case .delegate:
     return .none
 
   case let .reactionButtonTapped(reaction):
     state.wordSubmitButton.areReactionsOpen = false
-    return .merge(
-      environment.feedbackGenerator.selectionChanged()
-        .fireAndForget(),
-
-      environment.audioPlayer.play(.uiSfxEmojiSend)
-        .fireAndForget(),
-
-      Effect(value: .delegate(.confirmSubmit(reaction: reaction)))
-    )
+    return .task {
+      await environment.feedbackGenerator.selectionChanged()
+      await environment.audioPlayer.play(.uiSfxEmojiSend)
+      return .delegate(.confirmSubmit(reaction: reaction))
+    }
 
   case .submitButtonPressed:
     guard state.isTurnBasedMatch
     else { return .none }
 
-    let closeSound: Effect<Never, Never>
     if state.wordSubmitButton.areReactionsOpen {
       state.wordSubmitButton.isClosing = true
-      closeSound = environment.audioPlayer.play(.uiSfxEmojiClose)
-    } else {
-      closeSound = .none
     }
     state.wordSubmitButton.areReactionsOpen = false
     state.wordSubmitButton.isSubmitButtonPressed = true
 
-    let longPressEffect: Effect<WordSubmitButtonAction, Never>
-    if state.isSelectedWordValid {
-      longPressEffect = Effect(value: .delayedSubmitButtonPressed)
-        .delay(for: 0.5, scheduler: environment.mainQueue)
-        .eraseToEffect()
-        .cancellable(id: SubmitButtonPressedDelayId(), cancelInFlight: true)
-    } else {
-      longPressEffect = .none
+    return .task { [isClosing = state.wordSubmitButton.isClosing] in
+      await environment.feedbackGenerator.selectionChanged()
+      if isClosing {
+        await environment.audioPlayer.play(.uiSfxEmojiClose)
+      }
+      try await environment.mainQueue.sleep(for: 0.5)
+      return .delayedSubmitButtonPressed
     }
-
-    return .merge(
-      longPressEffect,
-
-      closeSound
-        .fireAndForget(),
-
-      environment.feedbackGenerator.selectionChanged()
-        .fireAndForget()
-    )
+    .cancellable(id: SubmitButtonPressedDelayID.self, cancelInFlight: true)
 
   case .submitButtonReleased:
     guard state.isTurnBasedMatch
@@ -143,19 +121,19 @@ let wordSubmitReducer = Reducer<
     let wasClosing = state.wordSubmitButton.isClosing
     state.wordSubmitButton.isClosing = false
     state.wordSubmitButton.isSubmitButtonPressed = false
-    return .merge(
-      .cancel(id: SubmitButtonPressedDelayId()),
 
-      wasClosing || state.wordSubmitButton.areReactionsOpen
-        ? .none
-        : Effect(value: .delegate(.confirmSubmit(reaction: nil)))
-    )
+    return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
+      await Task.cancel(id: SubmitButtonPressedDelayID.self)
+      guard !wasClosing && !areReactionsOpen
+      else { return }
+      await send(.delegate(.confirmSubmit(reaction: nil)))
+    }
 
   case .submitButtonTapped:
     guard !state.isTurnBasedMatch
     else { return .none }
 
-    return Effect(value: .delegate(.confirmSubmit(reaction: nil)))
+    return .task { .delegate(.confirmSubmit(reaction: nil)) }
   }
 }
 
@@ -236,10 +214,8 @@ public struct WordSubmitButton: View {
         ? Color.isowordsBlack.opacity(0.4)
         : nil
     )
-    .animation(.default)
-    .onTapGesture {
-      self.viewStore.send(.backgroundTapped, animation: .default)
-    }
+    .animation(.default, value: self.viewStore.wordSubmitButton.areReactionsOpen)
+    .onTapGesture { self.viewStore.send(.backgroundTapped, animation: .default) }
   }
 }
 
@@ -268,7 +244,8 @@ struct ReactionsView: View {
       .opacity(self.viewStore.areReactionsOpen ? 1 : 0)
       .offset(x: offset.x, y: offset.y)
       .animation(
-        Animation.default.delay(Double(idx) / Double(self.viewStore.favoriteReactions.count * 10))
+        .default.delay(Double(idx) / Double(self.viewStore.favoriteReactions.count * 10)),
+        value: self.viewStore.areReactionsOpen
       )
     }
   }

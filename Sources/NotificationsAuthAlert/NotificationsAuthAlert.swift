@@ -45,36 +45,28 @@ public let notificationsAuthAlertReducer = Reducer<
 > { state, action, environment in
   switch action {
   case .closeButtonTapped:
-    return Effect(value: .delegate(.close))
-      .receive(on: ImmediateScheduler.shared.animation())
-      .eraseToEffect()
+    return .task { .delegate(.close) }.animation()
 
   case .delegate:
     return .none
 
   case .turnOnNotificationsButtonTapped:
-    return .concatenate(
-      environment.userNotifications.requestAuthorization([.alert, .sound])
-        .ignoreFailure()
-        .flatMap { successful in
-          successful
-            ? Effect.registerForRemoteNotifications(
-              remoteNotifications: environment.remoteNotifications,
-              scheduler: environment.mainRunLoop,
-              userNotifications: environment.userNotifications
-            )
-            : .none
-        }
-        .eraseToEffect()
-        .fireAndForget(),
-
-      environment.userNotifications.getNotificationSettings
-        .flatMap { settings in
-          Effect(value: .delegate(.didChooseNotificationSettings(settings)))
-            .receive(on: environment.mainRunLoop.animation())
-        }
-        .eraseToEffect()
-    )
+    return .run { send in
+      if try await environment.userNotifications.requestAuthorization([.alert, .sound]) {
+        await registerForRemoteNotificationsAsync(
+          remoteNotifications: environment.remoteNotifications,
+          userNotifications: environment.userNotifications
+        )
+      }
+      await send(
+        .delegate(
+          .didChooseNotificationSettings(
+            environment.userNotifications.getNotificationSettings()
+          )
+        ),
+        animation: .default
+      )
+    }
   }
 }
 

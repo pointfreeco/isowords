@@ -23,19 +23,20 @@ struct LeaderboardsPreviewApp: App {
           timeScope: .lastWeek
         )
       ),
-      withResponse: .ok(
-        FetchLeaderboardResponse(
-          entries: (1...20).map { index in
-            .init(
-              id: .init(rawValue: UUID()),
-              isSupporter: false,
-              isYourScore: false,
-              outOf: 2_000,
-              playerDisplayName: "Blob \(index)",
-              rank: index,
-              score: 4_000 - index * 100
-            )
-          }
+      withResponse: {
+        try await OK(
+          FetchLeaderboardResponse(
+            entries: (1...20).map { index in
+              .init(
+                id: .init(rawValue: UUID()),
+                isSupporter: false,
+                isYourScore: false,
+                outOf: 2_000,
+                playerDisplayName: "Blob \(index)",
+                rank: index,
+                score: 4_000 - index * 100
+              )
+            }
             + [
               .init(
                 id: .init(rawValue: UUID()),
@@ -47,8 +48,9 @@ struct LeaderboardsPreviewApp: App {
                 score: 1_000
               )
             ]
+          )
         )
-      )
+      }
     )
 
     return WindowGroup {

@@ -5,14 +5,15 @@ import SharedModels
 import SiteMiddleware
 import XCTest
 
+@MainActor
 class GameOverFeatureIntegrationTests: XCTestCase {
-  func testSubmitSoloScore() {
+  func testSubmitSoloScore() async {
     let ranks: [TimeScope: LeaderboardScoreResult.Rank] = [
       .allTime: .init(outOf: 10_000, rank: 1_000),
       .lastWeek: .init(outOf: 1_000, rank: 100),
       .lastDay: .init(outOf: 100, rank: 10),
     ]
-    var serverEnvironment = ServerEnvironment.failing
+    var serverEnvironment = ServerEnvironment.unimplemented
     serverEnvironment.database.fetchPlayerByAccessToken = { _ in
       .init(value: .blob)
     }
@@ -38,16 +39,18 @@ class GameOverFeatureIntegrationTests: XCTestCase {
     serverEnvironment.dictionary.contains = { _, _ in true }
     serverEnvironment.router = .test
 
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient = .init(
       middleware: siteMiddleware(environment: serverEnvironment),
       router: .test
     )
-    environment.database.playedGamesCount = { _ in .init(value: 0) }
+    environment.database.playedGamesCount = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: GameOverState(
@@ -58,14 +61,14 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
+    let task = await store.send(.task)
 
-    store.receive(.delayedOnAppear) {
-      $0.isViewEnabled = true
-    }
-
-    store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
+    await store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
       $0.summary = .leaderboard(ranks)
     }
+    await store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
+    }
+    await task.cancel()
   }
 }

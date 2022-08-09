@@ -10,8 +10,9 @@ import XCTest
 
 @testable import GameFeature
 
+@MainActor
 class DailyChallengeTests: XCTestCase {
-  func testLeaveTimedDailyChallenge() {
+  func testLeaveTimedDailyChallenge() async {
     let move = Move(
       playedAt: .mock,
       playerIndex: nil,
@@ -24,16 +25,12 @@ class DailyChallengeTests: XCTestCase {
       ])
     )
 
-    var didSave = false
+    let didSave = ActorIsolated(false)
 
-    let environment = update(GameEnvironment.failing) {
-      $0.audioPlayer.play = { _ in .none }
-      $0.audioPlayer.stop = { _ in .none }
-      $0.database.saveGame = { _ in
-        didSave = true
-        return .none
-      }
-      $0.fileClient.load = { _ in .none }
+    let environment = update(GameEnvironment.unimplemented) {
+      $0.audioPlayer.stop = { _ in }
+      $0.database.saveGame = { _ in await didSave.setValue(true) }
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
     }
@@ -54,7 +51,7 @@ class DailyChallengeTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.endGameButtonTapped)) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: CompletedGame(gameState: $0),
@@ -63,10 +60,10 @@ class DailyChallengeTests: XCTestCase {
       }
     }
 
-    XCTAssertNoDifference(didSave, true)
+    await didSave.withValue { XCTAssert($0) }
   }
 
-  func testLeaveUnlimitedDailyChallenge() {
+  func testLeaveUnlimitedDailyChallenge() async {
     let move = Move(
       playedAt: .mock,
       playerIndex: nil,
@@ -79,15 +76,12 @@ class DailyChallengeTests: XCTestCase {
       ])
     )
 
-    var didSave = false
-    let environment = update(GameEnvironment.failing) {
-      $0.audioPlayer.play = { _ in .none }
-      $0.audioPlayer.stop = { _ in .none }
-      $0.database.saveGame = { _ in
-        didSave = true
-        return .none
-      }
-      $0.fileClient.load = { _ in .none }
+    let didSave = ActorIsolated(false)
+
+    let environment = update(GameEnvironment.unimplemented) {
+      $0.audioPlayer.stop = { _ in }
+      $0.database.saveGame = { _ in await didSave.setValue(true) }
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
     }
@@ -108,7 +102,7 @@ class DailyChallengeTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.endGameButtonTapped)) {
       try XCTUnwrap(&$0.game) {
         $0.gameOver = GameOverState(
           completedGame: CompletedGame(gameState: $0),
@@ -116,7 +110,8 @@ class DailyChallengeTests: XCTestCase {
         )
       }
     }
+    .finish()
 
-    XCTAssertNoDifference(didSave, true)
+    await didSave.withValue { XCTAssert($0) }
   }
 }

@@ -4,56 +4,27 @@ import UserNotifications
 
 extension UserNotificationClient {
   public static let live = Self(
-    add: { request in
-      .future { callback in
-        UNUserNotificationCenter.current().add(request) { error in
-          if let error = error {
-            callback(.failure(error))
-          } else {
-            callback(.success(()))
-          }
-        }
-      }
-    },
-    delegate:
-      Effect
-      .run { subscriber in
-        var delegate: Optional = Delegate(subscriber: subscriber)
+    add: { try await UNUserNotificationCenter.current().add($0) },
+    delegate: {
+      AsyncStream { continuation in
+        let delegate = Delegate(continuation: continuation)
         UNUserNotificationCenter.current().delegate = delegate
-        return AnyCancellable {
-          delegate = nil
-        }
-      }
-      .share()
-      .eraseToEffect(),
-    getNotificationSettings: .future { callback in
-      UNUserNotificationCenter.current().getNotificationSettings { settings in
-        callback(.success(.init(rawValue: settings)))
+        continuation.onTermination = { [delegate] _ in }
       }
     },
-    removeDeliveredNotificationsWithIdentifiers: { identifiers in
-      .fireAndForget {
-        UNUserNotificationCenter.current()
-          .removeDeliveredNotifications(withIdentifiers: identifiers)
-      }
+    getNotificationSettings: {
+      await Notification.Settings(
+        rawValue: UNUserNotificationCenter.current().notificationSettings()
+      )
     },
-    removePendingNotificationRequestsWithIdentifiers: { identifiers in
-      .fireAndForget {
-        UNUserNotificationCenter.current()
-          .removePendingNotificationRequests(withIdentifiers: identifiers)
-      }
+    removeDeliveredNotificationsWithIdentifiers: {
+      UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: $0)
     },
-    requestAuthorization: { options in
-      .future { callback in
-        UNUserNotificationCenter.current()
-          .requestAuthorization(options: options) { granted, error in
-            if let error = error {
-              callback(.failure(error))
-            } else {
-              callback(.success(granted))
-            }
-          }
-      }
+    removePendingNotificationRequestsWithIdentifiers: {
+      UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: $0)
+    },
+    requestAuthorization: {
+      try await UNUserNotificationCenter.current().requestAuthorization(options: $0)
     }
   )
 }
@@ -79,10 +50,10 @@ extension UserNotificationClient.Notification.Settings {
 
 extension UserNotificationClient {
   fileprivate class Delegate: NSObject, UNUserNotificationCenterDelegate {
-    let subscriber: Effect<UserNotificationClient.DelegateEvent, Never>.Subscriber
+    let continuation: AsyncStream<UserNotificationClient.DelegateEvent>.Continuation
 
-    init(subscriber: Effect<UserNotificationClient.DelegateEvent, Never>.Subscriber) {
-      self.subscriber = subscriber
+    init(continuation: AsyncStream<UserNotificationClient.DelegateEvent>.Continuation) {
+      self.continuation = continuation
     }
 
     func userNotificationCenter(
@@ -90,8 +61,8 @@ extension UserNotificationClient {
       didReceive response: UNNotificationResponse,
       withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-      self.subscriber.send(
-        .didReceiveResponse(.init(rawValue: response), completionHandler: completionHandler)
+      self.continuation.yield(
+        .didReceiveResponse(.init(rawValue: response)) { completionHandler() }
       )
     }
 
@@ -99,7 +70,7 @@ extension UserNotificationClient {
       _ center: UNUserNotificationCenter,
       openSettingsFor notification: UNNotification?
     ) {
-      self.subscriber.send(
+      self.continuation.yield(
         .openSettingsForNotification(notification.map(Notification.init(rawValue:)))
       )
     }
@@ -110,11 +81,8 @@ extension UserNotificationClient {
       withCompletionHandler completionHandler:
         @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-      self.subscriber.send(
-        .willPresentNotification(
-          .init(rawValue: notification),
-          completionHandler: completionHandler
-        )
+      self.continuation.yield(
+        .willPresentNotification(.init(rawValue: notification)) { completionHandler($0) }
       )
     }
   }

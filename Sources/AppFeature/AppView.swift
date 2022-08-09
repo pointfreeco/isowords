@@ -6,6 +6,7 @@ import ComposableUserNotifications
 import CubeCore
 import GameFeature
 import HomeFeature
+import NotificationHelpers
 import OnboardingFeature
 import ServerConfig
 import ServerRouter
@@ -72,8 +73,8 @@ public enum AppAction: Equatable {
   case home(HomeAction)
   case onboarding(OnboardingAction)
   case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
-  case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, NSError>)
+  case savedGamesLoaded(TaskResult<SavedGamesState>)
+  case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
 }
 
 extension AppEnvironment {
@@ -205,10 +206,9 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
       }
       .onChange(of: \.home.savedGames) { savedGames, _, action, environment in
         if case .savedGamesLoaded(.success) = action { return .none }
-        return environment.fileClient
-          .saveGames(games: savedGames, on: environment.backgroundQueue)
-          .receive(on: environment.mainQueue)
-          .fireAndForget()
+        return .fireAndForget {
+          try await environment.fileClient.save(games: savedGames)
+        }
       }
   }
 }
@@ -220,52 +220,52 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       state.onboarding = .init(presentationStyle: .firstLaunch)
     }
 
-    return .merge(
-      environment.database.migrate.fireAndForget(),
-      environment.fileClient.loadSavedGames().map(AppAction.savedGamesLoaded),
-
-      environment.userDefaults.installationTime <= 0
-        ? environment.userDefaults.setInstallationTime(
+    return .run { send in
+      async let migrate: Void = environment.database.migrate()
+      if environment.userDefaults.installationTime <= 0 {
+        async let setInstallationTime: Void = environment.userDefaults.setInstallationTime(
           environment.mainRunLoop.now.date.timeIntervalSinceReferenceDate
         )
-        .fireAndForget()
-        : .none
-    )
+      }
+      await send(
+        .savedGamesLoaded(
+          TaskResult { try await environment.fileClient.loadSavedGames() }
+        )
+      )
+    }
 
   case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
-    let effect = Effect<AppAction, Never>.fireAndForget(completionHandler)
-
-    guard
+    if
       let data =
         try? JSONSerialization
         .data(withJSONObject: response.notification.request.content.userInfo),
       let pushNotificationContent = try? JSONDecoder()
         .decode(PushNotificationContent.self, from: data)
-    else { return effect }
+    {
+      switch pushNotificationContent {
+      case .dailyChallengeEndsSoon:
+        if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
+          state.currentGame = GameFeatureState(
+            game: GameState(inProgressGame: inProgressGame),
+            settings: state.home.settings
+          )
+        } else {
+          // TODO: load/retry
+        }
 
-    switch pushNotificationContent {
-    case .dailyChallengeEndsSoon:
-      if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
-        state.currentGame = GameFeatureState(
-          game: GameState(inProgressGame: inProgressGame),
-          settings: state.home.settings
-        )
-      } else {
-        // TODO: load/retry
+      case .dailyChallengeReport:
+        state.game = nil
+        state.home.route = .dailyChallenge(.init())
       }
-
-    case .dailyChallengeReport:
-      state.game = nil
-      state.home.route = .dailyChallenge(.init())
     }
 
-    return effect
+    return .fireAndForget { completionHandler() }
 
   case .appDelegate:
     return .none
 
   case .currentGame(.game(.endGameButtonTapped)),
-    .currentGame(.game(.gameOver(.onAppear))):
+    .currentGame(.game(.gameOver(.task))):
 
     switch (state.game?.gameContext, state.game?.gameMode) {
     case (.dailyChallenge, .unlimited):
@@ -301,19 +301,17 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
 
   case let .currentGame(.game(.activeGames(.turnBasedGameTapped(matchId)))),
     let .home(.activeGames(.turnBasedGameTapped(matchId))):
-    return environment.gameCenter.turnBasedMatch.load(matchId)
-      .ignoreFailure()
-      .map {
-        .gameCenter(
-          .listener(
-            .turnBased(
-              .receivedTurnEventForMatch($0, didBecomeActive: true)
-            )
-          )
+    return .run { send in
+      do {
+        let match = try await environment.gameCenter.turnBasedMatch.load(matchId)
+        await send(
+          .gameCenter(
+            .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: true)))
+          ),
+          animation: .default
         )
-      }
-      .receive(on: environment.mainQueue.animation())
-      .eraseToEffect()
+      } catch {}
+    }
 
   case .currentGame(.game(.exitButtonTapped)),
     .currentGame(.game(.gameOver(.delegate(.close)))):
@@ -359,10 +357,9 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
       != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
     {
       state.home.savedGames.dailyChallengeUnlimited = nil
-      return environment.fileClient
-        .saveGames(games: state.home.savedGames, on: environment.backgroundQueue)
-        .receive(on: environment.mainQueue)
-        .fireAndForget()
+      return .fireAndForget { [savedGames = state.home.savedGames] in
+        try await environment.fileClient.save(games: savedGames)
+      }
     }
     return .none
 
@@ -371,18 +368,13 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     return .none
 
   case .didChangeScenePhase(.active):
-    return .merge(
-      Effect.registerForRemoteNotifications(
+    return .fireAndForget {
+      async let register: Void = registerForRemoteNotificationsAsync(
         remoteNotifications: environment.remoteNotifications,
-        scheduler: environment.mainQueue,
         userNotifications: environment.userNotifications
       )
-      .fireAndForget(),
-
-      environment.serverConfig.refresh()
-        .receive(on: environment.mainQueue)
-        .fireAndForget()
-    )
+      async let refresh = environment.serverConfig.refresh()
+    }
 
   case .didChangeScenePhase:
     return .none

@@ -3,17 +3,27 @@ import ComposableArchitecture
 
 extension Reducer where State == GameState, Action == GameAction, Environment == GameEnvironment {
   static let activeGamesTray = Self { state, action, environment in
-    let activeGameEffects = Effect<GameAction, Never>.merge(
-      environment.gameCenter.turnBasedMatch.loadMatches()
-        .receive(on: environment.mainQueue.animation())
-        .mapError { $0 as NSError }
-        .catchToEffect(GameAction.matchesLoaded),
-      environment.fileClient.loadSavedGames()
-        .subscribe(on: environment.backgroundQueue)
-        .receive(on: environment.mainQueue.animation())
-        .eraseToEffect()
-        .map(GameAction.savedGamesLoaded)
-    )
+    let activeGameEffects = Effect<GameAction, Never>.run { send in
+      await withThrowingTaskGroup(of: Void.self) { group in
+        group.addTask {
+          await send(
+            .matchesLoaded(
+              TaskResult { try await environment.gameCenter.turnBasedMatch.loadMatches() }
+            ),
+            animation: .default
+          )
+        }
+
+        group.addTask {
+          await send(
+            .savedGamesLoaded(
+              TaskResult { try await environment.fileClient.loadSavedGames() }
+            ),
+            animation: .default
+          )
+        }
+      }
+    }
 
     switch action {
     case .cancelButtonTapped,
@@ -52,7 +62,7 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
       )
       return .none
 
-    case .onAppear:
+    case .task:
       return activeGameEffects
 
     case let .savedGamesLoaded(.success(savedGames)):

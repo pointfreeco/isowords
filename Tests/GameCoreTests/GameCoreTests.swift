@@ -3,17 +3,16 @@ import ComposableArchitecture
 import GameCore
 import XCTest
 
+@MainActor
 class GameCoreTests: XCTestCase {
-  func testForfeitTurnBasedGame() {
-    var didEndMatchInTurn = false
+  func testForfeitTurnBasedGame() async {
+    let didEndMatchInTurn = ActorIsolated(false)
 
-    var environment = GameEnvironment.failing
-    environment.audioPlayer.stop = { _ in .none }
-    environment.database.saveGame = { _ in .none }
+    var environment = GameEnvironment.unimplemented
+    environment.audioPlayer.stop = { _ in }
     environment.gameCenter.localPlayer.localPlayer = { .authenticated }
     environment.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
-      didEndMatchInTurn = true
-      return .none
+      await didEndMatchInTurn.setValue(true)
     }
 
     var gameState = GameState(inProgressGame: .mock)
@@ -36,7 +35,7 @@ class GameCoreTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.forfeitGameButtonTapped) {
+    await store.send(.forfeitGameButtonTapped) {
       $0.alert = .init(
         title: .init("Are you sure?"),
         message: .init(
@@ -50,7 +49,7 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    store.send(.alert(.forfeitButtonTapped)) {
+    await store.send(.alert(.forfeitButtonTapped)) {
       $0.alert = nil
       $0.gameOver = .init(
         completedGame: .init(gameState: gameState),
@@ -59,6 +58,7 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    XCTAssertNoDifference(didEndMatchInTurn, true)
+    await didEndMatchInTurn.withValue { XCTAssertNoDifference($0, true) }
+    await store.finish()
   }
 }

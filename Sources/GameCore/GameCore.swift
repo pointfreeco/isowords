@@ -7,7 +7,6 @@ import CasePaths
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
-import ComposableGameCenterHelpers
 import ComposableStoreKit
 import ComposableUserNotifications
 import CubeCore
@@ -161,11 +160,11 @@ public enum GameAction: Equatable {
   case gameLoaded
   case gameOver(GameOverAction)
   case lowPowerModeChanged(Bool)
-  case matchesLoaded(Result<[TurnBasedMatch], NSError>)
+  case matchesLoaded(TaskResult<[TurnBasedMatch]>)
   case menuButtonTapped
-  case onAppear
+  case task
   case pan(UIGestureRecognizer.State, PanData?)
-  case savedGamesLoaded(Result<SavedGamesState, NSError>)
+  case savedGamesLoaded(TaskResult<SavedGamesState>)
   case settingsButtonTapped
   case submitButtonTapped(reaction: Move.Reaction?)
   case tap(UIGestureRecognizer.State, IndexedCubeFace?)
@@ -182,7 +181,7 @@ public enum GameAction: Equatable {
 
   public enum GameCenterAction: Equatable {
     case listener(LocalPlayerClient.ListenerEvent)
-    case turnBasedMatchResponse(Result<TurnBasedMatch, NSError>)
+    case turnBasedMatchResponse(TaskResult<TurnBasedMatch>)
   }
 }
 
@@ -202,7 +201,7 @@ public struct GameEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
+  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var userDefaults: UserDefaultsClient
   public var userNotifications: UserNotificationClient
@@ -223,7 +222,7 @@ public struct GameEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
+    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     userDefaults: UserDefaultsClient,
     userNotifications: UserNotificationClient
@@ -253,10 +252,6 @@ public struct GameEnvironment {
     self.mainRunLoop.now.date
   }
 }
-
-private enum InterstitialId {}
-private enum LowPowerModeId {}
-private enum TimerId {}
 
 public func gameReducer<StatePath, Action, Environment>(
   state: StatePath,
@@ -316,8 +311,26 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         else { return .none }
 
         return .merge(
-          forceQuitMatch(match: match, gameCenter: environment.gameCenter)
-            .fireAndForget(),
+          .fireAndForget {
+            let localPlayer = environment.gameCenter.localPlayer.localPlayer()
+            let currentParticipantIsLocalPlayer =
+              match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+
+            if currentParticipantIsLocalPlayer {
+              try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
+                .init(
+                  for: match.matchId,
+                  matchData: match.matchData ?? Data(),
+                  localPlayerId: localPlayer.gamePlayerId,
+                  localPlayerMatchOutcome: .quit,
+                  message: "\(localPlayer.displayName) forfeited the match."
+                )
+              )
+            } else {
+              try await environment.gameCenter.turnBasedMatch
+                .participantQuitOutOfTurn(match.matchId)
+            }
+          },
 
           state.gameOver(environment: environment)
         )
@@ -347,8 +360,7 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         return state.gameOver(environment: environment)
 
       case .exitButtonTapped:
-        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
-          .fireAndForget()
+        return .none
 
       case .forfeitGameButtonTapped:
         state.alert = .init(
@@ -357,7 +369,8 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
             """
             Forfeiting will end the game and your opponent will win. Are you sure you want to \
             forfeit?
-            """),
+            """
+          ),
           primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
           secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
         )
@@ -368,13 +381,14 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
 
       case .gameLoaded:
         state.isGameLoaded = true
-        return Effect<RunLoop.SchedulerTimeType, Never>
-          .timer(id: TimerId.self, every: 1, on: environment.mainRunLoop)
-          .map { GameAction.timerTick($0.date) }
+        return .run { send in
+          for await instant in environment.mainRunLoop.timer(interval: .seconds(1)) {
+            await send(.timerTick(instant.date))
+          }
+        }
 
       case .gameOver(.delegate(.close)):
-        return Effect.gameTearDownEffects(audioPlayer: environment.audioPlayer)
-          .fireAndForget()
+        return .none
 
       case let .gameOver(.delegate(.startGame(inProgressGame))):
         state = .init(inProgressGame: inProgressGame)
@@ -394,13 +408,45 @@ where StatePath: TcaHelpers.Path, StatePath.Value == GameState {
         state.bottomMenu = .gameMenu(state: state)
         return .none
 
-      case .onAppear:
+      case .task:
         guard !state.isGameOver else { return .none }
         state.gameCurrentTime = environment.date()
-        return .onAppearEffects(
-          environment: environment,
-          gameContext: state.gameContext
-        )
+
+        return .run { [gameContext = state.gameContext] send in
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+              for await isLowPower in await environment.lowPowerMode.start() {
+                await send(.lowPowerModeChanged(isLowPower))
+              }
+            }
+
+            if gameContext.isTurnBased {
+              group.addTask {
+                let playedGamesCount = await environment.userDefaults
+                  .incrementMultiplayerOpensCount()
+                let isFullGamePurchased = environment.apiClient.currentPlayer()?.appleReceipt != nil
+                guard
+                  !isFullGamePurchased,
+                  shouldShowInterstitial(
+                    gamePlayedCount: playedGamesCount,
+                    gameContext: .init(gameContext: gameContext),
+                    serverConfig: environment.serverConfig.config()
+                  )
+                else { return }
+                try await environment.mainRunLoop.sleep(for: .seconds(3))
+                await send(.delayedShowUpgradeInterstitial, animation: .default)
+              }
+            }
+
+            group.addTask {
+              try await environment.mainQueue.sleep(for: 0.5)
+              await send(.gameLoaded)
+            }
+          }
+          for music in AudioPlayerClient.Sound.allMusic {
+            await environment.audioPlayer.stop(music)
+          }
+        }
 
       case .pan(.began, _):
         state.isPanning = true
@@ -643,7 +689,7 @@ extension GameState {
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .init(value: .confirmRemoveCube(index)) }
+    else { return .task { .confirmRemoveCube(index) } }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.turnBasedContext,
@@ -657,7 +703,8 @@ extension GameState {
     }
 
     self.bottomMenu = .removeCube(
-      index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
+      index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval
+    )
     return .none
   }
 
@@ -687,8 +734,6 @@ extension GameState {
     with reaction: Move.Reaction?,
     environment: GameEnvironment
   ) -> Effect<GameAction, Never> {
-    let soundEffects: Effect<Never, Never>
-
     let move = Move(
       playedAt: environment.mainRunLoop.now.date,
       playerIndex: self.turnBasedContext?.localPlayerIndex,
@@ -705,30 +750,23 @@ extension GameState {
       previousMoves: self.moves
     )
 
-    if result != nil {
-      self.moves.append(move)
-      soundEffects = .merge(
-        self
-          .selectedWord.compactMap { !self.cubes[$0.index].isInPlay ? $0.index : nil }
-          .map { index in
-            environment.audioPlayer
-              .play(.cubeRemove)
-              .deferred(
-                for: .milliseconds(removeCubeDelay(index: index)),
-                scheduler: environment.mainQueue
-              )
-              .fireAndForget()
+    defer { self.selectedWord = [] }
+
+    guard result != nil else { return .none }
+
+    self.moves.append(move)
+
+    return .fireAndForget { [self] in
+      await withThrowingTaskGroup(of: Void.self) { group in
+        for face in self.selectedWord where !self.cubes[face.index].isInPlay {
+          group.addTask {
+            try await environment.mainQueue
+              .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
+            await environment.audioPlayer.play(.cubeRemove)
           }
-      )
-    } else {
-      soundEffects = .none
+        }
+      }
     }
-
-    self.selectedWord = []
-
-    return
-      soundEffects
-      .fireAndForget()
   }
 
   mutating func gameOver(environment: GameEnvironment) -> Effect<GameAction, Never> {
@@ -739,14 +777,11 @@ extension GameState {
       isDemo: self.isDemo
     )
 
-    let saveGameEffect: Effect<GameAction, Never> = environment.database
-      .saveGame(.init(gameState: self))
-      .receive(on: environment.mainQueue)
-      .fireAndForget()
-
     switch self.gameContext {
     case .dailyChallenge, .shared, .solo:
-      return saveGameEffect
+      return .fireAndForget { [self] in
+        try await environment.database.saveGame(.init(gameState: self))
+      }
 
     case let .turnBased(turnBasedMatch):
       self.gameOver?.turnBasedContext = turnBasedMatch
@@ -904,28 +939,29 @@ func menuTitle(state: GameState) -> TextState {
 }
 
 #if DEBUG
+  import XCTestDynamicOverlay
+
   extension GameEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      applicationClient: .failing,
-      audioPlayer: .failing,
-      backgroundQueue: .failing("backgroundQueue"),
-      build: .failing,
-      database: .failing,
-      dictionary: .failing,
-      feedbackGenerator: .failing,
-      fileClient: .failing,
-      gameCenter: .failing,
-      lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue"),
-      mainRunLoop: .failing("mainRunLoop"),
-      remoteNotifications: .failing,
-      serverConfig: .failing,
-      setUserInterfaceStyle: { _ in .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
-      },
-      storeKit: .failing,
-      userDefaults: .failing,
-      userNotifications: .failing
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      applicationClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      backgroundQueue: .unimplemented("backgroundQueue"),
+      build: .unimplemented,
+      database: .unimplemented,
+      dictionary: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      fileClient: .unimplemented,
+      gameCenter: .unimplemented,
+      lowPowerMode: .unimplemented,
+      mainQueue: .unimplemented("mainQueue"),
+      mainRunLoop: .unimplemented("mainRunLoop"),
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
+      storeKit: .unimplemented,
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
 
     public static let noop = Self(
@@ -944,51 +980,13 @@ func menuTitle(state: GameState) -> TextState {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in .none },
+      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       userDefaults: .noop,
       userNotifications: .noop
     )
   }
 #endif
-
-extension Effect where Output == GameAction, Failure == Never {
-  static func onAppearEffects(
-    environment: GameEnvironment,
-    gameContext: ClientModels.GameContext
-  ) -> Self {
-    .merge(
-      environment.lowPowerMode.start
-        .receive(on: environment.mainQueue)
-        .eraseToEffect()
-        .map(GameAction.lowPowerModeChanged)
-        .cancellable(id: LowPowerModeId.self),
-
-      Effect(value: .gameLoaded)
-        .delay(for: 0.5, scheduler: environment.mainQueue)
-        .eraseToEffect(),
-
-      gameContext.isTurnBased
-        ? Effect<Bool, Error>.showUpgradeInterstitial(
-          gameContext: .init(gameContext: gameContext),
-          isFullGamePurchased: environment.apiClient.currentPlayer()?.appleReceipt != nil,
-          serverConfig: environment.serverConfig.config(),
-          playedGamesCount: {
-            environment.userDefaults.incrementMultiplayerOpensCount()
-              .setFailureType(to: Error.self)
-              .eraseToEffect()
-          }
-        )
-        .filter { $0 }
-        .delay(for: 3, scheduler: environment.mainRunLoop.animation())
-        .map { _ in GameAction.delayedShowUpgradeInterstitial }
-        .ignoreFailure()
-        .eraseToEffect()
-        .cancellable(id: InterstitialId.self)
-        : .none
-    )
-  }
-}
 
 extension UpgradeInterstitialFeature.GameContext {
   fileprivate init(gameContext: ClientModels.GameContext) {
@@ -1002,20 +1000,6 @@ extension UpgradeInterstitialFeature.GameContext {
     case .turnBased:
       self = .turnBased
     }
-  }
-}
-
-extension Effect where Output == Never, Failure == Never {
-  public static func gameTearDownEffects(audioPlayer: AudioPlayerClient) -> Self {
-    .merge(
-      .cancel(id: InterstitialId.self),
-      .cancel(id: ListenerId.self),
-      .cancel(id: LowPowerModeId.self),
-      .cancel(id: TimerId.self),
-      Effect
-        .merge(AudioPlayerClient.Sound.allMusic.map(audioPlayer.stop))
-        .fireAndForget()
-    )
   }
 }
 
@@ -1084,19 +1068,13 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
           isDemo: state.isDemo,
           turnBasedContext: state.turnBasedContext
         )
-        return .merge(
-          environment.gameCenter.turnBasedMatch.remove(match)
-            .fireAndForget(),
-
-          environment.feedbackGenerator
-            .selectionChanged()
-            .fireAndForget()
-        )
+        return .fireAndForget {
+          await environment.feedbackGenerator.selectionChanged()
+          try await environment.gameCenter.turnBasedMatch.remove(match)
+        }
       }
 
-      return environment.feedbackGenerator
-        .selectionChanged()
-        .fireAndForget()
+      return .fireAndForget { await environment.feedbackGenerator.selectionChanged() }
 
     case let .gameCenter(.turnBasedMatchResponse(.success(match))):
       guard
@@ -1119,12 +1097,14 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
 
     case .gameOver(.delegate(.close)),
       .exitButtonTapped:
-      return .cancel(id: ListenerId.self)
+      return .none
 
-    case .onAppear:
-      return environment.gameCenter.localPlayer.listener
-        .map { .gameCenter(.listener($0)) }
-        .cancellable(id: ListenerId.self)
+    case .task:
+      return .run { send in
+        for await event in environment.gameCenter.localPlayer.listener() {
+          await send(.gameCenter(.listener(event)))
+        }
+      }
 
     case .submitButtonTapped,
       .wordSubmitButton(.delegate(.confirmSubmit)),
@@ -1141,81 +1121,73 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
         playerId: environment.apiClient.currentPlayer()?.player.id
       )
       let matchData = Data(turnBasedMatchData: turnBasedMatchData)
-      let reloadMatch = environment.gameCenter.turnBasedMatch.load(turnBasedContext.match.matchId)
-        .mapError { $0 as NSError }
-        .catchToEffect { GameAction.gameCenter(.turnBasedMatchResponse($0)) }
 
-      if state.isGameOver {
-        let completedGame = CompletedGame(gameState: state)
-        guard
-          let completedMatch = CompletedMatch(
-            completedGame: completedGame,
-            turnBasedContext: turnBasedContext
-          )
-        else { return .none }
-
-        return .concatenate(
-          environment.gameCenter.turnBasedMatch
-            .endMatchInTurn(
-              .init(
-                for: turnBasedContext.match.matchId,
-                matchData: matchData,
-                localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
-                localPlayerMatchOutcome: completedMatch.yourOutcome,
-                message: "Game over! Let’s see how you did!"
-              )
-            )
-            .fireAndForget(),
-
-          reloadMatch,
-
-          environment.database.saveGame(completedGame)
-            .fireAndForget()
-        )
-      } else {
-        switch move.type {
-        case .removedCube:
-          let shouldEndTurn =
-            state.moves.count > 1
-            && state.moves[state.moves.count - 2].playerIndex == turnBasedContext.localPlayerIndex
-
-          return .concatenate(
-            shouldEndTurn
-              ? environment.gameCenter.turnBasedMatch
-                .endTurn(
-                  .init(
-                    for: turnBasedContext.match.matchId,
-                    matchData: matchData,
-                    message: "\(turnBasedContext.localPlayer.displayName) removed cubes!"
+      return .task { [state] in
+        return await .gameCenter(
+          .turnBasedMatchResponse(
+            TaskResult {
+              if state.isGameOver {
+                let completedGame = CompletedGame(gameState: state)
+                if
+                  let completedMatch = CompletedMatch(
+                    completedGame: completedGame,
+                    turnBasedContext: turnBasedContext
                   )
-                )
-                .fireAndForget()
+                {
+                  try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
+                    .init(
+                      for: turnBasedContext.match.matchId,
+                      matchData: matchData,
+                      localPlayerId: turnBasedContext.localPlayer.gamePlayerId,
+                      localPlayerMatchOutcome: completedMatch.yourOutcome,
+                      message: "Game over! Let’s see how you did!"
+                    )
+                  )
+                  try await environment.database.saveGame(completedGame)
+                }
+              } else {
+                switch move.type {
+                case .removedCube:
+                  let shouldEndTurn =
+                    state.moves.count > 1
+                    && state.moves[state.moves.count - 2].playerIndex
+                      == turnBasedContext.localPlayerIndex
 
-              : environment.gameCenter.turnBasedMatch
-                .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
-                .fireAndForget(),
-            reloadMatch
+                  if shouldEndTurn {
+                    try await environment.gameCenter.turnBasedMatch.endTurn(
+                      .init(
+                        for: turnBasedContext.match.matchId,
+                        matchData: matchData,
+                        message: "\(turnBasedContext.localPlayer.displayName) removed cubes!"
+                      )
+                    )
+                  } else {
+                    try await environment.gameCenter.turnBasedMatch
+                      .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
+                  }
+
+                case let .playedWord(cubeFaces):
+                  let word = state.cubes.string(from: cubeFaces)
+                  let score = SharedModels.score(word)
+                  let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
+
+                  try await environment.gameCenter.turnBasedMatch.endTurn(
+                    .init(
+                      for: turnBasedContext.match.matchId,
+                      matchData: matchData,
+                      message: """
+                        \(turnBasedContext.localPlayer.displayName) played \(word)! \
+                        (+\(score)\(reaction))
+                        """
+                    )
+                  )
+                }
+              }
+              return try await environment.gameCenter.turnBasedMatch
+                .load(turnBasedContext.match.matchId)
+            }
           )
-        case let .playedWord(cubeFaces):
-          let word = state.cubes.string(from: cubeFaces)
-          let score = SharedModels.score(word)
-          let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
-
-          return .concatenate(
-            environment.gameCenter.turnBasedMatch
-              .endTurn(
-                .init(
-                  for: turnBasedContext.match.matchId,
-                  matchData: matchData,
-                  message:
-                    "\(turnBasedContext.localPlayer.displayName) played \(word)! (+\(score)\(reaction))"
-                )
-              )
-              .fireAndForget(),
-
-            reloadMatch
-          )
-        }
+        )
       }
     default:
       return .none
@@ -1245,5 +1217,3 @@ extension CompletedGame {
     )
   }
 }
-
-enum ListenerId {}

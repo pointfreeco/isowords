@@ -152,7 +152,6 @@ struct ColorSchemePicker: View {
                   isSelected: self.colorScheme == colorScheme
                 )
               )
-              .animation(self.colorScheme == colorScheme ? .default : nil)
               .frame(maxWidth: .infinity)
               .adaptiveFont(.matterMedium, size: 14)
           }

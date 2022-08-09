@@ -15,7 +15,7 @@ import XCTest
 class AppSiteAssociationMiddlewareTests: XCTestCase {
   func testBasics() throws {
     let request = URLRequest(url: URL(string: "/.well-known/apple-app-site-association")!)
-    let middleware = siteMiddleware(environment: .failing)
+    let middleware = siteMiddleware(environment: .unimplemented)
     let result = middleware(connection(from: request)).perform()
 
     _assertInlineSnapshot(matching: result, as: .conn, with: #"""

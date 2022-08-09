@@ -36,7 +36,7 @@ public struct AppEnvironment {
   public var mainRunLoop: AnySchedulerOf<RunLoop>
   public var remoteNotifications: RemoteNotificationsClient
   public var serverConfig: ServerConfigClient
-  public var setUserInterfaceStyle: (UIUserInterfaceStyle) -> Effect<Never, Never>
+  public var setUserInterfaceStyle: @Sendable (UIUserInterfaceStyle) async -> Void
   public var storeKit: StoreKitClient
   public var timeZone: () -> TimeZone
   public var userDefaults: UserDefaultsClient
@@ -59,7 +59,7 @@ public struct AppEnvironment {
     mainRunLoop: AnySchedulerOf<RunLoop>,
     remoteNotifications: RemoteNotificationsClient,
     serverConfig: ServerConfigClient,
-    setUserInterfaceStyle: @escaping (UIUserInterfaceStyle) -> Effect<Never, Never>,
+    setUserInterfaceStyle: @escaping @Sendable (UIUserInterfaceStyle) async -> Void,
     storeKit: StoreKitClient,
     timeZone: @escaping () -> TimeZone,
     userDefaults: UserDefaultsClient,
@@ -89,33 +89,28 @@ public struct AppEnvironment {
   }
 
   #if DEBUG
-    public static let failing = Self(
-      apiClient: .failing,
-      applicationClient: .failing,
-      audioPlayer: .failing,
-      backgroundQueue: .failing("backgroundQueue"),
-      build: .failing,
-      database: .failing,
-      deviceId: .failing,
-      dictionary: .failing,
-      feedbackGenerator: .failing,
-      fileClient: .failing,
-      gameCenter: .failing,
-      lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue"),
-      mainRunLoop: .failing("mainRunLoop"),
-      remoteNotifications: .failing,
-      serverConfig: .failing,
-      setUserInterfaceStyle: { _ in
-        .failing("\(Self.self).setUserInterfaceStyle is unimplemented")
-      },
-      storeKit: .failing,
-      timeZone: {
-        XCTFail("\(Self.self).timeZone is unimplemented")
-        return TimeZone(secondsFromGMT: 0)!
-      },
-      userDefaults: .failing,
-      userNotifications: .failing
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      applicationClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      backgroundQueue: .unimplemented("backgroundQueue"),
+      build: .unimplemented,
+      database: .unimplemented,
+      deviceId: .unimplemented,
+      dictionary: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      fileClient: .unimplemented,
+      gameCenter: .unimplemented,
+      lowPowerMode: .unimplemented,
+      mainQueue: .unimplemented("mainQueue"),
+      mainRunLoop: .unimplemented("mainRunLoop"),
+      remoteNotifications: .unimplemented,
+      serverConfig: .unimplemented,
+      setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
+      storeKit: .unimplemented,
+      timeZone: XCTUnimplemented("\(Self.self).timeZone"),
+      userDefaults: .unimplemented,
+      userNotifications: .unimplemented
     )
 
     public static let noop = Self(
@@ -135,7 +130,7 @@ public struct AppEnvironment {
       mainRunLoop: .immediate,
       remoteNotifications: .noop,
       serverConfig: .noop,
-      setUserInterfaceStyle: { _ in .none },
+      setUserInterfaceStyle: { _ in },
       storeKit: .noop,
       timeZone: { .autoupdatingCurrent },
       userDefaults: .noop,

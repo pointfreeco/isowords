@@ -65,9 +65,9 @@ public struct StatsState: Equatable {
 
 public enum StatsAction: Equatable {
   case backButtonTapped
-  case onAppear
   case setNavigation(tag: StatsState.Route.Tag?)
-  case statsResponse(Result<LocalDatabaseClient.Stats, NSError>)
+  case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
+  case task
   case vocab(VocabAction)
 }
 
@@ -114,12 +114,6 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
     case .backButtonTapped:
       return .none
 
-    case .onAppear:
-      // TODO: should we do this work on background thread?
-      return environment.database.fetchStats
-        .mapError { $0 as NSError }
-        .catchToEffect(StatsAction.statsResponse)
-
     case let .statsResponse(.failure(error)):
       // TODO
       return .none
@@ -147,6 +141,11 @@ public let statsReducer: Reducer<StatsState, StatsAction, StatsEnvironment> = .c
     case .setNavigation(tag: .none):
       state.route = nil
       return .none
+
+    case .task:
+      return .task {
+        await .statsResponse(TaskResult { try await environment.database.fetchStats() })
+      }
 
     case .vocab:
       return .none
@@ -273,7 +272,7 @@ public struct StatsView: View {
         .adaptiveFont(.matterMedium, size: 16)
       }
     }
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
     .navigationStyle(title: Text("Stats"))
   }
 }

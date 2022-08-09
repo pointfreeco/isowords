@@ -76,7 +76,10 @@ extension View {
       self.bottomMenu(
         item: Binding(
           get: {
-            viewStore.state?.converted(send: viewStore.send, sendWithAnimation: viewStore.send)
+            viewStore.state?.converted(
+              send: { viewStore.send($0) },
+              sendWithAnimation: { viewStore.send($0, animation: $1) }
+            )
           },
           set: { state, transaction in
             withAnimation(transaction.disablesAnimations ? nil : transaction.animation) {

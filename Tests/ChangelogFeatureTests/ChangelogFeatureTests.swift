@@ -1,3 +1,4 @@
+import ApiClient
 import ComposableArchitecture
 import ServerConfig
 import XCTest
@@ -5,8 +6,9 @@ import XCTest
 @testable import ChangelogFeature
 @testable import UserDefaultsClient
 
+@MainActor
 class ChangelogFeatureTests: XCTestCase {
-  func testOnAppear_IsUpToDate() {
+  func testOnAppear_IsUpToDate() async {
     let changelog = Changelog(
       changes: [
         .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -14,13 +16,12 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    var environment = ChangelogEnvironment.failing
+    var environment = ChangelogEnvironment.unimplemented
     environment.apiClient.override(
       route: .changelog(build: 42),
-      withResponse: .ok(changelog)
+      withResponse: { try await OK(changelog) }
     )
     environment.build.number = { 42 }
-    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: ChangelogState(),
@@ -28,11 +29,11 @@ class ChangelogFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    await store.send(.task) {
       $0.currentBuild = 42
       $0.isRequestInFlight = true
     }
-    store.receive(.changelogResponse(.success(changelog))) {
+    await store.receive(.changelogResponse(.success(changelog))) {
       $0.changelog = [
         .init(
           change: .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -47,7 +48,7 @@ class ChangelogFeatureTests: XCTestCase {
     }
   }
 
-  func testOnAppear_IsUpBehind() {
+  func testOnAppear_IsUpBehind() async {
     let changelog = Changelog(
       changes: [
         .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -56,13 +57,12 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    var environment = ChangelogEnvironment.failing
+    var environment = ChangelogEnvironment.unimplemented
     environment.apiClient.override(
       route: .changelog(build: 40),
-      withResponse: .ok(changelog)
+      withResponse: { try await OK(changelog) }
     )
     environment.build.number = { 40 }
-    environment.mainQueue = .immediate
 
     let store = TestStore(
       initialState: ChangelogState(),
@@ -70,11 +70,11 @@ class ChangelogFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    await store.send(.task) {
       $0.currentBuild = 40
       $0.isRequestInFlight = true
     }
-    store.receive(.changelogResponse(.success(changelog))) {
+    await store.receive(.changelogResponse(.success(changelog))) {
       $0.changelog = [
         .init(
           change: .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -96,12 +96,11 @@ class ChangelogFeatureTests: XCTestCase {
 }
 
 extension ChangelogEnvironment {
-  static let failing = Self(
-    apiClient: .failing,
-    applicationClient: .failing,
-    build: .failing,
-    mainQueue: .failing,
-    serverConfig: .failing,
-    userDefaults: .failing
+  static let unimplemented = Self(
+    apiClient: .unimplemented,
+    applicationClient: .unimplemented,
+    build: .unimplemented,
+    serverConfig: .unimplemented,
+    userDefaults: .unimplemented
   )
 }

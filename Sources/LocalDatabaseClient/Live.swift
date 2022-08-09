@@ -5,31 +5,29 @@ import Sqlite
 
 extension LocalDatabaseClient {
   public static func live(path: URL) -> Self {
-    var _db: Sqlite!
-    func db() throws -> Sqlite {
-      if _db == nil {
+    let _db = UncheckedSendable(Box<Sqlite?>(wrappedValue: nil))
+    @Sendable func db() throws -> Sqlite {
+      if _db.value.wrappedValue == nil {
         try! FileManager.default.createDirectory(
           at: path.deletingLastPathComponent(), withIntermediateDirectories: true
         )
-        _db = try Sqlite(path: path.absoluteString)
+        _db.value.wrappedValue = try Sqlite(path: path.absoluteString)
       }
-      return _db
+      return _db.value.wrappedValue!
     }
     return Self(
-      fetchGamesForWord: { word in .catching { try db().fetchGames(for: word) } },
-      fetchStats: .catching { try db().fetchStats() },
-      fetchVocab: .catching { try db().fetchVocab() },
-      migrate: .catching { try db().migrate() },
-      playedGamesCount: { gameContext in
-        .catching { try db().playedGamesCount(gameContext: gameContext) }
-      },
-      saveGame: { game in .catching { try db().saveGame(game) } }
+      fetchGamesForWord: { try db().fetchGames(for: $0) },
+      fetchStats: { try db().fetchStats() },
+      fetchVocab: { try db().fetchVocab() },
+      migrate: { try db().migrate() },
+      playedGamesCount: { try db().playedGamesCount(gameContext: $0) },
+      saveGame: { try db().saveGame($0) }
     )
   }
 
   public static func autoMigratingLive(path: URL) -> Self {
     let client = Self.live(path: path)
-    _ = client.migrate.sink(receiveCompletion: { _ in }, receiveValue: {})
+    Task { try await client.migrate() }
     return client
   }
 }

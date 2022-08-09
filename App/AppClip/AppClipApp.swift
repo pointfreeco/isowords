@@ -49,7 +49,7 @@ extension ApiClient {
   // games to the leaderboards.
   static var appClip: Self {
     var apiClient = ApiClient.noop
-    apiClient.request = { route in
+    apiClient.request = { @Sendable route in
       switch route {
       case .api,
         .appSiteAssociation,
@@ -60,7 +60,7 @@ extension ApiClient {
         .home,
         .pressKit,
         .privacyPolicy:
-        return .none
+        throw CancellationError()
 
       case let .demo(.submitGame(gameRequest)):
         #if DEBUG
@@ -78,8 +78,7 @@ extension ApiClient {
         request.httpMethod = "POST"
         request.httpBody = try? JSONEncoder().encode(gameRequest)
 
-        return URLSession.shared.dataTaskPublisher(for: request)
-          .eraseToEffect()
+        return try await URLSession.shared.data(for: request)
       }
     }
 

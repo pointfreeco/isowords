@@ -35,25 +35,22 @@ extension LeaderboardResultsState: Equatable where TimeScope: Equatable {}
 public enum LeaderboardResultsAction<TimeScope> {
   case dismissTimeScopeMenu
   case gameModeButtonTapped(GameMode)
-  case resultsResponse(Result<ResultEnvelope, ApiError>)
-  case onAppear
+  case resultsResponse(TaskResult<ResultEnvelope>)
   case tappedRow(id: UUID)
   case tappedTimeScopeLabel
+  case task
   case timeScopeChanged(TimeScope)
 }
 
 extension LeaderboardResultsAction: Equatable where TimeScope: Equatable {}
 
 public struct LeaderboardResultsEnvironment<TimeScope> {
-  public let loadResults: (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>
-  public let mainQueue: AnySchedulerOf<DispatchQueue>
+  public let loadResults: @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
 
   public init(
-    loadResults: @escaping (GameMode, TimeScope) -> Effect<ResultEnvelope, ApiError>,
-    mainQueue: AnySchedulerOf<DispatchQueue>
+    loadResults: @escaping @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
   ) {
     self.loadResults = loadResults
-    self.mainQueue = mainQueue
   }
 }
 
@@ -74,18 +71,12 @@ extension Reducer {
       case let .gameModeButtonTapped(gameMode):
         state.gameMode = gameMode
         state.isLoading = true
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
-
-      case .onAppear:
-        state.isLoading = true
-        state.isTimeScopeMenuVisible = false
-        state.resultEnvelope = .placeholder
-
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+        return .task { [timeScope = state.timeScope] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
+        .animation()
 
       case .resultsResponse(.failure):
         state.isLoading = false
@@ -104,14 +95,29 @@ extension Reducer {
         state.isTimeScopeMenuVisible.toggle()
         return .none
 
+      case .task:
+        state.isLoading = true
+        state.isTimeScopeMenuVisible = false
+        state.resultEnvelope = .placeholder
+
+        return .task { [gameMode = state.gameMode, timeScope = state.timeScope] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
+        .animation()
+
       case let .timeScopeChanged(timeScope):
         state.isLoading = true
         state.isTimeScopeMenuVisible = false
         state.timeScope = timeScope
 
-        return environment.loadResults(state.gameMode, state.timeScope)
-          .receive(on: environment.mainQueue.animation())
-          .catchToEffect(LeaderboardResultsAction.resultsResponse)
+        return .task { [gameMode = state.gameMode] in
+          await .resultsResponse(
+            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+          )
+        }
+        .animation()
       }
     }
   }
@@ -209,7 +215,6 @@ where
           }
 
           self.subtitle
-            .animation(nil)
             .adaptiveFont(.matterMedium, size: 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.init(top: .grid(4), leading: .grid(5), bottom: .grid(3), trailing: .grid(5)))
@@ -222,12 +227,11 @@ where
                 ResultRow(color: self.color, result: result)
               }
             }
-            .animation(nil)
 
             if let result = self.viewStore.resultEnvelope?.nonContiguousResult {
               Image(systemName: "ellipsis")
                 .opacity(0.4)
-                .adaptivePadding([.top, .bottom], .grid(5))
+                .adaptivePadding(.vertical, .grid(5))
                 .adaptiveFont(.matterMedium, size: 16)
 
               Button(action: { self.viewStore.send(.tappedRow(id: result.id)) }) {
@@ -250,7 +254,6 @@ where
         }
         .disabled(self.viewStore.isLoading)
         .redacted(reason: self.viewStore.isLoading ? .placeholder : [])
-        .animation(nil)
       }
       .background(self.color)
       .foregroundColor(.isowordsBlack)
@@ -297,7 +300,7 @@ where
       alignment: .topTrailing
 
     )
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
   }
 }
 
@@ -412,24 +415,21 @@ extension ResultEnvelope {
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
               loadResults: { _, _ in
-                Effect(
-                  value: .init(
-                    outOf: 1000,
-                    results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
-                      ResultEnvelope.Result(
-                        denseRank: index,
-                        id: UUID(),
-                        isYourScore: index == 15,
-                        rank: index,
-                        score: 6000 - index * 300,
-                        subtitle: "mbrandonw",
-                        title: "Longword\(index)"
-                      )
-                    }
-                  )
+                .init(
+                  outOf: 1000,
+                  results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
+                    ResultEnvelope.Result(
+                      denseRank: index,
+                      id: UUID(),
+                      isYourScore: index == 15,
+                      rank: index,
+                      score: 6000 - index * 300,
+                      subtitle: "mbrandonw",
+                      title: "Longword\(index)"
+                    )
+                  }
                 )
-              },
-              mainQueue: .immediate
+              }
             )
           ),
           title: Text("362,998 words"),
@@ -452,25 +452,20 @@ extension ResultEnvelope {
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
               loadResults: { _, _ in
-                Effect(
-                  value: .init(
-                    outOf: 1000,
-                    results: (1...5).map { index in
-                      ResultEnvelope.Result(
-                        denseRank: index,
-                        id: UUID(),
-                        isYourScore: index == 3,
-                        rank: index,
-                        score: 6000 - index * 800,
-                        title: "Player \(index)"
-                      )
-                    }
-                  )
+                .init(
+                  outOf: 1000,
+                  results: (1...5).map { index in
+                    ResultEnvelope.Result(
+                      denseRank: index,
+                      id: UUID(),
+                      isYourScore: index == 3,
+                      rank: index,
+                      score: 6000 - index * 800,
+                      title: "Player \(index)"
+                    )
+                  }
                 )
-                .delay(for: 1, scheduler: DispatchQueue.main.animation())
-                .eraseToEffect()
-              },
-              mainQueue: .immediate
+              }
             )
           ),
           title: Text("Daily challenge"),
@@ -492,8 +487,10 @@ extension ResultEnvelope {
             ),
             reducer: .leaderboardResultsReducer(),
             environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in .init(error: .init(error: NSError(domain: "", code: 1))) },
-              mainQueue: .immediate
+              loadResults: { _, _ in
+                struct Failure: Error {}
+                throw Failure()
+              }
             )
           ),
           title: Text("Solo"),

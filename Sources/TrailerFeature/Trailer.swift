@@ -7,6 +7,7 @@ import DictionaryClient
 import GameCore
 import SharedModels
 import SwiftUI
+import TcaHelpers
 
 public struct TrailerState: Equatable {
   var game: GameState
@@ -38,10 +39,9 @@ public struct TrailerState: Equatable {
 }
 
 public enum TrailerAction: BindableAction, Equatable {
-  case delayedOnAppear
-  case game(GameAction)
   case binding(BindingAction<TrailerState>)
-  case onAppear
+  case game(GameAction)
+  case task
 }
 
 public struct TrailerEnvironment {
@@ -89,7 +89,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
         mainRunLoop: $0.mainRunLoop,
         remoteNotifications: .noop,
         serverConfig: .noop,
-        setUserInterfaceStyle: { _ in .none },
+        setUserInterfaceStyle: { _ in },
         storeKit: .noop,
         userDefaults: .noop,
         userNotifications: .noop
@@ -103,129 +103,93 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
     case .binding:
       return .none
 
-    case .delayedOnAppear:
-      state.opacity = 1
-
-      var effects: [Effect<TrailerAction, Never>] = [
-        environment.audioPlayer.play(.onboardingBgMusic)
-          .fireAndForget()
-      ]
-
-      // Play each word
-      for (wordIndex, word) in replayableWords.enumerated() {
-        // Play each character in the word
-        for (characterIndex, character) in word.enumerated() {
-          let face = IndexedCubeFace(index: character.index, side: character.side)
-
-          // Move the nub to the face being played
-          effects.append(
-            Effect(value: .set(\.$nub.location, .face(face)))
-              .delay(
-                for: moveNubDelay(wordIndex: wordIndex, characterIndex: characterIndex),
-                scheduler: environment.mainQueue
-                  .animate(withDuration: moveNubToFaceDuration, options: .curveEaseInOut)
-              )
-              .eraseToEffect()
-          )
-          effects.append(
-            Effect.merge(
-              // Press the nub on the first character
-              characterIndex == 0 ? Effect(value: .set(\.$nub.isPressed, true)) : .none,
-              // Tap on each face in the word being played
-              Effect(value: .game(.tap(.began, face)))
-            )
-            .delay(
-              for: .seconds(
-                characterIndex == 0
-                  ? moveNubToFaceDuration
-                  : .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration))
-              ),
-              scheduler: environment.mainQueue.animation()
-            )
-            .eraseToEffect()
-          )
-        }
-
-        // Release the  nub when the last character is played
-        effects.append(
-          Effect(value: .set(\.$nub.isPressed, false))
-            .receive(on: environment.mainQueue.animate(withDuration: 0.3))
-            .eraseToEffect()
-        )
-        // Move the nub to the submit button
-        effects.append(
-          Effect(value: .set(\.$nub.location, .submitButton))
-            .delay(
-              for: 0.2,
-              scheduler: environment.mainQueue
-                .animate(withDuration: moveNubToSubmitButtonDuration, options: .curveEaseInOut)
-            )
-            .eraseToEffect()
-        )
-        // Press the nub
-        effects.append(
-          Effect(value: .set(\.$nub.isPressed, true))
-            .delay(
-              for: .seconds(
-                .random(
-                  in:
-                    moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration
-                    + submitHestitationDuration)
-                )
-              ),
-              scheduler: environment.mainQueue.animation()
-            )
-            .eraseToEffect()
-        )
-        // Submit the word
-        effects.append(
-          Effect(value: .game(.submitButtonTapped(reaction: nil)))
-        )
-        // Release the nub
-        effects.append(
-          Effect(value: .set(\.$nub.isPressed, false))
-            .delay(
-              for: .seconds(submitPressDuration),
-              scheduler: environment.mainQueue.animate(withDuration: 0.3)
-            )
-            .eraseToEffect()
-        )
-      }
-
-      // Move the nub off screen once all words have been played
-      effects.append(
-        Effect(value: .set(\.$nub.location, .offScreenBottom))
-          .delay(for: .seconds(0.3), scheduler: environment.mainQueue)
-          .receive(
-            on: environment.mainQueue
-              .animate(withDuration: moveNubOffScreenDuration, options: .curveEaseInOut)
-          )
-          .eraseToEffect()
-      )
-      // Fade the scene out
-      effects.append(
-        Effect(value: .set(\.$opacity, 0))
-          .receive(on: environment.mainQueue.animation(.linear(duration: moveNubOffScreenDuration)))
-          .eraseToEffect()
-      )
-
-      return .concatenate(effects)
-
     case .game:
       return .none
 
-    case .onAppear:
-      return .merge(
-        environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-          .fireAndForget(),
+    case .task:
+      return .run { send in
+        await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        
+        // Play trailer music
+        await environment.audioPlayer.play(.onboardingBgMusic)
 
-        Effect(value: .delayedOnAppear)
-          .delay(
-            for: 1,
-            scheduler: environment.mainQueue.animation(.easeInOut(duration: fadeInDuration))
+        // Fade the cube in after a second
+        await send(.set(\.$opacity, 1), animation: .easeInOut(duration: fadeInDuration))
+        try await environment.mainQueue.sleep(for: firstWordDelay)
+
+        // Play each word
+        for (wordIndex, word) in replayableWords.enumerated() {
+          // Play each character in the word
+          for (characterIndex, character) in word.enumerated() {
+            let face = IndexedCubeFace(index: character.index, side: character.side)
+
+            // Move the nub to the face being played
+            await send(
+              .set(\.$nub.location, .face(face)),
+              animateWithDuration: moveNubToFaceDuration,
+              options: .curveEaseInOut
+            )
+            try await environment.mainQueue.sleep(
+              for: moveNubDelay(characterIndex: characterIndex)
+            )
+
+            try await environment.mainQueue.sleep(
+              for: .seconds(.random(in: (0.3*moveNubToFaceDuration)...(0.7*moveNubToFaceDuration)))
+            )
+            // Press the nub on the first character
+            if characterIndex == 0 {
+              await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
+            }
+            // Select the cube face
+            await send(.game(.tap(.began, face)), animation: .default)
+          }
+
+          // Release the  nub when the last character is played
+          await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
+
+          // Move the nub to the submit button
+          try await environment.mainQueue.sleep(for: .seconds(0.3))
+          await send(
+            .set(\.$nub.location, .submitButton),
+            animateWithDuration: moveNubToSubmitButtonDuration,
+            options: .curveEaseInOut
           )
-          .eraseToEffect()
-      )
+
+          // Press the nub
+          try await environment.mainQueue.sleep(
+            for: .seconds(
+              .random(
+                in: moveNubToSubmitButtonDuration ...
+                  (moveNubToSubmitButtonDuration + submitHestitationDuration)
+              )
+            )
+          )
+
+          // Submit the word
+          try await environment.mainQueue.sleep(for: .seconds(0.1))
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+              await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
+            }
+            group.addTask {
+              try await environment.mainQueue.sleep(for: .seconds(0.2))
+              await send(.game(.submitButtonTapped(reaction: nil)))
+              try await environment.mainQueue.sleep(for: .seconds(0.3))
+              await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3 )
+            }
+          }
+        }
+
+        // Move the nub off screen once all words have been played
+        try await environment.mainQueue.sleep(for: .seconds(0.3))
+        await send(
+          .set(\.$nub.location, .offScreenBottom),
+          animateWithDuration: moveNubOffScreenDuration,
+          options: .curveEaseInOut
+        )
+
+        await send(.set(\.$opacity, 0), animation: .linear(duration: moveNubOffScreenDuration))
+      }
     }
   }
   .binding()
@@ -344,7 +308,7 @@ public struct TrailerView: View {
       .grid(15)
     )
     .opacity(self.viewStore.opacity)
-    .onAppear { self.viewStore.send(.onAppear) }
+    .task { await self.viewStore.send(.task).finish() }
   }
 
   var scoreText: Text {
@@ -354,13 +318,8 @@ public struct TrailerView: View {
   }
 }
 
-private func moveNubDelay(
-  wordIndex: Int,
-  characterIndex: Int
-) -> DispatchQueue.SchedulerTimeType.Stride {
-  if wordIndex == 0 && characterIndex == 0 {
-    return firstWordDelay
-  } else if characterIndex == 0 {
+private func moveNubDelay(characterIndex: Int) -> DispatchQueue.SchedulerTimeType.Stride {
+  if characterIndex == 0 {
     return firstCharacterDelay
   } else {
     return 0

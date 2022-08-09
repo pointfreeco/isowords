@@ -1,3 +1,4 @@
+import ApiClient
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
@@ -8,17 +9,20 @@ import XCTest
 
 @testable import SettingsFeature
 
+@MainActor
 class SettingsFeatureTests: XCTestCase {
   var defaultEnvironment: SettingsEnvironment {
-    var environment = SettingsEnvironment.failing
+    var environment = SettingsEnvironment.unimplemented
     environment.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     environment.apiClient.currentPlayer = { .some(.init(appleReceipt: .mock, player: .blob)) }
     environment.build.number = { 42 }
     environment.mainQueue = .immediate
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
-    environment.storeKit.fetchProducts = { _ in .none }
-    environment.storeKit.observer = .run { _ in AnyCancellable {} }
+    environment.fileClient.save = { @Sendable _, _ in }
+    environment.storeKit.fetchProducts = { _ in
+      .init(invalidProductIdentifiers: [], products: [])
+    }
+    environment.storeKit.observer =  { .finished }
     return environment
   }
 
@@ -53,24 +57,22 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Notifications
 
-  func testEnableNotifications_NotDetermined_GrantAuthorization() {
-    var didRegisterForRemoteNotifications = false
+  func testEnableNotifications_NotDetermined_GrantAuthorization() async {
+    let didRegisterForRemoteNotifications = ActorIsolated(false)
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .notDetermined)
-    )
-    environment.userNotifications.requestAuthorization = { _ in .init(value: true) }
+    environment.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .notDetermined)
+    }
+    environment.userNotifications.requestAuthorization = { _ in true }
     environment.remoteNotifications.register = {
-      .fireAndForget {
-        didRegisterForRemoteNotifications = true
-      }
+      await didRegisterForRemoteNotifications.setValue(true)
     }
 
     let store = TestStore(
@@ -79,39 +81,39 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
     }
 
-    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    store.send(.set(\.$enableNotifications, true)) {
+    await store.send(.set(\.$enableNotifications, true)) {
       $0.enableNotifications = true
     }
 
-    store.receive(.userNotificationAuthorizationResponse(.success(true)))
+    await store.receive(.userNotificationAuthorizationResponse(.success(true)))
 
-    XCTAssert(didRegisterForRemoteNotifications)
+    await didRegisterForRemoteNotifications.withValue { XCTAssert($0) }
 
-    store.send(.onDismiss)
+    await task.cancel()
   }
 
-  func testEnableNotifications_NotDetermined_DenyAuthorization() {
+  func testEnableNotifications_NotDetermined_DenyAuthorization() async {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .notDetermined)
-    )
-    environment.userNotifications.requestAuthorization = { _ in .init(value: false) }
+    environment.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .notDetermined)
+    }
+    environment.userNotifications.requestAuthorization = { _ in false }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -119,39 +121,38 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
     }
 
-    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    store.send(.set(\.$enableNotifications, true)) {
+    await store.send(.set(\.$enableNotifications, true)) {
       $0.enableNotifications = true
     }
 
-    store.receive(.userNotificationAuthorizationResponse(.success(false))) {
+    await store.receive(.userNotificationAuthorizationResponse(.success(false))) {
       $0.enableNotifications = false
     }
 
-    store.send(.onDismiss)
+    await task.cancel()
   }
 
-  func testNotifications_PreviouslyGranted() {
+  func testNotifications_PreviouslyGranted() async {
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
-    environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .authorized)
-    )
+    environment.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .authorized)
+    }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -159,42 +160,44 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
     }
 
-    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
       $0.enableNotifications = true
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    store.send(.set(\.$enableNotifications, false)) {
+    await store.send(.set(\.$enableNotifications, false)) {
       $0.enableNotifications = false
     }
 
-    store.send(.onDismiss)
+    await task.cancel()
   }
 
-  func testNotifications_PreviouslyDenied() {
-    var openedUrl: URL!
+  func testNotifications_PreviouslyDenied() async {
+    let openedUrl = ActorIsolated<URL?>(nil)
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { nil }
-    environment.applicationClient.openSettingsURLString = { "settings:isowords//isowords/settings" }
+    environment.applicationClient.openSettingsURLString = {
+      "settings:isowords//isowords/settings"
+    }
     environment.applicationClient.open = { url, _ in
-      openedUrl = url
-      return .init(value: true)
+      await openedUrl.setValue(url)
+      return true
     }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .denied)
-    )
+    environment.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .denied)
+    }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -202,58 +205,53 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
     }
 
-    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .denied))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .denied))) {
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
 
-    store.send(.set(\.$enableNotifications, true)) {
+    await store.send(.set(\.$enableNotifications, true)) {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
-    store.send(.openSettingButtonTapped)
+    await store.send(.openSettingButtonTapped)
 
-    XCTAssertNoDifference(openedUrl, URL(string: "settings:isowords//isowords/settings")!)
+    await openedUrl.withValue {
+      XCTAssertNoDifference($0, URL(string: "settings:isowords//isowords/settings")!)
+    }
 
-    store.send(.set(\.$alert, nil)) {
+    await store.send(.set(\.$alert, nil)) {
       $0.alert = nil
     }
 
-    store.send(.onDismiss)
+    await task.cancel()
   }
 
-  func testNotifications_DebounceRemoteSettingsUpdates() {
+  func testNotifications_DebounceRemoteSettingsUpdates() async {
     let mainQueue = DispatchQueue.test
 
     var environment = self.defaultEnvironment
-    environment.apiClient.refreshCurrentPlayer = { .init(value: .blobWithPurchase) }
-    environment.apiClient.override(
-      route: .push(
-        .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: true))
-      ),
-      withResponse: .none
-    )
+    environment.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
     environment.apiClient.override(
       route: .push(
         .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
       ),
-      withResponse: .none
+      withResponse: { try await OK([:]) }
     )
     environment.applicationClient.alternateIconName = { nil }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
+    environment.fileClient.save = { @Sendable _, _ in }
     environment.mainQueue = mainQueue.eraseToAnyScheduler()
-    environment.remoteNotifications.register = { .none }
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettings = .init(
-      value: .init(authorizationStatus: .authorized)
-    )
+    environment.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .authorized)
+    }
 
     let store = TestStore(
       initialState: SettingsState(sendDailyChallengeReminder: false),
@@ -261,44 +259,40 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
     }
 
-    mainQueue.advance()
+    await mainQueue.advance()
 
-    store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
       $0.enableNotifications = true
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    store.send(.set(\.$sendDailyChallengeReminder, true)) {
+    await store.send(.set(\.$sendDailyChallengeReminder, true)) {
       $0.sendDailyChallengeReminder = true
     }
-    mainQueue.advance(by: 0.5)
+    await mainQueue.advance(by: 0.5)
 
-    store.send(.set(\.$sendDailyChallengeSummary, true))
-    mainQueue.advance(by: 0.5)
-    mainQueue.advance(by: 0.5)
+    await store.send(.set(\.$sendDailyChallengeSummary, true))
+    await mainQueue.advance(by: 0.5)
+    await mainQueue.advance(by: 0.5)
 
-    store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
+    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
 
-    store.send(.onDismiss)
+    await task.cancel()
   }
 
   // MARK: - Sounds
 
-  func testSetMusicVolume() {
-    var setMusicVolume: Float!
+  func testSetMusicVolume() async {
+    let setMusicVolume = ActorIsolated<Float?>(nil)
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForMusic = { newValue in
-      .fireAndForget {
-        setMusicVolume = newValue
-      }
-    }
+    environment.audioPlayer.setGlobalVolumeForMusic = { await setMusicVolume.setValue($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -306,21 +300,19 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.set(\.$userSettings.musicVolume, 0.5)) {
+    await store.send(.set(\.$userSettings.musicVolume, 0.5)) {
       $0.userSettings.musicVolume = 0.5
     }
 
-    XCTAssertNoDifference(setMusicVolume, 0.5)
+    await setMusicVolume.withValue { XCTAssertNoDifference($0, 0.5) }
   }
 
-  func testSetSoundEffectsVolume() {
-    var setSoundEffectsVolume: Float!
+  func testSetSoundEffectsVolume() async {
+    let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
 
     var environment = self.defaultEnvironment
-    environment.audioPlayer.setGlobalVolumeForSoundEffects = { newValue in
-      .fireAndForget {
-        setSoundEffectsVolume = newValue
-      }
+    environment.audioPlayer.setGlobalVolumeForSoundEffects = {
+      await setSoundEffectsVolume.setValue($0)
     }
 
     let store = TestStore(
@@ -329,24 +321,20 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.set(\.$userSettings.soundEffectsVolume, 0.5)) {
+    await store.send(.set(\.$userSettings.soundEffectsVolume, 0.5)) {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
-    XCTAssertNoDifference(setSoundEffectsVolume, 0.5)
+    await setSoundEffectsVolume.withValue { XCTAssertNoDifference($0, 0.5) }
   }
 
   // MARK: - Appearance
 
-  func testSetColorScheme() {
-    var overriddenUserInterfaceStyle: UIUserInterfaceStyle!
+  func testSetColorScheme() async {
+    let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
 
     var environment = self.defaultEnvironment
-    environment.setUserInterfaceStyle = { newValue in
-      .fireAndForget {
-        overriddenUserInterfaceStyle = newValue
-      }
-    }
+    environment.setUserInterfaceStyle = { await overriddenUserInterfaceStyle.setValue($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -354,27 +342,22 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.set(\.$userSettings.colorScheme, .light)) {
+    await store.send(.set(\.$userSettings.colorScheme, .light)) {
       $0.userSettings.colorScheme = .light
     }
-    XCTAssertNoDifference(overriddenUserInterfaceStyle, .light)
+    await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .light) }
 
-    store.send(.set(\.$userSettings.colorScheme, .system)) {
+    await store.send(.set(\.$userSettings.colorScheme, .system)) {
       $0.userSettings.colorScheme = .system
     }
-    XCTAssertNoDifference(overriddenUserInterfaceStyle, .unspecified)
+    await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .unspecified) }
   }
 
-  func testSetAppIcon() {
-    var overriddenIconName: String!
+  func testSetAppIcon() async {
+    let overriddenIconName = ActorIsolated<String?>(nil)
 
     var environment = self.defaultEnvironment
-    environment.applicationClient.setAlternateIconName = { newValue in
-      .fireAndForget {
-        overriddenIconName = newValue
-      }
-    }
-    environment.fileClient.save = { _, _ in .none }
+    environment.applicationClient.setAlternateIconName = { await overriddenIconName.setValue($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -382,28 +365,25 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.set(\.$userSettings.appIcon, .icon2)) {
+    await store.send(.set(\.$userSettings.appIcon, .icon2)) {
       $0.userSettings.appIcon = .icon2
     }
-    XCTAssertNoDifference(overriddenIconName, "icon-2")
+    await overriddenIconName.withValue { XCTAssertNoDifference($0, "icon-2") }
   }
 
-  func testUnsetAppIcon() {
-    var overriddenIconName: String?
+  func testUnsetAppIcon() async {
+    let overriddenIconName = ActorIsolated<String?>(nil)
 
     var environment = self.defaultEnvironment
     environment.applicationClient.alternateIconName = { "icon-2" }
-    environment.applicationClient.setAlternateIconName = { newValue in
-      .fireAndForget {
-        overriddenIconName = newValue
-      }
-    }
+    environment.applicationClient.setAlternateIconName = { await overriddenIconName.setValue($0) }
     environment.backgroundQueue = .immediate
-    environment.fileClient.save = { _, _ in .none }
     environment.mainQueue = .immediate
     environment.serverConfig.config = { .init() }
     environment.userDefaults.boolForKey = { _ in false }
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -411,34 +391,30 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear) {
+    let task = await store.send(.task) {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
       $0.fullGamePurchasedAt = .mock
       $0.userSettings.appIcon = .icon2
     }
 
-    store.send(.set(\.$userSettings.appIcon, nil)) {
+    await store.send(.set(\.$userSettings.appIcon, nil)) {
       $0.userSettings.appIcon = nil
     }
-    XCTAssertNoDifference(overriddenIconName, nil)
+    await overriddenIconName.withValue { XCTAssertNil($0) }
 
-    store.send(.onDismiss)
+    await task.cancel()
   }
 
   // MARK: - Developer
 
-  func testSetApiBaseUrl() {
-    var setBaseUrl: URL!
-    var didLogout = false
+  func testSetApiBaseUrl() async {
+    let setBaseUrl = ActorIsolated<URL?>(nil)
+    let didLogout = ActorIsolated(false)
 
-    var environment = SettingsEnvironment.failing
-    environment.apiClient.logout = { .fireAndForget { didLogout = true } }
-    environment.apiClient.setBaseUrl = { newValue in
-      .fireAndForget {
-        setBaseUrl = newValue
-      }
-    }
+    var environment = SettingsEnvironment.unimplemented
+    environment.apiClient.logout = { await didLogout.setValue(true) }
+    environment.apiClient.setBaseUrl = { await setBaseUrl.setValue($0) }
 
     let store = TestStore(
       initialState: SettingsState(),
@@ -446,84 +422,84 @@ class SettingsFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.set(\.$developer.currentBaseUrl, .localhost)) {
+    await store.send(.set(\.$developer.currentBaseUrl, .localhost)) {
       $0.developer.currentBaseUrl = .localhost
     }
-    XCTAssertNoDifference(setBaseUrl, URL(string: "http://localhost:9876")!)
-    XCTAssertNoDifference(didLogout, true)
+    await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
+    await didLogout.withValue { XCTAssert($0) }
   }
 
-  func testToggleEnableCubeShadow() {
+  func testToggleEnableCubeShadow() async {
     let store = TestStore(
       initialState: SettingsState(enableCubeShadow: true),
       reducer: settingsReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
-    store.send(.set(\.$enableCubeShadow, false)) {
+    await store.send(.set(\.$enableCubeShadow, false)) {
       $0.enableCubeShadow = false
     }
-    store.send(.set(\.$enableCubeShadow, true)) {
+    await store.send(.set(\.$enableCubeShadow, true)) {
       $0.enableCubeShadow = true
     }
   }
 
-  func testSetShadowRadius() {
+  func testSetShadowRadius() async {
     let store = TestStore(
       initialState: SettingsState(cubeShadowRadius: 5),
       reducer: settingsReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
-    store.send(.set(\.$cubeShadowRadius, 20)) {
+    await store.send(.set(\.$cubeShadowRadius, 20)) {
       $0.cubeShadowRadius = 20
     }
-    store.send(.set(\.$cubeShadowRadius, 1.5)) {
+    await store.send(.set(\.$cubeShadowRadius, 1.5)) {
       $0.cubeShadowRadius = 1.5
     }
   }
 
-  func testToggleShowSceneStatistics() {
+  func testToggleShowSceneStatistics() async {
     let store = TestStore(
       initialState: SettingsState(showSceneStatistics: false),
       reducer: settingsReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
-    store.send(.set(\.$showSceneStatistics, true)) {
+    await store.send(.set(\.$showSceneStatistics, true)) {
       $0.showSceneStatistics = true
     }
-    store.send(.set(\.$showSceneStatistics, false)) {
+    await store.send(.set(\.$showSceneStatistics, false)) {
       $0.showSceneStatistics = false
     }
   }
 
-  func testToggleEnableGyroMotion() {
+  func testToggleEnableGyroMotion() async {
     let store = TestStore(
       initialState: SettingsState(userSettings: .init(enableGyroMotion: true)),
       reducer: settingsReducer,
       environment: self.defaultEnvironment
     )
 
-    store.send(.set(\.$userSettings.enableGyroMotion, false)) {
+    await store.send(.set(\.$userSettings.enableGyroMotion, false)) {
       $0.userSettings.enableGyroMotion = false
     }
-    store.send(.set(\.$userSettings.enableGyroMotion, true)) {
+    await store.send(.set(\.$userSettings.enableGyroMotion, true)) {
       $0.userSettings.enableGyroMotion = true
     }
   }
 
-  func testToggleEnableHaptics() {
+  func testToggleEnableHaptics() async {
     let store = TestStore(
       initialState: SettingsState(userSettings: .init(enableHaptics: true)),
       reducer: settingsReducer,
       environment: self.defaultEnvironment
     )
 
-    store.send(.set(\.$userSettings.enableHaptics, false)) {
+    await store.send(.set(\.$userSettings.enableHaptics, false)) {
       $0.userSettings.enableHaptics = false
     }
-    store.send(.set(\.$userSettings.enableHaptics, true)) {
+    await store.send(.set(\.$userSettings.enableHaptics, true)) {
       $0.userSettings.enableHaptics = true
     }
   }

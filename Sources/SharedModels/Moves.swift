@@ -3,7 +3,8 @@ public struct Moves:
   Codable,
   Equatable,
   ExpressibleByArrayLiteral,
-  RangeReplaceableCollection
+  RangeReplaceableCollection,
+  Sendable
 {
 
   var rawValue: [Move]

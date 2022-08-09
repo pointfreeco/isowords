@@ -1,7 +1,7 @@
 import Foundation
 import Tagged
 
-public struct Move: Codable, Equatable {
+public struct Move: Codable, Equatable, Sendable {
   public var playedAt: Date
   public var playerIndex: PlayerIndex?
   public var reactions: [PlayerIndex: Reaction]?
@@ -24,7 +24,7 @@ public struct Move: Codable, Equatable {
     self.type = type
   }
 
-  public enum MoveType: Codable, Equatable {
+  public enum MoveType: Codable, Equatable, Sendable {
     case playedWord([IndexedCubeFace])
     case removedCube(LatticePoint)
 
@@ -64,7 +64,7 @@ public struct Move: Codable, Equatable {
     }
   }
 
-  public struct Reaction: CaseIterable, Codable, Equatable, Hashable, Identifiable, RawRepresentable
+  public struct Reaction: CaseIterable, Codable, Hashable, Identifiable, RawRepresentable, Sendable
   {
     public let rawValue: String
 

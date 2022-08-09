@@ -8,8 +8,9 @@ import XCTest
 
 @testable import LeaderboardFeature
 
+@MainActor
 class LeaderboardFeatureIntegrationTests: XCTestCase {
-  func testSoloIntegrationWithLeaderboardResults() {
+  func testSoloIntegrationWithLeaderboardResults() async {
     let fetchLeaderboardsEntries = [
       FetchLeaderboardResponse.Entry(
         id: .init(rawValue: .deadbeef),
@@ -28,7 +29,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(ServerEnvironment.failing) {
+    let siteEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchRankedLeaderboardScores = { _ in
         pure(fetchLeaderboardsEntries)
@@ -36,7 +37,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
+    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }
@@ -47,17 +48,17 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    store.send(.solo(.onAppear)) {
+    await store.send(.solo(.task)) {
       $0.solo.isLoading = true
       $0.solo.resultEnvelope = .placeholder
     }
-    store.receive(.solo(.resultsResponse(.success(results)))) {
+    await store.receive(.solo(.resultsResponse(.success(results)))) {
       $0.solo.isLoading = false
       $0.solo.resultEnvelope = results
     }
   }
 
-  func testVocabIntegrationWithLeaderboardResults() {
+  func testVocabIntegrationWithLeaderboardResults() async {
     let fetchVocabEntries = [
       FetchVocabLeaderboardResponse.Entry.init(
         denseRank: 1,
@@ -87,7 +88,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       ]
     )
 
-    let siteEnvironment = update(ServerEnvironment.failing) {
+    let siteEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure(fetchVocabEntries)
@@ -95,7 +96,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let leaderboardEnvironment = update(LeaderboardEnvironment.failing) {
+    let leaderboardEnvironment = update(LeaderboardEnvironment.unimplemented) {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }
@@ -106,11 +107,11 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       environment: leaderboardEnvironment
     )
 
-    store.send(.vocab(.onAppear)) {
+    await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }
-    store.receive(.vocab(.resultsResponse(.success(results)))) {
+    await store.receive(.vocab(.resultsResponse(.success(results)))) {
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = results
     }

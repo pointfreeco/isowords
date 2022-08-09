@@ -7,8 +7,10 @@ import PackageDescription
 var package = Package(
   name: "isowords",
   platforms: [
-    .macOS(.v10_15),
-    .iOS(.v14),
+    .iOS(.v15),
+    .macOS(.v12),
+    .tvOS(.v15),
+    .watchOS(.v8),
   ],
   products: [
     .library(name: "Build", targets: ["Build"]),
@@ -171,7 +173,7 @@ var package = Package(
 // MARK: - client
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.28.0")
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.39.0")
   ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
@@ -188,7 +190,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "ClientModels", targets: ["ClientModels"]),
     .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
     .library(name: "ComposableGameCenter", targets: ["ComposableGameCenter"]),
-    .library(name: "ComposableGameCenterHelpers", targets: ["ComposableGameCenterHelpers"]),
     .library(name: "ComposableStoreKit", targets: ["ComposableStoreKit"]),
     .library(name: "ComposableUserNotifications", targets: ["ComposableUserNotifications"]),
     .library(name: "CubeCore", targets: ["CubeCore"]),
@@ -262,6 +263,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "ServerRouter",
         "SharedModels",
+        "TcaHelpers",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "Overture"),
         .product(name: "Tagged", package: "swift-tagged"),
@@ -284,7 +286,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Build",
         "ClientModels",
         "ComposableGameCenter",
-        "ComposableGameCenterHelpers",
         "ComposableStoreKit",
         "CubeCore",
         "CubePreview",
@@ -415,10 +416,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
-    ),
-    .target(
-      name: "ComposableGameCenterHelpers",
-      dependencies: ["ComposableGameCenter"]
     ),
     .target(
       name: "ComposableStoreKit",
@@ -579,7 +576,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Build",
         "ClientModels",
         "ComposableGameCenter",
-        "ComposableGameCenterHelpers",
         "ComposableUserNotifications",
         "CubeCore",
         "DictionaryClient",
@@ -711,7 +707,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ChangelogFeature",
         "ClientModels",
         "CombineHelpers",
-        "ComposableGameCenterHelpers",
         "ComposableStoreKit",
         "ComposableUserNotifications",
         "DailyChallengeFeature",
@@ -962,6 +957,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "OnboardingFeature",
         "SharedModels",
+        "TcaHelpers",
         "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

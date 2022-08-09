@@ -35,11 +35,14 @@ struct SettingsPreviewApp: App {
               lowPowerMode: .live,
               mainQueue: .main,
               remoteNotifications: .live,
-              serverConfig: ServerConfigClient.live(fetch: { .init(value: .init()) }),
+              serverConfig: ServerConfigClient.live(fetch: { .init() }),
               setUserInterfaceStyle: { userInterfaceStyle in
-                .fireAndForget {
-                  UIApplication.shared.windows.first?.overrideUserInterfaceStyle =
-                    userInterfaceStyle
+                await MainActor.run {
+                  guard
+                    let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
+                      as? UIWindowScene
+                  else { return }
+                  scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
                 }
               },
               storeKit: .live(),

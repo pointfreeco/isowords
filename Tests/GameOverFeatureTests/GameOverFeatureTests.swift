@@ -1,3 +1,4 @@
+import ApiClient
 import CasePaths
 import ComposableArchitecture
 import GameOverFeature
@@ -9,11 +10,12 @@ import XCTest
 @testable import LocalDatabaseClient
 @testable import UserDefaultsClient
 
+@MainActor
 class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
-  func testSubmitLeaderboardScore() throws {
-    var environment = GameOverEnvironment.failing
+  func testSubmitLeaderboardScore() async throws {
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
@@ -25,20 +27,24 @@ class GameOverFeatureTests: XCTestCase {
           )
         )
       ),
-      withResponse: .ok([
-        "solo": [
-          "ranks": [
-            "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
-            "lastWeek": .init(outOf: 1000, rank: 10),
-            "allTime": .init(outOf: 10000, rank: 100),
+      withResponse: {
+        try await OK([
+          "solo": [
+            "ranks": [
+              "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
+              "lastWeek": .init(outOf: 1000, rank: 10),
+              "allTime": .init(outOf: 10000, rank: 100),
+            ]
           ]
-        ]
-      ])
+        ])
+      }
     )
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.playedGamesCount = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: GameOverState(
@@ -57,11 +63,8 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
-    store.receive(.delayedOnAppear) {
-      $0.isViewEnabled = true
-    }
-    store.receive(
+    let task = await store.send(.task)
+    await store.receive(
       .submitGameResponse(
         .success(
           .solo(
@@ -80,9 +83,13 @@ class GameOverFeatureTests: XCTestCase {
         .allTime: .init(outOf: 10000, rank: 100),
       ])
     }
+    await store.receive(.delayedOnAppear) {
+      $0.isViewEnabled = true
+    }
+    await task.cancel()
   }
 
-  func testSubmitDailyChallenge() throws {
+  func testSubmitDailyChallenge() async throws {
     let dailyChallengeResponses = [
       FetchTodaysDailyChallengeResponse(
         dailyChallenge: .init(
@@ -104,7 +111,7 @@ class GameOverFeatureTests: XCTestCase {
       ),
     ]
 
-    var environment = GameOverEnvironment.failing
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
@@ -116,37 +123,41 @@ class GameOverFeatureTests: XCTestCase {
           )
         )
       ),
-      withResponse: .ok([
-        "dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]
-      ])
+      withResponse: {
+        try await OK(["dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]])
+      }
     )
     environment.apiClient.override(
       route: .dailyChallenge(.today(language: .en)),
-      withResponse: .ok([
-        [
-          "dailyChallenge": [
-            "endsAt": 1_234_567_890,
-            "gameMode": "timed",
-            "id": UUID.dailyChallengeId.uuidString,
-            "language": "en",
+      withResponse: {
+        try await OK([
+          [
+            "dailyChallenge": [
+              "endsAt": 1_234_567_890,
+              "gameMode": "timed",
+              "id": UUID.dailyChallengeId.uuidString,
+              "language": "en",
+            ],
+            "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
           ],
-          "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
-        ],
-        [
-          "dailyChallenge": [
-            "endsAt": 1_234_567_890,
-            "gameMode": "unlimited",
-            "id": UUID.dailyChallengeId.uuidString,
-            "language": "en",
+          [
+            "dailyChallenge": [
+              "endsAt": 1_234_567_890,
+              "gameMode": "unlimited",
+              "id": UUID.dailyChallengeId.uuidString,
+              "language": "en",
+            ],
+            "yourResult": ["outOf": 42, "started": false],
           ],
-          "yourResult": ["outOf": 42, "started": false],
-        ],
-      ])
+        ])
+      }
     )
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
+    environment.database.playedGamesCount = { _ in 0 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: GameOverState(
@@ -165,28 +176,23 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
-    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
-    store.receive(
+    let task = await store.send(.task)
+    await store.receive(
       .submitGameResponse(
-        .success(
-          .dailyChallenge(
-            .init(outOf: 100, rank: 2, score: 1000, started: true)
-          )
-        )
+        .success(.dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true)))
       )
     ) {
       $0.summary = .dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true))
     }
-    store.receive(
-      .dailyChallengeResponse(.success(dailyChallengeResponses))
-    ) {
+    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await store.receive(.dailyChallengeResponse(.success(dailyChallengeResponses))) {
       $0.dailyChallenges = dailyChallengeResponses
     }
+    await task.cancel()
   }
 
-  func testTurnBased_TrackLeaderboards() throws {
-    var environment = GameOverEnvironment.failing
+  func testTurnBased_TrackLeaderboards() async throws {
+    var environment = GameOverEnvironment.unimplemented
     environment.audioPlayer = .noop
     environment.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
     environment.apiClient.override(
@@ -205,22 +211,14 @@ class GameOverFeatureTests: XCTestCase {
           )
         )
       ),
-      withResponse: .ok(["turnBased": true])
+      withResponse: { try await OK(["turnBased": true]) }
     )
-    environment.database.playedGamesCount = { _ in .init(value: 10) }
-    environment.database.fetchStats = .init(
-      value: .init(
-        averageWordLength: nil,
-        gamesPlayed: 1,
-        highestScoringWord: nil,
-        longestWord: nil,
-        secondsPlayed: 1,
-        wordsFound: 1
-      )
-    )
+    environment.database.playedGamesCount = { _ in 10 }
     environment.mainRunLoop = .immediate
     environment.serverConfig.config = { .init() }
-    environment.userNotifications.getNotificationSettings = .none
+    environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
 
     let store = TestStore(
       initialState: GameOverState(
@@ -240,14 +238,15 @@ class GameOverFeatureTests: XCTestCase {
       environment: environment
     )
 
-    store.send(.onAppear)
-    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
-    store.receive(.submitGameResponse(.success(.turnBased)))
+    let task = await store.send(.task)
+    await store.receive(.submitGameResponse(.success(.turnBased)))
+    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await task.cancel()
   }
 
-  func testRequestReviewOnClose() {
-    var lastReviewRequestTimeIntervalSet: Double?
-    var requestReviewCount = 0
+  func testRequestReviewOnClose() async {
+    let lastReviewRequestTimeIntervalSet = ActorIsolated<Double?>(nil)
+    let requestReviewCount = ActorIsolated(0)
 
     let completedGame = CompletedGame(
       cubes: .mock,
@@ -260,9 +259,9 @@ class GameOverFeatureTests: XCTestCase {
       secondsPlayed: 0
     )
 
-    var environment = GameOverEnvironment.failing
-    environment.database.fetchStats = .init(
-      value: .init(
+    var environment = GameOverEnvironment.unimplemented
+    environment.database.fetchStats = {
+      LocalDatabaseClient.Stats(
         averageWordLength: nil,
         gamesPlayed: 1,
         highestScoringWord: nil,
@@ -270,20 +269,17 @@ class GameOverFeatureTests: XCTestCase {
         secondsPlayed: 1,
         wordsFound: 1
       )
-    )
+    }
     environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     environment.storeKit.requestReview = {
-      .fireAndForget { requestReviewCount += 1 }
+      await requestReviewCount.withValue { $0 += 1 }
     }
     environment.userDefaults.override(double: 0, forKey: "last-review-request-timeinterval")
     environment.userDefaults.setDouble = { double, key in
-      .fireAndForget {
-        if key == "last-review-request-timeinterval" {
-          lastReviewRequestTimeIntervalSet = double
-        }
+      if key == "last-review-request-timeinterval" {
+        await lastReviewRequestTimeIntervalSet.setValue(double)
       }
     }
-    environment.userNotifications.getNotificationSettings = .none
 
     let store = TestStore(
       initialState: GameOverState(completedGame: completedGame, isDemo: false, isViewEnabled: true),
@@ -292,15 +288,15 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     // Assert that the first time game over appears we do not request review
-    store.send(.closeButtonTapped)
-    store.receive(.delegate(.close))
-    self.mainRunLoop.advance()
-    XCTAssertNoDifference(requestReviewCount, 0)
-    XCTAssertNoDifference(lastReviewRequestTimeIntervalSet, nil)
+    await store.send(.closeButtonTapped)
+    await store.receive(.delegate(.close))
+    await self.mainRunLoop.advance()
+    await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
+    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
 
     // Assert that once the player plays enough games then a review request is made
-    store.environment.database.fetchStats = .init(
-      value: .init(
+    store.environment.database.fetchStats = {
+      .init(
         averageWordLength: nil,
         gamesPlayed: 3,
         highestScoringWord: nil,
@@ -308,23 +304,21 @@ class GameOverFeatureTests: XCTestCase {
         secondsPlayed: 1,
         wordsFound: 1
       )
-    )
-    store.send(.closeButtonTapped)
-    store.receive(.delegate(.close))
-    self.mainRunLoop.advance()
-    XCTAssertNoDifference(requestReviewCount, 1)
-    XCTAssertNoDifference(lastReviewRequestTimeIntervalSet, 0)
+    }
+    await store.send(.closeButtonTapped).finish()
+    await store.receive(.delegate(.close))
+    await requestReviewCount.withValue { XCTAssertNoDifference($0, 1) }
+    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
-    self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
-    store.send(.closeButtonTapped)
-    store.receive(.delegate(.close))
-    self.mainRunLoop.advance()
-    XCTAssertNoDifference(requestReviewCount, 2)
-    XCTAssertNoDifference(lastReviewRequestTimeIntervalSet, 60 * 60 * 24 * 7)
+    await self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
+    await store.send(.closeButtonTapped).finish()
+    await store.receive(.delegate(.close))
+    await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
+    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
   }
 
-  func testAutoCloseWhenNoWordsPlayed() throws {
+  func testAutoCloseWhenNoWordsPlayed() async throws {
     let store = TestStore(
       initialState: GameOverState(
         completedGame: .init(
@@ -339,31 +333,14 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: .failing
+      environment: .unimplemented
     )
 
-    store.send(.onAppear)
-    store.receive(.delegate(.close))
+    await store.send(.task)
+    await store.receive(.delegate(.close))
   }
 
-  func testShowUpgradeInterstitial() {
-    var environment = GameOverEnvironment.failing
-    environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.override(
-      routeCase: /ServerRoute.Api.Route.games .. /ServerRoute.Api.Route.Games.submit,
-      withResponse: { _ in .none }
-    )
-    environment.database.playedGamesCount = { _ in .init(value: 6) }
-    environment.database.fetchStats = .init(value: .init())
-    environment.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    environment.serverConfig.config = { .init() }
-    environment.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
-      forKey: "last-review-request-timeinterval"
-    )
-    environment.userNotifications.getNotificationSettings = .none
-
+  func testShowUpgradeInterstitial() async {
     let store = TestStore(
       initialState: GameOverState(
         completedGame: .init(
@@ -378,41 +355,28 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: environment
+      environment: .unimplemented
     )
 
-    store.send(.onAppear)
-    self.mainRunLoop.advance(by: .seconds(1))
-    store.receive(.delayedShowUpgradeInterstitial) {
+    store.environment.audioPlayer = .noop
+    store.environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    store.environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+    store.environment.database.playedGamesCount = { _ in 6 }
+    store.environment.mainRunLoop = .immediate
+    store.environment.serverConfig.config = { .init() }
+    store.environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
+
+    let task = await store.send(.task)
+    await store.receive(.delayedShowUpgradeInterstitial) {
       $0.upgradeInterstitial = .init()
     }
-    self.mainRunLoop.advance(by: .seconds(1))
-    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await task.cancel()
   }
 
-  func testSkipUpgradeIfLessThan10GamesPlayed() {
-    var environment = GameOverEnvironment.failing
-    environment.audioPlayer = .noop
-    environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-    environment.apiClient.apiRequest = { route in
-      switch route {
-      case .games(.submit):
-        return .none
-      default:
-        XCTFail("Unhandled route: \(route)")
-        return .none
-      }
-    }
-    environment.database.playedGamesCount = { _ in .init(value: 5) }
-    environment.database.fetchStats = .init(value: .init())
-    environment.mainRunLoop = .immediate
-    environment.serverConfig.config = { .init() }
-    environment.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
-      forKey: "last-review-request-timeinterval"
-    )
-    environment.userNotifications.getNotificationSettings = .none
-
+  func testSkipUpgradeIfLessThan6GamesPlayed() async {
     let store = TestStore(
       initialState: GameOverState(
         completedGame: .init(
@@ -427,10 +391,21 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: gameOverReducer,
-      environment: environment
+      environment: .unimplemented
     )
 
-    store.send(.onAppear)
-    store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    store.environment.audioPlayer = .noop
+    store.environment.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
+    store.environment.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+    store.environment.database.playedGamesCount = { _ in 5 }
+    store.environment.mainRunLoop = .immediate
+    store.environment.serverConfig.config = { .init() }
+    store.environment.userNotifications.getNotificationSettings = {
+      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    }
+
+    let task = await store.send(.task)
+    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await task.cancel()
   }
 }

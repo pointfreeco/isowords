@@ -23,27 +23,23 @@ public struct DailyChallengeResultsState: Equatable {
 public enum DailyChallengeResultsAction: Equatable {
   case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
   case loadHistory
-  case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, ApiError>)
+  case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
 }
 
 public struct DailyChallengeResultsEnvironment {
   public var apiClient: ApiClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
 
   public init(
-    apiClient: ApiClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
+    apiClient: ApiClient
   ) {
     self.apiClient = apiClient
-    self.mainQueue = mainQueue
   }
 }
 
 #if DEBUG
   extension DailyChallengeResultsEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      mainQueue: .failing("mainQueue")
+    public static let unimplemented = Self(
+      apiClient: .unimplemented
     )
   }
 #endif
@@ -56,12 +52,7 @@ public let dailyChallengeResultsReducer = Reducer<
     .pullback(
       state: \DailyChallengeResultsState.leaderboardResults,
       action: /DailyChallengeResultsAction.leaderboardResults,
-      environment: {
-        .init(
-          loadResults: $0.apiClient.loadDailyChallengeResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
-        )
-      }
+      environment: { .init(loadResults: $0.apiClient.loadDailyChallengeResults) }
     ),
 
   .init { state, action, environment in
@@ -86,7 +77,7 @@ public let dailyChallengeResultsReducer = Reducer<
       guard
         state.leaderboardResults.isTimeScopeMenuVisible
       else { return .none }
-      return .init(value: .loadHistory)
+      return .task { .loadHistory }
 
     case .leaderboardResults:
       return .none
@@ -96,21 +87,18 @@ public let dailyChallengeResultsReducer = Reducer<
         state.history = nil
       }
 
-      struct CancelId: Hashable {}
-      return environment.apiClient.apiRequest(
-        route: .dailyChallenge(
-          .results(
-            .history(
-              gameMode: state.leaderboardResults.gameMode,
-              language: .en
+      enum CancelID {}
+      return .task { [gameMode = state.leaderboardResults.gameMode] in
+        await .fetchHistoryResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequest(
+              route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
+              as: DailyChallengeHistoryResponse.self
             )
-          )
-        ),
-        as: DailyChallengeHistoryResponse.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(DailyChallengeResultsAction.fetchHistoryResponse)
-      .cancellable(id: CancelId(), cancelInFlight: true)
+          }
+        )
+      }
+      .cancellable(id: CancelID.self, cancelInFlight: true)
     }
   }
 )
@@ -175,23 +163,25 @@ public struct DailyChallengeResultsView: View {
 }
 
 extension ApiClient {
+  @Sendable
   func loadDailyChallengeResults(
     gameMode: GameMode,
     timeScope gameNumber: DailyChallenge.GameNumber?
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
-      route: .dailyChallenge(
-        .results(
-          .fetch(
-            gameMode: gameMode,
-            gameNumber: gameNumber,
-            language: .en
+  ) async throws -> ResultEnvelope {
+    try await ResultEnvelope(
+      self.apiRequest(
+        route: .dailyChallenge(
+          .results(
+            .fetch(
+              gameMode: gameMode,
+              gameNumber: gameNumber,
+              language: .en
+            )
           )
-        )
-      ),
-      as: FetchDailyChallengeResultsResponse.self
+        ),
+        as: FetchDailyChallengeResultsResponse.self
+      )
     )
-    .map(ResultEnvelope.init)
   }
 }
 

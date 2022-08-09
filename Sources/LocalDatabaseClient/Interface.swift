@@ -2,12 +2,12 @@ import ComposableArchitecture
 import SharedModels
 
 public struct LocalDatabaseClient {
-  public var fetchGamesForWord: (String) -> Effect<[LocalDatabaseClient.Game], Error>
-  public var fetchStats: Effect<Stats, Error>
-  public var fetchVocab: Effect<Vocab, Error>
-  public var migrate: Effect<Void, Error>
-  public var playedGamesCount: (GameContext) -> Effect<Int, Error>
-  public var saveGame: (CompletedGame) -> Effect<Void, Error>
+  public var fetchGamesForWord: @Sendable (String) async throws -> [LocalDatabaseClient.Game]
+  public var fetchStats: @Sendable () async throws -> Stats
+  public var fetchVocab: @Sendable () async throws -> Vocab
+  public var migrate: @Sendable () async throws -> Void
+  public var playedGamesCount: @Sendable (GameContext) async throws -> Int
+  public var saveGame: @Sendable (CompletedGame) async throws -> Void
 
   public struct Game: Equatable {
     public var id: Int
@@ -66,11 +66,11 @@ public struct LocalDatabaseClient {
 
 extension LocalDatabaseClient {
   public static let noop = Self(
-    fetchGamesForWord: { _ in .none },
-    fetchStats: .none,
-    fetchVocab: .none,
-    migrate: .none,
-    playedGamesCount: { _ in .none },
-    saveGame: { _ in .none }
+    fetchGamesForWord: { _ in try await Task.never() },
+    fetchStats: { try await Task.never() },
+    fetchVocab: { try await Task.never() },
+    migrate: {},
+    playedGamesCount: { _ in try await Task.never() },
+    saveGame: { _ in try await Task.never() }
   )
 }

@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
         "state": {
           "branch": null,
-          "revision": "0ba3a562716efabb585ccb169450c5389107286b",
-          "version": "0.6.0"
+          "revision": "f7c8277f05f27a5bfb2f6ecccb0bad126ffcf472",
+          "version": "0.7.0"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "89b0a0a5f110e77272fb5a775064a31bfc1f155c",
-          "version": "3.18.0"
+          "revision": "b7901df0611d3d7e869fa345020b3d0ae817c32d",
+          "version": "3.19.1"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
           "branch": null,
-          "revision": "0a38f2c860a64a005afeb8a6fe186eb2818c9a3f",
-          "version": "0.38.3"
+          "revision": "108e3a536fcebb16c4f247ef92c2d7326baf9fe3",
+          "version": "0.39.0"
         }
       },
       {
@@ -150,8 +150,8 @@
         "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
           "branch": null,
-          "revision": "1c1408bf8fc21be93713e897d2badf500ea38419",
-          "version": "2.3.1"
+          "revision": "53be78637ecd165d1ddedc4e20de69b8f43ec3b7",
+          "version": "2.3.2"
         }
       },
       {

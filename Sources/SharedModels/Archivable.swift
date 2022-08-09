@@ -1,4 +1,4 @@
-public struct ArchivableCubeFace: Codable, Equatable {
+public struct ArchivableCubeFace: Codable, Equatable, Sendable {
   public var letter: String
   public var side: CubeFace.Side
 
@@ -16,7 +16,7 @@ public struct ArchivableCubeFace: Codable, Equatable {
   }
 }
 
-public struct ArchivableCube: Codable, Equatable {
+public struct ArchivableCube: Codable, Equatable, Sendable {
   public var left: ArchivableCubeFace
   public var right: ArchivableCubeFace
   public var top: ArchivableCubeFace

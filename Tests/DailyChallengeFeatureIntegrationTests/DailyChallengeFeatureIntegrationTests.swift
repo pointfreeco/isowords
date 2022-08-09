@@ -12,8 +12,9 @@ import XCTest
 
 @testable import LeaderboardFeature
 
+@MainActor
 class DailyChallengeFeatureTests: XCTestCase {
-  func testBasics() {
+  func testBasics() async {
     let uuid = UUID.incrementing
     let currentPlayer = Player.blob
 
@@ -56,7 +57,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       rank: 1
     )
 
-    let serverEnvironment = update(ServerEnvironment.failing) {
+    let serverEnvironment = update(ServerEnvironment.unimplemented) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(currentPlayer) }
       $0.database.fetchDailyChallengeResults = { request in
         switch request.gameMode {
@@ -72,8 +73,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
 
     let clientEnvironment = DailyChallengeResultsEnvironment(
-      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment), router: .test),
-      mainQueue: .immediate
+      apiClient: .init(middleware: siteMiddleware(environment: serverEnvironment), router: .test)
     )
 
     let store = TestStore(
@@ -82,16 +82,16 @@ class DailyChallengeFeatureTests: XCTestCase {
       environment: clientEnvironment
     )
 
-    store.send(.leaderboardResults(.onAppear)) {
+    await store.send(.leaderboardResults(.task)) {
       $0.leaderboardResults.isLoading = true
       $0.leaderboardResults.resultEnvelope = .placeholder
     }
-    store.receive(.leaderboardResults(.resultsResponse(.success(timedResultEnvelope)))) {
+    await store.receive(.leaderboardResults(.resultsResponse(.success(timedResultEnvelope)))) {
       $0.leaderboardResults.isLoading = false
       $0.leaderboardResults.resultEnvelope = timedResultEnvelope
     }
-    store.send(.loadHistory)
-    store.receive(.fetchHistoryResponse(.success(.init(results: [historyResult])))) {
+    await store.send(.loadHistory)
+    await store.receive(.fetchHistoryResponse(.success(.init(results: [historyResult])))) {
       $0.history = .init(results: [historyResult])
     }
   }

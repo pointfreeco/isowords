@@ -662,15 +662,12 @@ extension DatabaseClient {
       migrate: { () -> EitherIO<Error, Void> in
         let database = pool.database(logger: Logger(label: "Postgres"))
         return sequence([
-          database.run(
-            #"CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "heroku_ext""#
-          ),
-          database.run(
-            #"CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "heroku_ext""#
-          ),
-          database.run(
-            #"CREATE EXTENSION IF NOT EXISTS "citext" WITH SCHEMA "heroku_ext""#
-          ),
+          database.run(#"CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "heroku_ext""#)
+            .catch { _ in database.run(#"CREATE EXTENSION IF NOT EXISTS "pgcrypto""#) },
+          database.run(#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "heroku_ext""#)
+            .catch { _ in database.run(#"CREATE EXTENSION IF NOT EXISTS "uuid-ossp""#) },
+          database.run(#"CREATE EXTENSION IF NOT EXISTS "citext" WITH SCHEMA "heroku_ext""#)
+            .catch { _ in database.run(#"CREATE EXTENSION IF NOT EXISTS "citext""#) },
           database.run(
             """
             CREATE OR REPLACE FUNCTION CURRENT_DAILY_CHALLENGE_NUMBER() RETURNS integer AS $$

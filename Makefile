@@ -26,7 +26,7 @@ else
 	@git lfs pull
 endif
 
-PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro,OS=15.4
+PLATFORM_IOS = iOS Simulator,name=iPhone 13 Pro,OS=15.5
 test-client:
 	@xcodebuild test \
 		-project App/isowords.xcodeproj \
@@ -203,7 +203,7 @@ run-server-linux:
 		--build
 
 test-server-linux:
-	docker run --rm -v "$(PWD):$(PWD)" -w "$(PWD)" swift:5.5 bash Bootstrap/test.sh
+	docker run --rm -v "$(PWD):$(PWD)" -w "$(PWD)" swift:5.6.2-focal bash Bootstrap/test.sh
 
 clean-server: clean-db
 

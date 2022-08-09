@@ -15,7 +15,7 @@ public struct ActivityView: UIViewControllerRepresentable {
     return controller
   }
 
-  public func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context)
-  {
-  }
+  public func updateUIViewController(
+    _ uiViewController: UIActivityViewController, context: Context
+  ) {}
 }

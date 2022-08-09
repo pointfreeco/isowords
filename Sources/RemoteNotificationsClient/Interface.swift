@@ -1,16 +1,16 @@
 import ComposableArchitecture
 
 public struct RemoteNotificationsClient {
-  public var isRegistered: () -> Bool
-  public var register: () -> Effect<Never, Never>
-  public var unregister: () -> Effect<Never, Never>
+  public var isRegistered: @Sendable () async -> Bool
+  public var register: @Sendable () async -> Void
+  public var unregister: @Sendable () async -> Void
 }
 
 extension RemoteNotificationsClient {
   public static let noop = Self(
     isRegistered: { true },
-    register: { .none },
-    unregister: { .none }
+    register: {},
+    unregister: {}
   )
 }
 
@@ -18,13 +18,10 @@ extension RemoteNotificationsClient {
   import XCTestDynamicOverlay
 
   extension RemoteNotificationsClient {
-    public static let failing = Self(
-      isRegistered: {
-        XCTFail("\(Self.self).isRegistered is unimplemented")
-        return false
-      },
-      register: { .failing("\(Self.self).register is unimplemented") },
-      unregister: { .failing("\(Self.self).unregister is unimplemented") }
+    public static let unimplemented = Self(
+      isRegistered: XCTUnimplemented("\(Self.self).isRegistered", placeholder: false),
+      register: XCTUnimplemented("\(Self.self).register"),
+      unregister: XCTUnimplemented("\(Self.self).unregister")
     )
   }
 #endif

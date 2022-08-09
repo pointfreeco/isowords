@@ -9,81 +9,78 @@ import XCTest
 
 @testable import LeaderboardFeature
 
+@MainActor
 class LeaderboardTests: XCTestCase {
-  func testOnAppear() {
+  func testOnAppear() async {
     let store = TestStore(
       initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
       reducer: Reducer.leaderboardResultsReducer(),
       environment: .happyPath
     )
 
-    store.send(.onAppear) {
+    await store.send(.task) {
       $0.isLoading = true
       $0.resultEnvelope = .placeholder
     }
-    store.receive(.resultsResponse(.success(timedResults))) {
+    await store.receive(.resultsResponse(.success(timedResults))) {
       $0.isLoading = false
       $0.resultEnvelope = timedResults
     }
   }
 
-  func testChangeGameMode() {
+  func testChangeGameMode() async {
     let store = TestStore(
       initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
       reducer: Reducer.leaderboardResultsReducer(),
       environment: .happyPath
     )
 
-    store.send(.gameModeButtonTapped(.unlimited)) {
+    await store.send(.gameModeButtonTapped(.unlimited)) {
       $0.gameMode = .unlimited
       $0.isLoading = true
     }
-    store.receive(.resultsResponse(.success(untimedResults))) {
+    await store.receive(.resultsResponse(.success(untimedResults))) {
       $0.isLoading = false
       $0.resultEnvelope = untimedResults
     }
   }
 
-  func testChangeTimeScope() {
+  func testChangeTimeScope() async {
     let store = TestStore(
       initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
       reducer: Reducer.leaderboardResultsReducer(),
       environment: .happyPath
     )
 
-    store.send(.tappedTimeScopeLabel) {
+    await store.send(.tappedTimeScopeLabel) {
       $0.isTimeScopeMenuVisible = true
     }
-    store.send(.timeScopeChanged(.lastDay)) {
+    await store.send(.timeScopeChanged(.lastDay)) {
       $0.isLoading = true
       $0.isTimeScopeMenuVisible = false
       $0.timeScope = .lastDay
     }
-    store.receive(.resultsResponse(.success(timedResults))) {
+    await store.receive(.resultsResponse(.success(timedResults))) {
       $0.isLoading = false
       $0.resultEnvelope = timedResults
     }
   }
 
-  func tetsUnhappyPath() {
+  func tetsUnhappyPath() async {
     struct SomeError: Error {}
 
     let store = TestStore(
       initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
       reducer: Reducer.leaderboardResultsReducer(),
       environment: LeaderboardResultsEnvironment(
-        loadResults: { _, _ in
-          .init(error: .init(error: SomeError()))
-        },
-        mainQueue: .immediate
+        loadResults: { _, _ in throw SomeError() }
       )
     )
 
-    store.send(.onAppear) {
+    await store.send(.task) {
       $0.isLoading = true
     }
-    // TODO: why does this pass?? how is the error checked for equality?
-    store.receive(.resultsResponse(.failure(.init(error: SomeError())))) {
+    await store.receive(.resultsResponse(.failure(ApiError(error: SomeError())))) {
       $0.isLoading = false
       $0.resultEnvelope = nil
     }
@@ -126,12 +123,11 @@ extension LeaderboardResultsEnvironment {
       loadResults: { gameMode, _ in
         switch gameMode {
         case .timed:
-          return .init(value: timedResults)
+          return timedResults
         case .unlimited:
-          return .init(value: untimedResults)
+          return untimedResults
         }
-      },
-      mainQueue: .immediate
+      }
     )
   }
 }

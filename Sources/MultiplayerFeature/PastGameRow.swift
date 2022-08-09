@@ -38,9 +38,9 @@ public struct PastGameState: Equatable, Identifiable {
 public enum PastGameAction: Equatable {
   case delegate(DelegateAction)
   case dismissAlert
-  case matchResponse(Result<TurnBasedMatch, NSError>)
+  case matchResponse(TaskResult<TurnBasedMatch>)
   case rematchButtonTapped
-  case rematchResponse(Result<TurnBasedMatch, NSError>)
+  case rematchResponse(TaskResult<TurnBasedMatch>)
   case tappedRow
 
   public enum DelegateAction: Equatable {
@@ -50,7 +50,6 @@ public enum PastGameAction: Equatable {
 
 struct PastGameEnvironment {
   var gameCenter: GameCenterClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
 }
 
 let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment> {
@@ -67,15 +66,11 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
     return .none
 
   case let .matchResponse(.success(match)):
-    return Effect(value: .delegate(.openMatch(match)))
-      .receive(on: ImmediateScheduler.shared.animation())
-      .eraseToEffect()
+    return .task { .delegate(.openMatch(match)) }.animation()
 
   case let .rematchResponse(.success(match)):
     state.isRematchRequestInFlight = false
-    return Effect(value: .delegate(.openMatch(match)))
-      .receive(on: ImmediateScheduler.shared.animation())
-      .eraseToEffect()
+    return .task { .delegate(.openMatch(match)) }.animation()
 
   case .rematchResponse(.failure):
     state.isRematchRequestInFlight = false
@@ -88,16 +83,18 @@ let pastGameReducer = Reducer<PastGameState, PastGameAction, PastGameEnvironment
 
   case .rematchButtonTapped:
     state.isRematchRequestInFlight = true
-    return environment.gameCenter.turnBasedMatch.rematch(state.matchId)
-      .receive(on: environment.mainQueue)
-      .mapError { $0 as NSError }
-      .catchToEffect(PastGameAction.rematchResponse)
+    return .task { [matchId = state.matchId] in
+      await .rematchResponse(
+        TaskResult { try await environment.gameCenter.turnBasedMatch.rematch(matchId) }
+      )
+    }
 
   case .tappedRow:
-    return environment.gameCenter.turnBasedMatch.load(state.matchId)
-      .receive(on: environment.mainQueue)
-      .mapError { $0 as NSError }
-      .catchToEffect(PastGameAction.matchResponse)
+    return .task { [matchId = state.matchId] in
+      await .matchResponse(
+        TaskResult { try await environment.gameCenter.turnBasedMatch.load(matchId) }
+      )
+    }
   }
 }
 

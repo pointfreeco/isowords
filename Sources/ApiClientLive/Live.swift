@@ -4,23 +4,21 @@ import ComposableArchitecture
 import Foundation
 import ServerRouter
 import SharedModels
+import TcaHelpers
+
+private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
+private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
 
 extension ApiClient {
-  private static let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
-  private static let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
-
   public static func live(
     baseUrl defaultBaseUrl: URL = URL(string: "http://localhost:9876")!,
     sha256: @escaping (Data) -> Data
   ) -> Self {
+
     #if DEBUG
-      var baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl {
-        didSet {
-          UserDefaults.standard.set(baseUrl, forKey: baseUrlKey)
-        }
-      }
+      let baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl
     #else
-      var baseUrl = URL(string: "https://www.isowords.xyz")!
+      let baseUrl = URL(string: "https://www.isowords.xyz")!
     #endif
 
     let router = ServerRouter(
@@ -31,29 +29,45 @@ extension ApiClient {
       sha256: sha256
     )
 
-    var currentPlayer = UserDefaults.standard.data(forKey: currentUserEnvelopeKey)
-      .flatMap({ try? decoder.decode(CurrentPlayerEnvelope.self, from: $0) })
-    {
-      didSet {
-        UserDefaults.standard.set(
-          currentPlayer.flatMap { try? encoder.encode($0) },
-          forKey: currentUserEnvelopeKey
+    actor Session {
+      nonisolated let baseUrl: Isolated<URL>
+      nonisolated let currentPlayer: Isolated<CurrentPlayerEnvelope?>
+      private let router: ServerRouter
+
+      init(baseUrl: URL, router: ServerRouter) {
+        self.baseUrl = Isolated(
+          baseUrl,
+          didSet: { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: baseUrlKey)
+          }
+        )
+        self.router = router
+        self.currentPlayer = Isolated(
+          UserDefaults.standard.data(forKey: currentUserEnvelopeKey)
+            .flatMap({ try? decoder.decode(CurrentPlayerEnvelope.self, from: $0) }),
+          didSet: { _, newValue in
+            UserDefaults.standard.set(
+              newValue.flatMap { try? encoder.encode($0) },
+              forKey: currentUserEnvelopeKey
+            )
+          }
         )
       }
-    }
 
-    return Self(
-      apiRequest: { route in
-        ApiClientLive.apiRequest(
-          accessToken: currentPlayer?.player.accessToken,
-          baseUrl: baseUrl,
+      func apiRequest(route: ServerRoute.Api.Route) async throws -> (Data, URLResponse) {
+        try await ApiClientLive.apiRequest(
+          accessToken: self.currentPlayer.value?.player.accessToken,
+          baseUrl: self.baseUrl.value,
           route: route,
-          router: router
+          router: self.router
         )
-      },
-      authenticate: { request in
-        return ApiClientLive.request(
-          baseUrl: baseUrl,
+      }
+
+      func authenticate(request: ServerRoute.AuthenticateRequest) async throws
+        -> CurrentPlayerEnvelope
+      {
+        let (data, _) = try await ApiClientLive.request(
+          baseUrl: self.baseUrl.value,
           route: .authenticate(
             .init(
               deviceId: request.deviceId,
@@ -64,46 +78,55 @@ extension ApiClient {
           ),
           router: router
         )
-        .map { data, _ in data }
-        .apiDecode(as: CurrentPlayerEnvelope.self)
-        .handleEvents(
-          receiveOutput: { newPlayer in
-            DispatchQueue.main.async { currentPlayer = newPlayer }
-          }
-        )
-        .eraseToEffect()
-      },
-      baseUrl: { baseUrl },
-      currentPlayer: { currentPlayer },
-      logout: {
-        .fireAndForget { currentPlayer = nil }
-      },
-      refreshCurrentPlayer: {
-        ApiClientLive.apiRequest(
-          accessToken: currentPlayer?.player.accessToken,
-          baseUrl: baseUrl,
-          route: .currentPlayer,
-          router: router
-        )
-        .map { data, _ in data }
-        .apiDecode(as: CurrentPlayerEnvelope.self)
-        .handleEvents(
-          receiveOutput: { newPlayer in
-            DispatchQueue.main.async { currentPlayer = newPlayer }
-          }
-        )
-        .eraseToEffect()
-      },
-      request: { route in
-        ApiClientLive.request(
-          baseUrl: baseUrl,
-          route: route,
-          router: router
-        )
-      },
-      setBaseUrl: { url in
-        .fireAndForget { baseUrl = url }
+        let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
+        self.currentPlayer.value = currentPlayer
+        return currentPlayer
       }
+
+      func logout() {
+        self.currentPlayer.value = nil
+      }
+
+      func refreshCurrentPlayer() async throws -> CurrentPlayerEnvelope {
+        let (data, _) = try await ApiClientLive.apiRequest(
+          accessToken: self.currentPlayer.value?.player.accessToken,
+          baseUrl: self.baseUrl.value,
+          route: .currentPlayer,
+          router: self.router
+        )
+        let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
+        self.currentPlayer.value = currentPlayer
+        return currentPlayer
+      }
+
+      func request(route: ServerRoute) async throws -> (Data, URLResponse) {
+        try await ApiClientLive.request(
+          baseUrl: self.baseUrl.value,
+          route: route,
+          router: self.router
+        )
+      }
+
+      func setBaseUrl(_ url: URL) {
+        self.baseUrl.value = url
+      }
+
+      fileprivate func setCurrentPlayer(_ player: CurrentPlayerEnvelope) {
+        self.currentPlayer.value = player
+      }
+    }
+
+    let session = Session(baseUrl: baseUrl, router: router)
+
+    return Self(
+      apiRequest: { try await session.apiRequest(route: $0) },
+      authenticate: { try await session.authenticate(request: $0) },
+      baseUrl: { session.baseUrl.value },
+      currentPlayer: { session.currentPlayer.value },
+      logout: { await session.logout() },
+      refreshCurrentPlayer: { try await session.refreshCurrentPlayer() },
+      request: { try await session.request(route: $0) },
+      setBaseUrl: { await session.setBaseUrl($0) }
     )
   }
 }
@@ -112,15 +135,15 @@ private func request(
   baseUrl: URL,
   route: ServerRoute,
   router: ServerRouter
-) -> Effect<(data: Data, response: URLResponse), URLError> {
-  Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
-    guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
-    else { return .init(error: URLError(.badURL)) }
-    request.setHeaders()
-    return URLSession.shared.dataTaskPublisher(for: request)
-      .eraseToEffect()
+) async throws -> (Data, URLResponse) {
+  guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
+  else { throw URLError(.badURL) }
+  request.setHeaders()
+  if #available(iOS 15.0, *) {
+    return try await URLSession.shared.data(for: request)
+  } else {
+    fatalError()
   }
-  .eraseToEffect()
 }
 
 private func apiRequest(
@@ -128,25 +151,22 @@ private func apiRequest(
   baseUrl: URL,
   route: ServerRoute.Api.Route,
   router: ServerRouter
-) -> Effect<(data: Data, response: URLResponse), URLError> {
+) async throws -> (Data, URLResponse) {
 
-  return Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
-    guard let accessToken = accessToken
-    else { return .init(error: .init(.userAuthenticationRequired)) }
+  guard let accessToken = accessToken
+  else { throw URLError(.userAuthenticationRequired) }
 
-    return request(
-      baseUrl: baseUrl,
-      route: .api(
-        .init(
-          accessToken: accessToken,
-          isDebug: isDebug,
-          route: route
-        )
-      ),
-      router: router
-    )
-  }
-  .eraseToEffect()
+  return try await request(
+    baseUrl: baseUrl,
+    route: .api(
+      .init(
+        accessToken: accessToken,
+        isDebug: isDebug,
+        route: route
+      )
+    ),
+    router: router
+  )
 }
 
 #if DEBUG

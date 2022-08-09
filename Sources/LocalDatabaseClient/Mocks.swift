@@ -2,35 +2,35 @@ import ComposableArchitecture
 import SharedModels
 import XCTestDynamicOverlay
 
+class Box<Value> {
+  var wrappedValue: Value
+  init(wrappedValue: Value) {
+    self.wrappedValue = wrappedValue
+  }
+}
+
 extension LocalDatabaseClient {
   public static var mock: Self {
-    var games: [CompletedGame] = []
+    let games = UncheckedSendable(Box(wrappedValue: [CompletedGame]()))
 
     return Self(
-      fetchGamesForWord: { _ in .result { .success([]) } },
-      fetchStats: Effect(value: Stats()),
-      fetchVocab: .none,
-      migrate: .result { .success(()) },
-      playedGamesCount: { _ in .init(value: 10) },
-      saveGame: { game in
-        .result {
-          games.append(game)
-          return .success(())
-        }
-      }
+      fetchGamesForWord: { _ in [] },
+      fetchStats: { Stats() },
+      fetchVocab: { Vocab(words: []) },
+      migrate: {},
+      playedGamesCount: { _ in 10 },
+      saveGame: { games.value.wrappedValue.append($0) }
     )
   }
 
   #if DEBUG
-    public static let failing = Self(
-      fetchGamesForWord: { _ in
-        .failing("\(Self.self).fetchGamesForWord is unimplemented")
-      },
-      fetchStats: .failing("\(Self.self).fetchStats is unimplemented"),
-      fetchVocab: .failing("\(Self.self).fetchVocab is unimplemented"),
-      migrate: .failing("\(Self.self).migrate is unimplemented"),
-      playedGamesCount: { _ in .failing("\(Self.self).playedGamesCount is unimplemented") },
-      saveGame: { _ in .failing("\(Self.self).saveGame is unimplemented") }
+    public static let unimplemented = Self(
+      fetchGamesForWord: XCTUnimplemented("\(Self.self).fetchGamesForWord"),
+      fetchStats: XCTUnimplemented("\(Self.self).fetchStats"),
+      fetchVocab: XCTUnimplemented("\(Self.self).fetchVocab"),
+      migrate: XCTUnimplemented("\(Self.self).migrate"),
+      playedGamesCount: XCTUnimplemented("\(Self.self).playedGamesCount"),
+      saveGame: XCTUnimplemented("\(Self.self).saveGame")
     )
   #endif
 }

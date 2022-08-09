@@ -5,26 +5,11 @@ import UIKit
 extension UIApplicationClient {
   public static let live = Self(
     alternateIconName: { UIApplication.shared.alternateIconName },
-    open: { url, options in
-      .future { callback in
-        UIApplication.shared.open(url, options: options) { bool in
-          callback(.success(bool))
-        }
-      }
-    },
-    openSettingsURLString: { UIApplication.openSettingsURLString },
-    setAlternateIconName: { iconName in
-      .run { subscriber in
-        UIApplication.shared.setAlternateIconName(iconName) { error in
-          if let error = error {
-            subscriber.send(completion: .failure(error))
-          } else {
-            subscriber.send(completion: .finished)
-          }
-        }
-        return AnyCancellable {}
-      }
-    },
-    supportsAlternateIcons: { UIApplication.shared.supportsAlternateIcons }
+    alternateIconNameAsync: { await UIApplication.shared.alternateIconName },
+    open: { @MainActor in await UIApplication.shared.open($0, options: $1) },
+    openSettingsURLString: { await UIApplication.openSettingsURLString },
+    setAlternateIconName: { @MainActor in try await UIApplication.shared.setAlternateIconName($0) },
+    supportsAlternateIcons: { UIApplication.shared.supportsAlternateIcons },
+    supportsAlternateIconsAsync: { await UIApplication.shared.supportsAlternateIcons }
   )
 }

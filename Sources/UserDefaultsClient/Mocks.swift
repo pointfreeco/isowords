@@ -4,11 +4,11 @@ extension UserDefaultsClient {
     dataForKey: { _ in nil },
     doubleForKey: { _ in 0 },
     integerForKey: { _ in 0 },
-    remove: { _ in .none },
-    setBool: { _, _ in .none },
-    setData: { _, _ in .none },
-    setDouble: { _, _ in .none },
-    setInteger: { _, _ in .none }
+    remove: { _ in },
+    setBool: { _, _ in },
+    setData: { _, _ in },
+    setDouble: { _, _ in },
+    setInteger: { _, _ in }
   )
 }
 
@@ -17,29 +17,16 @@ extension UserDefaultsClient {
   import XCTestDynamicOverlay
 
   extension UserDefaultsClient {
-    public static let failing = Self(
-      boolForKey: {
-        key
-        in XCTFail("\(Self.self).boolForKey(\(key)) is unimplemented")
-        return false
-      },
-      dataForKey: { key in
-        XCTFail("\(Self.self).dataForKey(\(key)) is unimplemented")
-        return nil
-      },
-      doubleForKey: { key in
-        XCTFail("\(Self.self).doubleForKey(\(key)) is unimplemented")
-        return 0
-      },
-      integerForKey: { key in
-        XCTFail("\(Self.self).integerForKey(\(key)) is unimplemented")
-        return 0
-      },
-      remove: { key in .failing("\(Self.self).remove(\(key)) is unimplemented") },
-      setBool: { _, key in .failing("\(Self.self).setBool(\(key), _) is unimplemented") },
-      setData: { _, key in .failing("\(Self.self).setData(\(key), _) is unimplemented") },
-      setDouble: { _, key in .failing("\(Self.self).setDouble(\(key), _) is unimplemented") },
-      setInteger: { _, key in .failing("\(Self.self).setInteger(\(key), _) is unimplemented") }
+    public static let unimplemented = Self(
+      boolForKey: XCTUnimplemented("\(Self.self).boolForKey", placeholder: false),
+      dataForKey: XCTUnimplemented("\(Self.self).dataForKey", placeholder: nil),
+      doubleForKey: XCTUnimplemented("\(Self.self).doubleForKey", placeholder: 0),
+      integerForKey: XCTUnimplemented("\(Self.self).integerForKey", placeholder: 0),
+      remove: XCTUnimplemented("\(Self.self).remove"),
+      setBool: XCTUnimplemented("\(Self.self).setBool"),
+      setData: XCTUnimplemented("\(Self.self).setData"),
+      setDouble: XCTUnimplemented("\(Self.self).setDouble"),
+      setInteger: XCTUnimplemented("\(Self.self).setInteger")
     )
 
     public mutating func override(bool: Bool, forKey key: String) {

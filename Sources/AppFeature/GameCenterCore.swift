@@ -1,7 +1,6 @@
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
-import ComposableGameCenterHelpers
 import GameFeature
 import GameKit
 import GameOverFeature
@@ -11,8 +10,7 @@ import SharedModels
 
 public enum GameCenterAction: Equatable {
   case listener(LocalPlayerClient.ListenerEvent)
-  case rematchResponse(Result<TurnBasedMatch, NSError>)
-  case turnBasedMatchReloaded(Result<TurnBasedMatch, NSError>)
+  case rematchResponse(TaskResult<TurnBasedMatch>)
 }
 
 extension Reducer where State == AppState, Action == AppAction, Environment == AppEnvironment {
@@ -45,25 +43,22 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: game,
                 settings: state.home.settings
               )
-              return .merge(
-                environment.gameCenter.turnBasedMatchmakerViewController.dismiss
-                  .fireAndForget(),
-                environment.gameCenter.turnBasedMatch
-                  .saveCurrentTurn(
-                    match.matchId,
-                    Data(
-                      turnBasedMatchData: .init(
-                        context: context,
-                        gameState: game,
-                        playerId: environment.apiClient.currentPlayer()?.player.id
-                      )
+              return .fireAndForget {
+                await environment.gameCenter.turnBasedMatchmakerViewController.dismiss()
+                try await environment.gameCenter.turnBasedMatch.saveCurrentTurn(
+                  match.matchId,
+                  Data(
+                    turnBasedMatchData: .init(
+                      context: context,
+                      gameState: game,
+                      playerId: environment.apiClient.currentPlayer()?.player.id
                     )
                   )
-                  .fireAndForget()
-              )
+                )
+              }
             }
 
-            guard var turnBasedMatchData = matchData.turnBasedMatchData else {
+            guard let turnBasedMatchData = matchData.turnBasedMatchData else {
               return .none
             }
 
@@ -91,19 +86,17 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
                 game: gameState,
                 settings: state.home.settings
               )
-              turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
-              return .merge(
-                environment.gameCenter.turnBasedMatchmakerViewController.dismiss
-                  .fireAndForget(),
-
-                gameState.isYourTurn
-                  ? environment.gameCenter.turnBasedMatch.saveCurrentTurn(
+              return .fireAndForget { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] in
+                await environment.gameCenter.turnBasedMatchmakerViewController.dismiss()
+                if isYourTurn {
+                  var turnBasedMatchData = turnBasedMatchData
+                  turnBasedMatchData.metadata.lastOpenedAt = environment.mainRunLoop.now.date
+                  try await environment.gameCenter.turnBasedMatch.saveCurrentTurn(
                     match.matchId,
                     Data(turnBasedMatchData: turnBasedMatchData)
                   )
-                  .fireAndForget()
-                  : .none
-              )
+                }
+              }
             }
 
             let context = TurnBasedContext(
@@ -119,23 +112,21 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
               lastTurnDate > environment.mainRunLoop.now.date.addingTimeInterval(-60)
             else { return .none }
 
-            return environment.gameCenter
-              .showNotificationBanner(.init(title: match.message, message: nil))
-              .fireAndForget()
+            return .fireAndForget {
+              await environment.gameCenter.showNotificationBanner(
+                .init(title: match.message, message: nil)
+              )
+            }
           }
 
           switch action {
           case .appDelegate(.didFinishLaunching):
-            return environment.gameCenter.localPlayer.authenticate
-              .map { $0 == nil }
-              .removeDuplicates()
-              .flatMap {
-                $0
-                  ? environment.gameCenter.localPlayer.listener.map { .gameCenter(.listener($0)) }
-                    .cancellable(id: ListenerId(), cancelInFlight: true)
-                  : .cancel(id: ListenerId())
+            return .run { send in
+              try await environment.gameCenter.localPlayer.authenticate()
+              for await event in environment.gameCenter.localPlayer.listener() {
+                await send(.gameCenter(.listener(event)))
               }
-              .eraseToEffect()
+            }
 
           case .currentGame(.game(.gameOver(.rematchButtonTapped))):
             guard
@@ -145,20 +136,23 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
 
             state.game = nil
 
-            return environment.gameCenter.turnBasedMatch
-              .rematch(turnBasedMatch.match.matchId)
-              .receive(on: environment.mainQueue)
-              .mapError { $0 as NSError }
-              .catchToEffect { .gameCenter(.rematchResponse($0)) }
+            return .task {
+              await .gameCenter(
+                .rematchResponse(
+                  TaskResult {
+                    try await environment.gameCenter.turnBasedMatch.rematch(
+                      turnBasedMatch.match.matchId
+                    )
+                  }
+                )
+              )
+            }
 
           case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
-            guard state.game?.turnBasedContext?.match.matchId == match.matchId
+            guard
+              state.game?.turnBasedContext?.match.matchId == match.matchId,
+              let turnBasedMatchData = match.matchData?.turnBasedMatchData
             else { return .none }
-
-            guard let turnBasedMatchData = match.matchData?.turnBasedMatchData
-            else {
-              return .none
-            }
 
             let newGame = GameState(
               gameCurrentTime: environment.mainRunLoop.now.date,
@@ -168,27 +162,29 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             )
             state.game = newGame
 
-            return environment.database
-              .saveGame(.init(gameState: newGame))
-              .fireAndForget()
+            return .fireAndForget {
+              try await environment.database.saveGame(.init(gameState: newGame))
+            }
 
           case let .gameCenter(
             .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive)))):
             return handleTurnBasedMatch(match, didBecomeActive: didBecomeActive)
 
           case let .gameCenter(.listener(.turnBased(.wantsToQuitMatch(match)))):
-            return environment.gameCenter.turnBasedMatch
-              .endMatchInTurn(
+            return .fireAndForget {
+              try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
                 .init(
                   for: match.matchId,
                   matchData: match.matchData ?? Data(),
                   localPlayerId: environment.gameCenter.localPlayer.localPlayer().gamePlayerId,
                   localPlayerMatchOutcome: .quit,
-                  message:
-                    "\(environment.gameCenter.localPlayer.localPlayer().displayName) forfeited the match."
+                  message: """
+                    \(environment.gameCenter.localPlayer.localPlayer().displayName) \
+                    forfeited the match.
+                    """
                 )
               )
-              .fireAndForget()
+            }
 
           case .gameCenter(.listener):
             return .none
@@ -197,23 +193,21 @@ extension Reducer where State == AppState, Action == AppAction, Environment == A
             let .home(.multiplayer(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))):
             return handleTurnBasedMatch(turnBasedMatch, didBecomeActive: true)
 
-          case let .gameCenter(.turnBasedMatchReloaded(.success(turnBasedMatch))):
-            if state.game?.turnBasedContext?.match.matchId == turnBasedMatch.matchId {
-              state.game?.turnBasedContext?.match = turnBasedMatch
-            }
-            return .none
-
           case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
-            return environment.gameCenter.turnBasedMatch.rematch(matchId)
-              .receive(on: environment.mainQueue)
-              .mapError { $0 as NSError }
-              .catchToEffect { .gameCenter(.rematchResponse($0)) }
+            return .task {
+              await .gameCenter(
+                .rematchResponse(
+                  TaskResult {
+                    try await environment.gameCenter.turnBasedMatch.rematch(matchId)
+                  }
+                )
+              )
+            }
 
           default:
             return .none
           }
-        })
+        }
+      )
   }
 }
-
-private struct ListenerId: Hashable {}

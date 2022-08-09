@@ -66,7 +66,7 @@ public struct LeaderboardState: Equatable {
 public enum LeaderboardAction: Equatable {
   case cubePreview(CubePreviewAction)
   case dismissCubePreview
-  case fetchWordResponse(Result<FetchVocabWordResponse, ApiError>)
+  case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
   case scopeTapped(LeaderboardScope)
   case solo(LeaderboardResultsAction<TimeScope>)
   case vocab(LeaderboardResultsAction<TimeScope>)
@@ -96,12 +96,12 @@ public struct LeaderboardEnvironment {
 
 #if DEBUG
   extension LeaderboardEnvironment {
-    public static let failing = Self(
-      apiClient: .failing,
-      audioPlayer: .failing,
-      feedbackGenerator: .failing,
-      lowPowerMode: .failing,
-      mainQueue: .failing("mainQueue")
+    public static let unimplemented = Self(
+      apiClient: .unimplemented,
+      audioPlayer: .unimplemented,
+      feedbackGenerator: .unimplemented,
+      lowPowerMode: .unimplemented,
+      mainQueue: .unimplemented("mainQueue")
     )
   }
 #endif
@@ -130,8 +130,7 @@ public let leaderboardReducer = Reducer<
       action: /LeaderboardAction.solo,
       environment: {
         LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadSoloResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
+          loadResults: $0.apiClient.loadSoloResults(gameMode:timeScope:)
         )
       }
     ),
@@ -142,8 +141,7 @@ public let leaderboardReducer = Reducer<
       action: /LeaderboardAction.vocab,
       environment: {
         LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadVocabResults(gameMode:timeScope:),
-          mainQueue: $0.mainQueue
+          loadResults: $0.apiClient.loadVocabResults(gameMode:timeScope:)
         )
       }
     ),
@@ -190,17 +188,22 @@ public let leaderboardReducer = Reducer<
       return .none
 
     case let .vocab(.tappedRow(id)):
-      struct CancelId: Hashable {}
+      enum CancelID {}
 
       guard let resultEnvelope = state.vocab.resultEnvelope
       else { return .none }
-      return environment.apiClient.apiRequest(
-        route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
-        as: FetchVocabWordResponse.self
-      )
-      .receive(on: environment.mainQueue)
-      .catchToEffect(LeaderboardAction.fetchWordResponse)
-      .cancellable(id: CancelId(), cancelInFlight: true)
+
+      return .task {
+        await .fetchWordResponse(
+          TaskResult {
+            try await environment.apiClient.apiRequest(
+              route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
+              as: FetchVocabWordResponse.self
+            )
+          }
+        )
+      }
+      .cancellable(id: CancelID.self, cancelInFlight: true)
 
     case .vocab:
       return .none
@@ -313,11 +316,12 @@ public struct LeaderboardView: View {
 }
 
 extension ApiClient {
+  @Sendable
   func loadSoloResults(
     gameMode: GameMode,
     timeScope: TimeScope
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
+  ) async throws -> ResultEnvelope {
+    let response = try await self.apiRequest(
       route: .leaderboard(
         .fetch(
           gameMode: gameMode,
@@ -327,34 +331,33 @@ extension ApiClient {
       ),
       as: FetchLeaderboardResponse.self
     )
-    .compactMap { response in
-      response.entries.first.map { firstEntry in
-        ResultEnvelope(
-          outOf: firstEntry.outOf,
-          results: response.entries.map { entry in
-            ResultEnvelope.Result(
-              denseRank: entry.rank,
-              id: entry.id.rawValue,
-              isYourScore: entry.isYourScore,
-              rank: entry.rank,
-              score: entry.score,
-              subtitle: nil,
-              title: entry.playerDisplayName ?? (entry.isYourScore ? "You" : "Someone")
-            )
-          }
-        )
-      }
+    return response.entries.first.map { firstEntry in
+      ResultEnvelope(
+        outOf: firstEntry.outOf,
+        results: response.entries.map { entry in
+          ResultEnvelope.Result(
+            denseRank: entry.rank,
+            id: entry.id.rawValue,
+            isYourScore: entry.isYourScore,
+            rank: entry.rank,
+            score: entry.score,
+            subtitle: nil,
+            title: entry.playerDisplayName ?? (entry.isYourScore ? "You" : "Someone")
+          )
+        }
+      )
     }
-    .eraseToEffect()
+    ?? .init()
   }
 }
 
 extension ApiClient {
+  @Sendable
   func loadVocabResults(
     gameMode: GameMode,
     timeScope: TimeScope
-  ) -> Effect<ResultEnvelope, ApiError> {
-    self.apiRequest(
+  ) async throws -> ResultEnvelope {
+    let response = try await self.apiRequest(
       route: .leaderboard(
         .vocab(
           .fetch(
@@ -365,15 +368,13 @@ extension ApiClient {
       ),
       as: [FetchVocabLeaderboardResponse.Entry].self
     )
-    .compactMap { response in
-      response.first.map { firstEntry in
-        ResultEnvelope(
-          outOf: firstEntry.outOf,
-          results: response.map(ResultEnvelope.Result.init)
-        )
-      }
+    return response.first.map { firstEntry in
+      ResultEnvelope(
+        outOf: firstEntry.outOf,
+        results: response.map(ResultEnvelope.Result.init)
+      )
     }
-    .eraseToEffect()
+    ?? .init()
   }
 }
 
@@ -409,10 +410,11 @@ extension ResultEnvelope.Result {
               reducer: leaderboardReducer,
               environment: LeaderboardEnvironment(
                 apiClient: update(.noop) {
-                  $0.apiRequest = { route in
+                  $0.apiRequest = { @Sendable route in
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      return Effect.ok(
+                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                      return try await OK(
                         FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
@@ -427,11 +429,9 @@ extension ResultEnvelope.Result {
                           }
                         )
                       )
-                      .delay(for: 1, scheduler: DispatchQueue.main)
-                      .eraseToEffect()
 
                     default:
-                      return .none
+                      throw CancellationError()
                     }
                   }
                 },

@@ -144,7 +144,7 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
         mainRunLoop: $0.mainRunLoop,
         remoteNotifications: .noop,
         serverConfig: .noop,
-        setUserInterfaceStyle: { _ in .none },
+        setUserInterfaceStyle: { _ in },
         storeKit: .noop,
         userDefaults: .noop,
         userNotifications: .noop
@@ -160,11 +160,9 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
       return .none
 
     case .fullVersionButtonTapped:
-      return environment.applicationClient.open(
-        ServerConfig().appStoreUrl,
-        [:]
-      )
-      .fireAndForget()
+      return .fireAndForget {
+        _ = await environment.applicationClient.open(ServerConfig().appStoreUrl, [:])
+      }
 
     case .game(.gameOver(.submitGameResponse(.success))):
       state.appStoreOverlayIsPresented = true
@@ -178,8 +176,9 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
       return .none
 
     case .onAppear:
-      return environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        .fireAndForget()
+      return .fireAndForget {
+        await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+      }
 
     case .onboarding(.delegate(.getStarted)):
       state.step = .game(
@@ -199,10 +198,11 @@ public let demoReducer = Reducer<DemoState, DemoAction, DemoEnvironment>.combine
     }
   }
 )
-.onChange(of: { $0.game?.gameOver != nil }) { isGameOver, state, _, environment in
-  Effect(value: .gameOverDelay)
-    .delay(for: 2, scheduler: environment.mainQueue)
-    .eraseToEffect()
+.onChange(of: { $0.game?.gameOver != nil }) { _, _, _, environment in
+  .task {
+    try await environment.mainQueue.sleep(for: .seconds(2))
+    return .gameOverDelay
+  }
 }
 
 public struct DemoView: View {

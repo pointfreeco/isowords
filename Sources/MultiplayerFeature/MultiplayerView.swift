@@ -63,13 +63,7 @@ public let multiplayerReducer = Reducer<
     ._pullback(
       state: (\MultiplayerState.route).appending(path: /MultiplayerState.Route.pastGames),
       action: /MultiplayerAction.pastGames,
-      environment: {
-        PastGamesEnvironment(
-          backgroundQueue: $0.backgroundQueue,
-          gameCenter: $0.gameCenter,
-          mainQueue: $0.mainQueue
-        )
-      }
+      environment: { PastGamesEnvironment(gameCenter: $0.gameCenter) }
     ),
 
   .init { state, action, environment in
@@ -78,14 +72,12 @@ public let multiplayerReducer = Reducer<
       return .none
 
     case .startButtonTapped:
-      if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
-        return environment.gameCenter.turnBasedMatchmakerViewController
-          .present(showExistingMatches: false)
-          .fireAndForget()
-
-      } else {
-        return environment.gameCenter.localPlayer.presentAuthenticationViewController
-          .fireAndForget()
+      return .fireAndForget {
+        if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
+          try await environment.gameCenter.turnBasedMatchmakerViewController.present(false)
+        } else {
+          await environment.gameCenter.localPlayer.presentAuthenticationViewController()
+        }
       }
 
     case .setNavigation(tag: .pastGames):

@@ -3,15 +3,15 @@ import XCTestDynamicOverlay
 
 #if DEBUG
   extension SnsClient {
-    public static let failing = Self(
+    public static let unimplemented = Self(
       createPlatformEndpoint: { _ in
-        .failing("\(Self.self).createPlatformEndpoint is not implemented.")
+        .unimplemented("\(Self.self).createPlatformEndpoint is not implemented.")
       },
       deleteEndpoint: { _ in
-        .failing("(Self.self).deleteEndpoint is not implemented.")
+        .unimplemented("(Self.self).deleteEndpoint is not implemented.")
       },
       publish: { _, _ in
-        .failing("(Self.self).publish is not implemented.")
+        .unimplemented("(Self.self).publish is not implemented.")
       }
     )
   }

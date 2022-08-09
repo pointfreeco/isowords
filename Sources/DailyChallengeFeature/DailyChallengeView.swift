@@ -60,13 +60,13 @@ public enum DailyChallengeAction: Equatable {
   case dailyChallengeResults(DailyChallengeResultsAction)
   case delegate(DelegateAction)
   case dismissAlert
-  case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], ApiError>)
+  case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
   case gameButtonTapped(GameMode)
-  case onAppear
   case notificationButtonTapped
   case notificationsAuthAlert(NotificationsAuthAlertAction)
   case setNavigation(tag: DailyChallengeState.Route.Tag?)
-  case startDailyChallengeResponse(Result<InProgressGame, DailyChallengeError>)
+  case startDailyChallengeResponse(TaskResult<InProgressGame>)
+  case task
   case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
   public enum DelegateAction: Equatable {
@@ -106,7 +106,7 @@ public let dailyChallengeReducer = Reducer<
     ._pullback(
       state: (\DailyChallengeState.route).appending(path: /DailyChallengeState.Route.results),
       action: /DailyChallengeAction.dailyChallengeResults,
-      environment: { .init(apiClient: $0.apiClient, mainQueue: $0.mainQueue) }
+      environment: { .init(apiClient: $0.apiClient) }
     ),
 
   notificationsAuthAlertReducer
@@ -123,7 +123,9 @@ public let dailyChallengeReducer = Reducer<
       }
     ),
 
-  .init { state, action, environment in
+  Reducer<
+    DailyChallengeState, DailyChallengeAction, DailyChallengeEnvironment
+  > { state, action, environment in
     switch action {
     case .dailyChallengeResults:
       return .none
@@ -164,29 +166,18 @@ public let dailyChallengeReducer = Reducer<
 
       state.gameModeIsLoading = challenge.dailyChallenge.gameMode
 
-      return startDailyChallenge(
-        challenge,
-        apiClient: environment.apiClient,
-        date: { environment.mainRunLoop.now.date },
-        fileClient: environment.fileClient,
-        mainRunLoop: environment.mainRunLoop
-      )
-      .catchToEffect(DailyChallengeAction.startDailyChallengeResponse)
-
-    case .onAppear:
-      return .merge(
-        environment.apiClient.apiRequest(
-          route: .dailyChallenge(.today(language: .en)),
-          as: [FetchTodaysDailyChallengeResponse].self
+      return .task {
+        await .startDailyChallengeResponse(
+          TaskResult {
+            try await startDailyChallengeAsync(
+              challenge,
+              apiClient: environment.apiClient,
+              date: { environment.mainRunLoop.now.date },
+              fileClient: environment.fileClient
+            )
+          }
         )
-        .receive(on: environment.mainRunLoop.animation())
-        .catchToEffect(DailyChallengeAction.fetchTodaysDailyChallengeResponse),
-
-        environment.userNotifications.getNotificationSettings
-          .receive(on: environment.mainRunLoop)
-          .map(DailyChallengeAction.userNotificationSettingsResponse)
-          .eraseToEffect()
-      )
+      }
 
     case .notificationButtonTapped:
       state.notificationsAuthAlert = .init()
@@ -212,19 +203,49 @@ public let dailyChallengeReducer = Reducer<
       state.route = nil
       return .none
 
-    case let .startDailyChallengeResponse(.failure(.alreadyPlayed(endsAt))):
+    case let .startDailyChallengeResponse(.failure(DailyChallengeError.alreadyPlayed(endsAt))):
       state.alert = .alreadyPlayed(nextStartsAt: endsAt)
       state.gameModeIsLoading = nil
       return .none
 
-    case let .startDailyChallengeResponse(.failure(.couldNotFetch(nextStartsAt))):
+    case let .startDailyChallengeResponse(.failure(DailyChallengeError.couldNotFetch(nextStartsAt))):
       state.alert = .couldNotFetchDaily(nextStartsAt: nextStartsAt)
       state.gameModeIsLoading = nil
       return .none
 
+    case .startDailyChallengeResponse(.failure):
+      return .none
+
     case let .startDailyChallengeResponse(.success(inProgressGame)):
       state.gameModeIsLoading = nil
-      return .init(value: .delegate(.startGame(inProgressGame)))
+      return .task { .delegate(.startGame(inProgressGame)) }
+
+    case .task:
+      return .run { send in
+        await withTaskGroup(of: Void.self) { group in
+          group.addTask {
+            await send(
+              .userNotificationSettingsResponse(
+                environment.userNotifications.getNotificationSettings()
+              )
+            )
+          }
+
+          group.addTask {
+            await send(
+              .fetchTodaysDailyChallengeResponse(
+                TaskResult {
+                  try await environment.apiClient.apiRequest(
+                    route: .dailyChallenge(.today(language: .en)),
+                    as: [FetchTodaysDailyChallengeResponse].self
+                  )
+                }
+              ),
+              animation: .default
+            )
+          }
+        }
+      }
 
     case let .userNotificationSettingsResponse(settings):
       state.userNotificationSettings = settings
@@ -395,7 +416,7 @@ public struct DailyChallengeView: View {
         .foregroundColor((self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge))
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
-      .onAppear { self.viewStore.send(.onAppear) }
+      .task { await self.viewStore.send(.task).finish() }
       .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
@@ -513,8 +534,9 @@ private struct RingEffect: GeometryEffect {
         remoteNotifications: .noop,
         userNotifications: .noop
       )
-      environment.userNotifications.getNotificationSettings = .init(
-        value: .init(authorizationStatus: .notDetermined))
+      environment.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .notDetermined)
+      }
 
       return Preview {
         NavigationView {

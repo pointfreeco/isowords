@@ -27,7 +27,6 @@ public struct GameFeatureView<Content>: View where Content: View {
             isAnimationReduced: viewStore.state,
             store: store.scope(state: { $0 }, action: GameFeatureAction.game)
           )
-          .onDisappear { viewStore.send(.onDisappear) }
         }
       }
     )
@@ -39,12 +38,7 @@ public struct GameFeatureView<Content>: View where Content: View {
         // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
         // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
         EmptyView()
-          .sheet(
-            isPresented: viewStore.binding(
-              get: { $0 },
-              send: .settings(.onDismiss)
-            )
-          ) {
+          .sheet(isPresented: viewStore.binding(send: .dismissSettings)) {
             NavigationView {
               SettingsView(
                 store: self.store.scope(
@@ -124,7 +118,7 @@ public struct GameFeatureView<Content>: View where Content: View {
               mainRunLoop: .main,
               remoteNotifications: .noop,
               serverConfig: .noop,
-              setUserInterfaceStyle: { _ in .none },
+              setUserInterfaceStyle: { _ in },
               storeKit: .live(),
               userDefaults: .noop,
               userNotifications: .live
