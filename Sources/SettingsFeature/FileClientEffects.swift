@@ -6,7 +6,7 @@ extension FileClient {
     try await self.load(UserSettings.self, from: userSettingsFileName)
   }
 
-  public func save(userSettings: UserSettings) async throws -> Void {
+  public func save(userSettings: UserSettings) async throws {
     try await self.save(userSettings, to: userSettingsFileName)
   }
 }

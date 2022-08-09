@@ -101,9 +101,10 @@ public let upgradeInterstitialReducer = Reducer<
       }
     }
 
-    guard event.isFullGamePurchased(
-      identifier: environment.serverConfig.config().productIdentifiers.fullGame
-    )
+    guard
+      event.isFullGamePurchased(
+        identifier: environment.serverConfig.config().productIdentifiers.fullGame
+      )
     else { return .none }
     return .task { .delegate(.fullGamePurchased) }
 
@@ -123,9 +124,11 @@ public let upgradeInterstitialReducer = Reducer<
           let response = try await environment.storeKit.fetchProducts([
             environment.serverConfig.config().productIdentifiers.fullGame
           ])
-          guard let product = response.products.first(where: { product in
-            product.productIdentifier == environment.serverConfig.config().productIdentifiers.fullGame
-          })
+          guard
+            let product = response.products.first(where: { product in
+              product.productIdentifier
+                == environment.serverConfig.config().productIdentifiers.fullGame
+            })
           else { return }
           await send(.fullGameProductResponse(product), animation: .default)
         }

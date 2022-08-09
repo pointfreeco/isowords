@@ -21,7 +21,7 @@ extension UIApplicationClient {
   public static let noop = Self(
     alternateIconName: { nil },
     alternateIconNameAsync: { nil },
-    open: { _, _ in false},
+    open: { _, _ in false },
     openSettingsURLString: { "settings://isowords/settings" },
     setAlternateIconName: { _ in },
     supportsAlternateIcons: { true },

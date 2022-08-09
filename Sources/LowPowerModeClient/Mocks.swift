@@ -8,7 +8,7 @@ extension LowPowerModeClient {
   public static let `false` = Self(
     start: { AsyncStream { $0.yield(false) } }
   )
-  
+
   public static let `true` = Self(
     start: { AsyncStream { $0.yield(true) } }
   )
@@ -25,7 +25,8 @@ extension LowPowerModeClient {
             Task {
               await continuation.yield(isLowPowerModeEnabled.value)
               for await _ in DispatchQueue.main.timer(interval: 2) {
-                let isLowPowerModeEnabled = await isLowPowerModeEnabled
+                let isLowPowerModeEnabled =
+                  await isLowPowerModeEnabled
                   .withValue { isLowPowerModeEnabled -> Bool in
                     isLowPowerModeEnabled.toggle()
                     return isLowPowerModeEnabled

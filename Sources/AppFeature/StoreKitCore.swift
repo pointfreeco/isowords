@@ -28,8 +28,7 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
             let verifiableTransactions = transactions.filter { $0.transactionState.canBeVerified }
             let otherTransactions = transactions.filter { !$0.transactionState.canBeVerified }
 
-            if
-              !verifiableTransactions.isEmpty,
+            if !verifiableTransactions.isEmpty,
               let appStoreReceiptURL = environment.storeKit.appStoreReceiptURL(),
               let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
             {
@@ -66,8 +65,9 @@ extension Reducer where Action == AppAction, Environment == AppEnvironment {
           return .fireAndForget {
             for transaction in envelope.transactions
             where envelope.verifyEnvelope.verifiedProductIds
-              .contains(where: { $0 == transaction.payment.productIdentifier }) {
-                await environment.storeKit.finishTransaction(transaction)
+              .contains(where: { $0 == transaction.payment.productIdentifier })
+            {
+              await environment.storeKit.finishTransaction(transaction)
             }
           }
 

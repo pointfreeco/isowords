@@ -8,7 +8,7 @@ public struct ApiClient {
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
   public var baseUrl: @Sendable () -> URL
-  public var currentPlayer: @Sendable() -> CurrentPlayerEnvelope?
+  public var currentPlayer: @Sendable () -> CurrentPlayerEnvelope?
   public var logout: @Sendable () async -> Void
   public var refreshCurrentPlayer: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)

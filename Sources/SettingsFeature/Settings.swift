@@ -551,18 +551,19 @@ public let settingsReducer = Reducer<SettingsState, SettingsAction, SettingsEnvi
             }
           }
 
-          async let productsResponse: Void = shouldFetchProducts
-          ? send(
-            .productsResponse(
-              TaskResult {
-                try await environment.storeKit.fetchProducts([
-                  environment.serverConfig.config().productIdentifiers.fullGame
-                ])
-              }
-            ),
-            animation: .default
-          )
-          : ()
+          async let productsResponse: Void =
+            shouldFetchProducts
+            ? send(
+              .productsResponse(
+                TaskResult {
+                  try await environment.storeKit.fetchProducts([
+                    environment.serverConfig.config().productIdentifiers.fullGame
+                  ])
+                }
+              ),
+              animation: .default
+            )
+            : ()
 
           async let settingsResponse: Void = send(
             .userNotificationSettingsResponse(

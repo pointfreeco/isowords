@@ -109,7 +109,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
     case .task:
       return .run { send in
         await environment.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        
+
         // Play trailer music
         await environment.audioPlayer.play(.onboardingBgMusic)
 
@@ -134,7 +134,8 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
             )
 
             try await environment.mainQueue.sleep(
-              for: .seconds(.random(in: (0.3*moveNubToFaceDuration)...(0.7*moveNubToFaceDuration)))
+              for: .seconds(
+                .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
             )
             // Press the nub on the first character
             if characterIndex == 0 {
@@ -159,8 +160,9 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
           try await environment.mainQueue.sleep(
             for: .seconds(
               .random(
-                in: moveNubToSubmitButtonDuration ...
-                  (moveNubToSubmitButtonDuration + submitHestitationDuration)
+                in:
+                  moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration
+                  + submitHestitationDuration)
               )
             )
           )
@@ -175,7 +177,7 @@ public let trailerReducer = Reducer<TrailerState, TrailerAction, TrailerEnvironm
               try await environment.mainQueue.sleep(for: .seconds(0.2))
               await send(.game(.submitButtonTapped(reaction: nil)))
               try await environment.mainQueue.sleep(for: .seconds(0.3))
-              await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3 )
+              await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
             }
           }
         }

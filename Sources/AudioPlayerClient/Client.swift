@@ -7,7 +7,7 @@ public struct AudioPlayerClient {
   public var secondaryAudioShouldBeSilencedHint: @Sendable () async -> Bool
   public var setGlobalVolumeForMusic: @Sendable (Float) async -> Void
   public var setGlobalVolumeForSoundEffects: @Sendable (Float) async -> Void
-  public var setVolume: @Sendable (Sound, Float) async ->Void
+  public var setVolume: @Sendable (Sound, Float) async -> Void
   public var stop: @Sendable (Sound) async -> Void
 
   public struct Sound: Hashable {

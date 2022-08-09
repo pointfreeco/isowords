@@ -42,7 +42,7 @@ extension StoreKitClient {
         guard
           let scene = await UIApplication.shared.connectedScenes
             .first(where: { $0 is UIWindowScene })
-        as? UIWindowScene
+            as? UIWindowScene
         else { return }
         await SKStoreReviewController.requestReview(in: scene)
       },

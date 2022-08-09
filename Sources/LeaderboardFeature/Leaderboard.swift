@@ -347,7 +347,7 @@ extension ApiClient {
         }
       )
     }
-    ?? .init()
+      ?? .init()
   }
 }
 
@@ -374,7 +374,7 @@ extension ApiClient {
         results: response.map(ResultEnvelope.Result.init)
       )
     }
-    ?? .init()
+      ?? .init()
   }
 }
 

@@ -205,7 +205,7 @@ extension Reducer {
               "\(file)",
               line,
               "\(globalAction)",
-              "\(State.self)"
+              "\(State.self)",
             ]
           )
         #endif

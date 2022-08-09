@@ -1128,12 +1128,10 @@ extension Reducer where State == GameState, Action == GameAction, Environment ==
             TaskResult {
               if state.isGameOver {
                 let completedGame = CompletedGame(gameState: state)
-                if
-                  let completedMatch = CompletedMatch(
-                    completedGame: completedGame,
-                    turnBasedContext: turnBasedContext
-                  )
-                {
+                if let completedMatch = CompletedMatch(
+                  completedGame: completedGame,
+                  turnBasedContext: turnBasedContext
+                ) {
                   try await environment.gameCenter.turnBasedMatch.endMatchInTurn(
                     .init(
                       for: turnBasedContext.match.matchId,

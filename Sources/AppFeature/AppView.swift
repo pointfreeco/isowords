@@ -235,10 +235,9 @@ let appReducerCore = Reducer<AppState, AppAction, AppEnvironment> { state, actio
     }
 
   case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
-    if
-      let data =
-        try? JSONSerialization
-        .data(withJSONObject: response.notification.request.content.userInfo),
+    if let data =
+      try? JSONSerialization
+      .data(withJSONObject: response.notification.request.content.userInfo),
       let pushNotificationContent = try? JSONDecoder()
         .decode(PushNotificationContent.self, from: data)
     {
