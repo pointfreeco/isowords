@@ -358,10 +358,6 @@ class GameOverFeatureTests: XCTestCase {
     store.dependencies.database.playedGamesCount = { _ in 6 }
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
-      forKey: "last-review-request-timeinterval"
-    )
     store.dependencies.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
@@ -399,10 +395,6 @@ class GameOverFeatureTests: XCTestCase {
     store.dependencies.database.playedGamesCount = { _ in 5 }
     store.dependencies.mainRunLoop = .immediate
     store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.override(
-      double: self.mainRunLoop.now.date.timeIntervalSince1970,
-      forKey: "last-review-request-timeinterval"
-    )
     store.dependencies.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }

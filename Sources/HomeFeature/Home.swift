@@ -326,9 +326,9 @@ public struct Home: ReducerProtocol {
 
       case .task:
         return .run { send in
-          try await self.authenticate(send: send)
-          await self.listen(send: send)
-        } catch: { _, _ in
+          async let authenticate: Void = self.authenticate(send: send)
+          await self.listenForGameCenterEvents(send: send)
+          _ = await authenticate
         }
         .animation()
 
@@ -376,10 +376,10 @@ public struct Home: ReducerProtocol {
     }
   }
 
-  private func authenticate(send: Send<Action>) async throws {
-    try? await self.gameCenter.localPlayer.authenticate()
-
+  private func authenticate(send: Send<Action>) async {
     do {
+      try? await self.gameCenter.localPlayer.authenticate()
+
       let localPlayer = self.gameCenter.localPlayer.localPlayer()
       let currentPlayerEnvelope = try await self.apiClient.authenticate(
         .init(
@@ -392,7 +392,10 @@ public struct Home: ReducerProtocol {
         )
       )
       await send(.authenticationResponse(currentPlayerEnvelope))
-      try await send(.serverConfigResponse(self.serverConfig.refresh()))
+
+      async let serverConfigResponse: Void = send(
+        .serverConfigResponse(self.serverConfig.refresh())
+      )
 
       async let dailyChallengeResponse: Void = send(
         .dailyChallengeResponse(
@@ -422,11 +425,13 @@ public struct Home: ReducerProtocol {
           }
         )
       )
-      _ = await (dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse)
+      _ = try await (
+        serverConfigResponse, dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse
+      )
     } catch {}
   }
 
-  private func listen(send: Send<Action>) async {
+  private func listenForGameCenterEvents(send: Send<Action>) async {
     for await event in self.gameCenter.localPlayer.listener() {
       switch event {
       case .turnBased(.matchEnded),

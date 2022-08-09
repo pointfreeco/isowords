@@ -230,10 +230,13 @@ public struct GameOver: ReducerProtocol {
         return .none
 
       case .task:
-        guard state.isDemo || state.completedGame.currentScore > 0
-        else { return .task { .delegate(.close) }.animation() }
-
         return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+          guard isDemo || completedGame.currentScore > 0
+          else {
+            await send(.delegate(.close), animation: .default)
+            return
+          }
+
           await self.audioPlayer.play(.transitionIn)
           await self.audioPlayer.loop(.gameOverMusicLoop)
 
