@@ -4,6 +4,7 @@ import ComposableArchitecture
 import ComposableUserNotifications
 import SharedModels
 import TestHelpers
+import UserDefaultsClient
 import UserNotifications
 import XCTest
 

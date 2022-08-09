@@ -144,21 +144,6 @@ private func request(
   baseUrl: URL,
   route: ServerRoute,
   router: ServerRouter
-) -> Effect<(data: Data, response: URLResponse), URLError> {
-  Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
-    guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
-    else { return .init(error: URLError(.badURL)) }
-    request.setHeaders()
-    return URLSession.shared.dataTaskPublisher(for: request)
-      .eraseToEffect()
-  }
-  .eraseToEffect()
-}
-
-private func request(
-  baseUrl: URL,
-  route: ServerRoute,
-  router: ServerRouter
 ) async throws -> (Data, URLResponse) {
   guard var request = try? router.baseURL(baseUrl.absoluteString).request(for: route)
   else { throw URLError(.badURL) }
@@ -167,31 +152,6 @@ private func request(
     return try await URLSession.shared.data(for: request)
   } else {
     fatalError()
-  }
-}
-
-private func apiRequest(
-  accessToken: AccessToken?,
-  baseUrl: URL,
-  route: ServerRoute.Api.Route,
-  router: ServerRouter
-) -> Effect<(data: Data, response: URLResponse), URLError> {
-
-  return Deferred { () -> Effect<(data: Data, response: URLResponse), URLError> in
-    guard let accessToken = accessToken
-    else { return .init(error: URLError(.userAuthenticationRequired)) }
-
-    return request(
-      baseUrl: baseUrl,
-      route: .api(
-        .init(
-          accessToken: accessToken,
-          isDebug: isDebug,
-          route: route
-        )
-      ),
-      router: router
-    )
   }
 }
 
