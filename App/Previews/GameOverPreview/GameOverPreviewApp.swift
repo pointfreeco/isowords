@@ -16,7 +16,7 @@ struct GameOverPreviewApp: App {
     WindowGroup {
       GameOverView(
         store: .solo
-        // store: .multiplayer
+          // store: .multiplayer
       )
     }
   }

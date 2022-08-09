@@ -27,8 +27,7 @@ public struct StoreKitLogic<State>: ReducerProtocol {
         let verifiableTransactions = transactions.filter { $0.transactionState.canBeVerified }
         let otherTransactions = transactions.filter { !$0.transactionState.canBeVerified }
 
-        if
-          !verifiableTransactions.isEmpty,
+        if !verifiableTransactions.isEmpty,
           let appStoreReceiptURL = self.storeKit.appStoreReceiptURL(),
           let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
         {
@@ -65,8 +64,9 @@ public struct StoreKitLogic<State>: ReducerProtocol {
       return .fireAndForget {
         for transaction in envelope.transactions
         where envelope.verifyEnvelope.verifiedProductIds
-          .contains(where: { $0 == transaction.payment.productIdentifier }) {
-            await self.storeKit.finishTransaction(transaction)
+          .contains(where: { $0 == transaction.payment.productIdentifier })
+        {
+          await self.storeKit.finishTransaction(transaction)
         }
       }
 

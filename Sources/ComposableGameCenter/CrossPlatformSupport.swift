@@ -6,7 +6,7 @@
     public func present() {
       guard
         let scene = UIKit.UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
-      as? UIWindowScene
+          as? UIWindowScene
       else { return }
       scene.keyWindow?.rootViewController?.present(self, animated: true)
     }

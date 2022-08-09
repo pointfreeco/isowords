@@ -8,8 +8,8 @@ extension ServerConfigClient {
     Self(
       config: {
         (UserDefaults.standard.object(forKey: serverConfigKey) as? Data)
-        .flatMap { try? jsonDecoder.decode(ServerConfig.self, from: $0) }
-        ?? ServerConfig()
+          .flatMap { try? jsonDecoder.decode(ServerConfig.self, from: $0) }
+          ?? ServerConfig()
       },
       refresh: {
         let config = try await fetch()

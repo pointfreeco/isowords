@@ -85,15 +85,16 @@ public struct UpgradeInterstitial: ReducerProtocol {
         }
       }
 
-      guard event.isFullGamePurchased(
-        identifier: self.serverConfig.config().productIdentifiers.fullGame
-      )
+      guard
+        event.isFullGamePurchased(
+          identifier: self.serverConfig.config().productIdentifiers.fullGame
+        )
       else { return .none }
       return .task { .delegate(.fullGamePurchased) }
 
     case .task:
       state.upgradeInterstitialDuration =
-      self.serverConfig.config().upgradeInterstitial.duration
+        self.serverConfig.config().upgradeInterstitial.duration
 
       return .run { [isDismissable = state.isDismissable] send in
         await withThrowingTaskGroup(of: Void.self) { group in
@@ -107,9 +108,10 @@ public struct UpgradeInterstitial: ReducerProtocol {
             let response = try await self.storeKit.fetchProducts([
               self.serverConfig.config().productIdentifiers.fullGame
             ])
-            guard let product = response.products.first(where: { product in
-              product.productIdentifier == self.serverConfig.config().productIdentifiers.fullGame
-            })
+            guard
+              let product = response.products.first(where: { product in
+                product.productIdentifier == self.serverConfig.config().productIdentifiers.fullGame
+              })
             else { return }
             await send(.fullGameProductResponse(product), animation: .default)
           }
@@ -129,8 +131,8 @@ public struct UpgradeInterstitial: ReducerProtocol {
     case .timerTick:
       state.secondsPassedCount += 1
       return state.secondsPassedCount == state.upgradeInterstitialDuration
-      ? .cancel(id: TimerID.self)
-      : .none
+        ? .cancel(id: TimerID.self)
+        : .none
 
     case .upgradeButtonTapped:
       state.isPurchasing = true

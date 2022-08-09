@@ -32,7 +32,7 @@ struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
         if secondsPlayed == state.gameMode.seconds - 10 {
           return .fireAndForget { await self.audioPlayer.play(.timed10SecWarning) }
         } else if secondsPlayed >= state.gameMode.seconds - 5
-                    && secondsPlayed <= state.gameMode.seconds
+          && secondsPlayed <= state.gameMode.seconds
         {
           return .fireAndForget { await self.audioPlayer.play(.timedCountdownTone) }
         } else {
@@ -64,25 +64,27 @@ struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
 
         let previousWord = state.cubes.string(from: previousSelection)
         let previousWordIsValid =
-        self.dictionary.contains(previousWord, state.language)
-        && !state.hasBeenPlayed(word: previousWord)
+          self.dictionary.contains(previousWord, state.language)
+          && !state.hasBeenPlayed(word: previousWord)
         let cubeWasShaking =
-        previousWordIsValid
-        && previousSelection.contains { state.cubes[$0].useCount == 2 }
+          previousWordIsValid
+          && previousSelection.contains { state.cubes[$0].useCount == 2 }
         let cubeIsShaking =
-        state.selectedWordIsValid
-        && selectedWord.contains { state.cubes[$0].useCount == 2 }
+          state.selectedWordIsValid
+          && selectedWord.contains { state.cubes[$0].useCount == 2 }
 
         if cubeIsShaking {
           state.cubeStartedShakingAt = state.cubeStartedShakingAt ?? self.date()
 
-          return cubeWasShaking ? .none : .fireAndForget {
-            await self.audioPlayer.play(.cubeShake)
-            for await _ in self.mainQueue.timer(interval: .seconds(2)) {
+          return cubeWasShaking
+            ? .none
+            : .fireAndForget {
               await self.audioPlayer.play(.cubeShake)
+              for await _ in self.mainQueue.timer(interval: .seconds(2)) {
+                await self.audioPlayer.play(.cubeShake)
+              }
             }
-          }
-          .cancellable(id: CubeShakingID.self)
+            .cancellable(id: CubeShakingID.self)
 
         } else {
           state.cubeStartedShakingAt = nil

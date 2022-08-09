@@ -101,12 +101,10 @@ struct TurnBasedLogic: ReducerProtocol {
             TaskResult {
               if state.isGameOver {
                 let completedGame = CompletedGame(gameState: state)
-                if
-                  let completedMatch = CompletedMatch(
-                    completedGame: completedGame,
-                    turnBasedContext: turnBasedContext
-                  )
-                {
+                if let completedMatch = CompletedMatch(
+                  completedGame: completedGame,
+                  turnBasedContext: turnBasedContext
+                ) {
                   try await self.gameCenter.turnBasedMatch.endMatchInTurn(
                     .init(
                       for: turnBasedContext.match.matchId,

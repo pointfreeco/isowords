@@ -26,10 +26,10 @@ public struct PastGame: ReducerProtocol {
 
     var outcome: Outcome {
       self.challengeeScore < self.challengerScore
-      ? .challenger
-      : self.challengeeScore > self.challengerScore
-      ? .challengee
-      : .tied
+        ? .challenger
+        : self.challengeeScore > self.challengerScore
+          ? .challengee
+          : .tied
     }
   }
 

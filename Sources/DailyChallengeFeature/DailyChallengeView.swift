@@ -113,7 +113,8 @@ public struct DailyChallengeReducer: ReducerProtocol {
         case .timed:
           isPlayable = !challenge.yourResult.started
         case .unlimited:
-          isPlayable = !challenge.yourResult.started || state.inProgressDailyChallengeUnlimited != nil
+          isPlayable =
+            !challenge.yourResult.started || state.inProgressDailyChallengeUnlimited != nil
         }
 
         guard isPlayable

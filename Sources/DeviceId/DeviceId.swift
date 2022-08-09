@@ -1,5 +1,6 @@
 import Dependencies
 import Foundation
+import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var deviceId: DeviceIdentifier {
@@ -21,7 +22,7 @@ extension DeviceIdentifier {
   public static let live = Self(
     id: {
       if let uuidString = NSUbiquitousKeyValueStore.default.string(forKey: deviceIdKey),
-         let uuid = UUID.init(uuidString: uuidString)
+        let uuid = UUID.init(uuidString: uuidString)
       {
 
         return uuid
@@ -34,13 +35,11 @@ extension DeviceIdentifier {
   )
 }
 
-import XCTestDynamicOverlay
-
 extension DeviceIdentifier {
   public static let unimplemented = Self(
     id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
   )
-  
+
   public static let noop = Self(
     id: { UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")! }
   )

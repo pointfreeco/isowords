@@ -19,8 +19,7 @@ public struct UserNotificationClient {
   public var delegate: @Sendable () -> AsyncStream<DelegateEvent>
   public var getNotificationSettings: @Sendable () async -> Notification.Settings
   public var removeDeliveredNotificationsWithIdentifiers: @Sendable ([String]) async -> Void
-  public var removePendingNotificationRequestsWithIdentifiers:
-    @Sendable ([String]) async -> Void
+  public var removePendingNotificationRequestsWithIdentifiers: @Sendable ([String]) async -> Void
   public var requestAuthorization: @Sendable (UNAuthorizationOptions) async throws -> Bool
 
   public enum DelegateEvent: Equatable {

@@ -24,7 +24,7 @@ public struct FileClient {
     try await JSONDecoder().decode(A.self, from: self.load(fileName))
   }
 
-  public func save<A: Encodable>(_ data: A, to fileName: String) async throws -> Void {
+  public func save<A: Encodable>(_ data: A, to fileName: String) async throws {
     try await self.save(fileName, JSONEncoder().encode(data))
   }
 }

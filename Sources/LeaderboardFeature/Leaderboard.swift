@@ -285,7 +285,7 @@ extension ApiClient {
         }
       )
     }
-    ?? .init()
+      ?? .init()
   }
 }
 
@@ -312,7 +312,7 @@ extension ApiClient {
         results: response.map(ResultEnvelope.Result.init)
       )
     }
-    ?? .init()
+      ?? .init()
   }
 }
 
@@ -346,7 +346,8 @@ extension ResultEnvelope.Result {
                 settings: .init()
               ),
               reducer: Leaderboard().dependency(
-                \.apiClient, update(.noop) {
+                \.apiClient,
+                update(.noop) {
                   $0.apiRequest = { @Sendable route in
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):

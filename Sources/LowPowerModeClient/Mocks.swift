@@ -16,7 +16,7 @@ extension LowPowerModeClient {
   public static let unimplemented = Self(
     start: XCTUnimplemented("\(Self.self).start")
   )
-  
+
   public static var backAndForth: Self {
     Self(
       start: {

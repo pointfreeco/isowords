@@ -33,11 +33,11 @@ public struct AppReducer: ReducerProtocol {
       set {
         let oldValue = self
         let isGameLoaded =
-        newValue.game?.isGameLoaded == .some(true) || oldValue.game?.isGameLoaded == .some(true)
+          newValue.game?.isGameLoaded == .some(true) || oldValue.game?.isGameLoaded == .some(true)
         let activeGames =
-        newValue.game?.activeGames.isEmpty == .some(false)
-        ? newValue.game?.activeGames
-        : oldValue.game?.activeGames
+          newValue.game?.activeGames.isEmpty == .some(false)
+          ? newValue.game?.activeGames
+          : oldValue.game?.activeGames
         self.game = newValue.game
         self.game?.activeGames = activeGames ?? .init()
         self.game?.isGameLoaded = isGameLoaded
@@ -148,10 +148,9 @@ public struct AppReducer: ReducerProtocol {
         }
 
       case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
-        if
-          let data =
-            try? JSONSerialization
-            .data(withJSONObject: response.notification.request.content.userInfo),
+        if let data =
+          try? JSONSerialization
+          .data(withJSONObject: response.notification.request.content.userInfo),
           let pushNotificationContent = try? JSONDecoder()
             .decode(PushNotificationContent.self, from: data)
         {
@@ -178,7 +177,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.endGameButtonTapped)),
-          .currentGame(.game(.gameOver(.task))):
+        .currentGame(.game(.gameOver(.task))):
 
         switch (state.game?.gameContext, state.game?.gameMode) {
         case (.dailyChallenge, .unlimited):
@@ -191,7 +190,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.activeGames(.dailyChallengeTapped))),
-          .home(.activeGames(.dailyChallengeTapped)):
+        .home(.activeGames(.dailyChallengeTapped)):
         guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
         else { return .none }
 
@@ -202,7 +201,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.activeGames(.soloTapped))),
-          .home(.activeGames(.soloTapped)):
+        .home(.activeGames(.soloTapped)):
         guard let inProgressGame = state.home.savedGames.unlimited
         else { return .none }
 
@@ -227,12 +226,12 @@ public struct AppReducer: ReducerProtocol {
         }
 
       case .currentGame(.game(.exitButtonTapped)),
-          .currentGame(.game(.gameOver(.delegate(.close)))):
+        .currentGame(.game(.gameOver(.delegate(.close)))):
         state.game = nil
         return .none
 
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
-          .home(.destination(.solo(.gameButtonTapped(.timed)))):
+        .home(.destination(.solo(.gameButtonTapped(.timed)))):
         state.game = .init(
           cubes: self.dictionary.randomCubes(.en),
           gameContext: .solo,
@@ -244,18 +243,18 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.unlimited))))),
-          .home(.destination(.solo(.gameButtonTapped(.unlimited)))):
+        .home(.destination(.solo(.gameButtonTapped(.unlimited)))):
         state.game =
-        state.home.savedGames.unlimited
+          state.home.savedGames.unlimited
           .map { Game.State(inProgressGame: $0) }
-        ?? Game.State(
-          cubes: self.dictionary.randomCubes(.en),
-          gameContext: .solo,
-          gameCurrentTime: self.mainRunLoop.now.date,
-          gameMode: .unlimited,
-          gameStartTime: self.mainRunLoop.now.date,
-          isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
-        )
+          ?? Game.State(
+            cubes: self.dictionary.randomCubes(.en),
+            gameContext: .solo,
+            gameCurrentTime: self.mainRunLoop.now.date,
+            gameMode: .unlimited,
+            gameStartTime: self.mainRunLoop.now.date,
+            isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
+          )
         return .none
 
       case .currentGame:
@@ -267,7 +266,7 @@ public struct AppReducer: ReducerProtocol {
 
       case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
         if dailyChallenges.unlimited?.dailyChallenge.id
-            != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
+          != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
           return .fireAndForget { [savedGames = state.home.savedGames] in

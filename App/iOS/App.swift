@@ -23,7 +23,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
           \.audioPlayer, .live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
         )
         .dependency(
-          \.database, .live(
+          \.database,
+          .live(
             path: FileManager.default
               .urls(for: .documentDirectory, in: .userDomainMask)
               .first!
@@ -36,7 +37,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         .dependency(\.userDefaults, .live())
     )
   }()
-  
+
   lazy var viewStore = ViewStore(
     self.store.scope(state: { _ in () }),
     removeDuplicates: ==

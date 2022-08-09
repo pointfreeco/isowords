@@ -141,7 +141,7 @@ extension BottomMenuState.Button {
   import ComposableArchitecture
   import SwiftUIHelpers
 
-  fileprivate struct BottomMenuReducer: ReducerProtocol {
+  private struct BottomMenuReducer: ReducerProtocol {
     typealias State = BottomMenuState<Action>?
 
     enum Action {

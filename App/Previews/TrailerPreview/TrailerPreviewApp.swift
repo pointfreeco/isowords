@@ -19,13 +19,15 @@ struct TrailerPreviewApp: App {
           initialState: Trailer.State(),
           reducer: Trailer()
             .dependency(
-              \.audioPlayer, .live(bundles: [
+              \.audioPlayer,
+              .live(bundles: [
                 AppAudioLibrary.bundle,
                 AppClipAudioLibrary.bundle,
               ])
             )
             .dependency(
-              \.dictionary, .init(
+              \.dictionary,
+              .init(
                 contains: { string, _ in
                   [
                     "SAY", "HELLO", "TO", "ISOWORDS",
@@ -33,7 +35,7 @@ struct TrailerPreviewApp: App {
                     "FOR", "YOUR", "PHONE",
                     "COMING", "NEXT", "YEAR",
                   ]
-                    .contains(string.uppercased())
+                  .contains(string.uppercased())
                 },
                 load: { _ in true },
                 lookup: { _, _ in nil },

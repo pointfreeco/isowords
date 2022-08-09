@@ -54,7 +54,7 @@ public struct Trailer: ReducerProtocol {
       .dependency(\.applicationClient, .noop)
       .dependency(
         \.audioPlayer,
-         self.audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
+        self.audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
       )
       .dependency(\.build, .noop)
       .dependency(\.database, .noop)
@@ -104,7 +104,8 @@ public struct Trailer: ReducerProtocol {
               )
 
               try await self.mainQueue.sleep(
-                for: .seconds(.random(in: (0.3*moveNubToFaceDuration)...(0.7*moveNubToFaceDuration)))
+                for: .seconds(
+                  .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
               )
               // Press the nub on the first character
               if characterIndex == 0 {
@@ -129,8 +130,9 @@ public struct Trailer: ReducerProtocol {
             try await self.mainQueue.sleep(
               for: .seconds(
                 .random(
-                  in: moveNubToSubmitButtonDuration ...
-                  (moveNubToSubmitButtonDuration + submitHestitationDuration)
+                  in:
+                    moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration
+                    + submitHestitationDuration)
                 )
               )
             )
@@ -145,7 +147,7 @@ public struct Trailer: ReducerProtocol {
                 try await self.mainQueue.sleep(for: .seconds(0.2))
                 await send(.game(.submitButtonTapped(reaction: nil)))
                 try await self.mainQueue.sleep(for: .seconds(0.3))
-                await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3 )
+                await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
               }
             }
           }

@@ -10,8 +10,8 @@ import PuzzleGen
 import SharedModels
 import Styleguide
 import SwiftUI
-import UserDefaultsClient
 import UIApplicationClient
+import UserDefaultsClient
 
 public struct Onboarding: ReducerProtocol {
   public struct State: Equatable {
@@ -72,28 +72,28 @@ public struct Onboarding: ReducerProtocol {
       var isFullscreen: Bool {
         switch self {
         case .step1_Welcome,
-            .step2_FindWordsOnCube,
-            .step3_ConnectLettersTouching,
-            .step7_BiggerCube,
-            .step10_CubeDisappear,
-            .step14_LettersRevealed,
-            .step15_FullCube,
-            .step18_OneLastThing,
-            .step21_PlayAGameYourself:
+          .step2_FindWordsOnCube,
+          .step3_ConnectLettersTouching,
+          .step7_BiggerCube,
+          .step10_CubeDisappear,
+          .step14_LettersRevealed,
+          .step15_FullCube,
+          .step18_OneLastThing,
+          .step21_PlayAGameYourself:
           return true
 
         case .step4_FindGame,
-            .step5_SubmitGame,
-            .step6_Congrats,
-            .step8_FindCubes,
-            .step9_Congrats,
-            .step11_FindRemove,
-            .step12_CubeIsShaking,
-            .step13_Congrats,
-            .step16_FindAnyWord,
-            .step17_Congrats,
-            .step19_DoubleTapToRemove,
-            .step20_Congrats:
+          .step5_SubmitGame,
+          .step6_Congrats,
+          .step8_FindCubes,
+          .step9_Congrats,
+          .step11_FindRemove,
+          .step12_CubeIsShaking,
+          .step13_Congrats,
+          .step16_FindAnyWord,
+          .step17_Congrats,
+          .step19_DoubleTapToRemove,
+          .step20_Congrats:
           return false
         }
       }
@@ -101,28 +101,28 @@ public struct Onboarding: ReducerProtocol {
       var isCongratsStep: Bool {
         switch self {
         case .step6_Congrats,
-            .step9_Congrats,
-            .step13_Congrats,
-            .step17_Congrats,
-            .step20_Congrats:
+          .step9_Congrats,
+          .step13_Congrats,
+          .step17_Congrats,
+          .step20_Congrats:
           return true
 
         case .step1_Welcome,
-            .step2_FindWordsOnCube,
-            .step3_ConnectLettersTouching,
-            .step4_FindGame,
-            .step5_SubmitGame,
-            .step7_BiggerCube,
-            .step8_FindCubes,
-            .step10_CubeDisappear,
-            .step11_FindRemove,
-            .step12_CubeIsShaking,
-            .step14_LettersRevealed,
-            .step15_FullCube,
-            .step16_FindAnyWord,
-            .step18_OneLastThing,
-            .step19_DoubleTapToRemove,
-            .step21_PlayAGameYourself:
+          .step2_FindWordsOnCube,
+          .step3_ConnectLettersTouching,
+          .step4_FindGame,
+          .step5_SubmitGame,
+          .step7_BiggerCube,
+          .step8_FindCubes,
+          .step10_CubeDisappear,
+          .step11_FindRemove,
+          .step12_CubeIsShaking,
+          .step14_LettersRevealed,
+          .step15_FullCube,
+          .step16_FindAnyWord,
+          .step18_OneLastThing,
+          .step19_DoubleTapToRemove,
+          .step21_PlayAGameYourself:
           return false
         }
       }
@@ -200,9 +200,9 @@ public struct Onboarding: ReducerProtocol {
       case .game(.submitButtonTapped):
         switch state.step {
         case .step5_SubmitGame where state.game.selectedWordString == "GAME",
-            .step8_FindCubes where state.game.selectedWordString == "CUBES",
-            .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
-            .step16_FindAnyWord where self.dictionary.contains(state.game.selectedWordString, .en):
+          .step8_FindCubes where state.game.selectedWordString == "CUBES",
+          .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
+          .step16_FindAnyWord where self.dictionary.contains(state.game.selectedWordString, .en):
 
           state.step.next()
 
@@ -227,15 +227,15 @@ public struct Onboarding: ReducerProtocol {
 
       case let .game(.tap(gestureState, .some(indexedCubeFace))):
         let index =
-        isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
-        ? indexedCubeFace
-        : nil
+          isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
+          ? indexedCubeFace
+          : nil
 
         return self.gameReducer.reduce(into: &state, action: .game(.tap(gestureState, index)))
 
       case let .game(.pan(recognizerState, panData)):
         if let indexedCubeFace = panData?.cubeFaceState,
-           !isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
+          !isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
         {
           return .none
         }
@@ -301,11 +301,11 @@ public struct Onboarding: ReducerProtocol {
     .onChange(of: \.game.selectedWordString) { selectedWord, state, _ in
       switch state.step {
       case .step4_FindGame where selectedWord == "GAME",
-          .step11_FindRemove where selectedWord.isRemove:
+        .step11_FindRemove where selectedWord.isRemove:
         state.step.next()
         return .none
       case .step5_SubmitGame where selectedWord != "GAME",
-          .step12_CubeIsShaking where !selectedWord.isRemove:
+        .step12_CubeIsShaking where !selectedWord.isRemove:
         state.step.previous()
         return .none
       default:
@@ -315,21 +315,21 @@ public struct Onboarding: ReducerProtocol {
     .onChange(of: \.step) { step, _, _ in
       switch step {
       case .step1_Welcome,
-          .step2_FindWordsOnCube,
-          .step3_ConnectLettersTouching,
-          .step4_FindGame,
-          .step5_SubmitGame,
-          .step7_BiggerCube,
-          .step8_FindCubes,
-          .step10_CubeDisappear,
-          .step11_FindRemove,
-          .step12_CubeIsShaking,
-          .step14_LettersRevealed,
-          .step15_FullCube,
-          .step16_FindAnyWord,
-          .step18_OneLastThing,
-          .step19_DoubleTapToRemove,
-          .step21_PlayAGameYourself:
+        .step2_FindWordsOnCube,
+        .step3_ConnectLettersTouching,
+        .step4_FindGame,
+        .step5_SubmitGame,
+        .step7_BiggerCube,
+        .step8_FindCubes,
+        .step10_CubeDisappear,
+        .step11_FindRemove,
+        .step12_CubeIsShaking,
+        .step14_LettersRevealed,
+        .step15_FullCube,
+        .step16_FindAnyWord,
+        .step18_OneLastThing,
+        .step19_DoubleTapToRemove,
+        .step21_PlayAGameYourself:
         return .none
 
       case .step13_Congrats:
@@ -340,9 +340,9 @@ public struct Onboarding: ReducerProtocol {
         .animation()
 
       case .step6_Congrats,
-          .step9_Congrats,
-          .step17_Congrats,
-          .step20_Congrats:
+        .step9_Congrats,
+        .step17_Congrats,
+        .step20_Congrats:
         return .task {
           try await self.mainQueue.sleep(for: .seconds(2))
           return .delayedNextStep

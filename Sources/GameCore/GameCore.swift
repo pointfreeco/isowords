@@ -191,8 +191,8 @@ public struct Game: ReducerProtocol {
     self.core
       .onChange(of: \.selectedWord) { selectedWord, state, _ in
         state.selectedWordIsValid =
-        !state.selectedWordHasAlreadyBeenPlayed
-        && self.dictionary.contains(state.selectedWordString, state.language)
+          !state.selectedWordHasAlreadyBeenPlayed
+          && self.dictionary.contains(state.selectedWordString, state.language)
         return .none
       }
       .filterActionsForYourTurn()
@@ -225,7 +225,7 @@ public struct Game: ReducerProtocol {
         return .fireAndForget {
           let localPlayer = self.gameCenter.localPlayer.localPlayer()
           let currentParticipantIsLocalPlayer =
-          match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+            match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
           if currentParticipantIsLocalPlayer {
             try await self.gameCenter.turnBasedMatch.endMatchInTurn(
@@ -367,8 +367,8 @@ public struct Game: ReducerProtocol {
         guard panData.normalizedPoint.isAwayFromCorners else { return .none }
 
         if let lastLetter = state.selectedWord.last,
-           !lastLetter.isTouching(panData.cubeFaceState),
-           !state.selectedWord.contains(panData.cubeFaceState)
+          !lastLetter.isTouching(panData.cubeFaceState),
+          !state.selectedWord.contains(panData.cubeFaceState)
         {
           return .none
         }
@@ -460,7 +460,7 @@ public struct Game: ReducerProtocol {
         } else {
           // If tapping on a face not connected to the previously selected face, deselect everything
           if let lastLetter = state.selectedWord.last,
-             !lastLetter.isTouching(face)
+            !lastLetter.isTouching(face)
           {
             state.selectedWord = []
           } else {
@@ -493,7 +493,7 @@ public struct Game: ReducerProtocol {
         return .none
 
       case .tap(.cancelled, _),
-          .tap(.failed, _):
+        .tap(.failed, _):
         state.optimisticallySelectedFace = nil
         return .none
 
@@ -511,7 +511,7 @@ public struct Game: ReducerProtocol {
         return .none
 
       case .upgradeInterstitial(.delegate(.close)),
-          .upgradeInterstitial(.delegate(.fullGamePurchased)):
+        .upgradeInterstitial(.delegate(.fullGamePurchased)):
         state.upgradeInterstitial = nil
         return .none
 
