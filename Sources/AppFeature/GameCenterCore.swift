@@ -22,7 +22,7 @@ public struct GameCenterLogic: ReducerProtocol {
     switch action {
     case .appDelegate(.didFinishLaunching):
       return .run { send in
-        try await self.gameCenter.localPlayer.authenticate()
+        try? await self.gameCenter.localPlayer.authenticate()
         for await event in self.gameCenter.localPlayer.listener() {
           await send(.gameCenter(.listener(event)))
         }
