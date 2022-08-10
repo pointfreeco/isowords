@@ -51,7 +51,7 @@ class DailyChallengeFeatureTests: XCTestCase {
         message: .init(
           "You already played today’s daily challenge. You can play the next one in in 2 hours."
         ),
-        dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
+        dismissButton: .default(.init("OK"))
       )
     }
   }
