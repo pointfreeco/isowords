@@ -22,7 +22,6 @@ public struct ActiveMatchResponse: Equatable {
 
 public struct Home: ReducerProtocol {
   public struct State: Equatable {
-    public var changelog: ChangelogReducer.State?
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
     @PresentationStateOf<Destinations> public var destination
     public var hasChangelog: Bool
@@ -88,11 +87,8 @@ public struct Home: ReducerProtocol {
     case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
     case activeGames(ActiveGamesAction)
     case authenticationResponse(CurrentPlayerEnvelope)
-    case changelog(ChangelogReducer.Action)
-    case cubeButtonTapped
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case destination(PresentationActionOf<Destinations>)
-    case dismissChangelog
     case gameButtonTapped(GameButtonAction)
     case howToPlayButtonTapped
     case nagBanner(PresentationActionOf<NagBanner>)
@@ -207,13 +203,6 @@ public struct Home: ReducerProtocol {
 
         return .none
 
-      case .changelog:
-        return .none
-
-      case .cubeButtonTapped:
-        state.changelog = .init()
-        return .none
-
       case let .dailyChallengeResponse(.success(dailyChallenges)):
         state.dailyChallenges = dailyChallenges
         return .none
@@ -258,10 +247,6 @@ public struct Home: ReducerProtocol {
       case .destination:
         return .none
 
-      case .dismissChangelog:
-        state.changelog = nil
-        return .none
-
       case .gameButtonTapped:
         return .none
 
@@ -298,9 +283,6 @@ public struct Home: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.changelog, action: /Action.changelog) {
-      ChangelogReducer()
-    }
     .presentationDestination(state: \.$destination, action: /Action.destination) {
       Destinations()
     }
@@ -322,12 +304,8 @@ public struct Home: ReducerProtocol {
       case solo
     }
 
-    // viewStore.send(.destination(.present(id: .leaderboard)))
-    // viewStore.send(.destination(.present(.leaderboard(Leaderboard.State())))
-
-    // viewStore.send(.counter(.present))
-
     public enum State: Equatable {
+      case changelog(ChangelogReducer.State)
       case dailyChallenge(DailyChallengeReducer.State)
       case leaderboard(Leaderboard.State)
       case multiplayer(Multiplayer.State)
@@ -336,6 +314,7 @@ public struct Home: ReducerProtocol {
     }
 
     public enum Action: Equatable {
+      case changelog(ChangelogReducer.Action)
       case dailyChallenge(DailyChallengeReducer.Action)
       case leaderboard(Leaderboard.Action)
       case multiplayer(Multiplayer.Action)
@@ -343,6 +322,12 @@ public struct Home: ReducerProtocol {
     }
 
     public var body: some ReducerProtocol<State, Action> {
+      ScopeCase(
+        state: /State.changelog,
+        action: /Action.changelog
+      ) {
+        ChangelogReducer()
+      }
       ScopeCase(
         state: /State.dailyChallenge,
         action: /Action.dailyChallenge
@@ -462,7 +447,6 @@ public struct HomeView: View {
   struct ViewState: Equatable {
     let hasActiveGames: Bool
     let hasChangelog: Bool
-    let isChangelogVisible: Bool
     let isNagBannerVisible: Bool
 
     init(state: Home.State) {
@@ -471,7 +455,6 @@ public struct HomeView: View {
         || state.savedGames.unlimited != nil
         || !state.turnBasedMatches.isEmpty
       self.hasChangelog = state.hasChangelog
-      self.isChangelogVisible = state.changelog != nil
       self.isNagBannerVisible = state.nagBanner != nil
     }
   }
@@ -492,7 +475,7 @@ public struct HomeView: View {
           VStack(spacing: .grid(6)) {
             HStack {
               CubeIconView(shake: self.viewStore.hasChangelog) {
-                self.viewStore.send(.cubeButtonTapped)
+                self.viewStore.send(.destination(.present(.changelog(ChangelogReducer.State()))))
               }
 
               Spacer()
@@ -597,19 +580,11 @@ public struct HomeView: View {
       // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
       EmptyView()
         .sheet(
-          isPresented: self.viewStore.binding(
-            get: \.isChangelogVisible,
-            send: Home.Action.dismissChangelog
-          )
-        ) {
-          IfLetStore(
-            self.store.scope(
-              state: \.changelog,
-              action: Home.Action.changelog
-            ),
-            then: ChangelogView.init(store:)
-          )
-        }
+          store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+          state: /Home.Destinations.State.changelog,
+          action: Home.Destinations.Action.changelog,
+          content: ChangelogView.init(store:)
+        )
     )
     .task { await self.viewStore.send(.task).finish() }
   }
