@@ -1,6 +1,7 @@
 import ApiClient
 import ClientModels
 import ComposableArchitecture
+import NotificationsAuthAlert
 import XCTest
 
 @testable import DailyChallengeFeature
@@ -28,7 +29,8 @@ class DailyChallengeFeatureTests: XCTestCase {
 
     await store.send(.task)
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
+    {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
     await store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
@@ -46,12 +48,14 @@ class DailyChallengeFeatureTests: XCTestCase {
     )
 
     await store.send(.gameButtonTapped(.unlimited)) {
-      $0.alert = .init(
-        title: .init("Already played"),
-        message: .init(
-          "You already played today’s daily challenge. You can play the next one in in 2 hours."
-        ),
-        dismissButton: .default(.init("OK"))
+      $0.destination = .alert(
+        .init(
+          title: .init("Already played"),
+          message: .init(
+            "You already played today’s daily challenge. You can play the next one in in 2 hours."
+          ),
+          dismissButton: .default(.init("OK"))
+        )
       )
     }
   }
@@ -131,21 +135,6 @@ class DailyChallengeFeatureTests: XCTestCase {
     await store.receive(.delegate(.startGame(inProgressGame)))
   }
 
-  func testNotifications_OpenThenClose() async {
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
-
-    await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
-    }
-    await store.send(.notificationsAuthAlert(.closeButtonTapped))
-    await store.receive(.notificationsAuthAlert(.delegate(.close))) {
-      $0.notificationsAuthAlert = nil
-    }
-  }
-
   func testNotifications_GrantAccess() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
@@ -163,16 +152,23 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
     store.dependencies.mainRunLoop = .immediate
 
-    await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+    await store.send(
+      .destination(.present(.notificationsAuthAlert(NotificationsAuthAlert.State())))
+    ) {
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
+    await store.send(
+      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))))
     await store.receive(
-      .notificationsAuthAlert(
-        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
+      .destination(
+        .presented(
+          .notificationsAuthAlert(
+            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
+          )
+        )
       )
     ) {
-      $0.notificationsAuthAlert = nil
+      $0.destination = nil
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
@@ -191,16 +187,22 @@ class DailyChallengeFeatureTests: XCTestCase {
     store.dependencies.userNotifications.requestAuthorization = { _ in false }
     store.dependencies.mainRunLoop = .immediate
 
-    await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+    await store.send(
+      .destination(.present(.notificationsAuthAlert(NotificationsAuthAlert.State())))
+    ) {
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
+    await store.send(.destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))))
     await store.receive(
-      .notificationsAuthAlert(
-        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
+      .destination(
+        .presented(
+          .notificationsAuthAlert(
+            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
+          )
+        )
       )
     ) {
-      $0.notificationsAuthAlert = nil
+      $0.destination = nil
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
   }

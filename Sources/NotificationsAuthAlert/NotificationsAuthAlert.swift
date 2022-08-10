@@ -13,13 +13,11 @@ public struct NotificationsAuthAlert: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case closeButtonTapped
     case delegate(DelegateAction)
     case turnOnNotificationsButtonTapped
   }
 
   public enum DelegateAction: Equatable {
-    case close
     case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
   }
 
@@ -31,9 +29,6 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 
   public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
     switch action {
-    case .closeButtonTapped:
-      return .task { .delegate(.close) }.animation()
-
     case .delegate:
       return .none
 
@@ -57,16 +52,27 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 }
 
 extension View {
-  public func notificationsAlert(
-    store: Store<NotificationsAuthAlert.State?, NotificationsAuthAlert.Action>
+  public func notificationsAlert<State, Action>(
+    store: Store<PresentationState<State>, PresentationAction<State, Action>>,
+    state toAlertState: @escaping (State) -> NotificationsAuthAlert.State?,
+    action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> Action
   ) -> some View {
     ZStack {
       self
 
-      IfLetStore(
-        store,
-        then: NotificationsAuthAlertView.init(store:)
-      )
+      WithViewStore(store.stateless) { viewStore in
+        IfLetStore(
+          store.scope(
+            state: { $0.wrappedValue.flatMap(toAlertState) },
+            action: { .presented(fromAlertAction($0)) }
+          )
+        ) {
+          NotificationsAuthAlertView(
+            store: $0,
+            dismiss: { viewStore.send(.dismiss, animation: .default) }
+          )
+        }
+      }
       // NB: This is necessary so that when the alert is animated away it stays above `self`.
       .zIndex(1)
     }
@@ -75,6 +81,7 @@ extension View {
 
 struct NotificationsAuthAlertView: View {
   let store: StoreOf<NotificationsAuthAlert>
+  let dismiss: () -> Void
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
@@ -92,9 +99,8 @@ struct NotificationsAuthAlertView: View {
             .minimumScaleFactor(0.2)
             .multilineTextAlignment(.center)
 
-          Button(action: { viewStore.send(.turnOnNotificationsButtonTapped, animation: .default) })
-          {
-            Text("Turn on notifications")
+          Button("Turn on notifications") {
+            viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)
           }
           .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
         }
@@ -102,7 +108,7 @@ struct NotificationsAuthAlertView: View {
         .padding(.grid(8))
         .background(Color.black)
 
-        Button(action: { viewStore.send(.closeButtonTapped, animation: .default) }) {
+        Button(action: self.dismiss) {
           Image(systemName: "xmark")
             .font(.system(size: 20))
             .foregroundColor(.dailyChallenge)
@@ -124,7 +130,8 @@ struct NotificationMenu_Previews: PreviewProvider {
       store: Store(
         initialState: NotificationsAuthAlert.State(),
         reducer: NotificationsAuthAlert()
-      )
+      ),
+      dismiss: {}
     )
   }
 }

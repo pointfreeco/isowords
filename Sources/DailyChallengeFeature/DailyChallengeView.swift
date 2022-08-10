@@ -15,7 +15,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
     @PresentationStateOf<Destinations> public var destination
     public var gameModeIsLoading: GameMode?
     public var inProgressDailyChallengeUnlimited: InProgressGame?
-    public var notificationsAuthAlert: NotificationsAuthAlert.State?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
@@ -23,14 +22,12 @@ public struct DailyChallengeReducer: ReducerProtocol {
       destination: Destinations.State? = nil,
       gameModeIsLoading: GameMode? = nil,
       inProgressDailyChallengeUnlimited: InProgressGame? = nil,
-      notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
       self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
-      self.notificationsAuthAlert = notificationsAuthAlert
       self.userNotificationSettings = userNotificationSettings
     }
   }
@@ -40,8 +37,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
     case destination(PresentationActionOf<Destinations>)
     case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case gameButtonTapped(GameMode)
-    case notificationButtonTapped
-    case notificationsAuthAlert(NotificationsAuthAlert.Action)
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
@@ -62,6 +57,12 @@ public struct DailyChallengeReducer: ReducerProtocol {
     Reduce { state, action in
       switch action {
       case .delegate:
+        return .none
+
+      case let .destination(
+        .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings))))):
+        state.destination = nil
+        state.userNotificationSettings = settings
         return .none
 
       case .destination:
@@ -109,22 +110,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
             }
           )
         }
-
-      case .notificationButtonTapped:
-        state.notificationsAuthAlert = .init()
-        return .none
-
-      case .notificationsAuthAlert(.delegate(.close)):
-        state.notificationsAuthAlert = nil
-        return .none
-
-      case let .notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings))):
-        state.userNotificationSettings = settings
-        state.notificationsAuthAlert = nil
-        return .none
-
-      case .notificationsAuthAlert:
-        return .none
 
       case let .startDailyChallengeResponse(.failure(DailyChallengeError.alreadyPlayed(endsAt))):
         state.destination = .alert(.alreadyPlayed(nextStartsAt: endsAt))
@@ -180,23 +165,28 @@ public struct DailyChallengeReducer: ReducerProtocol {
     .presentationDestination(state: \.$destination, action: /Action.destination) {
       Destinations()
     }
-    .ifLet(state: \.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
-      NotificationsAuthAlert()
-    }
   }
 
   public struct Destinations: ReducerProtocol {
     public enum State: Equatable {
       case alert(AlertState<Never>)
+      case notificationsAuthAlert(NotificationsAuthAlert.State)
       case results(DailyChallengeResults.State)
     }
 
     public enum Action: Equatable {
       case alert(Never)
+      case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case results(DailyChallengeResults.Action)
     }
 
     public var body: some ReducerProtocol<State, Action> {
+      ScopeCase(
+        state: /State.notificationsAuthAlert,
+        action: /Action.notificationsAuthAlert
+      ) {
+        NotificationsAuthAlert()
+      }
       ScopeCase(
         state: /State.results,
         action: /Action.results
@@ -362,7 +352,10 @@ public struct DailyChallengeView: View {
         trailing: Group {
           if !self.viewStore.isNotificationStatusDetermined {
             ReminderBell {
-              self.viewStore.send(.notificationButtonTapped, animation: .default)
+              self.viewStore.send(
+                .destination(.present(.notificationsAuthAlert(NotificationsAuthAlert.State()))),
+                animation: .default
+              )
             }
             .transition(
               AnyTransition
@@ -382,6 +375,14 @@ public struct DailyChallengeView: View {
       state: /DailyChallengeReducer.Destinations.State.alert,
       action: DailyChallengeReducer.Destinations.Action.alert
     )
+    .notificationsAlert(
+      store: self.store.scope(
+        state: \.$destination,
+        action: DailyChallengeReducer.Action.destination
+      ),
+      state: /DailyChallengeReducer.Destinations.State.notificationsAuthAlert,
+      action: DailyChallengeReducer.Destinations.Action.notificationsAuthAlert
+    )
     .navigationDestination(
       store: self.store.scope(
         state: \.$destination,
@@ -390,12 +391,6 @@ public struct DailyChallengeView: View {
       state: /DailyChallengeReducer.Destinations.State.results,
       action: DailyChallengeReducer.Destinations.Action.results,
       destination: DailyChallengeResultsView.init(store:)
-    )
-    .notificationsAlert(
-      store: self.store.scope(
-        state: \.notificationsAuthAlert,
-        action: DailyChallengeReducer.Action.notificationsAuthAlert
-      )
     )
   }
 }
