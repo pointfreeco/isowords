@@ -27,7 +27,7 @@ public struct Home: ReducerProtocol {
     @PresentationStateOf<Destinations> public var destination
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
-    /*@PresentationStateOf<NagBanner>*/ public var nagBanner: NagBanner.State?  // TODO: Make this a navigation thing that auto-cancels when goes away? New `IfLetStore`?
+    @PresentationStateOf<NagBanner> public var nagBanner
     public var savedGames: SavedGamesState {
       didSet {
         guard case var .dailyChallenge(dailyChallengeState) = self.destination
@@ -68,12 +68,13 @@ public struct Home: ReducerProtocol {
       self.dailyChallenges = dailyChallenges
       self.hasChangelog = hasChangelog
       self.hasPastTurnBasedGames = hasPastTurnBasedGames
-      self.nagBanner = nagBanner
       self.savedGames = savedGames
       self.settings = settings
       self.turnBasedMatches = turnBasedMatches
       self.weekInReview = weekInReview
+      // NB: Property wrappers must be assigned last
       self.destination = destination
+      self.nagBanner = nagBanner
     }
 
     var hasActiveGames: Bool {
@@ -94,7 +95,7 @@ public struct Home: ReducerProtocol {
     case dismissChangelog
     case gameButtonTapped(GameButtonAction)
     case howToPlayButtonTapped
-    case nagBannerFeature(NagBannerFeature.Action)
+    case nagBanner(PresentationActionOf<NagBanner>)
     case serverConfigResponse(ServerConfig)
     case settings(Settings.Action)
     case task
@@ -201,7 +202,7 @@ public struct Home: ReducerProtocol {
 
         state.nagBanner =
           !isFullGamePurchased && itsNagTime
-          ? .init()
+          ? NagBanner.State()
           : nil
 
         return .none
@@ -271,8 +272,11 @@ public struct Home: ReducerProtocol {
         state.hasChangelog = serverConfig.newestBuild > self.build.number()
         return .none
 
+      case .nagBanner(.presented(.upgradeInterstitial(.presented(.delegate(.fullGamePurchased))))):
+        state.nagBanner = nil
+        return .none
 
-      case .nagBannerFeature:
+      case .nagBanner:
         return .none
 
       case .settings:
@@ -300,9 +304,11 @@ public struct Home: ReducerProtocol {
     .presentationDestination(state: \.$destination, action: /Action.destination) {
       Destinations()
     }
-    Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
-      NagBannerFeature()
+    .presentationDestination(state: \.$nagBanner, action: /Action.nagBanner) {
+      NagBanner()
     }
+    .debug()
+
     Scope(state: \.settings, action: /Action.settings) {
       Settings()
     }
@@ -569,11 +575,9 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      NagBannerFeatureView(
-        store: self.store.scope(
-          state: \.nagBanner,
-          action: Home.Action.nagBannerFeature
-        )
+      IfLetStore(
+        self.store.scope(state: \.nagBanner, action: { .nagBanner(.presented($0)) }),
+        then: NagBannerView.init(store:)
       )
     }
     .navigationBarHidden(true)

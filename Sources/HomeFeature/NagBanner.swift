@@ -2,57 +2,19 @@ import ComposableArchitecture
 import SwiftUI
 import UpgradeInterstitialFeature
 
-public struct NagBannerFeature: ReducerProtocol {
-  public typealias State = NagBanner.State?
-
-  public enum Action: Equatable {
-    case dismissUpgradeInterstitial
-    case nagBanner(NagBanner.Action)
-  }
-
-  public var body: some ReducerProtocol<State, Action> {
-    Reduce { state, action in
-      switch action {
-      case .dismissUpgradeInterstitial:
-        state?.upgradeInterstitial = nil
-        return .none
-
-      case .nagBanner(.upgradeInterstitial(.delegate(.fullGamePurchased))):
-        state = nil
-        return .none
-
-      case .nagBanner:
-        return .none
-      }
-    }
-    .ifLet(state: \.self, action: /Action.nagBanner) {
-      NagBanner()
-    }
-  }
-}
-
 public struct NagBanner: ReducerProtocol {
   public struct State: Equatable {
-    var upgradeInterstitial: UpgradeInterstitial.State? = nil
+    @PresentationStateOf<UpgradeInterstitial> var upgradeInterstitial
   }
 
   public enum Action: Equatable {
-    case tapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
+    case upgradeInterstitial(PresentationActionOf<UpgradeInterstitial>)
   }
 
   public var body: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
-      case .tapped:
-        state.upgradeInterstitial = .init(isDismissable: true)
-        return .none
-
-      case .upgradeInterstitial(.delegate(.close)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial(.delegate(.fullGamePurchased)):
+      case .upgradeInterstitial(.presented(.delegate(.close))):
         state.upgradeInterstitial = nil
         return .none
 
@@ -60,51 +22,22 @@ public struct NagBanner: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .presentationDestination(state: \.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }
 }
 
-struct NagBannerFeatureView: View {
-  let store: StoreOf<NagBannerFeature>
-
-  var body: some View {
-    WithViewStore(self.store) { viewStore in
-      IfLetStore(
-        self.store.scope(state: { $0 }, action: NagBannerFeature.Action.nagBanner),
-        then: NagBannerView.init(store:)
-      )
-      .background(
-        // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-        // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-        // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-        EmptyView()
-          .sheet(
-            isPresented: viewStore.binding(
-              get: { $0?.upgradeInterstitial != nil },
-              send: NagBannerFeature.Action.dismissUpgradeInterstitial
-            )
-          ) {
-            IfLetStore(
-              self.store.scope(
-                state: { $0?.upgradeInterstitial },
-                action: { .nagBanner(.upgradeInterstitial($0)) }
-              ),
-              then: UpgradeInterstitialView.init(store:)
-            )
-          }
-      )
-    }
-  }
-}
-
-private struct NagBannerView: View {
+struct NagBannerView: View {
   let store: StoreOf<NagBanner>
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      Button(action: { viewStore.send(.tapped) }) {
+      Button {
+        viewStore.send(
+          .upgradeInterstitial(.present(UpgradeInterstitial.State(isDismissable: true)))
+        )
+      } label: {
         Marquee(duration: TimeInterval(messages.count) * 9) {
           ForEach(messages, id: \.self) { message in
             Text(message)
@@ -118,6 +51,19 @@ private struct NagBannerView: View {
       .frame(height: 56)
       .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
+    .background(
+      // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
+      // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
+      // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
+      EmptyView()
+        .sheet(
+          store: self.store.scope(
+            state: \.$upgradeInterstitial,
+            action: NagBanner.Action.upgradeInterstitial
+          ),
+          content: UpgradeInterstitialView.init(store:)
+        )
+    )
   }
 }
 
