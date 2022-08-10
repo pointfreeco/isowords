@@ -564,6 +564,12 @@ public struct HomeView: View {
       )
     }
     .navigationBarHidden(true)
+    .sheet(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destinations.State.changelog,
+      action: Home.Destinations.Action.changelog,
+      content: ChangelogView.init(store:)
+    )
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: Home.Action.destination),
       state: /Home.Destinations.State.dailyChallenge,
@@ -597,18 +603,6 @@ public struct HomeView: View {
       state: /Home.Destinations.State.solo,
       action: Home.Destinations.Action.solo,
       destination: SoloView.init(store:)
-    )
-    .background(
-      // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-      // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-      // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-      EmptyView()
-        .sheet(
-          store: self.store.scope(state: \.$destination, action: Home.Action.destination),
-          state: /Home.Destinations.State.changelog,
-          action: Home.Destinations.Action.changelog,
-          content: ChangelogView.init(store:)
-        )
     )
     .task { await self.viewStore.send(.task).finish() }
   }

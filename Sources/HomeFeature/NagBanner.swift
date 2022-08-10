@@ -51,18 +51,12 @@ struct NagBannerView: View {
       .frame(height: 56)
       .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
-    .background(
-      // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-      // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-      // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-      EmptyView()
-        .sheet(
-          store: self.store.scope(
-            state: \.$upgradeInterstitial,
-            action: NagBanner.Action.upgradeInterstitial
-          ),
-          content: UpgradeInterstitialView.init(store:)
-        )
+    .sheet(
+      store: self.store.scope(
+        state: \.$upgradeInterstitial,
+        action: NagBanner.Action.upgradeInterstitial
+      ),
+      content: UpgradeInterstitialView.init(store:)
     )
   }
 }
