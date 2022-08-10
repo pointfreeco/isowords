@@ -4,41 +4,21 @@ import TcaHelpers
 
 public struct Multiplayer: ReducerProtocol {
   public struct State: Equatable {
-    public var destination: DestinationState?
     public var hasPastGames: Bool
+    @PresentationStateOf<PastGames> public var pastGames
 
     public init(
-      destination: DestinationState? = nil,
-      hasPastGames: Bool
+      hasPastGames: Bool,
+      pastGames: PastGames.State? = nil
     ) {
-      self.destination = destination
       self.hasPastGames = hasPastGames
+      self.pastGames = pastGames
     }
   }
 
   public enum Action: Equatable {
-    case destination(DestinationAction)
-    case setNavigation(tag: DestinationState.Tag?)
+    case pastGames(PresentationActionOf<PastGames>)
     case startButtonTapped
-  }
-
-  public enum DestinationState: Equatable {
-    case pastGames(PastGames.State)
-
-    public enum Tag: Int {
-      case pastGames
-    }
-
-    var tag: Tag {
-      switch self {
-      case .pastGames:
-        return .pastGames
-      }
-    }
-  }
-
-  public enum DestinationAction: Equatable {
-    case pastGames(PastGames.Action)
   }
 
   @Dependency(\.gameCenter) var gameCenter
@@ -48,7 +28,7 @@ public struct Multiplayer: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
-      case .destination(.pastGames):
+      case .pastGames:
         return .none
 
       case .startButtonTapped:
@@ -59,23 +39,10 @@ public struct Multiplayer: ReducerProtocol {
             await self.gameCenter.localPlayer.presentAuthenticationViewController()
           }
         }
-
-      case .setNavigation(tag: .pastGames):
-        state.destination = .pastGames(.init())
-        return .none
-
-      case .setNavigation(tag: .none):
-        state.destination = nil
-        return .none
       }
     }
-    .ifLet(state: \State.destination, action: /Action.destination) {
-      EmptyReducer().ifLet(
-        state: /DestinationState.pastGames,
-        action: /DestinationAction.pastGames
-      ) {
-        PastGames()
-      }
+    .presentationDestination(state: \State.$pastGames, action: /Action.pastGames) {
+      PastGames()
     }
   }
 }
@@ -92,11 +59,9 @@ public struct MultiplayerView: View {
   }
 
   struct ViewState: Equatable {
-    let destinationTag: Multiplayer.DestinationState.Tag?
     let hasPastGames: Bool
 
     init(state: Multiplayer.State) {
-      self.destinationTag = state.destination?.tag
       self.hasPastGames = state.hasPastGames
     }
   }
@@ -139,22 +104,9 @@ public struct MultiplayerView: View {
         .adaptivePadding(.bottom, .grid(self.viewStore.hasPastGames ? 0 : 8))
 
         if self.viewStore.hasPastGames {
-          NavigationLink(
-            destination: IfLetStore(
-              self.store.scope(
-                state: (\Multiplayer.State.destination)
-                  .appending(path: /Multiplayer.DestinationState.pastGames)
-                  .extract(from:),
-                action: { .destination(.pastGames($0)) }
-              ),
-              then: { PastGamesView(store: $0) }
-            ),
-            tag: Multiplayer.DestinationState.Tag.pastGames,
-            selection: viewStore.binding(
-              get: \.destinationTag,
-              send: Multiplayer.Action.setNavigation
-            )
-          ) {
+          Button {
+            viewStore.send(.pastGames(.present(PastGames.State())))
+          } label: {
             HStack {
               Text("View past games")
                 .adaptiveFont(.matterMedium, size: 16)
@@ -171,6 +123,10 @@ public struct MultiplayerView: View {
           .background(self.colorScheme == .dark ? Color.multiplayer : .isowordsBlack)
         }
       }
+      .navigationDestination(
+        store: self.store.scope(state: \.$pastGames, action: Multiplayer.Action.pastGames),
+        destination: PastGamesView.init(store:)
+      )
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
         foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,

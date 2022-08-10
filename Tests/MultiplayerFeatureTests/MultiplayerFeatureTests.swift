@@ -43,11 +43,11 @@ class MultiplayerFeatureTests: XCTestCase {
       reducer: Multiplayer()
     )
 
-    await store.send(.setNavigation(tag: .pastGames)) {
-      $0.destination = .pastGames(.init(pastGames: []))
+    await store.send(.pastGames(.present(PastGames.State()))) {
+      $0.pastGames = PastGames.State()
     }
-    await store.send(.setNavigation(tag: nil)) {
-      $0.destination = nil
+    await store.send(.pastGames(.dismiss)) {
+      $0.pastGames = nil
     }
   }
 }
