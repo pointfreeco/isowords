@@ -58,12 +58,6 @@ struct LeaderboardLinkView: View {
         )
       )
     }
-    .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
-      state: /Home.Destinations.State.leaderboard,
-      action: Home.Destinations.Action.leaderboard,
-      destination: LeaderboardView.init(store:)
-    )
   }
 
   func weekInReview(_ weekInReview: FetchWeekInReviewResponse?) -> some View {

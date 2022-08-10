@@ -112,12 +112,6 @@ struct DailyChallengeHeaderView: View {
         .foregroundColor(self.colorScheme == .dark ? yellow6 : .isowordsBlack)
         .adaptiveFont(.matter, size: 12)
         .padding(.top)
-        .navigationDestination(
-          store: self.store.scope(state: \.$destination, action: Home.Action.destination),
-          state: /Home.Destinations.State.dailyChallenge,
-          action: Home.Destinations.Action.dailyChallenge,
-          destination: DailyChallengeView.init(store:)
-        )
       }
     }
   }

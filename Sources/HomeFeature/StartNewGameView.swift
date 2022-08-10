@@ -53,18 +53,6 @@ struct StartNewGameView: View {
         )        
       }
     }
-    .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
-      state: /Home.Destinations.State.solo,
-      action: Home.Destinations.Action.solo,
-      destination: SoloView.init(store:)
-    )
-    .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
-      state: /Home.Destinations.State.multiplayer,
-      action: Home.Destinations.Action.multiplayer,
-      destination: MultiplayerView.init(store:)
-    )
   }
 }
 

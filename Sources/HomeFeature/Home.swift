@@ -566,6 +566,24 @@ public struct HomeView: View {
     .navigationBarHidden(true)
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destinations.State.dailyChallenge,
+      action: Home.Destinations.Action.dailyChallenge,
+      destination: DailyChallengeView.init(store:)
+    )
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destinations.State.leaderboard,
+      action: Home.Destinations.Action.leaderboard,
+      destination: LeaderboardView.init(store:)
+    )
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destinations.State.multiplayer,
+      action: Home.Destinations.Action.multiplayer,
+      destination: MultiplayerView.init(store:)
+    )
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
       state: /Home.Destinations.State.settings,
       action: { $0 }
     ) { _ in
@@ -574,6 +592,12 @@ public struct HomeView: View {
         navPresentationStyle: .navigation
       )
     }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destinations.State.solo,
+      action: Home.Destinations.Action.solo,
+      destination: SoloView.init(store:)
+    )
     .background(
       // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
       // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
