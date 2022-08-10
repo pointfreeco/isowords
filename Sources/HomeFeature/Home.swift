@@ -357,7 +357,7 @@ public struct Home: ReducerProtocol {
 
   private func authenticate(send: Send<Action>) async {
     do {
-      try? await self.gameCenter.localPlayer.authenticate()
+//      try? await self.gameCenter.localPlayer.authenticate()
 
       let localPlayer = self.gameCenter.localPlayer.localPlayer()
       let currentPlayerEnvelope = try await self.apiClient.authenticate(
