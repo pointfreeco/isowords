@@ -85,16 +85,16 @@ public struct GameCenterLogic: ReducerProtocol {
           )
         )
       }
-      
+
     case .gameCenter(.listener):
       return .none
-      
+
     case let .gameCenter(.rematchResponse(.success(turnBasedMatch))),
       let .home(
         .destination(
           .presented(
             .multiplayer(
-              .destination(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+              .pastGames(.presented(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
             )
           )
         )
