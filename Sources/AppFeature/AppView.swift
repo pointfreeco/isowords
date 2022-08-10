@@ -231,7 +231,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
-        .home(.destination(.solo(.gameButtonTapped(.timed)))):
+          .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
         state.game = .init(
           cubes: self.dictionary.randomCubes(.en),
           gameContext: .solo,
@@ -243,7 +243,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.unlimited))))),
-        .home(.destination(.solo(.gameButtonTapped(.unlimited)))):
+          .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
         state.game =
           state.home.savedGames.unlimited
           .map { Game.State(inProgressGame: $0) }
@@ -260,7 +260,7 @@ public struct AppReducer: ReducerProtocol {
       case .currentGame:
         return .none
 
-      case let .home(.destination(.dailyChallenge(.delegate(.startGame(inProgressGame))))):
+      case let .home(.destination(.presented(.dailyChallenge(.delegate(.startGame(inProgressGame)))))):
         state.game = .init(inProgressGame: inProgressGame)
         return .none
 
@@ -348,10 +348,9 @@ public struct AppView: View {
   public var body: some View {
     Group {
       if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
-        NavigationView {
+        NavigationStack {
           HomeView(store: self.store.scope(state: \.home, action: AppReducer.Action.home))
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .zIndex(0)
       } else {
         IfLetStore(

@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.7
 
 import Foundation
 import PackageDescription
@@ -7,10 +7,10 @@ import PackageDescription
 var package = Package(
   name: "isowords",
   platforms: [
-    .iOS(.v15),
-    .macOS(.v12),
-    .tvOS(.v15),
-    .watchOS(.v8),
+    .iOS(.v16),
+    .macOS(.v13),
+    .tvOS(.v16),
+    .watchOS(.v9),
   ],
   products: [
     .library(name: "Build", targets: ["Build"]),
@@ -177,7 +177,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "protocol"
+      branch: "protocol-navigation"
     )
   ])
   package.products.append(contentsOf: [

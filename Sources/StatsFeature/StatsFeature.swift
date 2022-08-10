@@ -269,7 +269,7 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
   struct StatsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           StatsView(
             store: Store(
               initialState: Stats.State(

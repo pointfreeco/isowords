@@ -242,7 +242,7 @@ public struct SupportButtonStyle: ButtonStyle {
   struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           SettingsView(
             store: Store(
               initialState: Settings.State(

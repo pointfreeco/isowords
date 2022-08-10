@@ -125,7 +125,7 @@ public struct SoloView: View {
   struct SoloView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           SoloView(store: .solo)
         }
       }

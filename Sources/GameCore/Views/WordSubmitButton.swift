@@ -260,7 +260,7 @@ struct ReactionsView: View {
 #if DEBUG
   struct WordSubmitButton_Previews: PreviewProvider {
     static var previews: some View {
-      NavigationView {
+      NavigationStack {
         WordSubmitButton(
           store: .init(
             initialState: WordSubmitButtonFeature.State(

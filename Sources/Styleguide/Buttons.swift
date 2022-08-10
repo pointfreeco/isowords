@@ -38,7 +38,7 @@ public struct ActionButtonStyle: ButtonStyle {
 
 struct Buttons_Previews: PreviewProvider {
   static var previews: some View {
-    let view = NavigationView {
+    let view = NavigationStack {
       VStack {
         Section(header: Text("Active")) {
           Button("Button") {}

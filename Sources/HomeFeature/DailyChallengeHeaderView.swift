@@ -13,11 +13,9 @@ struct DailyChallengeHeaderView: View {
 
   struct ViewState: Equatable {
     let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    let destinationTag: Home.DestinationState.Tag?
 
     init(homeState: Home.State) {
       self.dailyChallenges = homeState.dailyChallenges
-      self.destinationTag = homeState.destination?.tag
     }
   }
 
@@ -61,22 +59,9 @@ struct DailyChallengeHeaderView: View {
       .frame(maxWidth: .infinity)
 
       VStack {
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\Home.State.destination)
-                .appending(path: /Home.DestinationState.dailyChallenge).extract(from:),
-              action: { .destination(.dailyChallenge($0)) }
-            ),
-            then: DailyChallengeView.init(store:)
-          ),
-          tag: Home.DestinationState.Tag.dailyChallenge,
-          selection: viewStore.binding(
-            get: \.destinationTag,
-            send: Home.Action.setNavigation(tag:)
-          )
-          .animation()
-        ) {
+        Button {
+          viewStore.send(.destination(.present(id: Home.Destinations.ID.dailyChallenge)))
+        } label: {
           HStack {
             Group {
               if self.hasPlayedAllDailyChallenges {
@@ -127,6 +112,12 @@ struct DailyChallengeHeaderView: View {
         .foregroundColor(self.colorScheme == .dark ? yellow6 : .isowordsBlack)
         .adaptiveFont(.matter, size: 12)
         .padding(.top)
+        .navigationDestination(
+          store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+          state: /Home.Destinations.State.dailyChallenge,
+          action: Home.Destinations.Action.dailyChallenge,
+          destination: DailyChallengeView.init(store:)
+        )
       }
     }
   }
@@ -149,12 +140,12 @@ private let yellow6 = Color.hex(0xECB788)
   struct DailyChallengeHeaderViewPreviews: PreviewProvider {
     static var previews: some View {
       Group {
-        NavigationView {
+        NavigationStack {
           DailyChallengeHeaderView(store: .home)
         }
         .environment(\.colorScheme, .light)
 
-        NavigationView {
+        NavigationStack {
           DailyChallengeHeaderView(store: .home)
         }
         .environment(\.colorScheme, .dark)

@@ -49,7 +49,7 @@ struct AccessibilitySettingsView: View {
   struct AccessibilitySettingsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           AccessibilitySettingsView(
             store: .init(
               initialState: Settings.State(),

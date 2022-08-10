@@ -187,7 +187,7 @@ public struct MultiplayerView: View {
   struct MultiplayerView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           MultiplayerView(store: .multiplayer)
         }
       }

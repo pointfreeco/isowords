@@ -82,7 +82,7 @@ struct PurchasesSettingsView: View {
   struct PurchasesSettingsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           PurchasesSettingsView(
             store: Store(
               initialState: Settings.State(
@@ -93,7 +93,7 @@ struct PurchasesSettingsView: View {
           )
         }
 
-        NavigationView {
+        NavigationStack {
           PurchasesSettingsView(
             store: Store(
               initialState: Settings.State(),

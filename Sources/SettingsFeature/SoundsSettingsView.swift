@@ -64,7 +64,7 @@ struct SoundsSettingsView: View {
   struct SoundsSettingsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           SoundsSettingsView(
             store: .init(
               initialState: Settings.State(

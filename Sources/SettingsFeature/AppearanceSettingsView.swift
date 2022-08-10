@@ -199,7 +199,7 @@ extension UserSettings.ColorScheme {
   struct AppearanceSettingsView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           AppearanceSettingsView(
             store: .init(
               initialState: Settings.State(),

@@ -143,7 +143,7 @@ private struct GameButtonStyle: ButtonStyle {
   struct SwiftUIView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           VStack {
             LazyVGrid(
               columns: [

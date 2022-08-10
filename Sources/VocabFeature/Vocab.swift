@@ -173,12 +173,12 @@ public struct VocabView: View {
   struct VocabView_Previews: PreviewProvider {
     static var previews: some View {
       Group {
-        NavigationView {
+        NavigationStack {
           VocabView(store: .vocab)
         }
         .environment(\.colorScheme, .light)
 
-        NavigationView {
+        NavigationStack {
           VocabView(store: .vocab)
         }
         .environment(\.colorScheme, .dark)

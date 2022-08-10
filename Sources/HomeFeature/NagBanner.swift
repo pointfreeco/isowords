@@ -131,7 +131,7 @@ let messages = [
 #if DEBUG
   struct NagBanner_Previews: PreviewProvider {
     static var previews: some View {
-      NavigationView {
+      NavigationStack {
         ZStack(alignment: .bottomLeading) {
           NagBannerView(
             store: Store(

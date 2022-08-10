@@ -337,7 +337,7 @@ extension ResultEnvelope.Result {
   struct LeaderboardView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           LeaderboardView(
             store: .init(
               initialState: Leaderboard.State(

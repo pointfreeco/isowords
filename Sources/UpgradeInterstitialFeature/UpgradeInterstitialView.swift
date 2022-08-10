@@ -341,7 +341,7 @@ extension View {
 struct UpgradeInterstitialPreviews: PreviewProvider {
   static var previews: some View {
     Preview {
-      NavigationView {
+      NavigationStack {
         UpgradeInterstitialView(
           store: Store(
             initialState: UpgradeInterstitial.State(

@@ -99,7 +99,7 @@ struct PastGamesView: View {
   struct SwiftUIView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           PastGamesView(
             store: .init(
               initialState: PastGames.State(pastGames: pastGames),

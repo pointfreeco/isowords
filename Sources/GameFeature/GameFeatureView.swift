@@ -38,7 +38,7 @@ public struct GameFeatureView<Content>: View where Content: View {
         // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
         EmptyView()
           .sheet(isPresented: viewStore.binding(send: .dismissSettings)) {
-            NavigationView {
+            NavigationStack {
               SettingsView(
                 store: self.store.scope(
                   state: \.settings,

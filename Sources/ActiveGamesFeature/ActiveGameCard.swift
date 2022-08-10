@@ -119,7 +119,7 @@ struct ActiveGameCardButton {
   struct ActiveGameCard_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top) {
               ActiveGameCard(

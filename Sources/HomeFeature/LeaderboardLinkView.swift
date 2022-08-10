@@ -9,11 +9,9 @@ struct LeaderboardLinkView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
 
   struct ViewState: Equatable {
-    var tag: Home.DestinationState.Tag?
     var weekInReview: FetchWeekInReviewResponse?
 
     init(state: Home.State) {
-      self.tag = state.destination?.tag
       self.weekInReview = state.weekInReview
     }
   }
@@ -33,21 +31,15 @@ struct LeaderboardLinkView: View {
         Spacer()
 
         Button("View all") {
-          self.viewStore.send(.setNavigation(tag: self.tag))
+          viewStore.send(.destination(.present(id: Home.Destinations.ID.leaderboard)))
         }
         .adaptiveFont(.matterMedium, size: 12)
       }
       .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
 
-      NavigationLink(
-        destination: self.destination,
-        tag: self.tag,
-        selection: self.viewStore.binding(
-          get: \.tag,
-          send: Home.Action.setNavigation(tag:)
-        )
-        .animation()
-      ) {
+      Button {
+        viewStore.send(.destination(.present(id: Home.Destinations.ID.leaderboard)))
+      } label: {
         VStack(alignment: .leading, spacing: .grid(4)) {
           Text("Week in review")
 
@@ -66,18 +58,11 @@ struct LeaderboardLinkView: View {
         )
       )
     }
-  }
-
-  var tag: Home.DestinationState.Tag { .leaderboard }
-
-  var destination: some View {
-    IfLetStore(
-      self.store.scope(
-        state: (\Home.State.destination).appending(path: /Home.DestinationState.leaderboard)
-          .extract(from:),
-        action: { .destination(.leaderboard($0)) }
-      ),
-      then: LeaderboardView.init(store:)
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destinations.State.leaderboard,
+      action: Home.Destinations.Action.leaderboard,
+      destination: LeaderboardView.init(store:)
     )
   }
 
