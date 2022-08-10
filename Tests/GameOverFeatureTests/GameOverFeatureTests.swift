@@ -5,6 +5,7 @@ import GameOverFeature
 import Overture
 import SharedModels
 import TestHelpers
+import UpgradeInterstitialFeature
 import XCTest
 
 @testable import LocalDatabaseClient
@@ -365,7 +366,7 @@ class GameOverFeatureTests: XCTestCase {
     let task = await store.send(.task)
     await self.mainRunLoop.advance(by: .seconds(1))
     await store.receive(.delayedShowUpgradeInterstitial) {
-      $0.upgradeInterstitial = .init()
+      $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
     }
     await self.mainRunLoop.advance(by: .seconds(1))
     await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }

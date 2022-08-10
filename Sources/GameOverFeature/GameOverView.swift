@@ -19,7 +19,7 @@ public struct GameOver: ReducerProtocol {
   public struct State: Equatable {
     public var completedGame: CompletedGame
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
-    @PresentationStateOf<Destinations> var destination
+    @PresentationStateOf<Destinations> public var destination
     public var gameModeIsLoading: GameMode?
     public var isDemo: Bool
     public var isNotificationMenuPresented: Bool
@@ -27,7 +27,6 @@ public struct GameOver: ReducerProtocol {
     public var showConfetti: Bool
     public var summary: RankSummary?
     public var turnBasedContext: TurnBasedContext?
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
@@ -41,7 +40,6 @@ public struct GameOver: ReducerProtocol {
       showConfetti: Bool = false,
       summary: RankSummary? = nil,
       turnBasedContext: TurnBasedContext? = nil,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.completedGame = completedGame
@@ -53,7 +51,6 @@ public struct GameOver: ReducerProtocol {
       self.showConfetti = showConfetti
       self.summary = summary
       self.turnBasedContext = turnBasedContext
-      self.upgradeInterstitial = upgradeInterstitial
       self.userNotificationSettings = userNotificationSettings
       // NB: Property wrapper state must be assigned last
       self.destination = destination
@@ -78,7 +75,6 @@ public struct GameOver: ReducerProtocol {
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case submitGameResponse(TaskResult<SubmitGameResponse>)
-    case upgradeInterstitial(UpgradeInterstitial.Action)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
   }
 
@@ -130,7 +126,7 @@ public struct GameOver: ReducerProtocol {
         return .none
 
       case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
+        state.destination = .upgradeInterstitial(UpgradeInterstitial.State())
         return .none
 
       case .delegate(.close):
@@ -151,6 +147,14 @@ public struct GameOver: ReducerProtocol {
       case .destination(
         .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings)))):
         return .task { .delegate(.close) }.animation()
+
+      case .destination(.presented(.upgradeInterstitial(.delegate(.close)))),
+        .destination(.presented(.upgradeInterstitial(.delegate(.fullGamePurchased)))):
+        guard case .upgradeInterstitial = state.destination
+        else { return .none }
+
+        state.destination = nil
+        return .none
 
       case .destination:
         return .none
@@ -313,14 +317,6 @@ public struct GameOver: ReducerProtocol {
           }
         }
 
-      case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
-        return .none
-
       case let .userNotificationSettingsResponse(settings):
         state.userNotificationSettings = settings
         return .none
@@ -329,18 +325,17 @@ public struct GameOver: ReducerProtocol {
     .presentationDestination(state: \.$destination, action: /Action.destination) {
       Destinations()
     }
-    .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-      UpgradeInterstitial()
-    }
   }
 
   public struct Destinations: ReducerProtocol {
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State)
+      case upgradeInterstitial(UpgradeInterstitial.State)
     }
 
     public enum Action: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
     }
 
     public var body: some ReducerProtocol<State, Action> {
@@ -349,6 +344,12 @@ public struct GameOver: ReducerProtocol {
         action: /Action.notificationsAuthAlert
       ) {
         NotificationsAuthAlert()
+      }
+      ScopeCase(
+        state: /State.upgradeInterstitial,
+        action: /Action.upgradeInterstitial
+      ) {
+        UpgradeInterstitial()
       }
     }
   }
@@ -423,7 +424,8 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented = state.upgradeInterstitial != nil
+      self.isUpgradeInterstitialPresented = (/GameOver.Destinations.State.upgradeInterstitial)
+        .extract(from: state.destination) != nil
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
@@ -504,8 +506,8 @@ public struct GameOverView: View {
 
       IfLetStore(
         self.store.scope(
-          state: \.upgradeInterstitial,
-          action: GameOver.Action.upgradeInterstitial
+          state: { $0.destination.flatMap(/GameOver.Destinations.State.upgradeInterstitial) },
+          action: { .destination(.presented(.upgradeInterstitial($0))) }
         ),
         then: { store in
           UpgradeInterstitialView(store: store)
