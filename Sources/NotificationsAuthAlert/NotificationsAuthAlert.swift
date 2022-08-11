@@ -21,6 +21,7 @@ public struct NotificationsAuthAlert: ReducerProtocol {
     case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
   }
 
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
@@ -46,6 +47,7 @@ public struct NotificationsAuthAlert: ReducerProtocol {
           ),
           animation: .default
         )
+        await self.dismiss()
       }
     }
   }

@@ -148,14 +148,6 @@ public struct GameOver: ReducerProtocol {
         .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings)))):
         return .task { .delegate(.close) }.animation()
 
-      case .destination(.presented(.upgradeInterstitial(.delegate(.close)))),
-        .destination(.presented(.upgradeInterstitial(.delegate(.fullGamePurchased)))):
-        guard case .upgradeInterstitial = state.destination
-        else { return .none }
-
-        state.destination = nil
-        return .none
-
       case .destination:
         return .none
 

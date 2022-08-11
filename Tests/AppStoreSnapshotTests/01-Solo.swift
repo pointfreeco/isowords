@@ -66,7 +66,6 @@ var gameplayAppStoreView: AnyView {
       gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
       gameCurrentTime: Date(),
       gameMode: .unlimited,
-      gameOver: nil,
       gameStartTime: Date(),
       isDemo: false,
       isGameLoaded: true,
@@ -81,7 +80,6 @@ var gameplayAppStoreView: AnyView {
       selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
         ?? [],
       selectedWordIsValid: true,
-      upgradeInterstitial: nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState()
     ),
     settings: .init()

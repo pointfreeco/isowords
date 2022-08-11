@@ -33,7 +33,6 @@ var turnBasedAppStoreView: AnyView {
       ),
       gameCurrentTime: Date(),
       gameMode: .unlimited,
-      gameOver: nil,
       gameStartTime: Date(),
       isDemo: false,
       isGameLoaded: true,
@@ -48,7 +47,6 @@ var turnBasedAppStoreView: AnyView {
       selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
         ?? [],
       selectedWordIsValid: true,
-      upgradeInterstitial: nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState()
     ),
     settings: .init()

@@ -89,6 +89,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     store.dependencies.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
+    let dismissed = ActorIsolated(false)
+    store.dependencies.dismiss = .init { await dismissed.setValue(true) }
 
     await store.send(.task)
 
@@ -109,7 +111,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     await self.scheduler.run()
 
     await store.send(.maybeLaterButtonTapped)
-    await store.receive(.delegate(.close))
+    await dismissed.withValue { XCTAssertTrue($0) }
   }
 
   func testMaybeLater_Dismissable() async  {
@@ -125,9 +127,12 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       .init(invalidProductIdentifiers: [], products: [])
     }
 
+    let dismissed = ActorIsolated(false)
+    store.dependencies.dismiss = .init { await dismissed.setValue(true) }
+
     await store.send(.task)
     await store.send(.maybeLaterButtonTapped)
-    await store.receive(.delegate(.close))
+    await dismissed.withValue { XCTAssertTrue($0) }
   }
 }
 

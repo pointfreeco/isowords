@@ -12,19 +12,10 @@ public struct NagBanner: ReducerProtocol {
   }
 
   public var body: some ReducerProtocol<State, Action> {
-    Reduce { state, action in
-      switch action {
-      case .upgradeInterstitial(.presented(.delegate(.close))):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
-        return .none
+    EmptyReducer()
+      .presentationDestination(state: \.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
       }
-    }
-    .presentationDestination(state: \.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
-      UpgradeInterstitial()
-    }
   }
 }
 

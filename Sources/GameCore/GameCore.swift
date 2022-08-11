@@ -252,12 +252,9 @@ public struct Game: ReducerProtocol {
       return .none
 
     case .destination(.presented(.alert(.dontForfeitButtonTapped))):
-      state.destination = nil
       return .none
 
     case .destination(.presented(.alert(.forfeitButtonTapped))):
-      state.destination = nil
-
       guard let match = state.turnBasedContext?.match
       else { return .none }
 
@@ -281,12 +278,6 @@ public struct Game: ReducerProtocol {
             .participantQuitOutOfTurn(match.matchId)
         }
       }
-
-    case .destination(.presented(.upgradeInterstitial(.delegate(.close)))),
-      .destination(.presented(.upgradeInterstitial(.delegate(.fullGamePurchased)))):
-
-      state.destination = nil
-      return .none
 
     case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
       state = State(inProgressGame: inProgressGame)

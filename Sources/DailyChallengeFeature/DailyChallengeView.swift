@@ -61,7 +61,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
       case let .destination(
         .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings))))):
-        state.destination = nil
         state.userNotificationSettings = settings
         return .none
 
