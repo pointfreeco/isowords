@@ -7,22 +7,35 @@ import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
+public struct NotificationsAuthAlertDelegate {
+  public var didChooseNotificationSettings:
+    @Sendable (UserNotificationClient.Notification.Settings) async -> Void = { _ in }
+}
+
+extension DependencyValues {
+  public var notificationsAuthAlertDelegate: NotificationsAuthAlertDelegate {
+    get { self[NotificationsAuthAlertDelegateKey.self] }
+    set { self[NotificationsAuthAlertDelegateKey.self] = newValue }
+  }
+
+  private enum NotificationsAuthAlertDelegateKey: LiveDependencyKey {
+    static let liveValue = NotificationsAuthAlertDelegate()
+    static let testValue = NotificationsAuthAlertDelegate()
+  }
+}
+
 public struct NotificationsAuthAlert: ReducerProtocol {
   public struct State: Equatable {
     public init() {}
   }
 
   public enum Action: Equatable {
-    case delegate(DelegateAction)
     case turnOnNotificationsButtonTapped
-  }
-
-  public enum DelegateAction: Equatable {
-    case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
   }
 
   @Dependency(\.dismiss) var dismiss
   @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.notificationsAuthAlertDelegate) var delegate
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
 
@@ -30,9 +43,6 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 
   public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
     switch action {
-    case .delegate:
-      return .none
-
     case .turnOnNotificationsButtonTapped:
       return .run { send in
         if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
@@ -41,11 +51,8 @@ public struct NotificationsAuthAlert: ReducerProtocol {
             userNotifications: self.userNotifications
           )
         }
-        await send(
-          .delegate(
-            .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
-          ),
-          animation: .default
+        await self.delegate.didChooseNotificationSettings(
+          self.userNotifications.getNotificationSettings()
         )
         await self.dismiss()
       }

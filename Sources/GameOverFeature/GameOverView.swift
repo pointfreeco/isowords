@@ -316,6 +316,7 @@ public struct GameOver: ReducerProtocol {
     }
     .presentationDestination(state: \.$destination, action: /Action.destination) {
       Destinations()
+//        .dependency(\.notificationsAuthAlertDelegate.didChooseNotificationSettings, {  })
     }
   }
 
