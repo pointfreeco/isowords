@@ -2,6 +2,7 @@ import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
 import GameFeature
+import GameOverFeature
 import SharedModels
 
 public enum GameCenterAction: Equatable {
@@ -28,7 +29,7 @@ public struct GameCenterLogic: ReducerProtocol {
         }
       }
 
-    case .currentGame(.game(.gameOver(.rematchButtonTapped))):
+    case .currentGame(.game(.destination(.presented(.gameOver(.rematchButtonTapped))))):
       guard
         let game = state.game,
         let turnBasedMatch = game.turnBasedContext
@@ -175,13 +176,15 @@ public struct GameCenterLogic: ReducerProtocol {
         match.participants.contains(where: { $0.matchOutcome != .none })
       }
       if match.status == .ended || isGameOver {
-        gameState.gameOver = .init(
-          completedGame: CompletedGame(gameState: gameState),
-          isDemo: gameState.isDemo,
-          turnBasedContext: gameState.turnBasedContext
+        gameState.destination = .gameOver(
+          GameOver.State(
+            completedGame: CompletedGame(gameState: gameState),
+            isDemo: gameState.isDemo,
+            turnBasedContext: gameState.turnBasedContext
+          )
         )
       }
-      state.currentGame = .init(
+      state.currentGame = GameFeature.State(
         game: gameState,
         settings: state.home.settings
       )

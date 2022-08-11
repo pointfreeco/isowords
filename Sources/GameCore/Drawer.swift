@@ -23,19 +23,17 @@ struct ActiveGamesTray: ReducerProtocol {
       return .none
 
     case .activeGames,
-      .alert,
       .delayedShowUpgradeInterstitial,
+      .destination,
       .exitButtonTapped,
       .dismissBottomMenu,
       .gameCenter,
       .gameLoaded,
-      .gameOver,
       .lowPowerModeChanged,
       .matchesLoaded(.failure),
       .savedGamesLoaded(.failure),
       .settingsButtonTapped,
-      .timerTick,
-      .upgradeInterstitial:
+      .timerTick:
 
       return .none
 

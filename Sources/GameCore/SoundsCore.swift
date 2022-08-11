@@ -4,23 +4,23 @@ import SelectionSoundsCore
 
 extension ReducerProtocolOf<Game> {
   func sounds() -> GameSounds<Self> {
-    GameSounds(upstream: self)
+    GameSounds(base: self)
   }
 }
 
-struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
+struct GameSounds<Base: ReducerProtocolOf<Game>>: ReducerProtocol {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
   @Dependency(\.dictionary) var dictionary
   @Dependency(\.mainQueue) var mainQueue
 
-  let upstream: Upstream
+  let base: Base
 
   enum CubeShakingID {}
 
   var body: some ReducerProtocolOf<Game> {
-    GroupReducers {
-      self.upstream
+    CombineReducers {
+      self.base
       Reduce { state, action in
         switch action {
         case .task:
@@ -47,13 +47,15 @@ struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
         }
       }
     }
-    .onChange(of: { $0.gameOver == nil }) { _, _, _ in
-        .fireAndForget {
-          await Task.cancel(id: CubeShakingID.self)
-          for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
-            await self.audioPlayer.stop(music)
-          }
+    .onChange(of: {
+      (/Game.Destinations.State.gameOver).extract(from: $0.destination) == nil
+    }) { _, _, _ in
+      .fireAndForget {
+        await Task.cancel(id: CubeShakingID.self)
+        for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
+          await self.audioPlayer.stop(music)
         }
+      }
     }
     .onChange(of: \.secondsPlayed) { secondsPlayed, state, _ in
       if secondsPlayed == state.gameMode.seconds - 10 {

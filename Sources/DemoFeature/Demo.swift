@@ -83,8 +83,12 @@ public struct Demo: ReducerProtocol {
     .dependency(\.storeKit, .noop)
     .dependency(\.userDefaults, .noop)
     .dependency(\.userNotifications, .noop)
-    .onChange(of: { $0.game?.gameOver != nil }) { _, _, _ in
-      .task {
+    .onChange(of: {
+      guard case .some(.gameOver) = $0.game?.destination else { return false }
+      return true
+    }) { (isGameOver: Bool, _, _) in
+      guard isGameOver else { return .none }
+      return .task {
         try await self.mainQueue.sleep(for: .seconds(2))
         return .gameOverDelay
       }
@@ -101,7 +105,7 @@ public struct Demo: ReducerProtocol {
           _ = await self.applicationClient.open(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.gameOver(.submitGameResponse(.success))):
+      case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
         state.appStoreOverlayIsPresented = true
         return .none
 
@@ -147,7 +151,11 @@ public struct DemoView: View {
 
     init(state: Demo.State) {
       self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = state.game?.gameOver != nil
+      if case .some(.gameOver) = state.game?.destination {
+        self.isGameOver = true
+      } else {
+        self.isGameOver = false
+      }
     }
   }
 

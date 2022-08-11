@@ -85,7 +85,7 @@ public struct AppReducer: ReducerProtocol {
   public init() {}
 
   public var body: some ReducerProtocol<State, Action> {
-    GroupReducers {
+    CombineReducers {
       Scope(state: \.home.settings.userSettings, action: /Action.appDelegate) {
         AppDelegateReducer()
       }
@@ -95,203 +95,7 @@ public struct AppReducer: ReducerProtocol {
       Scope(state: \.home, action: /Action.home) {
         Home()
       }
-      Reduce { state, action in
-        switch action {
-        case .appDelegate(.didFinishLaunching):
-          if !self.userDefaults.hasShownFirstLaunchOnboarding {
-            state.onboarding = .init(presentationStyle: .firstLaunch)
-          }
-
-          return .run { send in
-            async let migrate: Void = self.database.migrate()
-            if self.userDefaults.installationTime <= 0 {
-              await self.userDefaults.setInstallationTime(
-                self.mainRunLoop.now.date.timeIntervalSinceReferenceDate
-              )
-            }
-            await send(
-              .savedGamesLoaded(
-                TaskResult { try await self.fileClient.loadSavedGames() }
-              )
-            )
-            _ = try await migrate
-          }
-
-        case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
-          if let data =
-            try? JSONSerialization
-            .data(withJSONObject: response.notification.request.content.userInfo),
-            let pushNotificationContent = try? JSONDecoder()
-              .decode(PushNotificationContent.self, from: data)
-          {
-            switch pushNotificationContent {
-            case .dailyChallengeEndsSoon:
-              if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
-                state.currentGame = GameFeature.State(
-                  game: Game.State(inProgressGame: inProgressGame),
-                  settings: state.home.settings
-                )
-              } else {
-                // TODO: load/retry
-              }
-
-            case .dailyChallengeReport:
-              state.game = nil
-              state.home.destination = .dailyChallenge(.init())
-            }
-          }
-
-          return .fireAndForget { completionHandler() }
-
-        case .appDelegate:
-          return .none
-
-        case .currentGame(.game(.endGameButtonTapped)),
-          .currentGame(.game(.gameOver(.task))):
-
-          switch (state.game?.gameContext, state.game?.gameMode) {
-          case (.dailyChallenge, .unlimited):
-            state.home.savedGames.dailyChallengeUnlimited = nil
-          case (.solo, .unlimited):
-            state.home.savedGames.unlimited = nil
-          default:
-            break
-          }
-          return .none
-
-        case .currentGame(.game(.activeGames(.dailyChallengeTapped))),
-          .home(.activeGames(.dailyChallengeTapped)):
-          guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
-          else { return .none }
-
-          state.currentGame = .init(
-            game: Game.State(inProgressGame: inProgressGame),
-            settings: state.home.settings
-          )
-          return .none
-
-        case .currentGame(.game(.activeGames(.soloTapped))),
-          .home(.activeGames(.soloTapped)):
-          guard let inProgressGame = state.home.savedGames.unlimited
-          else { return .none }
-
-          state.currentGame = .init(
-            game: Game.State(inProgressGame: inProgressGame),
-            settings: state.home.settings
-          )
-          return .none
-
-        case let .currentGame(.game(.activeGames(.turnBasedGameTapped(matchId)))),
-          let .home(.activeGames(.turnBasedGameTapped(matchId))):
-          return .run { send in
-            do {
-              let match = try await self.gameCenter.turnBasedMatch.load(matchId)
-              await send(
-                .gameCenter(
-                  .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: true)))
-                ),
-                animation: .default
-              )
-            } catch {}
-          }
-
-        case .currentGame(.game(.exitButtonTapped)),
-          .currentGame(.game(.gameOver(.delegate(.close)))):
-          state.game = nil
-          return .none
-
-        case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
-            .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
-          state.game = .init(
-            cubes: self.dictionary.randomCubes(.en),
-            gameContext: .solo,
-            gameCurrentTime: self.mainRunLoop.now.date,
-            gameMode: .timed,
-            gameStartTime: self.mainRunLoop.now.date,
-            isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
-          )
-          return .none
-
-        case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.unlimited))))),
-            .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
-          state.game =
-            state.home.savedGames.unlimited
-            .map { Game.State(inProgressGame: $0) }
-            ?? Game.State(
-              cubes: self.dictionary.randomCubes(.en),
-              gameContext: .solo,
-              gameCurrentTime: self.mainRunLoop.now.date,
-              gameMode: .unlimited,
-              gameStartTime: self.mainRunLoop.now.date,
-              isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
-            )
-          return .none
-
-        case .currentGame:
-          return .none
-
-        case let .home(.destination(.presented(.dailyChallenge(.delegate(.startGame(inProgressGame)))))):
-          state.game = .init(inProgressGame: inProgressGame)
-          return .none
-
-        case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
-          if dailyChallenges.unlimited?.dailyChallenge.id
-            != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
-          {
-            state.home.savedGames.dailyChallengeUnlimited = nil
-            return .fireAndForget { [savedGames = state.home.savedGames] in
-              try await self.fileClient.save(games: savedGames)
-            }
-          }
-          return .none
-
-        case .home(.howToPlayButtonTapped):
-          state.onboarding = .init(presentationStyle: .help)
-          return .none
-
-        case .didChangeScenePhase(.active):
-          return .fireAndForget {
-            async let register: Void = registerForRemoteNotificationsAsync(
-              remoteNotifications: self.remoteNotifications,
-              userNotifications: self.userNotifications
-            )
-            async let refresh = self.serverConfig.refresh()
-            _ = try await (register, refresh)
-          }
-
-        case .didChangeScenePhase:
-          return .none
-
-        case .gameCenter:
-          return .none
-
-        case .home:
-          return .none
-
-        case let .onboarding(.delegate(action)):
-          switch action {
-          case .getStarted:
-            state.onboarding = nil
-            return .none
-          }
-
-        case .onboarding:
-          return .none
-
-        case .paymentTransaction:
-          return .none
-
-        case .savedGamesLoaded(.failure):
-          return .none
-
-        case let .savedGamesLoaded(.success(savedGames)):
-          state.home.savedGames = savedGames
-          return .none
-
-        case .verifyReceiptResponse:
-          return .none
-        }
-      }
+      Reduce(self.core)
     }
     .ifLet(state: \.onboarding, action: /Action.onboarding) {
       Onboarding()
@@ -319,6 +123,207 @@ public struct AppReducer: ReducerProtocol {
 
     GameCenterLogic()
     StoreKitLogic()
+  }
+
+  private func core(reducing state: inout State, action: Action) -> Effect<Action, Never> {
+    switch action {
+    case .appDelegate(.didFinishLaunching):
+      if !self.userDefaults.hasShownFirstLaunchOnboarding {
+        state.onboarding = .init(presentationStyle: .firstLaunch)
+      }
+
+      return .run { send in
+        async let migrate: Void = self.database.migrate()
+        if self.userDefaults.installationTime <= 0 {
+          await self.userDefaults.setInstallationTime(
+            self.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+          )
+        }
+        await send(
+          .savedGamesLoaded(
+            TaskResult { try await self.fileClient.loadSavedGames() }
+          )
+        )
+        _ = try await migrate
+      }
+
+    case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
+      if let data =
+        try? JSONSerialization
+        .data(withJSONObject: response.notification.request.content.userInfo),
+        let pushNotificationContent = try? JSONDecoder()
+          .decode(PushNotificationContent.self, from: data)
+      {
+        switch pushNotificationContent {
+        case .dailyChallengeEndsSoon:
+          if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
+            state.currentGame = GameFeature.State(
+              game: Game.State(inProgressGame: inProgressGame),
+              settings: state.home.settings
+            )
+          } else {
+            // TODO: load/retry
+          }
+
+        case .dailyChallengeReport:
+          state.game = nil
+          state.home.destination = .dailyChallenge(.init())
+        }
+      }
+
+      return .fireAndForget { completionHandler() }
+
+    case .appDelegate:
+      return .none
+
+    case .currentGame(.game(.endGameButtonTapped)),
+      .currentGame(.game(.destination(.presented(.gameOver(.task))))):
+
+      switch (state.game?.gameContext, state.game?.gameMode) {
+      case (.dailyChallenge, .unlimited):
+        state.home.savedGames.dailyChallengeUnlimited = nil
+      case (.solo, .unlimited):
+        state.home.savedGames.unlimited = nil
+      default:
+        break
+      }
+      return .none
+
+    case .currentGame(.game(.activeGames(.dailyChallengeTapped))),
+      .home(.activeGames(.dailyChallengeTapped)):
+      guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
+      else { return .none }
+
+      state.currentGame = .init(
+        game: Game.State(inProgressGame: inProgressGame),
+        settings: state.home.settings
+      )
+      return .none
+
+    case .currentGame(.game(.activeGames(.soloTapped))),
+      .home(.activeGames(.soloTapped)):
+      guard let inProgressGame = state.home.savedGames.unlimited
+      else { return .none }
+
+      state.currentGame = .init(
+        game: Game.State(inProgressGame: inProgressGame),
+        settings: state.home.settings
+      )
+      return .none
+
+    case let .currentGame(.game(.activeGames(.turnBasedGameTapped(matchId)))),
+      let .home(.activeGames(.turnBasedGameTapped(matchId))):
+      return .run { send in
+        do {
+          let match = try await self.gameCenter.turnBasedMatch.load(matchId)
+          await send(
+            .gameCenter(
+              .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: true)))
+            ),
+            animation: .default
+          )
+        } catch {}
+      }
+
+    case .currentGame(.game(.exitButtonTapped)),
+      .currentGame(.game(.destination(.presented(.gameOver(.delegate(.close)))))):
+      state.game = nil
+      return .none
+
+    case .currentGame(
+      .game(.destination(.presented(.gameOver(.delegate(.startSoloGame(.timed))))))),
+      .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
+      state.game = .init(
+        cubes: self.dictionary.randomCubes(.en),
+        gameContext: .solo,
+        gameCurrentTime: self.mainRunLoop.now.date,
+        gameMode: .timed,
+        gameStartTime: self.mainRunLoop.now.date,
+        isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
+      )
+      return .none
+
+    case .currentGame(
+      .game(.destination(.presented(.gameOver(.delegate(.startSoloGame(.unlimited))))))),
+      .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
+      state.game =
+        state.home.savedGames.unlimited
+        .map { Game.State(inProgressGame: $0) }
+        ?? Game.State(
+          cubes: self.dictionary.randomCubes(.en),
+          gameContext: .solo,
+          gameCurrentTime: self.mainRunLoop.now.date,
+          gameMode: .unlimited,
+          gameStartTime: self.mainRunLoop.now.date,
+          isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
+        )
+      return .none
+
+    case .currentGame:
+      return .none
+
+    case let .home(
+      .destination(.presented(.dailyChallenge(.delegate(.startGame(inProgressGame)))))):
+      state.game = .init(inProgressGame: inProgressGame)
+      return .none
+
+    case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
+      if dailyChallenges.unlimited?.dailyChallenge.id
+        != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
+      {
+        state.home.savedGames.dailyChallengeUnlimited = nil
+        return .fireAndForget { [savedGames = state.home.savedGames] in
+          try await self.fileClient.save(games: savedGames)
+        }
+      }
+      return .none
+
+    case .home(.howToPlayButtonTapped):
+      state.onboarding = .init(presentationStyle: .help)
+      return .none
+
+    case .didChangeScenePhase(.active):
+      return .fireAndForget {
+        async let register: Void = registerForRemoteNotificationsAsync(
+          remoteNotifications: self.remoteNotifications,
+          userNotifications: self.userNotifications
+        )
+        async let refresh = self.serverConfig.refresh()
+        _ = try await (register, refresh)
+      }
+
+    case .didChangeScenePhase:
+      return .none
+
+    case .gameCenter:
+      return .none
+
+    case .home:
+      return .none
+
+    case let .onboarding(.delegate(action)):
+      switch action {
+      case .getStarted:
+        state.onboarding = nil
+        return .none
+      }
+
+    case .onboarding:
+      return .none
+
+    case .paymentTransaction:
+      return .none
+
+    case .savedGamesLoaded(.failure):
+      return .none
+
+    case let .savedGamesLoaded(.success(savedGames)):
+      state.home.savedGames = savedGames
+      return .none
+
+    case .verifyReceiptResponse:
+      return .none
+    }
   }
 }
 

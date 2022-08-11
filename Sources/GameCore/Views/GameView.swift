@@ -128,7 +128,10 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.gameOver, action: Game.Action.gameOver),
+          self.store.scope(
+            state: { $0.destination.flatMap(/Game.Destinations.State.gameOver) },
+            action: { .destination(.presented(.gameOver($0))) }
+          ),
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -142,8 +145,8 @@ public struct GameView<Content>: View where Content: View {
 
         IfLetStore(
           self.store.scope(
-            state: \.upgradeInterstitial,
-            action: Game.Action.upgradeInterstitial
+            state: { $0.destination.flatMap(/Game.Destinations.State.upgradeInterstitial) },
+            action: { .destination(.presented(.upgradeInterstitial($0))) }
           ),
           then: { store in
             UpgradeInterstitialView(store: store)
@@ -175,8 +178,9 @@ public struct GameView<Content>: View where Content: View {
       )
       .bottomMenu(self.store.scope(state: \.bottomMenu))
       .alert(
-        self.store.scope(state: \.alert, action: Game.Action.alert),
-        dismiss: .dismiss
+        store: self.store.scope(state: \.$destination, action: Game.Action.destination),
+        state: /Game.Destinations.State.alert,
+        action: Game.Destinations.Action.alert
       )
     }
     .task { await self.viewStore.send(.task).finish() }

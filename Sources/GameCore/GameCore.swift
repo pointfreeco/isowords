@@ -16,16 +16,45 @@ import TcaHelpers
 import UpgradeInterstitialFeature
 
 public struct Game: ReducerProtocol {
+  public struct Destinations: ReducerProtocol {
+    public enum State: Equatable {
+      case alert(AlertState<AlertAction>)
+      // TODO: case bottomMenu
+      case gameOver(GameOver.State)
+      case upgradeInterstitial(UpgradeInterstitial.State)
+    }
+
+    public enum Action: Equatable {
+      case alert(AlertAction)
+      case gameOver(GameOver.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
+    }
+
+    public var body: some ReducerProtocol<State, Action> {
+      ScopeCase(
+        state: /State.gameOver,
+        action: /Action.gameOver
+      ) {
+        GameOver()
+      }
+      ScopeCase(
+        state: /State.upgradeInterstitial,
+        action: /Action.upgradeInterstitial
+      ) {
+        UpgradeInterstitial()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    public var alert: AlertState<AlertAction>?
     public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
+    @PresentationStateOf<Destinations> public var destination
     public var gameContext: ClientModels.GameContext
     public var gameCurrentTime: Date
     public var gameMode: GameMode
-    public var gameOver: GameOver.State?
     public var gameStartTime: Date
     public var isDemo: Bool
     public var isGameLoaded: Bool
@@ -39,19 +68,17 @@ public struct Game: ReducerProtocol {
     public var secondsPlayed: Int
     public var selectedWord: [IndexedCubeFace]
     public var selectedWordIsValid: Bool
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
     public init(
       activeGames: ActiveGamesState = .init(),
-      alert: AlertState<AlertAction>? = nil,
       bottomMenu: BottomMenuState<Action>? = nil,
       cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
+      @PresentationStateOf<Destinations> destination: Destinations.State? = nil,
       gameContext: ClientModels.GameContext,
       gameCurrentTime: Date,
       gameMode: GameMode,
-      gameOver: GameOver.State? = nil,
       gameStartTime: Date,
       isDemo: Bool = false,
       isGameLoaded: Bool = false,
@@ -65,18 +92,15 @@ public struct Game: ReducerProtocol {
       secondsPlayed: Int = 0,
       selectedWord: [IndexedCubeFace] = [],
       selectedWordIsValid: Bool = false,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       self.activeGames = activeGames
-      self.alert = alert
       self.bottomMenu = bottomMenu
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
-      self.gameOver = gameOver
       self.gameStartTime = gameStartTime
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
@@ -90,8 +114,9 @@ public struct Game: ReducerProtocol {
       self.secondsPlayed = secondsPlayed
       self.selectedWord = selectedWord
       self.selectedWordIsValid = selectedWordIsValid
-      self.upgradeInterstitial = upgradeInterstitial
       self.wordSubmitButton = wordSubmit
+      // NB: Property wrapper state must be initialized last
+      self.destination = destination
     }
 
     public var dailyChallengeId: DailyChallenge.Id? {
@@ -135,10 +160,10 @@ public struct Game: ReducerProtocol {
 
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
-    case alert(AlertAction)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
+    case destination(PresentationActionOf<Destinations>)
     case dismissBottomMenu
     case doubleTap(index: LatticePoint)
     case endGameButtonTapped
@@ -146,7 +171,6 @@ public struct Game: ReducerProtocol {
     case forfeitGameButtonTapped
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case gameOver(GameOver.Action)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
@@ -158,12 +182,10 @@ public struct Game: ReducerProtocol {
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
   public enum AlertAction: Equatable {
-    case dismiss
     case dontForfeitButtonTapped
     case forfeitButtonTapped
   }
@@ -188,325 +210,8 @@ public struct Game: ReducerProtocol {
   func date() -> Date { self.mainRunLoop.now.date }
 
   public var body: some ReducerProtocol<State, Action> {
-    GroupReducers {
-      Reduce { state, action in
-        switch action {
-        case .activeGames:
-          return .none
-
-        case .alert(.dismiss), .alert(.dontForfeitButtonTapped):
-          state.alert = nil
-          return .none
-
-        case .alert(.forfeitButtonTapped):
-          state.alert = nil
-
-          guard let match = state.turnBasedContext?.match
-          else { return .none }
-
-          return .fireAndForget {
-            let localPlayer = self.gameCenter.localPlayer.localPlayer()
-            let currentParticipantIsLocalPlayer =
-              match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
-
-            if currentParticipantIsLocalPlayer {
-              try await self.gameCenter.turnBasedMatch.endMatchInTurn(
-                .init(
-                  for: match.matchId,
-                  matchData: match.matchData ?? Data(),
-                  localPlayerId: localPlayer.gamePlayerId,
-                  localPlayerMatchOutcome: .quit,
-                  message: "\(localPlayer.displayName) forfeited the match."
-                )
-              )
-            } else {
-              try await self.gameCenter.turnBasedMatch
-                .participantQuitOutOfTurn(match.matchId)
-            }
-          }
-
-        case .cancelButtonTapped:
-          state.selectedWord = []
-          return .none
-
-        case let .confirmRemoveCube(index):
-          state.bottomMenu = nil
-          state.removeCube(at: index, playedAt: self.date())
-          state.selectedWord = []
-          return .none
-
-        case .delayedShowUpgradeInterstitial:
-          state.upgradeInterstitial = .init()
-          return .none
-
-        case .dismissBottomMenu:
-          state.bottomMenu = nil
-          return .none
-
-        case let .doubleTap(index):
-          guard state.selectedWord.count <= 1
-          else { return .none }
-
-          return state.tryToRemoveCube(at: index)
-
-        case .endGameButtonTapped:
-          return .none
-
-        case .exitButtonTapped:
-          return .none
-
-        case .forfeitGameButtonTapped:
-          state.alert = .init(
-            title: .init("Are you sure?"),
-            message: .init(
-              """
-              Forfeiting will end the game and your opponent will win. Are you sure you want to \
-              forfeit?
-              """
-            ),
-            primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
-            secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
-          )
-          return .none
-
-        case .gameCenter:
-          return .none
-
-        case .gameLoaded:
-          state.isGameLoaded = true
-          return .run { send in
-            for await instant in self.mainRunLoop.timer(interval: .seconds(1)) {
-              await send(.timerTick(instant.date))
-            }
-          }
-
-        case .gameOver(.delegate(.close)):
-          return .none
-
-        case let .gameOver(.delegate(.startGame(inProgressGame))):
-          state = .init(inProgressGame: inProgressGame)
-          return .none
-
-        case .gameOver:
-          return .none
-
-        case let .lowPowerModeChanged(isOn):
-          state.isOnLowPowerMode = isOn
-          return .none
-
-        case .matchesLoaded:
-          return .none
-
-        case .menuButtonTapped:
-          state.bottomMenu = .gameMenu(state: state)
-          return .none
-
-        case .task:
-          guard !state.isGameOver else { return .none }
-          state.gameCurrentTime = self.date()
-
-          return .run { [gameContext = state.gameContext] send in
-            await withThrowingTaskGroup(of: Void.self) { group in
-              group.addTask {
-                for await isLowPower in await self.lowPowerMode.start() {
-                  await send(.lowPowerModeChanged(isLowPower))
-                }
-              }
-
-              if gameContext.isTurnBased {
-                group.addTask {
-                  let playedGamesCount = await self.userDefaults
-                    .incrementMultiplayerOpensCount()
-                  let isFullGamePurchased = self.apiClient.currentPlayer()?.appleReceipt != nil
-                  guard
-                    !isFullGamePurchased,
-                    shouldShowInterstitial(
-                      gamePlayedCount: playedGamesCount,
-                      gameContext: .init(gameContext: gameContext),
-                      serverConfig: self.serverConfig.config()
-                    )
-                  else { return }
-                  try await self.mainRunLoop.sleep(for: .seconds(3))
-                  await send(.delayedShowUpgradeInterstitial, animation: .default)
-                }
-              }
-
-              group.addTask {
-                try await self.mainQueue.sleep(for: 0.5)
-                await send(.gameLoaded)
-              }
-            }
-            for music in AudioPlayerClient.Sound.allMusic {
-              await self.audioPlayer.stop(music)
-            }
-          }
-
-        case .pan(.began, _):
-          state.isPanning = true
-          return .none
-
-        case let .pan(.changed, .some(panData)):
-          guard panData.normalizedPoint.isAwayFromCorners else { return .none }
-
-          if let lastLetter = state.selectedWord.last,
-            !lastLetter.isTouching(panData.cubeFaceState),
-            !state.selectedWord.contains(panData.cubeFaceState)
-          {
-            return .none
-          }
-
-          if let index = state.selectedWord.firstIndex(of: panData.cubeFaceState) {
-            state.selectedWord.removeSubrange((index + 1)...)
-            return .none
-          } else if state.cubes.isPlayable(
-            side: panData.cubeFaceState.side, index: panData.cubeFaceState.index)
-          {
-            state.selectedWord.append(panData.cubeFaceState)
-            return .none
-          }
-
-          return .none
-
-        case .pan(.cancelled, _), .pan(.ended, .none), .pan(.failed, _):
-          state.isPanning = false
-          state.selectedWord = []
-          return .none
-
-        case .pan:
-          state.isPanning = false
-          return .none
-
-        case .savedGamesLoaded:
-          return .none
-
-        case .settingsButtonTapped:
-          state.isSettingsPresented = true
-          return .none
-
-        case let .submitButtonTapped(reaction: reaction),
-          let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
-
-          let move = Move(
-            playedAt: self.mainRunLoop.now.date,
-            playerIndex: state.turnBasedContext?.localPlayerIndex,
-            reactions: zip(state.turnBasedContext?.localPlayerIndex, reaction)
-              .map { [$0: $1] },
-            score: state.selectedWordScore,
-            type: .playedWord(state.selectedWord)
-          )
-
-          let result = verify(
-            move: move,
-            on: &state.cubes,
-            isValidWord: { self.dictionary.contains($0, state.language) },
-            previousMoves: state.moves
-          )
-
-          defer { state.selectedWord = [] }
-
-          guard result != nil else { return .none }
-
-          state.moves.append(move)
-
-          return .fireAndForget { [state] in
-            await withThrowingTaskGroup(of: Void.self) { group in
-              for face in state.selectedWord where !state.cubes[face.index].isInPlay {
-                group.addTask {
-                  try await self.mainQueue
-                    .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
-                  await self.audioPlayer.play(.cubeRemove)
-                }
-              }
-            }
-          }
-
-        case let .tap(.began, face):
-          state.optimisticallySelectedFace = nil
-
-          // If tapping off the cube, deselect everything
-          guard
-            let face = face,
-            state.cubes.isPlayable(side: face.side, index: face.index)
-          else {
-            state.selectedWord = []
-            return .none
-          }
-
-          // If tapping on a previously selected face then we may back up to that selected face
-          if let index = state.selectedWord.firstIndex(of: face) {
-            // If not tapping on the last selected face then optimistically back up the selection to
-            // that face
-            if index != state.selectedWord.endIndex - 1 {
-              state.optimisticallySelectedFace = face
-              state.selectedWord.removeSubrange((index + 1)...)
-            }
-          } else {
-            // If tapping on a face not connected to the previously selected face, deselect
-            // everything
-            if let lastLetter = state.selectedWord.last,
-              !lastLetter.isTouching(face)
-            {
-              state.selectedWord = []
-            } else {
-              state.optimisticallySelectedFace = face
-              state.selectedWord.append(face)
-            }
-          }
-
-          return .none
-
-        case let .tap(.ended, face):
-          defer { state.optimisticallySelectedFace = nil }
-
-          guard
-            !state.isPanning,
-            let face = face,
-            face != state.optimisticallySelectedFace,
-            state.cubes.isPlayable(side: face.side, index: face.index)
-          else {
-            return .none
-          }
-
-          if let index = state.selectedWord.firstIndex(of: face) {
-            // If not tapping on the last selected face then optimistically back up the selection to
-            // that face
-            state.selectedWord.removeSubrange(index...)
-          } else {
-            state.selectedWord = []
-          }
-
-          return .none
-
-        case .tap(.cancelled, _),
-          .tap(.failed, _):
-          state.optimisticallySelectedFace = nil
-          return .none
-
-        case .tap:
-          return .none
-
-        case let .timerTick(time):
-          state.gameCurrentTime = time
-          if state.isYourTurn && !state.isGameOver {
-            state.secondsPlayed += 1
-          }
-          return .none
-
-        case .trayButtonTapped:
-          return .none
-
-        case .upgradeInterstitial(.delegate(.close)),
-          .upgradeInterstitial(.delegate(.fullGamePurchased)):
-          state.upgradeInterstitial = nil
-          return .none
-
-        case .upgradeInterstitial:
-          return .none
-
-        case .wordSubmitButton:
-          return .none
-        }
-      }
+    CombineReducers {
+      Reduce(self.core)
       Scope(state: \.wordSubmitButtonFeature, action: /Action.wordSubmitButton) {
         WordSubmitButtonFeature()
       }
@@ -516,18 +221,335 @@ public struct Game: ReducerProtocol {
     }
     .onChange(of: \.selectedWord) { selectedWord, state, _ in
       state.selectedWordIsValid =
-      !state.selectedWordHasAlreadyBeenPlayed
-      && self.dictionary.contains(state.selectedWordString, state.language)
+        !state.selectedWordHasAlreadyBeenPlayed
+        && self.dictionary.contains(state.selectedWordString, state.language)
       return .none
     }
     .filterActionsForYourTurn()
-    .ifLet(state: \.gameOver, action: /Action.gameOver) {
-      GameOver()
-    }
-    .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-      UpgradeInterstitial()
+    .presentationDestination(state: \.$destination, action: /Action.destination) {
+      Destinations()
     }
     .sounds()
+  }
+
+  private func core(reducing state: inout State, action: Action) -> Effect<Action, Never> {
+    switch action {
+    case .activeGames:
+      return .none
+
+    case .cancelButtonTapped:
+      state.selectedWord = []
+      return .none
+
+    case let .confirmRemoveCube(index):
+      state.bottomMenu = nil
+      state.removeCube(at: index, playedAt: self.date())
+      state.selectedWord = []
+      return .none
+
+    case .delayedShowUpgradeInterstitial:
+      state.destination = .upgradeInterstitial(UpgradeInterstitial.State())
+      return .none
+
+    case .destination(.presented(.alert(.dontForfeitButtonTapped))):
+      state.destination = nil
+      return .none
+
+    case .destination(.presented(.alert(.forfeitButtonTapped))):
+      state.destination = nil
+
+      guard let match = state.turnBasedContext?.match
+      else { return .none }
+
+      return .fireAndForget {
+        let localPlayer = self.gameCenter.localPlayer.localPlayer()
+        let currentParticipantIsLocalPlayer =
+          match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+
+        if currentParticipantIsLocalPlayer {
+          try await self.gameCenter.turnBasedMatch.endMatchInTurn(
+            .init(
+              for: match.matchId,
+              matchData: match.matchData ?? Data(),
+              localPlayerId: localPlayer.gamePlayerId,
+              localPlayerMatchOutcome: .quit,
+              message: "\(localPlayer.displayName) forfeited the match."
+            )
+          )
+        } else {
+          try await self.gameCenter.turnBasedMatch
+            .participantQuitOutOfTurn(match.matchId)
+        }
+      }
+
+    case .destination(.presented(.upgradeInterstitial(.delegate(.close)))),
+      .destination(.presented(.upgradeInterstitial(.delegate(.fullGamePurchased)))):
+
+      state.destination = nil
+      return .none
+
+    case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
+      state = State(inProgressGame: inProgressGame)
+      return .none
+
+    case .destination:
+      return .none
+
+    case .dismissBottomMenu:
+      state.bottomMenu = nil
+      return .none
+
+    case let .doubleTap(index):
+      guard state.selectedWord.count <= 1
+      else { return .none }
+
+      return state.tryToRemoveCube(at: index)
+
+    case .endGameButtonTapped:
+      return .none
+
+    case .exitButtonTapped:
+      return .none
+
+    case .forfeitGameButtonTapped:
+      state.destination = .alert(
+        AlertState(
+          title: TextState("Are you sure?"),
+          message: TextState(
+            """
+            Forfeiting will end the game and your opponent will win. Are you sure you want to \
+            forfeit?
+            """
+          ),
+          primaryButton: .default(
+            TextState("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)
+          ),
+          secondaryButton: .destructive(
+            TextState("Yes, forfeit"), action: .send(.forfeitButtonTapped)
+          )
+        )
+      )
+      return .none
+
+    case .gameCenter:
+      return .none
+
+    case .gameLoaded:
+      state.isGameLoaded = true
+      return .run { send in
+        for await instant in self.mainRunLoop.timer(interval: .seconds(1)) {
+          await send(.timerTick(instant.date))
+        }
+      }
+
+    case let .lowPowerModeChanged(isOn):
+      state.isOnLowPowerMode = isOn
+      return .none
+
+    case .matchesLoaded:
+      return .none
+
+    case .menuButtonTapped:
+      state.bottomMenu = .gameMenu(state: state)
+      return .none
+
+    case .task:
+      guard !state.isGameOver else { return .none }
+      state.gameCurrentTime = self.date()
+
+      return .run { [gameContext = state.gameContext] send in
+        await withThrowingTaskGroup(of: Void.self) { group in
+          group.addTask {
+            for await isLowPower in await self.lowPowerMode.start() {
+              await send(.lowPowerModeChanged(isLowPower))
+            }
+          }
+
+          if gameContext.isTurnBased {
+            group.addTask {
+              let playedGamesCount = await self.userDefaults
+                .incrementMultiplayerOpensCount()
+              let isFullGamePurchased = self.apiClient.currentPlayer()?.appleReceipt != nil
+              guard
+                !isFullGamePurchased,
+                shouldShowInterstitial(
+                  gamePlayedCount: playedGamesCount,
+                  gameContext: .init(gameContext: gameContext),
+                  serverConfig: self.serverConfig.config()
+                )
+              else { return }
+              try await self.mainRunLoop.sleep(for: .seconds(3))
+              await send(.delayedShowUpgradeInterstitial, animation: .default)
+            }
+          }
+
+          group.addTask {
+            try await self.mainQueue.sleep(for: 0.5)
+            await send(.gameLoaded)
+          }
+        }
+        for music in AudioPlayerClient.Sound.allMusic {
+          await self.audioPlayer.stop(music)
+        }
+      }
+
+    case .pan(.began, _):
+      state.isPanning = true
+      return .none
+
+    case let .pan(.changed, .some(panData)):
+      guard panData.normalizedPoint.isAwayFromCorners else { return .none }
+
+      if let lastLetter = state.selectedWord.last,
+        !lastLetter.isTouching(panData.cubeFaceState),
+        !state.selectedWord.contains(panData.cubeFaceState)
+      {
+        return .none
+      }
+
+      if let index = state.selectedWord.firstIndex(of: panData.cubeFaceState) {
+        state.selectedWord.removeSubrange((index + 1)...)
+        return .none
+      } else if state.cubes.isPlayable(
+        side: panData.cubeFaceState.side, index: panData.cubeFaceState.index)
+      {
+        state.selectedWord.append(panData.cubeFaceState)
+        return .none
+      }
+
+      return .none
+
+    case .pan(.cancelled, _), .pan(.ended, .none), .pan(.failed, _):
+      state.isPanning = false
+      state.selectedWord = []
+      return .none
+
+    case .pan:
+      state.isPanning = false
+      return .none
+
+    case .savedGamesLoaded:
+      return .none
+
+    case .settingsButtonTapped:
+      state.isSettingsPresented = true
+      return .none
+
+    case let .submitButtonTapped(reaction: reaction),
+      let .wordSubmitButton(.delegate(.confirmSubmit(reaction: reaction))):
+
+      let move = Move(
+        playedAt: self.mainRunLoop.now.date,
+        playerIndex: state.turnBasedContext?.localPlayerIndex,
+        reactions: zip(state.turnBasedContext?.localPlayerIndex, reaction)
+          .map { [$0: $1] },
+        score: state.selectedWordScore,
+        type: .playedWord(state.selectedWord)
+      )
+
+      let result = verify(
+        move: move,
+        on: &state.cubes,
+        isValidWord: { self.dictionary.contains($0, state.language) },
+        previousMoves: state.moves
+      )
+
+      defer { state.selectedWord = [] }
+
+      guard result != nil else { return .none }
+
+      state.moves.append(move)
+
+      return .fireAndForget { [state] in
+        await withThrowingTaskGroup(of: Void.self) { group in
+          for face in state.selectedWord where !state.cubes[face.index].isInPlay {
+            group.addTask {
+              try await self.mainQueue
+                .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
+              await self.audioPlayer.play(.cubeRemove)
+            }
+          }
+        }
+      }
+
+    case let .tap(.began, face):
+      state.optimisticallySelectedFace = nil
+
+      // If tapping off the cube, deselect everything
+      guard
+        let face = face,
+        state.cubes.isPlayable(side: face.side, index: face.index)
+      else {
+        state.selectedWord = []
+        return .none
+      }
+
+      // If tapping on a previously selected face then we may back up to that selected face
+      if let index = state.selectedWord.firstIndex(of: face) {
+        // If not tapping on the last selected face then optimistically back up the selection to
+        // that face
+        if index != state.selectedWord.endIndex - 1 {
+          state.optimisticallySelectedFace = face
+          state.selectedWord.removeSubrange((index + 1)...)
+        }
+      } else {
+        // If tapping on a face not connected to the previously selected face, deselect
+        // everything
+        if let lastLetter = state.selectedWord.last,
+          !lastLetter.isTouching(face)
+        {
+          state.selectedWord = []
+        } else {
+          state.optimisticallySelectedFace = face
+          state.selectedWord.append(face)
+        }
+      }
+
+      return .none
+
+    case let .tap(.ended, face):
+      defer { state.optimisticallySelectedFace = nil }
+
+      guard
+        !state.isPanning,
+        let face = face,
+        face != state.optimisticallySelectedFace,
+        state.cubes.isPlayable(side: face.side, index: face.index)
+      else {
+        return .none
+      }
+
+      if let index = state.selectedWord.firstIndex(of: face) {
+        // If not tapping on the last selected face then optimistically back up the selection to
+        // that face
+        state.selectedWord.removeSubrange(index...)
+      } else {
+        state.selectedWord = []
+      }
+
+      return .none
+
+    case .tap(.cancelled, _),
+      .tap(.failed, _):
+      state.optimisticallySelectedFace = nil
+      return .none
+
+    case .tap:
+      return .none
+
+    case let .timerTick(time):
+      state.gameCurrentTime = time
+      if state.isYourTurn && !state.isGameOver {
+        state.secondsPlayed += 1
+      }
+      return .none
+
+    case .trayButtonTapped:
+      return .none
+
+    case .wordSubmitButton:
+      return .none
+    }
   }
 }
 
@@ -583,7 +605,8 @@ extension Game.State {
   }
 
   public var isGameOver: Bool {
-    self.gameOver != nil
+    guard case .gameOver = self.destination else { return false }
+    return true
   }
 
   public var isResumable: Bool {
