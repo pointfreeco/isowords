@@ -173,9 +173,17 @@ var package = Package(
 // MARK: - client
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.39.0")
+    .package(url: "https://github.com/google/swift-benchmark", from: "0.1.0"),
+
+    .package(
+      url: "https://github.com/pointfreeco/swift-composable-architecture",
+//      from: "0.39.0"
+      branch: "effect-operation"
+    ),
   ])
   package.products.append(contentsOf: [
+    .executable(name: "isowords-benchmark", targets: ["isowords-benchmark"]),
+
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
     .library(name: "AnyComparable", targets: ["AnyComparable"]),
     .library(name: "ApiClient", targets: ["ApiClient"]),
@@ -232,6 +240,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "VocabFeature", targets: ["VocabFeature"]),
   ])
   package.targets.append(contentsOf: [
+    .executableTarget(
+      name: "isowords-benchmark",
+      dependencies: [
+        "AppFeature",
+        .product(name: "Benchmark", package: "swift-benchmark"),
+      ]
+    ),
     .target(
       name: "ActiveGamesFeature",
       dependencies: [
