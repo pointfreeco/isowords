@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Foundation
 import ServerConfig
 
 extension ServerConfigClient {

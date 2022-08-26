@@ -1,5 +1,6 @@
 #if DEBUG
   import ComposableArchitecture
+  import Foundation
   import SQLite3
 
   extension LocalDatabaseClient {
