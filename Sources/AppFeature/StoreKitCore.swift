@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import ComposableStoreKit
+import Foundation
 import SharedModels
 
 public struct ReceiptFinalizationEnvelope: Equatable {

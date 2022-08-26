@@ -322,10 +322,10 @@ public struct GameOver: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+    .ifLet(\.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
       NotificationsAuthAlert()
     }
-    .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }

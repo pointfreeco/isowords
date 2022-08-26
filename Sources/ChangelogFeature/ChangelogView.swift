@@ -95,7 +95,7 @@ public struct ChangelogReducer: ReducerProtocol {
         }
       }
     }
-    .forEach(state: \.changelog, action: /Action.change(id:action:)) {
+    .forEach(\.changelog, action: /Action.change(id:action:)) {
       Change()
     }
   }

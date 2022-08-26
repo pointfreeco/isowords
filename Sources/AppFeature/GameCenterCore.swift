@@ -1,6 +1,7 @@
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
+import Foundation
 import GameFeature
 import SharedModels
 

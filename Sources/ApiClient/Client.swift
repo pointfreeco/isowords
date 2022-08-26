@@ -11,7 +11,7 @@ extension DependencyValues {
     set { self[ApiClientKey.self] = newValue }
   }
 
-  public enum ApiClientKey: DependencyKey {
+  public enum ApiClientKey: TestDependencyKey {
     public static let testValue = ApiClient.unimplemented
   }
 }

@@ -213,17 +213,15 @@ public struct DailyChallengeReducer: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.destination, action: /Action.destination) {
-      EmptyReducer().ifLet(
-        state: /DestinationState.results,
+    .ifLet(\.destination, action: /Action.destination) {
+      EmptyReducer().ifCaseLet(
+        /DestinationState.results,
         action: /DestinationAction.dailyChallengeResults
       ) {
         DailyChallengeResults()
       }
     }
-    .ifLet(
-      state: \.notificationsAuthAlert, action: /Action.notificationsAuthAlert
-    ) {
+    .ifLet(\.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
       NotificationsAuthAlert()
     }
   }

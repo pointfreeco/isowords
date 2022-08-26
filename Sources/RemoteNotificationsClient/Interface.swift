@@ -7,7 +7,7 @@ extension DependencyValues {
     set { self[RemoteNotificationsClientKey.self] = newValue }
   }
 
-  private enum RemoteNotificationsClientKey: LiveDependencyKey {
+  private enum RemoteNotificationsClientKey: DependencyKey {
     static let liveValue = RemoteNotificationsClient.live
     static let testValue = RemoteNotificationsClient.unimplemented
   }

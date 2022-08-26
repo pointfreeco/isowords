@@ -104,7 +104,7 @@ public struct Vocab: ReducerProtocol {
         }
       }
     }
-    .ifLet(state: \.cubePreview, action: /Action.preview) {
+    .ifLet(\.cubePreview, action: /Action.preview) {
       CubePreview()
     }
   }

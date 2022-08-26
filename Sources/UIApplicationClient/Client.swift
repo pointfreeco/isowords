@@ -7,7 +7,7 @@ extension DependencyValues {
     set { self[UIApplicationClientKey.self] = newValue }
   }
 
-  private enum UIApplicationClientKey: LiveDependencyKey {
+  private enum UIApplicationClientKey: DependencyKey {
     static let liveValue = UIApplicationClient.live
     static let testValue = UIApplicationClient.unimplemented
   }

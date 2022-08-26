@@ -7,7 +7,7 @@ import ServerRouter
 import SharedModels
 import TcaHelpers
 
-extension DependencyValues.ApiClientKey: LiveDependencyKey {
+extension DependencyValues.ApiClientKey: DependencyKey {
   public static let liveValue = ApiClient.live
 }
 

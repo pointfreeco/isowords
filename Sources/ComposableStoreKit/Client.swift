@@ -8,7 +8,7 @@ extension DependencyValues {
     set { self[StoreKitClientKey.self] = newValue }
   }
 
-  private enum StoreKitClientKey: LiveDependencyKey {
+  private enum StoreKitClientKey: DependencyKey {
     static let liveValue = StoreKitClient.live
     static let testValue = StoreKitClient.unimplemented
   }

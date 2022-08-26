@@ -62,8 +62,8 @@ public struct Demo: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Scope(state: \.step, action: .self) {
       EmptyReducer()
-        .ifLet(
-          state: /State.Step.onboarding,
+        .ifCaseLet(
+          /State.Step.onboarding,
           action: /Action.onboarding
         ) {
           Onboarding()

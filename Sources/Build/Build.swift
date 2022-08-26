@@ -9,7 +9,7 @@ extension DependencyValues {
     set { self[BuildKey.self] = newValue }
   }
 
-  private enum BuildKey: LiveDependencyKey {
+  private enum BuildKey: DependencyKey {
     static let liveValue = Build.live
     static let testValue = Build.unimplemented
   }

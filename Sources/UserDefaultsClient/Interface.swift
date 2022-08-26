@@ -7,7 +7,7 @@ extension DependencyValues {
     set { self[UserDefaultsClientKey.self] = newValue }
   }
 
-  private enum UserDefaultsClientKey: DependencyKey {
+  private enum UserDefaultsClientKey: TestDependencyKey {
     static let testValue = UserDefaultsClient.unimplemented
   }
 }

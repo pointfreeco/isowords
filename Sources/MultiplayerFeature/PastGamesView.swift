@@ -48,7 +48,7 @@ public struct PastGames: ReducerProtocol {
         }
       }
     }
-    .forEach(state: \.pastGames, action: /Action.pastGame) {
+    .forEach(\.pastGames, action: /Action.pastGame) {
       PastGame()
     }
   }

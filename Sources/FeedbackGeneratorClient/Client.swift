@@ -6,7 +6,7 @@ extension DependencyValues {
     set { self[FeedbackGeneratorClientKey.self] = newValue }
   }
 
-  private enum FeedbackGeneratorClientKey: LiveDependencyKey {
+  private enum FeedbackGeneratorClientKey: DependencyKey {
     static let liveValue = FeedbackGeneratorClient.live
     static let testValue = FeedbackGeneratorClient.unimplemented
   }

@@ -340,31 +340,31 @@ public struct Home: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.changelog, action: /Action.changelog) {
+    .ifLet(\.changelog, action: /Action.changelog) {
       ChangelogReducer()
     }
-    .ifLet(state: \.destination, action: /Action.destination) {
+    .ifLet(\.destination, action: /Action.destination) {
       EmptyReducer()
-        .ifLet(
-          state: /DestinationState.dailyChallenge,
+        .ifCaseLet(
+          /DestinationState.dailyChallenge,
           action: /DestinationAction.dailyChallenge
         ) {
           DailyChallengeReducer()
         }
-        .ifLet(
-          state: /DestinationState.leaderboard,
+        .ifCaseLet(
+          /DestinationState.leaderboard,
           action: /DestinationAction.leaderboard
         ) {
           Leaderboard()
         }
-        .ifLet(
-          state: /DestinationState.multiplayer,
+        .ifCaseLet(
+          /DestinationState.multiplayer,
           action: /DestinationAction.multiplayer
         ) {
           Multiplayer()
         }
-        .ifLet(
-          state: /DestinationState.solo,
+        .ifCaseLet(
+          /DestinationState.solo,
           action: /DestinationAction.solo
         ) {
           Solo()

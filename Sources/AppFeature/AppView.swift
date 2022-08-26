@@ -86,7 +86,7 @@ public struct AppReducer: ReducerProtocol {
 
   public var body: some ReducerProtocol<State, Action> {
     self.core
-      .ifLet(state: \.onboarding, action: /Action.onboarding) {
+      .ifLet(\.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
       .onChange(of: \.game?.moves) { moves, state, _ in

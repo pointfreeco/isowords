@@ -67,6 +67,7 @@ public struct CubePreview: ReducerProtocol {
   public init() {}
 
   public var body: some ReducerProtocol<State, Action> {
+    BindingReducer()
     Reduce { state, action in
       enum SelectionID {}
 
@@ -147,7 +148,6 @@ public struct CubePreview: ReducerProtocol {
         .cancellable(id: SelectionID.self)
       }
     }
-    .binding()
     .haptics(
       isEnabled: \.isHapticsEnabled,
       triggerOnChangeOf: \.selectedCubeFaces

@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Foundation
 import SharedModels
 
 extension DependencyValues {
@@ -7,7 +8,7 @@ extension DependencyValues {
     set { self[LocalDatabaseClientKey.self] = newValue }
   }
 
-  private enum LocalDatabaseClientKey: DependencyKey {
+  private enum LocalDatabaseClientKey: TestDependencyKey {
     static let testValue = LocalDatabaseClient.unimplemented
   }
 }

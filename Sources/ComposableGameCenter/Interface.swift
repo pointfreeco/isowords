@@ -9,7 +9,7 @@ extension DependencyValues {
     set { self[GameCenterClientKey.self] = newValue }
   }
 
-  private enum GameCenterClientKey: LiveDependencyKey {
+  private enum GameCenterClientKey: DependencyKey {
     static let liveValue = GameCenterClient.live
     static let testValue = GameCenterClient.unimplemented
   }

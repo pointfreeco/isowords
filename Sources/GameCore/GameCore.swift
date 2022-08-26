@@ -196,17 +196,17 @@ public struct Game: ReducerProtocol {
         return .none
       }
       .filterActionsForYourTurn()
-      .ifLet(state: \.gameOver, action: /Action.gameOver) {
+      .ifLet(\.gameOver, action: /Action.gameOver) {
         GameOver()
       }
-      .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
         UpgradeInterstitial()
       }
       .sounds()
   }
 
   @ReducerBuilderOf<Self>
-  var core: some ReducerProtocolOf<Self> {
+  var core: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
       case .activeGames:

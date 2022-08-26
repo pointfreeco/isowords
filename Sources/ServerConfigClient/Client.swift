@@ -7,7 +7,7 @@ extension DependencyValues {
     set { self[ServerConfigClientKey.self] = newValue }
   }
 
-  private enum ServerConfigClientKey: DependencyKey {
+  private enum ServerConfigClientKey: TestDependencyKey {
     static let testValue = ServerConfigClient.unimplemented
   }
 }

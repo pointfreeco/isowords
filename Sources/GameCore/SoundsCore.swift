@@ -2,13 +2,13 @@ import AudioPlayerClient
 import ComposableArchitecture
 import SelectionSoundsCore
 
-extension ReducerProtocolOf<Game> {
+extension ReducerProtocol<Game.State, Game.Action> {
   func sounds() -> GameSounds<Self> {
     GameSounds(upstream: self)
   }
 }
 
-struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
+struct GameSounds<Upstream: ReducerProtocol<Game.State, Game.Action>>: ReducerProtocol {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
   @Dependency(\.dictionary) var dictionary
@@ -18,7 +18,7 @@ struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
 
   enum CubeShakingID {}
 
-  var body: some ReducerProtocolOf<Game> {
+  var body: some ReducerProtocol<Game.State, Game.Action> {
     self.core
       .onChange(of: { $0.gameOver == nil }) { _, _, _ in
         .fireAndForget {
@@ -118,7 +118,7 @@ struct GameSounds<Upstream: ReducerProtocolOf<Game>>: ReducerProtocol {
   }
 
   @ReducerBuilderOf<Game>
-  var core: some ReducerProtocolOf<Game> {
+  var core: some ReducerProtocol<Game.State, Game.Action> {
     self.upstream
     Reduce { state, action in
       switch action {

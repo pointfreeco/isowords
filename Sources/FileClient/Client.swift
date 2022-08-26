@@ -9,7 +9,7 @@ extension DependencyValues {
     set { self[FileClientKey.self] = newValue }
   }
 
-  private enum FileClientKey: LiveDependencyKey {
+  private enum FileClientKey: DependencyKey {
     static let liveValue = FileClient.live
     static let testValue = FileClient.unimplemented
   }

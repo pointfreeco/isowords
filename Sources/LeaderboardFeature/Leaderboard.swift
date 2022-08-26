@@ -136,7 +136,7 @@ public struct Leaderboard: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.cubePreview, action: /Action.cubePreview) {
+    .ifLet(\.cubePreview, action: /Action.cubePreview) {
       CubePreview()
     }
 

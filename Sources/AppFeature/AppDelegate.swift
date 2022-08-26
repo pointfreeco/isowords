@@ -1,6 +1,7 @@
 import AudioPlayerClient
 import ComposableArchitecture
 import ComposableUserNotifications
+import Foundation
 import SettingsFeature
 
 public struct AppDelegateReducer: ReducerProtocol {

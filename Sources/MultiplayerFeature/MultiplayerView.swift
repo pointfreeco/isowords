@@ -69,9 +69,9 @@ public struct Multiplayer: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \State.destination, action: /Action.destination) {
-      EmptyReducer().ifLet(
-        state: /DestinationState.pastGames,
+    .ifLet(\.destination, action: /Action.destination) {
+      EmptyReducer().ifCaseLet(
+        /DestinationState.pastGames,
         action: /DestinationAction.pastGames
       ) {
         PastGames()

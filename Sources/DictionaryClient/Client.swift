@@ -7,7 +7,7 @@ extension DependencyValues {
     set { self[DictionaryClientKey.self] = newValue }
   }
 
-  private enum DictionaryClientKey: DependencyKey {
+  private enum DictionaryClientKey: TestDependencyKey {
     static let testValue = DictionaryClient.unimplemented
   }
 }

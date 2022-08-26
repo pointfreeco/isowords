@@ -8,7 +8,7 @@ extension DependencyValues {
     set { self[UserNotificationClientKey.self] = newValue }
   }
 
-  private enum UserNotificationClientKey: LiveDependencyKey {
+  private enum UserNotificationClientKey: DependencyKey {
     static let liveValue = UserNotificationClient.live
     static let testValue = UserNotificationClient.unimplemented
   }

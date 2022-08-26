@@ -8,7 +8,7 @@ extension DependencyValues {
     set { self[DeviceIdentifierKey.self] = newValue }
   }
 
-  private enum DeviceIdentifierKey: LiveDependencyKey {
+  private enum DeviceIdentifierKey: DependencyKey {
     static let liveValue = DeviceIdentifier.live
     static let testValue = DeviceIdentifier.unimplemented
   }

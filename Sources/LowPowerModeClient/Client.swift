@@ -8,7 +8,7 @@ extension DependencyValues {
     set { self[LowPowerModeClientKey.self] = newValue }
   }
 
-  private enum LowPowerModeClientKey: LiveDependencyKey {
+  private enum LowPowerModeClientKey: DependencyKey {
     static let liveValue = LowPowerModeClient.live
     static let testValue = LowPowerModeClient.unimplemented
   }

@@ -25,7 +25,7 @@ public struct NagBannerFeature: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.self, action: /Action.nagBanner) {
+    .ifLet(\.self, action: /Action.nagBanner) {
       NagBanner()
     }
   }
@@ -60,7 +60,7 @@ public struct NagBanner: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(state: \.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }

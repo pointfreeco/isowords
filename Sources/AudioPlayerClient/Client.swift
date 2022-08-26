@@ -7,7 +7,7 @@ extension DependencyValues {
     set { self[AudioPlayerClientKey.self] = newValue }
   }
 
-  private enum AudioPlayerClientKey: DependencyKey {
+  private enum AudioPlayerClientKey: TestDependencyKey {
     static let testValue = AudioPlayerClient.unimplemented
   }
 }

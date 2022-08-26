@@ -1,5 +1,6 @@
 import ClientModels
 import ComposableArchitecture
+import Foundation
 import GameOverFeature
 import SharedModels
 
