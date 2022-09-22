@@ -7,19 +7,19 @@ extension ReducerProtocol {
     isEnabled: @escaping (State) -> Bool,
     triggerOnChangeOf trigger: @escaping (State) -> Trigger
   ) -> Haptics<Self, Trigger> {
-    Haptics(upstream: self, isEnabled: isEnabled, trigger: trigger)
+    Haptics(base: self, isEnabled: isEnabled, trigger: trigger)
   }
 }
 
-public struct Haptics<Upstream: ReducerProtocol, Trigger: Equatable>: ReducerProtocol {
-  let upstream: Upstream
-  let isEnabled: (Upstream.State) -> Bool
-  let trigger: (Upstream.State) -> Trigger
+public struct Haptics<Base: ReducerProtocol, Trigger: Equatable>: ReducerProtocol {
+  let base: Base
+  let isEnabled: (Base.State) -> Bool
+  let trigger: (Base.State) -> Trigger
 
   @Dependency(\.feedbackGenerator) var feedbackGenerator
 
-  public var body: some ReducerProtocol<Upstream.State, Upstream.Action> {
-    self.upstream.onChange(of: self.trigger) { _, _, state, _ in
+  public var body: some ReducerProtocol<Base.State, Base.Action> {
+    self.base.onChange(of: self.trigger) { _, _, state, _ in
       guard self.isEnabled(state) else { return .none }
       return .fireAndForget { await self.feedbackGenerator.selectionChanged() }
     }
