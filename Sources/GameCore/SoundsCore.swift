@@ -3,18 +3,18 @@ import ComposableArchitecture
 import SelectionSoundsCore
 
 extension ReducerProtocol<Game.State, Game.Action> {
-  func sounds() -> GameSounds<Self> {
-    GameSounds(upstream: self)
+  func sounds() -> some ReducerProtocol<Game.State, Game.Action> {
+    GameSounds(base: self)
   }
 }
 
-struct GameSounds<Upstream: ReducerProtocol<Game.State, Game.Action>>: ReducerProtocol {
+private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: ReducerProtocol {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
   @Dependency(\.dictionary) var dictionary
   @Dependency(\.mainQueue) var mainQueue
 
-  let upstream: Upstream
+  let base: Base
 
   enum CubeShakingID {}
 
@@ -119,7 +119,7 @@ struct GameSounds<Upstream: ReducerProtocol<Game.State, Game.Action>>: ReducerPr
 
   @ReducerBuilderOf<Game>
   var core: some ReducerProtocol<Game.State, Game.Action> {
-    self.upstream
+    self.base
     Reduce { state, action in
       switch action {
       case .task:
