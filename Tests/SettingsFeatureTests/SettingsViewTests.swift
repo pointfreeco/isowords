@@ -21,7 +21,7 @@ class SettingsViewTests: XCTestCase {
         ),
         navPresentationStyle: .navigation
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
@@ -33,7 +33,7 @@ class SettingsViewTests: XCTestCase {
         ),
         navPresentationStyle: .navigation
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
@@ -45,7 +45,7 @@ class SettingsViewTests: XCTestCase {
         ),
         navPresentationStyle: .navigation
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -58,7 +58,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
@@ -71,7 +71,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -84,7 +84,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
@@ -97,7 +97,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -110,7 +110,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -123,7 +123,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -136,7 +136,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
@@ -147,7 +147,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
@@ -158,7 +158,7 @@ class SettingsViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }

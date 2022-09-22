@@ -33,7 +33,7 @@ class UpgradeInterstitialViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -46,7 +46,7 @@ class UpgradeInterstitialViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }
