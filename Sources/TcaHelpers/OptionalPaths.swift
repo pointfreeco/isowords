@@ -163,21 +163,21 @@ extension OptionalPath where Root == Value? {
 extension ReducerProtocol {
   @inlinable
   public func _ifLet<
-    Wrapped: ReducerProtocol,
-    StatePath: Path<State, Wrapped.State>,
-    ActionPath: Path<Action, Wrapped.Action>
+    Child: ReducerProtocol,
+    StatePath: Path<State, Child.State>,
+    ActionPath: Path<Action, Child.Action>
   >(
-    state toWrappedState: StatePath,
-    action toWrappedAction: ActionPath,
-    @ReducerBuilderOf<Wrapped> then wrapped: () -> Wrapped,
+    state toChildState: StatePath,
+    action toChildAction: ActionPath,
+    @ReducerBuilderOf<Child> then child: () -> Child,
     file: StaticString = #file,
     line: UInt = #line
-  ) -> OptionalPathReducer<StatePath, ActionPath, Self, Wrapped> {
+  ) -> OptionalPathReducer<StatePath, ActionPath, Self, Child> {
     OptionalPathReducer(
-      upstream: self,
-      wrapped: wrapped(),
-      toWrappedState: toWrappedState,
-      toWrappedAction: toWrappedAction
+      parent: self,
+      child: child(),
+      toChildState: toChildState,
+      toChildAction: toChildAction
     )
   }
 }
@@ -185,59 +185,59 @@ extension ReducerProtocol {
 public struct OptionalPathReducer<
   StatePath: Path,
   ActionPath: Path,
-  Upstream: ReducerProtocol<StatePath.Root, ActionPath.Root>,
-  Wrapped: ReducerProtocol<StatePath.Value, ActionPath.Value>
+  Parent: ReducerProtocol<StatePath.Root, ActionPath.Root>,
+  Child: ReducerProtocol<StatePath.Value, ActionPath.Value>
 >: ReducerProtocol {
   @usableFromInline
-  let upstream: Upstream
-  let wrapped: Wrapped
-  let toWrappedState: StatePath
-  let toWrappedAction: ActionPath
+  let parent: Parent
+  let child: Child
+  let toChildState: StatePath
+  let toChildAction: ActionPath
 
   @usableFromInline
   init(
-    upstream: Upstream,
-    wrapped: Wrapped,
-    toWrappedState: StatePath,
-    toWrappedAction: ActionPath
+    parent: Parent,
+    child: Child,
+    toChildState: StatePath,
+    toChildAction: ActionPath
   ) {
-    self.upstream = upstream
-    self.wrapped = wrapped
-    self.toWrappedState = toWrappedState
-    self.toWrappedAction = toWrappedAction
+    self.parent = parent
+    self.child = child
+    self.toChildState = toChildState
+    self.toChildAction = toChildAction
   }
 
   @inlinable
   public func reduce(
-    into state: inout Upstream.State, action: Upstream.Action
-  ) -> Effect<Upstream.Action, Never> {
+    into state: inout Parent.State, action: Parent.Action
+  ) -> Effect<Parent.Action, Never> {
     return .merge(
       self.reduceWrapped(into: &state, action: action),
-      self.upstream.reduce(into: &state, action: action)
+      self.parent.reduce(into: &state, action: action)
     )
   }
 
   @usableFromInline
   func reduceWrapped(
-    into state: inout Upstream.State, action: Upstream.Action
-  ) -> Effect<Upstream.Action, Never> {
-    guard let wrappedAction = self.toWrappedAction.extract(from: action)
+    into state: inout Parent.State, action: Parent.Action
+  ) -> Effect<Parent.Action, Never> {
+    guard let childAction = self.toChildAction.extract(from: action)
     else { return Effect<Action, Never>.none }
 
-    guard var wrappedState = self.toWrappedState.extract(from: state)
+    guard var childState = self.toChildState.extract(from: state)
     else {
       // TODO: Runtime warning
       return .none
     }
 
     let effect =
-    self.wrapped.reduce(into: &wrappedState, action: wrappedAction)
-      .map { wrappedAction -> Action in
+    self.child.reduce(into: &childState, action: childAction)
+      .map { childAction -> Action in
         var action = action
-        self.toWrappedAction.set(into: &action, wrappedAction)
+        self.toChildAction.set(into: &action, childAction)
         return action
       }
-    self.toWrappedState.set(into: &state, wrappedState)
+    self.toChildState.set(into: &state, childState)
     return effect
   }
 }

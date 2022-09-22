@@ -2,29 +2,32 @@ import ComposableArchitecture
 
 extension ReducerProtocol {
   @inlinable
-  public func filter(_ predicate: @escaping (State, Action) -> Bool) -> FilterReducer<Self> {
-    FilterReducer(upstream: self, predicate: predicate)
+  public func filter(
+    _ predicate: @escaping (State, Action) -> Bool
+  ) -> some ReducerProtocol<State, Action> {
+    FilterReducer(base: self, predicate: predicate)
   }
 }
 
-public struct FilterReducer<Upstream: ReducerProtocol>: ReducerProtocol {
+@usableFromInline
+struct FilterReducer<Base: ReducerProtocol>: ReducerProtocol {
   @usableFromInline
-  let upstream: Upstream
+  let base: Base
 
   @usableFromInline
-  let predicate: (Upstream.State, Upstream.Action) -> Bool
+  let predicate: (Base.State, Base.Action) -> Bool
 
   @usableFromInline
-  init(upstream: Upstream, predicate: @escaping (Upstream.State, Upstream.Action) -> Bool) {
-    self.upstream = upstream
+  init(base: Base, predicate: @escaping (Base.State, Base.Action) -> Bool) {
+    self.base = base
     self.predicate = predicate
   }
 
   @inlinable
   public func reduce(
-    into state: inout Upstream.State, action: Upstream.Action
-  ) -> Effect<Upstream.Action, Never> {
+    into state: inout Base.State, action: Base.Action
+  ) -> Effect<Base.Action, Never> {
     guard self.predicate(state, action) else { return .none }
-    return self.upstream.reduce(into: &state, action: action)
+    return self.base.reduce(into: &state, action: action)
   }
 }

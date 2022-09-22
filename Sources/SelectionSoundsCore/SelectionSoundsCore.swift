@@ -11,7 +11,7 @@ extension ReducerProtocol {
     selectedWord: @escaping (State) -> [IndexedCubeFace]
   ) -> SelectionSounds<Self> {
     SelectionSounds(
-      upstream: self,
+      base: self,
       contains: contains,
       hasBeenPlayed: hasBeenPlayed,
       puzzle: puzzle,
@@ -20,17 +20,17 @@ extension ReducerProtocol {
   }
 }
 
-public struct SelectionSounds<Upstream: ReducerProtocol>: ReducerProtocol {
-  let upstream: Upstream
-  let contains: (Upstream.State, String) -> Bool
-  let hasBeenPlayed: (Upstream.State, String) -> Bool
-  let puzzle: (Upstream.State) -> Puzzle
-  let selectedWord: (Upstream.State) -> [IndexedCubeFace]
+public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
+  let base: Base
+  let contains: (Base.State, String) -> Bool
+  let hasBeenPlayed: (Base.State, String) -> Bool
+  let puzzle: (Base.State) -> Puzzle
+  let selectedWord: (Base.State) -> [IndexedCubeFace]
 
   @Dependency(\.audioPlayer) var audioPlayer
 
-  public var body: some ReducerProtocol<Upstream.State, Upstream.Action> {
-    self.upstream.onChange(of: self.selectedWord) { previousSelection, selection, state, _ in
+  public var body: some ReducerProtocol<Base.State, Base.Action> {
+    self.base.onChange(of: self.selectedWord) { previousSelection, selection, state, _ in
       return .fireAndForget { [state] in
         if let noteIndex = noteIndex(
           selectedWord: selection,
