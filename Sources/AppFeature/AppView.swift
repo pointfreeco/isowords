@@ -72,13 +72,13 @@ public struct AppReducer: ReducerProtocol {
     case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
   }
 
-  @Dependency(\.database) var database
-  @Dependency(\.dictionary) var dictionary
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.gameCenter.turnBasedMatch.load) var loadTurnBasedMatch
+  @Dependency(\.database.migrate) var migrate
+  @Dependency(\.mainRunLoop.now.date) var now
+  @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.remoteNotifications) var remoteNotifications
-  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.serverConfig.refresh) var refreshServerConfig
   @Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
@@ -133,10 +133,10 @@ public struct AppReducer: ReducerProtocol {
         }
 
         return .run { send in
-          async let migrate: Void = self.database.migrate()
+          async let migrate: Void = self.migrate()
           if self.userDefaults.installationTime <= 0 {
             await self.userDefaults.setInstallationTime(
-              self.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+              self.now.timeIntervalSinceReferenceDate
             )
           }
           await send(
@@ -215,7 +215,7 @@ public struct AppReducer: ReducerProtocol {
         let .home(.activeGames(.turnBasedGameTapped(matchId))):
         return .run { send in
           do {
-            let match = try await self.gameCenter.turnBasedMatch.load(matchId)
+            let match = try await self.loadTurnBasedMatch(matchId)
             await send(
               .gameCenter(
                 .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive: true)))
@@ -233,11 +233,11 @@ public struct AppReducer: ReducerProtocol {
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
         .home(.destination(.solo(.gameButtonTapped(.timed)))):
         state.game = .init(
-          cubes: self.dictionary.randomCubes(.en),
+          cubes: self.randomCubes(.en),
           gameContext: .solo,
-          gameCurrentTime: self.mainRunLoop.now.date,
+          gameCurrentTime: self.now,
           gameMode: .timed,
-          gameStartTime: self.mainRunLoop.now.date,
+          gameStartTime: self.now,
           isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
         )
         return .none
@@ -248,11 +248,11 @@ public struct AppReducer: ReducerProtocol {
           state.home.savedGames.unlimited
           .map { Game.State(inProgressGame: $0) }
           ?? Game.State(
-            cubes: self.dictionary.randomCubes(.en),
+            cubes: self.randomCubes(.en),
             gameContext: .solo,
-            gameCurrentTime: self.mainRunLoop.now.date,
+            gameCurrentTime: self.now,
             gameMode: .unlimited,
-            gameStartTime: self.mainRunLoop.now.date,
+            gameStartTime: self.now,
             isGameLoaded: state.currentGame.game?.isGameLoaded == .some(true)
           )
         return .none
@@ -285,7 +285,7 @@ public struct AppReducer: ReducerProtocol {
             remoteNotifications: self.remoteNotifications,
             userNotifications: self.userNotifications
           )
-          async let refresh = self.serverConfig.refresh()
+          async let refresh = self.refreshServerConfig()
           _ = try await (register, refresh)
         }
 
