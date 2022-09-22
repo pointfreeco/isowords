@@ -23,7 +23,6 @@ public struct NotificationsAuthAlert: ReducerProtocol {
     case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
   }
 
-  @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
 

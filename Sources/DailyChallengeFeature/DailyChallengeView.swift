@@ -77,8 +77,8 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.userNotifications) var userNotifications
+  @Dependency(\.mainRunLoop.now.date) var now
+  @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
   public init() {}
 
@@ -131,7 +131,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
               try await startDailyChallengeAsync(
                 challenge,
                 apiClient: self.apiClient,
-                date: { self.mainRunLoop.now.date },
+                date: { self.now },
                 fileClient: self.fileClient
               )
             }
@@ -187,7 +187,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
             group.addTask {
               await send(
                 .userNotificationSettingsResponse(
-                  self.userNotifications.getNotificationSettings()
+                  self.getUserNotificationSettings()
                 )
               )
             }

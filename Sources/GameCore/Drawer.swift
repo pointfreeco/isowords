@@ -4,7 +4,7 @@ import ComposableArchitecture
 struct ActiveGamesTray: ReducerProtocol {
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.mainRunLoop.now.date) var now
 
   func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
     switch action {
@@ -42,7 +42,7 @@ struct ActiveGamesTray: ReducerProtocol {
     case let .matchesLoaded(.success(matches)):
       state.activeGames.turnBasedMatches = matches.activeMatches(
         for: self.gameCenter.localPlayer.localPlayer(),
-        at: self.mainRunLoop.now.date
+        at: self.now
       )
       return .none
 

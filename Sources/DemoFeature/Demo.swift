@@ -51,11 +51,11 @@ public struct Demo: ReducerProtocol {
     case onboarding(Onboarding.Action)
   }
 
-  @Dependency(\.applicationClient) var applicationClient
-  @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.dictionary) var dictionary
+  @Dependency(\.audioPlayer.load) var loadSounds
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.mainRunLoop.now.date) var now
+  @Dependency(\.applicationClient.open) var openURL
+  @Dependency(\.dictionary.randomCubes) var randomCubes
 
   public init() {}
 
@@ -98,7 +98,7 @@ public struct Demo: ReducerProtocol {
 
       case .fullVersionButtonTapped:
         return .fireAndForget {
-          _ = await self.applicationClient.open(ServerConfig().appStoreUrl, [:])
+          _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
       case .game(.gameOver(.submitGameResponse(.success))):
@@ -114,17 +114,17 @@ public struct Demo: ReducerProtocol {
 
       case .onAppear:
         return .fireAndForget {
-          await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+          await self.loadSounds(AudioPlayerClient.Sound.allCases)
         }
 
       case .onboarding(.delegate(.getStarted)):
         state.step = .game(
           .init(
-            cubes: self.dictionary.randomCubes(.en),
+            cubes: self.randomCubes(.en),
             gameContext: .solo,
-            gameCurrentTime: self.mainRunLoop.now.date,
+            gameCurrentTime: self.now,
             gameMode: .timed,
-            gameStartTime: self.mainRunLoop.now.date,
+            gameStartTime: self.now,
             isDemo: true
           )
         )

@@ -6,10 +6,10 @@ import SharedModels
 
 struct TurnBasedLogic: ReducerProtocol {
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.database) var database
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.mainRunLoop.now.date) var now
+  @Dependency(\.database.saveGame) var saveGame
 
   func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
     guard let turnBasedContext = state.turnBasedContext
@@ -26,7 +26,7 @@ struct TurnBasedLogic: ReducerProtocol {
       else { return .none }
 
       state = Game.State(
-        gameCurrentTime: self.mainRunLoop.now.date,
+        gameCurrentTime: self.now,
         localPlayer: turnBasedContext.localPlayer,
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
@@ -56,7 +56,7 @@ struct TurnBasedLogic: ReducerProtocol {
       else { return .none }
 
       var gameState = Game.State(
-        gameCurrentTime: self.mainRunLoop.now.date,
+        gameCurrentTime: self.now,
         localPlayer: self.gameCenter.localPlayer.localPlayer(),
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
@@ -115,7 +115,7 @@ struct TurnBasedLogic: ReducerProtocol {
                       message: "Game over! Let’s see how you did!"
                     )
                   )
-                  try await self.database.saveGame(completedGame)
+                  try await self.saveGame(completedGame)
                 }
               } else {
                 switch move.type {

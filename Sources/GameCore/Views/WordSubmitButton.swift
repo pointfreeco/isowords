@@ -55,9 +55,9 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
     }
   }
 
-  @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.mainQueue) var mainQueue
+  @Dependency(\.audioPlayer.play) var playSound
 
   public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
     enum SubmitButtonPressedDelayID {}
@@ -68,13 +68,13 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
     switch action {
     case .backgroundTapped:
       state.wordSubmitButton.areReactionsOpen = false
-      return .fireAndForget { await self.audioPlayer.play(.uiSfxEmojiClose) }
+      return .fireAndForget { await self.playSound(.uiSfxEmojiClose) }
 
     case .delayedSubmitButtonPressed:
       state.wordSubmitButton.areReactionsOpen = true
       return .fireAndForget {
         await self.feedbackGenerator.selectionChanged()
-        await self.audioPlayer.play(.uiSfxEmojiOpen)
+        await self.playSound(.uiSfxEmojiOpen)
       }
 
     case .delegate:
@@ -84,7 +84,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
       state.wordSubmitButton.areReactionsOpen = false
       return .task {
         await self.feedbackGenerator.selectionChanged()
-        await self.audioPlayer.play(.uiSfxEmojiSend)
+        await self.playSound(.uiSfxEmojiSend)
         return .delegate(.confirmSubmit(reaction: reaction))
       }
 
@@ -101,7 +101,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
       return .task { [isClosing = state.wordSubmitButton.isClosing] in
         await self.feedbackGenerator.selectionChanged()
         if isClosing {
-          await self.audioPlayer.play(.uiSfxEmojiClose)
+          await self.playSound(.uiSfxEmojiClose)
         }
         try await self.mainQueue.sleep(for: 0.5)
         return .delayedSubmitButtonPressed

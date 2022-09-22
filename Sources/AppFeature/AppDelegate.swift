@@ -15,12 +15,12 @@ public struct AppDelegateReducer: ReducerProtocol {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.build) var build
-  @Dependency(\.dictionary) var dictionary
+  @Dependency(\.build.number) var buildNumber
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.remoteNotifications) var remoteNotifications
+  @Dependency(\.dictionary.load) var loadDictionary
+  @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
+  @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
@@ -49,11 +49,11 @@ public struct AppDelegateReducer: ReducerProtocol {
             default:
               return
             }
-            await self.remoteNotifications.register()
+            await self.registerForRemoteNotifications()
           }
 
           group.addTask {
-            _ = try self.dictionary.load(.en)
+            _ = try self.loadDictionary(.en)
           }
 
           group.addTask {
@@ -82,7 +82,7 @@ public struct AppDelegateReducer: ReducerProtocol {
             .register(
               .init(
                 authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                build: self.build.number(),
+                build: self.buildNumber(),
                 token: token
               )
             )
@@ -109,7 +109,7 @@ public struct AppDelegateReducer: ReducerProtocol {
             : state.musicVolume
         )
         async let setUI: Void =
-          await self.applicationClient.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
+          await self.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
         _ = await (setSoundEffects, setMusic, setUI)
       }
     }

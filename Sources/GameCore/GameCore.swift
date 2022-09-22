@@ -173,14 +173,14 @@ public struct Game: ReducerProtocol {
     case turnBasedMatchResponse(TaskResult<TurnBasedMatch>)
   }
 
-  @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.dictionary) var dictionary
+  @Dependency(\.apiClient.currentPlayer) var currentPlayer
+  @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
 
   public init() {}
@@ -192,7 +192,7 @@ public struct Game: ReducerProtocol {
       .onChange(of: \.selectedWord) { selectedWord, state, _ in
         state.selectedWordIsValid =
           !state.selectedWordHasAlreadyBeenPlayed
-          && self.dictionary.contains(state.selectedWordString, state.language)
+          && self.dictionaryContains(state.selectedWordString, state.language)
         return .none
       }
       .filterActionsForYourTurn()
@@ -335,13 +335,13 @@ public struct Game: ReducerProtocol {
               group.addTask {
                 let playedGamesCount = await self.userDefaults
                   .incrementMultiplayerOpensCount()
-                let isFullGamePurchased = self.apiClient.currentPlayer()?.appleReceipt != nil
+                let isFullGamePurchased = self.currentPlayer()?.appleReceipt != nil
                 guard
                   !isFullGamePurchased,
                   shouldShowInterstitial(
                     gamePlayedCount: playedGamesCount,
                     gameContext: .init(gameContext: gameContext),
-                    serverConfig: self.serverConfig.config()
+                    serverConfig: self.serverConfig()
                   )
                 else { return }
                 try await self.mainRunLoop.sleep(for: .seconds(3))
@@ -416,7 +416,7 @@ public struct Game: ReducerProtocol {
         let result = verify(
           move: move,
           on: &state.cubes,
-          isValidWord: { self.dictionary.contains($0, state.language) },
+          isValidWord: { self.dictionaryContains($0, state.language) },
           previousMoves: state.moves
         )
 

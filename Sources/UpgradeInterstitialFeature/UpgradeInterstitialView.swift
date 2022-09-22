@@ -52,7 +52,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
   }
 
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
 
   public init() {}
@@ -87,14 +87,14 @@ public struct UpgradeInterstitial: ReducerProtocol {
 
       guard
         event.isFullGamePurchased(
-          identifier: self.serverConfig.config().productIdentifiers.fullGame
+          identifier: self.serverConfig().productIdentifiers.fullGame
         )
       else { return .none }
       return .task { .delegate(.fullGamePurchased) }
 
     case .task:
       state.upgradeInterstitialDuration =
-        self.serverConfig.config().upgradeInterstitial.duration
+        self.serverConfig().upgradeInterstitial.duration
 
       return .run { [isDismissable = state.isDismissable] send in
         await withThrowingTaskGroup(of: Void.self) { group in
@@ -106,11 +106,11 @@ public struct UpgradeInterstitial: ReducerProtocol {
 
           group.addTask {
             let response = try await self.storeKit.fetchProducts([
-              self.serverConfig.config().productIdentifiers.fullGame
+              self.serverConfig().productIdentifiers.fullGame
             ])
             guard
               let product = response.products.first(where: { product in
-                product.productIdentifier == self.serverConfig.config().productIdentifiers.fullGame
+                product.productIdentifier == self.serverConfig().productIdentifiers.fullGame
               })
             else { return }
             await send(.fullGameProductResponse(product), animation: .default)
@@ -138,7 +138,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
       state.isPurchasing = true
       return .fireAndForget {
         let payment = SKMutablePayment()
-        payment.productIdentifier = self.serverConfig.config().productIdentifiers.fullGame
+        payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
         payment.quantity = 1
         await self.storeKit.addPayment(payment)
       }

@@ -147,11 +147,11 @@ public struct Home: ReducerProtocol {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.build) var build
+  @Dependency(\.build.number) var buildNumber
   @Dependency(\.deviceId) var deviceId
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.mainRunLoop.now.date) var now
+  @Dependency(\.audioPlayer.play) var playSound
   @Dependency(\.serverConfig) var serverConfig
   @Dependency(\.timeZone) var timeZone
   @Dependency(\.userDefaults) var userDefaults
@@ -198,13 +198,13 @@ public struct Home: ReducerProtocol {
           await send(
             .activeMatchesResponse(
               TaskResult {
-                try await self.gameCenter.loadActiveMatches(now: self.mainRunLoop.now.date)
+                try await self.gameCenter.loadActiveMatches(now: self.now)
               }
             ),
             animation: .default
           )
 
-          await self.audioPlayer.play(.uiSfxActionDestructive)
+          await self.playSound(.uiSfxActionDestructive)
         }
 
       case .activeGames(.turnBasedGameMenuItemTapped(.rematch)):
@@ -231,7 +231,7 @@ public struct Home: ReducerProtocol {
         state.settings.sendDailyChallengeSummary =
           currentPlayerEnvelope.player.sendDailyChallengeSummary
 
-        let now = self.mainRunLoop.now.date.timeIntervalSinceReferenceDate
+        let now = self.now.timeIntervalSinceReferenceDate
         let itsNagTime =
           Int(now - self.userDefaults.installationTime)
           >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
@@ -283,7 +283,7 @@ public struct Home: ReducerProtocol {
         return .none
 
       case let .serverConfigResponse(serverConfig):
-        state.hasChangelog = serverConfig.newestBuild > self.build.number()
+        state.hasChangelog = serverConfig.newestBuild > self.buildNumber()
         return .none
 
       case let .setNavigation(tag: tag):
@@ -421,7 +421,7 @@ public struct Home: ReducerProtocol {
         .activeMatchesResponse(
           TaskResult {
             try await self.gameCenter
-              .loadActiveMatches(now: self.mainRunLoop.now.date)
+              .loadActiveMatches(now: self.now)
           }
         )
       )
@@ -440,7 +440,7 @@ public struct Home: ReducerProtocol {
           .activeMatchesResponse(
             TaskResult {
               try await self.gameCenter
-                .loadActiveMatches(now: self.mainRunLoop.now.date)
+                .loadActiveMatches(now: self.now)
             }
           )
         )

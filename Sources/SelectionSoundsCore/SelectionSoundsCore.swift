@@ -27,7 +27,7 @@ public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
   let puzzle: (Base.State) -> Puzzle
   let selectedWord: (Base.State) -> [IndexedCubeFace]
 
-  @Dependency(\.audioPlayer) var audioPlayer
+  @Dependency(\.audioPlayer.play) var playSound
 
   public var body: some ReducerProtocol<Base.State, Base.Action> {
     self.base.onChange(of: self.selectedWord) { previousSelection, selection, state, _ in
@@ -37,7 +37,7 @@ public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
           cubes: self.puzzle(state),
           notes: AudioPlayerClient.Sound.allNotes
         ) {
-          await self.audioPlayer.play(AudioPlayerClient.Sound.allNotes[noteIndex])
+          await self.playSound(AudioPlayerClient.Sound.allNotes[noteIndex])
         }
 
         let selectedWordString = self.puzzle(state).string(from: selection)
@@ -54,7 +54,7 @@ public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
                 : 0
             }
           if validCount > 0 {
-            await self.audioPlayer.play(.validWord(level: validCount))
+            await self.playSound(.validWord(level: validCount))
           }
         }
       }

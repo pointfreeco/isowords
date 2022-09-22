@@ -35,8 +35,8 @@ public struct ChangelogReducer: ReducerProtocol {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.applicationClient) var applicationClient
-  @Dependency(\.build) var build
+  @Dependency(\.build.number) var buildNumber
+  @Dependency(\.applicationClient.open) var openURL
   @Dependency(\.serverConfig) var serverConfig
 
   public init() {}
@@ -57,13 +57,13 @@ public struct ChangelogReducer: ReducerProtocol {
             .map { offset, change in
               Change.State(
                 change: change,
-                isExpanded: offset == 0 || self.build.number() <= change.build
+                isExpanded: offset == 0 || self.buildNumber() <= change.build
               )
             }
         )
         state.isRequestInFlight = false
         state.isUpdateButtonVisible =
-          self.build.number() < (changelog.changes.map(\.build).max() ?? 0)
+          self.buildNumber() < (changelog.changes.map(\.build).max() ?? 0)
 
         return .none
 
@@ -72,14 +72,14 @@ public struct ChangelogReducer: ReducerProtocol {
         return .none
 
       case .task:
-        state.currentBuild = self.build.number()
+        state.currentBuild = self.buildNumber()
         state.isRequestInFlight = true
 
         return .task {
           await .changelogResponse(
             TaskResult {
               try await self.apiClient.apiRequest(
-                route: .changelog(build: self.build.number()),
+                route: .changelog(build: self.buildNumber()),
                 as: Changelog.self
               )
             }
@@ -88,7 +88,7 @@ public struct ChangelogReducer: ReducerProtocol {
 
       case .updateButtonTapped:
         return .fireAndForget {
-          _ = await self.applicationClient.open(
+          _ = await self.openURL(
             self.serverConfig.config().appStoreUrl.absoluteURL,
             [:]
           )

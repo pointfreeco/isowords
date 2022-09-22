@@ -162,7 +162,6 @@ public struct Onboarding: ReducerProtocol {
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.userDefaults) var userDefaults
 
   public init() {}

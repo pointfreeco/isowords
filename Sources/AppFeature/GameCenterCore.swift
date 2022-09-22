@@ -11,11 +11,11 @@ public enum GameCenterAction: Equatable {
 }
 
 public struct GameCenterLogic: ReducerProtocol {
-  @Dependency(\.apiClient) var apiClient
-  @Dependency(\.database) var database
-  @Dependency(\.dictionary) var dictionary
+  @Dependency(\.apiClient.currentPlayer) var currentPlayer
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.mainRunLoop.now.date) var now
+  @Dependency(\.dictionary.randomCubes) var randomCubes
+  @Dependency(\.database.saveGame) var saveGame
 
   public func reduce(
     into state: inout AppReducer.State, action: AppReducer.Action
@@ -56,7 +56,7 @@ public struct GameCenterLogic: ReducerProtocol {
       else { return .none }
 
       let newGame = Game.State(
-        gameCurrentTime: self.mainRunLoop.now.date,
+        gameCurrentTime: self.now,
         localPlayer: self.gameCenter.localPlayer.localPlayer(),
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
@@ -64,7 +64,7 @@ public struct GameCenterLogic: ReducerProtocol {
       state.game = newGame
 
       return .fireAndForget {
-        try await self.database.saveGame(.init(gameState: newGame))
+        try await self.saveGame(.init(gameState: newGame))
       }
 
     case let .gameCenter(
@@ -126,14 +126,14 @@ public struct GameCenterLogic: ReducerProtocol {
         localPlayer: self.gameCenter.localPlayer.localPlayer(),
         match: match,
         metadata: .init(
-          lastOpenedAt: self.mainRunLoop.now.date,
+          lastOpenedAt: self.now,
           playerIndexToId: [:]
         )
       )
       let game = Game.State(
-        cubes: self.dictionary.randomCubes(.en),
+        cubes: self.randomCubes(.en),
         gameContext: .turnBased(context),
-        gameCurrentTime: self.mainRunLoop.now.date,
+        gameCurrentTime: self.now,
         gameMode: .unlimited,
         gameStartTime: match.creationDate
       )
@@ -149,7 +149,7 @@ public struct GameCenterLogic: ReducerProtocol {
             turnBasedMatchData: .init(
               context: context,
               gameState: game,
-              playerId: self.apiClient.currentPlayer()?.player.id
+              playerId: self.currentPlayer()?.player.id
             )
           )
         )
@@ -162,7 +162,7 @@ public struct GameCenterLogic: ReducerProtocol {
 
     if didBecomeActive {
       var gameState = Game.State(
-        gameCurrentTime: self.mainRunLoop.now.date,
+        gameCurrentTime: self.now,
         localPlayer: self.gameCenter.localPlayer.localPlayer(),
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
@@ -188,7 +188,7 @@ public struct GameCenterLogic: ReducerProtocol {
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         if isYourTurn {
           var turnBasedMatchData = turnBasedMatchData
-          turnBasedMatchData.metadata.lastOpenedAt = self.mainRunLoop.now.date
+          turnBasedMatchData.metadata.lastOpenedAt = self.now
           try await self.gameCenter.turnBasedMatch.saveCurrentTurn(
             match.matchId,
             Data(turnBasedMatchData: turnBasedMatchData)
@@ -207,7 +207,7 @@ public struct GameCenterLogic: ReducerProtocol {
       context.currentParticipantIsLocalPlayer,
       match.participants.allSatisfy({ $0.matchOutcome == .none }),
       let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),
-      lastTurnDate > self.mainRunLoop.now.date.addingTimeInterval(-60)
+      lastTurnDate > self.now.addingTimeInterval(-60)
     else { return .none }
 
     return .fireAndForget {

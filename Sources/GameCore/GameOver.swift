@@ -3,7 +3,7 @@ import GameOverFeature
 import SharedModels
 
 struct GameOverLogic: ReducerProtocol {
-  @Dependency(\.database) var database
+  @Dependency(\.database.saveGame) var saveGame
 
   func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
     var allCubesRemoved: Bool {
@@ -33,7 +33,7 @@ struct GameOverLogic: ReducerProtocol {
     switch state.gameContext {
     case .dailyChallenge, .shared, .solo:
       return .fireAndForget { [state] in
-        try await self.database.saveGame(.init(gameState: state))
+        try await self.saveGame(.init(gameState: state))
       }
 
     case let .turnBased(turnBasedMatch):

@@ -11,7 +11,7 @@ extension ReducerProtocol<Game.State, Game.Action> {
 private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: ReducerProtocol {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
-  @Dependency(\.dictionary) var dictionary
+  @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.mainQueue) var mainQueue
 
   let base: Base
@@ -64,7 +64,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
 
         let previousWord = state.cubes.string(from: previousSelection)
         let previousWordIsValid =
-          self.dictionary.contains(previousWord, state.language)
+          self.dictionaryContains(previousWord, state.language)
           && !state.hasBeenPlayed(word: previousWord)
         let cubeWasShaking =
           previousWordIsValid
@@ -110,7 +110,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
         }
       }
       .selectionSounds(
-        contains: { self.dictionary.contains($1, $0.language) },
+        contains: { self.dictionaryContains($1, $0.language) },
         hasBeenPlayed: { $0.hasBeenPlayed(word: $1) },
         puzzle: \.cubes,
         selectedWord: \.selectedWord

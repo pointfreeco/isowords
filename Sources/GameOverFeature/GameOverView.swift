@@ -92,10 +92,10 @@ public struct GameOver: ReducerProtocol {
   @Dependency(\.database) var database
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.serverConfig) var serverConfig
-  @Dependency(\.storeKit) var storeKit
+  @Dependency(\.storeKit.requestReview) var requestReview
+  @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userNotifications) var userNotifications
+  @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
   public init() {}
 
@@ -288,7 +288,7 @@ public struct GameOver: ReducerProtocol {
                 shouldShowInterstitial(
                   gamePlayedCount: playedGamesCount,
                   gameContext: .init(gameContext: completedGame.gameContext),
-                  serverConfig: self.serverConfig.config()
+                  serverConfig: self.serverConfig()
                 )
               else { return }
               await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
@@ -302,7 +302,7 @@ public struct GameOver: ReducerProtocol {
             group.addTask {
               await send(
                 .userNotificationSettingsResponse(
-                  self.userNotifications.getNotificationSettings()
+                  self.getUserNotificationSettings()
                 )
               )
             }
@@ -342,7 +342,7 @@ public struct GameOver: ReducerProtocol {
     if stats.gamesPlayed >= 3
       && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
     {
-      await self.storeKit.requestReview()
+      await self.requestReview()
       await self.userDefaults.setDouble(
         self.mainRunLoop.now.date.timeIntervalSince1970,
         lastReviewRequestTimeIntervalKey

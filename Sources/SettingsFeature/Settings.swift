@@ -182,8 +182,8 @@ public struct Settings: ReducerProtocol {
   @Dependency(\.build) var build
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.remoteNotifications) var remoteNotifications
-  @Dependency(\.serverConfig) var serverConfig
+  @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
+  @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
   @Dependency(\.userNotifications) var userNotifications
 
@@ -322,7 +322,7 @@ public struct Settings: ReducerProtocol {
         case .leaveUsAReviewButtonTapped:
           return .fireAndForget {
             _ = await self.applicationClient
-              .open(self.serverConfig.config().appStoreReviewUrl, [:])
+              .open(self.serverConfig().appStoreReviewUrl, [:])
           }
 
         case .onDismiss:
@@ -365,7 +365,7 @@ public struct Settings: ReducerProtocol {
           state.fullGameProduct =
           response.products
             .first {
-              $0.productIdentifier == self.serverConfig.config().productIdentifiers.fullGame
+              $0.productIdentifier == self.serverConfig().productIdentifiers.fullGame
             }
             .map(Result.success)
           ?? Result.failure(.init())
@@ -448,7 +448,7 @@ public struct Settings: ReducerProtocol {
                 .productsResponse(
                   TaskResult {
                     try await self.storeKit.fetchProducts([
-                      self.serverConfig.config().productIdentifiers.fullGame
+                      self.serverConfig().productIdentifiers.fullGame
                     ])
                   }
                 ),
@@ -474,7 +474,7 @@ public struct Settings: ReducerProtocol {
         case let .userNotificationAuthorizationResponse(.success(granted)):
           state.enableNotifications = granted
           return granted
-          ? .fireAndForget { await self.remoteNotifications.register() }
+          ? .fireAndForget { await self.registerForRemoteNotifications() }
           : .none
 
         case .userNotificationAuthorizationResponse:
