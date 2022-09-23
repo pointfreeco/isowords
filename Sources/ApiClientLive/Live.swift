@@ -1,7 +1,7 @@
 @_exported import ApiClient
 import Combine
-import ComposableArchitecture
 import CryptoKit
+import Dependencies
 import Foundation
 import ServerRouter
 import SharedModels

@@ -36,10 +36,7 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
     .package(
       name: "Overture", url: "https://github.com/pointfreeco/swift-overture", from: "0.5.0"),
-    .package(
-      name: "SnapshotTesting", url: "https://github.com/pointfreeco/swift-snapshot-testing",
-      from: "1.9.0"
-    ),
+    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.10.0"),
   ],
   targets: [
     .target(
@@ -94,7 +91,7 @@ var package = Package(
         .product(name: "HttpPipeline", package: "swift-web"),
         .product(name: "HttpPipelineTestSupport", package: "swift-web"),
         .product(name: "Prelude", package: "swift-prelude"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -157,7 +154,7 @@ var package = Package(
         "SharedModels",
         "TestHelpers",
         .product(name: "Overture", package: "Overture"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -177,7 +174,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "protocol"
+      branch: "protocol-beta"
     )
   ])
   package.products.append(contentsOf: [
@@ -258,7 +255,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "SharedModels",
         "XCTestDebugSupport",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "CasePaths", package: "swift-case-paths"),
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -269,9 +267,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ServerRouter",
         "SharedModels",
         "TcaHelpers",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
-        .product(name: "Tagged", package: "swift-tagged"),
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
       ],
       exclude: ["Secrets.swift.example"]
     ),
@@ -336,7 +332,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "AppFeature",
         "SharedSwiftUIEnvironment",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -402,7 +398,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TestHelpers",
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Overture", package: "Overture"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -500,7 +496,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "DailyChallengeFeature",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -607,7 +603,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "GameCore",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -684,7 +680,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "SharedSwiftUIEnvironment",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"],
       resources: [.process("Resources/")]
@@ -741,7 +737,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "HomeFeatureTests",
       dependencies: [
         "HomeFeature",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -899,7 +895,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "TestHelpers",
         "SettingsFeature",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -992,7 +988,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FirstPartyMocks",
         "UpgradeInterstitialFeature",
         .product(name: "Overture", package: "Overture"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -1064,7 +1060,7 @@ package.targets.append(contentsOf: [
       "AppSiteAssociationMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .executableTarget(
@@ -1092,7 +1088,7 @@ package.targets.append(contentsOf: [
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1155,7 +1151,7 @@ package.targets.append(contentsOf: [
       "DemoMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .target(
@@ -1183,7 +1179,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1229,7 +1225,7 @@ package.targets.append(contentsOf: [
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
       .product(name: "Overture", package: "Overture"),
       .product(name: "Prelude", package: "swift-prelude"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .executableTarget(
@@ -1317,7 +1313,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       "TestHelpers",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1352,7 +1348,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       "TestHelpers",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1369,7 +1365,7 @@ package.targets.append(contentsOf: [
     name: "SnsClientTests",
     dependencies: [
       "SnsClient",
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .target(
@@ -1398,7 +1394,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
 ])

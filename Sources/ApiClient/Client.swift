@@ -1,5 +1,6 @@
+import CasePaths
 import Combine
-import ComposableArchitecture
+import Dependencies
 import Foundation
 import SharedModels
 import XCTestDebugSupport
@@ -192,3 +193,18 @@ extension ApiClient {
 }
 
 let jsonDecoder = JSONDecoder()
+
+extension Task where Failure == Never {
+  /// An async function that never returns.
+  static func never() async throws -> Success {
+    for await element in AsyncStream<Success>.never {
+      return element
+    }
+    throw _Concurrency.CancellationError()
+  }
+}
+extension AsyncStream {
+  static var never: Self {
+    Self { _ in }
+  }
+}
