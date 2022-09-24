@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import Styleguide
 import SwiftUI
 
@@ -12,14 +13,10 @@ struct UpgradeInterstitialPreviewApp: App {
   var body: some Scene {
     WindowGroup {
       UpgradeInterstitialView(
-        store: .init(
-          initialState: .init(),
-          reducer: upgradeInterstitialReducer,
-          environment: .init(
-            mainRunLoop: .main,
-            serverConfig: .noop,
-            storeKit: .live()
-          )
+        store: Store(
+          initialState: UpgradeInterstitial.State(),
+          reducer: UpgradeInterstitial()
+            .dependency(\.serverConfig, .noop)
         )
       )
     }

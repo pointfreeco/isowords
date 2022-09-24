@@ -18,10 +18,9 @@ struct HomeFeaturePreviewApp: App {
       NavigationView {
         HomeView(
           store: Store(
-            initialState: .init(),
-            reducer: homeReducer,
-            environment: HomeEnvironment(
-              apiClient: update(.noop) {
+            initialState: Home.State(),
+            reducer: Home()
+              .dependency(\.apiClient, update(.noop) {
                 $0.authenticate = { _ in .init(appleReceipt: nil, player: .blob) }
                 $0.override(
                   route: .dailyChallenge(.today(language: .en)),
@@ -43,26 +42,18 @@ struct HomeFeaturePreviewApp: App {
                     ])
                   }
                 )
-              },
-              applicationClient: .noop,
-              audioPlayer: .noop,
-              backgroundQueue: DispatchQueue.global(qos: .background).eraseToAnyScheduler(),
-              build: .noop,
-              database: .live(path: URL(string: ":memory:")!),
-              deviceId: .noop,
-              feedbackGenerator: .live,
-              fileClient: .live,
-              gameCenter: .noop,
-              lowPowerMode: .live,
-              mainQueue: .main,
-              mainRunLoop: .main,
-              remoteNotifications: .noop,
-              serverConfig: .noop,
-              storeKit: .noop,
-              timeZone: { TimeZone.current },
-              userDefaults: .noop,
-              userNotifications: .noop
-            )
+              })
+              .dependency(\.applicationClient, .noop)
+              .dependency(\.audioPlayer, .noop)
+              .dependency(\.build, .noop)
+              .dependency(\.database, .inMemory)
+              .dependency(\.deviceId, .noop)
+              .dependency(\.gameCenter, .noop)
+              .dependency(\.remoteNotifications, .noop)
+              .dependency(\.serverConfig, .noop)
+              .dependency(\.storeKit, .noop)
+              .dependency(\.userDefaults, .noop)
+              .dependency(\.userNotifications, .noop)
           )
         )
       }

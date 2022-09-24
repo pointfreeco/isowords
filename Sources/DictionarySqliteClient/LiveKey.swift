@@ -1,8 +1,13 @@
+import Dependencies
 import DictionaryClient
 import Foundation
 import PuzzleGen
 import SharedModels
 import Sqlite
+
+extension DictionaryClient: DependencyKey {
+  public static let liveValue = Self.sqlite()
+}
 
 extension DictionaryClient {
   public static func sqlite(path: String? = nil) -> Self {

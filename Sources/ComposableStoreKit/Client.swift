@@ -1,18 +1,4 @@
-import Combine
-import ComposableArchitecture
 import StoreKit
-
-extension DependencyValues {
-  public var storeKit: StoreKitClient {
-    get { self[StoreKitClientKey.self] }
-    set { self[StoreKitClientKey.self] = newValue }
-  }
-
-  private enum StoreKitClientKey: DependencyKey {
-    static let liveValue = StoreKitClient.live
-    static let testValue = StoreKitClient.unimplemented
-  }
-}
 
 public struct StoreKitClient {
   public var addPayment: @Sendable (SKPayment) async -> Void

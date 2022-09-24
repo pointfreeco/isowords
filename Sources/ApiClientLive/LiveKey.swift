@@ -7,15 +7,8 @@ import ServerRouter
 import SharedModels
 import TcaHelpers
 
-extension DependencyValues.ApiClientKey: DependencyKey {
-  public static let liveValue = ApiClient.live
-}
-
-private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
-private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
-
-extension ApiClient {
-  public static let live = Self.live(
+extension ApiClient: DependencyKey {
+  public static let liveValue = Self.live(
     sha256: { Data(SHA256.hash(data: $0)) }
   )
 
@@ -139,6 +132,9 @@ extension ApiClient {
     )
   }
 }
+
+private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
+private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
 
 private func request(
   baseUrl: URL,

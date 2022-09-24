@@ -2,17 +2,6 @@ import Combine
 import ComposableArchitecture
 import UserNotifications
 
-extension DependencyValues {
-  public var userNotifications: UserNotificationClient {
-    get { self[UserNotificationClientKey.self] }
-    set { self[UserNotificationClientKey.self] = newValue }
-  }
-
-  private enum UserNotificationClientKey: DependencyKey {
-    static let liveValue = UserNotificationClient.live
-    static let testValue = UserNotificationClient.unimplemented
-  }
-}
 
 public struct UserNotificationClient {
   public var add: @Sendable (UNNotificationRequest) async throws -> Void

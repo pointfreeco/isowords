@@ -3,18 +3,6 @@ import ComposableArchitecture
 import GameKit
 import Tagged
 
-extension DependencyValues {
-  public var gameCenter: GameCenterClient {
-    get { self[GameCenterClientKey.self] }
-    set { self[GameCenterClientKey.self] = newValue }
-  }
-
-  private enum GameCenterClientKey: DependencyKey {
-    static let liveValue = GameCenterClient.live
-    static let testValue = GameCenterClient.unimplemented
-  }
-}
-
 public struct GameCenterClient {
   public var gameCenterViewController: GameCenterViewControllerClient
   public var localPlayer: LocalPlayerClient

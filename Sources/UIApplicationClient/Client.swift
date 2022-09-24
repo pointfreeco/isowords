@@ -1,17 +1,4 @@
-import ComposableArchitecture
 import UIKit
-
-extension DependencyValues {
-  public var applicationClient: UIApplicationClient {
-    get { self[UIApplicationClientKey.self] }
-    set { self[UIApplicationClientKey.self] = newValue }
-  }
-
-  private enum UIApplicationClientKey: DependencyKey {
-    static let liveValue = UIApplicationClient.live
-    static let testValue = UIApplicationClient.unimplemented
-  }
-}
 
 public struct UIApplicationClient {
   // TODO: Should these endpoints be merged and `@MainActor`? Should `Reducer` be `@MainActor`?

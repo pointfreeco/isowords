@@ -1,21 +1,17 @@
-import ComposableArchitecture
+import Dependencies
 import XCTestDynamicOverlay
 
-extension StoreKitClient {
-  public static let noop = Self(
-    addPayment: { _ in },
-    appStoreReceiptURL: { nil },
-    isAuthorizedForPayments: { false },
-    fetchProducts: { _ in try await Task.never() },
-    finishTransaction: { _ in },
-    observer: { AsyncStream { _ in } },
-    requestReview: {},
-    restoreCompletedTransactions: {}
-  )
+extension DependencyValues {
+  public var storeKit: StoreKitClient {
+    get { self[StoreKitClient.self] }
+    set { self[StoreKitClient.self] = newValue }
+  }
 }
 
-extension StoreKitClient {
-  public static let unimplemented = Self(
+extension StoreKitClient: TestDependencyKey {
+  public static let previewValue = Self.noop
+
+  public static let testValue = Self(
     addPayment: XCTUnimplemented("\(Self.self).addPayment"),
     appStoreReceiptURL: XCTUnimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
     isAuthorizedForPayments: XCTUnimplemented(
@@ -28,5 +24,18 @@ extension StoreKitClient {
     restoreCompletedTransactions: XCTUnimplemented(
       "\(Self.self).restoreCompletedTransactions"
     )
+  )
+}
+
+extension StoreKitClient {
+  public static let noop = Self(
+    addPayment: { _ in },
+    appStoreReceiptURL: { nil },
+    isAuthorizedForPayments: { false },
+    fetchProducts: { _ in try await Task.never() },
+    finishTransaction: { _ in },
+    observer: { AsyncStream { _ in } },
+    requestReview: {},
+    restoreCompletedTransactions: {}
   )
 }

@@ -2,29 +2,32 @@ import Dependencies
 import Foundation
 import XCTestDynamicOverlay
 
-extension DependencyValues {
-  public var deviceId: DeviceIdentifier {
-    get { self[DeviceIdentifierKey.self] }
-    set { self[DeviceIdentifierKey.self] = newValue }
-  }
-
-  private enum DeviceIdentifierKey: DependencyKey {
-    static let liveValue = DeviceIdentifier.live
-    static let testValue = DeviceIdentifier.unimplemented
-  }
-}
-
 public struct DeviceIdentifier {
   public var id: () -> UUID
 }
 
-extension DeviceIdentifier {
-  public static let live = Self(
+extension DependencyValues {
+  public var deviceId: DeviceIdentifier {
+    get { self[DeviceIdentifier.self] }
+    set { self[DeviceIdentifier.self] = newValue }
+  }
+}
+
+extension DeviceIdentifier: TestDependencyKey {
+  public static let previewValue = Self.noop
+
+  public static let testValue = Self(
+    id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
+  )
+}
+
+extension DeviceIdentifier: DependencyKey {
+  public static let liveValue = Self(
     id: {
-      if let uuidString = NSUbiquitousKeyValueStore.default.string(forKey: deviceIdKey),
+      if
+        let uuidString = NSUbiquitousKeyValueStore.default.string(forKey: deviceIdKey),
         let uuid = UUID.init(uuidString: uuidString)
       {
-
         return uuid
       }
 
@@ -36,10 +39,6 @@ extension DeviceIdentifier {
 }
 
 extension DeviceIdentifier {
-  public static let unimplemented = Self(
-    id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
-  )
-
   public static let noop = Self(
     id: { UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")! }
   )

@@ -1,4 +1,5 @@
 import ClientModels
+import ComposableArchitecture
 import CubeCore
 import CubePreview
 import PuzzleGen
@@ -15,8 +16,8 @@ struct CubePreviewPreviewApp: App {
   var body: some Scene {
     WindowGroup {
       CubePreviewView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: CubePreview.State(
             cubes: .mock,
             isAnimationReduced: false,
             isHapticsEnabled: true,
@@ -58,13 +59,8 @@ struct CubePreviewPreviewApp: App {
             ],
             settings: .init()
           ),
-          reducer: cubePreviewReducer,
-          environment: CubePreviewEnvironment(
-            audioPlayer: .noop,
-            feedbackGenerator: .live,
-            lowPowerMode: .live,
-            mainQueue: .main
-          )
+          reducer: CubePreview()
+            .dependency(\.audioPlayer, .noop)
         )
       )
     }

@@ -1,14 +1,10 @@
-import ComposableArchitecture
+import Dependencies
 import Foundation
 
 extension DependencyValues {
   public var userDefaults: UserDefaultsClient {
-    get { self[UserDefaultsClientKey.self] }
-    set { self[UserDefaultsClientKey.self] = newValue }
-  }
-
-  private enum UserDefaultsClientKey: TestDependencyKey {
-    static let testValue = UserDefaultsClient.unimplemented
+    get { self[UserDefaultsClient.self] }
+    set { self[UserDefaultsClient.self] = newValue }
   }
 }
 

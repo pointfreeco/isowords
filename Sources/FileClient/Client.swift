@@ -1,19 +1,4 @@
-import Combine
-import CombineHelpers
-import ComposableArchitecture
 import Foundation
-
-extension DependencyValues {
-  public var fileClient: FileClient {
-    get { self[FileClientKey.self] }
-    set { self[FileClientKey.self] = newValue }
-  }
-
-  private enum FileClientKey: DependencyKey {
-    static let liveValue = FileClient.live
-    static let testValue = FileClient.unimplemented
-  }
-}
 
 public struct FileClient {
   public var delete: @Sendable (String) async throws -> Void

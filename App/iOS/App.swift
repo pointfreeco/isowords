@@ -12,36 +12,24 @@ import SwiftUI
 import UIApplicationClient
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
-  let store: StoreOf<AppReducer> = {
-    let apiClient = ApiClient.live
-    let build = Build.live
-
-    return Store(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-        .dependency(
-          \.audioPlayer, .live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
-        )
-        .dependency(
-          \.database,
-          .live(
-            path: FileManager.default
-              .urls(for: .documentDirectory, in: .userDomainMask)
-              .first!
-              .appendingPathComponent("co.pointfree.Isowords")
-              .appendingPathComponent("Isowords.sqlite3")
-          )
-        )
-        .dependency(\.dictionary, .sqlite())
-        .dependency(\.serverConfig, .live(apiClient: apiClient, build: build))
-        .dependency(\.userDefaults, .live())
-    )
-  }()
-
-  lazy var viewStore = ViewStore(
-    self.store.scope(state: { _ in () }),
-    removeDuplicates: ==
+  let store = Store(
+    initialState: AppReducer.State(),
+    reducer: AppReducer().dependencies {
+      $0.audioPlayer = .live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
+      $0.database = .live(
+        path: FileManager.default
+          .urls(for: .documentDirectory, in: .userDomainMask)
+          .first!
+          .appendingPathComponent("co.pointfree.Isowords")
+          .appendingPathComponent("Isowords.sqlite3")
+      )
+      $0.serverConfig = .live(apiClient: $0.apiClient, build: $0.build)
+    }
   )
+
+  var viewStore: ViewStore<Void, AppReducer.Action> {
+    ViewStore(self.store.stateless)
+  }
 
   func application(
     _ application: UIApplication,

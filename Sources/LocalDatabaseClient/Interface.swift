@@ -1,17 +1,5 @@
-import ComposableArchitecture
 import Foundation
 import SharedModels
-
-extension DependencyValues {
-  public var database: LocalDatabaseClient {
-    get { self[LocalDatabaseClientKey.self] }
-    set { self[LocalDatabaseClientKey.self] = newValue }
-  }
-
-  private enum LocalDatabaseClientKey: TestDependencyKey {
-    static let testValue = LocalDatabaseClient.unimplemented
-  }
-}
 
 public struct LocalDatabaseClient {
   public var fetchGamesForWord: @Sendable (String) async throws -> [LocalDatabaseClient.Game]

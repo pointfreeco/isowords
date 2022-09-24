@@ -1,10 +1,9 @@
-import Combine
 import ComposableArchitecture
 import StoreKit
 
 @available(iOSApplicationExtension, unavailable)
-extension StoreKitClient {
-  public static let live = Self(
+extension StoreKitClient: DependencyKey {
+  public static let liveValue = Self(
     addPayment: { SKPaymentQueue.default().add($0) },
     appStoreReceiptURL: { Bundle.main.appStoreReceiptURL },
     isAuthorizedForPayments: { SKPaymentQueue.canMakePayments() },

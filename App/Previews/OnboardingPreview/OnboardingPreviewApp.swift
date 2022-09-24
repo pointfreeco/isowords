@@ -15,23 +15,12 @@ struct OnboardingPreviewApp: App {
     WindowGroup {
       OnboardingView(
         store: .init(
-          initialState: .init(presentationStyle: .firstLaunch),
-          reducer: onboardingReducer,
-          environment: OnboardingEnvironment(
-            audioPlayer: .live(
-              bundles: [
-                AppClipAudioLibrary.bundle,
-                AppAudioLibrary.bundle,
-              ]
-            ),
-            backgroundQueue: DispatchQueue.global().eraseToAnyScheduler(),
-            dictionary: .sqlite(),
-            feedbackGenerator: .live,
-            lowPowerMode: .live,
-            mainQueue: .main,
-            mainRunLoop: .main,
-            userDefaults: .noop
-          )
+          initialState: Onboarding.State(presentationStyle: .firstLaunch),
+          reducer: Onboarding()
+            .dependency(
+              \.audioPlayer, .live(bundles: [AppClipAudioLibrary.bundle, AppAudioLibrary.bundle])
+            )
+            .dependency(\.userDefaults, .noop)
         )
       )
     }

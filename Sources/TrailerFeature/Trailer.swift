@@ -68,6 +68,8 @@ public struct Trailer: ReducerProtocol {
       .dependency(\.userDefaults, .noop)
       .dependency(\.userNotifications, .noop)
 
+    BindingReducer()
+
     Reduce { state, action in
       switch action {
       case .binding:
@@ -164,7 +166,6 @@ public struct Trailer: ReducerProtocol {
         }
       }
     }
-    .binding()
   }
 }
 

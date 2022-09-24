@@ -21,25 +21,13 @@ struct SettingsPreviewApp: App {
       NavigationView {
         SettingsView(
           store: .init(
-            initialState: .init(),
-            reducer: settingsReducer,
-            environment: .init(
-              apiClient: .noop,
-              applicationClient: .live,
-              audioPlayer: .live(bundles: []),
-              backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
-              build: .noop,
-              database: .noop,
-              feedbackGenerator: .live,
-              fileClient: .live,
-              lowPowerMode: .live,
-              mainQueue: .main,
-              remoteNotifications: .live,
-              serverConfig: ServerConfigClient.live(fetch: { .init() }),
-              storeKit: .live(),
-              userDefaults: .live(),
-              userNotifications: .live
-            )
+            initialState: Settings.State(),
+            reducer: Settings()
+              .dependency(\.apiClient, .noop)
+              .dependency(\.audioPlayer, .noop)
+              .dependency(\.build, .noop)
+              .dependency(\.database, .noop)
+              .dependency(\.serverConfig, .live(fetch: { .init() }))
           ),
           navPresentationStyle: .modal
         )

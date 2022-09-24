@@ -22,7 +22,6 @@ struct AppClipApp: App {
             .dependency(\.apiClient, .appClip)
             .dependency(\.audioPlayer, .live(bundles: [AppClipAudioLibrary.bundle]))
             .dependency(\.dictionary, .file())
-            .dependency(\.userDefaults, .live())
         )
       )
     }

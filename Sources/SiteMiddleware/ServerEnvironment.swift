@@ -56,7 +56,7 @@ public struct ServerEnvironment {
       changelog: XCTUnimplemented("\(Self.self).changelog", placeholder: .current),
       database: .unimplemented,
       date: XCTUnimplemented("\(Self.self).date", placeholder: Date()),
-      dictionary: .unimplemented,
+      dictionary: .testValue,
       envVars: EnvVars(appEnv: .testing),
       itunes: .unimplemented,
       mailgun: .unimplemented,

@@ -1,8 +1,21 @@
-import Combine
-import CombineSchedulers
 import ComposableArchitecture
 import Foundation
 import XCTestDynamicOverlay
+
+extension DependencyValues {
+  public var lowPowerMode: LowPowerModeClient {
+    get { self[LowPowerModeClient.self] }
+    set { self[LowPowerModeClient.self] = newValue }
+  }
+}
+
+extension LowPowerModeClient: TestDependencyKey {
+  public static let previewValue = Self.true
+
+  public static let testValue = Self(
+    start: XCTUnimplemented("\(Self.self).start")
+  )
+}
 
 extension LowPowerModeClient {
   public static let `false` = Self(
@@ -11,10 +24,6 @@ extension LowPowerModeClient {
 
   public static let `true` = Self(
     start: { AsyncStream { $0.yield(true) } }
-  )
-
-  public static let unimplemented = Self(
-    start: XCTUnimplemented("\(Self.self).start")
   )
 
   public static var backAndForth: Self {
