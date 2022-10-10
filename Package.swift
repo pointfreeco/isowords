@@ -174,7 +174,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
   package.dependencies.append(contentsOf: [
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "protocol-beta"
+      from: "0.41.0"
     )
   ])
   package.products.append(contentsOf: [

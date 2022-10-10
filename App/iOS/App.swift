@@ -14,7 +14,7 @@ import UIApplicationClient
 final class AppDelegate: NSObject, UIApplicationDelegate {
   let store = Store(
     initialState: AppReducer.State(),
-    reducer: AppReducer().dependencies {
+    reducer: AppReducer().transformDependency(\.self) {
       $0.audioPlayer = .live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
       $0.database = .live(
         path: FileManager.default
