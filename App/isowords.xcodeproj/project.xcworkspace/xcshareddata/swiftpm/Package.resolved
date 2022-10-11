@@ -131,9 +131,9 @@
         "package": "swift-html",
         "repositoryURL": "https://github.com/pointfreeco/swift-html",
         "state": {
-          "branch": null,
-          "revision": "f53c38c4b841841f36afa1866093c908cadaa736",
-          "version": "0.4.0"
+          "branch": "14d01d1",
+          "revision": "14d01d19e43598167a8f8965af478285835ca010",
+          "version": null
         }
       },
       {
@@ -257,8 +257,8 @@
         "package": "swift-web",
         "repositoryURL": "https://github.com/pointfreeco/swift-web",
         "state": {
-          "branch": "d6236a3",
-          "revision": "d6236a3d3243c2e3237816218499b410cfebd1b1",
+          "branch": "f4bb612",
+          "revision": "f4bb6120766b92f1054b15036b690b58bc0bac13",
           "version": null
         }
       },
