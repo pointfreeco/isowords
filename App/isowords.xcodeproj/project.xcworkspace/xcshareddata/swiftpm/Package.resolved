@@ -95,9 +95,9 @@
         "package": "swift-composable-architecture",
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
-          "branch": "agnostic-runtime-warn",
-          "revision": "f42cd9cbb723ec8f6f787a88104f9d69d6d04e81",
-          "version": null
+          "branch": null,
+          "revision": "5c476994eaa79af8e466041f6de1ab116f37c528",
+          "version": "0.42.0"
         }
       },
       {
@@ -257,8 +257,8 @@
         "package": "swift-web",
         "repositoryURL": "https://github.com/pointfreeco/swift-web",
         "state": {
-          "branch": "f4bb612",
-          "revision": "f4bb6120766b92f1054b15036b690b58bc0bac13",
+          "branch": "2ad82ec",
+          "revision": "2ad82ec94983029566d009f12dca8d235983616a",
           "version": null
         }
       },
