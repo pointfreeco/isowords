@@ -22,7 +22,6 @@ import XCTest
 
 @MainActor
 class TurnBasedTests: XCTestCase {
-  let backgroundQueue = DispatchQueue.test
   let mainQueue = DispatchQueue.test
   let mainRunLoop = RunLoop.test
 
@@ -118,7 +117,6 @@ class TurnBasedTests: XCTestCase {
       $0.home.weekInReview = weekInReview
     }
 
-    await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
     await store.receive(
       .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
@@ -128,7 +126,6 @@ class TurnBasedTests: XCTestCase {
 
     listener.continuation
       .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
-    await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
 
     let initialGameState = Game.State(
@@ -174,7 +171,6 @@ class TurnBasedTests: XCTestCase {
       }
     }
 
-    await self.backgroundQueue.advance()
     await self.mainRunLoop.advance()
 
     await didSaveCurrentTurn.withValue { XCTAssert($0) }
@@ -356,7 +352,6 @@ class TurnBasedTests: XCTestCase {
     let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
     let homeTask = await store.send(.home(.task))
 
-    await self.backgroundQueue.advance()
     await store.receive(.home(.authenticationResponse(.mock)))
     await store.receive(.home(.serverConfigResponse(.init()))) {
       $0.home.hasChangelog = true
@@ -407,7 +402,6 @@ class TurnBasedTests: XCTestCase {
       .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
     )
 
-    await self.backgroundQueue.advance()
 
     await homeTask.cancel()
     await didFinishLaunchingTask.cancel()
@@ -480,7 +474,6 @@ class TurnBasedTests: XCTestCase {
     await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
       $0.home.weekInReview = weekInReview
     }
-    await self.backgroundQueue.advance()
     await store.receive(
       .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
     )
@@ -529,7 +522,6 @@ class TurnBasedTests: XCTestCase {
       .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
     )
 
-    await self.backgroundQueue.advance()
 
     await homeTask.cancel()
     await didFinishLaunchingTask.cancel()
