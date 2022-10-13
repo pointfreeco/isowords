@@ -47,4 +47,3 @@ extension UserDefaultsClient {
     self.integerForKey = { [self] in $0 == key ? integer : self.integerForKey(key) }
   }
 }
-

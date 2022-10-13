@@ -363,12 +363,12 @@ public struct Settings: ReducerProtocol {
 
         case let .productsResponse(.success(response)):
           state.fullGameProduct =
-          response.products
+            response.products
             .first {
               $0.productIdentifier == self.serverConfig().productIdentifiers.fullGame
             }
             .map(Result.success)
-          ?? Result.failure(.init())
+            ?? Result.failure(.init())
           return .none
 
         case .productsResponse(.failure):
@@ -388,10 +388,10 @@ public struct Settings: ReducerProtocol {
                 value: """
 
 
-                ---
-                Build: \(self.build.number()) (\(self.build.gitSha()))
-                \(currentPlayer?.player.id.rawValue.uuidString ?? "")
-                """
+                  ---
+                  Build: \(self.build.number()) (\(self.build.gitSha()))
+                  \(currentPlayer?.player.id.rawValue.uuidString ?? "")
+                  """
               ),
             ]
 
@@ -416,7 +416,7 @@ public struct Settings: ReducerProtocol {
 
         case .task:
           state.fullGamePurchasedAt =
-          self.apiClient.currentPlayer()?
+            self.apiClient.currentPlayer()?
             .appleReceipt?
             .receipt
             .originalPurchaseDate
@@ -443,18 +443,18 @@ public struct Settings: ReducerProtocol {
               }
 
               async let productsResponse: Void =
-              shouldFetchProducts
-              ? send(
-                .productsResponse(
-                  TaskResult {
-                    try await self.storeKit.fetchProducts([
-                      self.serverConfig().productIdentifiers.fullGame
-                    ])
-                  }
-                ),
-                animation: .default
-              )
-              : ()
+                shouldFetchProducts
+                ? send(
+                  .productsResponse(
+                    TaskResult {
+                      try await self.storeKit.fetchProducts([
+                        self.serverConfig().productIdentifiers.fullGame
+                      ])
+                    }
+                  ),
+                  animation: .default
+                )
+                : ()
 
               async let settingsResponse: Void = send(
                 .userNotificationSettingsResponse(
@@ -474,12 +474,12 @@ public struct Settings: ReducerProtocol {
         case let .userNotificationAuthorizationResponse(.success(granted)):
           state.enableNotifications = granted
           return granted
-          ? .fireAndForget { await self.registerForRemoteNotifications() }
-          : .none
+            ? .fireAndForget { await self.registerForRemoteNotifications() }
+            : .none
 
         case .userNotificationAuthorizationResponse:
           return .none
-          
+
         case let .userNotificationSettingsResponse(settings):
           state.userNotificationSettings = settings
           state.enableNotifications = settings.authorizationStatus == .authorized

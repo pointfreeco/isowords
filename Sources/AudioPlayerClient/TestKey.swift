@@ -10,7 +10,7 @@ extension DependencyValues {
 
 extension AudioPlayerClient: TestDependencyKey {
   public static let previewValue = Self.noop
-  
+
   public static let testValue = Self(
     load: XCTUnimplemented("\(Self.self).load"),
     loop: XCTUnimplemented("\(Self.self).loop"),

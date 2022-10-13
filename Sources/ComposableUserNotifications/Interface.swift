@@ -2,7 +2,6 @@ import Combine
 import ComposableArchitecture
 import UserNotifications
 
-
 public struct UserNotificationClient {
   public var add: @Sendable (UNNotificationRequest) async throws -> Void
   public var delegate: @Sendable () -> AsyncStream<DelegateEvent>

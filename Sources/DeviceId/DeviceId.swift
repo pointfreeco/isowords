@@ -24,8 +24,7 @@ extension DeviceIdentifier: TestDependencyKey {
 extension DeviceIdentifier: DependencyKey {
   public static let liveValue = Self(
     id: {
-      if
-        let uuidString = NSUbiquitousKeyValueStore.default.string(forKey: deviceIdKey),
+      if let uuidString = NSUbiquitousKeyValueStore.default.string(forKey: deviceIdKey),
         let uuid = UUID.init(uuidString: uuidString)
       {
         return uuid

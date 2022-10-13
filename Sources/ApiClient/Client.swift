@@ -4,7 +4,7 @@ import SharedModels
 public struct ApiClient {
   public var apiRequest: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:
-  @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
+    @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
   public var baseUrl: @Sendable () -> URL
   public var currentPlayer: @Sendable () -> CurrentPlayerEnvelope?
   public var logout: @Sendable () async -> Void
@@ -15,7 +15,7 @@ public struct ApiClient {
   public init(
     apiRequest: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse),
     authenticate: @escaping @Sendable (ServerRoute.AuthenticateRequest) async throws ->
-    CurrentPlayerEnvelope,
+      CurrentPlayerEnvelope,
     baseUrl: @escaping @Sendable () -> URL,
     currentPlayer: @escaping @Sendable () -> CurrentPlayerEnvelope?,
     logout: @escaping @Sendable () async -> Void,

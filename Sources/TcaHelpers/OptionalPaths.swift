@@ -1,6 +1,6 @@
 import ComposableArchitecture
 
-public protocol Path<Root, Value> {
+public protocol Path<Root,Value> {
   associatedtype Root
   associatedtype Value
   func extract(from root: Root) -> Value?
@@ -231,7 +231,7 @@ public struct OptionalPathReducer<
     }
 
     let effect =
-    self.child.reduce(into: &childState, action: childAction)
+      self.child.reduce(into: &childState, action: childAction)
       .map { childAction -> Action in
         var action = action
         self.toChildAction.set(into: &action, childAction)

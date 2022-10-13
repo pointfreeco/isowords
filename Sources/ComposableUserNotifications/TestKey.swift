@@ -10,7 +10,7 @@ extension DependencyValues {
 
 extension UserNotificationClient: TestDependencyKey {
   public static let previewValue = Self.noop
-  
+
   public static let testValue = Self(
     add: XCTUnimplemented("\(Self.self).add"),
     delegate: XCTUnimplemented("\(Self.self).delegate", placeholder: .finished),

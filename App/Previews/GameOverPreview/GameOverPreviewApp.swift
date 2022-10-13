@@ -16,7 +16,7 @@ struct GameOverPreviewApp: App {
     WindowGroup {
       GameOverView(
         store: .solo
-        // store: .multiplayer
+          // store: .multiplayer
       )
     }
   }
@@ -38,25 +38,28 @@ extension StoreOf<GameOver> {
         isDemo: false
       ),
       reducer: GameOver()
-        .dependency(\.apiClient, update(.noop) {
-          $0.override(
-            routeCase: (/ServerRoute.Api.Route.games)
-              .appending(path: /ServerRoute.Api.Route.Games.submit),
-            withResponse: { _ in
-              try await OK(
-                SubmitGameResponse.solo(
-                  .init(
-                    ranks: [
-                      .allTime: .init(outOf: 152122, rank: 3828),
-                      .lastDay: .init(outOf: 512, rank: 79),
-                      .lastWeek: .init(outOf: 1603, rank: 605),
-                    ]
+        .dependency(
+          \.apiClient,
+          update(.noop) {
+            $0.override(
+              routeCase: (/ServerRoute.Api.Route.games)
+                .appending(path: /ServerRoute.Api.Route.Games.submit),
+              withResponse: { _ in
+                try await OK(
+                  SubmitGameResponse.solo(
+                    .init(
+                      ranks: [
+                        .allTime: .init(outOf: 152122, rank: 3828),
+                        .lastDay: .init(outOf: 512, rank: 79),
+                        .lastWeek: .init(outOf: 1603, rank: 605),
+                      ]
+                    )
                   )
                 )
-              )
-            }
-          )
-        })
+              }
+            )
+          }
+        )
         .dependency(\.audioPlayer, .noop)
         .dependency(
           \.database,
