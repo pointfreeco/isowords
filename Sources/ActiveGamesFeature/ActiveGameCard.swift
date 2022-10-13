@@ -1,4 +1,3 @@
-import Styleguide
 import SwiftUI
 
 struct ActiveGameCard<Title: View, Message: View>: View {

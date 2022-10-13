@@ -39,7 +39,7 @@ class GameOverViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -62,7 +62,7 @@ class GameOverViewTests: XCTestCase {
           environment: ()
         )
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -89,7 +89,7 @@ class GameOverViewTests: XCTestCase {
       )
       .environment(\.yourImage, UIImage(named: "you", in: .module, with: nil))
       .environment(\.opponentImage, UIImage(named: "opponent", in: .module, with: nil)),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }

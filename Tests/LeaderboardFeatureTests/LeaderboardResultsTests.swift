@@ -13,9 +13,8 @@ import XCTest
 class LeaderboardTests: XCTestCase {
   func testOnAppear() async {
     let store = TestStore(
-      initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
-      reducer: Reducer.leaderboardResultsReducer(),
-      environment: .happyPath
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
+      reducer: LeaderboardResults.happyPath
     )
 
     await store.send(.task) {
@@ -30,9 +29,8 @@ class LeaderboardTests: XCTestCase {
 
   func testChangeGameMode() async {
     let store = TestStore(
-      initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
-      reducer: Reducer.leaderboardResultsReducer(),
-      environment: .happyPath
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
+      reducer: LeaderboardResults.happyPath
     )
 
     await store.send(.gameModeButtonTapped(.unlimited)) {
@@ -47,9 +45,8 @@ class LeaderboardTests: XCTestCase {
 
   func testChangeTimeScope() async {
     let store = TestStore(
-      initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
-      reducer: Reducer.leaderboardResultsReducer(),
-      environment: .happyPath
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
+      reducer: LeaderboardResults.happyPath
     )
 
     await store.send(.tappedTimeScopeLabel) {
@@ -70,11 +67,8 @@ class LeaderboardTests: XCTestCase {
     struct SomeError: Error {}
 
     let store = TestStore(
-      initialState: LeaderboardResultsState(timeScope: TimeScope.lastWeek),
-      reducer: Reducer.leaderboardResultsReducer(),
-      environment: LeaderboardResultsEnvironment(
-        loadResults: { _, _ in throw SomeError() }
-      )
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
+      reducer: LeaderboardResults(loadResults: { _, _ in throw SomeError() })
     )
 
     await store.send(.task) {
@@ -117,7 +111,7 @@ private let untimedResults = ResultEnvelope(
   }
 )
 
-extension LeaderboardResultsEnvironment {
+extension LeaderboardResults {
   fileprivate static var happyPath: Self {
     Self(
       loadResults: { gameMode, _ in

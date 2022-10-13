@@ -3,7 +3,7 @@ import GameCore
 import PuzzleGen
 import SharedModels
 
-extension GameState {
+extension Game.State {
   public static let onboarding = Self(
     inProgressGame: .init(
       cubes: .onboarding,

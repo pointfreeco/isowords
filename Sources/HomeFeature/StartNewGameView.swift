@@ -6,14 +6,14 @@ import SwiftUI
 
 struct StartNewGameView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<HomeState, HomeAction>
+  let store: StoreOf<Home>
 
-  init(store: Store<HomeState, HomeAction>) {
+  init(store: StoreOf<Home>) {
     self.store = store
   }
 
   var body: some View {
-    WithViewStore(self.store.scope(state: \.route?.tag)) { viewStore in
+    WithViewStore(self.store.scope(state: \.destination?.tag)) { viewStore in
       VStack(alignment: .leading) {
         Text("Start a game")
           .adaptiveFont(.matterMedium, size: 16)
@@ -23,14 +23,15 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.solo).extract(from:),
-              action: HomeAction.solo
+              state: (\Home.State.destination).appending(path: /Home.DestinationState.solo)
+                .extract(from:),
+              action: { .destination(.solo($0)) }
             ),
             then: SoloView.init(store:)
           ),
-          tag: HomeRoute.Tag.solo,
+          tag: Home.DestinationState.Tag.solo,
           selection: viewStore.binding(
-            send: HomeAction.setNavigation(tag:)
+            send: Home.Action.setNavigation(tag:)
           )
           .animation()
         ) {
@@ -50,15 +51,16 @@ struct StartNewGameView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.multiplayer).extract(from:),
-              action: HomeAction.multiplayer
+              state: (\Home.State.destination).appending(path: /Home.DestinationState.multiplayer)
+                .extract(from:),
+              action: { .destination(.multiplayer($0)) }
             ),
             then: MultiplayerView.init(store:)
           ),
-          tag: HomeRoute.Tag.multiplayer,
+          tag: Home.DestinationState.Tag.multiplayer,
           selection:
             viewStore
-            .binding(send: HomeAction.setNavigation(tag:))
+            .binding(send: Home.Action.setNavigation(tag:))
             .animation()
         ) {
           HStack {

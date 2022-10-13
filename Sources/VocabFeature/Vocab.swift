@@ -1,156 +1,119 @@
-import AudioPlayerClient
 import ComposableArchitecture
 import CubePreview
-import FeedbackGeneratorClient
 import LocalDatabaseClient
-import LowPowerModeClient
-import SharedModels
-import Styleguide
 import SwiftUI
 
-public struct VocabState: Equatable {
-  var cubePreview: CubePreviewState?
-  var isAnimationReduced: Bool
-  var isHapticsEnabled: Bool
-  var vocab: LocalDatabaseClient.Vocab?
+public struct Vocab: ReducerProtocol {
+  public struct State: Equatable {
+    var cubePreview: CubePreview.State?
+    var isAnimationReduced: Bool
+    var isHapticsEnabled: Bool
+    var vocab: LocalDatabaseClient.Vocab?
 
-  public init(
-    cubePreview: CubePreviewState? = nil,
-    isAnimationReduced: Bool,
-    isHapticsEnabled: Bool,
-    vocab: LocalDatabaseClient.Vocab? = nil
-  ) {
-    self.cubePreview = cubePreview
-    self.isAnimationReduced = isAnimationReduced
-    self.isHapticsEnabled = isHapticsEnabled
-    self.vocab = vocab
-  }
+    public init(
+      cubePreview: CubePreview.State? = nil,
+      isAnimationReduced: Bool,
+      isHapticsEnabled: Bool,
+      vocab: LocalDatabaseClient.Vocab? = nil
+    ) {
+      self.cubePreview = cubePreview
+      self.isAnimationReduced = isAnimationReduced
+      self.isHapticsEnabled = isHapticsEnabled
+      self.vocab = vocab
+    }
 
-  public struct GamesResponse: Equatable {
-    var games: [LocalDatabaseClient.Game]
-    var word: String
-  }
-}
-
-public enum VocabAction: Equatable {
-  case dismissCubePreview
-  case gamesResponse(TaskResult<VocabState.GamesResponse>)
-  case preview(CubePreviewAction)
-  case task
-  case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
-  case wordTapped(LocalDatabaseClient.Vocab.Word)
-}
-
-public struct VocabEnvironment {
-  var audioPlayer: AudioPlayerClient
-  var database: LocalDatabaseClient
-  var feedbackGenerator: FeedbackGeneratorClient
-  var lowPowerMode: LowPowerModeClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-
-  public init(
-    audioPlayer: AudioPlayerClient,
-    database: LocalDatabaseClient,
-    feedbackGenerator: FeedbackGeneratorClient,
-    lowPowerMode: LowPowerModeClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.audioPlayer = audioPlayer
-    self.database = database
-    self.lowPowerMode = lowPowerMode
-    self.feedbackGenerator = feedbackGenerator
-    self.mainQueue = mainQueue
-  }
-}
-
-public let vocabReducer = Reducer<
-  VocabState,
-  VocabAction,
-  VocabEnvironment
->.combine(
-  cubePreviewReducer
-    .optional()
-    .pullback(
-      state: \.cubePreview,
-      action: /VocabAction.preview,
-      environment: {
-        CubePreviewEnvironment(
-          audioPlayer: $0.audioPlayer,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case .dismissCubePreview:
-      state.cubePreview = nil
-      return .none
-
-    case let .gamesResponse(.failure(error)):
-      return .none
-
-    case let .gamesResponse(.success(response)):
-      guard let game = response.games.first
-      else { return .none }
-
-      let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
-        switch move.type {
-        case let .playedWord(cubeFaces):
-          return game.completedGame.cubes.string(from: cubeFaces) == response.word
-        case .removedCube:
-          return false
-        }
-      }
-      guard let moveIndex = possibleMoveIndex
-      else { return .none }
-
-      state.cubePreview = .init(
-        cubes: game.completedGame.cubes,
-        isAnimationReduced: state.isAnimationReduced,
-        isHapticsEnabled: state.isHapticsEnabled,
-        moveIndex: moveIndex,
-        moves: game.completedGame.moves,
-        settings: .init()
-      )
-      return .none
-
-    case .preview:
-      return .none
-
-    case .task:
-      return .task {
-        await .vocabResponse(TaskResult { try await environment.database.fetchVocab() })
-      }
-
-    case let .vocabResponse(.success(vocab)):
-      state.vocab = vocab
-      return .none
-
-    case let .vocabResponse(.failure(error)):
-      return .none
-
-    case let .wordTapped(word):
-      return .task {
-        await .gamesResponse(
-          TaskResult {
-            .init(
-              games: try await environment.database.fetchGamesForWord(word.letters),
-              word: word.letters
-            )
-          }
-        )
-      }
+    public struct GamesResponse: Equatable {
+      var games: [LocalDatabaseClient.Game]
+      var word: String
     }
   }
-)
+
+  public enum Action: Equatable {
+    case dismissCubePreview
+    case gamesResponse(TaskResult<State.GamesResponse>)
+    case preview(CubePreview.Action)
+    case task
+    case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
+    case wordTapped(LocalDatabaseClient.Vocab.Word)
+  }
+
+  @Dependency(\.database) var database
+
+  public init() {}
+
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case .dismissCubePreview:
+        state.cubePreview = nil
+        return .none
+
+      case .gamesResponse(.failure):
+        return .none
+
+      case let .gamesResponse(.success(response)):
+        guard let game = response.games.first
+        else { return .none }
+
+        let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
+          switch move.type {
+          case let .playedWord(cubeFaces):
+            return game.completedGame.cubes.string(from: cubeFaces) == response.word
+          case .removedCube:
+            return false
+          }
+        }
+        guard let moveIndex = possibleMoveIndex
+        else { return .none }
+
+        state.cubePreview = CubePreview.State(
+          cubes: game.completedGame.cubes,
+          isAnimationReduced: state.isAnimationReduced,
+          isHapticsEnabled: state.isHapticsEnabled,
+          moveIndex: moveIndex,
+          moves: game.completedGame.moves,
+          settings: .init()
+        )
+        return .none
+
+      case .preview:
+        return .none
+
+      case .task:
+        return .task {
+          await .vocabResponse(TaskResult { try await self.database.fetchVocab() })
+        }
+
+      case let .vocabResponse(.success(vocab)):
+        state.vocab = vocab
+        return .none
+
+      case .vocabResponse(.failure):
+        return .none
+
+      case let .wordTapped(word):
+        return .task {
+          await .gamesResponse(
+            TaskResult {
+              .init(
+                games: try await self.database.fetchGamesForWord(word.letters),
+                word: word.letters
+              )
+            }
+          )
+        }
+      }
+    }
+    .ifLet(\.cubePreview, action: /Action.preview) {
+      CubePreview()
+    }
+  }
+}
 
 public struct VocabView: View {
-  public let store: Store<VocabState, VocabAction>
+  public let store: StoreOf<Vocab>
 
-  public init(store: Store<VocabState, VocabAction>) {
+  public init(store: StoreOf<Vocab>) {
     self.store = store
   }
 
@@ -194,7 +157,7 @@ public struct VocabView: View {
         )
       ) {
         IfLetStore(
-          self.store.scope(state: \.cubePreview, action: VocabAction.preview),
+          self.store.scope(state: \.cubePreview, action: Vocab.Action.preview),
           then: CubePreviewView.init(store:)
         )
       }
@@ -223,9 +186,9 @@ public struct VocabView: View {
     }
   }
 
-  extension Store where State == VocabState, Action == VocabAction {
+  extension Store where State == Vocab.State, Action == Vocab.Action {
     static let vocab = Store(
-      initialState: .init(
+      initialState: Vocab.State(
         cubePreview: nil,
         isAnimationReduced: false,
         isHapticsEnabled: false,
@@ -236,14 +199,7 @@ public struct VocabView: View {
           ]
         )
       ),
-      reducer: vocabReducer,
-      environment: .init(
-        audioPlayer: .noop,
-        database: .noop,
-        feedbackGenerator: .noop,
-        lowPowerMode: .false,
-        mainQueue: .main
-      )
+      reducer: Vocab()
     )
   }
 #endif

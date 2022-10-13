@@ -141,71 +141,69 @@ public struct TurnBasedParticipant: Equatable {
   }
 }
 
-#if DEBUG
-  extension Player {
-    public static let mock = local
+extension Player {
+  public static let mock = local
 
-    public static let local = Self(
-      alias: "blob",
-      displayName: "Blob",
-      gamePlayerId: "A:_deadbeefdeadbeefdeadbeefdeadbeef"
-    )
+  public static let local = Self(
+    alias: "blob",
+    displayName: "Blob",
+    gamePlayerId: "A:_deadbeefdeadbeefdeadbeefdeadbeef"
+  )
 
-    public static let remote = Self(
-      alias: "blob_jr",
-      displayName: "Blob Jr.",
-      gamePlayerId: "123456789123456789"
-    )
-  }
+  public static let remote = Self(
+    alias: "blob_jr",
+    displayName: "Blob Jr.",
+    gamePlayerId: "123456789123456789"
+  )
+}
 
-  extension LocalPlayer {
-    public static let mock = authenticated
+extension LocalPlayer {
+  public static let mock = authenticated
 
-    public static let authenticated = Self(
-      isAuthenticated: true,
-      isMultiplayerGamingRestricted: false,
-      player: .local
-    )
+  public static let authenticated = Self(
+    isAuthenticated: true,
+    isMultiplayerGamingRestricted: false,
+    player: .local
+  )
 
-    public static let notAuthenticated = Self(
-      isAuthenticated: false,
-      isMultiplayerGamingRestricted: false,
-      player: .local
-    )
-  }
+  public static let notAuthenticated = Self(
+    isAuthenticated: false,
+    isMultiplayerGamingRestricted: false,
+    player: .local
+  )
+}
 
-  extension TurnBasedMatch {
-    public static let mock = new
+extension TurnBasedMatch {
+  public static let mock = new
 
-    public static let new = Self(
-      creationDate: .mock,
-      currentParticipant: update(.local) { $0.player = .local },
-      matchData: nil,
-      matchId: "deadbeef-dead-beef-dead-beefdeadbeef",
-      message: nil,
-      participants: [
-        update(.local) { $0.player = .local },
-        update(.remote) { $0.player = .remote },
-      ],
-      status: .open
-    )
-  }
+  public static let new = Self(
+    creationDate: .mock,
+    currentParticipant: update(.local) { $0.player = .local },
+    matchData: nil,
+    matchId: "deadbeef-dead-beef-dead-beefdeadbeef",
+    message: nil,
+    participants: [
+      update(.local) { $0.player = .local },
+      update(.remote) { $0.player = .remote },
+    ],
+    status: .open
+  )
+}
 
-  extension TurnBasedParticipant {
-    public static let local = Self(
-      lastTurnDate: nil,
-      matchOutcome: .none,
-      player: .local,
-      status: .active,
-      timeoutDate: nil
-    )
+extension TurnBasedParticipant {
+  public static let local = Self(
+    lastTurnDate: nil,
+    matchOutcome: .none,
+    player: .local,
+    status: .active,
+    timeoutDate: nil
+  )
 
-    public static let remote = Self(
-      lastTurnDate: nil,
-      matchOutcome: .none,
-      player: .remote,
-      status: .active,
-      timeoutDate: nil
-    )
-  }
-#endif
+  public static let remote = Self(
+    lastTurnDate: nil,
+    matchOutcome: .none,
+    player: .remote,
+    status: .active,
+    timeoutDate: nil
+  )
+}

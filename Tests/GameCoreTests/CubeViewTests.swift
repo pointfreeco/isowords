@@ -554,7 +554,7 @@ class CubeViewTests: XCTestCase {
 
     assertSnapshot(
       matching: view,
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }

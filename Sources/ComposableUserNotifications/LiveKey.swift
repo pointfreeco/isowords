@@ -2,8 +2,8 @@ import Combine
 import ComposableArchitecture
 import UserNotifications
 
-extension UserNotificationClient {
-  public static let live = Self(
+extension UserNotificationClient: DependencyKey {
+  public static let liveValue = Self(
     add: { try await UNUserNotificationCenter.current().add($0) },
     delegate: {
       AsyncStream { continuation in

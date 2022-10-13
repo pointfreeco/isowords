@@ -1,15 +1,29 @@
 import ComposableArchitecture
-import ComposableGameCenter
-import Styleguide
 import SwiftUI
 import TcaHelpers
 
-public struct MultiplayerState: Equatable {
-  public var hasPastGames: Bool
-  public var route: Route?
+public struct Multiplayer: ReducerProtocol {
+  public struct State: Equatable {
+    public var destination: DestinationState?
+    public var hasPastGames: Bool
 
-  public enum Route: Equatable {
-    case pastGames(PastGamesState)
+    public init(
+      destination: DestinationState? = nil,
+      hasPastGames: Bool
+    ) {
+      self.destination = destination
+      self.hasPastGames = hasPastGames
+    }
+  }
+
+  public enum Action: Equatable {
+    case destination(DestinationAction)
+    case setNavigation(tag: DestinationState.Tag?)
+    case startButtonTapped
+  }
+
+  public enum DestinationState: Equatable {
+    case pastGames(PastGames.State)
 
     public enum Tag: Int {
       case pastGames
@@ -23,92 +37,67 @@ public struct MultiplayerState: Equatable {
     }
   }
 
-  public init(
-    hasPastGames: Bool,
-    route: Route? = nil
-  ) {
-    self.hasPastGames = hasPastGames
-    self.route = route
+  public enum DestinationAction: Equatable {
+    case pastGames(PastGames.Action)
   }
-}
 
-public enum MultiplayerAction: Equatable {
-  case pastGames(PastGamesAction)
-  case setNavigation(tag: MultiplayerState.Route.Tag?)
-  case startButtonTapped
-}
+  @Dependency(\.gameCenter) var gameCenter
 
-public struct MultiplayerEnvironment {
-  public var backgroundQueue: AnySchedulerOf<DispatchQueue>
-  public var gameCenter: GameCenterClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
+  public init() {}
 
-  public init(
-    backgroundQueue: AnySchedulerOf<DispatchQueue>,
-    gameCenter: GameCenterClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.backgroundQueue = backgroundQueue
-    self.gameCenter = gameCenter
-    self.mainQueue = mainQueue
-  }
-}
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case .destination(.pastGames):
+        return .none
 
-public let multiplayerReducer = Reducer<
-  MultiplayerState,
-  MultiplayerAction,
-  MultiplayerEnvironment
->.combine(
-  pastGamesReducer
-    ._pullback(
-      state: (\MultiplayerState.route).appending(path: /MultiplayerState.Route.pastGames),
-      action: /MultiplayerAction.pastGames,
-      environment: { PastGamesEnvironment(gameCenter: $0.gameCenter) }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case .pastGames:
-      return .none
-
-    case .startButtonTapped:
-      return .fireAndForget {
-        if environment.gameCenter.localPlayer.localPlayer().isAuthenticated {
-          try await environment.gameCenter.turnBasedMatchmakerViewController.present(false)
-        } else {
-          await environment.gameCenter.localPlayer.presentAuthenticationViewController()
+      case .startButtonTapped:
+        return .fireAndForget {
+          if self.gameCenter.localPlayer.localPlayer().isAuthenticated {
+            try await self.gameCenter.turnBasedMatchmakerViewController.present(false)
+          } else {
+            await self.gameCenter.localPlayer.presentAuthenticationViewController()
+          }
         }
+
+      case .setNavigation(tag: .pastGames):
+        state.destination = .pastGames(.init())
+        return .none
+
+      case .setNavigation(tag: .none):
+        state.destination = nil
+        return .none
       }
-
-    case .setNavigation(tag: .pastGames):
-      state.route = .pastGames(.init())
-      return .none
-
-    case .setNavigation(tag: .none):
-      state.route = nil
-      return .none
+    }
+    .ifLet(\.destination, action: /Action.destination) {
+      EmptyReducer().ifCaseLet(
+        /DestinationState.pastGames,
+        action: /DestinationAction.pastGames
+      ) {
+        PastGames()
+      }
     }
   }
-)
+}
 
 public struct MultiplayerView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<MultiplayerState, MultiplayerAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, MultiplayerAction>
+  let store: StoreOf<Multiplayer>
+  @ObservedObject var viewStore: ViewStore<ViewState, Multiplayer.Action>
 
-  public init(store: Store<MultiplayerState, MultiplayerAction>) {
+  public init(store: StoreOf<Multiplayer>) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
   }
 
   struct ViewState: Equatable {
+    let destinationTag: Multiplayer.DestinationState.Tag?
     let hasPastGames: Bool
-    let routeTag: MultiplayerState.Route.Tag?
 
-    init(state: MultiplayerState) {
+    init(state: Multiplayer.State) {
+      self.destinationTag = state.destination?.tag
       self.hasPastGames = state.hasPastGames
-      self.routeTag = state.route?.tag
     }
   }
 
@@ -153,17 +142,17 @@ public struct MultiplayerView: View {
           NavigationLink(
             destination: IfLetStore(
               self.store.scope(
-                state: (\MultiplayerState.route)
-                  .appending(path: /MultiplayerState.Route.pastGames)
+                state: (\Multiplayer.State.destination)
+                  .appending(path: /Multiplayer.DestinationState.pastGames)
                   .extract(from:),
-                action: MultiplayerAction.pastGames
+                action: { .destination(.pastGames($0)) }
               ),
               then: { PastGamesView(store: $0) }
             ),
-            tag: MultiplayerState.Route.Tag.pastGames,
+            tag: Multiplayer.DestinationState.Tag.pastGames,
             selection: viewStore.binding(
-              get: \.routeTag,
-              send: MultiplayerAction.setNavigation
+              get: \.destinationTag,
+              send: Multiplayer.Action.setNavigation
             )
           ) {
             HStack {
@@ -205,15 +194,10 @@ public struct MultiplayerView: View {
     }
   }
 
-  extension Store where State == MultiplayerState, Action == MultiplayerAction {
+  extension Store where State == Multiplayer.State, Action == Multiplayer.Action {
     static let multiplayer = Store(
       initialState: .init(hasPastGames: true),
-      reducer: multiplayerReducer,
-      environment: MultiplayerEnvironment(
-        backgroundQueue: DispatchQueue(label: "background").eraseToAnyScheduler(),
-        gameCenter: .noop,
-        mainQueue: .main
-      )
+      reducer: Multiplayer()
     )
   }
 #endif

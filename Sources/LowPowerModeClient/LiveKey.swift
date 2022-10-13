@@ -1,8 +1,8 @@
-import Combine
+import Dependencies
 import Foundation
 
-extension LowPowerModeClient {
-  public static var live = Self(
+extension LowPowerModeClient: DependencyKey {
+  public static let liveValue = Self(
     start: {
       AsyncStream { continuation in
         continuation.yield(ProcessInfo.processInfo.isLowPowerModeEnabled)

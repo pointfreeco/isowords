@@ -4,6 +4,12 @@ import XCTest
 
 @testable import OnboardingFeature
 
+extension DateGenerator {
+  static func runLoop(_ runLoop: AnySchedulerOf<RunLoop>) -> Self {
+    Self { runLoop.now.date }
+  }
+}
+
 @MainActor
 class OnboardingFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
@@ -11,27 +17,25 @@ class OnboardingFeatureTests: XCTestCase {
   func testBasics_FirstLaunch() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
     
-    var environment = OnboardingEnvironment.unimplemented
-    environment.audioPlayer = .noop
-    environment.backgroundQueue = .immediate
-    environment.dictionary.load = { _ in true }
-    environment.dictionary.contains = { word, _ in
+    let store = TestStore(
+      initialState: Onboarding.State(presentationStyle: .firstLaunch),
+      reducer: Onboarding()
+    )
+
+    store.dependencies.audioPlayer = .noop
+    store.dependencies.dictionary.load = { _ in true }
+    store.dependencies.dictionary.contains = { word, _ in
       ["GAME", "CUBES", "REMOVE", "WORD"].contains(word)
     }
-    environment.feedbackGenerator = .noop
-    environment.mainRunLoop = .immediate
-    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    environment.userDefaults.setBool = { value, key in
+    store.dependencies.feedbackGenerator = .noop
+    store.dependencies.mainRunLoop = .immediate
+    store.dependencies.date = .runLoop(store.dependencies.mainRunLoop)
+    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    store.dependencies.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
       await isFirstLaunchOnboardingKeySet.setValue(true)
     }
-
-    let store = TestStore(
-      initialState: OnboardingState(presentationStyle: .firstLaunch),
-      reducer: onboardingReducer,
-      environment: environment
-    )
 
     await store.send(.task)
 
@@ -74,7 +78,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.one].right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: store.dependencies.mainRunLoop.now.date,
           playerIndex: nil,
           reactions: nil,
           score: 36,
@@ -131,7 +135,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.one].top.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: store.dependencies.mainRunLoop.now.date,
           playerIndex: nil,
           reactions: nil,
           score: 110,
@@ -181,7 +185,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .one, z: .one), side: .right))
     }
     await store.send(.game(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right)))) {
-      $0.game.cubeStartedShakingAt = environment.mainRunLoop.now.date
+      $0.game.cubeStartedShakingAt = store.dependencies.mainRunLoop.now.date
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
       $0.game.selectedWordIsValid = true
@@ -197,7 +201,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.one].right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: store.dependencies.mainRunLoop.now.date,
           playerIndex: nil,
           reactions: nil,
           score: 252,
@@ -253,7 +257,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.zero][.two].right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: store.dependencies.mainRunLoop.now.date,
           playerIndex: nil,
           reactions: nil,
           score: 44,
@@ -284,7 +288,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes[.two][.two][.two].wasRemoved = true
       $0.game.moves.append(
         .init(
-          playedAt: environment.mainRunLoop.now.date,
+          playedAt: store.dependencies.mainRunLoop.now.date,
           playerIndex: nil,
           reactions: nil,
           score: 0,
@@ -308,26 +312,23 @@ class OnboardingFeatureTests: XCTestCase {
   func testSkip_HasSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
-    var environment = OnboardingEnvironment.unimplemented
-    environment.audioPlayer = .noop
-    environment.backgroundQueue = .immediate
-    environment.dictionary.load = { _ in true }
-    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    environment.userDefaults.boolForKey = { key in
+    let store = TestStore(
+      initialState: Onboarding.State(presentationStyle: .help),
+      reducer: Onboarding()
+    )
+
+    store.dependencies.audioPlayer = .noop
+    store.dependencies.dictionary.load = { _ in true }
+    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    store.dependencies.userDefaults.boolForKey = { key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return true
     }
-    environment.userDefaults.setBool = { value, key in
+    store.dependencies.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
       await isFirstLaunchOnboardingKeySet.setValue(true)
     }
-
-    let store = TestStore(
-      initialState: OnboardingState(presentationStyle: .help),
-      reducer: onboardingReducer,
-      environment: environment
-    )
 
     await store.send(.task)
 
@@ -346,26 +347,23 @@ class OnboardingFeatureTests: XCTestCase {
   func testSkip_HasNotSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
-    var environment = OnboardingEnvironment.unimplemented
-    environment.audioPlayer = .noop
-    environment.backgroundQueue = .immediate
-    environment.dictionary.load = { _ in true }
-    environment.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    environment.userDefaults.boolForKey = { key in
+    let store = TestStore(
+      initialState: Onboarding.State(presentationStyle: .firstLaunch),
+      reducer: Onboarding()
+    )
+
+    store.dependencies.audioPlayer = .noop
+    store.dependencies.dictionary.load = { _ in true }
+    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
+    store.dependencies.userDefaults.boolForKey = { key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       return false
     }
-    environment.userDefaults.setBool = { value, key in
+    store.dependencies.userDefaults.setBool = { value, key in
       XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
       XCTAssertNoDifference(value, true)
       await isFirstLaunchOnboardingKeySet.setValue(true)
     }
-
-    let store = TestStore(
-      initialState: OnboardingState(presentationStyle: .firstLaunch),
-      reducer: onboardingReducer,
-      environment: environment
-    )
 
     await store.send(.task)
 
@@ -400,17 +398,4 @@ class OnboardingFeatureTests: XCTestCase {
 
     await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
-}
-
-extension OnboardingEnvironment {
-  static let unimplemented = Self(
-    audioPlayer: .unimplemented,
-    backgroundQueue: .unimplemented("backgroundQueue"),
-    dictionary: .unimplemented,
-    feedbackGenerator: .unimplemented,
-    lowPowerMode: .unimplemented,
-    mainQueue: .unimplemented("mainQueue"),
-    mainRunLoop: .unimplemented,
-    userDefaults: .unimplemented
-  )
 }

@@ -8,20 +8,20 @@ import SwiftUI
 struct DailyChallengeHeaderView: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.date) var date
-  let store: Store<HomeState, HomeAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, HomeAction>
+  let store: StoreOf<Home>
+  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
 
   struct ViewState: Equatable {
     let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    let routeTag: HomeRoute.Tag?
+    let destinationTag: Home.DestinationState.Tag?
 
-    init(homeState: HomeState) {
+    init(homeState: Home.State) {
       self.dailyChallenges = homeState.dailyChallenges
-      self.routeTag = homeState.route?.tag
+      self.destinationTag = homeState.destination?.tag
     }
   }
 
-  init(store: Store<HomeState, HomeAction>) {
+  init(store: StoreOf<Home>) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(homeState:)))
   }
@@ -64,15 +64,16 @@ struct DailyChallengeHeaderView: View {
         NavigationLink(
           destination: IfLetStore(
             self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge).extract(from:),
-              action: HomeAction.dailyChallenge
+              state: (\Home.State.destination)
+                .appending(path: /Home.DestinationState.dailyChallenge).extract(from:),
+              action: { .destination(.dailyChallenge($0)) }
             ),
             then: DailyChallengeView.init(store:)
           ),
-          tag: HomeRoute.Tag.dailyChallenge,
+          tag: Home.DestinationState.Tag.dailyChallenge,
           selection: viewStore.binding(
-            get: \.routeTag,
-            send: HomeAction.setNavigation(tag:)
+            get: \.destinationTag,
+            send: Home.Action.setNavigation(tag:)
           )
           .animation()
         ) {

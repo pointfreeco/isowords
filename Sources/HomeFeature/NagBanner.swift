@@ -1,43 +1,17 @@
-import Combine
 import ComposableArchitecture
-import ComposableStoreKit
-import ServerConfigClient
 import SwiftUI
-import TcaHelpers
 import UpgradeInterstitialFeature
 
-public struct NagBannerState: Equatable {
-  var upgradeInterstitial: UpgradeInterstitialState? = nil
-}
+public struct NagBannerFeature: ReducerProtocol {
+  public typealias State = NagBanner.State?
 
-public enum NagBannerAction: Equatable {
-  case tapped
-  case upgradeInterstitial(UpgradeInterstitialAction)
-}
+  public enum Action: Equatable {
+    case dismissUpgradeInterstitial
+    case nagBanner(NagBanner.Action)
+  }
 
-public enum NagBannerFeatureAction: Equatable {
-  case dismissUpgradeInterstitial
-  case nagBanner(NagBannerAction)
-}
-
-public struct NagBannerEnvironment {
-  var mainRunLoop: AnySchedulerOf<RunLoop>
-  var serverConfig: ServerConfigClient
-  var storeKit: StoreKitClient
-}
-
-let nagBannerFeatureReducer = Reducer<NagBannerState?, NagBannerFeatureAction, NagBannerEnvironment>
-  .combine(
-    nagBannerReducer
-      ._pullback(
-        state: OptionalPath(\.self),
-        action: /NagBannerFeatureAction.nagBanner,
-        environment: { $0 }
-      ),
-
-    .init { state, action, environment in
-      struct TimerId: Hashable {}
-
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
       switch action {
       case .dismissUpgradeInterstitial:
         state?.upgradeInterstitial = nil
@@ -51,24 +25,24 @@ let nagBannerFeatureReducer = Reducer<NagBannerState?, NagBannerFeatureAction, N
         return .none
       }
     }
-  )
+    .ifLet(\.self, action: /Action.nagBanner) {
+      NagBanner()
+    }
+  }
+}
 
-private let nagBannerReducer = Reducer<NagBannerState, NagBannerAction, NagBannerEnvironment>
-  .combine(
-    upgradeInterstitialReducer
-      ._pullback(
-        state: OptionalPath(\.upgradeInterstitial),
-        action: /NagBannerAction.upgradeInterstitial,
-        environment: {
-          UpgradeInterstitialEnvironment(
-            mainRunLoop: $0.mainRunLoop,
-            serverConfig: $0.serverConfig,
-            storeKit: $0.storeKit
-          )
-        }
-      ),
+public struct NagBanner: ReducerProtocol {
+  public struct State: Equatable {
+    var upgradeInterstitial: UpgradeInterstitial.State? = nil
+  }
 
-    .init { state, action, environment in
+  public enum Action: Equatable {
+    case tapped
+    case upgradeInterstitial(UpgradeInterstitial.Action)
+  }
+
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
       switch action {
       case .tapped:
         state.upgradeInterstitial = .init(isDismissable: true)
@@ -86,16 +60,20 @@ private let nagBannerReducer = Reducer<NagBannerState, NagBannerAction, NagBanne
         return .none
       }
     }
-  )
+    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      UpgradeInterstitial()
+    }
+  }
+}
 
-struct NagBannerFeature: View {
-  let store: Store<NagBannerState?, NagBannerFeatureAction>
+struct NagBannerFeatureView: View {
+  let store: StoreOf<NagBannerFeature>
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
       IfLetStore(
-        self.store.scope(state: { $0 }, action: NagBannerFeatureAction.nagBanner),
-        then: NagBanner.init(store:)
+        self.store.scope(state: { $0 }, action: NagBannerFeature.Action.nagBanner),
+        then: NagBannerView.init(store:)
       )
       .background(
         // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
@@ -105,7 +83,7 @@ struct NagBannerFeature: View {
           .sheet(
             isPresented: viewStore.binding(
               get: { $0?.upgradeInterstitial != nil },
-              send: NagBannerFeatureAction.dismissUpgradeInterstitial
+              send: NagBannerFeature.Action.dismissUpgradeInterstitial
             )
           ) {
             IfLetStore(
@@ -121,8 +99,8 @@ struct NagBannerFeature: View {
   }
 }
 
-private struct NagBanner: View {
-  let store: Store<NagBannerState, NagBannerAction>
+private struct NagBannerView: View {
+  let store: StoreOf<NagBanner>
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
@@ -155,15 +133,10 @@ let messages = [
     static var previews: some View {
       NavigationView {
         ZStack(alignment: .bottomLeading) {
-          NagBanner(
-            store: .init(
-              initialState: NagBannerState(),
-              reducer: nagBannerReducer,
-              environment: NagBannerEnvironment(
-                mainRunLoop: .main,
-                serverConfig: .noop,
-                storeKit: .noop
-              )
+          NagBannerView(
+            store: Store(
+              initialState: NagBanner.State(),
+              reducer: NagBanner()
             )
           )
         }

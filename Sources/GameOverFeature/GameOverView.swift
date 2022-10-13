@@ -1,154 +1,336 @@
-import ApiClient
 import AudioPlayerClient
 import ClientModels
-import Combine
-import CombineHelpers
 import ComposableArchitecture
 import ComposableGameCenter
-import ComposableStoreKit
 import ComposableUserNotifications
 import DailyChallengeHelpers
-import FileClient
-import GameKit
 import LocalDatabaseClient
-import NotificationHelpers
 import NotificationsAuthAlert
 import Overture
-import RemoteNotificationsClient
-import ServerConfig
-import ServerConfigClient
 import SharedModels
 import SharedSwiftUIEnvironment
 import Styleguide
 import SwiftUI
 import SwiftUIHelpers
-import TcaHelpers
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-public struct GameOverState: Equatable {
-  public var completedGame: CompletedGame
-  public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
-  public var gameModeIsLoading: GameMode?
-  public var isDemo: Bool
-  public var isNotificationMenuPresented: Bool
-  public var isViewEnabled: Bool
-  public var notificationsAuthAlert: NotificationsAuthAlertState?
-  public var showConfetti: Bool
-  public var summary: RankSummary?
-  public var turnBasedContext: TurnBasedContext?
-  public var upgradeInterstitial: UpgradeInterstitialState?
-  public var userNotificationSettings: UserNotificationClient.Notification.Settings?
+public struct GameOver: ReducerProtocol {
+  public struct State: Equatable {
+    public var completedGame: CompletedGame
+    public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
+    public var gameModeIsLoading: GameMode?
+    public var isDemo: Bool
+    public var isNotificationMenuPresented: Bool
+    public var isViewEnabled: Bool
+    public var notificationsAuthAlert: NotificationsAuthAlert.State?
+    public var showConfetti: Bool
+    public var summary: RankSummary?
+    public var turnBasedContext: TurnBasedContext?
+    public var upgradeInterstitial: UpgradeInterstitial.State?
+    public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
-  public init(
-    completedGame: CompletedGame,
-    dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
-    gameModeIsLoading: GameMode? = nil,
-    isDemo: Bool,
-    isNotificationMenuPresented: Bool = false,
-    isViewEnabled: Bool = false,
-    notificationsAuthAlert: NotificationsAuthAlertState? = nil,
-    showConfetti: Bool = false,
-    summary: RankSummary? = nil,
-    turnBasedContext: TurnBasedContext? = nil,
-    upgradeInterstitial: UpgradeInterstitialState? = nil,
-    userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
-  ) {
-    self.completedGame = completedGame
-    self.dailyChallenges = dailyChallenges
-    self.gameModeIsLoading = gameModeIsLoading
-    self.isDemo = isDemo
-    self.isNotificationMenuPresented = isNotificationMenuPresented
-    self.isViewEnabled = isViewEnabled
-    self.notificationsAuthAlert = notificationsAuthAlert
-    self.showConfetti = showConfetti
-    self.summary = summary
-    self.turnBasedContext = turnBasedContext
-    self.upgradeInterstitial = upgradeInterstitial
-    self.userNotificationSettings = userNotificationSettings
+    public init(
+      completedGame: CompletedGame,
+      dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
+      gameModeIsLoading: GameMode? = nil,
+      isDemo: Bool,
+      isNotificationMenuPresented: Bool = false,
+      isViewEnabled: Bool = false,
+      notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
+      showConfetti: Bool = false,
+      summary: RankSummary? = nil,
+      turnBasedContext: TurnBasedContext? = nil,
+      upgradeInterstitial: UpgradeInterstitial.State? = nil,
+      userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
+    ) {
+      self.completedGame = completedGame
+      self.dailyChallenges = dailyChallenges
+      self.gameModeIsLoading = gameModeIsLoading
+      self.isDemo = isDemo
+      self.isNotificationMenuPresented = isNotificationMenuPresented
+      self.isViewEnabled = isViewEnabled
+      self.notificationsAuthAlert = notificationsAuthAlert
+      self.showConfetti = showConfetti
+      self.summary = summary
+      self.turnBasedContext = turnBasedContext
+      self.upgradeInterstitial = upgradeInterstitial
+      self.userNotificationSettings = userNotificationSettings
+    }
+
+    public enum RankSummary: Equatable {
+      case dailyChallenge(DailyChallengeResult)
+      case leaderboard([TimeScope: LeaderboardScoreResult.Rank])
+    }
   }
 
-  public enum RankSummary: Equatable {
-    case dailyChallenge(DailyChallengeResult)
-    case leaderboard([TimeScope: LeaderboardScoreResult.Rank])
+  public enum Action: Equatable {
+    case closeButtonTapped
+    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case delayedOnAppear
+    case delayedShowUpgradeInterstitial
+    case delegate(DelegateAction)
+    case gameButtonTapped(GameMode)
+    case notificationsAuthAlert(NotificationsAuthAlert.Action)
+    case rematchButtonTapped
+    case showConfetti
+    case startDailyChallengeResponse(TaskResult<InProgressGame>)
+    case task
+    case submitGameResponse(TaskResult<SubmitGameResponse>)
+    case upgradeInterstitial(UpgradeInterstitial.Action)
+    case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
   }
-}
-
-public enum GameOverAction: Equatable {
-  case closeButtonTapped
-  case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
-  case delayedOnAppear
-  case delayedShowUpgradeInterstitial
-  case delegate(DelegateAction)
-  case gameButtonTapped(GameMode)
-  case notificationsAuthAlert(NotificationsAuthAlertAction)
-  case rematchButtonTapped
-  case showConfetti
-  case startDailyChallengeResponse(TaskResult<InProgressGame>)
-  case task
-  case submitGameResponse(TaskResult<SubmitGameResponse>)
-  case upgradeInterstitial(UpgradeInterstitialAction)
-  case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
   public enum DelegateAction: Equatable {
     case close
     case startGame(InProgressGame)
     case startSoloGame(GameMode)
   }
-}
 
-public struct GameOverEnvironment {
-  public var apiClient: ApiClient
-  public var audioPlayer: AudioPlayerClient
-  public var database: LocalDatabaseClient
-  public var fileClient: FileClient
-  public var mainRunLoop: AnySchedulerOf<RunLoop>
-  public var remoteNotifications: RemoteNotificationsClient
-  public var serverConfig: ServerConfigClient
-  public var storeKit: StoreKitClient
-  public var userDefaults: UserDefaultsClient
-  public var userNotifications: UserNotificationClient
+  @Dependency(\.apiClient) var apiClient
+  @Dependency(\.audioPlayer) var audioPlayer
+  @Dependency(\.database) var database
+  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.mainRunLoop) var mainRunLoop
+  @Dependency(\.storeKit.requestReview) var requestReview
+  @Dependency(\.serverConfig.config) var serverConfig
+  @Dependency(\.userDefaults) var userDefaults
+  @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
-  public init(
-    apiClient: ApiClient,
-    audioPlayer: AudioPlayerClient,
-    database: LocalDatabaseClient,
-    fileClient: FileClient,
-    mainRunLoop: AnySchedulerOf<RunLoop>,
-    remoteNotifications: RemoteNotificationsClient,
-    serverConfig: ServerConfigClient,
-    storeKit: StoreKitClient,
-    userDefaults: UserDefaultsClient,
-    userNotifications: UserNotificationClient
-  ) {
-    self.apiClient = apiClient
-    self.audioPlayer = audioPlayer
-    self.database = database
-    self.fileClient = fileClient
-    self.mainRunLoop = mainRunLoop
-    self.remoteNotifications = remoteNotifications
-    self.serverConfig = serverConfig
-    self.storeKit = storeKit
-    self.userDefaults = userDefaults
-    self.userNotifications = userNotifications
+  public init() {}
+
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case .closeButtonTapped:
+        guard
+          [.notDetermined, .provisional]
+            .contains(state.userNotificationSettings?.authorizationStatus),
+          case .dailyChallenge = state.completedGame.gameContext
+        else {
+          return .run { send in
+            try? await self.requestReviewAsync()
+            await send(.delegate(.close))
+          }
+        }
+
+        state.notificationsAuthAlert = .init()
+        return .none
+
+      case .dailyChallengeResponse(.failure):
+        return .none
+
+      case let .dailyChallengeResponse(.success(dailyChallenges)):
+        state.dailyChallenges = dailyChallenges
+        return .none
+
+      case .delayedOnAppear:
+        state.isViewEnabled = true
+        return .none
+
+      case .delayedShowUpgradeInterstitial:
+        state.upgradeInterstitial = .init()
+        return .none
+
+      case .delegate(.close):
+        return .none
+
+      case .delegate:
+        return .none
+
+      case let .gameButtonTapped(gameMode):
+        switch state.completedGame.gameContext {
+        case .dailyChallenge:
+          state.gameModeIsLoading = gameMode  // TODO: Move below guard?
+          guard
+            let challenge = state.dailyChallenges
+              .first(where: { $0.dailyChallenge.gameMode == gameMode })
+          else { return .none }
+          return .task {
+            await .startDailyChallengeResponse(
+              TaskResult {
+                try await startDailyChallengeAsync(
+                  challenge,
+                  apiClient: self.apiClient,
+                  date: { self.mainRunLoop.now.date },
+                  fileClient: self.fileClient
+                )
+              }
+            )
+          }
+
+        case .shared:
+          return .none
+        case .solo:
+          return .task { .delegate(.startSoloGame(gameMode)) }
+        case .turnBased:
+          return .none
+        }
+
+      case .notificationsAuthAlert(.delegate(.close)):
+        state.notificationsAuthAlert = nil
+        return .run { send in
+          try? await self.requestReviewAsync()
+          await send(.delegate(.close), animation: .default)
+        }
+
+      case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
+        return .task { .delegate(.close) }.animation()
+
+      case .notificationsAuthAlert:
+        return .none
+
+      case .rematchButtonTapped:
+        return .none
+
+      case .showConfetti:
+        return .none
+
+      case .startDailyChallengeResponse(.failure):
+        state.gameModeIsLoading = nil
+        return .none
+
+      case let .startDailyChallengeResponse(.success(inProgressGame)):
+        state.gameModeIsLoading = nil
+        return .task { .delegate(.startGame(inProgressGame)) }
+
+      case let .submitGameResponse(.success(.dailyChallenge(result))):
+        state.summary = .dailyChallenge(result)
+
+        return .task {
+          await .dailyChallengeResponse(
+            TaskResult {
+              try await self.apiClient.apiRequest(
+                route: .dailyChallenge(.today(language: .en)),
+                as: [FetchTodaysDailyChallengeResponse].self
+              )
+            }
+          )
+        }
+        .animation()
+
+      case .submitGameResponse(.success(.shared)):
+        return .none
+
+      case let .submitGameResponse(.success(.solo(result))):
+        state.summary = .leaderboard(
+          Dictionary(
+            result.ranks.compactMap { key, value in
+              TimeScope(rawValue: key).map { ($0, value) }
+            },
+            uniquingKeysWith: { $1 }
+          )
+        )
+        return .none
+
+      case .submitGameResponse(.success(.turnBased)):
+        return .none
+
+      case .submitGameResponse(.failure):
+        return .none
+
+      case .task:
+        return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
+          guard isDemo || completedGame.currentScore > 0
+          else {
+            await send(.delegate(.close), animation: .default)
+            return
+          }
+
+          await self.audioPlayer.play(.transitionIn)
+          await self.audioPlayer.loop(.gameOverMusicLoop)
+
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+              if isDemo {
+                let request = ServerRoute.Demo.SubmitRequest(
+                  gameMode: completedGame.gameMode,
+                  score: completedGame.currentScore
+                )
+                await send(
+                  .submitGameResponse(
+                    TaskResult {
+                      try await .solo(
+                        self.apiClient.request(
+                          route: .demo(.submitGame(request)),
+                          as: LeaderboardScoreResult.self
+                        )
+                      )
+                    }
+                  ),
+                  animation: .default
+                )
+              } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
+                completedGame: completedGame
+              ) {
+                await send(
+                  .submitGameResponse(
+                    TaskResult {
+                      try await self.apiClient.apiRequest(
+                        route: .games(.submit(request)),
+                        as: SubmitGameResponse.self
+                      )
+                    }
+                  ),
+                  animation: .default
+                )
+              }
+            }
+
+            group.addTask {
+              try await self.mainRunLoop.sleep(for: .seconds(1))
+              let playedGamesCount = try await self.database
+                .playedGamesCount(.init(gameContext: completedGame.gameContext))
+              let isFullGamePurchased =
+                self.apiClient.currentPlayer()?.appleReceipt != nil
+              guard
+                !isFullGamePurchased,
+                shouldShowInterstitial(
+                  gamePlayedCount: playedGamesCount,
+                  gameContext: .init(gameContext: completedGame.gameContext),
+                  serverConfig: self.serverConfig()
+                )
+              else { return }
+              await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
+            }
+
+            group.addTask {
+              try await self.mainRunLoop.sleep(for: .seconds(2))
+              await send(.delayedOnAppear)
+            }
+
+            group.addTask {
+              await send(
+                .userNotificationSettingsResponse(
+                  self.getUserNotificationSettings()
+                )
+              )
+            }
+          }
+        }
+
+      case .upgradeInterstitial(.delegate(.close)),
+        .upgradeInterstitial(.delegate(.fullGamePurchased)):
+        state.upgradeInterstitial = nil
+        return .none
+
+      case .upgradeInterstitial:
+        return .none
+
+      case let .userNotificationSettingsResponse(settings):
+        state.userNotificationSettings = settings
+        return .none
+      }
+    }
+    .ifLet(\.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+      NotificationsAuthAlert()
+    }
+    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      UpgradeInterstitial()
+    }
   }
 
-  #if DEBUG
-    public static let unimplemented = Self(
-      apiClient: .unimplemented,
-      audioPlayer: .unimplemented,
-      database: .unimplemented,
-      fileClient: .unimplemented,
-      mainRunLoop: .unimplemented,
-      remoteNotifications: .unimplemented,
-      serverConfig: .unimplemented,
-      storeKit: .unimplemented,
-      userDefaults: .unimplemented,
-      userNotifications: .unimplemented
-    )
-  #endif
-
-  func requestReviewAsync() async throws {
+  private func requestReviewAsync() async throws {
     let stats = try await self.database.fetchStats()
     let hasRequestedReviewBefore =
       self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey) != 0
@@ -160,7 +342,7 @@ public struct GameOverEnvironment {
     if stats.gamesPlayed >= 3
       && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
     {
-      await self.storeKit.requestReview()
+      await self.requestReview()
       await self.userDefaults.setDouble(
         self.mainRunLoop.now.date.timeIntervalSince1970,
         lastReviewRequestTimeIntervalKey
@@ -169,266 +351,13 @@ public struct GameOverEnvironment {
   }
 }
 
-public let gameOverReducer = Reducer<GameOverState, GameOverAction, GameOverEnvironment>.combine(
-  notificationsAuthAlertReducer
-    .optional()
-    .pullback(
-      state: \.notificationsAuthAlert,
-      action: /GameOverAction.notificationsAuthAlert,
-      environment: {
-        NotificationsAuthAlertEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          remoteNotifications: $0.remoteNotifications,
-          userNotifications: $0.userNotifications
-        )
-      }
-    ),
-
-  upgradeInterstitialReducer
-    .optional()
-    .pullback(
-      state: \.upgradeInterstitial,
-      action: /GameOverAction.upgradeInterstitial,
-      environment: {
-        UpgradeInterstitialEnvironment(
-          mainRunLoop: $0.mainRunLoop,
-          serverConfig: $0.serverConfig,
-          storeKit: $0.storeKit
-        )
-      }
-    ),
-
-  Reducer { state, action, environment in
-    switch action {
-    case .closeButtonTapped:
-      guard
-        [.notDetermined, .provisional]
-          .contains(state.userNotificationSettings?.authorizationStatus),
-        case .dailyChallenge = state.completedGame.gameContext
-      else {
-        return .run { send in
-          try? await environment.requestReviewAsync()
-          await send(.delegate(.close))
-        }
-      }
-
-      state.notificationsAuthAlert = .init()
-      return .none
-
-    case .dailyChallengeResponse(.failure):
-      return .none
-
-    case let .dailyChallengeResponse(.success(dailyChallenges)):
-      state.dailyChallenges = dailyChallenges
-      return .none
-
-    case .delayedOnAppear:
-      state.isViewEnabled = true
-      return .none
-
-    case .delayedShowUpgradeInterstitial:
-      state.upgradeInterstitial = .init()
-      return .none
-
-    case .delegate(.close):
-      return .none
-
-    case .delegate:
-      return .none
-
-    case let .gameButtonTapped(gameMode):
-      switch state.completedGame.gameContext {
-      case .dailyChallenge:
-        state.gameModeIsLoading = gameMode  // TODO: Move below guard?
-        guard
-          let challenge = state.dailyChallenges
-            .first(where: { $0.dailyChallenge.gameMode == gameMode })
-        else { return .none }
-        return .task {
-          await .startDailyChallengeResponse(
-            TaskResult {
-              try await startDailyChallengeAsync(
-                challenge,
-                apiClient: environment.apiClient,
-                date: { environment.mainRunLoop.now.date },
-                fileClient: environment.fileClient
-              )
-            }
-          )
-        }
-
-      case .shared:
-        return .none
-      case .solo:
-        return .task { .delegate(.startSoloGame(gameMode)) }
-      case .turnBased:
-        return .none
-      }
-
-    case .notificationsAuthAlert(.delegate(.close)):
-      state.notificationsAuthAlert = nil
-      return .run { send in
-        try? await environment.requestReviewAsync()
-        await send(.delegate(.close), animation: .default)
-      }
-
-    case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
-      return .task { .delegate(.close) }.animation()
-
-    case .notificationsAuthAlert:
-      return .none
-
-    case .rematchButtonTapped:
-      return .none
-
-    case .showConfetti:
-      return .none
-
-    case .startDailyChallengeResponse(.failure):
-      state.gameModeIsLoading = nil
-      return .none
-
-    case let .startDailyChallengeResponse(.success(inProgressGame)):
-      state.gameModeIsLoading = nil
-      return .task { .delegate(.startGame(inProgressGame)) }
-
-    case let .submitGameResponse(.success(.dailyChallenge(result))):
-      state.summary = .dailyChallenge(result)
-
-      return .task {
-        await .dailyChallengeResponse(
-          TaskResult {
-            try await environment.apiClient.apiRequest(
-              route: .dailyChallenge(.today(language: .en)),
-              as: [FetchTodaysDailyChallengeResponse].self
-            )
-          }
-        )
-      }
-      .animation()
-
-    case let .submitGameResponse(.success(.shared(result))):
-      return .none
-
-    case let .submitGameResponse(.success(.solo(result))):
-      state.summary = .leaderboard(
-        Dictionary(
-          result.ranks.compactMap { key, value in
-            TimeScope(rawValue: key).map { ($0, value) }
-          },
-          uniquingKeysWith: { $1 }
-        )
-      )
-      return .none
-
-    case .submitGameResponse(.success(.turnBased)):
-      return .none
-
-    case .submitGameResponse(.failure):
-      return .none
-
-    case .task:
-      return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
-        guard isDemo || completedGame.currentScore > 0
-        else {
-          await send(.delegate(.close), animation: .default)
-          return
-        }
-
-        await environment.audioPlayer.play(.transitionIn)
-        await environment.audioPlayer.loop(.gameOverMusicLoop)
-
-        await withThrowingTaskGroup(of: Void.self) { group in
-          group.addTask {
-            if isDemo {
-              let request = ServerRoute.Demo.SubmitRequest(
-                gameMode: completedGame.gameMode,
-                score: completedGame.currentScore
-              )
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    try await .solo(
-                      environment.apiClient.request(
-                        route: .demo(.submitGame(request)),
-                        as: LeaderboardScoreResult.self
-                      )
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
-              completedGame: completedGame
-            ) {
-              await send(
-                .submitGameResponse(
-                  TaskResult {
-                    try await environment.apiClient.apiRequest(
-                      route: .games(.submit(request)),
-                      as: SubmitGameResponse.self
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            }
-          }
-
-          group.addTask {
-            try await environment.mainRunLoop.sleep(for: .seconds(1))
-            let playedGamesCount = try await environment.database
-              .playedGamesCount(.init(gameContext: completedGame.gameContext))
-            let isFullGamePurchased =
-              environment.apiClient.currentPlayer()?.appleReceipt != nil
-            guard
-              !isFullGamePurchased,
-              shouldShowInterstitial(
-                gamePlayedCount: playedGamesCount,
-                gameContext: .init(gameContext: completedGame.gameContext),
-                serverConfig: environment.serverConfig.config()
-              )
-            else { return }
-            await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
-          }
-
-          group.addTask {
-            try await environment.mainRunLoop.sleep(for: .seconds(2))
-            await send(.delayedOnAppear)
-          }
-
-          group.addTask {
-            await send(
-              .userNotificationSettingsResponse(
-                environment.userNotifications.getNotificationSettings()
-              )
-            )
-          }
-        }
-      }
-
-    case .upgradeInterstitial(.delegate(.close)),
-      .upgradeInterstitial(.delegate(.fullGamePurchased)):
-      state.upgradeInterstitial = nil
-      return .none
-
-    case .upgradeInterstitial:
-      return .none
-
-    case let .userNotificationSettingsResponse(settings):
-      state.userNotificationSettings = settings
-      return .none
-    }
-  }
-)
-
 public struct GameOverView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.opponentImage) var defaultOpponentImage
   @Environment(\.yourImage) var defaultYourImage
-  let store: Store<GameOverState, GameOverAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameOverAction>
+  let store: StoreOf<GameOver>
+  @ObservedObject var viewStore: ViewStore<ViewState, GameOver.Action>
   @State var yourImage: UIImage?
   @State var yourOpponentImage: UIImage?
   @State var isSharePresented = false
@@ -442,7 +371,7 @@ public struct GameOverView: View {
     let isUpgradeInterstitialPresented: Bool
     let isViewEnabled: Bool
     let showConfetti: Bool
-    let summary: GameOverState.RankSummary?
+    let summary: GameOver.State.RankSummary?
     let unplayedDaily: GameMode?
     let words: [PlayedWord]
     let you: ComposableGameCenter.Player?
@@ -451,7 +380,7 @@ public struct GameOverView: View {
     var theirWords: [PlayedWord] { self.words.filter { !$0.isYourWord } }
     var yourWords: [PlayedWord] { self.words.filter { $0.isYourWord } }
 
-    init(state: GameOverState) {
+    init(state: GameOver.State) {
       self.gameContext = state.completedGame.gameContext
       self.gameMode = state.completedGame.gameMode
       let yourWords = state.completedGame.words(
@@ -493,7 +422,7 @@ public struct GameOverView: View {
     }
   }
 
-  public init(store: Store<GameOverState, GameOverAction>) {
+  public init(store: StoreOf<GameOver>) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
   }
@@ -553,7 +482,7 @@ public struct GameOverView: View {
       IfLetStore(
         self.store.scope(
           state: \.upgradeInterstitial,
-          action: GameOverAction.upgradeInterstitial
+          action: GameOver.Action.upgradeInterstitial
         ),
         then: { store in
           UpgradeInterstitialView(store: store)
@@ -570,7 +499,7 @@ public struct GameOverView: View {
     .notificationsAlert(
       store: self.store.scope(
         state: \.notificationsAuthAlert,
-        action: GameOverAction.notificationsAuthAlert
+        action: GameOver.Action.notificationsAuthAlert
       )
     )
     .sheet(isPresented: self.$isSharePresented) {
@@ -582,7 +511,7 @@ public struct GameOverView: View {
 
   @ViewBuilder
   var dailyChallengeResults: some View {
-    let result = (/GameOverState.RankSummary.dailyChallenge)
+    let result = (/GameOver.State.RankSummary.dailyChallenge)
       .extract(from: self.viewStore.summary)
 
     VStack(spacing: -8) {
@@ -705,7 +634,7 @@ public struct GameOverView: View {
             HStack {
               Text(timeScope.displayTitle)
               Spacer()
-              let rank = (/GameOverState.RankSummary.leaderboard)
+              let rank = (/GameOver.State.RankSummary.leaderboard)
                 .extract(from: self.viewStore.summary)?[timeScope]
               Text(
                 """
@@ -1127,7 +1056,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
     static var previews: some View {
       GameOverView(
         store: Store(
-          initialState: GameOverState(
+          initialState: GameOver.State(
             completedGame: .solo,
             isDemo: false,
             summary: .leaderboard([
@@ -1136,8 +1065,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
               .allTime: .init(outOf: 10000, rank: 100),
             ])
           ),
-          reducer: gameOverReducer,
-          environment: .preview
+          reducer: GameOver()
         )
       )
       .background(Color.white)
@@ -1148,7 +1076,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
     static var previews: some View {
       GameOverView(
         store: Store(
-          initialState: GameOverState(
+          initialState: GameOver.State(
             completedGame: .fetchedResponse,
             isDemo: false,
             summary: .dailyChallenge(
@@ -1159,8 +1087,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
               )
             )
           ),
-          reducer: gameOverReducer,
-          environment: .preview
+          reducer: GameOver()
         )
       )
       .background(Color.white)
@@ -1171,7 +1098,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
     static var previews: some View {
       GameOverView(
         store: Store(
-          initialState: GameOverState(
+          initialState: GameOver.State(
             completedGame: .turnBased,
             isDemo: false,
             summary: nil,
@@ -1186,8 +1113,7 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
               metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
             )
           ),
-          reducer: gameOverReducer,
-          environment: .preview
+          reducer: GameOver()
         )
       )
       .background(Color.white)
@@ -1244,20 +1170,5 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
           }
         })
     }
-  }
-
-  extension GameOverEnvironment {
-    public static let preview = Self(
-      apiClient: .noop,
-      audioPlayer: .noop,
-      database: .noop,
-      fileClient: .noop,
-      mainRunLoop: .immediate,
-      remoteNotifications: .noop,
-      serverConfig: .noop,
-      storeKit: .noop,
-      userDefaults: .noop,
-      userNotifications: .noop
-    )
   }
 #endif

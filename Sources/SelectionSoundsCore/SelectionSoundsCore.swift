@@ -3,44 +3,62 @@ import ComposableArchitecture
 import SharedModels
 import TcaHelpers
 
-extension Reducer {
+extension ReducerProtocol {
   public func selectionSounds(
-    audioPlayer: @escaping (Environment) -> AudioPlayerClient,
-    contains: @escaping (State, Environment, String) -> Bool,
+    contains: @escaping (State, String) -> Bool,
     hasBeenPlayed: @escaping (State, String) -> Bool,
     puzzle: @escaping (State) -> Puzzle,
     selectedWord: @escaping (State) -> [IndexedCubeFace]
-  ) -> Reducer {
-    self
-      .onChange(of: selectedWord) { previousSelection, selectedWord, state, _, environment in
-        return .fireAndForget { [state] in
-          if let noteIndex = noteIndex(
-            selectedWord: selectedWord,
-            cubes: puzzle(state),
-            notes: AudioPlayerClient.Sound.allNotes
-          ) {
-            await audioPlayer(environment).play(AudioPlayerClient.Sound.allNotes[noteIndex])
-          }
+  ) -> SelectionSounds<Self> {
+    SelectionSounds(
+      base: self,
+      contains: contains,
+      hasBeenPlayed: hasBeenPlayed,
+      puzzle: puzzle,
+      selectedWord: selectedWord
+    )
+  }
+}
 
-          let selectedWordString = puzzle(state).string(from: selectedWord)
-          if !hasBeenPlayed(state, selectedWordString)
-            && contains(state, environment, selectedWordString)
-          {
-            let validCount = selectedWordString
-              .indices
-              .dropFirst(2)
-              .reduce(into: 0) { count, index in
-                count +=
-                  contains(state, environment, String(selectedWordString[...index]))
-                  ? 1
-                  : 0
-              }
-            if validCount > 0 {
-              await audioPlayer(environment).play(.validWord(level: validCount))
+public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
+  let base: Base
+  let contains: (Base.State, String) -> Bool
+  let hasBeenPlayed: (Base.State, String) -> Bool
+  let puzzle: (Base.State) -> Puzzle
+  let selectedWord: (Base.State) -> [IndexedCubeFace]
+
+  @Dependency(\.audioPlayer.play) var playSound
+
+  public var body: some ReducerProtocol<Base.State, Base.Action> {
+    self.base.onChange(of: self.selectedWord) { previousSelection, selection, state, _ in
+      return .fireAndForget { [state] in
+        if let noteIndex = noteIndex(
+          selectedWord: selection,
+          cubes: self.puzzle(state),
+          notes: AudioPlayerClient.Sound.allNotes
+        ) {
+          await self.playSound(AudioPlayerClient.Sound.allNotes[noteIndex])
+        }
+
+        let selectedWordString = self.puzzle(state).string(from: selection)
+        if !hasBeenPlayed(state, selectedWordString)
+          && contains(state, selectedWordString)
+        {
+          let validCount = selectedWordString
+            .indices
+            .dropFirst(2)
+            .reduce(into: 0) { count, index in
+              count +=
+                contains(state, String(selectedWordString[...index]))
+                ? 1
+                : 0
             }
+          if validCount > 0 {
+            await self.playSound(.validWord(level: validCount))
           }
         }
       }
+    }
   }
 }
 

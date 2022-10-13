@@ -1,12 +1,9 @@
-import ActiveGamesFeature
 import ClientModels
-import ComposableArchitecture
 import Foundation
-import GameOverFeature
 import SharedModels
 
 extension InProgressGame {
-  public init(gameState: GameState) {
+  public init(gameState: Game.State) {
     self.init(
       cubes: gameState.cubes,
       gameContext: gameState.gameContext,
@@ -19,7 +16,7 @@ extension InProgressGame {
   }
 }
 
-extension GameState {
+extension Game.State {
   public init(inProgressGame: InProgressGame) {
     self.init(
       cubes: inProgressGame.cubes,

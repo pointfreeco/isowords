@@ -55,8 +55,7 @@ class AppStoreSnapshotTests: XCTestCase {
           + Text("on a vanishing cube").foregroundColor(Color.black)
       },
       backgroundColor: .isowordsYellow,
-      colorScheme: .dark,
-      precision: 0.999 // NB: gradient bloom can render slightly differently each run
+      colorScheme: .dark
     )
   }
 

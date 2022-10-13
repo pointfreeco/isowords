@@ -1,12 +1,12 @@
-import ComposableArchitecture
+import Dependencies
 import UIKit
 
-extension FeedbackGeneratorClient {
-  public static var live: Self {
+extension FeedbackGeneratorClient: DependencyKey {
+  public static let liveValue = {
     let generator = UISelectionFeedbackGenerator()
     return Self(
       prepare: { await generator.prepare() },
       selectionChanged: { await generator.selectionChanged() }
     )
-  }
+  }()
 }

@@ -1,21 +1,9 @@
-import ClientModels
-import Combine
-import ComposableArchitecture
-import ComposableStoreKit
-import CoreMotion
 import CubeCore
-import Foundation
-import GameOverFeature
-import Overture
-import SceneKit
 import SharedModels
-import Styleguide
-import SwiftUI
-import SwiftUIHelpers
 
 extension CubeSceneView.ViewState {
   public init(
-    game: GameState,
+    game: Game.State,
     nub: CubeSceneView.ViewState.NubState?,
     settings: Settings
   ) {
@@ -42,7 +30,7 @@ extension CubeSceneView.ViewState {
 }
 
 extension CubeSceneView.ViewAction {
-  public static func to(gameAction action: Self) -> GameAction {
+  public static func to(gameAction action: Self) -> Game.Action {
     switch action {
     case let .doubleTap(index: index):
       return .doubleTap(index: index)
@@ -55,7 +43,7 @@ extension CubeSceneView.ViewAction {
 }
 
 extension CubeNode.ViewState {
-  init(viewState: GameState, index: LatticePoint) {
+  init(viewState: Game.State, index: LatticePoint) {
     let isInPlay = viewState.cubes[index].isInPlay
 
     let leftIndex = IndexedCubeFace(index: index, side: .left)

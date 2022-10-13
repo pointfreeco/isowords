@@ -1,4 +1,3 @@
-import ComposableArchitecture
 @_exported import ServerConfig
 
 public struct ServerConfigClient {

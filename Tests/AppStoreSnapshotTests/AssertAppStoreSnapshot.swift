@@ -6,7 +6,8 @@ func assertAppStoreSnapshots<Description, SnapshotContent>(
   @ViewBuilder description: @escaping () -> Description,
   backgroundColor: Color,
   colorScheme: ColorScheme,
-  precision: Float = 1,
+  precision: Float = 0.98,
+  perceptualPrecision: Float = 0.98,
   file: StaticString = #file,
   testName: String = #function,
   line: UInt = #line
@@ -32,7 +33,11 @@ where
         }
         .environment(\.colorScheme, colorScheme)
         .environment(\.deviceState, config.deviceState),
-        as: .image(precision: precision, layout: .device(config: config.viewImageConfig)),
+        as: .image(
+          precision: precision,
+          perceptualPrecision: perceptualPrecision,
+          layout: .device(config: config.viewImageConfig)
+        ),
         named: name,
         file: file,
         testName: testName,

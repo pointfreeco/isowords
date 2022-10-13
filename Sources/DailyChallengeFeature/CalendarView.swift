@@ -9,7 +9,7 @@ struct CalendarView: View {
     let isLoading: Bool
     let months: [Month]
 
-    init(state: DailyChallengeResultsState) {
+    init(state: DailyChallengeResults.State) {
       self.currentChallenge =
         state.leaderboardResults.timeScope
         ?? state.history?.results.first?.gameNumber
@@ -62,11 +62,11 @@ struct CalendarView: View {
     }
   }
 
-  let store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeResultsAction>
+  let store: StoreOf<DailyChallengeResults>
+  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeResults.Action>
 
   init(
-    store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>
+    store: StoreOf<DailyChallengeResults>
   ) {
     self.store = store
     self.viewStore = ViewStore(store.scope(state: ViewState.init(state:)))

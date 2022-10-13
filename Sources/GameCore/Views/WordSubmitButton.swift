@@ -1,150 +1,145 @@
-import AudioPlayerClient
 import ComposableArchitecture
-import FeedbackGeneratorClient
 import SharedModels
 import SwiftUI
 
-public struct WordSubmitButtonFeatureState: Equatable {
-  public var isSelectedWordValid: Bool
-  public let isTurnBasedMatch: Bool
-  public let isYourTurn: Bool
-  public var wordSubmitButton: WordSubmitButtonState
+public struct WordSubmitButtonFeature: ReducerProtocol {
+  public struct State: Equatable {
+    public var isSelectedWordValid: Bool
+    public let isTurnBasedMatch: Bool
+    public let isYourTurn: Bool
+    public var wordSubmitButton: ButtonState
 
-  public init(
-    isSelectedWordValid: Bool,
-    isTurnBasedMatch: Bool,
-    isYourTurn: Bool,
-    wordSubmitButton: WordSubmitButtonState
-  ) {
-    self.isSelectedWordValid = isSelectedWordValid
-    self.isTurnBasedMatch = isTurnBasedMatch
-    self.isYourTurn = isYourTurn
-    self.wordSubmitButton = wordSubmitButton
-  }
-}
-
-public struct WordSubmitButtonState: Equatable {
-  public var areReactionsOpen: Bool
-  public var favoriteReactions: [Move.Reaction]
-  public var isClosing: Bool
-  public var isSubmitButtonPressed: Bool
-
-  public init(
-    areReactionsOpen: Bool = false,
-    favoriteReactions: [Move.Reaction] = Move.Reaction.allCases,
-    isClosing: Bool = false,
-    isSubmitButtonPressed: Bool = false
-  ) {
-    self.areReactionsOpen = areReactionsOpen
-    self.favoriteReactions = favoriteReactions
-    self.isClosing = isClosing
-    self.isSubmitButtonPressed = isSubmitButtonPressed
-  }
-}
-
-public enum WordSubmitButtonAction: Equatable {
-  case backgroundTapped
-  case delayedSubmitButtonPressed
-  case delegate(DelegateAction)
-  case reactionButtonTapped(Move.Reaction)
-  case submitButtonPressed
-  case submitButtonReleased
-  case submitButtonTapped
-
-  public enum DelegateAction: Equatable {
-    case confirmSubmit(reaction: Move.Reaction?)
-  }
-}
-
-struct WordSubmitEnvironment {
-  let audioPlayer: AudioPlayerClient
-  let feedbackGenerator: FeedbackGeneratorClient
-  let mainQueue: AnySchedulerOf<DispatchQueue>
-}
-
-let wordSubmitReducer = Reducer<
-  WordSubmitButtonFeatureState, WordSubmitButtonAction, WordSubmitEnvironment
-> { state, action, environment in
-
-  enum SubmitButtonPressedDelayID {}
-
-  guard state.isYourTurn
-  else { return .none }
-
-  switch action {
-  case .backgroundTapped:
-    state.wordSubmitButton.areReactionsOpen = false
-    return .fireAndForget { await environment.audioPlayer.play(.uiSfxEmojiClose) }
-
-  case .delayedSubmitButtonPressed:
-    state.wordSubmitButton.areReactionsOpen = true
-    return .fireAndForget {
-      await environment.feedbackGenerator.selectionChanged()
-      await environment.audioPlayer.play(.uiSfxEmojiOpen)
+    public init(
+      isSelectedWordValid: Bool,
+      isTurnBasedMatch: Bool,
+      isYourTurn: Bool,
+      wordSubmitButton: ButtonState
+    ) {
+      self.isSelectedWordValid = isSelectedWordValid
+      self.isTurnBasedMatch = isTurnBasedMatch
+      self.isYourTurn = isYourTurn
+      self.wordSubmitButton = wordSubmitButton
     }
+  }
 
-  case .delegate:
-    return .none
+  public struct ButtonState: Equatable {
+    public var areReactionsOpen: Bool
+    public var favoriteReactions: [Move.Reaction]
+    public var isClosing: Bool
+    public var isSubmitButtonPressed: Bool
 
-  case let .reactionButtonTapped(reaction):
-    state.wordSubmitButton.areReactionsOpen = false
-    return .task {
-      await environment.feedbackGenerator.selectionChanged()
-      await environment.audioPlayer.play(.uiSfxEmojiSend)
-      return .delegate(.confirmSubmit(reaction: reaction))
+    public init(
+      areReactionsOpen: Bool = false,
+      favoriteReactions: [Move.Reaction] = Move.Reaction.allCases,
+      isClosing: Bool = false,
+      isSubmitButtonPressed: Bool = false
+    ) {
+      self.areReactionsOpen = areReactionsOpen
+      self.favoriteReactions = favoriteReactions
+      self.isClosing = isClosing
+      self.isSubmitButtonPressed = isSubmitButtonPressed
     }
+  }
 
-  case .submitButtonPressed:
-    guard state.isTurnBasedMatch
+  public enum Action: Equatable {
+    case backgroundTapped
+    case delayedSubmitButtonPressed
+    case delegate(DelegateAction)
+    case reactionButtonTapped(Move.Reaction)
+    case submitButtonPressed
+    case submitButtonReleased
+    case submitButtonTapped
+
+    public enum DelegateAction: Equatable {
+      case confirmSubmit(reaction: Move.Reaction?)
+    }
+  }
+
+  @Dependency(\.feedbackGenerator) var feedbackGenerator
+  @Dependency(\.mainQueue) var mainQueue
+  @Dependency(\.audioPlayer.play) var playSound
+
+  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+    enum SubmitButtonPressedDelayID {}
+
+    guard state.isYourTurn
     else { return .none }
 
-    if state.wordSubmitButton.areReactionsOpen {
-      state.wordSubmitButton.isClosing = true
-    }
-    state.wordSubmitButton.areReactionsOpen = false
-    state.wordSubmitButton.isSubmitButtonPressed = true
+    switch action {
+    case .backgroundTapped:
+      state.wordSubmitButton.areReactionsOpen = false
+      return .fireAndForget { await self.playSound(.uiSfxEmojiClose) }
 
-    return .task { [isClosing = state.wordSubmitButton.isClosing] in
-      await environment.feedbackGenerator.selectionChanged()
-      if isClosing {
-        await environment.audioPlayer.play(.uiSfxEmojiClose)
+    case .delayedSubmitButtonPressed:
+      state.wordSubmitButton.areReactionsOpen = true
+      return .fireAndForget {
+        await self.feedbackGenerator.selectionChanged()
+        await self.playSound(.uiSfxEmojiOpen)
       }
-      try await environment.mainQueue.sleep(for: 0.5)
-      return .delayedSubmitButtonPressed
+
+    case .delegate:
+      return .none
+
+    case let .reactionButtonTapped(reaction):
+      state.wordSubmitButton.areReactionsOpen = false
+      return .task {
+        await self.feedbackGenerator.selectionChanged()
+        await self.playSound(.uiSfxEmojiSend)
+        return .delegate(.confirmSubmit(reaction: reaction))
+      }
+
+    case .submitButtonPressed:
+      guard state.isTurnBasedMatch
+      else { return .none }
+
+      if state.wordSubmitButton.areReactionsOpen {
+        state.wordSubmitButton.isClosing = true
+      }
+      state.wordSubmitButton.areReactionsOpen = false
+      state.wordSubmitButton.isSubmitButtonPressed = true
+
+      return .task { [isClosing = state.wordSubmitButton.isClosing] in
+        await self.feedbackGenerator.selectionChanged()
+        if isClosing {
+          await self.playSound(.uiSfxEmojiClose)
+        }
+        try await self.mainQueue.sleep(for: 0.5)
+        return .delayedSubmitButtonPressed
+      }
+      .cancellable(id: SubmitButtonPressedDelayID.self, cancelInFlight: true)
+
+    case .submitButtonReleased:
+      guard state.isTurnBasedMatch
+      else { return .none }
+
+      let wasClosing = state.wordSubmitButton.isClosing
+      state.wordSubmitButton.isClosing = false
+      state.wordSubmitButton.isSubmitButtonPressed = false
+
+      return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
+        await Task.cancel(id: SubmitButtonPressedDelayID.self)
+        guard !wasClosing && !areReactionsOpen
+        else { return }
+        await send(.delegate(.confirmSubmit(reaction: nil)))
+      }
+
+    case .submitButtonTapped:
+      guard !state.isTurnBasedMatch
+      else { return .none }
+
+      return .task { .delegate(.confirmSubmit(reaction: nil)) }
     }
-    .cancellable(id: SubmitButtonPressedDelayID.self, cancelInFlight: true)
-
-  case .submitButtonReleased:
-    guard state.isTurnBasedMatch
-    else { return .none }
-
-    let wasClosing = state.wordSubmitButton.isClosing
-    state.wordSubmitButton.isClosing = false
-    state.wordSubmitButton.isSubmitButtonPressed = false
-
-    return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
-      await Task.cancel(id: SubmitButtonPressedDelayID.self)
-      guard !wasClosing && !areReactionsOpen
-      else { return }
-      await send(.delegate(.confirmSubmit(reaction: nil)))
-    }
-
-  case .submitButtonTapped:
-    guard !state.isTurnBasedMatch
-    else { return .none }
-
-    return .task { .delegate(.confirmSubmit(reaction: nil)) }
   }
 }
 
 public struct WordSubmitButton: View {
   @Environment(\.deviceState) var deviceState
-  let store: Store<WordSubmitButtonFeatureState, WordSubmitButtonAction>
-  @ObservedObject var viewStore: ViewStore<WordSubmitButtonFeatureState, WordSubmitButtonAction>
+  let store: StoreOf<WordSubmitButtonFeature>
+  @ObservedObject var viewStore: ViewStoreOf<WordSubmitButtonFeature>
   @State var isTouchDown = false
 
   public init(
-    store: Store<WordSubmitButtonFeatureState, WordSubmitButtonAction>
+    store: StoreOf<WordSubmitButtonFeature>
   ) {
     self.store = store
     self.viewStore = ViewStore(self.store)
@@ -220,10 +215,11 @@ public struct WordSubmitButton: View {
 }
 
 struct ReactionsView: View {
-  let store: Store<WordSubmitButtonState, WordSubmitButtonAction>
-  @ObservedObject var viewStore: ViewStore<WordSubmitButtonState, WordSubmitButtonAction>
+  let store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
+  @ObservedObject var viewStore:
+    ViewStore<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
 
-  public init(store: Store<WordSubmitButtonState, WordSubmitButtonAction>) {
+  public init(store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -267,18 +263,13 @@ struct ReactionsView: View {
       NavigationView {
         WordSubmitButton(
           store: .init(
-            initialState: WordSubmitButtonFeatureState(
+            initialState: WordSubmitButtonFeature.State(
               isSelectedWordValid: true,
               isTurnBasedMatch: true,
               isYourTurn: true,
-              wordSubmitButton: .init()
+              wordSubmitButton: WordSubmitButtonFeature.ButtonState()
             ),
-            reducer: wordSubmitReducer,
-            environment: WordSubmitEnvironment(
-              audioPlayer: .noop,
-              feedbackGenerator: .live,
-              mainQueue: .main
-            )
+            reducer: WordSubmitButtonFeature()
           )
         )
         .background(Color.blue)

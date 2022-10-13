@@ -3,10 +3,10 @@ import Styleguide
 import SwiftUI
 
 struct SoundsSettingsView: View {
-  let store: Store<SettingsState, SettingsAction>
-  @ObservedObject var viewStore: ViewStore<SettingsState, SettingsAction>
+  let store: StoreOf<Settings>
+  @ObservedObject var viewStore: ViewStoreOf<Settings>
 
-  init(store: Store<SettingsState, SettingsAction>) {
+  init(store: StoreOf<Settings>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -67,9 +67,10 @@ struct SoundsSettingsView: View {
         NavigationView {
           SoundsSettingsView(
             store: .init(
-              initialState: .init(userSettings: .init(musicVolume: 0.5, soundEffectsVolume: 0.5)),
-              reducer: settingsReducer,
-              environment: .noop
+              initialState: Settings.State(
+                userSettings: .init(musicVolume: 0.5, soundEffectsVolume: 0.5)
+              ),
+              reducer: Settings()
             )
           )
         }

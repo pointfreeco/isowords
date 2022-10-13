@@ -6,63 +6,48 @@ import XCTest
 @MainActor
 class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterAuthenticated() async {
-    let didPresentMatchmakerViewController = ActorIsolated(false)
+    let store = TestStore(
+      initialState: Multiplayer.State(hasPastGames: false),
+      reducer: Multiplayer()
+    )
 
-    var environment = MultiplayerEnvironment.unimplemented
-    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
+    let didPresentMatchmakerViewController = ActorIsolated(false)
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
       await didPresentMatchmakerViewController.setValue(true)
     }
 
-    let store = TestStore(
-      initialState: MultiplayerState(hasPastGames: false),
-      reducer: multiplayerReducer,
-      environment: environment
-    )
-
     await store.send(.startButtonTapped)
-    await didPresentMatchmakerViewController.withValue { XCTAssertNoDifference($0, true) }
+    await didPresentMatchmakerViewController.withValue { XCTAssertTrue($0) }
   }
 
   func testStartGame_GameCenterNotAuthenticated() async {
-    let didPresentAuthentication = ActorIsolated(false)
+    let store = TestStore(
+      initialState: Multiplayer.State(hasPastGames: false),
+      reducer: Multiplayer()
+    )
 
-    var environment = MultiplayerEnvironment.unimplemented
-    environment.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-    environment.gameCenter.localPlayer.presentAuthenticationViewController = {
+    let didPresentAuthentication = ActorIsolated(false)
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
+    store.dependencies.gameCenter.localPlayer.presentAuthenticationViewController = {
       await didPresentAuthentication.setValue(true)
     }
 
-    let store = TestStore(
-      initialState: MultiplayerState(hasPastGames: false),
-      reducer: multiplayerReducer,
-      environment: environment
-    )
-
     await store.send(.startButtonTapped)
-    await didPresentAuthentication.withValue { XCTAssertNoDifference($0, true) }
+    await didPresentAuthentication.withValue { XCTAssertTrue($0) }
   }
 
   func testNavigateToPastGames() async {
     let store = TestStore(
-      initialState: MultiplayerState(hasPastGames: true),
-      reducer: multiplayerReducer,
-      environment: .unimplemented
+      initialState: Multiplayer.State(hasPastGames: true),
+      reducer: Multiplayer()
     )
 
     await store.send(.setNavigation(tag: .pastGames)) {
-      $0.route = .pastGames(.init(pastGames: []))
+      $0.destination = .pastGames(.init(pastGames: []))
     }
     await store.send(.setNavigation(tag: nil)) {
-      $0.route = nil
+      $0.destination = nil
     }
   }
-}
-
-extension MultiplayerEnvironment {
-  static let unimplemented = Self(
-    backgroundQueue: .unimplemented("backgroundQueue"),
-    gameCenter: .unimplemented,
-    mainQueue: .unimplemented("mainQueue")
-  )
 }

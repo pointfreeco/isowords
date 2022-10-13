@@ -1,192 +1,170 @@
-import AudioPlayerClient
 import Bloom
 import ComposableArchitecture
 import CubeCore
-import FeedbackGeneratorClient
 import HapticsCore
 import LowPowerModeClient
 import SelectionSoundsCore
 import SharedModels
-import Styleguide
 import SwiftUI
 
-public struct CubePreviewState: Equatable {
-  var cubes: Puzzle
-  var isAnimationReduced: Bool
-  var isHapticsEnabled: Bool
-  var isOnLowPowerMode: Bool
-  var moveIndex: Int
-  var moves: Moves
-  @BindableState var nub: CubeSceneView.ViewState.NubState
-  @BindableState var selectedCubeFaces: [IndexedCubeFace]
-  let settings: CubeSceneView.ViewState.Settings
+public struct CubePreview: ReducerProtocol {
+  public struct State: Equatable {
+    var cubes: Puzzle
+    var isAnimationReduced: Bool
+    var isHapticsEnabled: Bool
+    var isOnLowPowerMode: Bool
+    var moveIndex: Int
+    var moves: Moves
+    @BindableState var nub: CubeSceneView.ViewState.NubState
+    @BindableState var selectedCubeFaces: [IndexedCubeFace]
+    let settings: CubeSceneView.ViewState.Settings
 
-  public init(
-    cubes: ArchivablePuzzle,
-    isAnimationReduced: Bool,
-    isHapticsEnabled: Bool,
-    isOnLowPowerMode: Bool = false,
-    moveIndex: Int,
-    moves: Moves,
-    nub: CubeSceneView.ViewState.NubState = .init(),
-    selectedCubeFaces: [IndexedCubeFace] = [],
-    settings: CubeSceneView.ViewState.Settings
-  ) {
-    self.cubes = .init(archivableCubes: cubes)
-    apply(moves: moves[0..<moveIndex], to: &self.cubes)
+    public init(
+      cubes: ArchivablePuzzle,
+      isAnimationReduced: Bool,
+      isHapticsEnabled: Bool,
+      isOnLowPowerMode: Bool = false,
+      moveIndex: Int,
+      moves: Moves,
+      nub: CubeSceneView.ViewState.NubState = .init(),
+      selectedCubeFaces: [IndexedCubeFace] = [],
+      settings: CubeSceneView.ViewState.Settings
+    ) {
+      self.cubes = .init(archivableCubes: cubes)
+      apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
-    self.isAnimationReduced = isAnimationReduced
-    self.isHapticsEnabled = isHapticsEnabled
-    self.isOnLowPowerMode = isOnLowPowerMode
-    self.moveIndex = moveIndex
-    self.moves = moves
-    self.nub = nub
-    self.selectedCubeFaces = selectedCubeFaces
-    self.settings = settings
-  }
-
-  var finalWordString: String? {
-    switch self.moves[self.moveIndex].type {
-    case let .playedWord(faces):
-      return self.cubes.string(from: faces)
-    case .removedCube:
-      return nil
+      self.isAnimationReduced = isAnimationReduced
+      self.isHapticsEnabled = isHapticsEnabled
+      self.isOnLowPowerMode = isOnLowPowerMode
+      self.moveIndex = moveIndex
+      self.moves = moves
+      self.nub = nub
+      self.selectedCubeFaces = selectedCubeFaces
+      self.settings = settings
     }
-  }
-}
 
-public enum CubePreviewAction: BindableAction, Equatable {
-  case binding(BindingAction<CubePreviewState>)
-  case cubeScene(CubeSceneView.ViewAction)
-  case lowPowerModeResponse(Bool)
-  case tap
-  case task
-}
-
-public struct CubePreviewEnvironment {
-  var audioPlayer: AudioPlayerClient
-  var feedbackGenerator: FeedbackGeneratorClient
-  var lowPowerMode: LowPowerModeClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-
-  public init(
-    audioPlayer: AudioPlayerClient,
-    feedbackGenerator: FeedbackGeneratorClient,
-    lowPowerMode: LowPowerModeClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.audioPlayer = audioPlayer
-    self.feedbackGenerator = feedbackGenerator
-    self.lowPowerMode = lowPowerMode
-    self.mainQueue = mainQueue
-  }
-}
-
-public let cubePreviewReducer = Reducer<
-  CubePreviewState,
-  CubePreviewAction,
-  CubePreviewEnvironment
-> { state, action, environment in
-
-  enum SelectionID {}
-
-  switch action {
-  case .binding:
-    return .none
-
-  case .cubeScene:
-    return .none
-
-  case let .lowPowerModeResponse(isOn):
-    state.isOnLowPowerMode = isOn
-    return .none
-
-  case .tap:
-    state.nub.location = .offScreenRight
-    switch state.moves[state.moveIndex].type {
-    case let .playedWord(faces):
-      state.selectedCubeFaces = faces
-    case .removedCube:
-      break
-    }
-    return .cancel(id: SelectionID.self)
-
-  case .task:
-    return .run { [move = state.moves[state.moveIndex]] send in
-      await send(
-        .lowPowerModeResponse(
-          await environment.lowPowerMode.start().first(where: { _ in true }) ?? false
-        )
-      )
-
-      try await environment.mainQueue.sleep(for: .seconds(1))
-
-      var accumulatedSelectedFaces: [IndexedCubeFace] = []
-      switch move.type {
+    var finalWordString: String? {
+      switch self.moves[self.moveIndex].type {
       case let .playedWord(faces):
-        for (faceIndex, face) in faces.enumerated() {
-          accumulatedSelectedFaces.append(face)
-          let moveDuration = Double.random(in: (0.6...0.8))
-
-          // Move the nub to the face
-          await send(
-            .set(\.$nub.location, .face(face)),
-            animateWithDuration: moveDuration,
-            delay: 0, options: .curveEaseInOut
-          )
-
-          // Pause a bit to allow the nub to animate to the face
-          try await environment.mainQueue.sleep(
-            for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
-          )
-
-          // Press the nub on the first character
-          if faceIndex == 0 {
-            await send(.set(\.$nub.isPressed, true), animation: .default)
-          }
-
-          // Select the faces that have been tapped so far
-          await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
-        }
-
-        // Un-press the nub once finished selecting all faces
-        await send(.set(\.$nub.isPressed, false))
-
-        // Move the nub off the screen
-        await send(
-          .set(\.$nub.location, .offScreenRight),
-          animateWithDuration: 1,
-          delay: 0,
-          options: .curveEaseInOut
-        )
-
-      case let .removedCube(index):
-        break
+        return self.cubes.string(from: faces)
+      case .removedCube:
+        return nil
       }
     }
-    .cancellable(id: SelectionID.self)
+  }
+
+  public enum Action: BindableAction, Equatable {
+    case binding(BindingAction<State>)
+    case cubeScene(CubeSceneView.ViewAction)
+    case lowPowerModeResponse(Bool)
+    case tap
+    case task
+  }
+
+  @Dependency(\.lowPowerMode) var lowPowerMode
+  @Dependency(\.mainQueue) var mainQueue
+
+  public init() {}
+
+  public var body: some ReducerProtocol<State, Action> {
+    BindingReducer()
+    Reduce { state, action in
+      enum SelectionID {}
+
+      switch action {
+      case .binding:
+        return .none
+
+      case .cubeScene:
+        return .none
+
+      case let .lowPowerModeResponse(isOn):
+        state.isOnLowPowerMode = isOn
+        return .none
+
+      case .tap:
+        state.nub.location = .offScreenRight
+        switch state.moves[state.moveIndex].type {
+        case let .playedWord(faces):
+          state.selectedCubeFaces = faces
+        case .removedCube:
+          break
+        }
+        return .cancel(id: SelectionID.self)
+
+      case .task:
+        return .run { [move = state.moves[state.moveIndex]] send in
+          await send(
+            .lowPowerModeResponse(
+              await self.lowPowerMode.start().first(where: { _ in true }) ?? false
+            )
+          )
+
+          try await self.mainQueue.sleep(for: .seconds(1))
+
+          var accumulatedSelectedFaces: [IndexedCubeFace] = []
+          switch move.type {
+          case let .playedWord(faces):
+            for (faceIndex, face) in faces.enumerated() {
+              accumulatedSelectedFaces.append(face)
+              let moveDuration = Double.random(in: (0.6...0.8))
+
+              // Move the nub to the face
+              await send(
+                .set(\.$nub.location, .face(face)),
+                animateWithDuration: moveDuration,
+                delay: 0, options: .curveEaseInOut
+              )
+
+              // Pause a bit to allow the nub to animate to the face
+              try await self.mainQueue.sleep(
+                for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
+              )
+
+              // Press the nub on the first character
+              if faceIndex == 0 {
+                await send(.set(\.$nub.isPressed, true), animation: .default)
+              }
+
+              // Select the faces that have been tapped so far
+              await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
+            }
+
+            // Un-press the nub once finished selecting all faces
+            await send(.set(\.$nub.isPressed, false))
+
+            // Move the nub off the screen
+            await send(
+              .set(\.$nub.location, .offScreenRight),
+              animateWithDuration: 1,
+              delay: 0,
+              options: .curveEaseInOut
+            )
+
+          case .removedCube:
+            break
+          }
+        }
+        .cancellable(id: SelectionID.self)
+      }
+    }
+    .haptics(
+      isEnabled: \.isHapticsEnabled,
+      triggerOnChangeOf: \.selectedCubeFaces
+    )
+    .selectionSounds(
+      contains: { $0.finalWordString?.uppercased() == $1.uppercased() },
+      hasBeenPlayed: { _, _ in false },
+      puzzle: \.cubes,
+      selectedWord: \.selectedCubeFaces
+    )
   }
 }
-.binding()
-.haptics(
-  feedbackGenerator: \.feedbackGenerator,
-  isEnabled: \.isHapticsEnabled,
-  triggerOnChangeOf: { $0.selectedCubeFaces }
-)
-.selectionSounds(
-  audioPlayer: \.audioPlayer,
-  contains: { state, _, string in
-    state.finalWordString?.uppercased() == string.uppercased()
-  },
-  hasBeenPlayed: { _, _ in false },
-  puzzle: \.cubes,
-  selectedWord: \.selectedCubeFaces
-)
 
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
-  let store: Store<CubePreviewState, CubePreviewAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, CubePreviewAction>
+  let store: StoreOf<CubePreview>
+  @ObservedObject var viewStore: ViewStore<ViewState, CubePreview.Action>
 
   struct ViewState: Equatable {
     let isAnimationReduced: Bool
@@ -194,7 +172,7 @@ public struct CubePreviewView: View {
     let selectedWordScore: Int?
     let selectedWordString: String
 
-    init(state: CubePreviewState) {
+    init(state: CubePreview.State) {
       self.isAnimationReduced = state.isAnimationReduced
       self.selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
       self.selectedWordIsFinalWord = state.finalWordString == self.selectedWordString
@@ -205,7 +183,7 @@ public struct CubePreviewView: View {
     }
   }
 
-  public init(store: Store<CubePreviewState, CubePreviewAction>) {
+  public init(store: StoreOf<CubePreview>) {
     self.store = store
     self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
   }
@@ -241,7 +219,7 @@ public struct CubePreviewView: View {
         CubeView(
           store: self.store.scope(
             state: CubeSceneView.ViewState.init(preview:),
-            action: CubePreviewAction.cubeScene
+            action: CubePreview.Action.cubeScene
           )
         )
         .task { await self.viewStore.send(.task).finish() }
@@ -278,7 +256,7 @@ public struct CubePreviewView: View {
 }
 
 extension CubeSceneView.ViewState {
-  public init(preview state: CubePreviewState) {
+  public init(preview state: CubePreview.State) {
     let selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
 
     self.init(

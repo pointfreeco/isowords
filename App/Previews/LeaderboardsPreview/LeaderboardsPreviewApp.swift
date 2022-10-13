@@ -56,15 +56,12 @@ struct LeaderboardsPreviewApp: App {
     return WindowGroup {
       LeaderboardView(
         store: .init(
-          initialState: .init(isHapticsEnabled: false, settings: .init()),
-          reducer: leaderboardReducer,
-          environment: .init(
-            apiClient: apiClient,
-            audioPlayer: .noop,
-            feedbackGenerator: .noop,
-            lowPowerMode: .`false`,
-            mainQueue: DispatchQueue.main.eraseToAnyScheduler()
-          )
+          initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
+          reducer: Leaderboard()
+            .dependency(\.apiClient, apiClient)
+            .dependency(\.audioPlayer, .noop)
+            .dependency(\.feedbackGenerator, .noop)
+            .dependency(\.lowPowerMode, .false)
         )
       )
     }

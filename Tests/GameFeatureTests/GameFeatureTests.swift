@@ -17,16 +17,9 @@ class GameFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testRemoveCubeMove() async {
-    let environment = update(GameEnvironment.unimplemented) {
-      $0.audioPlayer.play = { _ in }
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
-      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
     let store = TestStore(
-      initialState: GameFeatureState(
-        game: GameState(
+      initialState: GameFeature.State(
+        game: Game.State(
           cubes: update(.mock) {
             $0.0.0.0 = .init(
               left: .init(letter: "A", side: .left),
@@ -46,11 +39,15 @@ class GameFeatureTests: XCTestCase {
           moves: [],
           secondsPlayed: 0
         ),
-        settings: SettingsState()
+        settings: Settings.State()
       ),
-      reducer: gameFeatureReducer,
-      environment: environment
+      reducer: GameFeature()
     )
+
+    store.dependencies.audioPlayer.play = { _ in }
+    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(.game(.doubleTap(index: .zero)))
     await store.receive(.game(.confirmRemoveCube(.zero))) {
@@ -69,15 +66,9 @@ class GameFeatureTests: XCTestCase {
   }
 
   func testDoubleTapRemoveCube_MultipleSelectedFaces() async {
-    let environment = update(GameEnvironment.unimplemented) {
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
-      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    }
-
     let store = TestStore(
-      initialState: GameFeatureState(
-        game: GameState(
+      initialState: GameFeature.State(
+        game: Game.State(
           cubes: update(.mock),
           gameContext: .solo,
           gameCurrentTime: .mock,
@@ -90,17 +81,20 @@ class GameFeatureTests: XCTestCase {
             .init(index: .init(x: .two, y: .two, z: .two), side: .right),
           ]
         ),
-        settings: SettingsState()
+        settings: Settings.State()
       ),
-      reducer: gameFeatureReducer,
-      environment: environment
+      reducer: GameFeature()
     )
+
+    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
+    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
+    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(.game(.doubleTap(index: .zero)))
   }
 
   func testIsYourTurn() {
-    var game = GameState(
+    var game = Game.State(
       cubes: .mock,
       gameContext: .turnBased(
         .init(
@@ -139,7 +133,7 @@ class GameFeatureTests: XCTestCase {
   }
 
   func testIsYourTurn_CubeRemoval() {
-    var game = GameState(
+    var game = Game.State(
       cubes: .mock,
       gameContext: .turnBased(
         .init(
@@ -189,7 +183,7 @@ class GameFeatureTests: XCTestCase {
   }
 
   func testIsYourTurn_RemoteTurn() {
-    let game = GameState(
+    let game = Game.State(
       cubes: .mock,
       gameContext: .turnBased(
         .init(
@@ -220,7 +214,7 @@ class GameFeatureTests: XCTestCase {
   func testGameStateInProgressGameRoundtrip() {
     for _ in 1...500 {
       let game = Gen.gameState.run()
-      let roundTrippedGame = GameState(
+      let roundTrippedGame = Game.State(
         inProgressGame: InProgressGame(gameState: game)
       )
       XCTAssertNoDifference(

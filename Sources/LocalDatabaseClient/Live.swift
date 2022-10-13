@@ -296,3 +296,10 @@ extension Sqlite {
     }
   }
 }
+
+final class Box<Value> {
+  var wrappedValue: Value
+  init(wrappedValue: Value) {
+    self.wrappedValue = wrappedValue
+  }
+}

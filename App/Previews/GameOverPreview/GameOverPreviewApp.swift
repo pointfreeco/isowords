@@ -16,13 +16,13 @@ struct GameOverPreviewApp: App {
     WindowGroup {
       GameOverView(
         store: .solo
-          // store: .multiplayer
+        // store: .multiplayer
       )
     }
   }
 }
 
-extension Store where State == GameOverState, Action == GameOverAction {
+extension StoreOf<GameOver> {
   static var solo: Self {
     Self(
       initialState: .init(
@@ -37,9 +37,8 @@ extension Store where State == GameOverState, Action == GameOverAction {
         ),
         isDemo: false
       ),
-      reducer: gameOverReducer,
-      environment: .init(
-        apiClient: update(.noop) {
+      reducer: GameOver()
+        .dependency(\.apiClient, update(.noop) {
           $0.override(
             routeCase: (/ServerRoute.Api.Route.games)
               .appending(path: /ServerRoute.Api.Route.Games.submit),
@@ -57,31 +56,29 @@ extension Store where State == GameOverState, Action == GameOverAction {
               )
             }
           )
-        },
-        audioPlayer: .noop,
-        database: .autoMigratingLive(
-          path: FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)
-            .first!
-            .appendingPathComponent("co.pointfree.Isowords")
-            .appendingPathComponent("Isowords.sqlite3")
-        ),
-        fileClient: .noop,
-        mainRunLoop: .main,
-        remoteNotifications: .noop,
-        serverConfig: .noop,
-        storeKit: .live(),
-        userDefaults: update(.live()) {
-          $0.boolForKey = { _ in false }
-        },
-        userNotifications: .noop
-      )
+        })
+        .dependency(\.audioPlayer, .noop)
+        .dependency(
+          \.database,
+          .autoMigratingLive(
+            path: FileManager.default
+              .urls(for: .documentDirectory, in: .userDomainMask)
+              .first!
+              .appendingPathComponent("co.pointfree.Isowords")
+              .appendingPathComponent("Isowords.sqlite3")
+          )
+        )
+        .dependency(\.fileClient, .noop)
+        .dependency(\.remoteNotifications, .noop)
+        .dependency(\.serverConfig, .noop)
+        .dependency(\.userDefaults.boolForKey) { _ in false }
+        .dependency(\.userNotifications, .noop)
     )
   }
 
   static var multiplayer: Self {
     Self(
-      initialState: .init(
+      initialState: GameOver.State(
         completedGame: .turnBased,
         isDemo: false,
         summary: nil,
@@ -96,8 +93,8 @@ extension Store where State == GameOverState, Action == GameOverAction {
           metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
-      reducer: gameOverReducer,
-      environment: .preview
+      reducer: GameOver()
+        .dependency(\.context, .preview)
     )
   }
 }

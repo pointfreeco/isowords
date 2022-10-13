@@ -4,6 +4,7 @@ import ComposableArchitecture
 import ComposableGameCenter
 import GameKit
 import SharedModels
+import TcaHelpers
 
 public struct ActiveTurnBasedMatch: Equatable, Identifiable {
   public let id: ComposableGameCenter.TurnBasedMatch.Id

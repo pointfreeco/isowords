@@ -1,14 +1,9 @@
 import ApiClient
-import AudioPlayerClient
 import ComposableArchitecture
 import CubeCore
 import CubePreview
-import FeedbackGeneratorClient
-import LowPowerModeClient
 import SharedModels
-import Styleguide
 import SwiftUI
-import TcaHelpers
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games
@@ -33,190 +28,133 @@ public enum LeaderboardScope: CaseIterable, Equatable {
   }
 }
 
-public struct LeaderboardState: Equatable {
-  public var cubePreview: CubePreviewState?
-  public var isAnimationReduced: Bool
-  public var isHapticsEnabled: Bool
-  public var scope: LeaderboardScope = .games
-  public var settings: CubeSceneView.ViewState.Settings
-  public var solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
-  public var vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
+public struct Leaderboard: ReducerProtocol {
+  public struct State: Equatable {
+    public var cubePreview: CubePreview.State?
+    public var isAnimationReduced: Bool
+    public var isHapticsEnabled: Bool
+    public var scope: LeaderboardScope = .games
+    public var settings: CubeSceneView.ViewState.Settings
+    public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
+    public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
 
-  public var isCubePreviewPresented: Bool { self.cubePreview != nil }
+    public var isCubePreviewPresented: Bool { self.cubePreview != nil }
 
-  public init(
-    cubePreview: CubePreviewState? = nil,
-    isAnimationReduced: Bool = false,
-    isHapticsEnabled: Bool,
-    scope: LeaderboardScope = .games,
-    settings: CubeSceneView.ViewState.Settings,
-    solo: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek),
-    vocab: LeaderboardResultsState<TimeScope> = .init(timeScope: .lastWeek)
-  ) {
-    self.cubePreview = cubePreview
-    self.isAnimationReduced = isAnimationReduced
-    self.isHapticsEnabled = isHapticsEnabled
-    self.scope = scope
-    self.settings = settings
-    self.solo = solo
-    self.vocab = vocab
-  }
-}
-
-public enum LeaderboardAction: Equatable {
-  case cubePreview(CubePreviewAction)
-  case dismissCubePreview
-  case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
-  case scopeTapped(LeaderboardScope)
-  case solo(LeaderboardResultsAction<TimeScope>)
-  case vocab(LeaderboardResultsAction<TimeScope>)
-}
-
-public struct LeaderboardEnvironment {
-  public var apiClient: ApiClient
-  public var audioPlayer: AudioPlayerClient
-  public var feedbackGenerator: FeedbackGeneratorClient
-  public var lowPowerMode: LowPowerModeClient
-  public var mainQueue: AnySchedulerOf<DispatchQueue>
-
-  public init(
-    apiClient: ApiClient,
-    audioPlayer: AudioPlayerClient,
-    feedbackGenerator: FeedbackGeneratorClient,
-    lowPowerMode: LowPowerModeClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.apiClient = apiClient
-    self.audioPlayer = audioPlayer
-    self.feedbackGenerator = feedbackGenerator
-    self.lowPowerMode = lowPowerMode
-    self.mainQueue = mainQueue
-  }
-}
-
-#if DEBUG
-  extension LeaderboardEnvironment {
-    public static let unimplemented = Self(
-      apiClient: .unimplemented,
-      audioPlayer: .unimplemented,
-      feedbackGenerator: .unimplemented,
-      lowPowerMode: .unimplemented,
-      mainQueue: .unimplemented("mainQueue")
-    )
-  }
-#endif
-
-public let leaderboardReducer = Reducer<
-  LeaderboardState, LeaderboardAction, LeaderboardEnvironment
->.combine(
-
-  cubePreviewReducer
-    ._pullback(
-      state: OptionalPath(\.cubePreview),
-      action: /LeaderboardAction.cubePreview,
-      environment: {
-        CubePreviewEnvironment(
-          audioPlayer: $0.audioPlayer,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
-  Reducer.leaderboardResultsReducer()
-    .pullback(
-      state: \LeaderboardState.solo,
-      action: /LeaderboardAction.solo,
-      environment: {
-        LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadSoloResults(gameMode:timeScope:)
-        )
-      }
-    ),
-
-  Reducer.leaderboardResultsReducer()
-    .pullback(
-      state: \LeaderboardState.vocab,
-      action: /LeaderboardAction.vocab,
-      environment: {
-        LeaderboardResultsEnvironment(
-          loadResults: $0.apiClient.loadVocabResults(gameMode:timeScope:)
-        )
-      }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case .cubePreview:
-      return .none
-
-    case .dismissCubePreview:
-      state.cubePreview = nil
-      return .none
-
-    case .fetchWordResponse(.failure):
-      return .none
-
-    case let .fetchWordResponse(.success(response)):
-      state.cubePreview = CubePreviewState(
-        cubes: response.puzzle,
-        isAnimationReduced: state.isAnimationReduced,
-        isHapticsEnabled: state.isHapticsEnabled,
-        moveIndex: response.moveIndex,
-        moves: response.moves,
-        settings: state.settings
-      )
-      return .none
-
-    case let .scopeTapped(scope):
-      state.scope = scope
-      return .none
-
-    case let .solo(.timeScopeChanged(timeScope)):
-      state.vocab.timeScope = timeScope
-      return .none
-
-    case .solo:
-      return .none
-
-    case .vocab(.timeScopeChanged(.interesting)):
-      return .none
-
-    case let .vocab(.timeScopeChanged(timeScope)):
-      state.solo.timeScope = timeScope
-      return .none
-
-    case let .vocab(.tappedRow(id)):
-      enum CancelID {}
-
-      guard let resultEnvelope = state.vocab.resultEnvelope
-      else { return .none }
-
-      return .task {
-        await .fetchWordResponse(
-          TaskResult {
-            try await environment.apiClient.apiRequest(
-              route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
-              as: FetchVocabWordResponse.self
-            )
-          }
-        )
-      }
-      .cancellable(id: CancelID.self, cancelInFlight: true)
-
-    case .vocab:
-      return .none
+    public init(
+      cubePreview: CubePreview.State? = nil,
+      isAnimationReduced: Bool = false,
+      isHapticsEnabled: Bool,
+      scope: LeaderboardScope = .games,
+      settings: CubeSceneView.ViewState.Settings,
+      solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
+      vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
+    ) {
+      self.cubePreview = cubePreview
+      self.isAnimationReduced = isAnimationReduced
+      self.isHapticsEnabled = isHapticsEnabled
+      self.scope = scope
+      self.settings = settings
+      self.solo = solo
+      self.vocab = vocab
     }
   }
-)
+
+  public enum Action: Equatable {
+    case cubePreview(CubePreview.Action)
+    case dismissCubePreview
+    case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
+    case scopeTapped(LeaderboardScope)
+    case solo(LeaderboardResults<TimeScope>.Action)
+    case vocab(LeaderboardResults<TimeScope>.Action)
+  }
+
+  @Dependency(\.apiClient) var apiClient
+
+  public init() {}
+
+  public var body: some ReducerProtocol<State, Action> {
+    Reduce { state, action in
+      switch action {
+      case .cubePreview:
+        return .none
+
+      case .dismissCubePreview:
+        state.cubePreview = nil
+        return .none
+
+      case .fetchWordResponse(.failure):
+        return .none
+
+      case let .fetchWordResponse(.success(response)):
+        state.cubePreview = CubePreview.State(
+          cubes: response.puzzle,
+          isAnimationReduced: state.isAnimationReduced,
+          isHapticsEnabled: state.isHapticsEnabled,
+          moveIndex: response.moveIndex,
+          moves: response.moves,
+          settings: state.settings
+        )
+        return .none
+
+      case let .scopeTapped(scope):
+        state.scope = scope
+        return .none
+
+      case let .solo(.timeScopeChanged(timeScope)):
+        state.vocab.timeScope = timeScope
+        return .none
+
+      case .solo:
+        return .none
+
+      case .vocab(.timeScopeChanged(.interesting)):
+        return .none
+
+      case let .vocab(.timeScopeChanged(timeScope)):
+        state.solo.timeScope = timeScope
+        return .none
+
+      case let .vocab(.tappedRow(id)):
+        enum CancelID {}
+
+        guard state.vocab.resultEnvelope != nil
+        else { return .none }
+
+        return .task {
+          await .fetchWordResponse(
+            TaskResult {
+              try await self.apiClient.apiRequest(
+                route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
+                as: FetchVocabWordResponse.self
+              )
+            }
+          )
+        }
+        .cancellable(id: CancelID.self, cancelInFlight: true)
+
+      case .vocab:
+        return .none
+      }
+    }
+    .ifLet(\.cubePreview, action: /Action.cubePreview) {
+      CubePreview()
+    }
+
+    Scope(state: \.solo, action: /Action.solo) {
+      LeaderboardResults(loadResults: self.apiClient.loadSoloResults(gameMode:timeScope:))
+    }
+    Scope(state: \.vocab, action: /Action.vocab) {
+      LeaderboardResults(loadResults: self.apiClient.loadVocabResults(gameMode:timeScope:))
+    }
+  }
+}
 
 public struct LeaderboardView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<LeaderboardState, LeaderboardAction>
-  @ObservedObject var viewStore: ViewStore<LeaderboardState, LeaderboardAction>
+  let store: StoreOf<Leaderboard>
+  @ObservedObject var viewStore: ViewStoreOf<Leaderboard>
 
-  public init(store: Store<LeaderboardState, LeaderboardAction>) {
+  public init(store: StoreOf<Leaderboard>) {
     self.store = store
     self.viewStore = ViewStore(self.store)
   }
@@ -246,7 +184,7 @@ public struct LeaderboardView: View {
           LeaderboardResultsView(
             store: self.store.scope(
               state: \.solo,
-              action: LeaderboardAction.solo
+              action: Leaderboard.Action.solo
             ),
             title: Text("Solo"),
             subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
@@ -269,7 +207,7 @@ public struct LeaderboardView: View {
           LeaderboardResultsView(
             store: self.store.scope(
               state: \.vocab,
-              action: LeaderboardAction.vocab
+              action: Leaderboard.Action.vocab
             ),
             title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
@@ -308,7 +246,7 @@ public struct LeaderboardView: View {
       isPresented: self.viewStore.binding(get: \.isCubePreviewPresented, send: .dismissCubePreview)
     ) {
       IfLetStore(
-        self.store.scope(state: \.cubePreview, action: LeaderboardAction.cubePreview),
+        self.store.scope(state: \.cubePreview, action: Leaderboard.Action.cubePreview),
         then: CubePreviewView.init(store:)
       )
     }
@@ -402,14 +340,14 @@ extension ResultEnvelope.Result {
         NavigationView {
           LeaderboardView(
             store: .init(
-              initialState: LeaderboardState(
+              initialState: Leaderboard.State(
                 isAnimationReduced: false,
                 isHapticsEnabled: true,
                 settings: .init()
               ),
-              reducer: leaderboardReducer,
-              environment: LeaderboardEnvironment(
-                apiClient: update(.noop) {
+              reducer: Leaderboard().dependency(
+                \.apiClient,
+                update(.noop) {
                   $0.apiRequest = { @Sendable route in
                     switch route {
                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
@@ -434,11 +372,7 @@ extension ResultEnvelope.Result {
                       throw CancellationError()
                     }
                   }
-                },
-                audioPlayer: .noop,
-                feedbackGenerator: .noop,
-                lowPowerMode: .false,
-                mainQueue: .main
+                }
               )
             )
           )

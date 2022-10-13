@@ -1,15 +1,17 @@
 @_exported import ApiClient
 import Combine
-import ComposableArchitecture
+import CryptoKit
+import Dependencies
 import Foundation
 import ServerRouter
 import SharedModels
 import TcaHelpers
 
-private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
-private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
+extension ApiClient: DependencyKey {
+  public static let liveValue = Self.live(
+    sha256: { Data(SHA256.hash(data: $0)) }
+  )
 
-extension ApiClient {
   public static func live(
     baseUrl defaultBaseUrl: URL = URL(string: "http://localhost:9876")!,
     sha256: @escaping (Data) -> Data
@@ -130,6 +132,9 @@ extension ApiClient {
     )
   }
 }
+
+private let baseUrlKey = "co.pointfree.isowords.apiClient.baseUrl"
+private let currentUserEnvelopeKey = "co.pointfree.isowords.apiClient.currentUserEnvelope"
 
 private func request(
   baseUrl: URL,

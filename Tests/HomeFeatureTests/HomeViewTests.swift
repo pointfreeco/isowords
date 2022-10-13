@@ -49,6 +49,7 @@ class HomeFeatureTests: XCTestCase {
       )
       .environment(\.date, { .mock - 2*60*60 }),
       as: .image(
+        perceptualPrecision: 0.98,
         layout: .device(
           config: update(.iPhoneXsMax) {
             $0.size?.height += 200
@@ -76,7 +77,7 @@ class HomeFeatureTests: XCTestCase {
         )
       )
       .environment(\.date, { .mock - 2*60*60 }),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -124,7 +125,7 @@ class HomeFeatureTests: XCTestCase {
         )
       )
       .environment(\.date, { .mock - 2*60*60 }),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -157,7 +158,7 @@ class HomeFeatureTests: XCTestCase {
         )
       )
       .environment(\.date, { .mock - 2*60*60 }),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }

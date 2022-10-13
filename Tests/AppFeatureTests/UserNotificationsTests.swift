@@ -10,6 +10,13 @@ import XCTest
 @MainActor
 class UserNotificationsTests: XCTestCase {
   func testReceiveBackgroundNotification() async {
+    let store = TestStore(
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
+    )
+
+    store.dependencies.didFinishLaunching()
+
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
     let response = UserNotificationClient.Notification.Response(
       notification: UserNotificationClient.Notification(
@@ -23,14 +30,7 @@ class UserNotificationsTests: XCTestCase {
     )
     var didCallback = false
     let completionHandler = { didCallback = true }
-
-    let store = TestStore(
-      initialState: .init(),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.userNotifications.delegate = { delegate.stream }
-      }
-    )
+    store.dependencies.userNotifications.delegate = { delegate.stream }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
 
@@ -51,6 +51,13 @@ class UserNotificationsTests: XCTestCase {
   }
 
   func testReceiveForegroundNotification() async {
+    let store = TestStore(
+      initialState: AppReducer.State(),
+      reducer: AppReducer()
+    )
+
+    store.dependencies.didFinishLaunching()
+
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
     let notification = UserNotificationClient.Notification(
       date: .mock,
@@ -62,14 +69,7 @@ class UserNotificationsTests: XCTestCase {
     )
     var didCallbackWithOptions: UNNotificationPresentationOptions?
     let completionHandler = { didCallbackWithOptions = $0 }
-
-    let store = TestStore(
-      initialState: .init(),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.userNotifications.delegate = { delegate.stream }
-      }
-    )
+    store.dependencies.userNotifications.delegate = { delegate.stream }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
 

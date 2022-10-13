@@ -1,6 +1,6 @@
 import ComposableArchitecture
 
-public protocol Path {
+public protocol Path<Root, Value> {
   associatedtype Root
   associatedtype Value
   func extract(from root: Root) -> Value?
@@ -160,67 +160,84 @@ extension OptionalPath where Root == Value? {
   }
 }
 
-extension Reducer {
-  public func _pullback<GlobalState, GlobalAction, GlobalEnvironment, StatePath, ActionPath>(
-    state toLocalState: StatePath,
-    action toLocalAction: ActionPath,
-    environment toLocalEnvironment: @escaping (GlobalEnvironment) -> Environment,
-    breakpointOnNil: Bool = true,
+extension ReducerProtocol {
+  @inlinable
+  public func _ifLet<
+    Child: ReducerProtocol,
+    StatePath: Path<State, Child.State>,
+    ActionPath: Path<Action, Child.Action>
+  >(
+    state toChildState: StatePath,
+    action toChildAction: ActionPath,
+    @ReducerBuilderOf<Child> then child: () -> Child,
     file: StaticString = #file,
     line: UInt = #line
-  ) -> Reducer<GlobalState, GlobalAction, GlobalEnvironment>
-  where
-    StatePath: Path, StatePath.Root == GlobalState, StatePath.Value == State,
-    ActionPath: Path, ActionPath.Root == GlobalAction, ActionPath.Value == Action
-  {
+  ) -> OptionalPathReducer<StatePath, ActionPath, Self, Child> {
+    OptionalPathReducer(
+      parent: self,
+      child: child(),
+      toChildState: toChildState,
+      toChildAction: toChildAction
+    )
+  }
+}
 
-    return .init { globalState, globalAction, globalEnvironment in
+public struct OptionalPathReducer<
+  StatePath: Path,
+  ActionPath: Path,
+  Parent: ReducerProtocol<StatePath.Root, ActionPath.Root>,
+  Child: ReducerProtocol<StatePath.Value, ActionPath.Value>
+>: ReducerProtocol {
+  @usableFromInline
+  let parent: Parent
+  let child: Child
+  let toChildState: StatePath
+  let toChildAction: ActionPath
 
-      guard let localAction = toLocalAction.extract(from: globalAction)
-      else { return .none }
+  @usableFromInline
+  init(
+    parent: Parent,
+    child: Child,
+    toChildState: StatePath,
+    toChildAction: ActionPath
+  ) {
+    self.parent = parent
+    self.child = child
+    self.toChildState = toChildState
+    self.toChildAction = toChildAction
+  }
 
-      guard var localState = toLocalState.extract(from: globalState)
-      else {
-        #if DEBUG
-          runtimeWarning(
-            """
-            Warning: Reducer._pullback@%@:%d
+  @inlinable
+  public func reduce(
+    into state: inout Parent.State, action: Parent.Action
+  ) -> Effect<Parent.Action, Never> {
+    return .merge(
+      self.reduceWrapped(into: &state, action: action),
+      self.parent.reduce(into: &state, action: action)
+    )
+  }
 
-            "%@" was received by an optional reducer when its state was "nil". This can happen for \
-            a few reasons:
+  @usableFromInline
+  func reduceWrapped(
+    into state: inout Parent.State, action: Parent.Action
+  ) -> Effect<Parent.Action, Never> {
+    guard let childAction = self.toChildAction.extract(from: action)
+    else { return Effect<Action, Never>.none }
 
-            * The optional reducer was combined with or run from another reducer that set "%@" to \
-            "nil" before the optional reducer ran. Combine or run optional reducers before \
-            reducers that can set their state to "nil". This ensures that optional reducers can \
-            handle their actions while their state is still non-"nil".
-
-            * An active effect emitted this action while state was "nil". Make sure that effects
-            for this optional reducer are canceled when optional state is set to "nil".
-
-            * This action was sent to the store while state was "nil". Make sure that actions \
-            for this reducer can only be sent to a view store when state is non-"nil". In \
-            SwiftUI applications, use "IfLetStore".
-            """,
-            [
-              "\(file)",
-              line,
-              "\(globalAction)",
-              "\(State.self)",
-            ]
-          )
-        #endif
-        return .none
-      }
-
-      let effect =
-        self.run(&localState, localAction, toLocalEnvironment(globalEnvironment))
-        .map { localAction -> GlobalAction in
-          var globalAction = globalAction
-          toLocalAction.set(into: &globalAction, localAction)
-          return globalAction
-        }
-      toLocalState.set(into: &globalState, localState)
-      return effect
+    guard var childState = self.toChildState.extract(from: state)
+    else {
+      // TODO: Runtime warning
+      return .none
     }
+
+    let effect =
+    self.child.reduce(into: &childState, action: childAction)
+      .map { childAction -> Action in
+        var action = action
+        self.toChildAction.set(into: &action, childAction)
+        return action
+      }
+    self.toChildState.set(into: &state, childState)
+    return effect
   }
 }

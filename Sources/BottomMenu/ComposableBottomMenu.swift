@@ -141,36 +141,40 @@ extension BottomMenuState.Button {
   import ComposableArchitecture
   import SwiftUIHelpers
 
-  private enum Action {
-    case show
-    case dismiss
-  }
+  private struct BottomMenuReducer: ReducerProtocol {
+    typealias State = BottomMenuState<Action>?
 
-  private let reducer = Reducer<BottomMenuState<Action>?, Action, Void> { state, action, _ in
-    switch action {
-    case .show:
-      state = .init(
-        title: .init("vs mbrandonw"),
-        buttons: [
-          .init(
-            title: .init("Main menu"),
-            icon: Image(systemName: "flag")
+    enum Action {
+      case show
+      case dismiss
+    }
+
+    func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+      switch action {
+      case .show:
+        state = .init(
+          title: .init("vs mbrandonw"),
+          buttons: [
+            .init(
+              title: .init("Main menu"),
+              icon: Image(systemName: "flag")
+            ),
+            .init(
+              title: .init("End game"),
+              icon: Image(systemName: "flag")
+            ),
+          ],
+          footerButton: .init(
+            title: .init("Settings"),
+            icon: Image(systemName: "gear")
           ),
-          .init(
-            title: .init("End game"),
-            icon: Image(systemName: "flag")
-          ),
-        ],
-        footerButton: .init(
-          title: .init("Settings"),
-          icon: Image(systemName: "gear")
-        ),
-        onDismiss: .init(action: .dismiss, animation: .default)
-      )
-      return .none
-    case .dismiss:
-      state = nil
-      return .none
+          onDismiss: .init(action: .dismiss, animation: .default)
+        )
+        return .none
+      case .dismiss:
+        state = nil
+        return .none
+      }
     }
   }
 
@@ -178,8 +182,7 @@ extension BottomMenuState.Button {
     struct TestView: View {
       private let store = Store(
         initialState: nil,
-        reducer: reducer,
-        environment: ()
+        reducer: BottomMenuReducer()
       )
 
       var body: some View {

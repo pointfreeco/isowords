@@ -1,13 +1,11 @@
 #if os(iOS)
-  import Combine
-  import CombineHelpers
-  import ComposableArchitecture
+  import Dependencies
   import GameKit
 
   @available(iOSApplicationExtension, unavailable)
-  extension GameCenterClient {
-    public static var live: Self {
-      return Self(
+  extension GameCenterClient: DependencyKey {
+    public static let liveValue = {
+      Self(
         gameCenterViewController: .live,
         localPlayer: .live,
         reportAchievements: { try await GKAchievement.report($0) },
@@ -17,7 +15,7 @@
         turnBasedMatch: .live,
         turnBasedMatchmakerViewController: .live
       )
-    }
+    }()
   }
 
   @available(iOSApplicationExtension, unavailable)
