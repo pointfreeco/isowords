@@ -2,6 +2,7 @@ import ApiClientLive
 import AppAudioLibrary
 import AppClipAudioLibrary
 import AppFeature
+import AudioPlayerClient
 import Build
 import ComposableArchitecture
 import DictionarySqliteClient
@@ -15,7 +16,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
   let store = Store(
     initialState: AppReducer.State(),
     reducer: AppReducer().transformDependency(\.self) {
-      $0.audioPlayer = .live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
+      $0.audioPlayer = .liveValue
       $0.database = .live(
         path: FileManager.default
           .urls(for: .documentDirectory, in: .userDomainMask)
@@ -71,6 +72,10 @@ struct IsowordsApp: App {
       self.appDelegate.viewStore.send(.didChangeScenePhase($0))
     }
   }
+}
+
+extension AudioPlayerClient {
+  static let liveValue = Self.live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
 }
 
 extension ServerConfigClient {
