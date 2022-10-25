@@ -74,7 +74,7 @@ The screenshots and preview video that we upload to the [App Store](https://www.
 
 ### Preview apps
 
-There are times that we want to test a feature in isolation without building the entire app. SwiftUI previews are great for this but also have their limitations, such as if you need to use APIs unavailable to previews, or if you need to debug more complex flows, etc.
+There are times that we want to test a feature in isolation without building the entire app. SwiftUI previews are great for this but they also have their limitations, such as if you need to use APIs unavailable to previews, or if you need to debug more complex flows, etc.
 
 So, we create [mini-applications](https://github.com/pointfreeco/isowords/blob/main/App/Previews) that build a small subset of the [86+ modules](https://github.com/pointfreeco/isowords/blob/main/Package.swift) that comprise the entire application. Setting up these applications requires minimal work. You just specify what dependencies you need in the Xcode project and then create an entry point to launch the feature.
 
