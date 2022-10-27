@@ -25,7 +25,7 @@ Available on the [App Store](https://www.isowords.xyz/app-store) now!
 We published a [4-part series of videos](https://www.pointfree.co/collections/tours/isowords) covering these topics and more on [Point-Free](https://www.pointfree.co), a video series exploring functional programming and the Swift language, hosted by [Brandon Williams](https://twitter.com/mbrandonw) and [Stephen Celis](https://twitter.com/stephencelis).
 
 <a href="https://www.pointfree.co/collections/tours/isowords">
-  <img alt="video poster image" src="https://d3rccdn33rt8ze.cloudfront.net/episodes/0142.jpeg" width="600">
+  <img alt="video poster image" src="https://d3rccdn33rt8ze.cloudfront.net/episodes/0169.jpeg" width="600">
 </a>
 
 <br><br>
