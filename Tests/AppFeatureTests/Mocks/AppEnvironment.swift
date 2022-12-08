@@ -1,7 +1,7 @@
 import AppFeature
 import ClientModels
 import ComposableArchitecture
-import FileClient
+//import FileClient
 import Foundation
 import Overture
 import SettingsFeature
@@ -12,7 +12,8 @@ extension DependencyValues {
     self.audioPlayer.load = { _ in }
     self.database.migrate = {}
     self.dictionary.load = { _ in false }
-    self.fileClient.load = { @Sendable _ in try await Task.never() }
+//    self.fileClient.load = { @Sendable _ in try await Task.never() }
+    self.userSettingsClient.load = { @Sendable _ in try await Task.never() }
     self.gameCenter.localPlayer.authenticate = {}
     self.gameCenter.localPlayer.listener = { .finished }
     self.mainQueue = .immediate

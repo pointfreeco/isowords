@@ -180,7 +180,8 @@ public struct Settings: ReducerProtocol {
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build) var build
-  @Dependency(\.fileClient) var fileClient
+//  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.userSettingsClient) var userSettingsClient
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.serverConfig.config) var serverConfig
@@ -490,7 +491,8 @@ public struct Settings: ReducerProtocol {
     .onChange(of: \.userSettings) { userSettings, _, _ in
       enum SaveDebounceID {}
 
-      return .fireAndForget { try await self.fileClient.save(userSettings: userSettings) }
+//      return .fireAndForget { try await self.fileClient.save(userSettings: userSettings) }
+      return .fireAndForget { try await self.userSettingsClient.save(userSettings: userSettings) }
         .debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: self.mainQueue)
     }
 

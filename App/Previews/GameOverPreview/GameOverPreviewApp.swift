@@ -71,7 +71,8 @@ extension StoreOf<GameOver> {
               .appendingPathComponent("Isowords.sqlite3")
           )
         )
-        .dependency(\.fileClient, .noop)
+//        .dependency(\.fileClient, .noop)
+        .dependency(\.userSettingsClient, .noop)
         .dependency(\.remoteNotifications, .noop)
         .dependency(\.serverConfig, .noop)
         .dependency(\.userDefaults.boolForKey) { _ in false }

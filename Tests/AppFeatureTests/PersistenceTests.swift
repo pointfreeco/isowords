@@ -16,11 +16,11 @@ import TestHelpers
 import XCTest
 
 @testable import AppFeature
-@testable import FileClient
+//@testable import FileClient
 @testable import GameCore
 @testable import SoloFeature
-@testable import UserSettingsClient
 @testable import UserDefaultsClient
+@testable import UserSettingsClient
 
 @MainActor
 class PersistenceTests: XCTestCase {
@@ -39,7 +39,8 @@ class PersistenceTests: XCTestCase {
     store.dependencies.dictionary.contains = { word, _ in word == "CAB" }
     store.dependencies.dictionary.randomCubes = { _ in .mock }
     store.dependencies.feedbackGenerator = .noop
-    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+//    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+    store.dependencies.userSettingsClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
     store.dependencies.mainRunLoop = .immediate
     store.dependencies.mainQueue = .immediate
 
@@ -164,7 +165,8 @@ class PersistenceTests: XCTestCase {
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+//    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+    store.dependencies.userSettingsClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
     store.dependencies.mainQueue = .immediate
 
     await store.send(.currentGame(.game(.menuButtonTapped))) {
@@ -265,7 +267,8 @@ class PersistenceTests: XCTestCase {
     )
 
     store.dependencies.didFinishLaunching()
-    store.dependencies.fileClient.override(load: savedGamesFileName, savedGames)
+//    store.dependencies.fileClient.override(load: savedGamesFileName, savedGames)
+    store.dependencies.userSettingsClient.override(load: savedGamesKey, savedGames)
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.receive(.savedGamesLoaded(.success(savedGames))) {

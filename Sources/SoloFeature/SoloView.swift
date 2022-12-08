@@ -1,6 +1,6 @@
 import ClientModels
 import ComposableArchitecture
-import FileClient
+//import FileClient
 import Overture
 import SharedModels
 import Styleguide
@@ -22,7 +22,8 @@ public struct Solo: ReducerProtocol {
     case task
   }
 
-  @Dependency(\.fileClient) var fileClient
+//  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.userSettingsClient) var userSettingsClient
 
   public init() {}
 
@@ -40,7 +41,8 @@ public struct Solo: ReducerProtocol {
 
     case .task:
       return .task {
-        await .savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() })
+//        await .savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() })
+        await .savedGamesLoaded(TaskResult { try await self.userSettingsClient.loadSavedGames() })
       }
     }
   }

@@ -72,7 +72,8 @@ public struct AppReducer: ReducerProtocol {
     case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
   }
 
-  @Dependency(\.fileClient) var fileClient
+//  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.userSettingsClient) var userSettingsClient
   @Dependency(\.gameCenter.turnBasedMatch.load) var loadTurnBasedMatch
   @Dependency(\.database.migrate) var migrate
   @Dependency(\.mainRunLoop.now.date) var now
@@ -106,7 +107,8 @@ public struct AppReducer: ReducerProtocol {
       .onChange(of: \.home.savedGames) { savedGames, _, action in
         if case .savedGamesLoaded(.success) = action { return .none }
         return .fireAndForget {
-          try await self.fileClient.save(games: savedGames)
+//          try await self.fileClient.save(games: savedGames)
+          try await self.userSettingsClient.save(games: savedGames)
         }
       }
 
@@ -141,7 +143,8 @@ public struct AppReducer: ReducerProtocol {
           }
           await send(
             .savedGamesLoaded(
-              TaskResult { try await self.fileClient.loadSavedGames() }
+//              TaskResult { try await self.fileClient.loadSavedGames() }
+              TaskResult { try await self.userSettingsClient.loadSavedGames() }
             )
           )
           _ = try await migrate
@@ -270,7 +273,8 @@ public struct AppReducer: ReducerProtocol {
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
           return .fireAndForget { [savedGames = state.home.savedGames] in
-            try await self.fileClient.save(games: savedGames)
+//            try await self.fileClient.save(games: savedGames)
+            try await self.userSettingsClient.save(games: savedGames)
           }
         }
         return .none

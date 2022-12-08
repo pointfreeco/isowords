@@ -76,7 +76,8 @@ public struct DailyChallengeReducer: ReducerProtocol {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.fileClient) var fileClient
+//  @Dependency(\.fileClient) var fileClient
+  @Dependency(\.userSettingsClient) var userSettingsClient
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
@@ -132,7 +133,8 @@ public struct DailyChallengeReducer: ReducerProtocol {
                 challenge,
                 apiClient: self.apiClient,
                 date: { self.now },
-                fileClient: self.fileClient
+//                fileClient: self.fileClient
+                userSettingsClient: self.userSettingsClient
               )
             }
           )
