@@ -5,6 +5,7 @@ import ComposableArchitecture
 import FileClient
 import Foundation
 import SharedModels
+import UserSettingsClient
 
 public enum DailyChallengeError: Error, Equatable {
   case alreadyPlayed(endsAt: Date)

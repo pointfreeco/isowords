@@ -58,6 +58,7 @@ public struct GameFeatureView<Content>: View where Content: View {
   import Overture
   import PuzzleGen
   import SharedModels
+  import UserSettingsClient
 
   struct GameFeatureView_Previews: PreviewProvider {
     static var previews: some View {

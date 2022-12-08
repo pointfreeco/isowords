@@ -5,6 +5,7 @@ import Overture
 import SharedModels
 import Styleguide
 import SwiftUI
+import UserSettingsClient
 
 public struct Solo: ReducerProtocol {
   public struct State: Equatable {
