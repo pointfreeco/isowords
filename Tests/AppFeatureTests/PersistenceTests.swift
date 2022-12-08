@@ -19,6 +19,7 @@ import XCTest
 @testable import FileClient
 @testable import GameCore
 @testable import SoloFeature
+@testable import UserSettingsClient
 @testable import UserDefaultsClient
 
 @MainActor

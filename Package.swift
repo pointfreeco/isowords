@@ -225,6 +225,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "UIApplicationClient", targets: ["UIApplicationClient"]),
     .library(name: "UpgradeInterstitialFeature", targets: ["UpgradeInterstitialFeature"]),
     .library(name: "UserDefaultsClient", targets: ["UserDefaultsClient"]),
+    .library(name: "UserSettingsClient", targets: ["UserSettingsClient"]),
     .library(name: "VocabFeature", targets: ["VocabFeature"]),
   ])
   package.targets.append(contentsOf: [
@@ -306,6 +307,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "StatsFeature",
         "TcaHelpers",
         "UIApplicationClient",
+        "UserSettingsClient",
         "VocabFeature",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Gen", package: "swift-gen"),
@@ -500,6 +502,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "FileClient",
         "SharedModels",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -587,6 +590,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Styleguide",
         "TcaHelpers",
         "UIApplicationClient",
+        "UserSettingsClient",
         "UpgradeInterstitialFeature",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ],
@@ -625,6 +629,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -655,6 +660,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SwiftUIHelpers",
         "TcaHelpers",
         "UpgradeInterstitialFeature",
+        "UserSettingsClient",
         "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
@@ -723,6 +729,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
         "UserDefaultsClient",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "Overture"),
       ]
@@ -879,6 +886,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UserDefaultsClient",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ],
@@ -903,6 +911,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FileClient",
         "SharedModels",
         "Styleguide",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -989,6 +998,16 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "UserDefaultsClient",
       dependencies: [
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+      ]
+    ),
+    .target(
+      name: "UserSettingsClient",
+      dependencies: [
+        "ClientModels",
+        "CombineHelpers",
+        "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
