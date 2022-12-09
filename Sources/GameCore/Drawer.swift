@@ -75,7 +75,7 @@ struct ActiveGamesTray: ReducerProtocol {
         group.addTask {
           await send(
             .savedGamesLoaded(
-              TaskResult { await self.persistenceClient.savedGames() }
+              TaskResult { self.persistenceClient.savedGames() }
             ),
             animation: .default
           )

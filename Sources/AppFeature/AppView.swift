@@ -141,7 +141,7 @@ public struct AppReducer: ReducerProtocol {
           }
           await send(
             .savedGamesLoaded(
-              TaskResult { await self.persistenceClient.savedGames() }
+              TaskResult { self.persistenceClient.savedGames() }
             )
           )
           _ = try await migrate

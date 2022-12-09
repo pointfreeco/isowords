@@ -24,7 +24,7 @@ public func startDailyChallengeAsync(
 
   guard
     challenge.dailyChallenge.gameMode == .unlimited,
-    let game = await persistenceClient.savedGames().dailyChallengeUnlimited
+    let game = persistenceClient.savedGames().dailyChallengeUnlimited
   else {
     do {
       return try await InProgressGame(

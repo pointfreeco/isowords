@@ -39,7 +39,7 @@ public struct Solo: ReducerProtocol {
 
     case .task:
       return .task {
-        await .savedGamesLoaded(TaskResult { await self.persistenceClient.savedGames() })
+        await .savedGamesLoaded(TaskResult { self.persistenceClient.savedGames() })
       }
     }
   }
