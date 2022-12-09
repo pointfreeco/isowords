@@ -362,7 +362,7 @@ public struct Onboarding: ReducerProtocol {
     .dependency(\.build, .noop)
     .dependency(\.database, .noop)
 //    .dependency(\.fileClient, .noop)
-    .dependency(\.userSettingsClient, .noop)
+    .dependency(\.persistenceClient, .noop)
     .dependency(\.gameCenter, .noop)
     .dependency(\.remoteNotifications, .noop)
     .dependency(\.serverConfig, .noop)

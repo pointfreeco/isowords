@@ -72,7 +72,7 @@ extension StoreOf<GameOver> {
           )
         )
 //        .dependency(\.fileClient, .noop)
-        .dependency(\.userSettingsClient, .noop)
+        .dependency(\.persistenceClient, .noop)
         .dependency(\.remoteNotifications, .noop)
         .dependency(\.serverConfig, .noop)
         .dependency(\.userDefaults.boolForKey) { _ in false }

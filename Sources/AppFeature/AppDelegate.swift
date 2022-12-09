@@ -18,7 +18,7 @@ public struct AppDelegateReducer: ReducerProtocol {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build.number) var buildNumber
 //  @Dependency(\.fileClient) var fileClient
-  @Dependency(\.userSettingsClient) var userSettingsClient
+  @Dependency(\.persistenceClient) var persistenceClient
   @Dependency(\.dictionary.load) var loadDictionary
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
@@ -65,7 +65,7 @@ public struct AppDelegateReducer: ReducerProtocol {
             await send(
               .userSettingsLoaded(
 //                TaskResult { try await self.fileClient.loadUserSettings() }
-                TaskResult { try await self.userSettingsClient.loadUserSettings() }
+                TaskResult { try await self.persistenceClient.loadUserSettings() }
               )
             )
           }

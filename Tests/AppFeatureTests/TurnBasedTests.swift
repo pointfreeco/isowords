@@ -86,8 +86,8 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.feedbackGenerator = .noop
 //    store.dependencies.fileClient.save = { @Sendable _, _ in }
 //    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
-    store.dependencies.userSettingsClient.save = { @Sendable _, _ in }
-    store.dependencies.userSettingsClient.load = { @Sendable _ in try await Task.never() }
+    store.dependencies.persistenceClient.save = { @Sendable _, _ in }
+    store.dependencies.persistenceClient.load = { @Sendable _ in try await Task.never() }
     store.dependencies.gameCenter.localPlayer.authenticate = {}
     store.dependencies.gameCenter.localPlayer.listener = { listener.stream }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
@@ -342,7 +342,7 @@ class TurnBasedTests: XCTestCase {
     }
     store.dependencies.deviceId.id = { .deviceId }
 //    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.userSettingsClient.save = { @Sendable _, _ in }
+    store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.gameCenter.localPlayer.authenticate = {}
     store.dependencies.gameCenter.localPlayer.listener = { listener.stream }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
@@ -456,7 +456,7 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.build.number = { 42 }
     store.dependencies.deviceId.id = { .deviceId }
 //    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.userSettingsClient.save = { @Sendable _, _ in }
+    store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.gameCenter.localPlayer.authenticate = {}
     store.dependencies.gameCenter.localPlayer.listener = { listener.stream }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .mock }
@@ -720,7 +720,7 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.apiClient.currentPlayer = { nil }
     store.dependencies.dictionary.randomCubes = { _ in .mock }
 //    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
-    store.dependencies.userSettingsClient.load = { @Sendable _ in try await Task.never() }
+    store.dependencies.persistenceClient.load = { @Sendable _ in try await Task.never() }
     store.dependencies.gameCenter.localPlayer.localPlayer = {
       update(.authenticated) { $0.player = localParticipant.player! }
     }

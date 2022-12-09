@@ -5,7 +5,7 @@ import Overture
 import SharedModels
 import Styleguide
 import SwiftUI
-import UserSettingsClient
+import PersistenceClient
 
 public struct Solo: ReducerProtocol {
   public struct State: Equatable {
@@ -23,7 +23,7 @@ public struct Solo: ReducerProtocol {
   }
 
 //  @Dependency(\.fileClient) var fileClient
-  @Dependency(\.userSettingsClient) var userSettingsClient
+  @Dependency(\.persistenceClient) var persistenceClient
 
   public init() {}
 
@@ -42,7 +42,7 @@ public struct Solo: ReducerProtocol {
     case .task:
       return .task {
 //        await .savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() })
-        await .savedGamesLoaded(TaskResult { try await self.userSettingsClient.loadSavedGames() })
+        await .savedGamesLoaded(TaskResult { try await self.persistenceClient.loadSavedGames() })
       }
     }
   }

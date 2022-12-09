@@ -9,7 +9,7 @@ import SettingsFeature
 import Styleguide
 import SwiftUI
 import UserDefaultsClient
-import UserSettingsClient
+import PersistenceClient
 
 @main
 struct SettingsPreviewApp: App {

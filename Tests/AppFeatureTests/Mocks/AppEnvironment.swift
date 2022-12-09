@@ -13,7 +13,7 @@ extension DependencyValues {
     self.database.migrate = {}
     self.dictionary.load = { _ in false }
 //    self.fileClient.load = { @Sendable _ in try await Task.never() }
-    self.userSettingsClient.load = { @Sendable _ in try await Task.never() }
+    self.persistenceClient.load = { @Sendable _ in try await Task.never() }
     self.gameCenter.localPlayer.authenticate = {}
     self.gameCenter.localPlayer.listener = { .finished }
     self.mainQueue = .immediate

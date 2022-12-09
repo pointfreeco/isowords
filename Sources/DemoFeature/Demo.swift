@@ -77,7 +77,7 @@ public struct Demo: ReducerProtocol {
     )
     .dependency(\.database, .noop)
 //    .dependency(\.fileClient, .noop)
-    .dependency(\.userSettingsClient, .noop)
+    .dependency(\.persistenceClient, .noop)
     .dependency(\.gameCenter, .noop)
     .dependency(\.remoteNotifications, .noop)
     .dependency(\.serverConfig, .noop)

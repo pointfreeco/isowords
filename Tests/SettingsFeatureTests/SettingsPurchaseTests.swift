@@ -14,7 +14,7 @@ fileprivate extension DependencyValues {
     self.build.number = { 42 }
     self.mainQueue = .immediate
 //    self.fileClient.save = { @Sendable _, _ in }
-    self.userSettingsClient.save = { @Sendable _, _ in }
+    self.persistenceClient.save = { @Sendable _, _ in }
     self.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }

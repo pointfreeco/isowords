@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import UserSettingsClient
+import PersistenceClient
 
 extension UserSettingsClient {
   public func loadUserSettings() async throws -> UserSettings {

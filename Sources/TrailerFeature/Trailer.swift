@@ -60,7 +60,7 @@ public struct Trailer: ReducerProtocol {
       .dependency(\.database, .noop)
       .dependency(\.feedbackGenerator, .noop)
 //      .dependency(\.fileClient, .noop)
-      .dependency(\.userSettingsClient, .noop)
+      .dependency(\.persistenceClient, .noop)
       .dependency(\.gameCenter, .noop)
       .dependency(\.lowPowerMode, .false)
       .dependency(\.remoteNotifications, .noop)
