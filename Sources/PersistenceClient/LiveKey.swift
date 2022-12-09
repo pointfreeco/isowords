@@ -7,9 +7,9 @@ extension PersistenceClient: DependencyKey {
   private static let savedGamesKey = "co.pointfree.isowords.PersistenceClient.savedGames"
 
   public static var liveValue: PersistenceClient {
-    let defaultUserSettings: Data = Data()
-    var userSettings = UserDefaults.standard.data(forKey: savedGamesKey) ?? defaultUserSettings
-//      .flatMap({ try? decoder.decode(SavedGamesState.self, from: $0) }) ?? defaultUserSettings
+    let defaultUserSettings = UserSettings()
+    var userSettings = UserDefaults.standard.data(forKey: savedGamesKey)
+      .flatMap({ try? decoder.decode(UserSettings.self, from: $0) }) ?? defaultUserSettings
     {
       didSet {
         UserDefaults.standard.set(

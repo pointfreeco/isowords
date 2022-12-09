@@ -65,7 +65,7 @@ public struct AppDelegateReducer: ReducerProtocol {
             await send(
               .userSettingsLoaded(
 //                TaskResult { try await self.fileClient.loadUserSettings() }
-                TaskResult { try await self.persistenceClient.loadUserSettings() }
+                TaskResult { try await self.persistenceClient.userSettings() }
               )
             )
           }
