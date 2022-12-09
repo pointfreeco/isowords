@@ -126,7 +126,6 @@ public struct Settings: ReducerProtocol {
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build) var build
-//  @Dependency(\.fileClient) var fileClient
   @Dependency(\.persistenceClient) var persistenceClient
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications

@@ -2,7 +2,6 @@ import ActiveGamesFeature
 import ComposableArchitecture
 
 struct ActiveGamesTray: ReducerProtocol {
-//  @Dependency(\.fileClient) var fileClient
   @Dependency(\.persistenceClient) var persistenceClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
@@ -76,8 +75,7 @@ struct ActiveGamesTray: ReducerProtocol {
         group.addTask {
           await send(
             .savedGamesLoaded(
-//              TaskResult { try await self.fileClient.loadSavedGames() }
-              TaskResult { try await self.persistenceClient.loadSavedGames() }
+              TaskResult { await self.persistenceClient.savedGames() }
             ),
             animation: .default
           )

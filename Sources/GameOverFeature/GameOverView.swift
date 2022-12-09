@@ -90,7 +90,6 @@ public struct GameOver: ReducerProtocol {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
-//  @Dependency(\.fileClient) var fileClient
   @Dependency(\.persistenceClient) var persistenceClient
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.storeKit.requestReview) var requestReview
@@ -154,7 +153,6 @@ public struct GameOver: ReducerProtocol {
                   challenge,
                   apiClient: self.apiClient,
                   date: { self.mainRunLoop.now.date },
-//                  fileClient: self.fileClient
                   persistenceClient: self.persistenceClient
                 )
               }

@@ -16,7 +16,6 @@ fileprivate extension DependencyValues {
     self.apiClient.currentPlayer = { .some(.init(appleReceipt: .mock, player: .blob)) }
     self.build.number = { 42 }
     self.mainQueue = .immediate
-//    self.fileClient.save = { @Sendable _, _ in }
     self.persistenceClient.save = { @Sendable _, _ in }
     self.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
@@ -68,7 +67,6 @@ class SettingsFeatureTests: XCTestCase {
 
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { nil }
-//    store.dependencies.fileClient.save = { @Sendable _, _ in }
     store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.mainQueue = .immediate
     store.dependencies.serverConfig.config = { .init() }
@@ -110,7 +108,6 @@ class SettingsFeatureTests: XCTestCase {
 
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { nil }
-//    store.dependencies.fileClient.save = { @Sendable _, _ in }
     store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.mainQueue = .immediate
     store.dependencies.serverConfig.config = { .init() }
@@ -149,7 +146,6 @@ class SettingsFeatureTests: XCTestCase {
 
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { nil }
-//    store.dependencies.fileClient.save = { @Sendable _, _ in }
     store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.mainQueue = .immediate
     store.dependencies.serverConfig.config = { .init() }
@@ -192,7 +188,6 @@ class SettingsFeatureTests: XCTestCase {
       await openedUrl.setValue(url)
       return true
     }
-//    store.dependencies.fileClient.save = { @Sendable _, _ in }
     store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.mainQueue = .immediate
     store.dependencies.serverConfig.config = { .init() }
@@ -244,7 +239,6 @@ class SettingsFeatureTests: XCTestCase {
       withResponse: { try await OK([:]) }
     )
     store.dependencies.applicationClient.alternateIconName = { nil }
-//    store.dependencies.fileClient.save = { @Sendable _, _ in }
     store.dependencies.persistenceClient.save = { @Sendable _, _ in }
     store.dependencies.mainQueue = mainQueue.eraseToAnyScheduler()
     store.dependencies.serverConfig.config = { .init() }

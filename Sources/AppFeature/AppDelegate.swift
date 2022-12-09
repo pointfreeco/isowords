@@ -1,4 +1,5 @@
 import AudioPlayerClient
+import ClientModels
 import ComposableArchitecture
 import ComposableUserNotifications
 import Foundation
@@ -17,7 +18,6 @@ public struct AppDelegateReducer: ReducerProtocol {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build.number) var buildNumber
-//  @Dependency(\.fileClient) var fileClient
   @Dependency(\.persistenceClient) var persistenceClient
   @Dependency(\.dictionary.load) var loadDictionary
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
@@ -64,8 +64,7 @@ public struct AppDelegateReducer: ReducerProtocol {
           group.addTask {
             await send(
               .userSettingsLoaded(
-//                TaskResult { try await self.fileClient.loadUserSettings() }
-                TaskResult { try await self.persistenceClient.userSettings() }
+                TaskResult { await self.persistenceClient.userSettings() }
               )
             )
           }

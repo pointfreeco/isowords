@@ -197,7 +197,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "DeviceId", targets: ["DeviceId"]),
     .library(name: "DictionaryFileClient", targets: ["DictionaryFileClient"]),
     .library(name: "FeedbackGeneratorClient", targets: ["FeedbackGeneratorClient"]),
-//    .library(name: "FileClient", targets: ["FileClient"]),
     .library(name: "GameCore", targets: ["GameCore"]),
     .library(name: "GameFeature", targets: ["GameFeature"]),
     .library(name: "GameOverFeature", targets: ["GameOverFeature"]),
@@ -289,7 +288,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DeviceId",
         "DictionarySqliteClient",
         "FeedbackGeneratorClient",
-//        "FileClient",
         "GameFeature",
         "GameOverFeature",
         "HomeFeature",
@@ -501,7 +499,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "DailyChallengeHelpers",
       dependencies: [
         "ApiClient",
-//        "FileClient",
         "PersistenceClient",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -555,16 +552,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
-//    .target(
-//      name: "FileClient",
-//      dependencies: [
-//        "ClientModels",
-//        "CombineHelpers",
-//        "XCTestDebugSupport",
-//        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-//        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-//      ]
-//    ),
     .target(
       name: "GameCore",
       dependencies: [
@@ -581,7 +568,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DictionaryClient",
         "GameOverFeature",
         "FeedbackGeneratorClient",
-//        "FileClient",
         "HapticsCore",
         "LowPowerModeClient",
         "PersistenceClient",
@@ -621,7 +607,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameCore",
         "GameOverFeature",
         "FeedbackGeneratorClient",
-//        "FileClient",
         "LowPowerModeClient",
         "PersistenceClient",
         "PuzzleGen",
@@ -651,7 +636,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "CombineHelpers",
         "ComposableStoreKit",
         "DailyChallengeHelpers",
-//        "FileClient",
         "FirstPartyMocks",
         "LocalDatabaseClient",
         "NotificationHelpers",
@@ -715,7 +699,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DailyChallengeFeature",
         "DateHelpers",
         "DeviceId",
-//        "FileClient",
         "LeaderboardFeature",
         "LocalDatabaseClient",
         "LowPowerModeClient",
@@ -887,7 +870,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ClientModels",
         "ComposableStoreKit",
         "ComposableUserNotifications",
-//        "FileClient",
         "LocalDatabaseClient",
         "LowPowerModeClient",
         "PersistenceClient",
@@ -920,7 +902,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "SoloFeature",
       dependencies: [
         "ClientModels",
-//        "FileClient",
         "PersistenceClient",
         "SharedModels",
         "Styleguide",

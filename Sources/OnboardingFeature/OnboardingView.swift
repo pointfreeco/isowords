@@ -361,7 +361,6 @@ public struct Onboarding: ReducerProtocol {
     .dependency(\.audioPlayer, self.audioPlayer)
     .dependency(\.build, .noop)
     .dependency(\.database, .noop)
-//    .dependency(\.fileClient, .noop)
     .dependency(\.persistenceClient, .noop)
     .dependency(\.gameCenter, .noop)
     .dependency(\.remoteNotifications, .noop)

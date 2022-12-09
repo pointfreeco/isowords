@@ -72,7 +72,6 @@ public struct AppReducer: ReducerProtocol {
     case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
   }
 
-//  @Dependency(\.fileClient) var fileClient
   @Dependency(\.persistenceClient) var persistenceClient
   @Dependency(\.gameCenter.turnBasedMatch.load) var loadTurnBasedMatch
   @Dependency(\.database.migrate) var migrate
@@ -106,9 +105,8 @@ public struct AppReducer: ReducerProtocol {
       }
       .onChange(of: \.home.savedGames) { savedGames, _, action in
         if case .savedGamesLoaded(.success) = action { return .none }
-        return .fireAndForget {
-//          try await self.fileClient.save(games: savedGames)
-          try await self.persistenceClient.save(games: savedGames)
+        return .run { _ in
+          await self.persistenceClient.setSavedGames(savedGames)
         }
       }
 
@@ -143,8 +141,7 @@ public struct AppReducer: ReducerProtocol {
           }
           await send(
             .savedGamesLoaded(
-//              TaskResult { try await self.fileClient.loadSavedGames() }
-              TaskResult { try await self.persistenceClient.loadSavedGames() }
+              TaskResult { await self.persistenceClient.savedGames() }
             )
           )
           _ = try await migrate
@@ -272,9 +269,8 @@ public struct AppReducer: ReducerProtocol {
           != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
-          return .fireAndForget { [savedGames = state.home.savedGames] in
-//            try await self.fileClient.save(games: savedGames)
-            try await self.persistenceClient.save(games: savedGames)
+          return .run { [savedGames = state.home.savedGames] _ in
+            await self.persistenceClient.setSavedGames(savedGames)
           }
         }
         return .none

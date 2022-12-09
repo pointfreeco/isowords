@@ -76,7 +76,6 @@ public struct Demo: ReducerProtocol {
       isHapticsEnabled: { _ in true }
     )
     .dependency(\.database, .noop)
-//    .dependency(\.fileClient, .noop)
     .dependency(\.persistenceClient, .noop)
     .dependency(\.gameCenter, .noop)
     .dependency(\.remoteNotifications, .noop)

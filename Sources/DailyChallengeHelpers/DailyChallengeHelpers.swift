@@ -2,7 +2,6 @@ import ApiClient
 import ClientModels
 import Combine
 import ComposableArchitecture
-//import FileClient
 import Foundation
 import SharedModels
 import PersistenceClient
@@ -16,7 +15,6 @@ public func startDailyChallengeAsync(
   _ challenge: FetchTodaysDailyChallengeResponse,
   apiClient: ApiClient,
   date: @escaping () -> Date,
-//  fileClient: FileClient
   persistenceClient: PersistenceClient
 ) async throws -> InProgressGame {
   guard challenge.yourResult.rank == nil
@@ -26,8 +24,7 @@ public func startDailyChallengeAsync(
 
   guard
     challenge.dailyChallenge.gameMode == .unlimited,
-//    let game = try? await fileClient.loadSavedGames().dailyChallengeUnlimited
-    let game = try? await persistenceClient.loadSavedGames().dailyChallengeUnlimited
+    let game = await persistenceClient.savedGames().dailyChallengeUnlimited
   else {
     do {
       return try await InProgressGame(
