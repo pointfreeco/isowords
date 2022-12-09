@@ -44,7 +44,7 @@ class DailyChallengeTests: XCTestCase {
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didSave.setValue(true) }
-    store.dependencies.persistenceClient.load = { @Sendable _ in try await Task.never() }
+//    store.dependencies.persistenceClient.load = { @Sendable _ in try await Task.never() }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = .immediate
 
@@ -93,7 +93,7 @@ class DailyChallengeTests: XCTestCase {
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didSave.setValue(true) }
-    store.dependencies.persistenceClient.load = { @Sendable _ in try await Task.never() }
+//    store.dependencies.persistenceClient.load = { @Sendable _ in try await Task.never() }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = .immediate
 

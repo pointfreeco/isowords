@@ -38,7 +38,7 @@ class PersistenceTests: XCTestCase {
     store.dependencies.dictionary.contains = { word, _ in word == "CAB" }
     store.dependencies.dictionary.randomCubes = { _ in .mock }
     store.dependencies.feedbackGenerator = .noop
-    store.dependencies.persistenceClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+//    store.dependencies.persistenceClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
     store.dependencies.mainRunLoop = .immediate
     store.dependencies.mainQueue = .immediate
 
@@ -163,7 +163,7 @@ class PersistenceTests: XCTestCase {
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-    store.dependencies.persistenceClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+//    store.dependencies.persistenceClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
     store.dependencies.mainQueue = .immediate
 
     await store.send(.currentGame(.game(.menuButtonTapped))) {

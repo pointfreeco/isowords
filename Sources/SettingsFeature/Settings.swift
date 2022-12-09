@@ -438,8 +438,7 @@ public struct Settings: ReducerProtocol {
 
       return .run { _ in
         await self.persistenceClient.setUserSettings(userSettings)
-      }
-        .debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: self.mainQueue)
+      }.debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: self.mainQueue)
     }
 
     Scope(state: \.stats, action: /Action.stats) {
