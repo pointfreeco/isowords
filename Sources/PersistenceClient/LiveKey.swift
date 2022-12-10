@@ -8,7 +8,7 @@ extension PersistenceClient: DependencyKey {
 
   public static var liveValue: PersistenceClient {
     let defaultUserSettings = UserSettings()
-    var userSettings = UserDefaults.standard.data(forKey: savedGamesKey)
+    var userSettings = UserDefaults.standard.data(forKey: userSettingsKey)
       .flatMap({ try? decoder.decode(UserSettings.self, from: $0) }) ?? defaultUserSettings
     {
       didSet {
