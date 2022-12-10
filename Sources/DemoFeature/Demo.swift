@@ -61,13 +61,12 @@ public struct Demo: ReducerProtocol {
 
   public var body: some ReducerProtocol<State, Action> {
     Scope(state: \.step, action: .self) {
-      EmptyReducer()
-        .ifCaseLet(
-          /State.Step.onboarding,
-          action: /Action.onboarding
-        ) {
-          Onboarding()
-        }
+      Scope(
+        state: /State.Step.onboarding,
+        action: /Action.onboarding
+      ) {
+        Onboarding()
+      }
     }
 
     IntegratedGame(

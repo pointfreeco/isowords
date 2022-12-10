@@ -344,35 +344,38 @@ public struct Home: ReducerProtocol {
       ChangelogReducer()
     }
     .ifLet(\.destination, action: /Action.destination) {
-      EmptyReducer()
-        .ifCaseLet(
-          /DestinationState.dailyChallenge,
-          action: /DestinationAction.dailyChallenge
-        ) {
-          DailyChallengeReducer()
-        }
-        .ifCaseLet(
-          /DestinationState.leaderboard,
-          action: /DestinationAction.leaderboard
-        ) {
-          Leaderboard()
-        }
-        .ifCaseLet(
-          /DestinationState.multiplayer,
-          action: /DestinationAction.multiplayer
-        ) {
-          Multiplayer()
-        }
-        .ifCaseLet(
-          /DestinationState.solo,
-          action: /DestinationAction.solo
-        ) {
-          Solo()
-        }
+      Scope(
+        state: /DestinationState.dailyChallenge,
+        action: /DestinationAction.dailyChallenge
+      ) {
+        DailyChallengeReducer()
+      }
+      Scope(
+        state: /DestinationState.leaderboard,
+        action: /DestinationAction.leaderboard
+      ) {
+        Leaderboard()
+      }
+      Scope(
+        state: /DestinationState.multiplayer,
+        action: /DestinationAction.multiplayer
+      ) {
+        Multiplayer()
+      }
+      Scope(
+        state: /DestinationState.solo,
+        action: /DestinationAction.solo
+      ) {
+        Solo()
+      }
     }
 
     Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
       NagBannerFeature()
+    }
+    
+    Scope(state: \.settings, action: /Action.settings) {
+      Settings()
     }
   }
 
