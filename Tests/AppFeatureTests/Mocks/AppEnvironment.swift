@@ -11,6 +11,8 @@ extension DependencyValues {
     self.audioPlayer.load = { _ in }
     self.database.migrate = {}
     self.dictionary.load = { _ in false }
+    self.persistenceClient.userSettings = { .init() }
+    self.persistenceClient.savedGames = { .init() }
     self.gameCenter.localPlayer.authenticate = {}
     self.gameCenter.localPlayer.listener = { .finished }
     self.mainQueue = .immediate

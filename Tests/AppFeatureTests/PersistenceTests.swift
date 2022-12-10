@@ -24,7 +24,7 @@ import XCTest
 @MainActor
 class PersistenceTests: XCTestCase {
   func testUnlimitedSaveAndQuit() async throws {
-    let saves = ActorIsolated<[Data]>([])
+    let saves = ActorIsolated<[SavedGamesState]>([])
 
     let store = TestStore(
       initialState: AppReducer.State(
@@ -38,7 +38,11 @@ class PersistenceTests: XCTestCase {
     store.dependencies.dictionary.contains = { word, _ in word == "CAB" }
     store.dependencies.dictionary.randomCubes = { _ in .mock }
     store.dependencies.feedbackGenerator = .noop
-//    store.dependencies.persistenceClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+    store.dependencies.persistenceClient.setSavedGames = { savedGames in
+      await saves.withValue {
+        $0.append(savedGames)
+      }
+    }
     store.dependencies.mainRunLoop = .immediate
     store.dependencies.mainQueue = .immediate
 
@@ -142,15 +146,15 @@ class PersistenceTests: XCTestCase {
       }
       appState.game = nil
     }
-    try await saves.withValue {
+    await saves.withValue {
       XCTAssertNoDifference(2, $0.count)
-      XCTAssertNoDifference($0.last, try JSONEncoder().encode(store.state.home.savedGames))
+      XCTAssertNoDifference($0.last, store.state.home.savedGames)
     }
   }
 
   func testUnlimitedAbandon() async throws {
     let didArchiveGame = ActorIsolated(false)
-    let saves = ActorIsolated<[Data]>([])
+    let saves = ActorIsolated<[SavedGamesState]>([])
 
     let store = TestStore(
       initialState: AppReducer.State(
@@ -163,7 +167,11 @@ class PersistenceTests: XCTestCase {
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-//    store.dependencies.persistenceClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+    store.dependencies.persistenceClient.setSavedGames = { savedGames in
+      await saves.withValue {
+        $0.append(savedGames)
+      }
+    }
     store.dependencies.mainQueue = .immediate
 
     await store.send(.currentGame(.game(.menuButtonTapped))) {
@@ -204,8 +212,8 @@ class PersistenceTests: XCTestCase {
     }
 
     await didArchiveGame.withValue { XCTAssert($0) }
-    try await saves.withValue {
-      XCTAssertNoDifference($0, [try JSONEncoder().encode(SavedGamesState())])
+    await saves.withValue {
+      XCTAssertNoDifference($0, [SavedGamesState()])
     }
   }
 
@@ -261,21 +269,20 @@ class PersistenceTests: XCTestCase {
     let store = TestStore(
       initialState: AppReducer.State(),
       reducer: AppReducer()
-    )
-
+    )    
     store.dependencies.didFinishLaunching()
-    await store.dependencies.persistenceClient.setSavedGames(savedGames)
+    store.dependencies.persistenceClient.savedGames = { savedGames }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.receive(.savedGamesLoaded(.success(savedGames))) {
       $0.home.savedGames = savedGames
     }
-    await store.send(.home(.setNavigation(tag: .solo))) {
-      $0.home.destination = .solo(.init(inProgressGame: .mock))
-    }
-    await store.send(.home(.destination(.solo(.gameButtonTapped(.unlimited))))) {
-      $0.game = Game.State(inProgressGame: .mock)
-    }
+//    await store.send(.home(.setNavigation(tag: .solo))) {
+//      $0.home.destination = .solo(.init(inProgressGame: .mock))
+//    }
+//    await store.send(.home(.destination(.solo(.gameButtonTapped(.unlimited))))) {
+//      $0.game = Game.State(inProgressGame: .mock)
+//    }
     await task.cancel()
   }
 
