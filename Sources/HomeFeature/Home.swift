@@ -159,6 +159,9 @@ public struct Home: ReducerProtocol {
   public init() {}
 
   public var body: some ReducerProtocol<State, Action> {
+    Scope(state: \.settings, action: /Action.settings) {
+      Settings()
+    }
     Reduce { state, action in
       switch action {
       case let .activeMatchesResponse(.success(response)):
@@ -372,10 +375,6 @@ public struct Home: ReducerProtocol {
 
     Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
       NagBannerFeature()
-    }
-    
-    Scope(state: \.settings, action: /Action.settings) {
-      Settings()
     }
   }
 
