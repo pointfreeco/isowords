@@ -374,6 +374,9 @@ public struct Home: ReducerProtocol {
     Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
       NagBannerFeature()
     }
+    Scope(state: \.settings, action: /Action.settings) {
+      Settings()
+    }
   }
 
   private func authenticate(send: Send<Action>) async {

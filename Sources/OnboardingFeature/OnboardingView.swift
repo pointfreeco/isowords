@@ -179,7 +179,7 @@ public struct Onboarding: ReducerProtocol {
 
         return .fireAndForget {
           await self.audioPlayer.play(.uiSfxTap)
-          await Task.cancel(id: DelayedNextStepID.self)
+          Task.cancel(id: DelayedNextStepID.self)
         }
 
       case .delayedNextStep:
@@ -190,7 +190,7 @@ public struct Onboarding: ReducerProtocol {
         return .fireAndForget {
           await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
           await self.audioPlayer.stop(.onboardingBgMusic)
-          await Task.cancel(id: DelayedNextStepID.self)
+          Task.cancel(id: DelayedNextStepID.self)
         }
 
       case .game where state.step.isCongratsStep:
@@ -346,6 +346,7 @@ public struct Onboarding: ReducerProtocol {
           try await self.mainQueue.sleep(for: .seconds(2))
           return .delayedNextStep
         }
+        .animation()
       }
     }
   }
