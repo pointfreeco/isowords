@@ -155,7 +155,7 @@ public struct Home: ReducerProtocol {
         do {
           let match = try await self.gameCenter.turnBasedMatch.load(matchId)
           let currentParticipantIsLocalPlayer =
-          match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+            match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
           if currentParticipantIsLocalPlayer {
             try await self.gameCenter.turnBasedMatch
@@ -206,21 +206,21 @@ public struct Home: ReducerProtocol {
 
     case let .authenticationResponse(currentPlayerEnvelope):
       state.settings.sendDailyChallengeReminder =
-      currentPlayerEnvelope.player.sendDailyChallengeReminder
+        currentPlayerEnvelope.player.sendDailyChallengeReminder
       state.settings.sendDailyChallengeSummary =
-      currentPlayerEnvelope.player.sendDailyChallengeSummary
+        currentPlayerEnvelope.player.sendDailyChallengeSummary
 
       let now = self.now.timeIntervalSinceReferenceDate
       let itsNagTime =
-      Int(now - self.userDefaults.installationTime)
-      >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
+        Int(now - self.userDefaults.installationTime)
+        >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
       let isFullGamePurchased =
-      currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
+        currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
 
       state.nagBanner =
-      !isFullGamePurchased && itsNagTime
-      ? .init()
-      : nil
+        !isFullGamePurchased && itsNagTime
+        ? .init()
+        : nil
 
       return .none
 
