@@ -117,7 +117,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
       state.wordSubmitButton.isSubmitButtonPressed = false
 
       return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
-        await Task.cancel(id: SubmitButtonPressedDelayID.self)
+        Task.cancel(id: SubmitButtonPressedDelayID.self)
         guard !wasClosing && !areReactionsOpen
         else { return }
         await send(.delegate(.confirmSubmit(reaction: nil)))

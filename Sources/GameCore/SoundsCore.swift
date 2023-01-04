@@ -22,7 +22,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
     self.core
       .onChange(of: { $0.gameOver == nil }) { _, _, _ in
         .fireAndForget {
-          await Task.cancel(id: CubeShakingID.self)
+          Task.cancel(id: CubeShakingID.self)
           for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
             await self.audioPlayer.stop(music)
           }

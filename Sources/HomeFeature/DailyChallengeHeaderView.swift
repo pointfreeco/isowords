@@ -13,7 +13,7 @@ struct DailyChallengeHeaderView: View {
 
   struct ViewState: Equatable {
     let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    let destinationTag: Home.DestinationState.Tag?
+    let destinationTag: Home.Destinations.State.Tag?
 
     init(homeState: Home.State) {
       self.dailyChallenges = homeState.dailyChallenges
@@ -65,12 +65,12 @@ struct DailyChallengeHeaderView: View {
           destination: IfLetStore(
             self.store.scope(
               state: (\Home.State.destination)
-                .appending(path: /Home.DestinationState.dailyChallenge).extract(from:),
+                .appending(path: /Home.Destinations.State.dailyChallenge).extract(from:),
               action: { .destination(.dailyChallenge($0)) }
             ),
             then: DailyChallengeView.init(store:)
           ),
-          tag: Home.DestinationState.Tag.dailyChallenge,
+          tag: Home.Destinations.State.Tag.dailyChallenge,
           selection: viewStore.binding(
             get: \.destinationTag,
             send: Home.Action.setNavigation(tag:)
