@@ -120,8 +120,8 @@ public struct Stats: ReducerProtocol {
       }
     }
     .ifLet(\.destination, action: /Action.destination) {
-      EmptyReducer().ifCaseLet(
-        /DestinationState.vocab,
+      Scope(
+        state: /DestinationState.vocab,
         action: /DestinationAction.vocab
       ) {
         Vocab()

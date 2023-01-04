@@ -214,8 +214,8 @@ public struct DailyChallengeReducer: ReducerProtocol {
       }
     }
     .ifLet(\.destination, action: /Action.destination) {
-      EmptyReducer().ifCaseLet(
-        /DestinationState.results,
+      Scope(
+        state: /DestinationState.results,
         action: /DestinationAction.dailyChallengeResults
       ) {
         DailyChallengeResults()
