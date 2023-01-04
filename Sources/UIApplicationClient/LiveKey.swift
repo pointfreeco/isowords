@@ -1,8 +1,9 @@
+import Dependencies
 import UIKit
 
 @available(iOSApplicationExtension, unavailable)
-extension UIApplicationClient {
-  public static let live = Self(
+extension UIApplicationClient: DependencyKey {
+  public static let liveValue = Self(
     alternateIconName: { UIApplication.shared.alternateIconName },
     alternateIconNameAsync: { await UIApplication.shared.alternateIconName },
     open: { @MainActor in await UIApplication.shared.open($0, options: $1) },
