@@ -104,9 +104,9 @@
         "package": "swift-composable-architecture",
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
-          "branch": "swift-dependencies",
-          "revision": "f14129ae8aac64e2919ce68d6cc3c698bb9d293b",
-          "version": null
+          "branch": null,
+          "revision": "9b5a510174ba956839035e8254d4be97f0c9ada1",
+          "version": "0.49.0"
         }
       },
       {
