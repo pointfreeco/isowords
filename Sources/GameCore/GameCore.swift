@@ -858,3 +858,26 @@ extension CompletedGame {
     )
   }
 }
+
+extension DependencyValues {
+  public mutating func gameOnboarding() {
+    let previousValues = self
+
+    self = Self.test
+    self.apiClient = .noop
+    self.audioPlayer = previousValues.audioPlayer
+    self.build = .noop
+    self.database = .noop
+    self.date = previousValues.date
+    self.dictionary = previousValues.dictionary
+    self.feedbackGenerator = previousValues.feedbackGenerator
+    self.fileClient = .noop
+    self.gameCenter = .noop
+    self.mainRunLoop = previousValues.mainRunLoop
+    self.mainQueue = previousValues.mainQueue
+    self.remoteNotifications = .noop
+    self.serverConfig = .noop
+    self.storeKit = .noop
+    self.userNotifications = .noop
+  }
+}

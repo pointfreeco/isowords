@@ -357,17 +357,9 @@ public struct Onboarding: ReducerProtocol {
       action: /Action.game,
       isHapticsEnabled: { _ in true }
     )
-    .dependency(\.apiClient, .noop)
-    .dependency(\.applicationClient, .noop)
-    .dependency(\.audioPlayer, self.audioPlayer)
-    .dependency(\.build, .noop)
-    .dependency(\.database, .noop)
-    .dependency(\.fileClient, .noop)
-    .dependency(\.gameCenter, .noop)
-    .dependency(\.remoteNotifications, .noop)
-    .dependency(\.serverConfig, .noop)
-    .dependency(\.storeKit, .noop)
-    .dependency(\.userNotifications, .noop)
+    .transformDependency(\.self) {
+      $0.gameOnboarding()
+    }
   }
 }
 
