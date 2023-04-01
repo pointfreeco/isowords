@@ -12,9 +12,9 @@ extension RemoteNotificationsClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    isRegistered: XCTUnimplemented("\(Self.self).isRegistered", placeholder: false),
-    register: XCTUnimplemented("\(Self.self).register"),
-    unregister: XCTUnimplemented("\(Self.self).unregister")
+    isRegistered: unimplemented("\(Self.self).isRegistered", placeholder: false),
+    register: unimplemented("\(Self.self).register"),
+    unregister: unimplemented("\(Self.self).unregister")
   )
 }
 

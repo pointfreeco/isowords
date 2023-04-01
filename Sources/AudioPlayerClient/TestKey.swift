@@ -12,18 +12,18 @@ extension AudioPlayerClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    load: XCTUnimplemented("\(Self.self).load"),
-    loop: XCTUnimplemented("\(Self.self).loop"),
-    play: XCTUnimplemented("\(Self.self).play"),
-    secondaryAudioShouldBeSilencedHint: XCTUnimplemented(
+    load: unimplemented("\(Self.self).load"),
+    loop: unimplemented("\(Self.self).loop"),
+    play: unimplemented("\(Self.self).play"),
+    secondaryAudioShouldBeSilencedHint: unimplemented(
       "\(Self.self).secondaryAudioShouldBeSilencedHint", placeholder: false
     ),
-    setGlobalVolumeForMusic: XCTUnimplemented("\(Self.self).setGlobalVolumeForMusic"),
-    setGlobalVolumeForSoundEffects: XCTUnimplemented(
+    setGlobalVolumeForMusic: unimplemented("\(Self.self).setGlobalVolumeForMusic"),
+    setGlobalVolumeForSoundEffects: unimplemented(
       "\(Self.self).setGlobalVolumeForSoundEffects"
     ),
-    setVolume: XCTUnimplemented("\(Self.self).setVolume"),
-    stop: XCTUnimplemented("\(Self.self).stop")
+    setVolume: unimplemented("\(Self.self).setVolume"),
+    stop: unimplemented("\(Self.self).stop")
   )
 }
 

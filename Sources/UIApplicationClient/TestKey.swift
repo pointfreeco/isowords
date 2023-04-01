@@ -12,16 +12,16 @@ extension UIApplicationClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    alternateIconName: XCTUnimplemented("\(Self.self).alternateIconName"),
-    alternateIconNameAsync: XCTUnimplemented("\(Self.self).alternateIconNameAsync"),
-    open: XCTUnimplemented("\(Self.self).open", placeholder: false),
-    openSettingsURLString: XCTUnimplemented("\(Self.self).openSettingsURLString"),
-    setAlternateIconName: XCTUnimplemented("\(Self.self).setAlternateIconName"),
-    setUserInterfaceStyle: XCTUnimplemented("\(Self.self).setUserInterfaceStyle"),
-    supportsAlternateIcons: XCTUnimplemented(
+    alternateIconName: unimplemented("\(Self.self).alternateIconName"),
+    alternateIconNameAsync: unimplemented("\(Self.self).alternateIconNameAsync"),
+    open: unimplemented("\(Self.self).open", placeholder: false),
+    openSettingsURLString: unimplemented("\(Self.self).openSettingsURLString"),
+    setAlternateIconName: unimplemented("\(Self.self).setAlternateIconName"),
+    setUserInterfaceStyle: unimplemented("\(Self.self).setUserInterfaceStyle"),
+    supportsAlternateIcons: unimplemented(
       "\(Self.self).supportsAlternateIcons", placeholder: false
     ),
-    supportsAlternateIconsAsync: XCTUnimplemented(
+    supportsAlternateIconsAsync: unimplemented(
       "\(Self.self).setAlternateIconNameAsync", placeholder: false
     )
   )
