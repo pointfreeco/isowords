@@ -13,11 +13,11 @@ extension DictionaryClient: TestDependencyKey {
   public static let previewValue = Self.everyString
 
   public static let testValue = Self(
-    contains: XCTUnimplemented("\(Self.self).contains", placeholder: false),
-    load: XCTUnimplemented("\(Self.self).load", placeholder: false),
-    lookup: XCTUnimplemented("\(Self.self).lookup"),
-    randomCubes: XCTUnimplemented("\(Self.self).randomCubes", placeholder: .mock),
-    unload: XCTUnimplemented("\(Self.self).unload")
+    contains: unimplemented("\(Self.self).contains", placeholder: false),
+    load: unimplemented("\(Self.self).load", placeholder: false),
+    lookup: unimplemented("\(Self.self).lookup"),
+    randomCubes: unimplemented("\(Self.self).randomCubes", placeholder: .mock),
+    unload: unimplemented("\(Self.self).unload")
   )
 }
 

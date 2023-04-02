@@ -53,14 +53,14 @@ public struct ServerEnvironment {
 
   extension ServerEnvironment {
     public static let unimplemented = Self(
-      changelog: XCTUnimplemented("\(Self.self).changelog", placeholder: .current),
+      changelog: unimplemented("\(Self.self).changelog", placeholder: .current),
       database: .unimplemented,
-      date: XCTUnimplemented("\(Self.self).date", placeholder: Date()),
+      date: unimplemented("\(Self.self).date", placeholder: Date()),
       dictionary: .testValue,
       envVars: EnvVars(appEnv: .testing),
       itunes: .unimplemented,
       mailgun: .unimplemented,
-      randomCubes: XCTUnimplemented("\(Self.self).randomCubes", placeholder: .mock),
+      randomCubes: unimplemented("\(Self.self).randomCubes", placeholder: .mock),
       router: .unimplemented,
       snsClient: .unimplemented
     )

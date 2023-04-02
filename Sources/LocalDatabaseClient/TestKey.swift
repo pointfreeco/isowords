@@ -13,12 +13,12 @@ extension LocalDatabaseClient: TestDependencyKey {
   public static let previewValue = Self.mock
 
   public static let testValue = Self(
-    fetchGamesForWord: XCTUnimplemented("\(Self.self).fetchGamesForWord"),
-    fetchStats: XCTUnimplemented("\(Self.self).fetchStats"),
-    fetchVocab: XCTUnimplemented("\(Self.self).fetchVocab"),
-    migrate: XCTUnimplemented("\(Self.self).migrate"),
-    playedGamesCount: XCTUnimplemented("\(Self.self).playedGamesCount"),
-    saveGame: XCTUnimplemented("\(Self.self).saveGame")
+    fetchGamesForWord: unimplemented("\(Self.self).fetchGamesForWord"),
+    fetchStats: unimplemented("\(Self.self).fetchStats"),
+    fetchVocab: unimplemented("\(Self.self).fetchVocab"),
+    migrate: unimplemented("\(Self.self).migrate"),
+    playedGamesCount: unimplemented("\(Self.self).playedGamesCount"),
+    saveGame: unimplemented("\(Self.self).saveGame")
   )
 }
 

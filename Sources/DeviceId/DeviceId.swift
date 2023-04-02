@@ -17,7 +17,7 @@ extension DeviceIdentifier: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    id: XCTUnimplemented("\(Self.self).id", placeholder: UUID())
+    id: unimplemented("\(Self.self).id", placeholder: UUID())
   )
 }
 

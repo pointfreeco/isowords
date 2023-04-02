@@ -14,9 +14,9 @@ extension FileClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    delete: XCTUnimplemented("\(Self.self).deleteAsync"),
-    load: XCTUnimplemented("\(Self.self).loadAsync"),
-    save: XCTUnimplemented("\(Self.self).saveAsync")
+    delete: unimplemented("\(Self.self).deleteAsync"),
+    load: unimplemented("\(Self.self).loadAsync"),
+    save: unimplemented("\(Self.self).saveAsync")
   )
 }
 

@@ -14,8 +14,8 @@ extension GameCenterClient: TestDependencyKey {
   public static let testValue = Self(
     gameCenterViewController: .unimplemented,
     localPlayer: .unimplemented,
-    reportAchievements: XCTUnimplemented("\(Self.self).reportAchievements"),
-    showNotificationBanner: XCTUnimplemented("\(Self.self).showNotificationBanner"),
+    reportAchievements: unimplemented("\(Self.self).reportAchievements"),
+    showNotificationBanner: unimplemented("\(Self.self).showNotificationBanner"),
     turnBasedMatch: .unimplemented,
     turnBasedMatchmakerViewController: .unimplemented
   )

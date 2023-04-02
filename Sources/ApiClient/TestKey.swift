@@ -16,14 +16,14 @@ extension ApiClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
-    authenticate: XCTUnimplemented("\(Self.self).authenticate"),
-    baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
-    currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
-    logout: XCTUnimplemented("\(Self.self).logout"),
-    refreshCurrentPlayer: XCTUnimplemented("\(Self.self).refreshCurrentPlayer"),
-    request: XCTUnimplemented("\(Self.self).request"),
-    setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
+    apiRequest: unimplemented("\(Self.self).apiRequest"),
+    authenticate: unimplemented("\(Self.self).authenticate"),
+    baseUrl: unimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
+    currentPlayer: unimplemented("\(Self.self).currentPlayer"),
+    logout: unimplemented("\(Self.self).logout"),
+    refreshCurrentPlayer: unimplemented("\(Self.self).refreshCurrentPlayer"),
+    request: unimplemented("\(Self.self).request"),
+    setBaseUrl: unimplemented("\(Self.self).setBaseUrl")
   )
 }
 

@@ -13,7 +13,7 @@ extension LowPowerModeClient: TestDependencyKey {
   public static let previewValue = Self.true
 
   public static let testValue = Self(
-    start: XCTUnimplemented("\(Self.self).start")
+    start: unimplemented("\(Self.self).start")
   )
 }
 
