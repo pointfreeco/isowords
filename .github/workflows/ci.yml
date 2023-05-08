@@ -17,6 +17,8 @@ jobs:
       run: git lfs pull
     - name: Install Postgres
       run: brew install postgresql@15
+    - name: Link Postgres
+      run: brew link postgresql@15
     - name: Start Postgres
       run: brew services start postgresql@15
     - name: Select Xcode 14.3
