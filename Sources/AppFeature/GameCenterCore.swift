@@ -19,7 +19,7 @@ public struct GameCenterLogic: ReducerProtocol {
 
   public func reduce(
     into state: inout AppReducer.State, action: AppReducer.Action
-  ) -> Effect<AppReducer.Action, Never> {
+  ) -> EffectTask<AppReducer.Action> {
     switch action {
     case .appDelegate(.didFinishLaunching):
       return .run { send in
@@ -120,7 +120,7 @@ public struct GameCenterLogic: ReducerProtocol {
     _ match: TurnBasedMatch,
     state: inout AppReducer.State,
     didBecomeActive: Bool
-  ) -> Effect<AppReducer.Action, Never> {
+  ) -> EffectTask<AppReducer.Action> {
     guard let matchData = match.matchData, !matchData.isEmpty else {
       let context = TurnBasedContext(
         localPlayer: self.gameCenter.localPlayer.localPlayer(),

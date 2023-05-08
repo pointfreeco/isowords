@@ -59,7 +59,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.audioPlayer.play) var playSound
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     enum SubmitButtonPressedDelayID {}
 
     guard state.isYourTurn

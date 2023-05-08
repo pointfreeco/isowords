@@ -15,8 +15,8 @@ public struct CubePreview: ReducerProtocol {
     var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
-    @BindableState var nub: CubeSceneView.ViewState.NubState
-    @BindableState var selectedCubeFaces: [IndexedCubeFace]
+    @BindingState var nub: CubeSceneView.ViewState.NubState
+    @BindingState var selectedCubeFaces: [IndexedCubeFace]
     let settings: CubeSceneView.ViewState.Settings
 
     public init(

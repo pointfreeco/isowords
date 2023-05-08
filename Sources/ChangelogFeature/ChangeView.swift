@@ -2,6 +2,7 @@ import Build
 import ComposableArchitecture
 import ServerConfigClient
 import SwiftUI
+import Tagged
 
 public struct Change: ReducerProtocol {
   public struct State: Equatable, Identifiable {
@@ -19,7 +20,7 @@ public struct Change: ReducerProtocol {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .showButtonTapped:
       state.isExpanded.toggle()

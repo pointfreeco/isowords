@@ -238,7 +238,7 @@ class SettingsFeatureTests: XCTestCase {
         route: .push(
           .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
         ),
-        withResponse: { try await OK([:]) }
+        withResponse: { try await OK([:] as [String: Any]) }
       )
       store.dependencies.applicationClient.alternateIconName = { nil }
       store.dependencies.fileClient.save = { @Sendable _, _ in }

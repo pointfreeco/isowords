@@ -12,6 +12,7 @@ import LowPowerModeClient
 import Overture
 import SharedModels
 import SwiftUI
+import Tagged
 import TcaHelpers
 import UpgradeInterstitialFeature
 
@@ -205,7 +206,7 @@ public struct Game: ReducerProtocol {
       .sounds()
   }
 
-  @ReducerBuilderOf<Self>
+  @ReducerBuilder<State, Action>
   var core: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
@@ -626,7 +627,7 @@ extension Game.State {
     })
   }
 
-  mutating func tryToRemoveCube(at index: LatticePoint) -> Effect<Game.Action, Never> {
+  mutating func tryToRemoveCube(at index: LatticePoint) -> EffectTask<Game.Action> {
     guard self.canRemoveCube else { return .none }
 
     // Don't show menu for timed games.

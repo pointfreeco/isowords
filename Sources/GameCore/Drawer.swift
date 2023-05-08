@@ -6,7 +6,7 @@ struct ActiveGamesTray: ReducerProtocol {
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
 
-  func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
+  func reduce(into state: inout Game.State, action: Game.Action) -> EffectTask<Game.Action> {
     switch action {
     case .cancelButtonTapped,
       .confirmRemoveCube,
@@ -60,7 +60,7 @@ struct ActiveGamesTray: ReducerProtocol {
     }
   }
 
-  var activeGameEffects: Effect<Game.Action, Never> {
+  var activeGameEffects: EffectTask<Game.Action> {
     .run { send in
       await withThrowingTaskGroup(of: Void.self) { group in
         group.addTask {

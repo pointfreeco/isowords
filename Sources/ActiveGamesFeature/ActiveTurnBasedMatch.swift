@@ -4,6 +4,7 @@ import ComposableArchitecture
 import ComposableGameCenter
 import GameKit
 import SharedModels
+import Tagged
 import TcaHelpers
 
 public struct ActiveTurnBasedMatch: Equatable, Identifiable {

@@ -5,6 +5,7 @@ import ServerConfigClient
 import SharedModels
 import Styleguide
 import SwiftUI
+import Tagged
 import UIApplicationClient
 
 public struct ChangelogReducer: ReducerProtocol {

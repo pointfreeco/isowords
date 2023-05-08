@@ -91,7 +91,7 @@ class GameOverFeatureTests: XCTestCase {
   }
 
   func testSubmitDailyChallenge() async {
-    try await withMainSerialExecutor {
+    await withMainSerialExecutor {
       let dailyChallengeResponses = [
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
@@ -141,7 +141,11 @@ class GameOverFeatureTests: XCTestCase {
           )
         ),
         withResponse: {
-          try await OK(["dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]])
+          try await OK([
+            "dailyChallenge": [
+              "rank": 2, "outOf": 100, "score": 1000, "started": true
+            ] as [String : Any]
+          ])
         }
       )
       store.dependencies.apiClient.override(
@@ -155,7 +159,9 @@ class GameOverFeatureTests: XCTestCase {
                 "id": UUID.dailyChallengeId.uuidString,
                 "language": "en",
               ],
-              "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
+              "yourResult": [
+                "outOf": 42, "rank": 1, "score": 3600, "started": true
+              ] as [String : Any],
             ],
             [
               "dailyChallenge": [
