@@ -16,7 +16,7 @@ jobs:
     - name: LFS pull
       run: git lfs pull
     - name: Start Postgres
-      run: brew services start postgresql
+      run: brew services start postgresql@14
     - name: Select Xcode 14.3
       run: sudo xcode-select -s /Applications/Xcode_14.3.app
     - name: Bootstrap
