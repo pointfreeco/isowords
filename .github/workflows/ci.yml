@@ -15,8 +15,10 @@ jobs:
       #   uses: mxschmitt/action-tmate@v2
     - name: LFS pull
       run: git lfs pull
+    - name: Install Postgres
+      run: brew install postgresql@15
     - name: Start Postgres
-      run: brew services start postgresql@14
+      run: brew services start postgresql@15
     - name: Select Xcode 14.3
       run: sudo xcode-select -s /Applications/Xcode_14.3.app
     - name: Bootstrap
