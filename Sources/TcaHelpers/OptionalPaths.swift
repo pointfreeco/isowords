@@ -1,6 +1,6 @@
 import ComposableArchitecture
 
-public protocol Path<Root,Value> {
+public protocol Path<Root, Value> {
   associatedtype Root
   associatedtype Value
   func extract(from root: Root) -> Value?

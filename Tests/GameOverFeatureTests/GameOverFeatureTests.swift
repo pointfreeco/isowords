@@ -1,6 +1,7 @@
 import ApiClient
 import CasePaths
 import ComposableArchitecture
+@_spi(Concurrency) import Dependencies
 import GameOverFeature
 import Overture
 import SharedModels
@@ -15,227 +16,233 @@ class GameOverFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testSubmitLeaderboardScore() async throws {
-    let store = TestStore(
-      initialState: GameOver.State(
-        completedGame: .init(
-          cubes: .mock,
-          gameContext: .solo,
-          gameMode: .timed,
-          gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
-          language: .en,
-          moves: [.mock],
-          secondsPlayed: 0
+    await withMainSerialExecutor {
+      let store = TestStore(
+        initialState: GameOver.State(
+          completedGame: .init(
+            cubes: .mock,
+            gameContext: .solo,
+            gameMode: .timed,
+            gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
+            language: .en,
+            moves: [.mock],
+            secondsPlayed: 0
+          ),
+          isDemo: false
         ),
-        isDemo: false
-      ),
-      reducer: GameOver()
-    )
+        reducer: GameOver()
+      )
 
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-    store.dependencies.apiClient.override(
-      route: .games(
-        .submit(
-          .init(
-            gameContext: .solo(.init(gameMode: .timed, language: .en, puzzle: .mock)),
-            moves: [.mock]
+      store.dependencies.audioPlayer = .noop
+      store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+      store.dependencies.apiClient.override(
+        route: .games(
+          .submit(
+            .init(
+              gameContext: .solo(.init(gameMode: .timed, language: .en, puzzle: .mock)),
+              moves: [.mock]
+            )
           )
-        )
-      ),
-      withResponse: {
-        try await OK([
-          "solo": [
-            "ranks": [
-              "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
-              "lastWeek": .init(outOf: 1000, rank: 10),
-              "allTime": .init(outOf: 10000, rank: 100),
+        ),
+        withResponse: {
+          try await OK([
+            "solo": [
+              "ranks": [
+                "lastDay": LeaderboardScoreResult.Rank(outOf: 100, rank: 1),
+                "lastWeek": .init(outOf: 1000, rank: 10),
+                "allTime": .init(outOf: 10000, rank: 100),
+              ]
             ]
-          ]
-        ])
+          ])
+        }
+      )
+      store.dependencies.database.playedGamesCount = { _ in 0 }
+      store.dependencies.mainRunLoop = .immediate
+      store.dependencies.serverConfig.config = { .init() }
+      store.dependencies.userNotifications.getNotificationSettings = {
+        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
       }
-    )
-    store.dependencies.database.playedGamesCount = { _ in 0 }
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-    }
 
-    let task = await store.send(.task)
-    await store.receive(
-      .submitGameResponse(
-        .success(
-          .solo(
-            .init(ranks: [
-              .lastDay: .init(outOf: 100, rank: 1),
-              .lastWeek: .init(outOf: 1000, rank: 10),
-              .allTime: .init(outOf: 10000, rank: 100),
-            ])
+      let task = await store.send(.task)
+      await store.receive(.delayedOnAppear) {
+        $0.isViewEnabled = true
+      }
+      await store.receive(
+        .submitGameResponse(
+          .success(
+            .solo(
+              .init(ranks: [
+                .lastDay: .init(outOf: 100, rank: 1),
+                .lastWeek: .init(outOf: 1000, rank: 10),
+                .allTime: .init(outOf: 10000, rank: 100),
+              ])
+            )
           )
         )
-      )
-    ) {
-      $0.summary = .leaderboard([
-        .lastDay: .init(outOf: 100, rank: 1),
-        .lastWeek: .init(outOf: 1000, rank: 10),
-        .allTime: .init(outOf: 10000, rank: 100),
-      ])
+      ) {
+        $0.summary = .leaderboard([
+          .lastDay: .init(outOf: 100, rank: 1),
+          .lastWeek: .init(outOf: 1000, rank: 10),
+          .allTime: .init(outOf: 10000, rank: 100),
+        ])
+      }
+      await task.cancel()
     }
-    await store.receive(.delayedOnAppear) {
-      $0.isViewEnabled = true
-    }
-    await task.cancel()
   }
 
-  func testSubmitDailyChallenge() async throws {
-    let dailyChallengeResponses = [
-      FetchTodaysDailyChallengeResponse(
-        dailyChallenge: .init(
-          endsAt: .mock,
-          gameMode: .timed,
-          id: .init(rawValue: .dailyChallengeId),
-          language: .en
+  func testSubmitDailyChallenge() async {
+    try await withMainSerialExecutor {
+      let dailyChallengeResponses = [
+        FetchTodaysDailyChallengeResponse(
+          dailyChallenge: .init(
+            endsAt: .mock,
+            gameMode: .timed,
+            id: .init(rawValue: .dailyChallengeId),
+            language: .en
+          ),
+          yourResult: .init(outOf: 42, rank: 1, score: 3600, started: true)
         ),
-        yourResult: .init(outOf: 42, rank: 1, score: 3600, started: true)
-      ),
-      FetchTodaysDailyChallengeResponse(
-        dailyChallenge: .init(
-          endsAt: .mock,
-          gameMode: .unlimited,
-          id: .init(rawValue: .dailyChallengeId),
-          language: .en
+        FetchTodaysDailyChallengeResponse(
+          dailyChallenge: .init(
+            endsAt: .mock,
+            gameMode: .unlimited,
+            id: .init(rawValue: .dailyChallengeId),
+            language: .en
+          ),
+          yourResult: .init(outOf: 42, rank: nil, score: nil)
         ),
-        yourResult: .init(outOf: 42, rank: nil, score: nil)
-      ),
-    ]
+      ]
 
-    let store = TestStore(
-      initialState: GameOver.State(
-        completedGame: .init(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
-          gameMode: .timed,
-          gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
-          language: .en,
-          moves: [.mock],
-          secondsPlayed: 0
-        ),
-        isDemo: false
-      ),
-      reducer: GameOver()
-    )
-
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-    store.dependencies.apiClient.override(
-      route: .games(
-        .submit(
-          .init(
+      let store = TestStore(
+        initialState: GameOver.State(
+          completedGame: .init(
+            cubes: .mock,
             gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
-            moves: [.mock]
-          )
-        )
-      ),
-      withResponse: {
-        try await OK(["dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]])
-      }
-    )
-    store.dependencies.apiClient.override(
-      route: .dailyChallenge(.today(language: .en)),
-      withResponse: {
-        try await OK([
-          [
-            "dailyChallenge": [
-              "endsAt": 1_234_567_890,
-              "gameMode": "timed",
-              "id": UUID.dailyChallengeId.uuidString,
-              "language": "en",
-            ],
-            "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
-          ],
-          [
-            "dailyChallenge": [
-              "endsAt": 1_234_567_890,
-              "gameMode": "unlimited",
-              "id": UUID.dailyChallengeId.uuidString,
-              "language": "en",
-            ],
-            "yourResult": ["outOf": 42, "started": false],
-          ],
-        ])
-      }
-    )
-    store.dependencies.database.playedGamesCount = { _ in 0 }
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-    }
-
-    let task = await store.send(.task)
-    await store.receive(
-      .submitGameResponse(
-        .success(.dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true)))
+            gameMode: .timed,
+            gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
+            language: .en,
+            moves: [.mock],
+            secondsPlayed: 0
+          ),
+          isDemo: false
+        ),
+        reducer: GameOver()
       )
-    ) {
-      $0.summary = .dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true))
+
+      store.dependencies.audioPlayer = .noop
+      store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+      store.dependencies.apiClient.override(
+        route: .games(
+          .submit(
+            .init(
+              gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
+              moves: [.mock]
+            )
+          )
+        ),
+        withResponse: {
+          try await OK(["dailyChallenge": ["rank": 2, "outOf": 100, "score": 1000, "started": true]])
+        }
+      )
+      store.dependencies.apiClient.override(
+        route: .dailyChallenge(.today(language: .en)),
+        withResponse: {
+          try await OK([
+            [
+              "dailyChallenge": [
+                "endsAt": 1_234_567_890,
+                "gameMode": "timed",
+                "id": UUID.dailyChallengeId.uuidString,
+                "language": "en",
+              ],
+              "yourResult": ["outOf": 42, "rank": 1, "score": 3600, "started": true],
+            ],
+            [
+              "dailyChallenge": [
+                "endsAt": 1_234_567_890,
+                "gameMode": "unlimited",
+                "id": UUID.dailyChallengeId.uuidString,
+                "language": "en",
+              ],
+              "yourResult": ["outOf": 42, "started": false],
+            ],
+          ])
+        }
+      )
+      store.dependencies.database.playedGamesCount = { _ in 0 }
+      store.dependencies.mainRunLoop = .immediate
+      store.dependencies.serverConfig.config = { .init() }
+      store.dependencies.userNotifications.getNotificationSettings = {
+        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+      }
+
+      let task = await store.send(.task)
+      await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+      await store.receive(
+        .submitGameResponse(
+          .success(.dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true)))
+        )
+      ) {
+        $0.summary = .dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true))
+      }
+      await store.receive(.dailyChallengeResponse(.success(dailyChallengeResponses))) {
+        $0.dailyChallenges = dailyChallengeResponses
+      }
+      await task.cancel()
     }
-    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
-    await store.receive(.dailyChallengeResponse(.success(dailyChallengeResponses))) {
-      $0.dailyChallenges = dailyChallengeResponses
-    }
-    await task.cancel()
   }
 
-  func testTurnBased_TrackLeaderboards() async throws {
-    let store = TestStore(
-      initialState: GameOver.State(
-        completedGame: .init(
-          cubes: .mock,
-          gameContext: .turnBased(playerIndexToId: [0: .init(rawValue: .deadbeef)]),
-          gameMode: .unlimited,
-          gameStartTime: .mock,
-          language: .en,
-          localPlayerIndex: 1,
-          moves: [.mock],
-          secondsPlayed: 0
+  func testTurnBased_TrackLeaderboards() async {
+    await withMainSerialExecutor {
+      let store = TestStore(
+        initialState: GameOver.State(
+          completedGame: .init(
+            cubes: .mock,
+            gameContext: .turnBased(playerIndexToId: [0: .init(rawValue: .deadbeef)]),
+            gameMode: .unlimited,
+            gameStartTime: .mock,
+            language: .en,
+            localPlayerIndex: 1,
+            moves: [.mock],
+            secondsPlayed: 0
+          ),
+          isDemo: false
         ),
-        isDemo: false
-      ),
-      reducer: GameOver()
-    )
+        reducer: GameOver()
+      )
 
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
-    store.dependencies.apiClient.override(
-      route: .games(
-        .submit(
-          .init(
-            gameContext: .turnBased(
-              .init(
-                gameMode: .unlimited,
-                language: .en,
-                playerIndexToId: [0: .init(rawValue: .deadbeef)],
-                puzzle: .mock
-              )
-            ),
-            moves: [.mock]
+      store.dependencies.audioPlayer = .noop
+      store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+      store.dependencies.apiClient.override(
+        route: .games(
+          .submit(
+            .init(
+              gameContext: .turnBased(
+                .init(
+                  gameMode: .unlimited,
+                  language: .en,
+                  playerIndexToId: [0: .init(rawValue: .deadbeef)],
+                  puzzle: .mock
+                )
+              ),
+              moves: [.mock]
+            )
           )
-        )
-      ),
-      withResponse: { try await OK(["turnBased": true]) }
-    )
-    store.dependencies.database.playedGamesCount = { _ in 10 }
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-    }
+        ),
+        withResponse: { try await OK(["turnBased": true]) }
+      )
+      store.dependencies.database.playedGamesCount = { _ in 10 }
+      store.dependencies.mainRunLoop = .immediate
+      store.dependencies.serverConfig.config = { .init() }
+      store.dependencies.userNotifications.getNotificationSettings = {
+        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+      }
 
-    let task = await store.send(.task)
-    await store.receive(.submitGameResponse(.success(.turnBased)))
-    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
-    await task.cancel()
+      let task = await store.send(.task)
+      await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+      await store.receive(.submitGameResponse(.success(.turnBased)))
+      await task.cancel()
+    }
   }
 
   func testRequestReviewOnClose() async {

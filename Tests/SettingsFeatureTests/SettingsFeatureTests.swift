@@ -2,6 +2,7 @@ import ApiClient
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
+@_spi(Concurrency) import Dependencies
 import SharedModels
 import TestHelpers
 import UserDefaultsClient
@@ -224,54 +225,56 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testNotifications_DebounceRemoteSettingsUpdates() async {
-    let store = TestStore(
-      initialState: Settings.State(sendDailyChallengeReminder: false),
-      reducer: Settings()
-    )
+    await withMainSerialExecutor {
+      let store = TestStore(
+        initialState: Settings.State(sendDailyChallengeReminder: false),
+        reducer: Settings()
+      )
 
-    let mainQueue = DispatchQueue.test
-    store.dependencies.setUpDefaults()
-    store.dependencies.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
-    store.dependencies.apiClient.override(
-      route: .push(
-        .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
-      ),
-      withResponse: { try await OK([:]) }
-    )
-    store.dependencies.applicationClient.alternateIconName = { nil }
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.mainQueue = mainQueue.eraseToAnyScheduler()
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.boolForKey = { _ in false }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
+      let mainQueue = DispatchQueue.test
+      store.dependencies.setUpDefaults()
+      store.dependencies.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
+      store.dependencies.apiClient.override(
+        route: .push(
+          .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
+        ),
+        withResponse: { try await OK([:]) }
+      )
+      store.dependencies.applicationClient.alternateIconName = { nil }
+      store.dependencies.fileClient.save = { @Sendable _, _ in }
+      store.dependencies.mainQueue = mainQueue.eraseToAnyScheduler()
+      store.dependencies.serverConfig.config = { .init() }
+      store.dependencies.userDefaults.boolForKey = { _ in false }
+      store.dependencies.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .authorized)
+      }
+
+      let task = await store.send(.task) {
+        $0.buildNumber = 42
+        $0.developer.currentBaseUrl = .localhost
+        $0.fullGamePurchasedAt = .mock
+      }
+
+      await mainQueue.advance()
+
+      await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+        $0.enableNotifications = true
+        $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+      }
+
+      await store.send(.set(\.$sendDailyChallengeReminder, true)) {
+        $0.sendDailyChallengeReminder = true
+      }
+      await mainQueue.advance(by: 0.5)
+
+      await store.send(.set(\.$sendDailyChallengeSummary, true))
+      await mainQueue.advance(by: 0.5)
+      await mainQueue.advance(by: 0.5)
+
+      await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
+
+      await task.cancel()
     }
-
-    let task = await store.send(.task) {
-      $0.buildNumber = 42
-      $0.developer.currentBaseUrl = .localhost
-      $0.fullGamePurchasedAt = .mock
-    }
-
-    await mainQueue.advance()
-
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
-      $0.enableNotifications = true
-      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
-    }
-
-    await store.send(.set(\.$sendDailyChallengeReminder, true)) {
-      $0.sendDailyChallengeReminder = true
-    }
-    await mainQueue.advance(by: 0.5)
-
-    await store.send(.set(\.$sendDailyChallengeSummary, true))
-    await mainQueue.advance(by: 0.5)
-    await mainQueue.advance(by: 0.5)
-
-    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
-
-    await task.cancel()
   }
 
   // MARK: - Sounds
