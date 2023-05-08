@@ -203,7 +203,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     var updatedData: AppleVerifyReceiptResponse?
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.testValue) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.itunes.verify = { data, environment in
           environment == .sandbox

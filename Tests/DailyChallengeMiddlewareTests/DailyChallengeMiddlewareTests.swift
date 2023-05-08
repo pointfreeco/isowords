@@ -36,7 +36,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.testValue) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.createTodaysDailyChallenge = { request in
           pure(
@@ -71,7 +71,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     )
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.testValue) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
         $0.database.createTodaysDailyChallenge = { request in
           pure(
@@ -110,7 +110,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     let player = Player.blob
 
     let middleware = siteMiddleware(
-      environment: update(.unimplemented) {
+      environment: update(.testValue) {
         $0.database.fetchPlayerByAccessToken = { _ in pure(player) }
         $0.database.fetchTodaysDailyChallenges = { language in
           pure(
