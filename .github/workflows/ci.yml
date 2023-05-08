@@ -35,8 +35,6 @@ jobs:
     - uses: swift-actions/setup-swift@v1
       with:
         swift-version: 5.8
-    - name: Print Swift version
-      run: swift --version
     - uses: actions/checkout@v3
     - name: Install dependencies
       run: 'sudo apt-get --fix-missing update && sudo apt-get install -y wamerican'
