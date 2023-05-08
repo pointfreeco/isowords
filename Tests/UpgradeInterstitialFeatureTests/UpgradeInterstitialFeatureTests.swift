@@ -1,6 +1,7 @@
 import Combine
 import ComposableArchitecture
 import ComposableStoreKit
+@_spi(Concurrency) import Dependencies
 import FirstPartyMocks
 import ServerConfig
 import StoreKit
@@ -14,67 +15,69 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   let scheduler = RunLoop.test
 
   func testUpgrade() async {
-    let store = TestStore(
-      initialState: UpgradeInterstitial.State(),
-      reducer: UpgradeInterstitial()
-    )
-
-    let paymentAdded = ActorIsolated<String?>(nil)
-
-    let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
-      .streamWithContinuation()
-
-    let transactions = [
-      StoreKitClient.PaymentTransaction(
-        error: nil,
-        original: nil,
-        payment: .init(
-          applicationUsername: nil,
-          productIdentifier: "co.pointfree.isowords_testing.full_game",
-          quantity: 1,
-          requestData: nil,
-          simulatesAskToBuyInSandbox: false
-        ),
-        rawValue: nil,
-        transactionDate: .mock,
-        transactionIdentifier: "deadbeef",
-        transactionState: .purchased
+    await withMainSerialExecutor {
+      let store = TestStore(
+        initialState: UpgradeInterstitial.State(),
+        reducer: UpgradeInterstitial()
       )
-    ]
 
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
-    store.dependencies.storeKit.observer = { observer.stream }
-    store.dependencies.storeKit.fetchProducts = { _ in
-      .init(
-        invalidProductIdentifiers: [],
-        products: [fullGameProduct]
-      )
+      let paymentAdded = ActorIsolated<String?>(nil)
+
+      let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
+        .streamWithContinuation()
+
+      let transactions = [
+        StoreKitClient.PaymentTransaction(
+          error: nil,
+          original: nil,
+          payment: .init(
+            applicationUsername: nil,
+            productIdentifier: "co.pointfree.isowords_testing.full_game",
+            quantity: 1,
+            requestData: nil,
+            simulatesAskToBuyInSandbox: false
+          ),
+          rawValue: nil,
+          transactionDate: .mock,
+          transactionIdentifier: "deadbeef",
+          transactionState: .purchased
+        )
+      ]
+
+      store.dependencies.mainRunLoop = .immediate
+      store.dependencies.serverConfig.config = { .init() }
+      store.dependencies.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
+      store.dependencies.storeKit.observer = { observer.stream }
+      store.dependencies.storeKit.fetchProducts = { _ in
+        .init(
+          invalidProductIdentifiers: [],
+          products: [fullGameProduct]
+        )
+      }
+
+      let task = await store.send(.task)
+
+      await store.receive(.fullGameProductResponse(fullGameProduct)) {
+        $0.fullGameProduct = fullGameProduct
+      }
+
+      await store.receive(.timerTick) {
+        $0.secondsPassedCount = 1
+      }
+      await store.send(.upgradeButtonTapped) {
+        $0.isPurchasing = true
+      }
+
+      observer.continuation.yield(.updatedTransactions(transactions))
+      await paymentAdded.withValue {
+        XCTAssertNoDifference($0, "co.pointfree.isowords_testing.full_game")
+      }
+
+      await store.receive(.paymentTransaction(.updatedTransactions(transactions)))
+      await store.receive(.delegate(.fullGamePurchased))
+
+      await task.cancel()
     }
-
-    let task = await store.send(.task)
-
-    await store.receive(.fullGameProductResponse(fullGameProduct)) {
-      $0.fullGameProduct = fullGameProduct
-    }
-
-    await store.receive(.timerTick) {
-      $0.secondsPassedCount = 1
-    }
-    await store.send(.upgradeButtonTapped) {
-      $0.isPurchasing = true
-    }
-
-    observer.continuation.yield(.updatedTransactions(transactions))
-    await paymentAdded.withValue {
-      XCTAssertNoDifference($0, "co.pointfree.isowords_testing.full_game")
-    }
-
-    await store.receive(.paymentTransaction(.updatedTransactions(transactions)))
-    await store.receive(.delegate(.fullGamePurchased))
-
-    await task.cancel()
   }
 
   func testWaitAndDismiss() async {
@@ -112,7 +115,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     await store.receive(.delegate(.close))
   }
 
-  func testMaybeLater_Dismissable() async  {
+  func testMaybeLater_Dismissable() async {
     let store = TestStore(
       initialState: UpgradeInterstitial.State(isDismissable: true),
       reducer: UpgradeInterstitial()
