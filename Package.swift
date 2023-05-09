@@ -1013,10 +1013,10 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
 // MARK: - server
 package.dependencies.append(contentsOf: [
   .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
-  .package(url: "https://github.com/swift-server/swift-backtrace", .exact("1.2.0")),
-  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
-  .package(url: "https://github.com/pointfreeco/swift-prelude", .revision("7ff9911")),
-  .package(url: "https://github.com/pointfreeco/swift-web", .revision("2ad82ec")),
+  .package(url: "https://github.com/swift-server/swift-backtrace", exact: "1.2.0"),
+  .package(url: "https://github.com/vapor/postgres-kit", exact: "2.2.0"),
+  .package(url: "https://github.com/pointfreeco/swift-prelude", revision: "7ff9911"),
+  .package(url: "https://github.com/pointfreeco/swift-web", revision: "2ad82ec"),
 ])
 package.products.append(contentsOf: [
   .executable(name: "daily-challenge-reports", targets: ["daily-challenge-reports"]),

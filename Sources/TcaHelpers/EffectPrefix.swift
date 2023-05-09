@@ -1,7 +1,7 @@
 import Combine
 import ComposableArchitecture
 
-extension Effect {
+extension EffectPublisher where Failure == Never {
   public func prefix(id: AnyHashable, _ maxLength: Int) -> Self {
     Deferred { () -> AnyPublisher<Output, Failure> in
       if counts[id] ?? 0 > maxLength {
