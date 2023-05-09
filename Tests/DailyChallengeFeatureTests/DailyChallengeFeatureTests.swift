@@ -144,10 +144,9 @@ class DailyChallengeFeatureTests: XCTestCase {
     )
 
     await store.send(.notificationButtonTapped) {
-      $0.destination = .notificationsAuthAlert(.init())
+      $0.destination = .notificationsAuthAlert()
     }
-    await store.send(.destination(.presented(.notificationsAuthAlert(.closeButtonTapped))))
-    await store.receive(.destination(.dismiss)) {
+    await store.send(.destination(.dismiss)) {
       $0.destination = nil
     }
   }

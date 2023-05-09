@@ -13,7 +13,6 @@ public struct NotificationsAuthAlert: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case closeButtonTapped
     case delegate(Delegate)
     case turnOnNotificationsButtonTapped
 
@@ -30,11 +29,6 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 
   public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
-    case .closeButtonTapped:
-      return .fireAndForget {
-        await self.dismiss()
-      }
-
     case .delegate:
       return .none
 
