@@ -14,15 +14,15 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 
   public enum Action: Equatable {
     case closeButtonTapped
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case turnOnNotificationsButtonTapped
+
+    public enum Delegate: Equatable {
+      case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
+    }
   }
 
-  public enum DelegateAction: Equatable {
-    case close
-    case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
-  }
-
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
 
@@ -31,7 +31,9 @@ public struct NotificationsAuthAlert: ReducerProtocol {
   public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .closeButtonTapped:
-      return .task { .delegate(.close) }.animation()
+      return .fireAndForget {
+        await self.dismiss()
+      }
 
     case .delegate:
       return .none
@@ -50,24 +52,31 @@ public struct NotificationsAuthAlert: ReducerProtocol {
           ),
           animation: .default
         )
+        await self.dismiss()
       }
     }
   }
 }
 
 extension View {
+  public func notificationsAlert<DestinationState, DestinationAction>(
+    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
+    state: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
+    action: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
+  ) -> some View {
+    self.overlay {
+      IfLetStore(store, state: state, action: action, then: NotificationsAuthAlertView.init(store:))
+    }
+  }
+
   public func notificationsAlert(
     store: Store<NotificationsAuthAlert.State?, NotificationsAuthAlert.Action>
   ) -> some View {
-    ZStack {
-      self
-
+    self.overlay {
       IfLetStore(
         store,
         then: NotificationsAuthAlertView.init(store:)
       )
-      // NB: This is necessary so that when the alert is animated away it stays above `self`.
-      .zIndex(1)
     }
   }
 }

@@ -15,7 +15,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
     @PresentationState public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
     public var inProgressDailyChallengeUnlimited: InProgressGame?
-    public var notificationsAuthAlert: NotificationsAuthAlert.State?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
@@ -23,14 +22,12 @@ public struct DailyChallengeReducer: ReducerProtocol {
       destination: Destination.State? = nil,
       gameModeIsLoading: GameMode? = nil,
       inProgressDailyChallengeUnlimited: InProgressGame? = nil,
-      notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
       self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
-      self.notificationsAuthAlert = notificationsAuthAlert
       self.userNotificationSettings = userNotificationSettings
     }
   }
@@ -41,7 +38,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
     case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
-    case notificationsAuthAlert(NotificationsAuthAlert.Action)
     case resultsButtonTapped
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
@@ -63,6 +59,12 @@ public struct DailyChallengeReducer: ReducerProtocol {
     Reduce { state, action in
       switch action {
       case .delegate:
+        return .none
+
+      case let .destination(
+        .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings))))
+      ):
+        state.userNotificationSettings = settings
         return .none
 
       case .destination:
@@ -112,19 +114,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
         }
 
       case .notificationButtonTapped:
-        state.notificationsAuthAlert = .init()
-        return .none
-
-      case .notificationsAuthAlert(.delegate(.close)):
-        state.notificationsAuthAlert = nil
-        return .none
-
-      case let .notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings))):
-        state.userNotificationSettings = settings
-        state.notificationsAuthAlert = nil
-        return .none
-
-      case .notificationsAuthAlert:
+        state.destination = .notificationsAuthAlert(.init())
         return .none
 
       case .resultsButtonTapped:
@@ -185,25 +175,27 @@ public struct DailyChallengeReducer: ReducerProtocol {
     .ifLet(\.$destination, action: /Action.destination) {
       Destination()
     }
-    .ifLet(\.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
-      NotificationsAuthAlert()
-    }
   }
 
   public struct Destination: ReducerProtocol {
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
+      case notificationsAuthAlert(NotificationsAuthAlert.State)
       case results(DailyChallengeResults.State)
     }
 
     public enum Action: Equatable {
       case alert(Alert)
+      case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case results(DailyChallengeResults.Action)
 
       public enum Alert: Equatable {}
     }
 
     public var body: some ReducerProtocol<State, Action> {
+      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+        NotificationsAuthAlert()
+      }
       Scope(state: /State.results, action: /Action.results) {
         DailyChallengeResults()
       }
@@ -407,9 +399,11 @@ public struct DailyChallengeView: View {
     )
     .notificationsAlert(
       store: self.store.scope(
-        state: \.notificationsAuthAlert,
-        action: DailyChallengeReducer.Action.notificationsAuthAlert
-      )
+        state: \.$destination,
+        action: DailyChallengeReducer.Action.destination
+      ),
+      state: /DailyChallengeReducer.Destination.State.notificationsAuthAlert,
+      action: DailyChallengeReducer.Destination.Action.notificationsAuthAlert
     )
   }
 }
