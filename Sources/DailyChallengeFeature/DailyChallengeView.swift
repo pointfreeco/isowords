@@ -10,6 +10,31 @@ import Styleguide
 import SwiftUI
 
 public struct DailyChallengeReducer: ReducerProtocol {
+  public struct Destination: ReducerProtocol {
+    public enum State: Equatable {
+      case alert(AlertState<Action.Alert>)
+      case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
+      case results(DailyChallengeResults.State = .init())
+    }
+
+    public enum Action: Equatable {
+      case alert(Alert)
+      case notificationsAuthAlert(NotificationsAuthAlert.Action)
+      case results(DailyChallengeResults.Action)
+
+      public enum Alert: Equatable {}
+    }
+
+    public var body: some ReducerProtocol<State, Action> {
+      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+        NotificationsAuthAlert()
+      }
+      Scope(state: /State.results, action: /Action.results) {
+        DailyChallengeResults()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     @PresentationState public var destination: Destination.State?
@@ -33,7 +58,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
     case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case gameButtonTapped(GameMode)
@@ -42,10 +67,10 @@ public struct DailyChallengeReducer: ReducerProtocol {
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
-  }
 
-  public enum DelegateAction: Equatable {
-    case startGame(InProgressGame)
+    public enum Delegate: Equatable {
+      case startGame(InProgressGame)
+    }
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -174,31 +199,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
     }
     .ifLet(\.$destination, action: /Action.destination) {
       Destination()
-    }
-  }
-
-  public struct Destination: ReducerProtocol {
-    public enum State: Equatable {
-      case alert(AlertState<Action.Alert>)
-      case notificationsAuthAlert(NotificationsAuthAlert.State)
-      case results(DailyChallengeResults.State)
-    }
-
-    public enum Action: Equatable {
-      case alert(Alert)
-      case notificationsAuthAlert(NotificationsAuthAlert.Action)
-      case results(DailyChallengeResults.Action)
-
-      public enum Alert: Equatable {}
-    }
-
-    public var body: some ReducerProtocol<State, Action> {
-      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
-        NotificationsAuthAlert()
-      }
-      Scope(state: /State.results, action: /Action.results) {
-        DailyChallengeResults()
-      }
     }
   }
 }

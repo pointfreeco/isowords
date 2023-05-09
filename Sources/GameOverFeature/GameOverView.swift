@@ -18,7 +18,7 @@ import UserDefaultsClient
 public struct GameOver: ReducerProtocol {
   public struct Destination: ReducerProtocol {
     public enum State: Equatable {
-      case notificationsAuthAlert(NotificationsAuthAlert.State)
+      case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
     }
     public enum Action: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
@@ -38,7 +38,6 @@ public struct GameOver: ReducerProtocol {
     public var isDemo: Bool
     public var isNotificationMenuPresented: Bool
     public var isViewEnabled: Bool
-    public var notificationsAuthAlert: NotificationsAuthAlert.State?
     public var showConfetti: Bool
     public var summary: RankSummary?
     public var turnBasedContext: TurnBasedContext?
@@ -84,7 +83,7 @@ public struct GameOver: ReducerProtocol {
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case delayedOnAppear
     case delayedShowUpgradeInterstitial
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameMode)
     case rematchButtonTapped
@@ -94,12 +93,12 @@ public struct GameOver: ReducerProtocol {
     case submitGameResponse(TaskResult<SubmitGameResponse>)
     case upgradeInterstitial(UpgradeInterstitial.Action)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
-  }
 
-  public enum DelegateAction: Equatable {
-    case close
-    case startGame(InProgressGame)
-    case startSoloGame(GameMode)
+    public enum Delegate: Equatable {
+      case close
+      case startGame(InProgressGame)
+      case startSoloGame(GameMode)
+    }
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -129,7 +128,7 @@ public struct GameOver: ReducerProtocol {
           }
         }
 
-        state.notificationsAuthAlert = .init()
+        state.destination = .notificationsAuthAlert()
         return .none
 
       case .dailyChallengeResponse(.failure):
