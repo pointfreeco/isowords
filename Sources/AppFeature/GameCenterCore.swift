@@ -95,7 +95,9 @@ public struct GameCenterLogic: ReducerProtocol {
         .destination(
           .presented(
             .multiplayer(
-              .destination(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+              .destination(
+                .presented(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+              )
             )
           )
         )
