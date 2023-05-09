@@ -11,7 +11,6 @@ import SwiftUI
 
 public struct DailyChallengeReducer: ReducerProtocol {
   public struct State: Equatable {
-    public var alert: AlertState<Action>?
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     @PresentationState public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
@@ -20,7 +19,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
-      alert: AlertState<Action>? = nil,
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
       destination: Destination.State? = nil,
       gameModeIsLoading: GameMode? = nil,
@@ -28,7 +26,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
       notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
-      self.alert = alert
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
@@ -41,7 +38,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
   public enum Action: Equatable {
     case delegate(DelegateAction)
     case destination(PresentationAction<Destination.Action>)
-    case dismissAlert
     case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
@@ -72,10 +68,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
       case .destination:
         return .none
 
-      case .dismissAlert:
-        state.alert = nil
-        return .none
-
       case .fetchTodaysDailyChallengeResponse(.failure):
         return .none
 
@@ -100,7 +92,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
         guard isPlayable
         else {
-          state.alert = .alreadyPlayed(nextStartsAt: challenge.dailyChallenge.endsAt)
+          state.destination = .alert(.alreadyPlayed(nextStartsAt: challenge.dailyChallenge.endsAt))
           return .none
         }
 
@@ -140,14 +132,14 @@ public struct DailyChallengeReducer: ReducerProtocol {
         return .none
 
       case let .startDailyChallengeResponse(.failure(DailyChallengeError.alreadyPlayed(endsAt))):
-        state.alert = .alreadyPlayed(nextStartsAt: endsAt)
+        state.destination = .alert(.alreadyPlayed(nextStartsAt: endsAt))
         state.gameModeIsLoading = nil
         return .none
 
       case let .startDailyChallengeResponse(
         .failure(DailyChallengeError.couldNotFetch(nextStartsAt))
       ):
-        state.alert = .couldNotFetchDaily(nextStartsAt: nextStartsAt)
+        state.destination = .alert(.couldNotFetchDaily(nextStartsAt: nextStartsAt))
         state.gameModeIsLoading = nil
         return .none
 
@@ -200,11 +192,15 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
   public struct Destination: ReducerProtocol {
     public enum State: Equatable {
+      case alert(AlertState<Action.Alert>)
       case results(DailyChallengeResults.State)
     }
 
     public enum Action: Equatable {
+      case alert(Alert)
       case results(DailyChallengeResults.Action)
+
+      public enum Alert: Equatable {}
     }
 
     public var body: some ReducerProtocol<State, Action> {
@@ -215,29 +211,39 @@ public struct DailyChallengeReducer: ReducerProtocol {
   }
 }
 
-extension AlertState where Action == DailyChallengeReducer.Action {
+extension AlertState where Action == DailyChallengeReducer.Destination.Action.Alert {
   static func alreadyPlayed(nextStartsAt: Date) -> Self {
-    Self(
-      title: .init("Already played"),
-      message: .init(
+    Self {
+      TextState("Already played")
+    } actions: {
+      ButtonState {
+        TextState("OK")
+      }
+    } message: {
+      TextState(
         """
         You already played today’s daily challenge. You can play the next one in \
         \(nextStartsAt, formatter: relativeFormatter).
-        """),
-      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
-    )
+        """
+      )
+    }
   }
 
   static func couldNotFetchDaily(nextStartsAt: Date) -> Self {
-    Self(
-      title: .init("Couldn’t start today’s daily"),
-      message: .init(
+    Self {
+      TextState("Couldn’t start today’s daily")
+    } actions: {
+      ButtonState {
+        TextState("OK")
+      }
+    } message: {
+      TextState(
         """
         We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
-        """),
-      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
-    )
+        """
+      )
+    }
   }
 }
 
@@ -363,7 +369,6 @@ public struct DailyChallengeView: View {
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .task { await self.viewStore.send(.task).finish() }
-      .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
@@ -383,6 +388,14 @@ public struct DailyChallengeView: View {
       )
       .edgesIgnoringSafeArea(.bottom)
     }
+    .alert(
+      store: self.store.scope(
+        state: \.$destination,
+        action: DailyChallengeReducer.Action.destination
+      ),
+      state: /DailyChallengeReducer.Destination.State.alert,
+      action: DailyChallengeReducer.Destination.Action.alert
+    )
     .navigationDestination(
       store: self.store.scope(
         state: \.$destination,

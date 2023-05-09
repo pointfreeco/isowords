@@ -46,12 +46,18 @@ class DailyChallengeFeatureTests: XCTestCase {
     )
 
     await store.send(.gameButtonTapped(.unlimited)) {
-      $0.alert = .init(
-        title: .init("Already played"),
-        message: .init(
-          "You already played today’s daily challenge. You can play the next one in in 2 hours."
-        ),
-        dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
+      $0.destination = .alert(
+        AlertState {
+          TextState("Already played")
+        } actions: {
+          ButtonState {
+            TextState("OK")
+          }
+        } message: {
+          TextState(
+            "You already played today’s daily challenge. You can play the next one in in 2 hours."
+          )
+        }
       )
     }
   }
