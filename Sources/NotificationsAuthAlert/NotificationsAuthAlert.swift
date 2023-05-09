@@ -65,14 +65,14 @@ extension View {
     action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
   ) -> some View {
     self.modifier(
-      NotificationsAuthAlertViewMofifier(
+      NotificationsAuthAlertViewModifier(
         store: store, toAlertState: toAlertState, fromAlertAction: fromAlertAction
       )
     )
   }
 }
 
-struct NotificationsAuthAlertViewMofifier<DestinationState, DestinationAction>: ViewModifier {
+struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: ViewModifier {
   let store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>
   let toAlertState: (DestinationState) -> NotificationsAuthAlert.State?
   let fromAlertAction: (NotificationsAuthAlert.Action) -> DestinationAction
