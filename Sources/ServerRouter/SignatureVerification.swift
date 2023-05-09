@@ -7,8 +7,7 @@ func verifiedDataBody(
   require: Bool = true,
   secrets: [String],
   sha256: @escaping (Data) -> Data
-) -> AnyParserPrinter<URLRequestData, Data> {
-
+) -> some Router<Data> {
   OneOf {
     Route(.verifySignature(date: date, secrets: secrets, sha256: sha256)) {
       Body()
@@ -28,7 +27,6 @@ func verifiedDataBody(
       Body()
     }
   }
-  .eraseToAnyParserPrinter()
 }
 
 extension Conversion where Self == AnyConversion<(Data, Data?, Int?), Data> {

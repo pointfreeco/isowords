@@ -110,11 +110,10 @@ public struct ServerRouter: ParserPrinter {
         }
       }
     }
-    .eraseToAnyParserPrinter()
   }
 
   @ParserBuilder<URLRequestData>
-  var apiRouter: AnyParserPrinter<URLRequestData, ServerRoute.Api.Route> {
+  var apiRouter: some Router<ServerRoute.Api.Route> {
     let dailyChallengeRouter = OneOf {
       Route(.case(ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:))) {
         Method.post
@@ -299,15 +298,6 @@ public struct ServerRouter: ParserPrinter {
         Body()
       }
     }
-    .eraseToAnyParserPrinter()
-  }
-
-  public func parse(_ input: inout URLRequestData) throws -> ServerRoute {
-    try self.body.parse(&input)
-  }
-
-  public func print(_ output: ServerRoute, into input: inout URLRequestData) throws {
-    try self.body.print(output, into: &input)
   }
 }
 
