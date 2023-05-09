@@ -30,15 +30,13 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct Leaderboard: ReducerProtocol {
   public struct State: Equatable {
-    public var cubePreview: CubePreview.State?
+    @PresentationState public var cubePreview: CubePreview.State?
     public var isAnimationReduced: Bool
     public var isHapticsEnabled: Bool
     public var scope: LeaderboardScope = .games
     public var settings: CubeSceneView.ViewState.Settings
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
-
-    public var isCubePreviewPresented: Bool { self.cubePreview != nil }
 
     public init(
       cubePreview: CubePreview.State? = nil,
@@ -60,8 +58,7 @@ public struct Leaderboard: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case cubePreview(CubePreview.Action)
-    case dismissCubePreview
+    case cubePreview(PresentationAction<CubePreview.Action>)
     case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
     case scopeTapped(LeaderboardScope)
     case solo(LeaderboardResults<TimeScope>.Action)
@@ -76,10 +73,6 @@ public struct Leaderboard: ReducerProtocol {
     Reduce { state, action in
       switch action {
       case .cubePreview:
-        return .none
-
-      case .dismissCubePreview:
-        state.cubePreview = nil
         return .none
 
       case .fetchWordResponse(.failure):
@@ -136,7 +129,7 @@ public struct Leaderboard: ReducerProtocol {
         return .none
       }
     }
-    .ifLet(\.cubePreview, action: /Action.cubePreview) {
+    .ifLet(\.$cubePreview, action: /Action.cubePreview) {
       CubePreview()
     }
 
@@ -243,13 +236,9 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      isPresented: self.viewStore.binding(get: \.isCubePreviewPresented, send: .dismissCubePreview)
-    ) {
-      IfLetStore(
-        self.store.scope(state: \.cubePreview, action: Leaderboard.Action.cubePreview),
-        then: CubePreviewView.init(store:)
-      )
-    }
+      store: self.store.scope(state: \.$cubePreview, action: Leaderboard.Action.cubePreview),
+      content: CubePreviewView.init(store:)
+    )
   }
 }
 
