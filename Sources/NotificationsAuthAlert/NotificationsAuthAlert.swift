@@ -61,22 +61,35 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 extension View {
   public func notificationsAlert<DestinationState, DestinationAction>(
     store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
-    state: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
-    action: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
+    state toAlertState: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
+    action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
   ) -> some View {
-    self.overlay {
-      IfLetStore(store, state: state, action: action, then: NotificationsAuthAlertView.init(store:))
-    }
-  }
-
-  public func notificationsAlert(
-    store: Store<NotificationsAuthAlert.State?, NotificationsAuthAlert.Action>
-  ) -> some View {
-    self.overlay {
-      IfLetStore(
-        store,
-        then: NotificationsAuthAlertView.init(store:)
-      )
+    WithViewStore(
+      store.scope(state: { $0.wrappedValue.flatMap(toAlertState) != nil }), observe: { $0 }
+    ) { viewStore in
+      self
+        .overlay {
+          if viewStore.state {
+            Rectangle()
+              .fill(Color.dailyChallenge.opacity(0.8))
+              .ignoresSafeArea()
+              .transition(.opacity.animation(.default))
+          }
+        }
+        .overlay {
+          IfLetStore(
+            store,
+            state: toAlertState,
+            action: fromAlertAction
+          ) {
+            NotificationsAuthAlertView(store: $0)
+              .transition(
+                .scale(scale: 0.8, anchor: .center)
+                .animation(.spring())
+                .combined(with: .opacity.animation(.default))
+              )
+          }
+        }
     }
   }
 }
@@ -86,10 +99,6 @@ struct NotificationsAuthAlertView: View {
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      Rectangle()
-        .fill(Color.dailyChallenge.opacity(0.8))
-        .ignoresSafeArea()
-
       ZStack(alignment: .topTrailing) {
         VStack(spacing: .grid(8)) {
           (Text("Want to get notified about ")
@@ -100,9 +109,8 @@ struct NotificationsAuthAlertView: View {
             .minimumScaleFactor(0.2)
             .multilineTextAlignment(.center)
 
-          Button(action: { viewStore.send(.turnOnNotificationsButtonTapped, animation: .default) })
-          {
-            Text("Turn on notifications")
+          Button("Turn on notifications") {
+            viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)
           }
           .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
         }
@@ -117,11 +125,6 @@ struct NotificationsAuthAlertView: View {
             .padding(.grid(5))
         }
       }
-      .transition(
-        AnyTransition.scale(scale: 0.8, anchor: .center)
-          .animation(.spring())
-          .combined(with: .opacity)
-      )
     }
   }
 }

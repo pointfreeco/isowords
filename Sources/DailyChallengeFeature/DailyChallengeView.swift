@@ -16,7 +16,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case results(DailyChallengeResults.State = .init())
     }
-
     public enum Action: Equatable {
       case alert(Alert)
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
@@ -24,7 +23,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
       public enum Alert: Equatable {}
     }
-
     public var body: some ReducerProtocol<State, Action> {
       Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
         NotificationsAuthAlert()
@@ -339,7 +337,7 @@ public struct DailyChallengeView: View {
           )
           .disabled(self.viewStore.gameModeIsLoading != nil)
         }
-        .adaptivePadding([.vertical])
+        .adaptivePadding(.vertical)
         .screenEdgePadding(.horizontal)
 
         Button {
@@ -357,7 +355,7 @@ public struct DailyChallengeView: View {
           .padding(.bottom, proxy.safeAreaInsets.bottom / 2)
         }
         .frame(maxWidth: .infinity)
-        .foregroundColor((self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge))
+        .foregroundColor(self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge)
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .task { await self.viewStore.send(.task).finish() }
