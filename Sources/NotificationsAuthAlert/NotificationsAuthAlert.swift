@@ -64,12 +64,27 @@ extension View {
     state toAlertState: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
     action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
   ) -> some View {
+    self.modifier(
+      NotificationsAuthAlertViewMofifier(
+        store: store, toAlertState: toAlertState, fromAlertAction: fromAlertAction
+      )
+    )
+  }
+}
+
+struct NotificationsAuthAlertViewMofifier<DestinationState, DestinationAction>: ViewModifier {
+  let store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>
+  let toAlertState: (DestinationState) -> NotificationsAuthAlert.State?
+  let fromAlertAction: (NotificationsAuthAlert.Action) -> DestinationAction
+
+  func body(content: Content) -> some View {
     WithViewStore(
-      store.scope(state: { $0.wrappedValue.flatMap(toAlertState) != nil }), observe: { $0 }
+      self.store.scope(state: { $0.wrappedValue.flatMap(self.toAlertState) }),
+      observe: { $0 }
     ) { viewStore in
-      self
+      content
         .overlay {
-          if viewStore.state {
+          if viewStore.state != nil {
             Rectangle()
               .fill(Color.dailyChallenge.opacity(0.8))
               .ignoresSafeArea()
@@ -77,17 +92,26 @@ extension View {
           }
         }
         .overlay {
-          IfLetStore(
-            store,
-            state: toAlertState,
-            action: fromAlertAction
-          ) {
-            NotificationsAuthAlertView(store: $0)
-              .transition(
-                .scale(scale: 0.8, anchor: .center)
-                .animation(.spring())
-                .combined(with: .opacity.animation(.default))
+          if let state = viewStore.state {
+            ZStack(alignment: .topTrailing) {
+              NotificationsAuthAlertView(
+                store: store.scope(
+                  state: { _ in state }, action: { .presented(fromAlertAction($0)) }
+                )
               )
+
+              Button(action: { viewStore.send(.dismiss) }) {
+                Image(systemName: "xmark")
+                  .font(.system(size: 20))
+                  .foregroundColor(.dailyChallenge)
+                  .padding(.grid(5))
+              }
+            }
+            .transition(
+              .scale(scale: 0.8, anchor: .center)
+              .animation(.spring())
+              .combined(with: .opacity.animation(.default))
+            )
           }
         }
     }
@@ -99,32 +123,23 @@ struct NotificationsAuthAlertView: View {
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      ZStack(alignment: .topTrailing) {
-        VStack(spacing: .grid(8)) {
-          (Text("Want to get notified about ")
-            + Text("your ranks?").fontWeight(.medium))
-            .adaptiveFont(.matter, size: 28)
-            .foregroundColor(.dailyChallenge)
-            .lineLimit(.max)
-            .minimumScaleFactor(0.2)
-            .multilineTextAlignment(.center)
+      VStack(spacing: .grid(8)) {
+        (Text("Want to get notified about ")
+         + Text("your ranks?").fontWeight(.medium))
+        .adaptiveFont(.matter, size: 28)
+        .foregroundColor(.dailyChallenge)
+        .lineLimit(.max)
+        .minimumScaleFactor(0.2)
+        .multilineTextAlignment(.center)
 
-          Button("Turn on notifications") {
-            viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)
-          }
-          .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
+        Button("Turn on notifications") {
+          viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)
         }
-        .padding(.top, .grid(4))
-        .padding(.grid(8))
-        .background(Color.black)
-
-        Button(action: { viewStore.send(.closeButtonTapped, animation: .default) }) {
-          Image(systemName: "xmark")
-            .font(.system(size: 20))
-            .foregroundColor(.dailyChallenge)
-            .padding(.grid(5))
-        }
+        .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
       }
+      .padding(.top, .grid(4))
+      .padding(.grid(8))
+      .background(Color.black)
     }
   }
 }
