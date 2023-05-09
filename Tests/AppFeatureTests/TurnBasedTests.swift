@@ -124,7 +124,7 @@ class TurnBasedTests: XCTestCase {
         .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
       )
 
-      await store.send(.home(.destination(.multiplayer(.startButtonTapped))))
+      await store.send(.home(.destination(.presented(.multiplayer(.startButtonTapped)))))
 
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))

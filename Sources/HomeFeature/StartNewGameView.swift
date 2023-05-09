@@ -13,28 +13,16 @@ struct StartNewGameView: View {
   }
 
   var body: some View {
-    WithViewStore(self.store.scope(state: \.destination?.tag)) { viewStore in
+    WithViewStore(self.store.stateless) { viewStore in
       VStack(alignment: .leading) {
         Text("Start a game")
           .adaptiveFont(.matterMedium, size: 16)
           .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
           .padding([.bottom, .top])
 
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\Home.State.destination).appending(path: /Home.Destinations.State.solo)
-                .extract(from:),
-              action: { .destination(.solo($0)) }
-            ),
-            then: SoloView.init(store:)
-          ),
-          tag: Home.Destinations.State.Tag.solo,
-          selection: viewStore.binding(
-            send: Home.Action.setNavigation(tag:)
-          )
-          .animation()
-        ) {
+        Button {
+          viewStore.send(.soloButtonTapped)
+        } label: {
           HStack {
             Text("Solo")
             Spacer()
@@ -48,21 +36,9 @@ struct StartNewGameView: View {
           )
         )
 
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\Home.State.destination).appending(path: /Home.Destinations.State.multiplayer)
-                .extract(from:),
-              action: { .destination(.multiplayer($0)) }
-            ),
-            then: MultiplayerView.init(store:)
-          ),
-          tag: Home.Destinations.State.Tag.multiplayer,
-          selection:
-            viewStore
-            .binding(send: Home.Action.setNavigation(tag:))
-            .animation()
-        ) {
+        Button {
+          viewStore.send(.multiplayerButtonTapped)
+        } label : {
           HStack {
             Text("Multiplayer")
             Spacer()
@@ -77,6 +53,18 @@ struct StartNewGameView: View {
         )
       }
     }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destination.State.solo,
+      action: Home.Destination.Action.solo,
+      destination: SoloView.init(store:)
+    )
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destination.State.multiplayer,
+      action: Home.Destination.Action.multiplayer,
+      destination: MultiplayerView.init(store:)
+    )
   }
 }
 

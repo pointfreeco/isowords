@@ -21,10 +21,45 @@ public struct ActiveMatchResponse: Equatable {
 }
 
 public struct Home: ReducerProtocol {
+  public struct Destination: ReducerProtocol {
+    public enum State: Equatable {
+      case changelog(ChangelogReducer.State = .init())
+      case dailyChallenge(DailyChallengeReducer.State = .init())
+      case leaderboard(Leaderboard.State)
+      case multiplayer(Multiplayer.State)
+      case settings
+      case solo(Solo.State = .init())
+    }
+    public enum Action: Equatable {
+      case changelog(ChangelogReducer.Action)
+      case dailyChallenge(DailyChallengeReducer.Action)
+      case leaderboard(Leaderboard.Action)
+      case multiplayer(Multiplayer.Action)
+      case settings(Never)
+      case solo(Solo.Action)
+    }
+    public var body: some ReducerProtocol<State, Action> {
+      Scope(state: /State.changelog, action: /Action.changelog) {
+        ChangelogReducer()
+      }
+      Scope(state: /State.dailyChallenge, action: /Action.dailyChallenge) {
+        DailyChallengeReducer()
+      }
+      Scope(state: /State.leaderboard, action: /Action.leaderboard) {
+        Leaderboard()
+      }
+      Scope(state: /State.multiplayer, action: /Action.multiplayer) {
+        Multiplayer()
+      }
+      Scope(state: /State.solo, action: /Action.solo) {
+        Solo()
+      }
+    }
+  }
+
   public struct State: Equatable {
-    public var changelog: ChangelogReducer.State?
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    public var destination: Destinations.State?
+    @PresentationState public var destination: Destination.State?
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
     public var nagBanner: NagBanner.State?
@@ -59,7 +94,7 @@ public struct Home: ReducerProtocol {
       hasChangelog: Bool = false,
       hasPastTurnBasedGames: Bool = false,
       nagBanner: NagBanner.State? = nil,
-      destination: Destinations.State? = nil,
+      destination: Destination.State? = nil,
       savedGames: SavedGamesState = SavedGamesState(),
       settings: Settings.State = .init(),
       turnBasedMatches: [ActiveTurnBasedMatch] = [],
@@ -89,15 +124,18 @@ public struct Home: ReducerProtocol {
     case authenticationResponse(CurrentPlayerEnvelope)
     case changelog(ChangelogReducer.Action)
     case cubeButtonTapped
+    case dailyChallengeButtonTapped
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
-    case destination(Destinations.Action)
-    case dismissChangelog
+    case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameButtonAction)
     case howToPlayButtonTapped
+    case leaderboardButtonTapped
+    case multiplayerButtonTapped
     case nagBannerFeature(NagBannerFeature.Action)
     case serverConfigResponse(ServerConfig)
-    case setNavigation(tag: Destinations.State.Tag?)
     case settings(Settings.Action)
+    case settingsButtonTapped
+    case soloButtonTapped
     case task
     case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
   }
@@ -122,17 +160,13 @@ public struct Home: ReducerProtocol {
 
   public var body: some ReducerProtocol<State, Action> {
     Reduce(self.core)
-      .ifLet(\.changelog, action: /Action.changelog) {
-        ChangelogReducer()
-      }
-      .ifLet(\.destination, action: /Action.destination) {
-        Destinations()
+      .ifLet(\.$destination, action: /Action.destination) {
+        Destination()
       }
 
     Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
       NagBannerFeature()
     }
-
     Scope(state: \.settings, action: /Action.settings) {
       Settings()
     }
@@ -228,19 +262,16 @@ public struct Home: ReducerProtocol {
       return .none
 
     case .cubeButtonTapped:
-      state.changelog = .init()
+      state.destination = .changelog()
       return .none
 
-    case .destination(.dailyChallenge):
-      return .none
-
-    case .destination(.leaderboard):
-      return .none
-
-    case .destination(.multiplayer):
-      return .none
-
-    case .destination(.solo):
+    case .dailyChallengeButtonTapped:
+      state.destination = .dailyChallenge(
+        .init(
+          dailyChallenges: state.dailyChallenges ?? [],
+          inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
+        )
+      )
       return .none
 
     case let .dailyChallengeResponse(.success(dailyChallenges)):
@@ -251,8 +282,7 @@ public struct Home: ReducerProtocol {
       state.dailyChallenges = []
       return .none
 
-    case .dismissChangelog:
-      state.changelog = nil
+    case .destination:
       return .none
 
     case .gameButtonTapped:
@@ -261,46 +291,40 @@ public struct Home: ReducerProtocol {
     case .howToPlayButtonTapped:
       return .none
 
-    case let .serverConfigResponse(serverConfig):
-      state.hasChangelog = serverConfig.newestBuild > self.buildNumber()
+    case .leaderboardButtonTapped:
+      state.destination = .leaderboard(
+        .init(
+          isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
+          isHapticsEnabled: state.settings.userSettings.enableHaptics,
+          settings: .init(
+            enableCubeShadow: state.settings.enableCubeShadow,
+            enableGyroMotion: state.settings.userSettings.enableGyroMotion,
+            showSceneStatistics: state.settings.showSceneStatistics
+          )
+        )
+      )
       return .none
 
-    case let .setNavigation(tag: tag):
-      switch tag {
-      case .dailyChallenge:
-        state.destination = .dailyChallenge(
-          .init(
-            dailyChallenges: state.dailyChallenges ?? [],
-            inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
-          )
-        )
-      case .leaderboard:
-        state.destination = .leaderboard(
-          .init(
-            isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
-            isHapticsEnabled: state.settings.userSettings.enableHaptics,
-            settings: .init(
-              enableCubeShadow: state.settings.enableCubeShadow,
-              enableGyroMotion: state.settings.userSettings.enableGyroMotion,
-              showSceneStatistics: state.settings.showSceneStatistics
-            )
-          )
-        )
-      case .multiplayer:
-        state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
-      case .settings:
-        state.destination = .settings
-      case .solo:
-        state.destination = .solo(.init(inProgressGame: state.savedGames.unlimited))
-      case .none:
-        state.destination = .none
-      }
+    case .multiplayerButtonTapped:
+      state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
       return .none
 
     case .nagBannerFeature:
       return .none
 
+    case let .serverConfigResponse(serverConfig):
+      state.hasChangelog = serverConfig.newestBuild > self.buildNumber()
+      return .none
+
+    case .settingsButtonTapped:
+      state.destination = .settings
+      return .none
+
     case .settings:
+      return .none
+
+    case .soloButtonTapped:
+      state.destination = .solo(.init(inProgressGame: state.savedGames.unlimited))
       return .none
 
     case .task:
@@ -317,73 +341,6 @@ public struct Home: ReducerProtocol {
     case let .weekInReviewResponse(.success(response)):
       state.weekInReview = response
       return .none
-    }
-  }
-
-  public struct Destinations: ReducerProtocol {
-    public enum State: Equatable {
-      case dailyChallenge(DailyChallengeReducer.State)
-      case leaderboard(Leaderboard.State)
-      case multiplayer(Multiplayer.State)
-      case settings
-      case solo(Solo.State)
-
-      public enum Tag: Int {
-        case dailyChallenge
-        case leaderboard
-        case multiplayer
-        case settings
-        case solo
-      }
-
-      var tag: Tag {
-        switch self {
-        case .dailyChallenge:
-          return .dailyChallenge
-        case .leaderboard:
-          return .leaderboard
-        case .multiplayer:
-          return .multiplayer
-        case .settings:
-          return .settings
-        case .solo:
-          return .solo
-        }
-      }
-    }
-
-    public enum Action: Equatable {
-      case dailyChallenge(DailyChallengeReducer.Action)
-      case leaderboard(Leaderboard.Action)
-      case multiplayer(Multiplayer.Action)
-      case solo(Solo.Action)
-    }
-
-    public var body: some ReducerProtocol<State, Action> {
-      Scope(
-        state: /State.dailyChallenge,
-        action: /Action.dailyChallenge
-      ) {
-        DailyChallengeReducer()
-      }
-      Scope(
-        state: /State.leaderboard,
-        action: /Action.leaderboard
-      ) {
-        Leaderboard()
-      }
-      Scope(
-        state: /State.multiplayer,
-        action: /Action.multiplayer
-      ) {
-        Multiplayer()
-      }
-      Scope(
-        state: /State.solo,
-        action: /Action.solo
-      ) {
-        Solo()
-      }
     }
   }
 
@@ -479,9 +436,7 @@ public struct HomeView: View {
   struct ViewState: Equatable {
     let hasActiveGames: Bool
     let hasChangelog: Bool
-    let isChangelogVisible: Bool
     let isNagBannerVisible: Bool
-    let tag: Home.Destinations.State.Tag?
 
     init(state: Home.State) {
       self.hasActiveGames =
@@ -489,9 +444,7 @@ public struct HomeView: View {
         || state.savedGames.unlimited != nil
         || !state.turnBasedMatches.isEmpty
       self.hasChangelog = state.hasChangelog
-      self.isChangelogVisible = state.changelog != nil
       self.isNagBannerVisible = state.nagBanner != nil
-      self.tag = state.destination?.tag
     }
   }
 
@@ -516,22 +469,15 @@ public struct HomeView: View {
 
               Spacer()
 
-              Button(action: { self.viewStore.send(.howToPlayButtonTapped, animation: .default) }) {
+              Button {
+                self.viewStore.send(.howToPlayButtonTapped, animation: .default)
+              } label: {
                 Image(systemName: "questionmark.circle")
               }
 
-              NavigationLink(
-                destination: SettingsView(
-                  store: self.store.scope(
-                    state: \.settings,
-                    action: Home.Action.settings
-                  ),
-                  navPresentationStyle: .navigation
-                ),
-                tag: Home.Destinations.State.Tag.settings,
-                selection: viewStore.binding(get: \.tag, send: Home.Action.setNavigation(tag:))
-                  .animation()
-              ) {
+              Button {
+                self.viewStore.send(.settingsButtonTapped)
+              } label: {
                 Image(systemName: "gear")
               }
             }
@@ -611,25 +557,24 @@ public struct HomeView: View {
       )
     }
     .navigationBarHidden(true)
-    .background(
-      // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-      // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-      // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-      EmptyView()
-        .sheet(
-          isPresented: self.viewStore.binding(
-            get: \.isChangelogVisible,
-            send: Home.Action.dismissChangelog
-          )
-        ) {
-          IfLetStore(
-            self.store.scope(
-              state: \.changelog,
-              action: Home.Action.changelog
-            ),
-            then: ChangelogView.init(store:)
-          )
-        }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destination.State.settings,
+      action: Home.Destination.Action.settings
+    ) { _ in
+      SettingsView(
+        store: self.store.scope(
+          state: \.settings,
+          action: Home.Action.settings
+        ),
+        navPresentationStyle: .navigation
+      )
+    }
+    .sheet(
+      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      state: /Home.Destination.State.changelog,
+      action: Home.Destination.Action.changelog,
+      content: ChangelogView.init(store:)
     )
     .task { await self.viewStore.send(.task).finish() }
   }
@@ -674,7 +619,7 @@ private struct ShakeEffect: GeometryEffect {
   struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
       Preview {
-        NavigationView {
+        NavigationStack {
           HomeView(store: .home)
         }
       }
