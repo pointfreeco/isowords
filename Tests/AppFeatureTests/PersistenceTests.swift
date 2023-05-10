@@ -262,7 +262,6 @@ class PersistenceTests: XCTestCase {
         )
       }
     }
-    .finish()
 
     await didArchiveGame.withValue { XCTAssert($0) }
   }
@@ -301,6 +300,7 @@ class PersistenceTests: XCTestCase {
               metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
             )
           )
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
         },
         home: Home.State(
           savedGames: SavedGamesState(

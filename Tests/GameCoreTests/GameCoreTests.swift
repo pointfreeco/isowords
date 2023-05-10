@@ -16,6 +16,7 @@ class GameCoreTests: XCTestCase {
         metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
       )
     )
+    gameState.destination = .bottomMenu(.gameMenu(state: gameState))
 
     let store = TestStore(
       initialState: gameState,
@@ -34,7 +35,7 @@ class GameCoreTests: XCTestCase {
           TextState("Are you sure?")
         } actions: {
           ButtonState {
-            TextState("Don’t forfeit")
+            TextState("Don't forfeit")
           }
           ButtonState(role: .destructive, action: .forfeitButtonTapped) {
             TextState("Yes, forfeit")
@@ -61,6 +62,5 @@ class GameCoreTests: XCTestCase {
     }
 
     await didEndMatchInTurn.withValue { XCTAssertNoDifference($0, true) }
-    await store.finish()
   }
 }

@@ -608,6 +608,9 @@ class TurnBasedTests: XCTestCase {
     await store.send(
       .currentGame(.game(.destination(.presented(.bottomMenu(.confirmRemoveCube(.zero))))))
     ) {
+      $0.game?.destination = nil
+    }
+    await store.receive(.currentGame(.game(.confirmRemoveCube(index: .zero)))) {
       $0.game = updatedGameState
     }
     await store.receive(
@@ -643,7 +646,6 @@ class TurnBasedTests: XCTestCase {
       )
       $0.turnBasedContext?.match = updatedMatch
       $0.cubes.0.0.1.wasRemoved = true
-      $0.destination = nil
     }
     updatedMatch = update(updatedMatch) {
       $0.currentParticipant = .remote
@@ -668,6 +670,13 @@ class TurnBasedTests: XCTestCase {
             .presented(.bottomMenu(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))
           )
         )
+      )
+    ) {
+      $0.game?.destination = nil
+    }
+    await store.receive(
+      .currentGame(
+        .game(.confirmRemoveCube(index: .init(x: .zero, y: .zero, z: .one)))
       )
     ) {
       $0.game = updatedGameState

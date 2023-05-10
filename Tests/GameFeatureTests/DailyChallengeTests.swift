@@ -29,14 +29,18 @@ class DailyChallengeTests: XCTestCase {
 
     let store = TestStore(
       initialState: GameFeature.State(
-        game: Game.State(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
-          gameCurrentTime: .mock,
-          gameMode: .timed,
-          gameStartTime: .mock,
-          moves: [move]
-        ),
+        game: update(
+          Game.State(
+            cubes: .mock,
+            gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
+            gameCurrentTime: .mock,
+            gameMode: .timed,
+            gameStartTime: .mock,
+            moves: [move]
+          )
+        ) {
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
+        },
         settings: .init()
       ),
       reducer: GameFeature()
@@ -58,7 +62,6 @@ class DailyChallengeTests: XCTestCase {
         )
       }
     }
-    .finish()
 
     await didSave.withValue { XCTAssert($0) }
   }
@@ -80,14 +83,18 @@ class DailyChallengeTests: XCTestCase {
 
     let store = TestStore(
       initialState: GameFeature.State(
-        game: Game.State(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
-          gameCurrentTime: .mock,
-          gameMode: .unlimited,
-          gameStartTime: .mock,
-          moves: [move]
-        ),
+        game: update(
+          Game.State(
+            cubes: .mock,
+            gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
+            gameCurrentTime: .mock,
+            gameMode: .unlimited,
+            gameStartTime: .mock,
+            moves: [move]
+          )
+        ) {
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
+        },
         settings: .init()
       ),
       reducer: GameFeature()
@@ -109,7 +116,6 @@ class DailyChallengeTests: XCTestCase {
         )
       }
     }
-    .finish()
 
     await didSave.withValue { XCTAssert($0) }
   }

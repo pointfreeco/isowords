@@ -285,6 +285,8 @@ class GameOverFeatureTests: XCTestCase {
         wordsFound: 1
       )
     }
+    let dismissed = self.expectation(description: "dismissed")
+    store.dependencies.dismiss = DismissEffect { dismissed.fulfill() }
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     store.dependencies.storeKit.requestReview = {
       await requestReviewCount.withValue { $0 += 1 }
@@ -298,7 +300,7 @@ class GameOverFeatureTests: XCTestCase {
 
     // Assert that the first time game over appears we do not request review
     await store.send(.closeButtonTapped)
-    await store.receive(.destination(.dismiss))
+    await self.fulfillment(of: [dismissed])
     await self.mainRunLoop.advance()
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
@@ -314,20 +316,26 @@ class GameOverFeatureTests: XCTestCase {
         wordsFound: 1
       )
     }
+    let dismissed2 = self.expectation(description: "dismissed")
+    store.dependencies.dismiss = DismissEffect { dismissed2.fulfill() }
     await store.send(.closeButtonTapped).finish()
-    await store.receive(.destination(.dismiss))
+    await self.fulfillment(of: [dismissed2])
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 1) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
+    let dismissed3 = self.expectation(description: "dismissed")
+    store.dependencies.dismiss = DismissEffect { dismissed3.fulfill() }
     await self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     await store.send(.closeButtonTapped).finish()
-    await store.receive(.destination(.dismiss))
+    await self.fulfillment(of: [dismissed3])
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
   }
 
   func testAutoCloseWhenNoWordsPlayed() async throws {
+    let dismissed = self.expectation(description: "dismissed")
+
     let store = TestStore(
       initialState: GameOver.State(
         completedGame: .init(
@@ -342,10 +350,15 @@ class GameOverFeatureTests: XCTestCase {
         isDemo: false
       ),
       reducer: GameOver()
-    )
+    ) {
+      $0.dismiss = DismissEffect {
+        dismissed.fulfill()
+      }
+    }
 
     await store.send(.task)
-    await store.receive(.destination(.dismiss))
+
+    await self.fulfillment(of: [dismissed])
   }
 
   func testShowUpgradeInterstitial() async {

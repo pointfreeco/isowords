@@ -768,7 +768,7 @@ extension BottomMenuState where Action == Game.Destination.Action.BottomMenu {
     )
   }
 
-  static func gameMenu(state: Game.State) -> Self {
+  public static func gameMenu(state: Game.State) -> Self {
     var menu = BottomMenuState(title: menuTitle(state: state))
 
     if state.isResumable {
