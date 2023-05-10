@@ -20,14 +20,23 @@ public struct Game: ReducerProtocol {
   public struct Destination: ReducerProtocol {
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
+      case bottomMenu(BottomMenuState<Action.BottomMenu>)
       case gameOver(GameOver.State)
     }
     public enum Action: Equatable {
       case alert(Alert)
+      case bottomMenu(BottomMenu)
       case gameOver(GameOver.Action)
 
       public enum Alert: Equatable {
         case forfeitButtonTapped
+      }
+      public enum BottomMenu: Equatable {
+        case confirmRemoveCube(LatticePoint)
+        case endGameButtonTapped
+        case exitButtonTapped
+        case forfeitGameButtonTapped
+        case settingsButtonTapped
       }
     }
     public var body: some ReducerProtocol<State, Action> {
@@ -38,7 +47,6 @@ public struct Game: ReducerProtocol {
   }
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
     @PresentationState public var destination: Destination.State?
@@ -63,7 +71,6 @@ public struct Game: ReducerProtocol {
 
     public init(
       activeGames: ActiveGamesState = .init(),
-      bottomMenu: BottomMenuState<Action>? = nil,
       cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
       destination: Destination.State? = nil,
@@ -87,7 +94,6 @@ public struct Game: ReducerProtocol {
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       self.activeGames = activeGames
-      self.bottomMenu = bottomMenu
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.destination = destination
@@ -153,10 +159,8 @@ public struct Game: ReducerProtocol {
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
     case cancelButtonTapped
-    case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
     case destination(PresentationAction<Destination.Action>)
-    case dismissBottomMenu
     case doubleTap(index: LatticePoint)
     case endGameButtonTapped
     case exitButtonTapped
@@ -169,7 +173,6 @@ public struct Game: ReducerProtocol {
     case task
     case pan(UIGestureRecognizer.State, PanData?)
     case savedGamesLoaded(TaskResult<SavedGamesState>)
-    case settingsButtonTapped
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
@@ -248,13 +251,12 @@ public struct Game: ReducerProtocol {
           }
         }
 
-      case .cancelButtonTapped:
-        state.selectedWord = []
+      case .destination(.presented(.bottomMenu(.settingsButtonTapped))):
+        // TODO: Move to Destination.State
+        state.isSettingsPresented = true
         return .none
 
-      case let .confirmRemoveCube(index):
-        state.bottomMenu = nil
-        state.removeCube(at: index, playedAt: self.date())
+      case .cancelButtonTapped:
         state.selectedWord = []
         return .none
 
@@ -262,15 +264,16 @@ public struct Game: ReducerProtocol {
         state.upgradeInterstitial = .init()
         return .none
 
+      case let .destination(.presented(.bottomMenu(.confirmRemoveCube(index)))):
+        state.removeCube(at: index, playedAt: self.date())
+        state.selectedWord = []
+        return .none
+
       case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
         state = .init(inProgressGame: inProgressGame)
         return .none
 
       case .destination:
-        return .none
-
-      case .dismissBottomMenu:
-        state.bottomMenu = nil
         return .none
 
       case let .doubleTap(index):
@@ -298,10 +301,10 @@ public struct Game: ReducerProtocol {
             }
           } message: {
             TextState(
-            """
-            Forfeiting will end the game and your opponent will win. Are you sure you want to \
-            forfeit?
-            """
+              """
+              Forfeiting will end the game and your opponent will win. Are you sure you want to \
+              forfeit?
+              """
             )
           }
         )
@@ -326,7 +329,7 @@ public struct Game: ReducerProtocol {
         return .none
 
       case .menuButtonTapped:
-        state.bottomMenu = .gameMenu(state: state)
+        state.destination = .bottomMenu(.gameMenu(state: state))
         return .none
 
       case .task:
@@ -405,10 +408,6 @@ public struct Game: ReducerProtocol {
         return .none
 
       case .savedGamesLoaded:
-        return .none
-
-      case .settingsButtonTapped:
-        state.isSettingsPresented = true
         return .none
 
       case let .submitButtonTapped(reaction: reaction),
@@ -641,7 +640,7 @@ extension Game.State {
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .task { .confirmRemoveCube(index) } }
+    else { return .task { .destination(.presented(.bottomMenu(.confirmRemoveCube(index)))) } }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.turnBasedContext,
@@ -654,8 +653,8 @@ extension Game.State {
       isTurnEndingRemoval = false
     }
 
-    self.bottomMenu = .removeCube(
-      index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval
+    self.destination = .bottomMenu(
+      .removeCube(index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
     )
     return .none
   }
@@ -758,7 +757,7 @@ extension TurnBasedMatchData {
   }
 }
 
-extension BottomMenuState where Action == Game.Action {
+extension BottomMenuState where Action == Game.Destination.Action.BottomMenu {
   public static func removeCube(
     index: LatticePoint,
     state: Game.State,
@@ -775,14 +774,12 @@ extension BottomMenuState where Action == Game.Action {
           : .init("Remove cube"),
         icon: .init(systemName: "trash"),
         action: .init(action: .confirmRemoveCube(index), animation: .default)
-      ),
-      onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+      )
     )
   }
 
   static func gameMenu(state: Game.State) -> Self {
     var menu = BottomMenuState(title: menuTitle(state: state))
-    menu.onDismiss = .init(action: .dismissBottomMenu, animation: .default)
 
     if state.isResumable {
       menu.buttons.append(

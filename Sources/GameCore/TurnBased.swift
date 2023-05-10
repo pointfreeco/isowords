@@ -83,7 +83,7 @@ struct TurnBasedLogic: ReducerProtocol {
 
     case .submitButtonTapped,
       .wordSubmitButton(.delegate(.confirmSubmit)),
-      .confirmRemoveCube:
+      .destination(.presented(.bottomMenu(.confirmRemoveCube))):
       guard
         let move = state.moves.last,
         let localPlayerIndex = turnBasedContext.localPlayerIndex,
@@ -179,10 +179,8 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
 
       case .activeGames,
         .cancelButtonTapped,
-        .confirmRemoveCube,
         .delayedShowUpgradeInterstitial,
         .destination,
-        .dismissBottomMenu,
         .doubleTap,
         .endGameButtonTapped,
         .exitButtonTapped,
@@ -194,7 +192,6 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
         .menuButtonTapped,
         .task,
         .savedGamesLoaded,
-        .settingsButtonTapped,
         .timerTick,
         .trayButtonTapped,
         .upgradeInterstitial,

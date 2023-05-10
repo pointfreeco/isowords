@@ -24,7 +24,6 @@ struct GameOverLogic: ReducerProtocol {
         || allCubesRemoved
     else { return .none }
 
-    state.bottomMenu = nil
     state.destination = .gameOver(
       GameOver.State(
         completedGame: CompletedGame(gameState: state),

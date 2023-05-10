@@ -215,14 +215,17 @@ public struct Onboarding: ReducerProtocol {
           return .none
         }
 
-      case let .game(.confirmRemoveCube(index)):
+      case let .game(.destination(.presented(.bottomMenu(.confirmRemoveCube(index))))):
         state.step.next()
-        return self.gameReducer.reduce(into: &state, action: .game(.confirmRemoveCube(index)))
+        return self.gameReducer.reduce(
+          into: &state,
+          action: .game(.destination(.presented(.bottomMenu(.confirmRemoveCube(index)))))
+        )
 
       case let .game(.doubleTap(index: index)):
         guard state.step == .some(.step19_DoubleTapToRemove)
         else { return .none }
-        return .task { .game(.confirmRemoveCube(index)) }
+        return .task { .game(.destination(.presented(.bottomMenu(.confirmRemoveCube(index))))) }
 
       case let .game(.tap(gestureState, .some(indexedCubeFace))):
         let index =

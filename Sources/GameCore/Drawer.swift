@@ -9,7 +9,7 @@ struct ActiveGamesTray: ReducerProtocol {
   func reduce(into state: inout Game.State, action: Game.Action) -> EffectTask<Game.Action> {
     switch action {
     case .cancelButtonTapped,
-      .confirmRemoveCube,
+      .destination(.presented(.bottomMenu(.confirmRemoveCube))),
       .doubleTap,
       .endGameButtonTapped,
       .forfeitGameButtonTapped,
@@ -26,13 +26,11 @@ struct ActiveGamesTray: ReducerProtocol {
       .delayedShowUpgradeInterstitial,
       .exitButtonTapped,
       .destination,
-      .dismissBottomMenu,
       .gameCenter,
       .gameLoaded,
       .lowPowerModeChanged,
       .matchesLoaded(.failure),
       .savedGamesLoaded(.failure),
-      .settingsButtonTapped,
       .timerTick,
       .upgradeInterstitial:
 
