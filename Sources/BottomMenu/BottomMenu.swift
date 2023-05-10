@@ -61,25 +61,23 @@ extension View {
   public func bottomMenu(
     item: Binding<BottomMenu?>
   ) -> some View {
-    BottomMenuWrapper(content: self, item: item)
+    self.modifier(BottomMenuModifier(item: item))
   }
 }
 
-private struct BottomMenuWrapper<Content: View>: View {
+private struct BottomMenuModifier: ViewModifier {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
-  let content: Content
   @Binding var item: BottomMenu?
 
-  var body: some View {
-    self.content
+  func body(content: Content) -> some View {
+    content
       .overlay {
         if self.item != nil {
           Rectangle()
             .fill(Color.isowordsBlack.opacity(0.4))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onTapGesture { self.item = nil }
-            .zIndex(1)
             .transition(.opacity.animation(.default))
             .ignoresSafeArea()
         }
