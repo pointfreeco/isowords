@@ -298,7 +298,7 @@ class GameOverFeatureTests: XCTestCase {
 
     // Assert that the first time game over appears we do not request review
     await store.send(.closeButtonTapped)
-    await store.receive(.delegate(.close))
+    await store.receive(.destination(.dismiss))
     await self.mainRunLoop.advance()
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
@@ -315,14 +315,14 @@ class GameOverFeatureTests: XCTestCase {
       )
     }
     await store.send(.closeButtonTapped).finish()
-    await store.receive(.delegate(.close))
+    await store.receive(.destination(.dismiss))
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 1) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
     await self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     await store.send(.closeButtonTapped).finish()
-    await store.receive(.delegate(.close))
+    await store.receive(.destination(.dismiss))
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
   }
@@ -345,7 +345,7 @@ class GameOverFeatureTests: XCTestCase {
     )
 
     await store.send(.task)
-    await store.receive(.delegate(.close))
+    await store.receive(.destination(.dismiss))
   }
 
   func testShowUpgradeInterstitial() async {

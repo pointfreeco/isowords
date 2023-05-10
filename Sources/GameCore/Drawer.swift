@@ -23,7 +23,6 @@ struct ActiveGamesTray: ReducerProtocol {
       return .none
 
     case .activeGames,
-      .alert,
       .delayedShowUpgradeInterstitial,
       .exitButtonTapped,
       .destination,

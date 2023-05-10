@@ -512,16 +512,18 @@ class TurnBasedTests: XCTestCase {
             secondsPlayed: 0
           )
         )
-        gameState.gameCurrentTime = self.mainRunLoop.now.date
-        gameState.gameOver = GameOver.State(
-          completedGame: CompletedGame(gameState: gameState),
-          isDemo: false,
-          turnBasedContext: .init(
-            localPlayer: .mock,
-            match: .forfeited,
-            metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+        gameState.destination = .gameOver(
+          GameOver.State(
+            completedGame: CompletedGame(gameState: gameState),
+            isDemo: false,
+            turnBasedContext: .init(
+              localPlayer: .mock,
+              match: .forfeited,
+              metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+            )
           )
         )
+        gameState.gameCurrentTime = self.mainRunLoop.now.date
         $0.game = gameState
       }
       await store.receive(
@@ -711,9 +713,11 @@ class TurnBasedTests: XCTestCase {
             gameStartTime: .mock
           )
         ) {
-          $0.gameOver = GameOver.State(
-            completedGame: CompletedGame(gameState: $0),
-            isDemo: false
+          $0.destination = .gameOver(
+            GameOver.State(
+              completedGame: CompletedGame(gameState: $0),
+              isDemo: false
+            )
           )
         }
       ),
@@ -735,7 +739,9 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
-    await store.send(.currentGame(.game(.gameOver(.rematchButtonTapped)))) {
+    await store.send(
+      .currentGame(.game(.destination(.presented(.gameOver(.rematchButtonTapped)))))
+    ) {
       $0.game = nil
     }
     await didRematchWithId.withValue { XCTAssertNoDifference($0, match.matchId) }

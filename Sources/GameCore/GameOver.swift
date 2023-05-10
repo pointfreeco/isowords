@@ -18,7 +18,7 @@ struct GameOverLogic: ReducerProtocol {
 
     guard
       !state.isGameOver
-        && action == .alert(.forfeitButtonTapped)
+        && action == .destination(.presented(.alert(.forfeitButtonTapped)))
         || action == .endGameButtonTapped
         || timesUp
         || allCubesRemoved

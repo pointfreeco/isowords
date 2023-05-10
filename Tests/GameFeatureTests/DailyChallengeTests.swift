@@ -50,9 +50,11 @@ class DailyChallengeTests: XCTestCase {
 
     await store.send(.game(.endGameButtonTapped)) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOver.State(
-          completedGame: CompletedGame(gameState: $0),
-          isDemo: false
+        $0.destination = .gameOver(
+          GameOver.State(
+            completedGame: CompletedGame(gameState: $0),
+            isDemo: false
+          )
         )
       }
     }
@@ -99,9 +101,11 @@ class DailyChallengeTests: XCTestCase {
 
     await store.send(.game(.endGameButtonTapped)) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOver.State(
-          completedGame: CompletedGame(gameState: $0),
-          isDemo: false
+        $0.destination = .gameOver(
+          GameOver.State(
+            completedGame: CompletedGame(gameState: $0),
+            isDemo: false
+          )
         )
       }
     }

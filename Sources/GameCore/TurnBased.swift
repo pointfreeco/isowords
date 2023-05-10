@@ -178,7 +178,6 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
         return state.isYourTurn
 
       case .activeGames,
-        .alert,
         .cancelButtonTapped,
         .confirmRemoveCube,
         .delayedShowUpgradeInterstitial,

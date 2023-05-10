@@ -19,10 +19,16 @@ import UpgradeInterstitialFeature
 public struct Game: ReducerProtocol {
   public struct Destination: ReducerProtocol {
     public enum State: Equatable {
+      case alert(AlertState<Action.Alert>)
       case gameOver(GameOver.State)
     }
     public enum Action: Equatable {
+      case alert(Alert)
       case gameOver(GameOver.Action)
+
+      public enum Alert: Equatable {
+        case forfeitButtonTapped
+      }
     }
     public var body: some ReducerProtocol<State, Action> {
       Scope(state: /State.gameOver, action: /Action.gameOver) {
@@ -32,7 +38,6 @@ public struct Game: ReducerProtocol {
   }
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    public var alert: AlertState<AlertAction>?
     public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
@@ -58,7 +63,6 @@ public struct Game: ReducerProtocol {
 
     public init(
       activeGames: ActiveGamesState = .init(),
-      alert: AlertState<AlertAction>? = nil,
       bottomMenu: BottomMenuState<Action>? = nil,
       cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
@@ -83,7 +87,6 @@ public struct Game: ReducerProtocol {
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       self.activeGames = activeGames
-      self.alert = alert
       self.bottomMenu = bottomMenu
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
@@ -149,7 +152,6 @@ public struct Game: ReducerProtocol {
 
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
-    case alert(AlertAction)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
@@ -174,12 +176,6 @@ public struct Game: ReducerProtocol {
     case trayButtonTapped
     case upgradeInterstitial(UpgradeInterstitial.Action)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
-  }
-
-  public enum AlertAction: Equatable {
-    case dismiss
-    case dontForfeitButtonTapped
-    case forfeitButtonTapped
   }
 
   public enum GameCenterAction: Equatable {
@@ -226,12 +222,7 @@ public struct Game: ReducerProtocol {
       case .activeGames:
         return .none
 
-      case .alert(.dismiss), .alert(.dontForfeitButtonTapped):
-        state.alert = nil
-        return .none
-
-      case .alert(.forfeitButtonTapped):
-        state.alert = nil
+      case .destination(.presented(.alert(.forfeitButtonTapped))):
 
         guard let match = state.turnBasedContext?.match
         else { return .none }
@@ -295,16 +286,24 @@ public struct Game: ReducerProtocol {
         return .none
 
       case .forfeitGameButtonTapped:
-        state.alert = .init(
-          title: .init("Are you sure?"),
-          message: .init(
+        state.destination = .alert(
+          AlertState {
+            TextState("Are you sure?")
+          } actions: {
+            ButtonState {
+              TextState("Don't forfeit")
+            }
+            ButtonState(role: .destructive, action: .forfeitButtonTapped) {
+              TextState("Yes, forfeit")
+            }
+          } message: {
+            TextState(
             """
             Forfeiting will end the game and your opponent will win. Are you sure you want to \
             forfeit?
             """
-          ),
-          primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
-          secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
+            )
+          }
         )
         return .none
 

@@ -177,8 +177,9 @@ public struct GameView<Content>: View where Content: View {
       )
       .bottomMenu(self.store.scope(state: \.bottomMenu))
       .alert(
-        self.store.scope(state: \.alert, action: Game.Action.alert),
-        dismiss: .dismiss
+        store: self.store.scope(state: \.$destination, action: Game.Action.destination),
+        state: /Game.Destination.State.alert,
+        action: Game.Destination.Action.alert
       )
     }
     .task { await self.viewStore.send(.task).finish() }
