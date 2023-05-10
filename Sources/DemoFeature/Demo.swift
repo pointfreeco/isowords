@@ -100,7 +100,7 @@ public struct Demo: ReducerProtocol {
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.gameOver(.submitGameResponse(.success))):
+      case .game(.gameOver(.presented(.submitGameResponse(.success)))):
         state.appStoreOverlayIsPresented = true
         return .none
 

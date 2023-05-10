@@ -69,8 +69,7 @@ struct TurnBasedLogic: ReducerProtocol {
     case .gameCenter(.turnBasedMatchResponse(.failure)):
       return .none
 
-    case .gameOver(.delegate(.close)),
-      .exitButtonTapped:
+    case .exitButtonTapped:
       return .none
 
     case .task:

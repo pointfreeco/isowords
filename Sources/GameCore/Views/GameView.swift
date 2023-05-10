@@ -128,7 +128,7 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.gameOver, action: Game.Action.gameOver),
+          self.store.scope(state: \.$gameOver, action: Game.Action.gameOver),
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())

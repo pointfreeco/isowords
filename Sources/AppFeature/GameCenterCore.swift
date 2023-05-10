@@ -29,7 +29,7 @@ public struct GameCenterLogic: ReducerProtocol {
         }
       }
 
-    case .currentGame(.game(.gameOver(.rematchButtonTapped))):
+    case .currentGame(.game(.gameOver(.presented(.rematchButtonTapped)))):
       guard
         let game = state.game,
         let turnBasedMatch = game.turnBasedContext

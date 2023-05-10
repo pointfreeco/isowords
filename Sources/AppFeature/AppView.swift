@@ -177,7 +177,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .currentGame(.game(.endGameButtonTapped)),
-        .currentGame(.game(.gameOver(.task))):
+        .currentGame(.game(.gameOver(.presented(.task)))):
 
         switch (state.game?.gameContext, state.game?.gameMode) {
         case (.dailyChallenge, .unlimited):
@@ -226,11 +226,11 @@ public struct AppReducer: ReducerProtocol {
         }
 
       case .currentGame(.game(.exitButtonTapped)),
-        .currentGame(.game(.gameOver(.delegate(.close)))):
+        .currentGame(.game(.gameOver(.dismiss))):
         state.game = nil
         return .none
 
-      case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
+      case .currentGame(.game(.gameOver(.presented(.delegate(.startSoloGame(.timed)))))),
         .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
         state.game = .init(
           cubes: self.randomCubes(.en),
@@ -242,7 +242,7 @@ public struct AppReducer: ReducerProtocol {
         )
         return .none
 
-      case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.unlimited))))),
+      case .currentGame(.game(.gameOver(.presented(.delegate(.startSoloGame(.unlimited)))))),
         .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
         state.game =
           state.home.savedGames.unlimited

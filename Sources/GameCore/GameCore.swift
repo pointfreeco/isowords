@@ -26,7 +26,7 @@ public struct Game: ReducerProtocol {
     public var gameContext: ClientModels.GameContext
     public var gameCurrentTime: Date
     public var gameMode: GameMode
-    public var gameOver: GameOver.State?
+    @PresentationState public var gameOver: GameOver.State?
     public var gameStartTime: Date
     public var isDemo: Bool
     public var isGameLoaded: Bool
@@ -147,7 +147,7 @@ public struct Game: ReducerProtocol {
     case forfeitGameButtonTapped
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case gameOver(GameOver.Action)
+    case gameOver(PresentationAction<GameOver.Action>)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
@@ -197,7 +197,7 @@ public struct Game: ReducerProtocol {
         return .none
       }
       .filterActionsForYourTurn()
-      .ifLet(\.gameOver, action: /Action.gameOver) {
+      .ifLet(\.$gameOver, action: /Action.gameOver) {
         GameOver()
       }
       .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
@@ -299,10 +299,7 @@ public struct Game: ReducerProtocol {
           }
         }
 
-      case .gameOver(.delegate(.close)):
-        return .none
-
-      case let .gameOver(.delegate(.startGame(inProgressGame))):
+      case let .gameOver(.presented(.delegate(.startGame(inProgressGame)))):
         state = .init(inProgressGame: inProgressGame)
         return .none
 
