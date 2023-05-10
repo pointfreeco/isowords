@@ -16,13 +16,13 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
 
   let base: Base
 
-  enum CubeShakingID {}
+  private enum CancelID { case cubeShake }
 
   var body: some ReducerProtocol<Game.State, Game.Action> {
     self.core
       .onChange(of: { /Game.Destination.State.gameOver ~= $0.destination }) { _, _, _ in
         .fireAndForget {
-          Task.cancel(id: CubeShakingID.self)
+          Task.cancel(id: CancelID.cubeShake)
           for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
             await self.audioPlayer.stop(music)
           }
@@ -59,7 +59,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
         guard !selectedWord.isEmpty
         else {
           state.cubeStartedShakingAt = nil
-          return .cancel(id: CubeShakingID.self)
+          return .cancel(id: CancelID.cubeShake)
         }
 
         let previousWord = state.cubes.string(from: previousSelection)
@@ -84,11 +84,11 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
                 await self.audioPlayer.play(.cubeShake)
               }
             }
-            .cancellable(id: CubeShakingID.self)
+            .cancellable(id: CancelID.cubeShake)
 
         } else {
           state.cubeStartedShakingAt = nil
-          return .cancel(id: CubeShakingID.self)
+          return .cancel(id: CancelID.cubeShake)
         }
       }
       .onChange(of: \.moves.last) { lastMove, state, _ in

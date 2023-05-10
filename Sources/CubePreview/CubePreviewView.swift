@@ -61,6 +61,8 @@ public struct CubePreview: ReducerProtocol {
     case task
   }
 
+  private enum CancelID { case selection }
+
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
 
@@ -69,7 +71,6 @@ public struct CubePreview: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     BindingReducer()
     Reduce { state, action in
-      enum SelectionID {}
 
       switch action {
       case .binding:
@@ -90,7 +91,7 @@ public struct CubePreview: ReducerProtocol {
         case .removedCube:
           break
         }
-        return .cancel(id: SelectionID.self)
+        return .cancel(id: CancelID.selection)
 
       case .task:
         return .run { [move = state.moves[state.moveIndex]] send in
@@ -145,7 +146,7 @@ public struct CubePreview: ReducerProtocol {
             break
           }
         }
-        .cancellable(id: SelectionID.self)
+        .cancellable(id: CancelID.selection)
       }
     }
     .haptics(

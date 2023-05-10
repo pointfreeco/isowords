@@ -176,6 +176,12 @@ public struct Settings: ReducerProtocol {
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
   }
 
+  private enum CancelID {
+    case paymentObserver
+    case saveDebounce
+    case updateRemoteSettings
+  }
+
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
@@ -193,9 +199,6 @@ public struct Settings: ReducerProtocol {
     CombineReducers {
       BindingReducer()
       Reduce { state, action in
-        enum PaymentObserverID {}
-        enum UpdateRemoteSettingsID {}
-
         switch action {
         case .binding(\.$developer.currentBaseUrl):
           return .fireAndForget { [url = state.developer.currentBaseUrl.url] in
@@ -258,7 +261,7 @@ public struct Settings: ReducerProtocol {
               TaskResult { try await self.apiClient.refreshCurrentPlayer() }
             )
           }
-          .debounce(id: UpdateRemoteSettingsID.self, for: 1, scheduler: self.mainQueue)
+          .debounce(id: CancelID.updateRemoteSettings, for: 1, scheduler: self.mainQueue)
 
         case .binding(\.$sendDailyChallengeSummary):
           return .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
@@ -276,7 +279,7 @@ public struct Settings: ReducerProtocol {
               TaskResult { try await self.apiClient.refreshCurrentPlayer() }
             )
           }
-          .debounce(id: UpdateRemoteSettingsID.self, for: 1, scheduler: self.mainQueue)
+          .debounce(id: CancelID.updateRemoteSettings, for: 1, scheduler: self.mainQueue)
 
         case .binding(\.$userSettings.appIcon):
           return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
@@ -326,7 +329,7 @@ public struct Settings: ReducerProtocol {
           }
 
         case .onDismiss:
-          return .cancel(id: PaymentObserverID.self)
+          return .cancel(id: CancelID.paymentObserver)
 
         case .paymentTransaction(.removedTransactions):
           state.isPurchasing = false
@@ -435,7 +438,7 @@ public struct Settings: ReducerProtocol {
           return .merge(
             .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
               Task {
-                await withTaskCancellation(id: PaymentObserverID.self, cancelInFlight: true) {
+                await withTaskCancellation(id: CancelID.paymentObserver, cancelInFlight: true) {
                   for await event in self.storeKit.observer() {
                     await send(.paymentTransaction(event), animation: .default)
                   }
@@ -488,10 +491,8 @@ public struct Settings: ReducerProtocol {
       }
     }
     .onChange(of: \.userSettings) { userSettings, _, _ in
-      enum SaveDebounceID {}
-
       return .fireAndForget { try await self.fileClient.save(userSettings: userSettings) }
-        .debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: self.mainQueue)
+        .debounce(id: CancelID.saveDebounce, for: .seconds(1), scheduler: self.mainQueue)
     }
 
     Scope(state: \.stats, action: /Action.stats) {

@@ -65,6 +65,10 @@ public struct Leaderboard: ReducerProtocol {
     case vocab(LeaderboardResults<TimeScope>.Action)
   }
 
+  private enum CancelID {
+    case vocabRequest
+  }
+
   @Dependency(\.apiClient) var apiClient
 
   public init() {}
@@ -108,8 +112,6 @@ public struct Leaderboard: ReducerProtocol {
         return .none
 
       case let .vocab(.tappedRow(id)):
-        enum CancelID {}
-
         guard state.vocab.resultEnvelope != nil
         else { return .none }
 
@@ -123,7 +125,7 @@ public struct Leaderboard: ReducerProtocol {
             }
           )
         }
-        .cancellable(id: CancelID.self, cancelInFlight: true)
+        .cancellable(id: CancelID.vocabRequest, cancelInFlight: true)
 
       case .vocab:
         return .none

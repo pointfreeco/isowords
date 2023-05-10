@@ -25,6 +25,10 @@ public struct DailyChallengeResults: ReducerProtocol {
     case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
   }
 
+  private enum CancelID {
+    case historyRequest
+  }
+
   @Dependency(\.apiClient) var apiClient
 
   public init() {}
@@ -66,7 +70,6 @@ public struct DailyChallengeResults: ReducerProtocol {
           state.history = nil
         }
 
-        enum CancelID {}
         return .task { [gameMode = state.leaderboardResults.gameMode] in
           await .fetchHistoryResponse(
             TaskResult {
@@ -77,7 +80,7 @@ public struct DailyChallengeResults: ReducerProtocol {
             }
           )
         }
-        .cancellable(id: CancelID.self, cancelInFlight: true)
+        .cancellable(id: CancelID.historyRequest, cancelInFlight: true)
       }
     }
   }
