@@ -284,11 +284,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
-    await store.receive(
-      .game(
-        .destination(.presented(.bottomMenu(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))))
-      )
-    ) {
+    await store.receive(.game(.confirmRemoveCube(index: .init(x: .two, y: .two, z: .two)))) {
       $0.game.cubes.2.2.2.wasRemoved = true
       $0.game.moves.append(
         .init(
@@ -383,7 +379,7 @@ class OnboardingFeatureTests: XCTestCase {
         ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
           TextState("Yes, skip")
         }
-        ButtonState(action: .resumeButtonTapped) {
+        ButtonState {
           TextState("No, resume")
         }
       } message: {
@@ -397,7 +393,7 @@ class OnboardingFeatureTests: XCTestCase {
       }
     }
 
-    await store.send(.alert(.skipButtonTapped)) {
+    await store.send(.alert(.presented(.skipButtonTapped))) {
       $0.alert = nil
       $0.step = .step21_PlayAGameYourself
     }

@@ -9,6 +9,7 @@ struct ActiveGamesTray: ReducerProtocol {
   func reduce(into state: inout Game.State, action: Game.Action) -> EffectTask<Game.Action> {
     switch action {
     case .cancelButtonTapped,
+      .confirmRemoveCube,
       .destination(.presented(.bottomMenu(.confirmRemoveCube))),
       .destination(.presented(.bottomMenu(.endGameButtonTapped))),
       .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))),

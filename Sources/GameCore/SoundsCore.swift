@@ -138,7 +138,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
           }
         }
 
-      case .destination(.presented(.bottomMenu(.confirmRemoveCube))):
+      case .confirmRemoveCube:
         return .fireAndForget { await self.audioPlayer.play(.cubeRemove) }
 
       default:

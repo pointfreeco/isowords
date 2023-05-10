@@ -78,9 +78,9 @@ struct TurnBasedLogic: ReducerProtocol {
         }
       }
 
-    case .submitButtonTapped,
-      .wordSubmitButton(.delegate(.confirmSubmit)),
-      .destination(.presented(.bottomMenu(.confirmRemoveCube))):
+    case .confirmRemoveCube,
+      .submitButtonTapped,
+      .wordSubmitButton(.delegate(.confirmSubmit)):
       guard
         let move = state.moves.last,
         let localPlayerIndex = turnBasedContext.localPlayerIndex,
@@ -168,7 +168,8 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
   func filterActionsForYourTurn() -> some ReducerProtocol<State, Action> {
     self.filter { state, action in
       switch action {
-      case .pan,
+      case .confirmRemoveCube,
+        .pan,
         .submitButtonTapped,
         .tap,
         .wordSubmitButton(.delegate(.confirmSubmit)):

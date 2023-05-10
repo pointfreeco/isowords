@@ -161,6 +161,7 @@ public struct Game: ReducerProtocol {
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
     case cancelButtonTapped
+    case confirmRemoveCube(index: LatticePoint)
     case delayedShowUpgradeInterstitial
     case destination(PresentationAction<Destination.Action>)
     case doubleTap(index: LatticePoint)
@@ -224,6 +225,11 @@ public struct Game: ReducerProtocol {
         state.selectedWord = []
         return .none
 
+      case let .confirmRemoveCube(index):
+        state.removeCube(at: index, playedAt: self.date())
+        state.selectedWord = []
+        return .none
+
       case .delayedShowUpgradeInterstitial:
         state.destination = .upgradeInterstitial()
         return .none
@@ -259,9 +265,7 @@ public struct Game: ReducerProtocol {
         return .none
 
       case let .destination(.presented(.bottomMenu(.confirmRemoveCube(index)))):
-        state.removeCube(at: index, playedAt: self.date())
-        state.selectedWord = []
-        return .none
+        return .send(.confirmRemoveCube(index: index))
 
       case .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))):
         state.destination = .alert(
@@ -626,7 +630,7 @@ extension Game.State {
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .task { .destination(.presented(.bottomMenu(.confirmRemoveCube(index)))) } }
+    else { return .send(.confirmRemoveCube(index: index)) }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.turnBasedContext,

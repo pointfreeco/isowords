@@ -209,17 +209,17 @@ public struct Onboarding: ReducerProtocol {
           return .none
         }
 
-      case let .game(.destination(.presented(.bottomMenu(.confirmRemoveCube(index))))):
+      case let .game(.confirmRemoveCube(index)):
         state.step.next()
         return self.gameReducer.reduce(
           into: &state,
-          action: .game(.destination(.presented(.bottomMenu(.confirmRemoveCube(index)))))
+          action: .game(.confirmRemoveCube(index: index))
         )
 
       case let .game(.doubleTap(index: index)):
         guard state.step == .some(.step19_DoubleTapToRemove)
         else { return .none }
-        return .task { .game(.destination(.presented(.bottomMenu(.confirmRemoveCube(index))))) }
+        return .send(.game(.confirmRemoveCube(index: index)))
 
       case let .game(.tap(gestureState, .some(indexedCubeFace))):
         let index =
@@ -299,6 +299,7 @@ public struct Onboarding: ReducerProtocol {
         .cancellable(id: DelayedNextStepID.self)
       }
     }
+    .ifLet(\.$alert, action: /Action.alert)
     .onChange(of: \.game.selectedWordString) { selectedWord, state, _ in
       switch state.step {
       case .step4_FindGame where selectedWord == "GAME",
