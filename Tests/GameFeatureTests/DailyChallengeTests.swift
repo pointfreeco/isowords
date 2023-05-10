@@ -48,7 +48,7 @@ class DailyChallengeTests: XCTestCase {
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = .immediate
 
-    await store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
           GameOver.State(
@@ -99,7 +99,7 @@ class DailyChallengeTests: XCTestCase {
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = .immediate
 
-    await store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
           GameOver.State(

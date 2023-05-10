@@ -185,7 +185,7 @@ public struct AppReducer: ReducerProtocol {
       case .appDelegate:
         return .none
 
-      case .currentGame(.game(.endGameButtonTapped)),
+      case .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))),
         .currentGame(.game(.destination(.presented(.gameOver(.task))))):
 
         switch (state.game?.gameContext, state.game?.gameMode) {
@@ -234,7 +234,7 @@ public struct AppReducer: ReducerProtocol {
           } catch {}
         }
 
-      case .currentGame(.game(.exitButtonTapped)):
+      case .currentGame(.game(.destination(.presented(.bottomMenu(.exitButtonTapped))))):
         state.game = nil
         return .none
 

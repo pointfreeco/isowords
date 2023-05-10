@@ -571,13 +571,15 @@ class TurnBasedTests: XCTestCase {
 
     await store.send(.currentGame(.game(.doubleTap(index: .zero)))) {
       try XCTUnwrap(&$0.game) {
-        $0.bottomMenu = .removeCube(index: .zero, state: $0, isTurnEndingRemoval: false)
+        $0.destination = .bottomMenu(
+          .removeCube(index: .zero, state: $0, isTurnEndingRemoval: false)
+        )
       }
     }
 
     var updatedGameState = update(initialGameState) {
-      $0.bottomMenu = nil
       $0.cubes.0.0.0.wasRemoved = true
+      $0.destination = nil
       $0.moves.append(
         .init(
           playedAt: self.mainRunLoop.now.date,
@@ -603,7 +605,9 @@ class TurnBasedTests: XCTestCase {
     }
     store.dependencies.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
-    await store.send(.currentGame(.game(.confirmRemoveCube(.zero)))) {
+    await store.send(
+      .currentGame(.game(.destination(.presented(.bottomMenu(.confirmRemoveCube(.zero))))))
+    ) {
       $0.game = updatedGameState
     }
     await store.receive(
@@ -617,10 +621,12 @@ class TurnBasedTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
       try XCTUnwrap(&$0.game) {
-        $0.bottomMenu = .removeCube(
-          index: .init(x: .zero, y: .zero, z: .one),
-          state: $0,
-          isTurnEndingRemoval: true
+        $0.destination = .bottomMenu(
+          .removeCube(
+            index: .init(x: .zero, y: .zero, z: .one),
+            state: $0,
+            isTurnEndingRemoval: true
+          )
         )
       }
     }
@@ -637,7 +643,7 @@ class TurnBasedTests: XCTestCase {
       )
       $0.turnBasedContext?.match = updatedMatch
       $0.cubes.0.0.1.wasRemoved = true
-      $0.bottomMenu = nil
+      $0.destination = nil
     }
     updatedMatch = update(updatedMatch) {
       $0.currentParticipant = .remote
@@ -655,7 +661,15 @@ class TurnBasedTests: XCTestCase {
     }
     store.dependencies.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
-    await store.send(.currentGame(.game(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))) {
+    await store.send(
+      .currentGame(
+        .game(
+          .destination(
+            .presented(.bottomMenu(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))
+          )
+        )
+      )
+    ) {
       $0.game = updatedGameState
     }
     await store.receive(.currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))) {

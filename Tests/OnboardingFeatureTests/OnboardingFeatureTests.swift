@@ -284,8 +284,12 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
-    await store.receive(.game(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))) {
-      $0.game.cubes[.two][.two][.two].wasRemoved = true
+    await store.receive(
+      .game(
+        .destination(.presented(.bottomMenu(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))))
+      )
+    ) {
+      $0.game.cubes.2.2.2.wasRemoved = true
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,

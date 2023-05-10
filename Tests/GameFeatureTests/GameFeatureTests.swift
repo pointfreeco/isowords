@@ -50,7 +50,7 @@ class GameFeatureTests: XCTestCase {
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(.game(.doubleTap(index: .zero)))
-    await store.receive(.game(.confirmRemoveCube(.zero))) {
+    await store.receive(.game(.destination(.presented(.bottomMenu(.confirmRemoveCube(.zero)))))) {
       $0.game?.cubes.0.0.0.wasRemoved = true
       $0.game?.moves = [
         .init(

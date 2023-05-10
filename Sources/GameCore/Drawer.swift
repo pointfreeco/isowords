@@ -10,9 +10,9 @@ struct ActiveGamesTray: ReducerProtocol {
     switch action {
     case .cancelButtonTapped,
       .destination(.presented(.bottomMenu(.confirmRemoveCube))),
+      .destination(.presented(.bottomMenu(.endGameButtonTapped))),
+      .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))),
       .doubleTap,
-      .endGameButtonTapped,
-      .forfeitGameButtonTapped,
       .menuButtonTapped,
       .pan,
       .submitButtonTapped,
@@ -24,15 +24,13 @@ struct ActiveGamesTray: ReducerProtocol {
 
     case .activeGames,
       .delayedShowUpgradeInterstitial,
-      .exitButtonTapped,
       .destination,
       .gameCenter,
       .gameLoaded,
       .lowPowerModeChanged,
       .matchesLoaded(.failure),
       .savedGamesLoaded(.failure),
-      .timerTick,
-      .upgradeInterstitial:
+      .timerTick:
 
       return .none
 

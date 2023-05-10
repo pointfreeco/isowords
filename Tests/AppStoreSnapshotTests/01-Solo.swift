@@ -60,7 +60,6 @@ var gameplayAppStoreView: AnyView {
   let state = GameFeature.State(
     game: Game.State(
       activeGames: ActiveGamesState(),
-      bottomMenu: nil,
       cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
       cubeStartedShakingAt: nil,
       gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
@@ -80,7 +79,6 @@ var gameplayAppStoreView: AnyView {
       selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
         ?? [],
       selectedWordIsValid: true,
-      upgradeInterstitial: nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState()
     ),
     settings: .init()

@@ -22,11 +22,13 @@ public struct Game: ReducerProtocol {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
       case gameOver(GameOver.State)
+      case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
     public enum Action: Equatable {
       case alert(Alert)
       case bottomMenu(BottomMenu)
       case gameOver(GameOver.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
 
       public enum Alert: Equatable {
         case forfeitButtonTapped
@@ -42,6 +44,9 @@ public struct Game: ReducerProtocol {
     public var body: some ReducerProtocol<State, Action> {
       Scope(state: /State.gameOver, action: /Action.gameOver) {
         GameOver()
+      }
+      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
       }
     }
   }
@@ -66,7 +71,6 @@ public struct Game: ReducerProtocol {
     public var secondsPlayed: Int
     public var selectedWord: [IndexedCubeFace]
     public var selectedWordIsValid: Bool
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
     public init(
@@ -90,7 +94,6 @@ public struct Game: ReducerProtocol {
       secondsPlayed: Int = 0,
       selectedWord: [IndexedCubeFace] = [],
       selectedWordIsValid: Bool = false,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       self.activeGames = activeGames
@@ -113,7 +116,6 @@ public struct Game: ReducerProtocol {
       self.secondsPlayed = secondsPlayed
       self.selectedWord = selectedWord
       self.selectedWordIsValid = selectedWordIsValid
-      self.upgradeInterstitial = upgradeInterstitial
       self.wordSubmitButton = wordSubmit
     }
 
@@ -162,9 +164,6 @@ public struct Game: ReducerProtocol {
     case delayedShowUpgradeInterstitial
     case destination(PresentationAction<Destination.Action>)
     case doubleTap(index: LatticePoint)
-    case endGameButtonTapped
-    case exitButtonTapped
-    case forfeitGameButtonTapped
     case gameCenter(GameCenterAction)
     case gameLoaded
     case lowPowerModeChanged(Bool)
@@ -177,7 +176,6 @@ public struct Game: ReducerProtocol {
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
@@ -212,9 +210,6 @@ public struct Game: ReducerProtocol {
       .ifLet(\.$destination, action: /Action.destination) {
         Destination()
       }
-      .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-        UpgradeInterstitial()
-      }
       .sounds()
   }
 
@@ -225,8 +220,15 @@ public struct Game: ReducerProtocol {
       case .activeGames:
         return .none
 
-      case .destination(.presented(.alert(.forfeitButtonTapped))):
+      case .cancelButtonTapped:
+        state.selectedWord = []
+        return .none
 
+      case .delayedShowUpgradeInterstitial:
+        state.destination = .upgradeInterstitial()
+        return .none
+
+      case .destination(.presented(.alert(.forfeitButtonTapped))):
         guard let match = state.turnBasedContext?.match
         else { return .none }
 
@@ -256,39 +258,12 @@ public struct Game: ReducerProtocol {
         state.isSettingsPresented = true
         return .none
 
-      case .cancelButtonTapped:
-        state.selectedWord = []
-        return .none
-
-      case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
-        return .none
-
       case let .destination(.presented(.bottomMenu(.confirmRemoveCube(index)))):
         state.removeCube(at: index, playedAt: self.date())
         state.selectedWord = []
         return .none
 
-      case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
-        state = .init(inProgressGame: inProgressGame)
-        return .none
-
-      case .destination:
-        return .none
-
-      case let .doubleTap(index):
-        guard state.selectedWord.count <= 1
-        else { return .none }
-
-        return state.tryToRemoveCube(at: index)
-
-      case .endGameButtonTapped:
-        return .none
-
-      case .exitButtonTapped:
-        return .none
-
-      case .forfeitGameButtonTapped:
+      case .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))):
         state.destination = .alert(
           AlertState {
             TextState("Are you sure?")
@@ -309,6 +284,25 @@ public struct Game: ReducerProtocol {
           }
         )
         return .none
+
+      case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
+        state = .init(inProgressGame: inProgressGame)
+        return .none
+
+      case .destination(.presented(.upgradeInterstitial(.delegate(.close)))),
+        .destination(.presented(.upgradeInterstitial(.delegate(.fullGamePurchased)))):
+        // TODO: Check /Destination.State.upgradeInterstitial ~= destination
+        state.destination = nil
+        return .none
+
+      case .destination:
+        return .none
+
+      case let .doubleTap(index):
+        guard state.selectedWord.count <= 1
+        else { return .none }
+
+        return state.tryToRemoveCube(at: index)
 
       case .gameCenter:
         return .none
@@ -517,14 +511,6 @@ public struct Game: ReducerProtocol {
         return .none
 
       case .trayButtonTapped:
-        return .none
-
-      case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
         return .none
 
       case .wordSubmitButton:

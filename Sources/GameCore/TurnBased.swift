@@ -71,9 +71,6 @@ struct TurnBasedLogic: ReducerProtocol {
     case .gameCenter(.turnBasedMatchResponse(.failure)):
       return .none
 
-    case .exitButtonTapped:
-      return .none
-
     case .task:
       return .run { send in
         for await event in self.gameCenter.localPlayer.listener() {
@@ -182,9 +179,6 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
         .delayedShowUpgradeInterstitial,
         .destination,
         .doubleTap,
-        .endGameButtonTapped,
-        .exitButtonTapped,
-        .forfeitGameButtonTapped,
         .gameCenter,
         .gameLoaded,
         .lowPowerModeChanged,
@@ -194,7 +188,6 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
         .savedGamesLoaded,
         .timerTick,
         .trayButtonTapped,
-        .upgradeInterstitial,
         .wordSubmitButton:
         return true
       }
