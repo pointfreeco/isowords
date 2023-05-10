@@ -332,10 +332,7 @@ struct OnboardingStepView: View {
       }
     }
     .task { await self.viewStore.send(.task).finish() }
-    .alert(
-      self.store.scope(state: \.alert, action: Onboarding.Action.alert),
-      dismiss: .dismiss
-    )
+    .alert(store: self.store.scope(state: \.$alert, action: Onboarding.Action.alert))
   }
 }
 

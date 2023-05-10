@@ -72,10 +72,10 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
-      $0.game.cubes[.one][.two][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
+      $0.game.cubes.1.2.2.left.useCount += 1
+      $0.game.cubes.2.2.2.left.useCount += 1
+      $0.game.cubes.2.2.2.right.useCount += 1
+      $0.game.cubes.2.2.1.right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -128,11 +128,11 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
-      $0.game.cubes[.one][.two][.two].top.useCount += 1
-      $0.game.cubes[.one][.two][.one].top.useCount += 1
-      $0.game.cubes[.two][.two][.two].top.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].top.useCount += 1
+      $0.game.cubes.1.2.2.top.useCount += 1
+      $0.game.cubes.1.2.1.top.useCount += 1
+      $0.game.cubes.2.2.2.top.useCount += 1
+      $0.game.cubes.2.2.1.right.useCount += 1
+      $0.game.cubes.2.2.1.top.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -193,12 +193,12 @@ class OnboardingFeatureTests: XCTestCase {
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubeStartedShakingAt = nil
-      $0.game.cubes[.one][.one][.two].left.useCount += 1
-      $0.game.cubes[.two][.one][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].right.useCount += 1
-      $0.game.cubes[.two][.one][.two].right.useCount += 1
-      $0.game.cubes[.two][.one][.one].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
+      $0.game.cubes.1.1.2.left.useCount += 1
+      $0.game.cubes.2.1.2.left.useCount += 1
+      $0.game.cubes.2.2.2.right.useCount += 1
+      $0.game.cubes.2.1.2.right.useCount += 1
+      $0.game.cubes.2.1.1.right.useCount += 1
+      $0.game.cubes.2.2.1.right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -251,10 +251,10 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
-      $0.game.cubes[.zero][.zero][.two].left.useCount += 1
-      $0.game.cubes[.one][.zero][.two].left.useCount += 1
-      $0.game.cubes[.two][.zero][.two].left.useCount += 1
-      $0.game.cubes[.two][.zero][.two].right.useCount += 1
+      $0.game.cubes.0.0.2.left.useCount += 1
+      $0.game.cubes.1.0.2.left.useCount += 1
+      $0.game.cubes.2.0.2.left.useCount += 1
+      $0.game.cubes.2.0.2.right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -377,19 +377,24 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.skipButtonTapped) {
-      $0.alert = .init(
-        title: .init("Skip tutorial?"),
-        message: .init("""
+      $0.alert = AlertState {
+        TextState("Skip tutorial?")
+      } actions: {
+        ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
+          TextState("Yes, skip")
+        }
+        ButtonState(action: .resumeButtonTapped) {
+          TextState("No, resume")
+        }
+      } message: {
+        TextState(
+          """
           Are you sure you want to skip the tutorial? It only takes about a minute to complete.
 
           You can always view it again later in settings.
-          """),
-        primaryButton: .default(
-          .init("Yes, skip"),
-          action: .send(.skipButtonTapped, animation: .default)
-        ),
-        secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
-      )
+          """
+        )
+      }
     }
 
     await store.send(.alert(.skipButtonTapped)) {

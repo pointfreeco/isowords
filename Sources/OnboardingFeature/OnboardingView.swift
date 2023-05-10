@@ -15,13 +15,13 @@ import UserDefaultsClient
 
 public struct Onboarding: ReducerProtocol {
   public struct State: Equatable {
-    public var alert: AlertState<AlertAction>?
+    @PresentationState public var alert: AlertState<Action.Alert>?
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
 
     public init(
-      alert: AlertState<AlertAction>? = nil,
+      alert: AlertState<Action.Alert>? = nil,
       game: Game.State = .onboarding,
       presentationStyle: PresentationStyle,
       step: Step = Step.allCases.first!
@@ -134,24 +134,21 @@ public struct Onboarding: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case alert(AlertAction)
+    case alert(PresentationAction<Alert>)
     case delayedNextStep
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case game(Game.Action)
     case getStartedButtonTapped
     case nextButtonTapped
     case skipButtonTapped
     case task
-  }
 
-  public enum AlertAction: Equatable {
-    case dismiss
-    case resumeButtonTapped
-    case skipButtonTapped
-  }
-
-  public enum DelegateAction {
-    case getStarted
+    public enum Alert: Equatable {
+      case skipButtonTapped
+    }
+    public enum Delegate {
+      case getStarted
+    }
   }
 
   @Dependency(\.audioPlayer) var _audioPlayer
@@ -169,18 +166,15 @@ public struct Onboarding: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
-      case .alert(.dismiss), .alert(.resumeButtonTapped):
-        state.alert = nil
-        return .none
-
-      case .alert(.skipButtonTapped):
-        state.alert = nil
+      case .alert(.presented(.skipButtonTapped)):
         state.step = State.Step.allCases.last!
-
         return .fireAndForget {
           await self.audioPlayer.play(.uiSfxTap)
           Task.cancel(id: DelayedNextStepID.self)
         }
+
+      case .alert:
+        return .none
 
       case .delayedNextStep:
         state.step.next()
@@ -260,19 +254,24 @@ public struct Onboarding: ReducerProtocol {
             await self.audioPlayer.play(.uiSfxTap)
           }
         }
-        state.alert = .init(
-          title: .init("Skip tutorial?"),
-          message: .init(
+        state.alert = AlertState {
+          TextState("Skip tutorial?")
+        } actions: {
+          ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
+            TextState("Yes, skip")
+          }
+          ButtonState {
+            TextState("No, resume")
+          }
+        } message: {
+          TextState(
             """
             Are you sure you want to skip the tutorial? It only takes about a minute to complete.
 
             You can always view it again later in settings.
-            """),
-          primaryButton: .default(
-            .init("Yes, skip"), action: .send(.skipButtonTapped, animation: .default)
-          ),
-          secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
-        )
+            """
+          )
+        }
         return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
 
       case .task:
