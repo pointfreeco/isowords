@@ -37,10 +37,12 @@ struct TurnBasedLogic: ReducerProtocol {
         match.status != .ended,
         match.participants.allSatisfy({ $0.matchOutcome == .none })
       else {
-        state.gameOver = .init(
-          completedGame: CompletedGame(gameState: state),
-          isDemo: state.isDemo,
-          turnBasedContext: state.turnBasedContext
+        state.destination = .gameOver(
+          .init(
+            completedGame: CompletedGame(gameState: state),
+            isDemo: state.isDemo,
+            turnBasedContext: state.turnBasedContext
+          )
         )
         return .fireAndForget {
           await self.feedbackGenerator.selectionChanged()
@@ -180,6 +182,7 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
         .cancelButtonTapped,
         .confirmRemoveCube,
         .delayedShowUpgradeInterstitial,
+        .destination,
         .dismissBottomMenu,
         .doubleTap,
         .endGameButtonTapped,
@@ -187,7 +190,6 @@ extension ReducerProtocol where State == Game.State, Action == Game.Action {
         .forfeitGameButtonTapped,
         .gameCenter,
         .gameLoaded,
-        .gameOver,
         .lowPowerModeChanged,
         .matchesLoaded,
         .menuButtonTapped,

@@ -17,16 +17,29 @@ import TcaHelpers
 import UpgradeInterstitialFeature
 
 public struct Game: ReducerProtocol {
+  public struct Destination: ReducerProtocol {
+    public enum State: Equatable {
+      case gameOver(GameOver.State)
+    }
+    public enum Action: Equatable {
+      case gameOver(GameOver.Action)
+    }
+    public var body: some ReducerProtocol<State, Action> {
+      Scope(state: /State.gameOver, action: /Action.gameOver) {
+        GameOver()
+      }
+    }
+  }
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
     public var alert: AlertState<AlertAction>?
     public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
+    @PresentationState public var destination: Destination.State?
     public var gameContext: ClientModels.GameContext
     public var gameCurrentTime: Date
     public var gameMode: GameMode
-    @PresentationState public var gameOver: GameOver.State?
     public var gameStartTime: Date
     public var isDemo: Bool
     public var isGameLoaded: Bool
@@ -49,10 +62,10 @@ public struct Game: ReducerProtocol {
       bottomMenu: BottomMenuState<Action>? = nil,
       cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
+      destination: Destination.State? = nil,
       gameContext: ClientModels.GameContext,
       gameCurrentTime: Date,
       gameMode: GameMode,
-      gameOver: GameOver.State? = nil,
       gameStartTime: Date,
       isDemo: Bool = false,
       isGameLoaded: Bool = false,
@@ -74,10 +87,10 @@ public struct Game: ReducerProtocol {
       self.bottomMenu = bottomMenu
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
+      self.destination = destination
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
-      self.gameOver = gameOver
       self.gameStartTime = gameStartTime
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
@@ -140,6 +153,7 @@ public struct Game: ReducerProtocol {
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
+    case destination(PresentationAction<Destination.Action>)
     case dismissBottomMenu
     case doubleTap(index: LatticePoint)
     case endGameButtonTapped
@@ -147,7 +161,6 @@ public struct Game: ReducerProtocol {
     case forfeitGameButtonTapped
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case gameOver(PresentationAction<GameOver.Action>)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
@@ -197,8 +210,8 @@ public struct Game: ReducerProtocol {
         return .none
       }
       .filterActionsForYourTurn()
-      .ifLet(\.$gameOver, action: /Action.gameOver) {
-        GameOver()
+      .ifLet(\.$destination, action: /Action.destination) {
+        Destination()
       }
       .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
         UpgradeInterstitial()
@@ -258,6 +271,13 @@ public struct Game: ReducerProtocol {
         state.upgradeInterstitial = .init()
         return .none
 
+      case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
+        state = .init(inProgressGame: inProgressGame)
+        return .none
+
+      case .destination:
+        return .none
+
       case .dismissBottomMenu:
         state.bottomMenu = nil
         return .none
@@ -298,13 +318,6 @@ public struct Game: ReducerProtocol {
             await send(.timerTick(instant.date))
           }
         }
-
-      case let .gameOver(.presented(.delegate(.startGame(inProgressGame)))):
-        state = .init(inProgressGame: inProgressGame)
-        return .none
-
-      case .gameOver:
-        return .none
 
       case let .lowPowerModeChanged(isOn):
         state.isOnLowPowerMode = isOn
@@ -581,7 +594,7 @@ extension Game.State {
   }
 
   public var isGameOver: Bool {
-    self.gameOver != nil
+    /Game.Destination.State.gameOver ~= self.destination
   }
 
   public var isResumable: Bool {

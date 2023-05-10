@@ -61,10 +61,7 @@ public struct Demo: ReducerProtocol {
 
   public var body: some ReducerProtocol<State, Action> {
     Scope(state: \.step, action: .self) {
-      Scope(
-        state: /State.Step.onboarding,
-        action: /Action.onboarding
-      ) {
+      Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
     }
@@ -82,7 +79,7 @@ public struct Demo: ReducerProtocol {
     .dependency(\.storeKit, .noop)
     .dependency(\.userDefaults, .noop)
     .dependency(\.userNotifications, .noop)
-    .onChange(of: { $0.game?.gameOver != nil }) { _, _, _ in
+    .onChange(of: { /Game.Destination.State.gameOver ~= $0.game?.destination }) { _, _, _ in
       .task {
         try await self.mainQueue.sleep(for: .seconds(2))
         return .gameOverDelay
@@ -100,7 +97,7 @@ public struct Demo: ReducerProtocol {
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.gameOver(.presented(.submitGameResponse(.success)))):
+      case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
         state.appStoreOverlayIsPresented = true
         return .none
 
@@ -146,7 +143,7 @@ public struct DemoView: View {
 
     init(state: Demo.State) {
       self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = state.game?.gameOver != nil
+      self.isGameOver = /Game.Destination.State.gameOver ~= state.game?.destination
     }
   }
 
@@ -159,29 +156,24 @@ public struct DemoView: View {
 
   public var body: some View {
     SwitchStore(self.store.scope(state: \.step)) {
-      CaseLet(
-        state: /Demo.State.Step.onboarding,
-        action: Demo.Action.onboarding,
-        then: {
+      switch $0 {
+      case .onboarding:
+        CaseLet(/Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
           OnboardingView(store: $0)
             .onAppear { self.viewStore.send(.onAppear) }
         }
-      )
-
-      CaseLet(
-        state: /Demo.State.Step.game,
-        action: Demo.Action.game,
-        then: { store in
+      case .game:
+        CaseLet(/Demo.State.Step.game, action: Demo.Action.game) {
           GameWrapper(
             content: GameView(
               content: CubeView(
-                store: store.scope(
+                store: $0.scope(
                   state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
                   action: { CubeSceneView.ViewAction.to(gameAction: $0) }
                 )
               ),
               isAnimationReduced: false,
-              store: store
+              store: $0
             ),
             isGameOver: self.viewStore.isGameOver,
             bannerAction: {
@@ -189,7 +181,7 @@ public struct DemoView: View {
             }
           )
         }
-      )
+      }
     }
     .appStoreOverlay(
       isPresented: self.viewStore.binding(

@@ -25,9 +25,11 @@ struct GameOverLogic: ReducerProtocol {
     else { return .none }
 
     state.bottomMenu = nil
-    state.gameOver = GameOver.State(
-      completedGame: CompletedGame(gameState: state),
-      isDemo: state.isDemo
+    state.destination = .gameOver(
+      GameOver.State(
+        completedGame: CompletedGame(gameState: state),
+        isDemo: state.isDemo
+      )
     )
 
     switch state.gameContext {
@@ -37,7 +39,9 @@ struct GameOverLogic: ReducerProtocol {
       }
 
     case let .turnBased(turnBasedMatch):
-      state.gameOver?.turnBasedContext = turnBasedMatch
+      XCTModify(&state.destination, case: /Game.Destination.State.gameOver) {
+        $0.turnBasedContext = turnBasedMatch
+      }
       return .none
     }
   }
