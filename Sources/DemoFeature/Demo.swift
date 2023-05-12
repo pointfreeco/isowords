@@ -80,9 +80,9 @@ public struct Demo: ReducerProtocol {
     .dependency(\.userDefaults, .noop)
     .dependency(\.userNotifications, .noop)
     .onChange(of: { /Game.Destination.State.gameOver ~= $0.game?.destination }) { _, _, _ in
-      .task {
+      .run { send in
         try await self.mainQueue.sleep(for: .seconds(2))
-        return .gameOverDelay
+        await send(.gameOverDelay)
       }
     }
 
@@ -93,7 +93,7 @@ public struct Demo: ReducerProtocol {
         return .none
 
       case .fullVersionButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
@@ -109,7 +109,7 @@ public struct Demo: ReducerProtocol {
         return .none
 
       case .onAppear:
-        return .fireAndForget {
+        return .run { _ in
           await self.loadSounds(AudioPlayerClient.Sound.allCases)
         }
 

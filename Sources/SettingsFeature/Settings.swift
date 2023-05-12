@@ -201,7 +201,7 @@ public struct Settings: ReducerProtocol {
       Reduce { state, action in
         switch action {
         case .binding(\.$developer.currentBaseUrl):
-          return .fireAndForget { [url = state.developer.currentBaseUrl.url] in
+          return .run { [url = state.developer.currentBaseUrl.url] _ in
             await self.apiClient.setBaseUrl(url)
             await self.apiClient.logout()
           }
@@ -219,14 +219,16 @@ public struct Settings: ReducerProtocol {
           switch userNotificationSettings.authorizationStatus {
           case .notDetermined, .provisional:
             state.enableNotifications = true
-            return .task {
-              await .userNotificationAuthorizationResponse(
-                TaskResult {
-                  try await self.userNotifications.requestAuthorization([.alert, .sound])
-                }
+            return .run { send in
+              await send(
+                .userNotificationAuthorizationResponse(
+                  TaskResult {
+                    try await self.userNotifications.requestAuthorization([.alert, .sound])
+                  }
+                ),
+                animation: .default
               )
             }
-            .animation()
 
           case .denied:
             state.alert = .userNotificationAuthorizationDenied
@@ -235,7 +237,7 @@ public struct Settings: ReducerProtocol {
 
           case .authorized:
             state.enableNotifications = true
-            return .task { .userNotificationAuthorizationResponse(.success(true)) }
+            return .send(.userNotificationAuthorizationResponse(.success(true)))
 
           case .ephemeral:
             state.enableNotifications = true
@@ -246,7 +248,7 @@ public struct Settings: ReducerProtocol {
           }
 
         case .binding(\.$sendDailyChallengeReminder):
-          return .task { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
+          return .run { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] send in
             _ = try await self.apiClient.apiRequest(
               route: .push(
                 .updateSetting(
@@ -257,14 +259,16 @@ public struct Settings: ReducerProtocol {
                 )
               )
             )
-            return await .currentPlayerRefreshed(
-              TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+            await send(
+              .currentPlayerRefreshed(
+                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+              )
             )
           }
           .debounce(id: CancelID.updateRemoteSettings, for: 1, scheduler: self.mainQueue)
 
         case .binding(\.$sendDailyChallengeSummary):
-          return .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
+          return .run { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] send in
             _ = try await self.apiClient.apiRequest(
               route: .push(
                 .updateSetting(
@@ -275,29 +279,31 @@ public struct Settings: ReducerProtocol {
                 )
               )
             )
-            return await .currentPlayerRefreshed(
-              TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+            await send(
+              .currentPlayerRefreshed(
+                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+              )
             )
           }
           .debounce(id: CancelID.updateRemoteSettings, for: 1, scheduler: self.mainQueue)
 
         case .binding(\.$userSettings.appIcon):
-          return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
+          return .run { [appIcon = state.userSettings.appIcon?.rawValue] _ in
             try await self.applicationClient.setAlternateIconName(appIcon)
           }
 
         case .binding(\.$userSettings.colorScheme):
-          return .fireAndForget { [style = state.userSettings.colorScheme.userInterfaceStyle] in
+          return .run { [style = state.userSettings.colorScheme.userInterfaceStyle] _ in
             await self.applicationClient.setUserInterfaceStyle(style)
           }
 
         case .binding(\.$userSettings.musicVolume):
-          return .fireAndForget { [volume = state.userSettings.musicVolume] in
+          return .run { [volume = state.userSettings.musicVolume] _ in
             await self.audioPlayer.setGlobalVolumeForMusic(volume)
           }
 
         case .binding(\.$userSettings.soundEffectsVolume):
-          return .fireAndForget { [volume = state.userSettings.soundEffectsVolume] in
+          return .run { [volume = state.userSettings.soundEffectsVolume] _ in
             await self.audioPlayer.setGlobalVolumeForSoundEffects(volume)
           }
 
@@ -316,14 +322,14 @@ public struct Settings: ReducerProtocol {
           return .none
 
         case .didBecomeActive:
-          return .task {
-            await .userNotificationSettingsResponse(
-              self.userNotifications.getNotificationSettings()
+          return .run { send in
+            await send(
+              .userNotificationSettingsResponse(self.userNotifications.getNotificationSettings())
             )
           }
 
         case .leaveUsAReviewButtonTapped:
-          return .fireAndForget {
+          return .run { _ in
             _ = await self.applicationClient
               .open(self.serverConfig().appStoreReviewUrl, [:])
           }
@@ -333,12 +339,14 @@ public struct Settings: ReducerProtocol {
 
         case .paymentTransaction(.removedTransactions):
           state.isPurchasing = false
-          return .task {
-            await .currentPlayerRefreshed(
-              TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+          return .run { send in
+            await send(
+              .currentPlayerRefreshed(
+                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+              ),
+              animation: .default
             )
           }
-          .animation()
 
         case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
           state.isRestoring = false
@@ -357,7 +365,7 @@ public struct Settings: ReducerProtocol {
           return .none
 
         case .openSettingButtonTapped:
-          return .fireAndForget {
+          return .run { _ in
             guard
               let url = await URL(string: self.applicationClient.openSettingsURLString())
             else { return }
@@ -379,7 +387,7 @@ public struct Settings: ReducerProtocol {
           return .none
 
         case .reportABugButtonTapped:
-          return .fireAndForget {
+          return .run { _ in
             let currentPlayer = self.apiClient.currentPlayer()
             var components = URLComponents()
             components.scheme = "mailto"
@@ -403,14 +411,14 @@ public struct Settings: ReducerProtocol {
 
         case .restoreButtonTapped:
           state.isRestoring = true
-          return .fireAndForget { await self.storeKit.restoreCompletedTransactions() }
+          return .run { _ in await self.storeKit.restoreCompletedTransactions() }
 
         case .stats:
           return .none
 
         case let .tappedProduct(product):
           state.isPurchasing = true
-          return .fireAndForget {
+          return .run { _ in
             let payment = SKMutablePayment()
             payment.productIdentifier = product.productIdentifier
             payment.quantity = 1
@@ -477,7 +485,7 @@ public struct Settings: ReducerProtocol {
         case let .userNotificationAuthorizationResponse(.success(granted)):
           state.enableNotifications = granted
           return granted
-            ? .fireAndForget { await self.registerForRemoteNotifications() }
+            ? .run { _ in await self.registerForRemoteNotifications() }
             : .none
 
         case .userNotificationAuthorizationResponse:
@@ -491,7 +499,7 @@ public struct Settings: ReducerProtocol {
       }
     }
     .onChange(of: \.userSettings) { userSettings, _, _ in
-      return .fireAndForget { try await self.fileClient.save(userSettings: userSettings) }
+      return .run { _ in try await self.fileClient.save(userSettings: userSettings) }
         .debounce(id: CancelID.saveDebounce, for: .seconds(1), scheduler: self.mainQueue)
     }
 

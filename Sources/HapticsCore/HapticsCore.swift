@@ -21,7 +21,7 @@ private struct Haptics<Base: ReducerProtocol, Trigger: Equatable>: ReducerProtoc
   var body: some ReducerProtocol<Base.State, Base.Action> {
     self.base.onChange(of: self.trigger) { _, _, state, _ in
       guard self.isEnabled(state) else { return .none }
-      return .fireAndForget { await self.feedbackGenerator.selectionChanged() }
+      return .run { _ in await self.feedbackGenerator.selectionChanged() }
     }
   }
 }

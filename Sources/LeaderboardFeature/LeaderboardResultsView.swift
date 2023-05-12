@@ -57,12 +57,12 @@ public struct LeaderboardResults<TimeScope>: ReducerProtocol {
     case let .gameModeButtonTapped(gameMode):
       state.gameMode = gameMode
       state.isLoading = true
-      return .task { [timeScope = state.timeScope] in
-        await .resultsResponse(
-          TaskResult { try await self.loadResults(gameMode, timeScope) }
+      return .run { [timeScope = state.timeScope] send in
+        await send(
+          .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+          animation: .default
         )
       }
-      .animation()
 
     case .resultsResponse(.failure):
       state.isLoading = false
@@ -86,24 +86,24 @@ public struct LeaderboardResults<TimeScope>: ReducerProtocol {
       state.isTimeScopeMenuVisible = false
       state.resultEnvelope = .placeholder
 
-      return .task { [gameMode = state.gameMode, timeScope = state.timeScope] in
-        await .resultsResponse(
-          TaskResult { try await self.loadResults(gameMode, timeScope) }
+      return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
+        await send(
+          .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+          animation: .default
         )
       }
-      .animation()
 
     case let .timeScopeChanged(timeScope):
       state.isLoading = true
       state.isTimeScopeMenuVisible = false
       state.timeScope = timeScope
 
-      return .task { [gameMode = state.gameMode] in
-        await .resultsResponse(
-          TaskResult { try await self.loadResults(gameMode, timeScope) }
+      return .run { [gameMode = state.gameMode] send in
+        await send(
+          .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+          animation: .default
         )
       }
-      .animation()
     }
   }
 }

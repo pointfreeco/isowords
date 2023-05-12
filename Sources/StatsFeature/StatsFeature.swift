@@ -96,8 +96,8 @@ public struct Stats: ReducerProtocol {
         return .none
 
       case .task:
-        return .task {
-          await .statsResponse(TaskResult { try await self.database.fetchStats() })
+        return .run { send in
+          await send(.statsResponse(TaskResult { try await self.database.fetchStats() }))
         }
 
       case .vocabButtonTapped:

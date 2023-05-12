@@ -238,7 +238,7 @@ public struct Game: ReducerProtocol {
         guard let match = state.turnBasedContext?.match
         else { return .none }
 
-        return .fireAndForget {
+        return .run { _ in
           let localPlayer = self.gameCenter.localPlayer.localPlayer()
           let currentParticipantIsLocalPlayer =
             match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
@@ -433,7 +433,7 @@ public struct Game: ReducerProtocol {
 
         state.moves.append(move)
 
-        return .fireAndForget { [state] in
+        return .run { [state] _ in
           await withThrowingTaskGroup(of: Void.self) { group in
             for face in state.selectedWord where !state.cubes[face.index].isInPlay {
               group.addTask {

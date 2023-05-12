@@ -21,7 +21,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
   var body: some ReducerProtocol<Game.State, Game.Action> {
     self.core
       .onChange(of: { /Game.Destination.State.gameOver ~= $0.destination }) { _, _, _ in
-        .fireAndForget {
+        .run { _ in
           Task.cancel(id: CancelID.cubeShake)
           for music in AudioPlayerClient.Sound.allMusic where music != .gameOverMusicLoop {
             await self.audioPlayer.stop(music)
@@ -30,11 +30,11 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
       }
       .onChange(of: \.secondsPlayed) { secondsPlayed, state, _ in
         if secondsPlayed == state.gameMode.seconds - 10 {
-          return .fireAndForget { await self.audioPlayer.play(.timed10SecWarning) }
+          return .run { _ in await self.audioPlayer.play(.timed10SecWarning) }
         } else if secondsPlayed >= state.gameMode.seconds - 5
           && secondsPlayed <= state.gameMode.seconds
         {
-          return .fireAndForget { await self.audioPlayer.play(.timedCountdownTone) }
+          return .run { _ in await self.audioPlayer.play(.timedCountdownTone) }
         } else {
           return .none
         }
@@ -49,10 +49,10 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
 
         switch action {
         case .submitButtonTapped, .wordSubmitButton(.delegate(.confirmSubmit)):
-          return .fireAndForget { await self.audioPlayer.play(.invalidWord) }
+          return .run { _ in await self.audioPlayer.play(.invalidWord) }
 
         default:
-          return .fireAndForget { await self.audioPlayer.play(.cubeDeselect) }
+          return .run { _ in await self.audioPlayer.play(.cubeDeselect) }
         }
       }
       .onChange(of: \.selectedWord) { previousSelection, selectedWord, state, _ in
@@ -78,7 +78,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
 
           return cubeWasShaking
             ? .none
-            : .fireAndForget {
+            : .run { _ in
               await self.audioPlayer.play(.cubeShake)
               for await _ in self.mainQueue.timer(interval: .seconds(2)) {
                 await self.audioPlayer.play(.cubeShake)
@@ -105,7 +105,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
             .remainder
         )
 
-        return .fireAndForget {
+        return .run { _ in
           await self.audioPlayer.play(AudioPlayerClient.Sound.allSubmits[firstIndex])
         }
       }
@@ -123,7 +123,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
     Reduce { state, action in
       switch action {
       case .task:
-        return .fireAndForget { [gameMode = state.gameMode, isDemo = state.isDemo] in
+        return .run { [gameMode = state.gameMode, isDemo = state.isDemo] _ in
           if gameMode == .timed {
             await self.audioPlayer
               .play(
@@ -139,7 +139,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
         }
 
       case .confirmRemoveCube:
-        return .fireAndForget { await self.audioPlayer.play(.cubeRemove) }
+        return .run { _ in await self.audioPlayer.play(.cubeRemove) }
 
       default:
         return .none

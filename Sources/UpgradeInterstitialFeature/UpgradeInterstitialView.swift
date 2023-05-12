@@ -69,7 +69,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
       return .none
 
     case .maybeLaterButtonTapped:
-      return .task { .delegate(.close) }.animation()
+      return .send(.delegate(.close), animation: .default)
 
     case let .paymentTransaction(event):
       switch event {
@@ -90,7 +90,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
           identifier: self.serverConfig().productIdentifiers.fullGame
         )
       else { return .none }
-      return .task { .delegate(.fullGamePurchased) }
+      return .send(.delegate(.fullGamePurchased))
 
     case .task:
       state.upgradeInterstitialDuration =
@@ -136,7 +136,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
 
     case .upgradeButtonTapped:
       state.isPurchasing = true
-      return .fireAndForget {
+      return .run { _ in
         let payment = SKMutablePayment()
         payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
         payment.quantity = 1

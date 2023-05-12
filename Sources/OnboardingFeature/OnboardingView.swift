@@ -168,7 +168,7 @@ public struct Onboarding: ReducerProtocol {
       switch action {
       case .alert(.presented(.skipButtonTapped)):
         state.step = State.Step.allCases.last!
-        return .fireAndForget {
+        return .run { _ in
           await self.audioPlayer.play(.uiSfxTap)
           Task.cancel(id: DelayedNextStepID.self)
         }
@@ -181,7 +181,7 @@ public struct Onboarding: ReducerProtocol {
         return .none
 
       case .delegate(.getStarted):
-        return .fireAndForget {
+        return .run { _ in
           await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
           await self.audioPlayer.stop(.onboardingBgMusic)
           Task.cancel(id: DelayedNextStepID.self)
@@ -241,11 +241,11 @@ public struct Onboarding: ReducerProtocol {
         return self.gameReducer.reduce(into: &state, action: action)
 
       case .getStartedButtonTapped:
-        return .task { .delegate(.getStarted) }
+        return .send(.delegate(.getStarted))
 
       case .nextButtonTapped:
         state.step.next()
-        return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
+        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .skipButtonTapped:
         guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
@@ -272,7 +272,7 @@ public struct Onboarding: ReducerProtocol {
             """
           )
         }
-        return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
+        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .task:
         let firstStepDelay: Int = {
@@ -335,21 +335,19 @@ public struct Onboarding: ReducerProtocol {
         return .none
 
       case .step13_Congrats:
-        return .task {
+        return .run { send in
           try await self.mainQueue.sleep(for: .seconds(3))
-          return .delayedNextStep
+          await send(.delayedNextStep, animation: .default)
         }
-        .animation()
 
       case .step6_Congrats,
         .step9_Congrats,
         .step17_Congrats,
         .step20_Congrats:
-        return .task {
+        return .run { send in
           try await self.mainQueue.sleep(for: .seconds(2))
-          return .delayedNextStep
+          await send(.delayedNextStep, animation: .default)
         }
-        .animation()
       }
     }
   }
