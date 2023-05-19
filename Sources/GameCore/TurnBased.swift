@@ -11,7 +11,7 @@ struct TurnBasedLogic: ReducerProtocol {
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.database.saveGame) var saveGame
 
-  func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action, Never> {
+  func reduce(into state: inout Game.State, action: Game.Action) -> EffectTask<Game.Action> {
     guard let turnBasedContext = state.turnBasedContext
     else { return .none }
 

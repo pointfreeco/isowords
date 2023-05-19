@@ -21,7 +21,6 @@ extension DependencyValues {
     self.storeKit.observer = { .finished }
     self.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")
     self.userDefaults.override(double: 0, forKey: "installationTimeKey")
-    let defaults = self.userDefaults
     self.userDefaults.setDouble = { _, _ in }
     self.userNotifications.delegate = { .finished }
     self.userNotifications.getNotificationSettings = {

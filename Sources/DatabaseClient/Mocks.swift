@@ -4,7 +4,7 @@ import XCTestDynamicOverlay
 
 #if DEBUG
   extension DatabaseClient {
-    public static let unimplemented = Self(
+    public static let testValue = Self(
       completeDailyChallenge: { _, _ in
         .unimplemented("\(Self.self).completeDailyChallenge")
       },

@@ -14,7 +14,7 @@ public struct StoreKitLogic<State>: ReducerProtocol {
 
   public func reduce(
     into _: inout State, action: AppReducer.Action
-  ) -> Effect<AppReducer.Action, Never> {
+  ) -> EffectTask<AppReducer.Action> {
     switch action {
     case .appDelegate(.didFinishLaunching):
       return .run { send in

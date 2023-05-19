@@ -33,7 +33,7 @@ class AuthenticationMiddlewareTests: XCTestCase {
       }
       """.utf8)
 
-    var environment = ServerEnvironment.unimplemented
+    var environment = ServerEnvironment.testValue
     environment.database.fetchAppleReceipt = { _ in pure(.mock) }
     environment.database.insertPlayer = { request in
       pure(
@@ -127,7 +127,7 @@ class AuthenticationMiddlewareTests: XCTestCase {
       }
       """.utf8)
 
-    var environment = ServerEnvironment.unimplemented
+    var environment = ServerEnvironment.testValue
     environment.database.fetchAppleReceipt = { _ in pure(.mock) }
     environment.database.insertPlayer = { request in
       pure(
