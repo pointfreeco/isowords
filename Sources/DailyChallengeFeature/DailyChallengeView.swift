@@ -111,8 +111,12 @@ public struct DailyChallengeReducer: ReducerProtocol {
       case let .gameButtonTapped(gameMode):
         guard
           let challenge = state.dailyChallenges
-            .first(where: { $0.dailyChallenge.gameMode == gameMode })
-        else { return .none }
+            .first(where: { $0.dailyChallenge.gameMode == gameMode }),
+          state.gameBlockingError == nil
+        else {
+          state.alert = .couldntStartGame(message: state.gameBlockingError)
+          return .none
+        }
 
         let isPlayable: Bool
         switch challenge.dailyChallenge.gameMode {
@@ -245,7 +249,15 @@ extension AlertState where Action == DailyChallengeReducer.Action {
       dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
     )
   }
-
+  
+  static func couldntStartGame(message: String?) -> Self {
+    Self(
+      title: .init("Couldn’t start game"),
+      message: .init(message ?? ""),
+      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
+    )
+  }
+  
   static func couldNotFetchDaily(nextStartsAt: Date) -> Self {
     Self(
       title: .init("Couldn’t start today’s daily"),
