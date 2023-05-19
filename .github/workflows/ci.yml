@@ -8,17 +8,21 @@ on:
 jobs:
   mac:
     name: macOS
-    runs-on: macOS-12
+    runs-on: macOS-13
     steps:
     - uses: actions/checkout@v3
       # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v2
     - name: LFS pull
       run: git lfs pull
+    - name: Install Postgres
+      run: brew install postgresql@15
+    - name: Link Postgres
+      run: brew link postgresql@15
     - name: Start Postgres
-      run: brew services start postgresql
-    - name: Select Xcode 14.2
-      run: sudo xcode-select -s /Applications/Xcode_14.2.app
+      run: brew services start postgresql@15
+    - name: Select Xcode 14.3
+      run: sudo xcode-select -s /Applications/Xcode_14.3.app
     - name: Bootstrap
       run: make bootstrap
     - name: Run tests
@@ -30,7 +34,7 @@ jobs:
     steps:
     - uses: swift-actions/setup-swift@v1
       with:
-        swift-version: 5.7
+        swift-version: 5.8
     - uses: actions/checkout@v3
     - name: Install dependencies
       run: 'sudo apt-get --fix-missing update && sudo apt-get install -y wamerican'

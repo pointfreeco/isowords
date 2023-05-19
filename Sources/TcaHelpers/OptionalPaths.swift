@@ -1,6 +1,6 @@
 import ComposableArchitecture
 
-public protocol Path<Root,Value> {
+public protocol Path<Root, Value> {
   associatedtype Root
   associatedtype Value
   func extract(from root: Root) -> Value?
@@ -163,16 +163,19 @@ extension OptionalPath where Root == Value? {
 extension ReducerProtocol {
   @inlinable
   public func _ifLet<
+    ChildState,
+    ChildAction,
     Child: ReducerProtocol,
-    StatePath: Path<State, Child.State>,
-    ActionPath: Path<Action, Child.Action>
+    StatePath: Path<State, ChildState>,
+    ActionPath: Path<Action, ChildAction>
   >(
     state toChildState: StatePath,
     action toChildAction: ActionPath,
-    @ReducerBuilderOf<Child> then child: () -> Child,
+    @ReducerBuilder<ChildState, ChildAction> then child: () -> Child,
     file: StaticString = #file,
     line: UInt = #line
-  ) -> OptionalPathReducer<StatePath, ActionPath, Self, Child> {
+  ) -> OptionalPathReducer<StatePath, ActionPath, Self, Child>
+  where Child.State == ChildState, Child.Action == ChildAction {
     OptionalPathReducer(
       parent: self,
       child: child(),

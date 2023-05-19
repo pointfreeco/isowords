@@ -98,22 +98,22 @@ public struct DeveloperSettings: Equatable {
 
 public struct Settings: ReducerProtocol {
   public struct State: Equatable {
-    @BindableState public var alert: AlertState<Action>?
+    @BindingState public var alert: AlertState<Action>?
     public var buildNumber: Build.Number?
-    @BindableState public var cubeShadowRadius: CGFloat
-    @BindableState public var developer: DeveloperSettings
-    @BindableState public var enableCubeShadow: Bool
-    @BindableState public var enableNotifications: Bool
+    @BindingState public var cubeShadowRadius: CGFloat
+    @BindingState public var developer: DeveloperSettings
+    @BindingState public var enableCubeShadow: Bool
+    @BindingState public var enableNotifications: Bool
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
     public var isRestoring: Bool
-    @BindableState public var sendDailyChallengeReminder: Bool
-    @BindableState public var sendDailyChallengeSummary: Bool
-    @BindableState public var showSceneStatistics: Bool
+    @BindingState public var sendDailyChallengeReminder: Bool
+    @BindingState public var sendDailyChallengeSummary: Bool
+    @BindingState public var showSceneStatistics: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    @BindableState public var userSettings: UserSettings
+    @BindingState public var userSettings: UserSettings
 
     public struct ProductError: Error, Equatable {}
 

@@ -29,7 +29,7 @@ extension FileClient {
 
   public mutating func override<A: Encodable>(load file: String, _ data: A) {
     let fulfill = expectation(description: "FileClient.load(\(file))")
-    self.load = { @Sendable[self] in
+    self.load = { @Sendable [self] in
       if $0 == file {
         fulfill()
         return try JSONEncoder().encode(data)

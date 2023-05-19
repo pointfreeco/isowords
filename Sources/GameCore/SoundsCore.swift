@@ -117,7 +117,7 @@ private struct GameSounds<Base: ReducerProtocol<Game.State, Game.Action>>: Reduc
       )
   }
 
-  @ReducerBuilderOf<Game>
+  @ReducerBuilder<Game.State, Game.Action>
   var core: some ReducerProtocol<Game.State, Game.Action> {
     self.base
     Reduce { state, action in
