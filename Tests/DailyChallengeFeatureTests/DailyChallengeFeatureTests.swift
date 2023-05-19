@@ -55,6 +55,53 @@ class DailyChallengeFeatureTests: XCTestCase {
       )
     }
   }
+  
+  func testFetchTodaysDailyChallengeThatReturnsAnError() async {
+    struct SomeError: LocalizedError {
+      let message: String?
+      
+      var failureReason: String? { message }
+    }
+    
+    let store = TestStore(
+      initialState: DailyChallengeReducer.State(),
+      reducer: DailyChallengeReducer()
+    )
+    store.dependencies.mainRunLoop = .immediate
+    store.dependencies.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .authorized)
+    }
+    let connectionLostError = NSError(domain: "Network", code: -1005)
+    store.dependencies.apiClient.override(
+      route: .dailyChallenge(.today(language: .en)),
+      withResponse: { throw connectionLostError }
+    )
+
+    await store.send(.task)
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+    }
+    await store.receive(.fetchTodaysDailyChallengeResponse(.failure(ApiError(error: connectionLostError)))) {
+      $0.gameBlockingError = "Connection unavailable"
+    }
+  }
+  
+  func testTapGameThatIsBlockedDueToANetworkError() async {
+    var state = DailyChallengeReducer.State(dailyChallenges: [.notStarted])
+    let message = "Connection unavailable"
+    state.gameBlockingError = message
+    
+    let store = TestStore(
+      initialState: state,
+      reducer: DailyChallengeReducer()
+    )
+    store.exhaustivity = .off
+
+    await store.send(.gameButtonTapped(.unlimited)) {
+      $0.alert = .couldntStartGame(message: message)
+    }
+    await store.finish()
+  }
 
   func testTapGameThatWasNotStarted() async {
     var inProgressGame = InProgressGame.mock
