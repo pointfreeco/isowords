@@ -290,7 +290,7 @@ public struct DailyChallengeView: View {
       case played(rank: Int, outOf: Int)
       case playable
       case resume(currentScore: Int)
-      case unplayable
+      case unplayable(reason: String)
     }
 
     init(state: DailyChallengeReducer.State) {
@@ -301,11 +301,13 @@ public struct DailyChallengeView: View {
       self.destinationTag = state.destination?.tag
       self.timedState = .init(
         fetchedResponse: state.dailyChallenges.timed,
-        inProgressGame: nil
+        inProgressGame: nil,
+        error: state.gameBlockingError
       )
       self.unlimitedState = .init(
         fetchedResponse: state.dailyChallenges.unlimited,
-        inProgressGame: state.inProgressDailyChallengeUnlimited
+        inProgressGame: state.inProgressDailyChallengeUnlimited,
+        error: state.gameBlockingError
       )
     }
   }
@@ -440,7 +442,8 @@ public struct DailyChallengeView: View {
 extension DailyChallengeView.ViewState.ButtonState {
   init(
     fetchedResponse: FetchTodaysDailyChallengeResponse?,
-    inProgressGame: InProgressGame?
+    inProgressGame: InProgressGame?,
+    error: String? = nil
   ) {
     if let rank = fetchedResponse?.yourResult.rank,
       let outOf = fetchedResponse?.yourResult.outOf
@@ -449,7 +452,9 @@ extension DailyChallengeView.ViewState.ButtonState {
     } else if let currentScore = inProgressGame?.currentScore {
       self = .resume(currentScore: currentScore)
     } else if fetchedResponse?.yourResult.started == .some(true) {
-      self = .unplayable
+      self = .unplayable(reason: "Played")
+    } else if let error {
+      self = .unplayable(reason: error)
     } else {
       self = .playable
     }
@@ -463,8 +468,8 @@ extension DailyChallengeView.ViewState.ButtonState {
       return nil
     case .playable:
       return nil
-    case .unplayable:
-      return Text("Played")
+    case let .unplayable(reason):
+      return Text(reason)
     }
   }
 
