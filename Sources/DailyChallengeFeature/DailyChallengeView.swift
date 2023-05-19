@@ -15,6 +15,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     public var destination: DestinationState?
     public var gameModeIsLoading: GameMode?
+    public var gameBlockingError: String?
     public var inProgressDailyChallengeUnlimited: InProgressGame?
     public var notificationsAuthAlert: NotificationsAuthAlert.State?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
@@ -24,6 +25,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
       destination: DestinationState? = nil,
       gameModeIsLoading: GameMode? = nil,
+      gameBlockingError: String? = nil,
       inProgressDailyChallengeUnlimited: InProgressGame? = nil,
       notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
@@ -32,6 +34,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
+      self.gameBlockingError = gameBlockingError
       self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
       self.notificationsAuthAlert = notificationsAuthAlert
       self.userNotificationSettings = userNotificationSettings
@@ -95,7 +98,10 @@ public struct DailyChallengeReducer: ReducerProtocol {
         state.alert = nil
         return .none
 
-      case .fetchTodaysDailyChallengeResponse(.failure):
+      case let .fetchTodaysDailyChallengeResponse(.failure(error)):
+        if let apiError = error as? LocalizedError {
+          state.gameBlockingError = apiError.failureReason
+        }
         return .none
 
       case let .fetchTodaysDailyChallengeResponse(.success(response)):
