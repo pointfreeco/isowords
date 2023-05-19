@@ -18,11 +18,8 @@ public struct ApiError: Codable, Error, Equatable, LocalizedError {
     self.file = String(describing: file)
     self.line = line
     self.message = error.localizedDescription  // TODO: separate user facing from debug facing messages?
-    switch (error as NSError).code {
-    case ErrorCode.connectionLost:
+    if NSURLErrorConnectionFailureCodes.contains((error as NSError).code) {
       self.reason = .offline
-    default:
-      break
     }
   }
 
@@ -39,9 +36,13 @@ public struct ApiError: Codable, Error, Equatable, LocalizedError {
   }
 }
 
-private enum ErrorCode {
-  static let connectionLost = -1005
-}
+private let NSURLErrorConnectionFailureCodes: [Int] = [
+  NSURLErrorCannotFindHost, /// Error Code: ` -1003`
+  NSURLErrorCannotConnectToHost, /// Error Code: ` -1004`
+  NSURLErrorNetworkConnectionLost, /// Error Code: ` -1005`
+  NSURLErrorNotConnectedToInternet, /// Error Code: ` -1009`
+  NSURLErrorSecureConnectionFailed /// Error Code: ` -1200`
+]
 
 public enum FailureReason: CustomStringConvertible, Equatable, Codable {
   case offline
