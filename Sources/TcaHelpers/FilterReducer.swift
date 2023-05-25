@@ -26,7 +26,7 @@ struct FilterReducer<Base: ReducerProtocol>: ReducerProtocol {
   @inlinable
   public func reduce(
     into state: inout Base.State, action: Base.Action
-  ) -> Effect<Base.Action, Never> {
+  ) -> EffectTask<Base.Action> {
     guard self.predicate(state, action) else { return .none }
     return self.base.reduce(into: &state, action: action)
   }
