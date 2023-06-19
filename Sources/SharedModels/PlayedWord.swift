@@ -1,3 +1,5 @@
+import Tagged
+
 public struct PlayedWord: Equatable {
   public var isYourWord: Bool
   public var reactions: [Move.PlayerIndex: Move.Reaction]?

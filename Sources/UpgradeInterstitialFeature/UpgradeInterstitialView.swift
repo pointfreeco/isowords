@@ -58,7 +58,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
   public init() {}
 
   public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
-    enum TimerID {}
+    enum CancelID { case timer }
 
     switch action {
     case .delegate:
@@ -118,7 +118,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
 
           if !isDismissable {
             group.addTask {
-              await withTaskCancellation(id: TimerID.self) {
+              await withTaskCancellation(id: CancelID.timer) {
                 for await _ in self.mainRunLoop.timer(interval: 1) {
                   await send(.timerTick, animation: .default)
                 }
@@ -131,7 +131,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
     case .timerTick:
       state.secondsPassedCount += 1
       return state.secondsPassedCount == state.upgradeInterstitialDuration
-        ? .cancel(id: TimerID.self)
+        ? .cancel(id: CancelID.timer)
         : .none
 
     case .upgradeButtonTapped:

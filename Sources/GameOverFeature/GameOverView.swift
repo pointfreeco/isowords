@@ -424,7 +424,7 @@ public struct GameOverView: View {
 
   public init(store: StoreOf<GameOver>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   public var body: some View {

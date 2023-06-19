@@ -158,7 +158,7 @@ public struct GameView<Content>: View where Content: View {
           ? nil
           : BloomBackground(
             size: proxy.size,
-            store: self.store.actionless
+            store: self.store
               .scope(
                 state: {
                   BloomBackground.ViewState(
@@ -168,6 +168,7 @@ public struct GameView<Content>: View where Content: View {
                 },
                 action: { $0 }
               )
+              .actionless
           )
       )
       .background(

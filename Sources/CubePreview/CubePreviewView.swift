@@ -229,7 +229,7 @@ public struct CubePreviewView: View {
           ? nil
           : BloomBackground(
             size: proxy.size,
-            store: self.store.actionless
+            store: self.store
               .scope(
                 state: { _ in
                   BloomBackground.ViewState(
@@ -239,6 +239,7 @@ public struct CubePreviewView: View {
                 },
                 action: { $0 }
               )
+              .actionless
           )
       )
     }

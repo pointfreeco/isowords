@@ -71,20 +71,21 @@ public class CubeNode: SCNNode {
     letterGeometry: SCNGeometry,
     store: Store<ViewState, Never>
   ) {
+    func absurd<A>(_: Never) -> A {}
     self.viewStore = ViewStore(store)
 
     self.index = self.viewStore.index
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.left, action: { $0 })
+      store: store.scope(state: \.left, action: absurd)
     )
     self.rightPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.right, action: { $0 })
+      store: store.scope(state: \.right, action: absurd)
     )
     self.topPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.top, action: { $0 })
+      store: store.scope(state: \.top, action: absurd)
     )
 
     super.init()

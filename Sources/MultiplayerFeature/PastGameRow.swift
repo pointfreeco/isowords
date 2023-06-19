@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import ComposableGameCenter
 import SwiftUI
+import Tagged
 
 public struct PastGame: ReducerProtocol {
   public struct State: Equatable, Identifiable {
@@ -151,7 +152,7 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
+    .alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .dismissAlert)
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
