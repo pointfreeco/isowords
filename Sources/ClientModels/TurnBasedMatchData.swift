@@ -1,4 +1,5 @@
 import ComposableGameCenter
+import Dependencies
 import Foundation
 import SharedModels
 import Tagged
@@ -67,7 +68,6 @@ extension Data {
     return encoder
   }()
 }
-import Dependencies
 
 extension TurnBasedMatchData.Metadata {
   private enum CodingKeys: CaseIterable, CodingKey {
