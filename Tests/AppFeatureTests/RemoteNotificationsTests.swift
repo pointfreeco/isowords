@@ -107,7 +107,7 @@ class RemoteNotificationsTests: XCTestCase {
     store.dependencies.didFinishLaunching()
     store.dependencies.fileClient.save = { @Sendable _, _ in }
 
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     store.dependencies.userNotifications.delegate = { delegate.stream }
 
     let notification = UserNotificationClient.Notification(

@@ -76,15 +76,15 @@ public class CubeNode: SCNNode {
     self.index = self.viewStore.index
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.left)
+      store: store.scope(state: \.left, action: { $0 })
     )
     self.rightPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.right)
+      store: store.scope(state: \.right, action: { $0 })
     )
     self.topPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.top)
+      store: store.scope(state: \.top, action: { $0 })
     )
 
     super.init()

@@ -17,7 +17,7 @@ class UserNotificationsTests: XCTestCase {
 
     store.dependencies.didFinishLaunching()
 
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let response = UserNotificationClient.Notification.Response(
       notification: UserNotificationClient.Notification(
         date: .mock,
@@ -58,7 +58,7 @@ class UserNotificationsTests: XCTestCase {
 
     store.dependencies.didFinishLaunching()
 
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let notification = UserNotificationClient.Notification(
       date: .mock,
       request: UNNotificationRequest(

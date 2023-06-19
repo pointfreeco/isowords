@@ -154,11 +154,11 @@ public struct DemoView: View {
     store: StoreOf<Demo>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   public var body: some View {
-    SwitchStore(self.store.scope(state: \.step)) {
+    SwitchStore(self.store.scope(state: \.step, action: { $0 })) {
       CaseLet(
         state: /Demo.State.Step.onboarding,
         action: Demo.Action.onboarding,

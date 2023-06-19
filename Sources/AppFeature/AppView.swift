@@ -342,7 +342,7 @@ public struct AppView: View {
 
   public init(store: StoreOf<AppReducer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init, action: { $0 }))
   }
 
   public var body: some View {
@@ -368,7 +368,8 @@ public struct AppView: View {
                   )
                 )
               }
-            }
+            },
+            action: { $0 }
           ),
           then: { gameAndSettingsStore in
             GameFeatureView(

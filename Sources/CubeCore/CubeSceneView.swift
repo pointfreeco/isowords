@@ -147,7 +147,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
             letterGeometry: letterGeometry,
             store: store
               .actionless
-              .scope(state: \.cubes[index])
+              .scope(state: \.cubes[index], action: { $0 })
           )
           cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
           self.gameCubeNode.addChildNode(cube)

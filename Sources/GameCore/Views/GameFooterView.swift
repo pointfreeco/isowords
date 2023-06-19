@@ -25,7 +25,7 @@ public struct GameFooterView: View {
     self.isAnimationReduced = isAnimationReduced
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   public var body: some View {
@@ -64,7 +64,7 @@ public struct WordListView: View {
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   struct SpacerId: Hashable {}

@@ -294,7 +294,7 @@ public struct DailyChallengeView: View {
 
   public init(store: StoreOf<DailyChallengeReducer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init, action: { $0 }))
   }
 
   public var body: some View {
@@ -390,7 +390,7 @@ public struct DailyChallengeView: View {
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .task { await self.viewStore.send(.task).finish() }
-      .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
+      .alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .dismissAlert)
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,

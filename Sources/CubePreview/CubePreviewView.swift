@@ -69,7 +69,7 @@ public struct CubePreview: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     BindingReducer()
     Reduce { state, action in
-      enum SelectionID {}
+      enum CancelID { case selection }
 
       switch action {
       case .binding:
@@ -90,7 +90,7 @@ public struct CubePreview: ReducerProtocol {
         case .removedCube:
           break
         }
-        return .cancel(id: SelectionID.self)
+        return .cancel(id: CancelID.selection)
 
       case .task:
         return .run { [move = state.moves[state.moveIndex]] send in
@@ -145,7 +145,7 @@ public struct CubePreview: ReducerProtocol {
             break
           }
         }
-        .cancellable(id: SelectionID.self)
+        .cancellable(id: CancelID.selection)
       }
     }
     .haptics(
@@ -185,7 +185,7 @@ public struct CubePreviewView: View {
 
   public init(store: StoreOf<CubePreview>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   public var body: some View {
@@ -236,7 +236,8 @@ public struct CubePreviewView: View {
                     bloomCount: self.viewStore.selectedWordString.count,
                     word: self.viewStore.selectedWordString
                   )
-                }
+                },
+                action: { $0 }
               )
           )
       )

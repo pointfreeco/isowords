@@ -60,7 +60,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
   @Dependency(\.audioPlayer.play) var playSound
 
   public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
-    enum SubmitButtonPressedDelayID {}
+    enum CancelID { case submitButtonPressedDelay }
 
     guard state.isYourTurn
     else { return .none }
@@ -106,7 +106,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
         try await self.mainQueue.sleep(for: 0.5)
         return .delayedSubmitButtonPressed
       }
-      .cancellable(id: SubmitButtonPressedDelayID.self, cancelInFlight: true)
+      .cancellable(id: CancelID.submitButtonPressedDelay, cancelInFlight: true)
 
     case .submitButtonReleased:
       guard state.isTurnBasedMatch
@@ -117,7 +117,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
       state.wordSubmitButton.isSubmitButtonPressed = false
 
       return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
-        Task.cancel(id: SubmitButtonPressedDelayID.self)
+        Task.cancel(id: CancelID.submitButtonPressedDelay)
         guard !wasClosing && !areReactionsOpen
         else { return }
         await send(.delegate(.confirmSubmit(reaction: nil)))
@@ -161,7 +161,7 @@ public struct WordSubmitButton: View {
         Spacer()
 
         ZStack {
-          ReactionsView(store: self.store.scope(state: \.wordSubmitButton))
+          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: { $0 }))
 
           Button(action: {
             self.viewStore.send(.submitButtonTapped, animation: .default)

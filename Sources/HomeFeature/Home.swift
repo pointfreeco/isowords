@@ -501,7 +501,7 @@ public struct HomeView: View {
 
   public init(store: StoreOf<Home>) {
     self.store = store
-    self.viewStore = ViewStore(store.scope(state: ViewState.init))
+    self.viewStore = ViewStore(store.scope(state: ViewState.init, action: { $0 }))
   }
 
   public var body: some View {

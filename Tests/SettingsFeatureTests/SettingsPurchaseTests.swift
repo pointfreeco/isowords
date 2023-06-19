@@ -30,7 +30,7 @@ class SettingsPurchaseTests: XCTestCase {
 
     let didAddPaymentProductIdentifier = ActorIsolated<String?>(nil)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
-      .streamWithContinuation()
+      .makeStream()
 
     store.dependencies.setUpDefaults()
     store.dependencies.serverConfig.config = {
@@ -84,7 +84,7 @@ class SettingsPurchaseTests: XCTestCase {
 
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
-      .streamWithContinuation()
+      .makeStream()
 
     store.dependencies.setUpDefaults()
     store.dependencies.serverConfig.config = {
@@ -140,7 +140,7 @@ class SettingsPurchaseTests: XCTestCase {
 
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
-      .streamWithContinuation()
+      .makeStream()
 
     store.dependencies.setUpDefaults()
     store.dependencies.serverConfig.config = {
@@ -189,7 +189,7 @@ class SettingsPurchaseTests: XCTestCase {
 
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
-      .streamWithContinuation()
+      .makeStream()
 
     store.dependencies.setUpDefaults()
     store.dependencies.serverConfig.config = {

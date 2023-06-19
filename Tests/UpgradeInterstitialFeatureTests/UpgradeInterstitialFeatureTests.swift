@@ -24,7 +24,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       let paymentAdded = ActorIsolated<String?>(nil)
 
       let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
-        .streamWithContinuation()
+        .makeStream()
 
       let transactions = [
         StoreKitClient.PaymentTransaction(
