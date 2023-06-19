@@ -144,7 +144,10 @@ class PersistenceTests: XCTestCase {
     }
     try await saves.withValue {
       XCTAssertNoDifference(2, $0.count)
-      XCTAssertNoDifference($0.last, try JSONEncoder().encode(store.state.home.savedGames))
+      XCTAssertNoDifference(
+        try JSONDecoder().decode(SavedGamesState.self, from: $0.last!),
+        store.state.home.savedGames
+      )
     }
   }
 
