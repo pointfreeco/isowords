@@ -69,7 +69,7 @@ struct CalendarView: View {
     store: StoreOf<DailyChallengeResults>
   ) {
     self.store = store
-    self.viewStore = ViewStore(store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   var body: some View {

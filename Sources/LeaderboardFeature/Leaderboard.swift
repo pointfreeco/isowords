@@ -115,7 +115,7 @@ public struct Leaderboard: ReducerProtocol {
         return .none
 
       case let .vocab(.tappedRow(id)):
-        enum CancelID {}
+        enum CancelID { case fetch }
 
         guard state.vocab.resultEnvelope != nil
         else { return .none }
@@ -130,7 +130,7 @@ public struct Leaderboard: ReducerProtocol {
             }
           )
         }
-        .cancellable(id: CancelID.self, cancelInFlight: true)
+        .cancellable(id: CancelID.fetch, cancelInFlight: true)
 
       case .vocab:
         return .none

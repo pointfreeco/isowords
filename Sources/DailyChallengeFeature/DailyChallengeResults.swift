@@ -66,7 +66,7 @@ public struct DailyChallengeResults: ReducerProtocol {
           state.history = nil
         }
 
-        enum CancelID {}
+        enum CancelID { case fetch }
         return .task { [gameMode = state.leaderboardResults.gameMode] in
           await .fetchHistoryResponse(
             TaskResult {
@@ -77,7 +77,7 @@ public struct DailyChallengeResults: ReducerProtocol {
             }
           )
         }
-        .cancellable(id: CancelID.self, cancelInFlight: true)
+        .cancellable(id: CancelID.fetch, cancelInFlight: true)
       }
     }
   }

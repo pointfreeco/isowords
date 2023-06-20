@@ -179,7 +179,7 @@ public struct Onboarding: ReducerProtocol {
 
         return .fireAndForget {
           await self.audioPlayer.play(.uiSfxTap)
-          Task.cancel(id: DelayedNextStepID.self)
+          Task.cancel(id: CancelID.delayedNextStep)
         }
 
       case .delayedNextStep:
@@ -190,7 +190,7 @@ public struct Onboarding: ReducerProtocol {
         return .fireAndForget {
           await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
           await self.audioPlayer.stop(.onboardingBgMusic)
-          Task.cancel(id: DelayedNextStepID.self)
+          Task.cancel(id: CancelID.delayedNextStep)
         }
 
       case .game where state.step.isCongratsStep:
@@ -294,7 +294,7 @@ public struct Onboarding: ReducerProtocol {
             await send(.delayedNextStep, animation: .default)
           }
         }
-        .cancellable(id: DelayedNextStepID.self)
+        .cancellable(id: CancelID.delayedNextStep)
       }
     }
     .onChange(of: \.game.selectedWordString) { selectedWord, state, _ in
@@ -380,7 +380,7 @@ public struct OnboardingView: View {
 
   public init(store: StoreOf<Onboarding>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   public var body: some View {
@@ -461,7 +461,9 @@ extension String {
   }
 }
 
-private enum DelayedNextStepID: Hashable {}
+private enum CancelID {
+  case delayedNextStep
+}
 
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {

@@ -43,7 +43,7 @@ public struct GameView<Content>: View where Content: View {
     self.content = content
     self.isAnimationReduced = isAnimationReduced
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
   }
 
   public var body: some View {
@@ -158,22 +158,24 @@ public struct GameView<Content>: View where Content: View {
           ? nil
           : BloomBackground(
             size: proxy.size,
-            store: self.store.actionless
+            store: self.store
               .scope(
                 state: {
                   BloomBackground.ViewState(
                     bloomCount: $0.selectedWord.count,
                     word: $0.selectedWordString
                   )
-                }
+                },
+                action: { $0 }
               )
+              .actionless
           )
       )
       .background(
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
       )
-      .bottomMenu(self.store.scope(state: \.bottomMenu))
+      .bottomMenu(self.store.scope(state: \.bottomMenu, action: { $0 }))
       .alert(
         self.store.scope(state: \.alert, action: Game.Action.alert),
         dismiss: .dismiss

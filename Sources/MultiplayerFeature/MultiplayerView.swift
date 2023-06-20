@@ -88,7 +88,7 @@ public struct MultiplayerView: View {
 
   public init(store: StoreOf<Multiplayer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
+    self.viewStore = ViewStore(self.store.scope(state: ViewState.init, action: { $0 }))
   }
 
   struct ViewState: Equatable {

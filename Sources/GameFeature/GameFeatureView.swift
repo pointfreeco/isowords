@@ -16,10 +16,10 @@ public struct GameFeatureView<Content>: View where Content: View {
 
   public var body: some View {
     IfLetStore(
-      self.store.scope(state: \.game),
+      self.store.scope(state: \.game, action: { $0 }),
       then: { store in
         WithViewStore(
-          self.store.scope(state: \.settings.userSettings.enableReducedAnimation)
+          self.store.scope(state: \.settings.userSettings.enableReducedAnimation, action: { $0 })
         ) { viewStore in
           GameView(
             content: self.content,
@@ -31,7 +31,7 @@ public struct GameFeatureView<Content>: View where Content: View {
     )
     .background(Color.adaptiveWhite)
     .background(
-      WithViewStore(self.store.scope(state: { $0.game?.isSettingsPresented ?? false })) {
+      WithViewStore(self.store.scope(state: { $0.game?.isSettingsPresented ?? false }, action: { $0 })) {
         viewStore in
         // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
         // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
