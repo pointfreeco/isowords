@@ -145,7 +145,8 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         LatticePoint.cubeIndices.forEach { index in
           let cube = CubeNode(
             letterGeometry: letterGeometry,
-            store: store
+            store:
+              store
               .scope(state: \.cubes[index], action: { $0 })
               .actionless
           )

@@ -31,7 +31,9 @@ public struct GameFeatureView<Content>: View where Content: View {
     )
     .background(Color.adaptiveWhite)
     .background(
-      WithViewStore(self.store.scope(state: { $0.game?.isSettingsPresented ?? false }, action: { $0 })) {
+      WithViewStore(
+        self.store.scope(state: { $0.game?.isSettingsPresented ?? false }, action: { $0 })
+      ) {
         viewStore in
         // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
         // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
