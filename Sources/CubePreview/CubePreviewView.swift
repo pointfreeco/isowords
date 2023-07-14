@@ -195,17 +195,17 @@ public struct CubePreviewView: View {
           (Text(self.viewStore.selectedWordString)
             + self.scoreText
             .baselineOffset(
-              (self.deviceState.idiom == .pad ? 2 : 1) * 16
+              (self.deviceState.isUsingPadMetrics ? 2 : 1) * 16
             )
             .font(
               .custom(
                 .matterMedium,
-                size: (self.deviceState.idiom == .pad ? 2 : 1) * 20
+                size: (self.deviceState.isUsingPadMetrics ? 2 : 1) * 20
               )
             ))
             .adaptiveFont(
               .matterSemiBold,
-              size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
+              size: (self.deviceState.isUsingPadMetrics ? 2 : 1) * 32
             )
             .opacity(self.viewStore.selectedWordIsFinalWord ? 1 : 0.5)
             .allowsTightening(true)

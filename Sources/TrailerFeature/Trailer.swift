@@ -203,17 +203,17 @@ public struct TrailerView: View {
             (Text(self.viewStore.selectedWordString)
               + self.scoreText
               .baselineOffset(
-                (self.deviceState.idiom == .pad ? 2 : 1) * 16
+                (self.deviceState.isUsingPadMetrics ? 2 : 1) * 16
               )
               .font(
                 .custom(
                   .matterMedium,
-                  size: (self.deviceState.idiom == .pad ? 2 : 1) * 20
+                  size: (self.deviceState.isUsingPadMetrics ? 2 : 1) * 20
                 )
               ))
               .adaptiveFont(
                 .matterSemiBold,
-                size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
+                size: (self.deviceState.isUsingPadMetrics ? 2 : 1) * 32
               )
               .opacity(self.viewStore.selectedWordIsValid ? 1 : 0.5)
               .allowsTightening(true)
@@ -258,7 +258,7 @@ public struct TrailerView: View {
           )
         )
         .adaptivePadding(
-          self.deviceState.idiom == .pad ? .horizontal : [],
+          self.deviceState.isUsingPadMetrics ? .horizontal : [],
           .grid(30)
         )
       }
@@ -278,7 +278,7 @@ public struct TrailerView: View {
       )
     }
     .padding(
-      self.deviceState.idiom == .pad ? .vertical : [],
+      self.deviceState.isUsingPadMetrics ? .vertical : [],
       .grid(15)
     )
     .opacity(self.viewStore.opacity)

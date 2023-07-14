@@ -174,13 +174,13 @@ public struct WordSubmitButton: View {
               }
             }
             .frame(
-              width: self.deviceState.idiom == .pad ? 100 : 80,
-              height: self.deviceState.idiom == .pad ? 100 : 80
+              width: self.deviceState.isUsingPadMetrics ? 100 : 80,
+              height: self.deviceState.isUsingPadMetrics ? 100 : 80
             )
             .background(Circle().fill(Color.adaptiveBlack))
             .foregroundColor(.adaptiveWhite)
             .opacity(self.viewStore.isSelectedWordValid ? 1 : 0.5)
-            .font(.system(size: self.deviceState.isPad ? 40 : 30))
+            .font(.system(size: self.deviceState.isUsingPadMetrics ? 40 : 30))
             .adaptivePadding([.all], .grid(4))
             // NB: Expand the tappable radius of the button.
             .background(Color.black.opacity(0.0001))

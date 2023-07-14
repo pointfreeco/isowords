@@ -143,7 +143,7 @@ private struct BottomMenuWrapper<Content: View>: View {
           .adaptiveCornerRadius([UIRectCorner.topLeft, .topRight], .grid(3))
           .zIndex(2)
           .transition(.move(edge: .bottom))
-          .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
+          .screenEdgePadding(self.deviceState.isUsingPadMetrics ? .horizontal : [])
         }
       }
       .ignoresSafeArea()

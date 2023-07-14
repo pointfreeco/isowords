@@ -25,14 +25,18 @@ private struct ScreenEdgePadding: ViewModifier {
       content.adaptivePadding(self.edges)
 
     case .pad, .tv, .mac:
-      content.adaptivePadding(
-        self.edges,
-        // NB: clean this up by holding onto previous "valid" orientation.
-        iPadPadding(for: self.deviceState.orientation)
-          ?? iPadPadding(for: self.deviceState.previousOrientation)
-          ?? .grid(20)
-      )
-
+      if self.deviceState.isUsingPadMetrics {
+        content.adaptivePadding(
+          self.edges,
+          // NB: clean this up by holding onto previous "valid" orientation.
+          iPadPadding(for: self.deviceState.orientation)
+            ?? iPadPadding(for: self.deviceState.previousOrientation)
+            ?? .grid(20)
+        )
+      } else {
+        content.adaptivePadding(self.edges)
+      }
+      
     @unknown default:
       content
     }

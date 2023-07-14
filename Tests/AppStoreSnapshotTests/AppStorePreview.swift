@@ -28,7 +28,7 @@ where
   var body: some View {
     ZStack {
       Group {
-        if self.deviceState.idiom == .pad {
+        if self.deviceState.isUsingPadMetrics {
           Snapshot(self.snapshotting) {
             ZStack(alignment: .top) {
               self.snapshotContent()
@@ -78,10 +78,10 @@ where
         }
       }
       .clipShape(
-        RoundedRectangle(cornerRadius: .grid(self.deviceState.idiom == .pad ? 4 : 10), style: .continuous)
+        RoundedRectangle(cornerRadius: .grid(self.deviceState.isUsingPadMetrics ? 4 : 10), style: .continuous)
       )
       .clipped()
-      .padding(.grid(self.deviceState.idiom == .pad ? 10 : 4))
+      .padding(.grid(self.deviceState.isUsingPadMetrics ? 10 : 4))
       .background(Color.black)
       .clipShape(
         RoundedRectangle(cornerRadius: .grid(14), style: .continuous)
@@ -90,17 +90,17 @@ where
         RoundedRectangle(cornerRadius: .grid(14), style: .continuous)
           .stroke(Color.gray, style: StrokeStyle(lineWidth: .grid(1) / 2))
       )
-      .scaleEffect(self.deviceState.idiom == .pad ? 0.8 : 0.9)
-      .offset(y: .grid(self.deviceState.idiom == .pad ? 90 : 60))
+      .scaleEffect(self.deviceState.isUsingPadMetrics ? 0.8 : 0.9)
+      .offset(y: .grid(self.deviceState.isUsingPadMetrics ? 90 : 60))
 
-      VStack(spacing: .grid(self.deviceState.idiom == .pad ? 14 : 7)) {
-        VStack(spacing: .grid(self.deviceState.idiom == .pad ? 14 : 7)) {
+      VStack(spacing: .grid(self.deviceState.isUsingPadMetrics ? 14 : 7)) {
+        VStack(spacing: .grid(self.deviceState.isUsingPadMetrics ? 14 : 7)) {
           Image(systemName: "cube.fill")
             .foregroundColor(Color.black)
-            .font(.system(size: self.deviceState.idiom == .pad ? 50 : 30))
+            .font(.system(size: self.deviceState.isUsingPadMetrics ? 50 : 30))
 
           self.description()
-            .font(.custom(.matterMedium, size: self.deviceState.idiom == .pad ? 75 : 36))
+            .font(.custom(.matterMedium, size: self.deviceState.isUsingPadMetrics ? 75 : 36))
             .multilineTextAlignment(.center)
         }
         .foreground(
@@ -115,8 +115,8 @@ where
 
         Spacer()
       }
-      .padding(.horizontal, .grid(self.deviceState.idiom == .pad ? 40 : 10))
-      .padding(.vertical, .grid(self.deviceState.idiom == .pad ? 12 : 4))
+      .padding(.horizontal, .grid(self.deviceState.isUsingPadMetrics ? 40 : 10))
+      .padding(.vertical, .grid(self.deviceState.isUsingPadMetrics ? 12 : 4))
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(self.backgroundColor.ignoresSafeArea())
