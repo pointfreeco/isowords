@@ -160,7 +160,7 @@ public struct DemoView: View {
   public var body: some View {
     SwitchStore(self.store.scope(state: \.step, action: { $0 })) {
       CaseLet(
-        state: /Demo.State.Step.onboarding,
+        /Demo.State.Step.onboarding,
         action: Demo.Action.onboarding,
         then: {
           OnboardingView(store: $0)
@@ -169,7 +169,7 @@ public struct DemoView: View {
       )
 
       CaseLet(
-        state: /Demo.State.Step.game,
+        /Demo.State.Step.game,
         action: Demo.Action.game,
         then: { store in
           GameWrapper(
