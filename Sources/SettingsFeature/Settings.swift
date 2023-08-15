@@ -195,7 +195,6 @@ public struct Settings: ReducerProtocol {
 
   private enum CancelID {
     case paymentObserver
-    case updateRemoveSettings
   }
 
   public var body: some ReducerProtocol<State, Action> {
@@ -271,7 +270,6 @@ public struct Settings: ReducerProtocol {
                 )
               )
             }
-            .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
           }
         }
         .onChange(of: \.sendDailyChallengeSummary) { _, _ in
@@ -293,7 +291,6 @@ public struct Settings: ReducerProtocol {
                 )
               )
             }
-            .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
           }
         }
         .onChange(of: \.userSettings.appIcon) { _, appIcon in

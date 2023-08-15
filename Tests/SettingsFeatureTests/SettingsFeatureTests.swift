@@ -231,9 +231,8 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
-  func testNotifications_DebounceRemoteSettingsUpdates() async {
+  func testNotifications_RemoteSettingsUpdates() async {
     await withMainSerialExecutor {
-      let mainQueue = DispatchQueue.test
       let store = TestStore(
         initialState: Settings.State(sendDailyChallengeReminder: false)
       ) {
@@ -243,13 +242,13 @@ class SettingsFeatureTests: XCTestCase {
         $0.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
         $0.apiClient.override(
           route: .push(
-            .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
+            .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: true))
           ),
           withResponse: { try await OK([:] as [String: Any]) }
         )
         $0.applicationClient.alternateIconName = { nil }
         $0.fileClient.save = { @Sendable _, _ in }
-        $0.mainQueue = mainQueue.eraseToAnyScheduler()
+        $0.mainQueue = .immediate
         $0.serverConfig.config = { .init() }
         $0.userDefaults.boolForKey = { _ in false }
         $0.userNotifications.getNotificationSettings = {
@@ -263,8 +262,6 @@ class SettingsFeatureTests: XCTestCase {
         $0.fullGamePurchasedAt = .mock
       }
 
-      await mainQueue.advance()
-
       await store.receive(
         .userNotificationSettingsResponse(.init(authorizationStatus: .authorized))
       ) {
@@ -275,12 +272,6 @@ class SettingsFeatureTests: XCTestCase {
       await store.send(.set(\.$sendDailyChallengeReminder, true)) {
         $0.sendDailyChallengeReminder = true
       }
-      await mainQueue.advance(by: 0.5)
-
-      await store.send(.set(\.$sendDailyChallengeSummary, true))
-      await mainQueue.advance(by: 0.5)
-      await mainQueue.advance(by: 0.5)
-
       await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
 
       await task.cancel()
