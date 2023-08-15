@@ -87,11 +87,13 @@ class PastGamesTests: XCTestCase {
     await store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure())))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
-        $0.alert = .init(
-          title: .init("Error"),
-          message: .init("We couldn’t start the rematch. Try again later."),
-          dismissButton: .default(.init("Ok"), action: .send(.dismissAlert))
-        )
+        $0.alert = .init {
+          TextState("Error")
+        } actions: {
+          ButtonState { TextState("Ok") }
+        } message: {
+          TextState("We couldn’t start the rematch. Try again later.")
+        }
       }
     }
   }
