@@ -98,7 +98,7 @@ public struct DeveloperSettings: Equatable {
 
 public struct Settings: Reducer {
   public struct State: Equatable {
-    @BindingState public var alert: AlertState<Action>?
+    @PresentationState public var alert: AlertState<Action.Alert>?
     public var buildNumber: Build.Number?
     @BindingState public var cubeShadowRadius: CGFloat
     @BindingState public var developer: DeveloperSettings
@@ -118,7 +118,7 @@ public struct Settings: Reducer {
     public struct ProductError: Error, Equatable {}
 
     public init(
-      alert: AlertState<Action>? = nil,
+      alert: AlertState<Action.Alert>? = nil,
       buildNumber: Build.Number? = nil,
       cubeShadowRadius: CGFloat = 50,
       developer: DeveloperSettings = DeveloperSettings(),
@@ -159,12 +159,12 @@ public struct Settings: Reducer {
   }
 
   public enum Action: BindableAction, Equatable {
+    case alert(PresentationAction<Alert>)
     case binding(BindingAction<State>)
     case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
     case didBecomeActive
     case leaveUsAReviewButtonTapped
     case onDismiss
-    case openSettingButtonTapped
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
     case productsResponse(TaskResult<StoreKitClient.ProductsResponse>)
     case reportABugButtonTapped
@@ -174,6 +174,10 @@ public struct Settings: Reducer {
     case task
     case userNotificationAuthorizationResponse(TaskResult<Bool>)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
+
+    public enum Alert: Equatable {
+      case openSettingButtonTapped
+    }
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -306,6 +310,17 @@ public struct Settings: Reducer {
 
       Reduce { state, action in
         switch action {
+        case .alert(.presented(.openSettingButtonTapped)):
+          return .run { _ in
+            guard
+              let url = await URL(string: self.applicationClient.openSettingsURLString())
+            else { return }
+            _ = await self.applicationClient.open(url, [:])
+          }
+
+        case .alert:
+          return .none
+
         case .binding:
           return .none
 
@@ -364,14 +379,6 @@ public struct Settings: Reducer {
             state.isPurchasing = false
           }
           return .none
-
-        case .openSettingButtonTapped:
-          return .run { _ in
-            guard
-              let url = await URL(string: self.applicationClient.openSettingsURLString())
-            else { return }
-            _ = await self.applicationClient.open(url, [:])
-          }
 
         case let .productsResponse(.success(response)):
           state.fullGameProduct =
@@ -500,6 +507,7 @@ public struct Settings: Reducer {
         }
       }
     }
+    .ifLet(\.$alert, action: /Action.alert)
     .onChange(of: \.userSettings) { userSettings, _, _ in
       enum CancelID { case saveDebounce }
 
@@ -513,23 +521,31 @@ public struct Settings: Reducer {
   }
 }
 
-extension AlertState where Action == Settings.Action {
-  static let userNotificationAuthorizationDenied = Self(
-    title: .init("Permission Denied"),
-    message: .init("Turn on notifications in iOS settings."),
-    primaryButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil))),
-    secondaryButton: .default(.init("Open Settings"), action: .send(.openSettingButtonTapped))
-  )
+extension AlertState where Action == Settings.Action.Alert {
+  static let userNotificationAuthorizationDenied = Self {
+    TextState("Permission Denied")
+  } actions: {
+    ButtonState { TextState("Ok") }
+    ButtonState(action: .openSettingButtonTapped) {
+      TextState("Open settings")
+    }
+  } message: {
+    TextState("Turn on notifications in iOS settings.")
+  }
 
-  static let restoredPurchasesFailed = Self(
-    title: .init("Error"),
-    message: .init("We couldn’t restore purchases, please try again."),
-    dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
-  )
+  static let restoredPurchasesFailed = Self {
+    TextState("Error")
+  } actions: {
+    ButtonState { TextState("Ok") }
+  } message: {
+    TextState("We couldn’t restore purchases, please try again.")
+  }
 
-  static let noRestoredPurchases = Self(
-    title: .init("No Purchases"),
-    message: .init("No purchases were found to restore."),
-    dismissButton: .default(.init("Ok"), action: .send(.set(\.$alert, nil)))
-  )
+  static let noRestoredPurchases = Self {
+    TextState("No Purchases")
+  } actions: {
+    ButtonState { TextState("Ok") }
+  } message: {
+    TextState("No purchases were found to restore.")
+  }
 }

@@ -11,7 +11,7 @@ import SwiftUI
 
 public struct DailyChallengeReducer: Reducer {
   public struct State: Equatable {
-    public var alert: AlertState<Action>?
+    @PresentationState public var alert: AlertState<Action.Alert>?
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     public var destination: DestinationState?
     public var gameModeIsLoading: GameMode?
@@ -20,7 +20,7 @@ public struct DailyChallengeReducer: Reducer {
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
-      alert: AlertState<Action>? = nil,
+      alert: AlertState<Action.Alert>? = nil,
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
       destination: DestinationState? = nil,
       gameModeIsLoading: GameMode? = nil,
@@ -39,9 +39,9 @@ public struct DailyChallengeReducer: Reducer {
   }
 
   public enum Action: Equatable {
+    case alert(PresentationAction<Alert>)
     case delegate(DelegateAction)
     case destination(DestinationAction)
-    case dismissAlert
     case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
@@ -50,6 +50,9 @@ public struct DailyChallengeReducer: Reducer {
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
+
+    public enum Alert: Equatable {
+    }
   }
 
   public enum DelegateAction: Equatable {
@@ -85,15 +88,15 @@ public struct DailyChallengeReducer: Reducer {
   public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
+      case .alert:
+        return .none
+
       case .delegate:
         return .none
 
       case .destination(.dailyChallengeResults):
         return .none
 
-      case .dismissAlert:
-        state.alert = nil
-        return .none
 
       case .fetchTodaysDailyChallengeResponse(.failure):
         return .none
@@ -215,6 +218,7 @@ public struct DailyChallengeReducer: Reducer {
         return .none
       }
     }
+    .ifLet(\.$alert, action: /Action.alert)
     .ifLet(\.destination, action: /Action.destination) {
       Scope(
         state: /DestinationState.results,
@@ -229,29 +233,35 @@ public struct DailyChallengeReducer: Reducer {
   }
 }
 
-extension AlertState where Action == DailyChallengeReducer.Action {
+extension AlertState where Action == DailyChallengeReducer.Action.Alert {
   static func alreadyPlayed(nextStartsAt: Date) -> Self {
-    Self(
-      title: .init("Already played"),
-      message: .init(
-        """
+    Self {
+      TextState("Already played")
+    } actions: {
+      ButtonState {
+        TextState("OK")
+      }
+    } message: {
+      TextState("""
         You already played today’s daily challenge. You can play the next one in \
         \(nextStartsAt, formatter: relativeFormatter).
-        """),
-      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
-    )
+        """)
+    }
   }
 
   static func couldNotFetchDaily(nextStartsAt: Date) -> Self {
-    Self(
-      title: .init("Couldn’t start today’s daily"),
-      message: .init(
-        """
+    Self {
+      TextState("Couldn’t start today’s daily")
+    } actions: {
+      ButtonState {
+        TextState("OK")
+      }
+    } message: {
+      TextState("""
         We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
-        """),
-      dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
-    )
+        """)
+    }
   }
 }
 
@@ -392,8 +402,7 @@ public struct DailyChallengeView: View {
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .task { await self.viewStore.send(.task).finish() }
-      // XXXXX
-      //.alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .dismissAlert)
+      .alert(store: self.store.scope(state: \.$alert, action: DailyChallengeReducer.Action.alert))
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,

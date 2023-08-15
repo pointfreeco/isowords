@@ -220,14 +220,12 @@ class SettingsFeatureTests: XCTestCase {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
-    await store.send(.openSettingButtonTapped)
+    await store.send(.alert(.presented(.openSettingButtonTapped))) {
+      $0.alert = nil
+    }
 
     await openedUrl.withValue {
       XCTAssertNoDifference($0, URL(string: "settings:isowords//isowords/settings")!)
-    }
-
-    await store.send(.set(\.$alert, nil)) {
-      $0.alert = nil
     }
 
     await task.cancel()
