@@ -8,7 +8,7 @@ import StoreKit
 import SwiftUI
 import TcaHelpers
 
-public struct Demo: ReducerProtocol {
+public struct Demo: Reducer {
   public struct State: Equatable {
     var appStoreOverlayIsPresented: Bool
     var step: Step
@@ -59,7 +59,7 @@ public struct Demo: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Scope(state: \.step, action: .self) {
       Scope(
         state: /State.Step.onboarding,

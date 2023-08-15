@@ -15,7 +15,7 @@ import SwiftUIHelpers
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-public struct GameOver: ReducerProtocol {
+public struct GameOver: Reducer {
   public struct State: Equatable {
     public var completedGame: CompletedGame
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
@@ -99,7 +99,7 @@ public struct GameOver: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .closeButtonTapped:

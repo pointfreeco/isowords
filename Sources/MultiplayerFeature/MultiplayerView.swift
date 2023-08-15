@@ -2,7 +2,7 @@ import ComposableArchitecture
 import SwiftUI
 import TcaHelpers
 
-public struct Multiplayer: ReducerProtocol {
+public struct Multiplayer: Reducer {
   public struct State: Equatable {
     public var destination: DestinationState?
     public var hasPastGames: Bool
@@ -45,7 +45,7 @@ public struct Multiplayer: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .destination(.pastGames):

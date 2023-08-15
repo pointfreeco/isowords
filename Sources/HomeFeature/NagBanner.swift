@@ -2,7 +2,7 @@ import ComposableArchitecture
 import SwiftUI
 import UpgradeInterstitialFeature
 
-public struct NagBannerFeature: ReducerProtocol {
+public struct NagBannerFeature: Reducer {
   public typealias State = NagBanner.State?
 
   public enum Action: Equatable {
@@ -10,7 +10,7 @@ public struct NagBannerFeature: ReducerProtocol {
     case nagBanner(NagBanner.Action)
   }
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .dismissUpgradeInterstitial:
@@ -31,7 +31,7 @@ public struct NagBannerFeature: ReducerProtocol {
   }
 }
 
-public struct NagBanner: ReducerProtocol {
+public struct NagBanner: Reducer {
   public struct State: Equatable {
     var upgradeInterstitial: UpgradeInterstitial.State? = nil
   }
@@ -41,7 +41,7 @@ public struct NagBanner: ReducerProtocol {
     case upgradeInterstitial(UpgradeInterstitial.Action)
   }
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .tapped:

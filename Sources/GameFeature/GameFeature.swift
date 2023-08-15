@@ -3,7 +3,7 @@ import ComposableArchitecture
 import SettingsFeature
 import TcaHelpers
 
-public struct GameFeature: ReducerProtocol {
+public struct GameFeature: Reducer {
   public struct State: Equatable {
     public var game: Game.State?
     public var settings: Settings.State
@@ -25,7 +25,7 @@ public struct GameFeature: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Scope(state: \.settings, action: /Action.settings) {
       Settings()
     }

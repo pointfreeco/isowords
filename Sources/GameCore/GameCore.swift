@@ -16,7 +16,7 @@ import Tagged
 import TcaHelpers
 import UpgradeInterstitialFeature
 
-public struct Game: ReducerProtocol {
+public struct Game: Reducer {
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
     @PresentationState public var alert: AlertState<AlertAction>?
@@ -187,7 +187,7 @@ public struct Game: ReducerProtocol {
 
   func date() -> Date { self.mainRunLoop.now.date }
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     self.core
       .onChange(of: \.selectedWord) { selectedWord, state, _ in
         state.selectedWordIsValid =
@@ -207,7 +207,7 @@ public struct Game: ReducerProtocol {
   }
 
   @ReducerBuilder<State, Action>
-  var core: some ReducerProtocol<State, Action> {
+  var core: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .activeGames:
@@ -529,7 +529,7 @@ public struct Game: ReducerProtocol {
   }
 }
 
-public struct IntegratedGame<StatePath: TcaHelpers.Path, Action>: ReducerProtocol
+public struct IntegratedGame<StatePath: TcaHelpers.Path, Action>: Reducer
 where StatePath.Value == Game.State {
   public typealias State = StatePath.Root
 
@@ -547,7 +547,7 @@ where StatePath.Value == Game.State {
     self.isHapticsEnabled = isHapticsEnabled
   }
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     EmptyReducer()._ifLet(state: self.toGameState, action: self.toGameAction) {
       Game()
     }
@@ -624,7 +624,7 @@ extension Game.State {
     })
   }
 
-  mutating func tryToRemoveCube(at index: LatticePoint) -> EffectTask<Game.Action> {
+  mutating func tryToRemoveCube(at index: LatticePoint) -> Effect<Game.Action> {
     guard self.canRemoveCube else { return .none }
 
     // Don't show menu for timed games.

@@ -7,7 +7,7 @@ import SelectionSoundsCore
 import SharedModels
 import SwiftUI
 
-public struct CubePreview: ReducerProtocol {
+public struct CubePreview: Reducer {
   public struct State: Equatable {
     var cubes: Puzzle
     var isAnimationReduced: Bool
@@ -66,7 +66,7 @@ public struct CubePreview: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     BindingReducer()
     Reduce { state, action in
       enum CancelID { case selection }

@@ -4,7 +4,7 @@ import ComposableGameCenter
 import Styleguide
 import SwiftUI
 
-public struct PastGames: ReducerProtocol {
+public struct PastGames: Reducer {
   public struct State: Equatable {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
@@ -17,7 +17,7 @@ public struct PastGames: ReducerProtocol {
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case let .matchesResponse(.success(matches)):

@@ -13,7 +13,7 @@ public enum GameContext: String, Codable {
   case turnBased
 }
 
-public struct UpgradeInterstitial: ReducerProtocol {
+public struct UpgradeInterstitial: Reducer {
   public struct State: Equatable {
     public var fullGameProduct: StoreKitClient.Product?
     public var isDismissable: Bool
@@ -57,7 +57,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     enum CancelID { case timer }
 
     switch action {
@@ -69,7 +69,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
       return .none
 
     case .maybeLaterButtonTapped:
-      return .task { .delegate(.close) }.animation()
+      return .run { send in send.delegate(.close) }.animation()
 
     case let .paymentTransaction(event):
       switch event {

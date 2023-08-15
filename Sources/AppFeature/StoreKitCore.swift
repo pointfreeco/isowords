@@ -8,13 +8,13 @@ public struct ReceiptFinalizationEnvelope: Equatable {
   let verifyEnvelope: VerifyReceiptEnvelope
 }
 
-public struct StoreKitLogic<State>: ReducerProtocol {
+public struct StoreKitLogic<State>: Reducer {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.storeKit) var storeKit
 
   public func reduce(
     into _: inout State, action: AppReducer.Action
-  ) -> EffectTask<AppReducer.Action> {
+  ) -> Effect<AppReducer.Action> {
     switch action {
     case .appDelegate(.didFinishLaunching):
       return .run { send in

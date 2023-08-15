@@ -2,7 +2,7 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-public struct LeaderboardResults<TimeScope>: ReducerProtocol {
+public struct LeaderboardResults<TimeScope>: Reducer {
   public struct State {
     public var gameMode: GameMode
     public var isLoading: Bool
@@ -48,7 +48,7 @@ public struct LeaderboardResults<TimeScope>: ReducerProtocol {
     self.loadResults = loadResults
   }
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .dismissTimeScopeMenu:
       state.isTimeScopeMenuVisible = false

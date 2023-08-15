@@ -4,7 +4,7 @@ import ServerConfigClient
 import SwiftUI
 import Tagged
 
-public struct Change: ReducerProtocol {
+public struct Change: Reducer {
   public struct State: Equatable, Identifiable {
     public var change: Changelog.Change
     public var isExpanded = false
@@ -20,7 +20,7 @@ public struct Change: ReducerProtocol {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .showButtonTapped:
       state.isExpanded.toggle()

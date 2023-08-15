@@ -7,7 +7,7 @@ import SharedModels
 import SwiftUI
 import UIApplicationClient
 
-public struct Trailer: ReducerProtocol {
+public struct Trailer: Reducer {
   public struct State: Equatable {
     var game: Game.State
     @BindingState var nub: CubeSceneView.ViewState.NubState
@@ -48,7 +48,7 @@ public struct Trailer: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     IntegratedGame(state: \State.game, action: /Action.game, isHapticsEnabled: { _ in true })
       .dependency(\.apiClient, .noop)
       .dependency(\.applicationClient, .noop)

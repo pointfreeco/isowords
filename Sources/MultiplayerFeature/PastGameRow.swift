@@ -3,7 +3,7 @@ import ComposableGameCenter
 import SwiftUI
 import Tagged
 
-public struct PastGame: ReducerProtocol {
+public struct PastGame: Reducer {
   public struct State: Equatable, Identifiable {
     public var alert: AlertState<Action>?
     public var challengeeDisplayName: String
@@ -49,7 +49,7 @@ public struct PastGame: ReducerProtocol {
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .delegate:
       return .none

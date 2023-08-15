@@ -2,7 +2,7 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-public struct WordSubmitButtonFeature: ReducerProtocol {
+public struct WordSubmitButtonFeature: Reducer {
   public struct State: Equatable {
     public var isSelectedWordValid: Bool
     public let isTurnBasedMatch: Bool
@@ -59,7 +59,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.audioPlayer.play) var playSound
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     enum CancelID { case submitButtonPressedDelay }
 
     guard state.isYourTurn
