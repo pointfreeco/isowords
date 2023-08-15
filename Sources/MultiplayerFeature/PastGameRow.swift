@@ -5,7 +5,7 @@ import Tagged
 
 public struct PastGame: ReducerProtocol {
   public struct State: Equatable, Identifiable {
-    public var alert: AlertState<Action>?
+    @PresentationState public var alert: AlertState<Action.Alert>?
     public var challengeeDisplayName: String
     public var challengerDisplayName: String
     public var challengeeScore: Int
@@ -35,12 +35,15 @@ public struct PastGame: ReducerProtocol {
   }
 
   public enum Action: Equatable {
+    case alert(PresentationAction<Alert>)
     case delegate(DelegateAction)
-    case dismissAlert
     case matchResponse(TaskResult<TurnBasedMatch>)
     case rematchButtonTapped
     case rematchResponse(TaskResult<TurnBasedMatch>)
     case tappedRow
+
+    public enum Alert: Equatable {
+    }
   }
 
   public enum DelegateAction: Equatable {
@@ -49,13 +52,17 @@ public struct PastGame: ReducerProtocol {
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public var body: some ReducerProtocolOf<Self> {
+    Reduce(self.core)
+      .ifLet(\.$alert, action: /Action.alert)
+  }
+
+  public func core(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
-    case .delegate:
+    case .alert:
       return .none
 
-    case .dismissAlert:
-      state.alert = nil
+    case .delegate:
       return .none
 
     case .matchResponse(.failure):
@@ -70,11 +77,13 @@ public struct PastGame: ReducerProtocol {
 
     case .rematchResponse(.failure):
       state.isRematchRequestInFlight = false
-      state.alert = .init(
-        title: TextState("Error"),
-        message: TextState("We couldn’t start the rematch. Try again later."),
-        dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert))
-      )
+      state.alert = AlertState {
+        TextState("Error")
+      } actions: {
+        ButtonState { TextState("OK") }
+      } message: {
+        TextState("We couldn’t start the rematch. Try again later.")
+      }
       return .none
 
     case .rematchButtonTapped:
@@ -156,7 +165,7 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .dismissAlert)
+    .alert(store: self.store.scope(state: \.$alert, action: PastGame.Action.alert))
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
