@@ -380,7 +380,7 @@ public struct OnboardingView: View {
 
   public init(store: StoreOf<Onboarding>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {

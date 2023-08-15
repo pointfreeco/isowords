@@ -43,7 +43,7 @@ public struct GameView<Content>: View where Content: View {
     self.content = content
     self.isAnimationReduced = isAnimationReduced
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {

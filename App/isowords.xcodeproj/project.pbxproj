@@ -914,6 +914,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		DC204A282538E7FE00DB49BC /* Update Info.plist */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -928,7 +929,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#/usr/libexec/PlistBuddy -c \"Set GitSHA '$(git rev-parse --short HEAD)'\" \"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n";
+			shellScript = "# TODO: Fix this\n#/usr/libexec/PlistBuddy -c \"Set GitSHA '$(git rev-parse --short HEAD)'\" \"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

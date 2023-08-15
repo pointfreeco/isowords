@@ -19,7 +19,8 @@ public struct GameFeatureView<Content>: View where Content: View {
       self.store.scope(state: \.game, action: { $0 }),
       then: { store in
         WithViewStore(
-          self.store.scope(state: \.settings.userSettings.enableReducedAnimation, action: { $0 })
+          self.store,
+          observe: \.settings.userSettings.enableReducedAnimation
         ) { viewStore in
           GameView(
             content: self.content,
@@ -32,7 +33,8 @@ public struct GameFeatureView<Content>: View where Content: View {
     .background(Color.adaptiveWhite)
     .background(
       WithViewStore(
-        self.store.scope(state: { $0.game?.isSettingsPresented ?? false }, action: { $0 })
+        self.store,
+        observe: { $0.game?.isSettingsPresented ?? false }
       ) {
         viewStore in
         // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also

@@ -118,10 +118,10 @@ public struct VocabView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack {
         IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
-          WithViewStore(vocabStore) { vocabViewStore in
+          WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
             List {
               ForEach(vocabViewStore.words, id: \.letters) { word in
                 Button {

@@ -8,7 +8,7 @@ struct PurchasesSettingsView: View {
 
   init(store: StoreOf<Settings>) {
     self.store = store
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   var body: some View {

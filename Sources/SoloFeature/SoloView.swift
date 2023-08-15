@@ -63,7 +63,7 @@ public struct SoloView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store.scope(state: ViewState.init, action: { $0 })) { viewStore in
+    WithViewStore(self.store, observe: ViewState.init) { viewStore in
       VStack {
         Spacer()
           .frame(maxHeight: .grid(16))

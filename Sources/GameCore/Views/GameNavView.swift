@@ -21,7 +21,7 @@ struct GameNavView: View {
     store: StoreOf<Game>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -74,11 +74,10 @@ struct GameNavView: View {
     static var previews: some View {
       VStack {
         GameNavView(
-          store: .init(
-            initialState: .init(inProgressGame: .mock),
-            reducer: .empty,
-            environment: ()
-          )
+          store: Store(
+            initialState: .init(inProgressGame: .mock)
+          ) {
+          }
         )
         Spacer()
       }

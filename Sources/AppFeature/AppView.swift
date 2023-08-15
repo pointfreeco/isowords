@@ -342,7 +342,7 @@ public struct AppView: View {
 
   public init(store: StoreOf<AppReducer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init, action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {

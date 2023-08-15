@@ -189,117 +189,116 @@ public struct Settings: ReducerProtocol {
 
   public init() {}
 
+  private enum CancelID {
+    case paymentObserver
+    case updateRemoveSettings
+  }
+
   public var body: some ReducerProtocol<State, Action> {
     CombineReducers {
       BindingReducer()
-      Reduce { state, action in
-        enum CancelID {
-          case paymentObserver
-          case updateRemoveSettings
+        .onChange(of: \.developer.currentBaseUrl.url) { _, url in
+          Reduce { _, _ in
+              .run { _ in
+                await self.apiClient.setBaseUrl(url)
+                await self.apiClient.logout()
+              }
+          }
         }
+        .onChange(of: \.enableNotifications) { _, _ in
+          Reduce { state, _ in
+            guard
+              state.enableNotifications,
+              let userNotificationSettings = state.userNotificationSettings
+            else {
+              // TODO: API request to opt out of all notifications
+              state.enableNotifications = false
+              return .none
+            }
 
-        switch action {
-        case .binding(\.$developer.currentBaseUrl):
-          return .run { [url = state.developer.currentBaseUrl.url] _ in
-            await self.apiClient.setBaseUrl(url)
-            await self.apiClient.logout()
+            switch userNotificationSettings.authorizationStatus {
+            case .notDetermined, .provisional:
+              state.enableNotifications = true
+              return .task {
+                await .userNotificationAuthorizationResponse(
+                  TaskResult {
+                    try await self.userNotifications.requestAuthorization([.alert, .sound])
+                  }
+                )
+              }
+              .animation()
+
+            case .denied:
+              state.alert = .userNotificationAuthorizationDenied
+              state.enableNotifications = false
+              return .none
+
+            case .authorized:
+              state.enableNotifications = true
+              return .task { .userNotificationAuthorizationResponse(.success(true)) }
+
+            case .ephemeral:
+              state.enableNotifications = true
+              return .none
+
+            @unknown default:
+              return .none
+            }
           }
-
-        case .binding(\.$enableNotifications):
-          guard
-            state.enableNotifications,
-            let userNotificationSettings = state.userNotificationSettings
-          else {
-            // TODO: API request to opt out of all notifications
-            state.enableNotifications = false
-            return .none
-          }
-
-          switch userNotificationSettings.authorizationStatus {
-          case .notDetermined, .provisional:
-            state.enableNotifications = true
-            return .task {
-              await .userNotificationAuthorizationResponse(
-                TaskResult {
-                  try await self.userNotifications.requestAuthorization([.alert, .sound])
-                }
+        }
+        .onChange(of: \.sendDailyChallengeReminder) { _, _ in
+          Reduce { state, _ in
+            .task { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
+              _ = try await self.apiClient.apiRequest(
+                route: .push(
+                  .updateSetting(
+                    .init(
+                      notificationType: .dailyChallengeEndsSoon,
+                      sendNotifications: sendDailyChallengeReminder
+                    )
+                  )
+                )
+              )
+              return await .currentPlayerRefreshed(
+                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
               )
             }
-            .animation()
-
-          case .denied:
-            state.alert = .userNotificationAuthorizationDenied
-            state.enableNotifications = false
-            return .none
-
-          case .authorized:
-            state.enableNotifications = true
-            return .task { .userNotificationAuthorizationResponse(.success(true)) }
-
-          case .ephemeral:
-            state.enableNotifications = true
-            return .none
-
-          @unknown default:
-            return .none
+            .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
           }
-
-        case .binding(\.$sendDailyChallengeReminder):
-          return .task { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
-            _ = try await self.apiClient.apiRequest(
-              route: .push(
-                .updateSetting(
-                  .init(
-                    notificationType: .dailyChallengeEndsSoon,
-                    sendNotifications: sendDailyChallengeReminder
+        }
+        .onChange(of: \.sendDailyChallengeSummary) { _, _ in
+          Reduce { state, _ in
+            .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
+              _ = try await self.apiClient.apiRequest(
+                route: .push(
+                  .updateSetting(
+                    .init(
+                      notificationType: .dailyChallengeReport,
+                      sendNotifications: sendDailyChallengeSummary
+                    )
                   )
                 )
               )
-            )
-            return await .currentPlayerRefreshed(
-              TaskResult { try await self.apiClient.refreshCurrentPlayer() }
-            )
-          }
-          .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
-
-        case .binding(\.$sendDailyChallengeSummary):
-          return .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
-            _ = try await self.apiClient.apiRequest(
-              route: .push(
-                .updateSetting(
-                  .init(
-                    notificationType: .dailyChallengeReport,
-                    sendNotifications: sendDailyChallengeSummary
-                  )
-                )
+              return await .currentPlayerRefreshed(
+                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
               )
-            )
-            return await .currentPlayerRefreshed(
-              TaskResult { try await self.apiClient.refreshCurrentPlayer() }
-            )
+            }
+            .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
           }
-          .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
-
-        case .binding(\.$userSettings.appIcon):
-          return .run { [appIcon = state.userSettings.appIcon?.rawValue] _ in
-            try await self.applicationClient.setAlternateIconName(appIcon)
+        }
+        .onChange(of: \.userSettings) { _, userSettings in
+          Reduce { _, _ in
+            .run { _ in
+              try await self.applicationClient.setAlternateIconName(userSettings.appIcon?.rawValue)
+              await self.applicationClient.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
+              await self.audioPlayer.setGlobalVolumeForMusic(userSettings.musicVolume)
+              await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
+            }
           }
+        }
 
-        case .binding(\.$userSettings.colorScheme):
-          return .run { [style = state.userSettings.colorScheme.userInterfaceStyle] _ in
-            await self.applicationClient.setUserInterfaceStyle(style)
-          }
-
-        case .binding(\.$userSettings.musicVolume):
-          return .run { [volume = state.userSettings.musicVolume] _ in
-            await self.audioPlayer.setGlobalVolumeForMusic(volume)
-          }
-
-        case .binding(\.$userSettings.soundEffectsVolume):
-          return .run { [volume = state.userSettings.soundEffectsVolume] _ in
-            await self.audioPlayer.setGlobalVolumeForSoundEffects(volume)
-          }
-
+      Reduce { state, action in
+        switch action {
         case .binding:
           return .none
 
@@ -468,9 +467,10 @@ public struct Settings: ReducerProtocol {
               _ = await (productsResponse, settingsResponse)
             },
 
-            NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
-              .map { _ in .didBecomeActive }
-              .eraseToEffect()
+            .publisher {
+              NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+                .map { _ in .didBecomeActive }
+            }
           )
 
         case let .userNotificationAuthorizationResponse(.success(granted)):

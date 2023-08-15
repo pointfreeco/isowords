@@ -13,7 +13,7 @@ struct StartNewGameView: View {
   }
 
   var body: some View {
-    WithViewStore(self.store.scope(state: \.destination?.tag, action: { $0 })) { viewStore in
+    WithViewStore(self.store, observe: \.destination?.tag) { viewStore in
       VStack(alignment: .leading) {
         Text("Start a game")
           .adaptiveFont(.matterMedium, size: 16)
@@ -87,11 +87,10 @@ struct StartNewGameView: View {
     static var previews: some View {
       Preview {
         StartNewGameView(
-          store: .init(
-            initialState: .init(),
-            reducer: .empty,
-            environment: ()
-          )
+          store: Store(
+            initialState: .init()
+          ) {
+          }
         )
       }
     }

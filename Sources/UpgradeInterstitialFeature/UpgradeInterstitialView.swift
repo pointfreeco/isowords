@@ -155,7 +155,7 @@ public struct UpgradeInterstitialView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack {
         VStack {
           if !viewStore.isDismissable

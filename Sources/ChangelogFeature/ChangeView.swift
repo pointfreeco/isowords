@@ -34,7 +34,7 @@ struct ChangeView: View {
   let store: StoreOf<Change>
 
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack(alignment: .leading, spacing: .grid(2)) {
         HStack {
           Text(viewStore.change.version)

@@ -72,7 +72,7 @@ public class CubeNode: SCNNode {
     store: Store<ViewState, Never>
   ) {
     func absurd<A>(_: Never) -> A {}
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
 
     self.index = self.viewStore.index
     self.leftPlaneNode = CubeFaceNode(

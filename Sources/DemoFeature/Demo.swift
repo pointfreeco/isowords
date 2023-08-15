@@ -154,42 +154,46 @@ public struct DemoView: View {
     store: StoreOf<Demo>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
-    SwitchStore(self.store.scope(state: \.step, action: { $0 })) {
-      CaseLet(
-        /Demo.State.Step.onboarding,
-        action: Demo.Action.onboarding,
-        then: {
-          OnboardingView(store: $0)
-            .onAppear { self.viewStore.send(.onAppear) }
-        }
-      )
+    SwitchStore(self.store.scope(state: \.step, action: { $0 })) { step in
+      switch step {
+      case .onboarding:
+        CaseLet(
+          /Demo.State.Step.onboarding,
+           action: Demo.Action.onboarding,
+           then: {
+             OnboardingView(store: $0)
+               .onAppear { self.viewStore.send(.onAppear) }
+           }
+        )
 
-      CaseLet(
-        /Demo.State.Step.game,
-        action: Demo.Action.game,
-        then: { store in
-          GameWrapper(
-            content: GameView(
-              content: CubeView(
-                store: store.scope(
-                  state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
-                  action: { CubeSceneView.ViewAction.to(gameAction: $0) }
-                )
+      case .game:
+        CaseLet(
+          /Demo.State.Step.game,
+           action: Demo.Action.game,
+           then: { store in
+             GameWrapper(
+              content: GameView(
+                content: CubeView(
+                  store: store.scope(
+                    state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
+                    action: { CubeSceneView.ViewAction.to(gameAction: $0) }
+                  )
+                ),
+                isAnimationReduced: false,
+                store: store
               ),
-              isAnimationReduced: false,
-              store: store
-            ),
-            isGameOver: self.viewStore.isGameOver,
-            bannerAction: {
-              self.viewStore.send(.fullVersionButtonTapped)
-            }
-          )
-        }
-      )
+              isGameOver: self.viewStore.isGameOver,
+              bannerAction: {
+                self.viewStore.send(.fullVersionButtonTapped)
+              }
+             )
+           }
+        )
+      }
     }
     .appStoreOverlay(
       isPresented: self.viewStore.binding(

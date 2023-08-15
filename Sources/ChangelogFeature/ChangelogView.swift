@@ -122,7 +122,7 @@ public struct ChangelogView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store.scope(state: ViewState.init, action: { $0 })) { viewStore in
+    WithViewStore(self.store, observe: ViewState.init) { viewStore in
       ScrollView {
         VStack(alignment: .leading) {
           if viewStore.isUpdateButtonVisible {
