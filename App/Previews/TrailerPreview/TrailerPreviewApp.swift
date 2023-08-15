@@ -28,7 +28,7 @@ struct TrailerPreviewApp: App {
             )
             .dependency(
               \.dictionary,
-               .init(
+              .init(
                 contains: { string, _ in
                   [
                     "SAY", "HELLO", "TO", "ISOWORDS",
