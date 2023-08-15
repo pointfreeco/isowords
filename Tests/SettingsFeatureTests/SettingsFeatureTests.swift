@@ -291,7 +291,9 @@ class SettingsFeatureTests: XCTestCase {
     store.dependencies.setUpDefaults()
     store.dependencies.audioPlayer.setGlobalVolumeForMusic = { await setMusicVolume.setValue($0) }
 
-    await store.send(.set(\.$userSettings.musicVolume, 0.5)) {
+    var userSettings = store.state.userSettings
+    userSettings.musicVolume = 0.5
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.musicVolume = 0.5
     }
 
@@ -311,7 +313,9 @@ class SettingsFeatureTests: XCTestCase {
       await setSoundEffectsVolume.setValue($0)
     }
 
-    await store.send(.set(\.$userSettings.soundEffectsVolume, 0.5)) {
+    var userSettings = store.state.userSettings
+    userSettings.soundEffectsVolume = 0.5
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
@@ -333,12 +337,15 @@ class SettingsFeatureTests: XCTestCase {
       await overriddenUserInterfaceStyle.setValue($0)
     }
 
-    await store.send(.set(\.$userSettings.colorScheme, .light)) {
+    var userSettings = store.state.userSettings
+    userSettings.colorScheme = .light
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.colorScheme = .light
     }
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .light) }
 
-    await store.send(.set(\.$userSettings.colorScheme, .system)) {
+    userSettings.colorScheme = .system
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.colorScheme = .system
     }
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .unspecified) }
@@ -357,7 +364,9 @@ class SettingsFeatureTests: XCTestCase {
       await overriddenIconName.setValue($0)
     }
 
-    await store.send(.set(\.$userSettings.appIcon, .icon2)) {
+    var userSettings = store.state.userSettings
+    userSettings.appIcon = .icon2
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.appIcon = .icon2
     }
     await overriddenIconName.withValue { XCTAssertNoDifference($0, "icon-2") }
@@ -390,7 +399,9 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.appIcon = .icon2
     }
 
-    await store.send(.set(\.$userSettings.appIcon, nil)) {
+    var userSettings = store.state.userSettings
+    userSettings.appIcon = nil
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.appIcon = nil
     }
     await overriddenIconName.withValue { XCTAssertNil($0) }
@@ -414,7 +425,9 @@ class SettingsFeatureTests: XCTestCase {
     store.dependencies.apiClient.logout = { await didLogout.setValue(true) }
     store.dependencies.apiClient.setBaseUrl = { await setBaseUrl.setValue($0) }
 
-    await store.send(.set(\.$developer.currentBaseUrl, .localhost)) {
+    var developer = store.state.developer
+    developer.currentBaseUrl = .localhost
+    await store.send(.set(\.$developer, developer)) {
       $0.developer.currentBaseUrl = .localhost
     }
     await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
@@ -475,10 +488,13 @@ class SettingsFeatureTests: XCTestCase {
 
     store.dependencies.setUpDefaults()
 
-    await store.send(.set(\.$userSettings.enableGyroMotion, false)) {
+    var userSettings = store.state.userSettings
+    userSettings.enableGyroMotion = false
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.enableGyroMotion = false
     }
-    await store.send(.set(\.$userSettings.enableGyroMotion, true)) {
+    userSettings.enableGyroMotion = true
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.enableGyroMotion = true
     }
   }
@@ -492,10 +508,13 @@ class SettingsFeatureTests: XCTestCase {
 
     store.dependencies.setUpDefaults()
 
-    await store.send(.set(\.$userSettings.enableHaptics, false)) {
+    var userSettings = store.state.userSettings
+    userSettings.enableHaptics = false
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.enableHaptics = false
     }
-    await store.send(.set(\.$userSettings.enableHaptics, true)) {
+    userSettings.enableHaptics = true
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.userSettings.enableHaptics = true
     }
   }
