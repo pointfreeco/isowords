@@ -199,10 +199,10 @@ public struct Settings: Reducer {
       BindingReducer()
         .onChange(of: \.developer.currentBaseUrl.url) { _, url in
           Reduce { _, _ in
-              .run { _ in
-                await self.apiClient.setBaseUrl(url)
-                await self.apiClient.logout()
-              }
+            .run { _ in
+              await self.apiClient.setBaseUrl(url)
+              await self.apiClient.logout()
+            }
           }
         }
         .onChange(of: \.enableNotifications) { _, _ in
@@ -219,11 +219,13 @@ public struct Settings: Reducer {
             switch userNotificationSettings.authorizationStatus {
             case .notDetermined, .provisional:
               state.enableNotifications = true
-              return .task {
-                await .userNotificationAuthorizationResponse(
-                  TaskResult {
-                    try await self.userNotifications.requestAuthorization([.alert, .sound])
-                  }
+              return .run { send in
+                await send(
+                  .userNotificationAuthorizationResponse(
+                    TaskResult {
+                      try await self.userNotifications.requestAuthorization([.alert, .sound])
+                    }
+                  )
                 )
               }
               .animation()
@@ -235,7 +237,7 @@ public struct Settings: Reducer {
 
             case .authorized:
               state.enableNotifications = true
-              return .task { .userNotificationAuthorizationResponse(.success(true)) }
+              return .send(.userNotificationAuthorizationResponse(.success(true)))
 
             case .ephemeral:
               state.enableNotifications = true
@@ -248,7 +250,7 @@ public struct Settings: Reducer {
         }
         .onChange(of: \.sendDailyChallengeReminder) { _, _ in
           Reduce { state, _ in
-            .task { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] in
+            .run { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] send in
               _ = try await self.apiClient.apiRequest(
                 route: .push(
                   .updateSetting(
@@ -259,8 +261,10 @@ public struct Settings: Reducer {
                   )
                 )
               )
-              return await .currentPlayerRefreshed(
-                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+              await send(
+                .currentPlayerRefreshed(
+                  TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                )
               )
             }
             .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
@@ -268,7 +272,7 @@ public struct Settings: Reducer {
         }
         .onChange(of: \.sendDailyChallengeSummary) { _, _ in
           Reduce { state, _ in
-            .task { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] in
+            .run { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] send in
               _ = try await self.apiClient.apiRequest(
                 route: .push(
                   .updateSetting(
@@ -279,8 +283,10 @@ public struct Settings: Reducer {
                   )
                 )
               )
-              return await .currentPlayerRefreshed(
-                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+              await send(
+                .currentPlayerRefreshed(
+                  TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                )
               )
             }
             .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
@@ -290,7 +296,8 @@ public struct Settings: Reducer {
           Reduce { _, _ in
             .run { _ in
               try await self.applicationClient.setAlternateIconName(userSettings.appIcon?.rawValue)
-              await self.applicationClient.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
+              await self.applicationClient.setUserInterfaceStyle(
+                userSettings.colorScheme.userInterfaceStyle)
               await self.audioPlayer.setGlobalVolumeForMusic(userSettings.musicVolume)
               await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
             }
@@ -314,9 +321,11 @@ public struct Settings: Reducer {
           return .none
 
         case .didBecomeActive:
-          return .task {
-            await .userNotificationSettingsResponse(
-              self.userNotifications.getNotificationSettings()
+          return .run { send in
+            await send(
+              .userNotificationSettingsResponse(
+                self.userNotifications.getNotificationSettings()
+              )
             )
           }
 
@@ -331,9 +340,11 @@ public struct Settings: Reducer {
 
         case .paymentTransaction(.removedTransactions):
           state.isPurchasing = false
-          return .task {
-            await .currentPlayerRefreshed(
-              TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+          return .run { send in
+            await send(
+              .currentPlayerRefreshed(
+                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+              )
             )
           }
           .animation()

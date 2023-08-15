@@ -146,23 +146,25 @@ public struct GameOver: Reducer {
             let challenge = state.dailyChallenges
               .first(where: { $0.dailyChallenge.gameMode == gameMode })
           else { return .none }
-          return .task {
-            await .startDailyChallengeResponse(
-              TaskResult {
-                try await startDailyChallengeAsync(
-                  challenge,
-                  apiClient: self.apiClient,
-                  date: { self.mainRunLoop.now.date },
-                  fileClient: self.fileClient
-                )
-              }
+          return .run { send in
+            await send(
+              .startDailyChallengeResponse(
+                TaskResult {
+                  try await startDailyChallengeAsync(
+                    challenge,
+                    apiClient: self.apiClient,
+                    date: { self.mainRunLoop.now.date },
+                    fileClient: self.fileClient
+                  )
+                }
+              )
             )
           }
 
         case .shared:
           return .none
         case .solo:
-          return .task { .delegate(.startSoloGame(gameMode)) }
+          return .send(.delegate(.startSoloGame(gameMode)))
         case .turnBased:
           return .none
         }
@@ -175,7 +177,7 @@ public struct GameOver: Reducer {
         }
 
       case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
-        return .task { .delegate(.close) }.animation()
+        return .send(.delegate(.close)).animation()
 
       case .notificationsAuthAlert:
         return .none
@@ -192,19 +194,21 @@ public struct GameOver: Reducer {
 
       case let .startDailyChallengeResponse(.success(inProgressGame)):
         state.gameModeIsLoading = nil
-        return .task { .delegate(.startGame(inProgressGame)) }
+        return .send(.delegate(.startGame(inProgressGame)))
 
       case let .submitGameResponse(.success(.dailyChallenge(result))):
         state.summary = .dailyChallenge(result)
 
-        return .task {
-          await .dailyChallengeResponse(
-            TaskResult {
-              try await self.apiClient.apiRequest(
-                route: .dailyChallenge(.today(language: .en)),
-                as: [FetchTodaysDailyChallengeResponse].self
-              )
-            }
+        return .run { send in
+          await send(
+            .dailyChallengeResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .dailyChallenge(.today(language: .en)),
+                  as: [FetchTodaysDailyChallengeResponse].self
+                )
+              }
+            )
           )
         }
         .animation()

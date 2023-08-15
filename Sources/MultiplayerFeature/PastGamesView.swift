@@ -31,19 +31,21 @@ public struct PastGames: Reducer {
         return .none
 
       case .task:
-        return .task {
-          await .matchesResponse(
-            TaskResult {
-              try await self.gameCenter.turnBasedMatch
-                .loadMatches()
-                .compactMap { match in
-                  PastGame.State(
-                    turnBasedMatch: match,
-                    localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
-                  )
-                }
-                .sorted { $0.endDate > $1.endDate }
-            }
+        return .run { send in
+          await send(
+            .matchesResponse(
+              TaskResult {
+                try await self.gameCenter.turnBasedMatch
+                  .loadMatches()
+                  .compactMap { match in
+                    PastGame.State(
+                      turnBasedMatch: match,
+                      localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
+                    )
+                  }
+                  .sorted { $0.endDate > $1.endDate }
+              }
+            )
           )
         }
       }

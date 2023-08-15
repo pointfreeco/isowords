@@ -69,7 +69,7 @@ public struct UpgradeInterstitial: Reducer {
       return .none
 
     case .maybeLaterButtonTapped:
-      return .run { send in send.delegate(.close) }.animation()
+      return .send(.delegate(.close)).animation()
 
     case let .paymentTransaction(event):
       switch event {
@@ -90,7 +90,7 @@ public struct UpgradeInterstitial: Reducer {
           identifier: self.serverConfig().productIdentifiers.fullGame
         )
       else { return .none }
-      return .task { .delegate(.fullGamePurchased) }
+      return .send(.delegate(.fullGamePurchased))
 
     case .task:
       state.upgradeInterstitialDuration =

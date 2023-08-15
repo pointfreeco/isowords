@@ -629,7 +629,7 @@ extension Game.State {
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .task { .confirmRemoveCube(index) } }
+    else { return .send(.confirmRemoveCube(index)) }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.turnBasedContext,

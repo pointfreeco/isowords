@@ -38,8 +38,8 @@ public struct Solo: Reducer {
       return .none
 
     case .task:
-      return .task {
-        await .savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() })
+      return .run { send in
+        await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
       }
     }
   }

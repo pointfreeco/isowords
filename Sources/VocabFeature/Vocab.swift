@@ -80,8 +80,8 @@ public struct Vocab: Reducer {
         return .none
 
       case .task:
-        return .task {
-          await .vocabResponse(TaskResult { try await self.database.fetchVocab() })
+        return .run { send in
+          await send(.vocabResponse(TaskResult { try await self.database.fetchVocab() }))
         }
 
       case let .vocabResponse(.success(vocab)):
@@ -92,14 +92,16 @@ public struct Vocab: Reducer {
         return .none
 
       case let .wordTapped(word):
-        return .task {
-          await .gamesResponse(
-            TaskResult {
-              .init(
-                games: try await self.database.fetchGamesForWord(word.letters),
-                word: word.letters
-              )
-            }
+        return .run { send in
+          await send(
+            .gamesResponse(
+              TaskResult {
+                .init(
+                  games: try await self.database.fetchGamesForWord(word.letters),
+                  word: word.letters
+                )
+              }
+            )
           )
         }
       }
