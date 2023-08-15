@@ -41,8 +41,8 @@ extension StoreOf<GameOver> {
       GameOver()
         .dependency(
           \.apiClient,
-           update(.noop) {
-             $0.override(
+          update(.noop) {
+            $0.override(
               routeCase: (/ServerRoute.Api.Route.games)
                 .appending(path: /ServerRoute.Api.Route.Games.submit),
               withResponse: { _ in
