@@ -31,7 +31,7 @@ public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
 
   public var body: some ReducerProtocol<Base.State, Base.Action> {
     self.base.onChange(of: self.selectedWord) { previousSelection, selection, state, _ in
-      return .fireAndForget { [state] in
+      return .run { [state] _ in
         if let noteIndex = noteIndex(
           selectedWord: selection,
           cubes: self.puzzle(state),

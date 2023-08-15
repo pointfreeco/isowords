@@ -62,7 +62,7 @@ public struct StoreKitLogic<State>: ReducerProtocol {
       }
 
     case let .verifyReceiptResponse(.success(envelope)):
-      return .fireAndForget {
+      return .run { _ in
         for transaction in envelope.transactions
         where envelope.verifyEnvelope.verifiedProductIds
           .contains(where: { $0 == transaction.payment.productIdentifier })

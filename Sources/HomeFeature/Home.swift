@@ -190,7 +190,7 @@ public struct Home: ReducerProtocol {
       return .none
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex))):
-      return .fireAndForget {
+      return .run { _ in
         try await self.gameCenter.turnBasedMatch.sendReminder(
           .init(
             for: matchId,

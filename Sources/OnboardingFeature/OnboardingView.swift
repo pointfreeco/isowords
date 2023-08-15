@@ -177,7 +177,7 @@ public struct Onboarding: ReducerProtocol {
         state.alert = nil
         state.step = State.Step.allCases.last!
 
-        return .fireAndForget {
+        return .run { _ in
           await self.audioPlayer.play(.uiSfxTap)
           Task.cancel(id: CancelID.delayedNextStep)
         }
@@ -187,7 +187,7 @@ public struct Onboarding: ReducerProtocol {
         return .none
 
       case .delegate(.getStarted):
-        return .fireAndForget {
+        return .run { _ in
           await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
           await self.audioPlayer.stop(.onboardingBgMusic)
           Task.cancel(id: CancelID.delayedNextStep)
@@ -248,7 +248,7 @@ public struct Onboarding: ReducerProtocol {
 
       case .nextButtonTapped:
         state.step.next()
-        return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
+        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .skipButtonTapped:
         guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
@@ -270,7 +270,7 @@ public struct Onboarding: ReducerProtocol {
           ),
           secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
         )
-        return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
+        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .task:
         let firstStepDelay: Int = {

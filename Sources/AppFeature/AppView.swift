@@ -105,7 +105,7 @@ public struct AppReducer: ReducerProtocol {
       }
       .onChange(of: \.home.savedGames) { savedGames, _, action in
         if case .savedGamesLoaded(.success) = action { return .none }
-        return .fireAndForget {
+        return .run { _ in 
           try await self.fileClient.save(games: savedGames)
         }
       }
@@ -171,7 +171,7 @@ public struct AppReducer: ReducerProtocol {
           }
         }
 
-        return .fireAndForget { completionHandler() }
+        return .run { _ in completionHandler() }
 
       case .appDelegate:
         return .none
@@ -269,7 +269,7 @@ public struct AppReducer: ReducerProtocol {
           != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
-          return .fireAndForget { [savedGames = state.home.savedGames] in
+          return .run { [savedGames = state.home.savedGames] _ in
             try await self.fileClient.save(games: savedGames)
           }
         }
@@ -280,7 +280,7 @@ public struct AppReducer: ReducerProtocol {
         return .none
 
       case .didChangeScenePhase(.active):
-        return .fireAndForget {
+        return .run { _ in
           async let register: Void = registerForRemoteNotificationsAsync(
             remoteNotifications: self.remoteNotifications,
             userNotifications: self.userNotifications

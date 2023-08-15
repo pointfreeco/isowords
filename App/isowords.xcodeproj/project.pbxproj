@@ -120,6 +120,7 @@
 		CA24633D25199144002FC36D /* CubePreviewPreviewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubePreviewPreviewApp.swift; sourceTree = "<group>"; };
 		CA24634125199144002FC36D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA24634625199144002FC36D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CA690C792A8BA70600599183 /* HomeFeaturePreview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HomeFeaturePreview.entitlements; sourceTree = "<group>"; };
 		CA6CDF772501505200BF8541 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		CA6CDF7C2501538B00BF8541 /* StoreKit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = StoreKit.storekit; sourceTree = "<group>"; };
 		CA73213B25DF36840095F978 /* icon-4@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-4@2x.png"; sourceTree = "<group>"; };
@@ -442,6 +443,7 @@
 		DC9D467F24CF8DC00052B234 = {
 			isa = PBXGroup;
 			children = (
+				CA690C792A8BA70600599183 /* HomeFeaturePreview.entitlements */,
 				CA9BA0C926AB2E1E0061168A /* isowords */,
 				CA97086F25D5B2EE0027EABE /* AppClip */,
 				DC0C367024D1F72C00CAE21F /* Config */,
@@ -728,8 +730,9 @@
 		DC9D468024CF8DC00052B234 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1240;
-				LastUpgradeCheck = 1200;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					CA09C06A25AF74D8003912CC = {
 						CreatedOnToolsVersion = 12.3;
@@ -1164,6 +1167,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HomeFeaturePreview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = VFRXY8HC3H;
 				ENABLE_PREVIEWS = YES;
@@ -1185,6 +1189,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HomeFeaturePreview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = VFRXY8HC3H;
 				ENABLE_PREVIEWS = YES;
@@ -1207,6 +1212,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HomeFeaturePreview.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = VFRXY8HC3H;
 				ENABLE_PREVIEWS = YES;
@@ -1324,9 +1330,11 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 105;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1805,9 +1813,11 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 105;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1867,9 +1877,11 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 105;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

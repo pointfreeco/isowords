@@ -63,7 +63,7 @@ public struct GameCenterLogic: ReducerProtocol {
       )
       state.game = newGame
 
-      return .fireAndForget {
+      return .run { _ in
         try await self.saveGame(.init(gameState: newGame))
       }
 
@@ -72,7 +72,7 @@ public struct GameCenterLogic: ReducerProtocol {
       return handleTurnBasedMatch(match, state: &state, didBecomeActive: didBecomeActive)
 
     case let .gameCenter(.listener(.turnBased(.wantsToQuitMatch(match)))):
-      return .fireAndForget {
+      return .run { _ in
         try await self.gameCenter.turnBasedMatch.endMatchInTurn(
           .init(
             for: match.matchId,
@@ -141,7 +141,7 @@ public struct GameCenterLogic: ReducerProtocol {
         game: game,
         settings: state.home.settings
       )
-      return .fireAndForget {
+      return .run { _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         try await self.gameCenter.turnBasedMatch.saveCurrentTurn(
           match.matchId,
@@ -184,7 +184,7 @@ public struct GameCenterLogic: ReducerProtocol {
         game: gameState,
         settings: state.home.settings
       )
-      return .fireAndForget { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] in
+      return .run { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         if isYourTurn {
           var turnBasedMatchData = turnBasedMatchData
@@ -210,7 +210,7 @@ public struct GameCenterLogic: ReducerProtocol {
       lastTurnDate > self.now.addingTimeInterval(-60)
     else { return .none }
 
-    return .fireAndForget {
+    return .run { _ in
       await self.gameCenter.showNotificationBanner(
         .init(title: match.message, message: nil)
       )

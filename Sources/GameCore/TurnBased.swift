@@ -42,13 +42,13 @@ struct TurnBasedLogic: ReducerProtocol {
           isDemo: state.isDemo,
           turnBasedContext: state.turnBasedContext
         )
-        return .fireAndForget {
+        return .run { _ in
           await self.feedbackGenerator.selectionChanged()
           try await self.gameCenter.turnBasedMatch.remove(match)
         }
       }
 
-      return .fireAndForget { await self.feedbackGenerator.selectionChanged() }
+      return .run { _ in await self.feedbackGenerator.selectionChanged() }
 
     case let .gameCenter(.turnBasedMatchResponse(.success(match))):
       guard

@@ -200,7 +200,7 @@ public struct Settings: ReducerProtocol {
 
         switch action {
         case .binding(\.$developer.currentBaseUrl):
-          return .fireAndForget { [url = state.developer.currentBaseUrl.url] in
+          return .run { [url = state.developer.currentBaseUrl.url] _ in
             await self.apiClient.setBaseUrl(url)
             await self.apiClient.logout()
           }
@@ -281,22 +281,22 @@ public struct Settings: ReducerProtocol {
           .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
 
         case .binding(\.$userSettings.appIcon):
-          return .fireAndForget { [appIcon = state.userSettings.appIcon?.rawValue] in
+          return .run { [appIcon = state.userSettings.appIcon?.rawValue] _ in
             try await self.applicationClient.setAlternateIconName(appIcon)
           }
 
         case .binding(\.$userSettings.colorScheme):
-          return .fireAndForget { [style = state.userSettings.colorScheme.userInterfaceStyle] in
+          return .run { [style = state.userSettings.colorScheme.userInterfaceStyle] _ in
             await self.applicationClient.setUserInterfaceStyle(style)
           }
 
         case .binding(\.$userSettings.musicVolume):
-          return .fireAndForget { [volume = state.userSettings.musicVolume] in
+          return .run { [volume = state.userSettings.musicVolume] _ in
             await self.audioPlayer.setGlobalVolumeForMusic(volume)
           }
 
         case .binding(\.$userSettings.soundEffectsVolume):
-          return .fireAndForget { [volume = state.userSettings.soundEffectsVolume] in
+          return .run { [volume = state.userSettings.soundEffectsVolume] _ in
             await self.audioPlayer.setGlobalVolumeForSoundEffects(volume)
           }
 
@@ -322,7 +322,7 @@ public struct Settings: ReducerProtocol {
           }
 
         case .leaveUsAReviewButtonTapped:
-          return .fireAndForget {
+          return .run { _ in
             _ = await self.applicationClient
               .open(self.serverConfig().appStoreReviewUrl, [:])
           }
@@ -356,7 +356,7 @@ public struct Settings: ReducerProtocol {
           return .none
 
         case .openSettingButtonTapped:
-          return .fireAndForget {
+          return .run { _ in
             guard
               let url = await URL(string: self.applicationClient.openSettingsURLString())
             else { return }
@@ -378,7 +378,7 @@ public struct Settings: ReducerProtocol {
           return .none
 
         case .reportABugButtonTapped:
-          return .fireAndForget {
+          return .run { _ in
             let currentPlayer = self.apiClient.currentPlayer()
             var components = URLComponents()
             components.scheme = "mailto"
@@ -402,14 +402,14 @@ public struct Settings: ReducerProtocol {
 
         case .restoreButtonTapped:
           state.isRestoring = true
-          return .fireAndForget { await self.storeKit.restoreCompletedTransactions() }
+          return .run { _ in await self.storeKit.restoreCompletedTransactions() }
 
         case .stats:
           return .none
 
         case let .tappedProduct(product):
           state.isPurchasing = true
-          return .fireAndForget {
+          return .run { _ in
             let payment = SKMutablePayment()
             payment.productIdentifier = product.productIdentifier
             payment.quantity = 1
@@ -476,7 +476,7 @@ public struct Settings: ReducerProtocol {
         case let .userNotificationAuthorizationResponse(.success(granted)):
           state.enableNotifications = granted
           return granted
-            ? .fireAndForget { await self.registerForRemoteNotifications() }
+            ? .run { _ in await self.registerForRemoteNotifications() }
             : .none
 
         case .userNotificationAuthorizationResponse:
@@ -492,7 +492,7 @@ public struct Settings: ReducerProtocol {
     .onChange(of: \.userSettings) { userSettings, _, _ in
       enum SaveDebounceID {}
 
-      return .fireAndForget { try await self.fileClient.save(userSettings: userSettings) }
+      return .run { _ in try await self.fileClient.save(userSettings: userSettings) }
         .debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: self.mainQueue)
     }
 

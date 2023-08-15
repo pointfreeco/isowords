@@ -88,7 +88,7 @@ public struct ChangelogReducer: ReducerProtocol {
         }
 
       case .updateButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           _ = await self.openURL(
             self.serverConfig.config().appStoreUrl.absoluteURL,
             [:]

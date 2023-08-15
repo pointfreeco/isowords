@@ -68,11 +68,11 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
     switch action {
     case .backgroundTapped:
       state.wordSubmitButton.areReactionsOpen = false
-      return .fireAndForget { await self.playSound(.uiSfxEmojiClose) }
+      return .run { _ in await self.playSound(.uiSfxEmojiClose) }
 
     case .delayedSubmitButtonPressed:
       state.wordSubmitButton.areReactionsOpen = true
-      return .fireAndForget {
+      return .run { _ in
         await self.feedbackGenerator.selectionChanged()
         await self.playSound(.uiSfxEmojiOpen)
       }

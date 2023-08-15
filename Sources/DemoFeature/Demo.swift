@@ -96,7 +96,7 @@ public struct Demo: ReducerProtocol {
         return .none
 
       case .fullVersionButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
@@ -112,7 +112,7 @@ public struct Demo: ReducerProtocol {
         return .none
 
       case .onAppear:
-        return .fireAndForget {
+        return .run { _ in
           await self.loadSounds(AudioPlayerClient.Sound.allCases)
         }
 

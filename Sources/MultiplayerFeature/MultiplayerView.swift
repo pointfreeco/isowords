@@ -52,7 +52,7 @@ public struct Multiplayer: ReducerProtocol {
         return .none
 
       case .startButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           if self.gameCenter.localPlayer.localPlayer().isAuthenticated {
             try await self.gameCenter.turnBasedMatchmakerViewController.present(false)
           } else {

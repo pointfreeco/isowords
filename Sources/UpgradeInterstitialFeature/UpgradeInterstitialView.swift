@@ -136,7 +136,7 @@ public struct UpgradeInterstitial: ReducerProtocol {
 
     case .upgradeButtonTapped:
       state.isPurchasing = true
-      return .fireAndForget {
+      return .run { _ in
         let payment = SKMutablePayment()
         payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
         payment.quantity = 1
