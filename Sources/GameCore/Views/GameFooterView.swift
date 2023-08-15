@@ -25,7 +25,7 @@ public struct GameFooterView: View {
     self.isAnimationReduced = isAnimationReduced
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -64,7 +64,7 @@ public struct WordListView: View {
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   struct SpacerId: Hashable {}
@@ -170,18 +170,15 @@ extension WordListView.ViewState {
     @ViewBuilder
     static var previews: some View {
       WordListView(
-        store: .init(
-          initialState: .init(inProgressGame: .mock),
-          reducer: .empty,
-          environment: ()
-        )
+        store: Store(initialState: .init(inProgressGame: .mock)) {
+        }
       )
       .previewLayout(.fixed(width: 500, height: 100))
       .previewDisplayName("New game")
 
       WordListView(
-        store: .init(
-          initialState: .init(
+        store: StoreOf<Game>(
+          initialState: Game.State(
             gameCurrentTime: Date(),
             localPlayer: .authenticated,
             turnBasedMatch: update(.mock) {
@@ -222,10 +219,10 @@ extension WordListView.ViewState {
                 ),
               ]
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+          
+        }
       )
       .previewLayout(.fixed(width: 500, height: 100))
       .previewDisplayName("Multiplayer game")

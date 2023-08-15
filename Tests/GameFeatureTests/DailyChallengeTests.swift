@@ -38,9 +38,10 @@ class DailyChallengeTests: XCTestCase {
           moves: [move]
         ),
         settings: .init()
-      ),
-      reducer: GameFeature()
-    )
+      )
+    ) {
+      GameFeature()
+    }
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didSave.setValue(true) }
@@ -87,9 +88,10 @@ class DailyChallengeTests: XCTestCase {
           moves: [move]
         ),
         settings: .init()
-      ),
-      reducer: GameFeature()
-    )
+      )
+    ) {
+      GameFeature()
+    }
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didSave.setValue(true) }

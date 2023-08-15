@@ -21,7 +21,7 @@ struct GameHeaderView: View {
     store: StoreOf<Game>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -67,7 +67,7 @@ struct ScoreView: View {
     store: StoreOf<Game>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {

@@ -75,7 +75,7 @@ public struct AppDelegateReducer: ReducerProtocol {
 
     case let .didRegisterForRemoteNotifications(.success(tokenData)):
       let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-      return .fireAndForget {
+      return .run { _ in 
         let settings = await self.userNotifications.getNotificationSettings()
         _ = try await self.apiClient.apiRequest(
           route: .push(
@@ -91,7 +91,7 @@ public struct AppDelegateReducer: ReducerProtocol {
       }
 
     case let .userNotifications(.willPresentNotification(_, completionHandler)):
-      return .fireAndForget {
+      return .run { _ in 
         completionHandler(.banner)
       }
 
@@ -100,7 +100,7 @@ public struct AppDelegateReducer: ReducerProtocol {
 
     case let .userSettingsLoaded(result):
       state = (try? result.value) ?? state
-      return .fireAndForget { [state] in
+      return .run { [state] _ in
         async let setSoundEffects: Void =
           await self.audioPlayer.setGlobalVolumeForSoundEffects(state.soundEffectsVolume)
         async let setMusic: Void = await self.audioPlayer.setGlobalVolumeForMusic(

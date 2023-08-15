@@ -31,19 +31,21 @@ public struct PastGames: ReducerProtocol {
         return .none
 
       case .task:
-        return .task {
-          await .matchesResponse(
-            TaskResult {
-              try await self.gameCenter.turnBasedMatch
-                .loadMatches()
-                .compactMap { match in
-                  PastGame.State(
-                    turnBasedMatch: match,
-                    localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
-                  )
-                }
-                .sorted { $0.endDate > $1.endDate }
-            }
+        return .run { send in
+          await send(
+            .matchesResponse(
+              TaskResult {
+                try await self.gameCenter.turnBasedMatch
+                  .loadMatches()
+                  .compactMap { match in
+                    PastGame.State(
+                      turnBasedMatch: match,
+                      localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
+                    )
+                  }
+                  .sorted { $0.endDate > $1.endDate }
+              }
+            )
           )
         }
       }
@@ -61,7 +63,7 @@ struct PastGamesView: View {
 
   init(store: StoreOf<PastGames>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
@@ -102,9 +104,10 @@ struct PastGamesView: View {
         NavigationView {
           PastGamesView(
             store: .init(
-              initialState: PastGames.State(pastGames: pastGames),
-              reducer: PastGames()
-            )
+              initialState: PastGames.State(pastGames: pastGames)
+            ) {
+              PastGames()
+            }
           )
         }
       }

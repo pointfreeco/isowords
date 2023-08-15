@@ -86,9 +86,10 @@ var homeAppStoreView: AnyView {
             score: score("QUEENLY")
           )
         )
-      ),
-      reducer: EmptyReducer<Home.State, Home.Action>()
-    )
+      )
+    ) {
+      
+    }
   )
   .environment(\.date) { runLoop.now.advanced(by: -60 * 60 * 2).date }
   return AnyView(view)

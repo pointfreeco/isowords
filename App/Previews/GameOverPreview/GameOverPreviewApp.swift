@@ -36,8 +36,9 @@ extension StoreOf<GameOver> {
           secondsPlayed: 0
         ),
         isDemo: false
-      ),
-      reducer: GameOver()
+      )
+    ) {
+      GameOver()
         .dependency(
           \.apiClient,
           update(.noop) {
@@ -76,7 +77,7 @@ extension StoreOf<GameOver> {
         .dependency(\.serverConfig, .noop)
         .dependency(\.userDefaults.boolForKey) { _ in false }
         .dependency(\.userNotifications, .noop)
-    )
+    }
   }
 
   static var multiplayer: Self {
@@ -95,9 +96,10 @@ extension StoreOf<GameOver> {
           },
           metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
-      ),
-      reducer: GameOver()
+      )
+    ) {
+      GameOver()
         .dependency(\.context, .preview)
-    )
+    }
   }
 }

@@ -40,9 +40,10 @@ class GameFeatureTests: XCTestCase {
           secondsPlayed: 0
         ),
         settings: Settings.State()
-      ),
-      reducer: GameFeature()
-    )
+      )
+    ) {
+      GameFeature()
+    }
 
     store.dependencies.audioPlayer.play = { _ in }
     store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
@@ -82,9 +83,10 @@ class GameFeatureTests: XCTestCase {
           ]
         ),
         settings: Settings.State()
-      ),
-      reducer: GameFeature()
-    )
+      )
+    ) {
+      GameFeature()
+    }
 
     store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }

@@ -185,7 +185,7 @@ public struct CubePreviewView: View {
 
   public init(store: StoreOf<CubePreview>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -237,9 +237,8 @@ public struct CubePreviewView: View {
                     word: self.viewStore.selectedWordString
                   )
                 },
-                action: { $0 }
+                action: absurd
               )
-              .actionless
           )
       )
     }
@@ -306,3 +305,5 @@ extension CubeSceneView.ViewState {
     )
   }
 }
+
+private func absurd<A>(_: Never) -> A { }

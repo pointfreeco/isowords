@@ -1,3 +1,4 @@
+import ComposableArchitecture
 @testable import SettingsFeature
 import SnapshotTesting
 import Styleguide
@@ -15,10 +16,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: SettingsView(
         store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        ),
+          initialState: .init()
+        ) {
+        },
         navPresentationStyle: .navigation
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -27,10 +27,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: SettingsView(
         store: .init(
-          initialState: .init(fullGameProduct: .success(.fullGame)),
-          reducer: .empty,
-          environment: ()
-        ),
+          initialState: .init(fullGameProduct: .success(.fullGame))
+        ) {
+        },
         navPresentationStyle: .navigation
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -39,10 +38,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: SettingsView(
         store: .init(
-          initialState: .init(fullGamePurchasedAt: .mock),
-          reducer: .empty,
-          environment: ()
-        ),
+          initialState: .init(fullGamePurchasedAt: .mock)
+        ) {
+        },
         navPresentationStyle: .navigation
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -53,10 +51,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: NotificationsSettingsView(
         store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init()
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -66,10 +63,9 @@ class SettingsViewTests: XCTestCase {
         store: .init(
           initialState: .init(
             enableNotifications: true
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -79,23 +75,21 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: SoundsSettingsView(
         store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init()
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
     assertSnapshot(
       matching: SoundsSettingsView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: Settings.State(
             userSettings: .init(musicVolume: 0, soundEffectsVolume: 0)
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -105,10 +99,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: AppearanceSettingsView(
         store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init()
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -118,10 +111,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: AccessibilitySettingsView(
         store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init()
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -131,10 +123,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: PurchasesSettingsView(
         store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init()
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -142,10 +133,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: PurchasesSettingsView(
         store: .init(
-          initialState: .init(fullGameProduct: .success(.fullGame)),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init(fullGameProduct: .success(.fullGame))
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -153,10 +143,9 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: PurchasesSettingsView(
         store: .init(
-          initialState: .init(fullGamePurchasedAt: .mock),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init(fullGamePurchasedAt: .mock)
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )

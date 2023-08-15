@@ -21,14 +21,15 @@ struct SettingsPreviewApp: App {
       NavigationView {
         SettingsView(
           store: .init(
-            initialState: Settings.State(),
-            reducer: Settings()
+            initialState: Settings.State()
+          ) {
+            Settings()
               .dependency(\.apiClient, .noop)
               .dependency(\.audioPlayer, .noop)
               .dependency(\.build, .noop)
               .dependency(\.database, .noop)
               .dependency(\.serverConfig, .live(fetch: { .init() }))
-          ),
+          },
           navPresentationStyle: .modal
         )
       }

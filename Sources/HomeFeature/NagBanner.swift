@@ -70,7 +70,7 @@ struct NagBannerFeatureView: View {
   let store: StoreOf<NagBannerFeature>
 
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       IfLetStore(
         self.store.scope(state: { $0 }, action: NagBannerFeature.Action.nagBanner),
         then: NagBannerView.init(store:)
@@ -103,7 +103,7 @@ private struct NagBannerView: View {
   let store: StoreOf<NagBanner>
 
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       Button(action: { viewStore.send(.tapped) }) {
         Marquee(duration: TimeInterval(messages.count) * 9) {
           ForEach(messages, id: \.self) { message in
@@ -135,9 +135,10 @@ let messages = [
         ZStack(alignment: .bottomLeading) {
           NagBannerView(
             store: Store(
-              initialState: NagBanner.State(),
-              reducer: NagBanner()
-            )
+              initialState: NagBanner.State()
+            ) {
+              NagBanner()
+            }
           )
         }
       }

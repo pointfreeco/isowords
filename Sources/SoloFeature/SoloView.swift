@@ -38,8 +38,8 @@ public struct Solo: ReducerProtocol {
       return .none
 
     case .task:
-      return .task {
-        await .savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() })
+      return .run { send in
+        await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
       }
     }
   }
@@ -63,7 +63,7 @@ public struct SoloView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store.scope(state: ViewState.init, action: { $0 })) { viewStore in
+    WithViewStore(self.store, observe: ViewState.init) { viewStore in
       VStack {
         Spacer()
           .frame(maxHeight: .grid(16))
@@ -134,7 +134,7 @@ public struct SoloView: View {
 
   extension Store where State == Solo.State, Action == Solo.Action {
     static let solo = Store(
-      initialState: .init(
+      initialState: Solo.State(
         inProgressGame: .some(
           update(.mock) {
             $0.moves = [
@@ -160,8 +160,9 @@ public struct SoloView: View {
               )
             ]
           })
-      ),
-      reducer: Solo()
-    )
+      )
+    ) {
+      Solo()
+    }
   }
 #endif

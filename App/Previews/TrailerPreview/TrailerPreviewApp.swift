@@ -16,8 +16,9 @@ struct TrailerPreviewApp: App {
     WindowGroup {
       TrailerView(
         store: .init(
-          initialState: Trailer.State(),
-          reducer: Trailer()
+          initialState: Trailer.State()
+        ) {
+          Trailer()
             .dependency(
               \.audioPlayer,
               .live(bundles: [
@@ -43,7 +44,7 @@ struct TrailerPreviewApp: App {
                 unload: { _ in }
               )
             )
-        )
+        }
       )
       .statusBar(hidden: true)
     }

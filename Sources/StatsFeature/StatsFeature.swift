@@ -114,8 +114,8 @@ public struct Stats: ReducerProtocol {
         return .none
 
       case .task:
-        return .task {
-          await .statsResponse(TaskResult { try await self.database.fetchStats() })
+        return .run { send in
+          await send(.statsResponse(TaskResult { try await self.database.fetchStats() }))
         }
       }
     }
@@ -136,7 +136,7 @@ public struct StatsView: View {
 
   public init(store: StoreOf<Stats>) {
     self.store = store
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   public var body: some View {
@@ -281,9 +281,10 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 longestWord: "ENFEEBLINGS",
                 secondsPlayed: 42000,
                 wordsFound: 200
-              ),
-              reducer: Stats()
-            )
+              )
+            ) {
+              Stats()
+            }
           )
           .navigationBarHidden(true)
         }

@@ -52,7 +52,7 @@ public struct Multiplayer: ReducerProtocol {
         return .none
 
       case .startButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           if self.gameCenter.localPlayer.localPlayer().isAuthenticated {
             try await self.gameCenter.turnBasedMatchmakerViewController.present(false)
           } else {
@@ -88,7 +88,7 @@ public struct MultiplayerView: View {
 
   public init(store: StoreOf<Multiplayer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init, action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   struct ViewState: Equatable {
@@ -196,8 +196,9 @@ public struct MultiplayerView: View {
 
   extension Store where State == Multiplayer.State, Action == Multiplayer.Action {
     static let multiplayer = Store(
-      initialState: .init(hasPastGames: true),
-      reducer: Multiplayer()
-    )
+      initialState: .init(hasPastGames: true)
+    ) {
+      Multiplayer()
+    }
   }
 #endif

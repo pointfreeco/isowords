@@ -8,7 +8,7 @@ struct PurchasesSettingsView: View {
 
   init(store: StoreOf<Settings>) {
     self.store = store
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   var body: some View {
@@ -87,18 +87,20 @@ struct PurchasesSettingsView: View {
             store: Store(
               initialState: Settings.State(
                 fullGamePurchasedAt: Date()
-              ),
-              reducer: Settings()
-            )
+              )
+            ) {
+              Settings()
+            }
           )
         }
 
         NavigationView {
           PurchasesSettingsView(
             store: Store(
-              initialState: Settings.State(),
-              reducer: Settings()
-            )
+              initialState: Settings.State()
+            ) {
+              Settings()
+            }
           )
         }
       }

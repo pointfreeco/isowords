@@ -13,9 +13,10 @@ import XCTest
 class LeaderboardFeatureTests: XCTestCase {
   func testScopeSwitcher() async {
     let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
-      reducer: Leaderboard()
-    )
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+    ) {
+      Leaderboard()
+    }
 
     await store.send(.scopeTapped(.vocab)) {
       $0.scope = .vocab
@@ -27,9 +28,10 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testTimeScopeSynchronization() async {
     let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
-      reducer: Leaderboard()
-    )
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+    ) {
+      Leaderboard()
+    }
 
     store.dependencies.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
     store.dependencies.audioPlayer = .noop
@@ -104,9 +106,10 @@ class LeaderboardFeatureTests: XCTestCase {
         isHapticsEnabled: false,
         scope: .vocab,
         settings: .init()
-      ),
-      reducer: Leaderboard()
-    )
+      )
+    ) {
+      Leaderboard()
+    }
 
     store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
     store.dependencies.mainQueue = .immediate

@@ -14,10 +14,11 @@ struct UpgradeInterstitialPreviewApp: App {
     WindowGroup {
       UpgradeInterstitialView(
         store: Store(
-          initialState: UpgradeInterstitial.State(),
-          reducer: UpgradeInterstitial()
+          initialState: UpgradeInterstitial.State()
+        ) {
+          UpgradeInterstitial()
             .dependency(\.serverConfig, .noop)
-        )
+        }
       )
     }
   }

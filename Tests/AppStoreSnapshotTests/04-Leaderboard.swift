@@ -33,10 +33,10 @@ var leaderboardAppStoreView: AnyView {
           ),
           timeScope: .lastWeek
         )
-      ),
-      reducer: .empty,
-      environment: ()
-    )
+      )
+    ) {
+      
+    }
   )
   return AnyView(view)
 }

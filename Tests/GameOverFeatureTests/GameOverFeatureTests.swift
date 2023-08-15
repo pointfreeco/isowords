@@ -29,9 +29,10 @@ class GameOverFeatureTests: XCTestCase {
             secondsPlayed: 0
           ),
           isDemo: false
-        ),
-        reducer: GameOver()
-      )
+        )
+      ) {
+        GameOver()
+      }
 
       store.dependencies.audioPlayer = .noop
       store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
@@ -125,9 +126,10 @@ class GameOverFeatureTests: XCTestCase {
             secondsPlayed: 0
           ),
           isDemo: false
-        ),
-        reducer: GameOver()
-      )
+        )
+      ) {
+        GameOver()
+      }
 
       store.dependencies.audioPlayer = .noop
       store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
@@ -213,9 +215,10 @@ class GameOverFeatureTests: XCTestCase {
             secondsPlayed: 0
           ),
           isDemo: false
-        ),
-        reducer: GameOver()
-      )
+        )
+      ) {
+        GameOver()
+      }
 
       store.dependencies.audioPlayer = .noop
       store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
@@ -271,9 +274,10 @@ class GameOverFeatureTests: XCTestCase {
         completedGame: completedGame,
         isDemo: false,
         isViewEnabled: true
-      ),
-      reducer: GameOver()
-    )
+      )
+    ) {
+      GameOver()
+    }
 
     store.dependencies.database.fetchStats = {
       LocalDatabaseClient.Stats(
@@ -340,9 +344,10 @@ class GameOverFeatureTests: XCTestCase {
           secondsPlayed: 0
         ),
         isDemo: false
-      ),
-      reducer: GameOver()
-    )
+      )
+    ) {
+      GameOver()
+    }
 
     await store.send(.task)
     await store.receive(.delegate(.close))
@@ -361,9 +366,10 @@ class GameOverFeatureTests: XCTestCase {
           secondsPlayed: 0
         ),
         isDemo: false
-      ),
-      reducer: GameOver()
-    )
+      )
+    ) {
+      GameOver()
+    }
 
     store.dependencies.audioPlayer = .noop
     store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
@@ -398,9 +404,10 @@ class GameOverFeatureTests: XCTestCase {
           secondsPlayed: 0
         ),
         isDemo: false
-      ),
-      reducer: GameOver()
-    )
+      )
+    ) {
+      GameOver()
+    }
 
     store.dependencies.audioPlayer = .noop
     store.dependencies.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }

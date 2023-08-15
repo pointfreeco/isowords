@@ -17,9 +17,10 @@ class ChangelogFeatureTests: XCTestCase {
     )
 
     let store = TestStore(
-      initialState: ChangelogReducer.State(),
-      reducer: ChangelogReducer()
-    )
+      initialState: ChangelogReducer.State()
+    ) {
+      ChangelogReducer()
+    }
 
     store.dependencies.apiClient.override(
       route: .changelog(build: 42),
@@ -56,9 +57,10 @@ class ChangelogFeatureTests: XCTestCase {
     )
 
     let store = TestStore(
-      initialState: ChangelogReducer.State(),
-      reducer: ChangelogReducer()
-    )
+      initialState: ChangelogReducer.State()
+    ) {
+      ChangelogReducer()
+    }
 
     store.dependencies.apiClient.override(
       route: .changelog(build: 40),

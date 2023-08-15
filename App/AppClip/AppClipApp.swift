@@ -17,12 +17,13 @@ struct AppClipApp: App {
     WindowGroup {
       DemoView(
         store: Store(
-          initialState: Demo.State(),
-          reducer: Demo()
+          initialState: Demo.State()
+        ) {
+          Demo()
             .dependency(\.apiClient, .appClip)
             .dependency(\.audioPlayer, .live(bundles: [AppClipAudioLibrary.bundle]))
             .dependency(\.dictionary, .file())
-        )
+        }
       )
     }
   }

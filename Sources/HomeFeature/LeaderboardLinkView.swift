@@ -21,7 +21,7 @@ struct LeaderboardLinkView: View {
 
   init(store: StoreOf<Home>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -163,10 +163,10 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
       Preview {
         LeaderboardLinkView(
           store: Store(
-            initialState: .init(),
-            reducer: .empty,
-            environment: ()
-          )
+            initialState: .init()
+          ) {
+            
+          }
         )
       }
     }

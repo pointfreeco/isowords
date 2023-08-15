@@ -102,7 +102,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     store: Store<ViewState, ViewAction>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
 
     super.init(frame: .zero, options: nil)
 
@@ -147,8 +147,10 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
             letterGeometry: letterGeometry,
             store:
               store
-              .scope(state: \.cubes[index], action: { $0 })
-              .actionless
+              .scope(
+                state: \.cubes[index],
+                action: absurd
+              )
           )
           cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
           self.gameCubeNode.addChildNode(cube)
@@ -164,10 +166,9 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
                 cubeFace: .init(letter: "A", side: .top),
                 letterIsHidden: true,
                 status: status
-              ),
-              reducer: .empty,
-              environment: ()
-            )
+              )
+            ) {
+            }
           )
           warmer.position = .init(-1, -1, -1)
           warmer.scale = .init(0.001, 0.001, 0.001)
@@ -454,3 +455,5 @@ extension SCNVector3 {
     sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
   }
 }
+
+private func absurd<A>(_: Never) -> A { }

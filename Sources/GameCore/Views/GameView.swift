@@ -43,7 +43,7 @@ public struct GameView<Content>: View where Content: View {
     self.content = content
     self.isAnimationReduced = isAnimationReduced
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -166,9 +166,8 @@ public struct GameView<Content>: View where Content: View {
                     word: $0.selectedWordString
                   )
                 },
-                action: { $0 }
+                action: absurd
               )
-              .actionless
           )
       )
       .background(
@@ -176,11 +175,10 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(self.store.scope(state: \.bottomMenu, action: { $0 }))
-      .alert(
-        self.store.scope(state: \.alert, action: Game.Action.alert),
-        dismiss: .dismiss
-      )
+      .alert(store: self.store.scope(state: \.$alert, action: Game.Action.alert))
     }
     .task { await self.viewStore.send(.task).finish() }
   }
 }
+
+private func absurd<A>(_: Never) -> A { }

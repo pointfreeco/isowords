@@ -546,10 +546,10 @@ class CubeViewTests: XCTestCase {
           ),
           nub: nil,
           settings: .init()
-        ),
-        reducer: .empty,
-        environment: ()
-      )
+        )
+      ) {
+
+      }
     )
 
     assertSnapshot(

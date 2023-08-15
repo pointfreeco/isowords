@@ -11,9 +11,10 @@ import XCTest
 class UserNotificationsTests: XCTestCase {
   func testReceiveBackgroundNotification() async {
     let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.didFinishLaunching()
 
@@ -52,9 +53,10 @@ class UserNotificationsTests: XCTestCase {
 
   func testReceiveForegroundNotification() async {
     let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.didFinishLaunching()
 

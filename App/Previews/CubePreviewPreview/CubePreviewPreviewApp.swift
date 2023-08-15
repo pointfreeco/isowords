@@ -58,10 +58,11 @@ struct CubePreviewPreviewApp: App {
               )
             ],
             settings: .init()
-          ),
-          reducer: CubePreview()
+          )
+        ) {
+          CubePreview()
             .dependency(\.audioPlayer, .noop)
-        )
+        }
       )
     }
   }

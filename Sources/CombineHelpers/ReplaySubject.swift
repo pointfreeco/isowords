@@ -5,7 +5,7 @@ import Foundation
 public final class ReplaySubject<Output, Failure: Error>: Subject {
   private var buffer = [Output]()
   private let bufferSize: Int
-  private var subscriptions = [Subscription<Output, Failure>]()
+  private var subscriptions = [Subscription]()
   private var completion: Subscribers.Completion<Failure>?
   private let lock = NSRecursiveLock()
 
@@ -44,7 +44,7 @@ public final class ReplaySubject<Output, Failure: Error>: Subject {
     subscription.replay(self.buffer, completion: self.completion)
   }
 
-  private final class Subscription<Output, Failure: Error>: Combine.Subscription {
+  private final class Subscription: Combine.Subscription {
     private let downstream: AnySubscriber<Output, Failure>
     private var isCompleted = false
     private var demand: Subscribers.Demand = .none

@@ -34,7 +34,7 @@ public struct SettingsView: View {
   ) {
     self.navPresentationStyle = navPresentationStyle
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init, action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -175,7 +175,7 @@ public struct SettingsView: View {
       onDismiss: { self.viewStore.send(.onDismiss) }
     )
     .task { await self.viewStore.send(.task).finish() }
-    .alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .set(\.$alert, nil))
+    .alert(store: self.store.scope(state: \.$alert, action: Settings.Action.alert))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()
@@ -258,12 +258,13 @@ public struct SupportButtonStyle: ButtonStyle {
                     productIdentifier: ""
                   )
                 )
-              ),
-              reducer: Settings()
+              )
+            ) {
+              Settings()
                 .dependency(\.apiClient.currentPlayer) {
                   .init(appleReceipt: .mock, player: .blob)
                 }
-            ),
+            },
             navPresentationStyle: .navigation
           )
         }

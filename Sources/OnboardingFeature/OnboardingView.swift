@@ -15,7 +15,7 @@ import UserDefaultsClient
 
 public struct Onboarding: ReducerProtocol {
   public struct State: Equatable {
-    public var alert: AlertState<AlertAction>?
+    @PresentationState public var alert: AlertState<AlertAction>?
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
@@ -134,7 +134,7 @@ public struct Onboarding: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case alert(AlertAction)
+    case alert(PresentationAction<AlertAction>)
     case delayedNextStep
     case delegate(DelegateAction)
     case game(Game.Action)
@@ -145,7 +145,6 @@ public struct Onboarding: ReducerProtocol {
   }
 
   public enum AlertAction: Equatable {
-    case dismiss
     case resumeButtonTapped
     case skipButtonTapped
   }
@@ -169,15 +168,12 @@ public struct Onboarding: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
-      case .alert(.dismiss), .alert(.resumeButtonTapped):
-        state.alert = nil
+      case .alert(.dismiss), .alert(.presented(.resumeButtonTapped)):
         return .none
 
-      case .alert(.skipButtonTapped):
-        state.alert = nil
+      case .alert(.presented(.skipButtonTapped)):
         state.step = State.Step.allCases.last!
-
-        return .fireAndForget {
+        return .run { _ in
           await self.audioPlayer.play(.uiSfxTap)
           Task.cancel(id: CancelID.delayedNextStep)
         }
@@ -187,7 +183,7 @@ public struct Onboarding: ReducerProtocol {
         return .none
 
       case .delegate(.getStarted):
-        return .fireAndForget {
+        return .run { _ in
           await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
           await self.audioPlayer.stop(.onboardingBgMusic)
           Task.cancel(id: CancelID.delayedNextStep)
@@ -222,7 +218,7 @@ public struct Onboarding: ReducerProtocol {
       case let .game(.doubleTap(index: index)):
         guard state.step == .some(.step19_DoubleTapToRemove)
         else { return .none }
-        return .task { .game(.confirmRemoveCube(index)) }
+        return .send(.game(.confirmRemoveCube(index)))
 
       case let .game(.tap(gestureState, .some(indexedCubeFace))):
         let index =
@@ -244,11 +240,11 @@ public struct Onboarding: ReducerProtocol {
         return self.gameReducer.reduce(into: &state, action: action)
 
       case .getStartedButtonTapped:
-        return .task { .delegate(.getStarted) }
+        return .send(.delegate(.getStarted))
 
       case .nextButtonTapped:
         state.step.next()
-        return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
+        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .skipButtonTapped:
         guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
@@ -270,7 +266,7 @@ public struct Onboarding: ReducerProtocol {
           ),
           secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
         )
-        return .fireAndForget { await self.audioPlayer.play(.uiSfxTap) }
+        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .task:
         let firstStepDelay: Int = {
@@ -297,6 +293,7 @@ public struct Onboarding: ReducerProtocol {
         .cancellable(id: CancelID.delayedNextStep)
       }
     }
+    .ifLet(\.$alert, action: /Action.alert)
     .onChange(of: \.game.selectedWordString) { selectedWord, state, _ in
       switch state.step {
       case .step4_FindGame where selectedWord == "GAME",
@@ -332,9 +329,9 @@ public struct Onboarding: ReducerProtocol {
         return .none
 
       case .step13_Congrats:
-        return .task {
+        return .run { send in
           try await self.mainQueue.sleep(for: .seconds(3))
-          return .delayedNextStep
+          await send(.delayedNextStep)
         }
         .animation()
 
@@ -342,9 +339,9 @@ public struct Onboarding: ReducerProtocol {
         .step9_Congrats,
         .step17_Congrats,
         .step20_Congrats:
-        return .task {
+        return .run { send in
           try await self.mainQueue.sleep(for: .seconds(2))
-          return .delayedNextStep
+          await send(.delayedNextStep)
         }
         .animation()
       }
@@ -380,7 +377,7 @@ public struct OnboardingView: View {
 
   public init(store: StoreOf<Onboarding>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -469,11 +466,9 @@ private enum CancelID {
   struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
       OnboardingView(
-        store: Store(
-          initialState: .init(presentationStyle: .firstLaunch),
-          reducer: .empty,
-          environment: ()
-        )
+        store: Store(initialState: .init(presentationStyle: .firstLaunch)) {
+          
+        }
       )
     }
   }

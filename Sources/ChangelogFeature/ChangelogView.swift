@@ -76,19 +76,21 @@ public struct ChangelogReducer: ReducerProtocol {
         state.currentBuild = self.buildNumber()
         state.isRequestInFlight = true
 
-        return .task {
-          await .changelogResponse(
-            TaskResult {
-              try await self.apiClient.apiRequest(
-                route: .changelog(build: self.buildNumber()),
-                as: Changelog.self
-              )
-            }
+        return .run { send in
+          await send(
+            .changelogResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .changelog(build: self.buildNumber()),
+                  as: Changelog.self
+                )
+              }
+            )
           )
         }
 
       case .updateButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           _ = await self.openURL(
             self.serverConfig.config().appStoreUrl.absoluteURL,
             [:]
@@ -122,7 +124,7 @@ public struct ChangelogView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store.scope(state: ViewState.init, action: { $0 })) { viewStore in
+    WithViewStore(self.store, observe: ViewState.init) { viewStore in
       ScrollView {
         VStack(alignment: .leading) {
           if viewStore.isUpdateButtonVisible {
@@ -173,8 +175,9 @@ public struct ChangelogView: View {
       Preview {
         ChangelogView(
           store: .init(
-            initialState: ChangelogReducer.State(),
-            reducer: ChangelogReducer()
+            initialState: ChangelogReducer.State()
+          ) {
+            ChangelogReducer()
               .dependency(
                 \.apiClient,
                 {
@@ -201,7 +204,7 @@ public struct ChangelogView: View {
               .dependency(\.applicationClient, .noop)
               .dependency(\.build.number) { 98 }
               .dependency(\.serverConfig, .noop)
-          )
+          }
         )
         .navigationStyle(
           title: Text("Updates"),

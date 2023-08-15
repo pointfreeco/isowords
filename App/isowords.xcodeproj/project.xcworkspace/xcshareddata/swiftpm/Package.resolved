@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
         "state": {
           "branch": null,
-          "revision": "0625932976b3ae23949f6b816d13bd97f3b40b7c",
-          "version": "0.10.0"
+          "revision": "ec62f32d21584214a4b27c8cee2b2ad70ab2c38a",
+          "version": "0.11.0"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-clocks",
         "state": {
           "branch": null,
-          "revision": "f9acfa1a45f4483fe0f2c434a74e6f68f865d12d",
-          "version": "0.3.0"
+          "revision": "0fbaebfc013715dab44d715a4d350ba37f297e4d",
+          "version": "0.4.0"
         }
       },
       {
@@ -105,8 +105,17 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
         "state": {
           "branch": null,
-          "revision": "b6559103c7867821b3848afe29afc1a386ae83f1",
-          "version": "0.53.2"
+          "revision": "4cf2104cf14d57ec3dfb8cbd90d29f2b81a32028",
+          "version": "0.58.0"
+        }
+      },
+      {
+        "package": "swift-concurrency-extras",
+        "repositoryURL": "https://github.com/pointfreeco/swift-concurrency-extras",
+        "state": {
+          "branch": null,
+          "revision": "479750bd98fac2e813fffcf2af0728b5b0085795",
+          "version": "0.1.1"
         }
       },
       {
@@ -123,8 +132,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-custom-dump",
         "state": {
           "branch": null,
-          "revision": "84b30e1af72e0ffe6dfbfe39d53b8173caacf224",
-          "version": "0.10.2"
+          "revision": "4a87bb75be70c983a9548597e8783236feb3401e",
+          "version": "0.11.1"
         }
       },
       {
@@ -132,8 +141,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swift-dependencies",
         "state": {
           "branch": null,
-          "revision": "25c9b6789b4b7ada649a3808e6d8de1489082a33",
-          "version": "0.5.0"
+          "revision": "16fd42ae04c6e7f74a6a86395d04722c641cccee",
+          "version": "0.6.0"
         }
       },
       {
@@ -294,8 +303,8 @@
         "repositoryURL": "https://github.com/pointfreeco/swiftui-navigation",
         "state": {
           "branch": null,
-          "revision": "47dd574b900ba5ba679f56ea00d4d282fc7305a6",
-          "version": "0.7.1"
+          "revision": "2aa885e719087ee19df251c08a5980ad3e787f12",
+          "version": "0.8.0"
         }
       },
       {
@@ -303,8 +312,8 @@
         "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
         "state": {
           "branch": null,
-          "revision": "ab8c9f45843694dd16be4297e6d44c0634fd9913",
-          "version": "0.8.4"
+          "revision": "50843cbb8551db836adec2290bb4bc6bac5c1865",
+          "version": "0.9.0"
         }
       }
     ]

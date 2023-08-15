@@ -18,8 +18,9 @@ struct HomeFeaturePreviewApp: App {
       NavigationView {
         HomeView(
           store: Store(
-            initialState: Home.State(),
-            reducer: Home()
+            initialState: Home.State()
+          ) {
+            Home()
               .dependency(
                 \.apiClient,
                 update(.noop) {
@@ -57,7 +58,7 @@ struct HomeFeaturePreviewApp: App {
               .dependency(\.storeKit, .noop)
               .dependency(\.userDefaults, .noop)
               .dependency(\.userNotifications, .noop)
-          )
+          }
         )
       }
     }

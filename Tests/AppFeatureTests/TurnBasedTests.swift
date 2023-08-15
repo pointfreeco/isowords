@@ -60,9 +60,10 @@ class TurnBasedTests: XCTestCase {
       let store = TestStore(
         initialState: AppReducer.State(
           home: .init(destination: .multiplayer(.init(hasPastGames: false)))
-        ),
-        reducer: AppReducer()
-      )
+        )
+      ) {
+        AppReducer()
+      }
 
       store.dependencies.didFinishLaunching()
 
@@ -324,9 +325,10 @@ class TurnBasedTests: XCTestCase {
       let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
 
       let store = TestStore(
-        initialState: AppReducer.State(),
-        reducer: AppReducer()
-      )
+        initialState: AppReducer.State()
+      ) {
+        AppReducer()
+      }
 
       store.dependencies.didFinishLaunching()
       store.dependencies.apiClient.authenticate = { _ in .mock }
@@ -438,11 +440,10 @@ class TurnBasedTests: XCTestCase {
       ]
       let weekInReview = FetchWeekInReviewResponse(ranks: [], word: nil)
       
-      let store = TestStore(
-        initialState: AppReducer.State(),
-        reducer: AppReducer()
-      )
-      
+      let store = TestStore(initialState: AppReducer.State()) {
+        AppReducer()
+      }
+
       store.dependencies.didFinishLaunching()
       store.dependencies.apiClient.authenticate = { _ in .mock }
       store.dependencies.apiClient.currentPlayer = { nil }
@@ -556,9 +557,10 @@ class TurnBasedTests: XCTestCase {
       secondsPlayed: 0
     )
     let store = TestStore(
-      initialState: AppReducer.State(game: initialGameState),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State(game: initialGameState)
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.apiClient.currentPlayer = { nil }
     store.dependencies.audioPlayer.play = { _ in }
@@ -716,9 +718,10 @@ class TurnBasedTests: XCTestCase {
             isDemo: false
           )
         }
-      ),
-      reducer: AppReducer()
-    )
+      )
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.apiClient.currentPlayer = { nil }
     store.dependencies.dictionary.randomCubes = { _ in .mock }
@@ -801,9 +804,10 @@ class TurnBasedTests: XCTestCase {
     let notificationBannerRequest = ActorIsolated<GameCenterClient.NotificationBannerRequest?>(nil)
 
     let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.gameCenter.showNotificationBanner = { await notificationBannerRequest.setValue($0) }
@@ -860,9 +864,10 @@ class TurnBasedTests: XCTestCase {
     }
 
     let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()

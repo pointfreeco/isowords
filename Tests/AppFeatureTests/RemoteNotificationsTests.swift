@@ -13,9 +13,10 @@ import XCTest
 class RemoteNotificationsTests: XCTestCase {
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
     let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    }
 
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
@@ -71,10 +72,9 @@ class RemoteNotificationsTests: XCTestCase {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
 
-    let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+    let store = TestStore(initialState: AppReducer.State()) {
+      AppReducer()
+    }
 
     store.dependencies.didFinishLaunching()
     store.dependencies.remoteNotifications.register = {
@@ -100,9 +100,10 @@ class RemoteNotificationsTests: XCTestCase {
     let store = TestStore(
       initialState: update(AppReducer.State()) {
         $0.home.savedGames.dailyChallengeUnlimited = inProgressGame
-      },
-      reducer: AppReducer()
-    )
+      }
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.didFinishLaunching()
     store.dependencies.fileClient.save = { @Sendable _, _ in }

@@ -8,7 +8,7 @@ struct SoundsSettingsView: View {
 
   init(store: StoreOf<Settings>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
@@ -19,7 +19,7 @@ struct SoundsSettingsView: View {
 
           VStack {
             Slider(
-              value: self.viewStore.binding(\.$userSettings.musicVolume).animation(), in: 0...1
+              value: self.viewStore.$userSettings.musicVolume.animation(), in: 0...1
             )
             .accentColor(.isowordsOrange)
 
@@ -39,7 +39,7 @@ struct SoundsSettingsView: View {
 
           VStack {
             Slider(
-              value: self.viewStore.binding(\.$userSettings.soundEffectsVolume).animation(),
+              value: self.viewStore.$userSettings.soundEffectsVolume.animation(),
               in: 0...1
             )
             .accentColor(.isowordsOrange)
@@ -69,9 +69,10 @@ struct SoundsSettingsView: View {
             store: .init(
               initialState: Settings.State(
                 userSettings: .init(musicVolume: 0.5, soundEffectsVolume: 0.5)
-              ),
-              reducer: Settings()
-            )
+              )
+            ) {
+              Settings()
+            }
           )
         }
       }

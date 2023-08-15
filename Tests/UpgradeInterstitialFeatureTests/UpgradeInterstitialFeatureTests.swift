@@ -17,9 +17,10 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   func testUpgrade() async {
     await withMainSerialExecutor {
       let store = TestStore(
-        initialState: UpgradeInterstitial.State(),
-        reducer: UpgradeInterstitial()
-      )
+        initialState: UpgradeInterstitial.State()
+      ) {
+        UpgradeInterstitial()
+      }
 
       let paymentAdded = ActorIsolated<String?>(nil)
 
@@ -82,9 +83,10 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
   func testWaitAndDismiss() async {
     let store = TestStore(
-      initialState: UpgradeInterstitial.State(),
-      reducer: UpgradeInterstitial()
-    )
+      initialState: UpgradeInterstitial.State()
+    ) {
+      UpgradeInterstitial()
+    }
 
     store.dependencies.mainRunLoop = self.scheduler.eraseToAnyScheduler()
     store.dependencies.serverConfig.config = { .init() }
@@ -117,9 +119,10 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
   func testMaybeLater_Dismissable() async {
     let store = TestStore(
-      initialState: UpgradeInterstitial.State(isDismissable: true),
-      reducer: UpgradeInterstitial()
-    )
+      initialState: UpgradeInterstitial.State(isDismissable: true)
+    ) {
+      UpgradeInterstitial()
+    }
 
     store.dependencies.mainRunLoop = .immediate
     store.dependencies.serverConfig.config = { .init() }

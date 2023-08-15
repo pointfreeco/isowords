@@ -190,7 +190,7 @@ public struct Home: ReducerProtocol {
       return .none
 
     case let .activeGames(.turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex))):
-      return .fireAndForget {
+      return .run { _ in
         try await self.gameCenter.turnBasedMatch.sendReminder(
           .init(
             for: matchId,
@@ -501,7 +501,7 @@ public struct HomeView: View {
 
   public init(store: StoreOf<Home>) {
     self.store = store
-    self.viewStore = ViewStore(store.scope(state: ViewState.init, action: { $0 }))
+    self.viewStore = ViewStore(store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -683,7 +683,7 @@ private struct ShakeEffect: GeometryEffect {
 
   extension Store where State == Home.State, Action == Home.Action {
     static let home = Store(
-      initialState: update(.init()) {
+      initialState: update(Home.State()) {
         $0.dailyChallenges = [
           FetchTodaysDailyChallengeResponse(
             dailyChallenge: .init(
@@ -755,8 +755,8 @@ private struct ShakeEffect: GeometryEffect {
             theirName: "Blob"
           ),
         ]
-      },
-      reducer: Home()
-    )
+      }) {
+        Home()
+      }
   }
 #endif

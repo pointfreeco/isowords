@@ -18,7 +18,7 @@ struct GameOverLogic: ReducerProtocol {
 
     guard
       !state.isGameOver
-        && action == .alert(.forfeitButtonTapped)
+        && action == .alert(.presented(.forfeitButtonTapped))
         || action == .endGameButtonTapped
         || timesUp
         || allCubesRemoved
@@ -32,7 +32,7 @@ struct GameOverLogic: ReducerProtocol {
 
     switch state.gameContext {
     case .dailyChallenge, .shared, .solo:
-      return .fireAndForget { [state] in
+      return .run { [state] _ in
         try await self.saveGame(.init(gameState: state))
       }
 
