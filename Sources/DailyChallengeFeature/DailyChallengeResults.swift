@@ -56,7 +56,7 @@ public struct DailyChallengeResults: ReducerProtocol {
         guard
           state.leaderboardResults.isTimeScopeMenuVisible
         else { return .none }
-        return .task { .loadHistory }
+        return .send(.loadHistory)
 
       case .leaderboardResults:
         return .none
@@ -67,14 +67,16 @@ public struct DailyChallengeResults: ReducerProtocol {
         }
 
         enum CancelID { case fetch }
-        return .task { [gameMode = state.leaderboardResults.gameMode] in
-          await .fetchHistoryResponse(
-            TaskResult {
-              try await self.apiClient.apiRequest(
-                route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
-                as: DailyChallengeHistoryResponse.self
-              )
-            }
+        return .run { [gameMode = state.leaderboardResults.gameMode] send in
+          await send(
+            .fetchHistoryResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
+                  as: DailyChallengeHistoryResponse.self
+                )
+              }
+            )
           )
         }
         .cancellable(id: CancelID.fetch, cancelInFlight: true)

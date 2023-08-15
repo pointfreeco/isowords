@@ -82,10 +82,10 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
 
     case let .reactionButtonTapped(reaction):
       state.wordSubmitButton.areReactionsOpen = false
-      return .task {
+      return .run { send in
         await self.feedbackGenerator.selectionChanged()
         await self.playSound(.uiSfxEmojiSend)
-        return .delegate(.confirmSubmit(reaction: reaction))
+        await send(.delegate(.confirmSubmit(reaction: reaction)))
       }
 
     case .submitButtonPressed:
@@ -98,13 +98,13 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
       state.wordSubmitButton.areReactionsOpen = false
       state.wordSubmitButton.isSubmitButtonPressed = true
 
-      return .task { [isClosing = state.wordSubmitButton.isClosing] in
+      return .run { [isClosing = state.wordSubmitButton.isClosing] send in
         await self.feedbackGenerator.selectionChanged()
         if isClosing {
           await self.playSound(.uiSfxEmojiClose)
         }
         try await self.mainQueue.sleep(for: 0.5)
-        return .delayedSubmitButtonPressed
+        await send(.delayedSubmitButtonPressed)
       }
       .cancellable(id: CancelID.submitButtonPressedDelay, cancelInFlight: true)
 
@@ -127,7 +127,7 @@ public struct WordSubmitButtonFeature: ReducerProtocol {
       guard !state.isTurnBasedMatch
       else { return .none }
 
-      return .task { .delegate(.confirmSubmit(reaction: nil)) }
+      return .send(.delegate(.confirmSubmit(reaction: nil)))
     }
   }
 }

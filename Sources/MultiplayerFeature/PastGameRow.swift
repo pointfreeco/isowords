@@ -62,11 +62,11 @@ public struct PastGame: ReducerProtocol {
       return .none
 
     case let .matchResponse(.success(match)):
-      return .task { .delegate(.openMatch(match)) }.animation()
+      return .send(.delegate(.openMatch(match))).animation()
 
     case let .rematchResponse(.success(match)):
       state.isRematchRequestInFlight = false
-      return .task { .delegate(.openMatch(match)) }.animation()
+      return .send(.delegate(.openMatch(match))).animation()
 
     case .rematchResponse(.failure):
       state.isRematchRequestInFlight = false
@@ -79,16 +79,20 @@ public struct PastGame: ReducerProtocol {
 
     case .rematchButtonTapped:
       state.isRematchRequestInFlight = true
-      return .task { [matchId = state.matchId] in
-        await .rematchResponse(
-          TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+      return .run { [matchId = state.matchId] send in
+        await send(
+          .rematchResponse(
+            TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+          )
         )
       }
 
     case .tappedRow:
-      return .task { [matchId = state.matchId] in
-        await .matchResponse(
-          TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+      return .run { [matchId = state.matchId] send in
+        await send(
+          .matchResponse(
+            TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+          )
         )
       }
     }

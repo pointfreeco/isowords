@@ -218,7 +218,7 @@ public struct Onboarding: ReducerProtocol {
       case let .game(.doubleTap(index: index)):
         guard state.step == .some(.step19_DoubleTapToRemove)
         else { return .none }
-        return .task { .game(.confirmRemoveCube(index)) }
+        return .send(.game(.confirmRemoveCube(index)))
 
       case let .game(.tap(gestureState, .some(indexedCubeFace))):
         let index =
@@ -240,7 +240,7 @@ public struct Onboarding: ReducerProtocol {
         return self.gameReducer.reduce(into: &state, action: action)
 
       case .getStartedButtonTapped:
-        return .task { .delegate(.getStarted) }
+        return .send(.delegate(.getStarted))
 
       case .nextButtonTapped:
         state.step.next()
@@ -329,9 +329,9 @@ public struct Onboarding: ReducerProtocol {
         return .none
 
       case .step13_Congrats:
-        return .task {
+        return .run { send in
           try await self.mainQueue.sleep(for: .seconds(3))
-          return .delayedNextStep
+          await send(.delayedNextStep)
         }
         .animation()
 
@@ -339,9 +339,9 @@ public struct Onboarding: ReducerProtocol {
         .step9_Congrats,
         .step17_Congrats,
         .step20_Congrats:
-        return .task {
+        return .run { send in
           try await self.mainQueue.sleep(for: .seconds(2))
-          return .delayedNextStep
+          await send(.delayedNextStep)
         }
         .animation()
       }

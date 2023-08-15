@@ -76,14 +76,16 @@ public struct ChangelogReducer: ReducerProtocol {
         state.currentBuild = self.buildNumber()
         state.isRequestInFlight = true
 
-        return .task {
-          await .changelogResponse(
-            TaskResult {
-              try await self.apiClient.apiRequest(
-                route: .changelog(build: self.buildNumber()),
-                as: Changelog.self
-              )
-            }
+        return .run { send in
+          await send(
+            .changelogResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .changelog(build: self.buildNumber()),
+                  as: Changelog.self
+                )
+              }
+            )
           )
         }
 

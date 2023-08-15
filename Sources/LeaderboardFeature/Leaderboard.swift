@@ -120,14 +120,16 @@ public struct Leaderboard: ReducerProtocol {
         guard state.vocab.resultEnvelope != nil
         else { return .none }
 
-        return .task {
-          await .fetchWordResponse(
-            TaskResult {
-              try await self.apiClient.apiRequest(
-                route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
-                as: FetchVocabWordResponse.self
-              )
-            }
+        return .run { send in
+          await send(
+            .fetchWordResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
+                  as: FetchVocabWordResponse.self
+                )
+              }
+            )
           )
         }
         .cancellable(id: CancelID.fetch, cancelInFlight: true)

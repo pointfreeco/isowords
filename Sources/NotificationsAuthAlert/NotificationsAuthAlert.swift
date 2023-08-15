@@ -31,7 +31,7 @@ public struct NotificationsAuthAlert: ReducerProtocol {
   public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .closeButtonTapped:
-      return .task { .delegate(.close) }.animation()
+      return .send(.delegate(.close)).animation()
 
     case .delegate:
       return .none

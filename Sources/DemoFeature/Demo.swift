@@ -83,9 +83,9 @@ public struct Demo: ReducerProtocol {
     .dependency(\.userDefaults, .noop)
     .dependency(\.userNotifications, .noop)
     .onChange(of: { $0.game?.gameOver != nil }) { _, _, _ in
-      .task {
+      .run { send in
         try await self.mainQueue.sleep(for: .seconds(2))
-        return .gameOverDelay
+        await send(.gameOverDelay)
       }
     }
 

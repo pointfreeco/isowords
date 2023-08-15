@@ -37,14 +37,16 @@ public struct GameCenterLogic: ReducerProtocol {
 
       state.game = nil
 
-      return .task {
-        await .gameCenter(
-          .rematchResponse(
-            TaskResult {
-              try await self.gameCenter.turnBasedMatch.rematch(
-                turnBasedMatch.match.matchId
-              )
-            }
+      return .run { send in
+        await send(
+          .gameCenter(
+            .rematchResponse(
+              TaskResult {
+                try await self.gameCenter.turnBasedMatch.rematch(
+                  turnBasedMatch.match.matchId
+                )
+              }
+            )
           )
         )
       }
@@ -101,12 +103,14 @@ public struct GameCenterLogic: ReducerProtocol {
       return handleTurnBasedMatch(turnBasedMatch, state: &state, didBecomeActive: true)
 
     case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
-      return .task {
-        await .gameCenter(
-          .rematchResponse(
-            TaskResult {
-              try await self.gameCenter.turnBasedMatch.rematch(matchId)
-            }
+      return .run { send in
+        await send(
+          .gameCenter(
+            .rematchResponse(
+              TaskResult {
+                try await self.gameCenter.turnBasedMatch.rematch(matchId)
+              }
+            )
           )
         )
       }

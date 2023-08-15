@@ -125,16 +125,18 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
         state.gameModeIsLoading = challenge.dailyChallenge.gameMode
 
-        return .task {
-          await .startDailyChallengeResponse(
-            TaskResult {
-              try await startDailyChallengeAsync(
-                challenge,
-                apiClient: self.apiClient,
-                date: { self.now },
-                fileClient: self.fileClient
-              )
-            }
+        return .run { send in
+          await send(
+            .startDailyChallengeResponse(
+              TaskResult {
+                try await startDailyChallengeAsync(
+                  challenge,
+                  apiClient: self.apiClient,
+                  date: { self.now },
+                  fileClient: self.fileClient
+                )
+              }
+            )
           )
         }
 
@@ -179,7 +181,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
       case let .startDailyChallengeResponse(.success(inProgressGame)):
         state.gameModeIsLoading = nil
-        return .task { .delegate(.startGame(inProgressGame)) }
+        return .send(.delegate(.startGame(inProgressGame)))
 
       case .task:
         return .run { send in
