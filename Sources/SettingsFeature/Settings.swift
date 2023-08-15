@@ -96,7 +96,7 @@ public struct DeveloperSettings: Equatable {
   }
 }
 
-public struct Settings: ReducerProtocol {
+public struct Settings: Reducer {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var buildNumber: Build.Number?
@@ -197,7 +197,7 @@ public struct Settings: ReducerProtocol {
     case paymentObserver
   }
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     CombineReducers {
       BindingReducer()
         .onChange(of: \.developer.currentBaseUrl.url) { _, url in

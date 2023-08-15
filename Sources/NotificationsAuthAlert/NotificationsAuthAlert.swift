@@ -7,7 +7,7 @@ import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
-public struct NotificationsAuthAlert: ReducerProtocol {
+public struct NotificationsAuthAlert: Reducer {
   public struct State: Equatable {
     public init() {}
   }
@@ -28,7 +28,7 @@ public struct NotificationsAuthAlert: ReducerProtocol {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .closeButtonTapped:
       return .send(.delegate(.close)).animation()

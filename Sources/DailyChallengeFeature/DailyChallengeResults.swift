@@ -4,7 +4,7 @@ import LeaderboardFeature
 import SharedModels
 import SwiftUI
 
-public struct DailyChallengeResults: ReducerProtocol {
+public struct DailyChallengeResults: Reducer {
   public struct State: Equatable {
     public var history: DailyChallengeHistoryResponse?
     public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
@@ -29,7 +29,7 @@ public struct DailyChallengeResults: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Scope(state: \.leaderboardResults, action: /Action.leaderboardResults) {
       LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
     }

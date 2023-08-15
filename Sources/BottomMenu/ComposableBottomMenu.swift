@@ -141,7 +141,7 @@ extension BottomMenuState.Button {
   import ComposableArchitecture
   import SwiftUIHelpers
 
-  private struct BottomMenuReducer: ReducerProtocol {
+  private struct BottomMenuReducer: Reducer {
     typealias State = BottomMenuState<Action>?
 
     enum Action {
@@ -149,7 +149,7 @@ extension BottomMenuState.Button {
       case dismiss
     }
 
-    func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+    func reduce(into state: inout State, action: Action) -> Effect<Action> {
       switch action {
       case .show:
         state = .init(

@@ -99,7 +99,7 @@ class RemoteNotificationsTests: XCTestCase {
 
     let store = TestStore(
       initialState: update(AppReducer.State()) {
-        $0.home.savedGames.dailyChallengeUnlimited = inProgressGame
+        $0.home.savedGames.dailyChallengeUnlimited = .mock
       }
     ) {
       AppReducer()

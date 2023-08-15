@@ -9,7 +9,7 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct DailyChallengeReducer: ReducerProtocol {
+public struct DailyChallengeReducer: Reducer {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
@@ -85,7 +85,7 @@ public struct DailyChallengeReducer: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .alert:

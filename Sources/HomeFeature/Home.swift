@@ -20,7 +20,7 @@ public struct ActiveMatchResponse: Equatable {
   public let hasPastTurnBasedGames: Bool
 }
 
-public struct Home: ReducerProtocol {
+public struct Home: Reducer {
   public struct State: Equatable {
     public var changelog: ChangelogReducer.State?
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
@@ -120,7 +120,7 @@ public struct Home: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce(self.core)
       .ifLet(\.changelog, action: /Action.changelog) {
         ChangelogReducer()
@@ -138,7 +138,7 @@ public struct Home: ReducerProtocol {
     }
   }
 
-  private func core(state: inout State, action: Action) -> EffectTask<Action> {
+  private func core(state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case let .activeMatchesResponse(.success(response)):
       state.hasPastTurnBasedGames = response.hasPastTurnBasedGames
@@ -320,7 +320,7 @@ public struct Home: ReducerProtocol {
     }
   }
 
-  public struct Destinations: ReducerProtocol {
+  public struct Destinations: Reducer {
     public enum State: Equatable {
       case dailyChallenge(DailyChallengeReducer.State)
       case leaderboard(Leaderboard.State)
@@ -359,7 +359,7 @@ public struct Home: ReducerProtocol {
       case solo(Solo.Action)
     }
 
-    public var body: some ReducerProtocol<State, Action> {
+    public var body: some Reducer<State, Action> {
       Scope(
         state: /State.dailyChallenge,
         action: /Action.dailyChallenge

@@ -4,7 +4,7 @@ import ComposableUserNotifications
 import Foundation
 import SettingsFeature
 
-public struct AppDelegateReducer: ReducerProtocol {
+public struct AppDelegateReducer: Reducer {
   public typealias State = UserSettings
 
   public enum Action: Equatable {
@@ -25,7 +25,7 @@ public struct AppDelegateReducer: ReducerProtocol {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .didFinishLaunching:
       return .run { send in

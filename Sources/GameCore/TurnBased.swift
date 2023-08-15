@@ -4,14 +4,14 @@ import Foundation
 import GameOverFeature
 import SharedModels
 
-struct TurnBasedLogic: ReducerProtocol {
+struct TurnBasedLogic: Reducer {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.database.saveGame) var saveGame
 
-  func reduce(into state: inout Game.State, action: Game.Action) -> EffectTask<Game.Action> {
+  func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action> {
     guard let turnBasedContext = state.turnBasedContext
     else { return .none }
 
@@ -168,8 +168,8 @@ struct TurnBasedLogic: ReducerProtocol {
   }
 }
 
-extension ReducerProtocol where State == Game.State, Action == Game.Action {
-  func filterActionsForYourTurn() -> some ReducerProtocol<State, Action> {
+extension Reducer where State == Game.State, Action == Game.Action {
+  func filterActionsForYourTurn() -> some Reducer<State, Action> {
     self.filter { state, action in
       switch action {
       case .pan,

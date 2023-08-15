@@ -3,11 +3,12 @@ import ComposableArchitecture
 import CubeCore
 import HapticsCore
 import LowPowerModeClient
+import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
 
-public struct CubePreview: ReducerProtocol {
+public struct CubePreview: Reducer {
   public struct State: Equatable {
     var cubes: Puzzle
     var isAnimationReduced: Bool
@@ -66,7 +67,7 @@ public struct CubePreview: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     BindingReducer()
     Reduce { state, action in
       enum CancelID { case selection }
@@ -93,7 +94,9 @@ public struct CubePreview: ReducerProtocol {
         return .cancel(id: CancelID.selection)
 
       case .task:
-        return .run { [move = state.moves[state.moveIndex]] send in
+        return .run { [move = state.moves[state.moveIndex], nub = state.nub] send in
+          var nub = nub
+
           await send(
             .lowPowerModeResponse(
               await self.lowPowerMode.start().first(where: { _ in true }) ?? false
@@ -110,8 +113,9 @@ public struct CubePreview: ReducerProtocol {
               let moveDuration = Double.random(in: (0.6...0.8))
 
               // Move the nub to the face
+              nub.location = .face(face)
               await send(
-                .set(\.$nub.location, .face(face)),
+                .set(\.$nub, nub),
                 animateWithDuration: moveDuration,
                 delay: 0, options: .curveEaseInOut
               )
@@ -123,7 +127,8 @@ public struct CubePreview: ReducerProtocol {
 
               // Press the nub on the first character
               if faceIndex == 0 {
-                await send(.set(\.$nub.isPressed, true), animation: .default)
+                nub.isPressed = true
+                await send(.set(\.$nub, nub), animation: .default)
               }
 
               // Select the faces that have been tapped so far
@@ -131,11 +136,13 @@ public struct CubePreview: ReducerProtocol {
             }
 
             // Un-press the nub once finished selecting all faces
-            await send(.set(\.$nub.isPressed, false))
+            nub.isPressed = false
+            await send(.set(\.$nub, nub))
 
             // Move the nub off the screen
+            nub.location = .offScreenRight
             await send(
-              .set(\.$nub.location, .offScreenRight),
+              .set(\.$nub, nub),
               animateWithDuration: 1,
               delay: 0,
               options: .curveEaseInOut

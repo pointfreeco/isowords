@@ -3,7 +3,7 @@ import CubePreview
 import LocalDatabaseClient
 import SwiftUI
 
-public struct Vocab: ReducerProtocol {
+public struct Vocab: Reducer {
   public struct State: Equatable {
     var cubePreview: CubePreview.State?
     var isAnimationReduced: Bool
@@ -41,7 +41,7 @@ public struct Vocab: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .dismissCubePreview:

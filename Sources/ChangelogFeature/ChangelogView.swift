@@ -8,7 +8,7 @@ import SwiftUI
 import Tagged
 import UIApplicationClient
 
-public struct ChangelogReducer: ReducerProtocol {
+public struct ChangelogReducer: Reducer {
   public struct State: Equatable {
     public var changelog: IdentifiedArrayOf<Change.State>
     public var currentBuild: Build.Number
@@ -42,7 +42,7 @@ public struct ChangelogReducer: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .change:
@@ -180,9 +180,9 @@ public struct ChangelogView: View {
             ChangelogReducer()
               .dependency(
                 \.apiClient,
-                {
-                  var apiClient = ApiClient.noop
-                  apiClient.override(
+                 {
+                   var apiClient = ApiClient.noop
+                   apiClient.override(
                     routeCase: /ServerRoute.Api.Route.changelog(build:),
                     withResponse: { _ in
                       try await OK(
@@ -197,9 +197,9 @@ public struct ChangelogView: View {
                         }
                       )
                     }
-                  )
-                  return apiClient
-                }()
+                   )
+                   return apiClient
+                 }()
               )
               .dependency(\.applicationClient, .noop)
               .dependency(\.build.number) { 98 }

@@ -4,7 +4,7 @@ import Styleguide
 import SwiftUI
 import VocabFeature
 
-public struct Stats: ReducerProtocol {
+public struct Stats: Reducer {
   public struct State: Equatable {
     public var averageWordLength: Double?
     public var destination: DestinationState?
@@ -76,7 +76,7 @@ public struct Stats: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .backButtonTapped:

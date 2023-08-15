@@ -3,7 +3,7 @@ import ComposableArchitecture
 import SharedModels
 import TcaHelpers
 
-extension ReducerProtocol {
+extension Reducer {
   public func selectionSounds(
     contains: @escaping (State, String) -> Bool,
     hasBeenPlayed: @escaping (State, String) -> Bool,
@@ -20,7 +20,7 @@ extension ReducerProtocol {
   }
 }
 
-public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
+public struct SelectionSounds<Base: Reducer>: Reducer {
   let base: Base
   let contains: (Base.State, String) -> Bool
   let hasBeenPlayed: (Base.State, String) -> Bool
@@ -29,7 +29,7 @@ public struct SelectionSounds<Base: ReducerProtocol>: ReducerProtocol {
 
   @Dependency(\.audioPlayer.play) var playSound
 
-  public var body: some ReducerProtocol<Base.State, Base.Action> {
+  public var body: some Reducer<Base.State, Base.Action> {
     self.base.onChange(of: self.selectedWord) { previousSelection, selection, state, _ in
       return .run { [state] _ in
         if let noteIndex = noteIndex(

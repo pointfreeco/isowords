@@ -13,7 +13,7 @@ import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
 
-public struct Onboarding: ReducerProtocol {
+public struct Onboarding: Reducer {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<AlertAction>?
     public var game: Game.State
@@ -165,7 +165,7 @@ public struct Onboarding: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .alert(.dismiss), .alert(.presented(.resumeButtonTapped)):
@@ -348,7 +348,7 @@ public struct Onboarding: ReducerProtocol {
     }
   }
 
-  var gameReducer: some ReducerProtocol<State, Action> {
+  var gameReducer: some Reducer<State, Action> {
     IntegratedGame(
       state: \State.game,
       action: /Action.game,

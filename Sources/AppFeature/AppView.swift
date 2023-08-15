@@ -10,7 +10,7 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct AppReducer: ReducerProtocol {
+public struct AppReducer: Reducer {
   public struct State: Equatable {
     public var game: Game.State?
     public var onboarding: Onboarding.State?
@@ -84,7 +84,7 @@ public struct AppReducer: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     self.core
       .ifLet(\.onboarding, action: /Action.onboarding) {
         Onboarding()
@@ -115,7 +115,7 @@ public struct AppReducer: ReducerProtocol {
   }
 
   @ReducerBuilder<State, Action>
-  var core: some ReducerProtocol<State, Action> {
+  var core: some Reducer<State, Action> {
     Scope(state: \.home.settings.userSettings, action: /Action.appDelegate) {
       AppDelegateReducer()
     }

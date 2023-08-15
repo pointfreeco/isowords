@@ -28,7 +28,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
   }
 }
 
-public struct Leaderboard: ReducerProtocol {
+public struct Leaderboard: Reducer {
   public struct State: Equatable {
     public var cubePreview: CubePreview.State?
     public var isAnimationReduced: Bool
@@ -72,7 +72,7 @@ public struct Leaderboard: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some Reducer<State, Action> {
     Reduce { state, action in
       switch action {
       case .cubePreview:

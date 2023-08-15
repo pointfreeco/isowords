@@ -10,7 +10,7 @@ public enum GameCenterAction: Equatable {
   case rematchResponse(TaskResult<TurnBasedMatch>)
 }
 
-public struct GameCenterLogic: ReducerProtocol {
+public struct GameCenterLogic: Reducer {
   @Dependency(\.apiClient.currentPlayer) var currentPlayer
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
@@ -19,7 +19,7 @@ public struct GameCenterLogic: ReducerProtocol {
 
   public func reduce(
     into state: inout AppReducer.State, action: AppReducer.Action
-  ) -> EffectTask<AppReducer.Action> {
+  ) -> Effect<AppReducer.Action> {
     switch action {
     case .appDelegate(.didFinishLaunching):
       return .run { send in
@@ -124,7 +124,7 @@ public struct GameCenterLogic: ReducerProtocol {
     _ match: TurnBasedMatch,
     state: inout AppReducer.State,
     didBecomeActive: Bool
-  ) -> EffectTask<AppReducer.Action> {
+  ) -> Effect<AppReducer.Action> {
     guard let matchData = match.matchData, !matchData.isEmpty else {
       let context = TurnBasedContext(
         localPlayer: self.gameCenter.localPlayer.localPlayer(),

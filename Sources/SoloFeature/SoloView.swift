@@ -6,7 +6,7 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct Solo: ReducerProtocol {
+public struct Solo: Reducer {
   public struct State: Equatable {
     var inProgressGame: InProgressGame?
 
@@ -25,7 +25,7 @@ public struct Solo: ReducerProtocol {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .gameButtonTapped:
       return .none

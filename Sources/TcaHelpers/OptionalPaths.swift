@@ -160,12 +160,12 @@ extension OptionalPath where Root == Value? {
   }
 }
 
-extension ReducerProtocol {
+extension Reducer {
   @inlinable
   public func _ifLet<
     ChildState,
     ChildAction,
-    Child: ReducerProtocol,
+    Child: Reducer,
     StatePath: Path<State, ChildState>,
     ActionPath: Path<Action, ChildAction>
   >(
@@ -188,9 +188,9 @@ extension ReducerProtocol {
 public struct OptionalPathReducer<
   StatePath: Path,
   ActionPath: Path,
-  Parent: ReducerProtocol<StatePath.Root, ActionPath.Root>,
-  Child: ReducerProtocol<StatePath.Value, ActionPath.Value>
->: ReducerProtocol {
+  Parent: Reducer<StatePath.Root, ActionPath.Root>,
+  Child: Reducer<StatePath.Value, ActionPath.Value>
+>: Reducer {
   @usableFromInline
   let parent: Parent
   let child: Child
@@ -213,7 +213,7 @@ public struct OptionalPathReducer<
   @inlinable
   public func reduce(
     into state: inout Parent.State, action: Parent.Action
-  ) -> EffectTask<Parent.Action> {
+  ) -> Effect<Parent.Action> {
     return .merge(
       self.reduceWrapped(into: &state, action: action),
       self.parent.reduce(into: &state, action: action)
@@ -223,9 +223,9 @@ public struct OptionalPathReducer<
   @usableFromInline
   func reduceWrapped(
     into state: inout Parent.State, action: Parent.Action
-  ) -> EffectTask<Parent.Action> {
+  ) -> Effect<Parent.Action> {
     guard let childAction = self.toChildAction.extract(from: action)
-    else { return EffectTask<Parent.Action>.none }
+    else { return Effect<Parent.Action>.none }
 
     guard var childState = self.toChildState.extract(from: state)
     else {

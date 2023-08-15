@@ -1,12 +1,12 @@
 import ActiveGamesFeature
 import ComposableArchitecture
 
-struct ActiveGamesTray: ReducerProtocol {
+struct ActiveGamesTray: Reducer {
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
 
-  func reduce(into state: inout Game.State, action: Game.Action) -> EffectTask<Game.Action> {
+  func reduce(into state: inout Game.State, action: Game.Action) -> Effect<Game.Action> {
     switch action {
     case .cancelButtonTapped,
       .confirmRemoveCube,
@@ -60,7 +60,7 @@ struct ActiveGamesTray: ReducerProtocol {
     }
   }
 
-  var activeGameEffects: EffectTask<Game.Action> {
+  var activeGameEffects: Effect<Game.Action> {
     .run { send in
       await withThrowingTaskGroup(of: Void.self) { group in
         group.addTask {
