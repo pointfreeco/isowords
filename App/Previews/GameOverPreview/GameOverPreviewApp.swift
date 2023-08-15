@@ -70,7 +70,7 @@ extension StoreOf<GameOver> {
               .first!
               .appendingPathComponent("co.pointfree.Isowords")
               .appendingPathComponent("Isowords.sqlite3")
-           )
+          )
         )
         .dependency(\.fileClient, .noop)
         .dependency(\.remoteNotifications, .noop)
