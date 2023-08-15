@@ -20,7 +20,7 @@ struct CubeCorePreviewApp: App {
             settings: .init(showSceneStatistics: true)
           )
         ) {
-          
+
         }
       )
     }

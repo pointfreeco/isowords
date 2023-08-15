@@ -755,8 +755,9 @@ private struct ShakeEffect: GeometryEffect {
             theirName: "Blob"
           ),
         ]
-      }) {
-        Home()
       }
+    ) {
+      Home()
+    }
   }
 #endif

@@ -163,19 +163,19 @@ public struct DemoView: View {
       case .onboarding:
         CaseLet(
           /Demo.State.Step.onboarding,
-           action: Demo.Action.onboarding,
-           then: {
-             OnboardingView(store: $0)
-               .onAppear { self.viewStore.send(.onAppear) }
-           }
+          action: Demo.Action.onboarding,
+          then: {
+            OnboardingView(store: $0)
+              .onAppear { self.viewStore.send(.onAppear) }
+          }
         )
 
       case .game:
         CaseLet(
           /Demo.State.Step.game,
-           action: Demo.Action.game,
-           then: { store in
-             GameWrapper(
+          action: Demo.Action.game,
+          then: { store in
+            GameWrapper(
               content: GameView(
                 content: CubeView(
                   store: store.scope(
@@ -190,8 +190,8 @@ public struct DemoView: View {
               bannerAction: {
                 self.viewStore.send(.fullVersionButtonTapped)
               }
-             )
-           }
+            )
+          }
         )
       }
     }

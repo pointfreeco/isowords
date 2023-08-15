@@ -206,7 +206,7 @@ private struct PlayerView: View {
               )
             )
           ) {
-            
+
           }
         )
         .previewLayout(.fixed(width: 320, height: 100))

@@ -350,12 +350,12 @@ extension ResultEnvelope.Result {
             ) {
               Leaderboard().dependency(
                 \.apiClient,
-                 update(.noop) {
-                   $0.apiRequest = { @Sendable route in
-                     switch route {
-                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                       try await Task.sleep(nanoseconds: NSEC_PER_SEC)
-                       return try await OK(
+                update(.noop) {
+                  $0.apiRequest = { @Sendable route in
+                    switch route {
+                    case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
+                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                      return try await OK(
                         FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
@@ -369,13 +369,13 @@ extension ResultEnvelope.Result {
                             )
                           }
                         )
-                       )
+                      )
 
-                     default:
-                       throw CancellationError()
-                     }
-                   }
-                 }
+                    default:
+                      throw CancellationError()
+                    }
+                  }
+                }
               )
             }
           )

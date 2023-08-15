@@ -61,7 +61,7 @@ struct DeveloperSettingsView: View {
         store: Store(
           initialState: Settings.State()
         ) {
-          
+
         }
       )
     }

@@ -105,7 +105,7 @@ public struct AppReducer: ReducerProtocol {
       }
       .onChange(of: \.home.savedGames) { savedGames, _, action in
         if case .savedGamesLoaded(.success) = action { return .none }
-        return .run { _ in 
+        return .run { _ in
           try await self.fileClient.save(games: savedGames)
         }
       }

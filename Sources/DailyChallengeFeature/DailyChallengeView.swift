@@ -97,7 +97,6 @@ public struct DailyChallengeReducer: ReducerProtocol {
       case .destination(.dailyChallengeResults):
         return .none
 
-
       case .fetchTodaysDailyChallengeResponse(.failure):
         return .none
 
@@ -242,7 +241,8 @@ extension AlertState where Action == DailyChallengeReducer.Action.Alert {
         TextState("OK")
       }
     } message: {
-      TextState("""
+      TextState(
+        """
         You already played today’s daily challenge. You can play the next one in \
         \(nextStartsAt, formatter: relativeFormatter).
         """)
@@ -257,7 +257,8 @@ extension AlertState where Action == DailyChallengeReducer.Action.Alert {
         TextState("OK")
       }
     } message: {
-      TextState("""
+      TextState(
+        """
         We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
         """)

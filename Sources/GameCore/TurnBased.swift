@@ -122,10 +122,10 @@ struct TurnBasedLogic: ReducerProtocol {
                   switch move.type {
                   case .removedCube:
                     let shouldEndTurn =
-                    state.moves.count > 1
-                    && state.moves[state.moves.count - 2].playerIndex
-                    == turnBasedContext.localPlayerIndex
-                    
+                      state.moves.count > 1
+                      && state.moves[state.moves.count - 2].playerIndex
+                        == turnBasedContext.localPlayerIndex
+
                     if shouldEndTurn {
                       try await self.gameCenter.turnBasedMatch.endTurn(
                         .init(
@@ -138,20 +138,20 @@ struct TurnBasedLogic: ReducerProtocol {
                       try await self.gameCenter.turnBasedMatch
                         .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
                     }
-                    
+
                   case let .playedWord(cubeFaces):
                     let word = state.cubes.string(from: cubeFaces)
                     let score = SharedModels.score(word)
                     let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
-                    
+
                     try await self.gameCenter.turnBasedMatch.endTurn(
                       .init(
                         for: turnBasedContext.match.matchId,
                         matchData: matchData,
                         message: """
-                        \(turnBasedContext.localPlayer.displayName) played \(word)! \
-                        (+\(score)\(reaction))
-                        """
+                          \(turnBasedContext.localPlayer.displayName) played \(word)! \
+                          (+\(score)\(reaction))
+                          """
                       )
                     )
                   }

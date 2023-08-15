@@ -456,4 +456,4 @@ extension SCNVector3 {
   }
 }
 
-private func absurd<A>(_: Never) -> A { }
+private func absurd<A>(_: Never) -> A {}

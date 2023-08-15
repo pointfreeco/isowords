@@ -181,4 +181,4 @@ public struct GameView<Content>: View where Content: View {
   }
 }
 
-private func absurd<A>(_: Never) -> A { }
+private func absurd<A>(_: Never) -> A {}

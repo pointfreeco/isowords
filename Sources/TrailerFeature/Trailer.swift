@@ -311,4 +311,4 @@ private let fadeOutDuration = 0.3
 private let submitPressDuration = 0.05
 private let submitHestitationDuration = 0.15
 
-private func absurd<A>(_: Never) -> A { }
+private func absurd<A>(_: Never) -> A {}

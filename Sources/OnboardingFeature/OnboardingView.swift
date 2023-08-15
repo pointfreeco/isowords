@@ -467,7 +467,7 @@ private enum CancelID {
     static var previews: some View {
       OnboardingView(
         store: Store(initialState: .init(presentationStyle: .firstLaunch)) {
-          
+
         }
       )
     }

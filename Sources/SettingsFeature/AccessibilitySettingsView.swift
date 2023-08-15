@@ -55,7 +55,7 @@ struct AccessibilitySettingsView: View {
             store: .init(
               initialState: Settings.State()
             ) {
-              
+
             }
           )
         }

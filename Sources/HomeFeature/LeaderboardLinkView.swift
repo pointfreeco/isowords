@@ -165,7 +165,7 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
           store: Store(
             initialState: .init()
           ) {
-            
+
           }
         )
       }

@@ -33,10 +33,10 @@ private struct ScreenEdgePadding: ViewModifier {
           ?? .grid(20)
       )
 
-#if swift(>=5.9)
-    case .vision:
-      content
-#endif
+    #if swift(>=5.9)
+      case .vision:
+        content
+    #endif
 
     @unknown default:
       content

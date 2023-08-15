@@ -306,4 +306,4 @@ extension CubeSceneView.ViewState {
   }
 }
 
-private func absurd<A>(_: Never) -> A { }
+private func absurd<A>(_: Never) -> A {}
