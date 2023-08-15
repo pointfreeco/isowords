@@ -89,24 +89,28 @@ public struct AppReducer: Reducer {
       .ifLet(\.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
-      .onChange(of: \.game?.moves) { moves, state, _ in
-        guard let game = state.game, game.isSavable
-        else { return .none }
+      .onChange(of: \.game?.moves) { _, moves in
+        Reduce { state, _ in
+          guard let game = state.game, game.isSavable
+          else { return .none }
 
-        switch (game.gameContext, game.gameMode) {
-        case (.dailyChallenge, .unlimited):
-          state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
-        case (.shared, .unlimited), (.solo, .unlimited):
-          state.home.savedGames.unlimited = InProgressGame(gameState: game)
-        case (.turnBased, _), (_, .timed):
+          switch (game.gameContext, game.gameMode) {
+          case (.dailyChallenge, .unlimited):
+            state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
+          case (.shared, .unlimited), (.solo, .unlimited):
+            state.home.savedGames.unlimited = InProgressGame(gameState: game)
+          case (.turnBased, _), (_, .timed):
+            return .none
+          }
           return .none
         }
-        return .none
       }
-      .onChange(of: \.home.savedGames) { savedGames, _, action in
-        if case .savedGamesLoaded(.success) = action { return .none }
-        return .run { _ in
-          try await self.fileClient.save(games: savedGames)
+      .onChange(of: \.home.savedGames) { _, savedGames in
+        Reduce { _, action in
+          if case .savedGamesLoaded(.success) = action { return .none }
+          return .run { _ in
+            try await self.fileClient.save(games: savedGames)
+          }
         }
       }
 

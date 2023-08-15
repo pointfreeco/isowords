@@ -19,9 +19,11 @@ private struct Haptics<Base: Reducer, Trigger: Equatable>: Reducer {
   @Dependency(\.feedbackGenerator) var feedbackGenerator
 
   var body: some Reducer<Base.State, Base.Action> {
-    self.base.onChange(of: self.trigger) { _, _, state, _ in
-      guard self.isEnabled(state) else { return .none }
-      return .run { _ in await self.feedbackGenerator.selectionChanged() }
+    self.base.onChange(of: self.trigger) { _, _ in
+      Reduce { state, _ in
+        guard self.isEnabled(state) else { return .none }
+        return .run { _ in await self.feedbackGenerator.selectionChanged() }
+      }
     }
   }
 }

@@ -294,56 +294,58 @@ public struct Onboarding: Reducer {
       }
     }
     .ifLet(\.$alert, action: /Action.alert)
-    .onChange(of: \.game.selectedWordString) { selectedWord, state, _ in
-      switch state.step {
-      case .step4_FindGame where selectedWord == "GAME",
-        .step11_FindRemove where selectedWord.isRemove:
-        state.step.next()
-        return .none
-      case .step5_SubmitGame where selectedWord != "GAME",
-        .step12_CubeIsShaking where !selectedWord.isRemove:
-        state.step.previous()
-        return .none
-      default:
-        return .none
+    .onChange(of: \.game.selectedWordString) { _, selectedWord in
+      Reduce { state, _ in
+        switch state.step {
+        case .step4_FindGame where selectedWord == "GAME",
+          .step11_FindRemove where selectedWord.isRemove:
+          state.step.next()
+          return .none
+        case .step5_SubmitGame where selectedWord != "GAME",
+          .step12_CubeIsShaking where !selectedWord.isRemove:
+          state.step.previous()
+          return .none
+        default:
+          return .none
+        }
       }
     }
-    .onChange(of: \.step) { step, _, _ in
-      switch step {
-      case .step1_Welcome,
-        .step2_FindWordsOnCube,
-        .step3_ConnectLettersTouching,
-        .step4_FindGame,
-        .step5_SubmitGame,
-        .step7_BiggerCube,
-        .step8_FindCubes,
-        .step10_CubeDisappear,
-        .step11_FindRemove,
-        .step12_CubeIsShaking,
-        .step14_LettersRevealed,
-        .step15_FullCube,
-        .step16_FindAnyWord,
-        .step18_OneLastThing,
-        .step19_DoubleTapToRemove,
-        .step21_PlayAGameYourself:
-        return .none
+    .onChange(of: \.step) { _, step in
+      Reduce { _, _ in
+        switch step {
+        case .step1_Welcome,
+          .step2_FindWordsOnCube,
+          .step3_ConnectLettersTouching,
+          .step4_FindGame,
+          .step5_SubmitGame,
+          .step7_BiggerCube,
+          .step8_FindCubes,
+          .step10_CubeDisappear,
+          .step11_FindRemove,
+          .step12_CubeIsShaking,
+          .step14_LettersRevealed,
+          .step15_FullCube,
+          .step16_FindAnyWord,
+          .step18_OneLastThing,
+          .step19_DoubleTapToRemove,
+          .step21_PlayAGameYourself:
+          return .none
 
-      case .step13_Congrats:
-        return .run { send in
-          try await self.mainQueue.sleep(for: .seconds(3))
-          await send(.delayedNextStep)
-        }
-        .animation()
+        case .step13_Congrats:
+          return .run { send in
+            try await self.mainQueue.sleep(for: .seconds(3))
+            await send(.delayedNextStep, animation: .default)
+          }
 
-      case .step6_Congrats,
-        .step9_Congrats,
-        .step17_Congrats,
-        .step20_Congrats:
-        return .run { send in
-          try await self.mainQueue.sleep(for: .seconds(2))
-          await send(.delayedNextStep)
+        case .step6_Congrats,
+          .step9_Congrats,
+          .step17_Congrats,
+          .step20_Congrats:
+          return .run { send in
+            try await self.mainQueue.sleep(for: .seconds(2))
+            await send(.delayedNextStep, animation: .default)
+          }
         }
-        .animation()
       }
     }
   }

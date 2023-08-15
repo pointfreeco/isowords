@@ -82,10 +82,12 @@ public struct Demo: Reducer {
     .dependency(\.storeKit, .noop)
     .dependency(\.userDefaults, .noop)
     .dependency(\.userNotifications, .noop)
-    .onChange(of: { $0.game?.gameOver != nil }) { _, _, _ in
-      .run { send in
-        try await self.mainQueue.sleep(for: .seconds(2))
-        await send(.gameOverDelay)
+    .onChange(of: { $0.game?.gameOver != nil }) { _, _ in
+      Reduce { _, _ in
+        .run { send in
+          try await self.mainQueue.sleep(for: .seconds(2))
+          await send(.gameOverDelay)
+        }
       }
     }
 

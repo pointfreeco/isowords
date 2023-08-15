@@ -189,11 +189,13 @@ public struct Game: Reducer {
 
   public var body: some Reducer<State, Action> {
     self.core
-      .onChange(of: \.selectedWord) { selectedWord, state, _ in
-        state.selectedWordIsValid =
-          !state.selectedWordHasAlreadyBeenPlayed
-          && self.dictionaryContains(state.selectedWordString, state.language)
-        return .none
+      .onChange(of: \.selectedWord) { _, selectedWord in
+        Reduce { state, _ in
+          state.selectedWordIsValid =
+            !state.selectedWordHasAlreadyBeenPlayed
+            && self.dictionaryContains(state.selectedWordString, state.language)
+          return .none
+        }
       }
       .filterActionsForYourTurn()
       .ifLet(\.gameOver, action: /Action.gameOver) {

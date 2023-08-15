@@ -522,11 +522,13 @@ public struct Settings: Reducer {
       }
     }
     .ifLet(\.$alert, action: /Action.alert)
-    .onChange(of: \.userSettings) { userSettings, _, _ in
-      enum CancelID { case saveDebounce }
+    .onChange(of: \.userSettings) { _, userSettings in
+      Reduce { _, _ in
+        enum CancelID { case saveDebounce }
 
-      return .run { _ in try await self.fileClient.save(userSettings: userSettings) }
-        .debounce(id: CancelID.saveDebounce, for: .seconds(1), scheduler: self.mainQueue)
+        return .run { _ in try await self.fileClient.save(userSettings: userSettings) }
+          .debounce(id: CancelID.saveDebounce, for: .seconds(1), scheduler: self.mainQueue)
+      }
     }
 
     Scope(state: \.stats, action: /Action.stats) {
