@@ -52,12 +52,12 @@ public struct PastGame: Reducer {
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public var body: some ReducerProtocolOf<Self> {
+  public var body: some ReducerOf<Self> {
     Reduce(self.core)
       .ifLet(\.$alert, action: /Action.alert)
   }
 
-  public func core(into state: inout State, action: Action) -> EffectTask<Action> {
+  public func core(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .alert:
       return .none
