@@ -64,7 +64,7 @@ extension StoreOf<GameOver> {
         .dependency(\.audioPlayer, .noop)
         .dependency(
           \.database,
-           .autoMigratingLive(
+          .autoMigratingLive(
             path: FileManager.default
               .urls(for: .documentDirectory, in: .userDomainMask)
               .first!
