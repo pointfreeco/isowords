@@ -80,7 +80,7 @@ public struct PastGame: ReducerProtocol {
       state.alert = AlertState {
         TextState("Error")
       } actions: {
-        ButtonState { TextState("OK") }
+        ButtonState { TextState("Ok") }
       } message: {
         TextState("We couldn’t start the rematch. Try again later.")
       }
