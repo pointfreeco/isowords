@@ -24,7 +24,7 @@ struct TrailerPreviewApp: App {
               .live(bundles: [
                 AppAudioLibrary.bundle,
                 AppClipAudioLibrary.bundle,
-               ])
+              ])
             )
             .dependency(
               \.dictionary,
