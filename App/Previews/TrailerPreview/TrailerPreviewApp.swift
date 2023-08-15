@@ -42,7 +42,7 @@ struct TrailerPreviewApp: App {
                 lookup: { _, _ in nil },
                 randomCubes: { _ in .mock },
                 unload: { _ in }
-               )
+              )
             )
         }
       )
