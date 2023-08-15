@@ -17,106 +17,106 @@ public struct GameCenterLogic: Reducer {
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.database.saveGame) var saveGame
 
-  public func reduce(
-    into state: inout AppReducer.State, action: AppReducer.Action
-  ) -> Effect<AppReducer.Action> {
-    switch action {
-    case .appDelegate(.didFinishLaunching):
-      return .run { send in
-        try await self.gameCenter.localPlayer.authenticate()
-        for await event in self.gameCenter.localPlayer.listener() {
-          await send(.gameCenter(.listener(event)))
+  public var body: some ReducerOf<AppReducer> {
+    Reduce { state, action in
+      switch action {
+      case .appDelegate(.didFinishLaunching):
+        return .run { send in
+          try await self.gameCenter.localPlayer.authenticate()
+          for await event in self.gameCenter.localPlayer.listener() {
+            await send(.gameCenter(.listener(event)))
+          }
         }
-      }
 
-    case .currentGame(.game(.gameOver(.rematchButtonTapped))):
-      guard
-        let game = state.game,
-        let turnBasedMatch = game.turnBasedContext
-      else { return .none }
+      case .currentGame(.game(.gameOver(.rematchButtonTapped))):
+        guard
+          let game = state.game,
+          let turnBasedMatch = game.turnBasedContext
+        else { return .none }
 
-      state.game = nil
+        state.game = nil
 
-      return .run { send in
-        await send(
-          .gameCenter(
-            .rematchResponse(
-              TaskResult {
-                try await self.gameCenter.turnBasedMatch.rematch(
-                  turnBasedMatch.match.matchId
-                )
-              }
+        return .run { send in
+          await send(
+            .gameCenter(
+              .rematchResponse(
+                TaskResult {
+                  try await self.gameCenter.turnBasedMatch.rematch(
+                    turnBasedMatch.match.matchId
+                  )
+                }
+              )
             )
           )
+        }
+
+      case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
+        guard
+          state.game?.turnBasedContext?.match.matchId == match.matchId,
+          let turnBasedMatchData = match.matchData?.turnBasedMatchData
+        else { return .none }
+
+        let newGame = Game.State(
+          gameCurrentTime: self.now,
+          localPlayer: self.gameCenter.localPlayer.localPlayer(),
+          turnBasedMatch: match,
+          turnBasedMatchData: turnBasedMatchData
         )
-      }
+        state.game = newGame
 
-    case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
-      guard
-        state.game?.turnBasedContext?.match.matchId == match.matchId,
-        let turnBasedMatchData = match.matchData?.turnBasedMatchData
-      else { return .none }
+        return .run { _ in
+          try await self.saveGame(.init(gameState: newGame))
+        }
 
-      let newGame = Game.State(
-        gameCurrentTime: self.now,
-        localPlayer: self.gameCenter.localPlayer.localPlayer(),
-        turnBasedMatch: match,
-        turnBasedMatchData: turnBasedMatchData
-      )
-      state.game = newGame
+      case let .gameCenter(
+        .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive)))):
+        return handleTurnBasedMatch(match, state: &state, didBecomeActive: didBecomeActive)
 
-      return .run { _ in
-        try await self.saveGame(.init(gameState: newGame))
-      }
-
-    case let .gameCenter(
-      .listener(.turnBased(.receivedTurnEventForMatch(match, didBecomeActive)))):
-      return handleTurnBasedMatch(match, state: &state, didBecomeActive: didBecomeActive)
-
-    case let .gameCenter(.listener(.turnBased(.wantsToQuitMatch(match)))):
-      return .run { _ in
-        try await self.gameCenter.turnBasedMatch.endMatchInTurn(
-          .init(
-            for: match.matchId,
-            matchData: match.matchData ?? Data(),
-            localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId,
-            localPlayerMatchOutcome: .quit,
-            message: """
-              \(self.gameCenter.localPlayer.localPlayer().displayName) \
-              forfeited the match.
-              """
-          )
-        )
-      }
-
-    case .gameCenter(.listener):
-      return .none
-
-    case let .gameCenter(.rematchResponse(.success(turnBasedMatch))),
-      let .home(
-        .destination(
-          .multiplayer(
-            .destination(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
-          )
-        )
-      ):
-      return handleTurnBasedMatch(turnBasedMatch, state: &state, didBecomeActive: true)
-
-    case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
-      return .run { send in
-        await send(
-          .gameCenter(
-            .rematchResponse(
-              TaskResult {
-                try await self.gameCenter.turnBasedMatch.rematch(matchId)
-              }
+      case let .gameCenter(.listener(.turnBased(.wantsToQuitMatch(match)))):
+        return .run { _ in
+          try await self.gameCenter.turnBasedMatch.endMatchInTurn(
+            .init(
+              for: match.matchId,
+              matchData: match.matchData ?? Data(),
+              localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId,
+              localPlayerMatchOutcome: .quit,
+              message: """
+                \(self.gameCenter.localPlayer.localPlayer().displayName) \
+                forfeited the match.
+                """
             )
           )
-        )
-      }
+        }
 
-    default:
-      return .none
+      case .gameCenter(.listener):
+        return .none
+
+      case let .gameCenter(.rematchResponse(.success(turnBasedMatch))),
+        let .home(
+          .destination(
+            .multiplayer(
+              .destination(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+            )
+          )
+        ):
+        return handleTurnBasedMatch(turnBasedMatch, state: &state, didBecomeActive: true)
+
+      case let .home(.activeGames(.turnBasedGameMenuItemTapped(.rematch(matchId)))):
+        return .run { send in
+          await send(
+            .gameCenter(
+              .rematchResponse(
+                TaskResult {
+                  try await self.gameCenter.turnBasedMatch.rematch(matchId)
+                }
+              )
+            )
+          )
+        }
+
+      default:
+        return .none
+      }
     }
   }
 
@@ -124,7 +124,7 @@ public struct GameCenterLogic: Reducer {
     _ match: TurnBasedMatch,
     state: inout AppReducer.State,
     didBecomeActive: Bool
-  ) -> Effect<AppReducer.Action> {
+  ) -> EffectOf<AppReducer> {
     guard let matchData = match.matchData, !matchData.isEmpty else {
       let context = TurnBasedContext(
         localPlayer: self.gameCenter.localPlayer.localPlayer(),

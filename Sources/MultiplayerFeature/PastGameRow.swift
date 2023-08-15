@@ -57,7 +57,7 @@ public struct PastGame: Reducer {
       .ifLet(\.$alert, action: /Action.alert)
   }
 
-  public func core(into state: inout State, action: Action) -> Effect<Action> {
+  public func core(into state: inout State, action: Action) -> EffectOf<Self> {
     switch action {
     case .alert:
       return .none

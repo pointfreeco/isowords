@@ -213,7 +213,7 @@ public struct OptionalPathReducer<
   @inlinable
   public func reduce(
     into state: inout Parent.State, action: Parent.Action
-  ) -> Effect<Parent.Action> {
+  ) -> EffectOf<Parent> {
     return .merge(
       self.reduceWrapped(into: &state, action: action),
       self.parent.reduce(into: &state, action: action)
@@ -223,9 +223,9 @@ public struct OptionalPathReducer<
   @usableFromInline
   func reduceWrapped(
     into state: inout Parent.State, action: Parent.Action
-  ) -> Effect<Parent.Action> {
+  ) -> EffectOf<Parent> {
     guard let childAction = self.toChildAction.extract(from: action)
-    else { return Effect<Parent.Action>.none }
+    else { return .none }
 
     guard var childState = self.toChildState.extract(from: state)
     else {

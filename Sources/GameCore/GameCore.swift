@@ -626,7 +626,7 @@ extension Game.State {
     })
   }
 
-  mutating func tryToRemoveCube(at index: LatticePoint) -> Effect<Game.Action> {
+  mutating func tryToRemoveCube(at index: LatticePoint) -> EffectOf<Game> {
     guard self.canRemoveCube else { return .none }
 
     // Don't show menu for timed games.

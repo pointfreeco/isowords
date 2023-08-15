@@ -59,75 +59,77 @@ public struct WordSubmitButtonFeature: Reducer {
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.audioPlayer.play) var playSound
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    enum CancelID { case submitButtonPressedDelay }
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      enum CancelID { case submitButtonPressedDelay }
 
-    guard state.isYourTurn
-    else { return .none }
-
-    switch action {
-    case .backgroundTapped:
-      state.wordSubmitButton.areReactionsOpen = false
-      return .run { _ in await self.playSound(.uiSfxEmojiClose) }
-
-    case .delayedSubmitButtonPressed:
-      state.wordSubmitButton.areReactionsOpen = true
-      return .run { _ in
-        await self.feedbackGenerator.selectionChanged()
-        await self.playSound(.uiSfxEmojiOpen)
-      }
-
-    case .delegate:
-      return .none
-
-    case let .reactionButtonTapped(reaction):
-      state.wordSubmitButton.areReactionsOpen = false
-      return .run { send in
-        await self.feedbackGenerator.selectionChanged()
-        await self.playSound(.uiSfxEmojiSend)
-        await send(.delegate(.confirmSubmit(reaction: reaction)))
-      }
-
-    case .submitButtonPressed:
-      guard state.isTurnBasedMatch
+      guard state.isYourTurn
       else { return .none }
 
-      if state.wordSubmitButton.areReactionsOpen {
-        state.wordSubmitButton.isClosing = true
-      }
-      state.wordSubmitButton.areReactionsOpen = false
-      state.wordSubmitButton.isSubmitButtonPressed = true
+      switch action {
+      case .backgroundTapped:
+        state.wordSubmitButton.areReactionsOpen = false
+        return .run { _ in await self.playSound(.uiSfxEmojiClose) }
 
-      return .run { [isClosing = state.wordSubmitButton.isClosing] send in
-        await self.feedbackGenerator.selectionChanged()
-        if isClosing {
-          await self.playSound(.uiSfxEmojiClose)
+      case .delayedSubmitButtonPressed:
+        state.wordSubmitButton.areReactionsOpen = true
+        return .run { _ in
+          await self.feedbackGenerator.selectionChanged()
+          await self.playSound(.uiSfxEmojiOpen)
         }
-        try await self.mainQueue.sleep(for: 0.5)
-        await send(.delayedSubmitButtonPressed)
+
+      case .delegate:
+        return .none
+
+      case let .reactionButtonTapped(reaction):
+        state.wordSubmitButton.areReactionsOpen = false
+        return .run { send in
+          await self.feedbackGenerator.selectionChanged()
+          await self.playSound(.uiSfxEmojiSend)
+          await send(.delegate(.confirmSubmit(reaction: reaction)))
+        }
+
+      case .submitButtonPressed:
+        guard state.isTurnBasedMatch
+        else { return .none }
+
+        if state.wordSubmitButton.areReactionsOpen {
+          state.wordSubmitButton.isClosing = true
+        }
+        state.wordSubmitButton.areReactionsOpen = false
+        state.wordSubmitButton.isSubmitButtonPressed = true
+
+        return .run { [isClosing = state.wordSubmitButton.isClosing] send in
+          await self.feedbackGenerator.selectionChanged()
+          if isClosing {
+            await self.playSound(.uiSfxEmojiClose)
+          }
+          try await self.mainQueue.sleep(for: 0.5)
+          await send(.delayedSubmitButtonPressed)
+        }
+        .cancellable(id: CancelID.submitButtonPressedDelay, cancelInFlight: true)
+
+      case .submitButtonReleased:
+        guard state.isTurnBasedMatch
+        else { return .none }
+
+        let wasClosing = state.wordSubmitButton.isClosing
+        state.wordSubmitButton.isClosing = false
+        state.wordSubmitButton.isSubmitButtonPressed = false
+
+        return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
+          Task.cancel(id: CancelID.submitButtonPressedDelay)
+          guard !wasClosing && !areReactionsOpen
+          else { return }
+          await send(.delegate(.confirmSubmit(reaction: nil)))
+        }
+
+      case .submitButtonTapped:
+        guard !state.isTurnBasedMatch
+        else { return .none }
+
+        return .send(.delegate(.confirmSubmit(reaction: nil)))
       }
-      .cancellable(id: CancelID.submitButtonPressedDelay, cancelInFlight: true)
-
-    case .submitButtonReleased:
-      guard state.isTurnBasedMatch
-      else { return .none }
-
-      let wasClosing = state.wordSubmitButton.isClosing
-      state.wordSubmitButton.isClosing = false
-      state.wordSubmitButton.isSubmitButtonPressed = false
-
-      return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
-        Task.cancel(id: CancelID.submitButtonPressedDelay)
-        guard !wasClosing && !areReactionsOpen
-        else { return }
-        await send(.delegate(.confirmSubmit(reaction: nil)))
-      }
-
-    case .submitButtonTapped:
-      guard !state.isTurnBasedMatch
-      else { return .none }
-
-      return .send(.delegate(.confirmSubmit(reaction: nil)))
     }
   }
 }

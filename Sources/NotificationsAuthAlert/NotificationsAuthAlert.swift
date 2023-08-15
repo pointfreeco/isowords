@@ -28,28 +28,30 @@ public struct NotificationsAuthAlert: Reducer {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    switch action {
-    case .closeButtonTapped:
-      return .send(.delegate(.close)).animation()
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .closeButtonTapped:
+        return .send(.delegate(.close)).animation()
 
-    case .delegate:
-      return .none
+      case .delegate:
+        return .none
 
-    case .turnOnNotificationsButtonTapped:
-      return .run { send in
-        if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
-          await registerForRemoteNotificationsAsync(
-            remoteNotifications: self.remoteNotifications,
-            userNotifications: self.userNotifications
+      case .turnOnNotificationsButtonTapped:
+        return .run { send in
+          if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
+            await registerForRemoteNotificationsAsync(
+              remoteNotifications: self.remoteNotifications,
+              userNotifications: self.userNotifications
+            )
+          }
+          await send(
+            .delegate(
+              .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
+            ),
+            animation: .default
           )
         }
-        await send(
-          .delegate(
-            .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
-          ),
-          animation: .default
-        )
       }
     }
   }

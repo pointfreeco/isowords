@@ -25,21 +25,23 @@ public struct Solo: Reducer {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    switch action {
-    case .gameButtonTapped:
-      return .none
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .gameButtonTapped:
+        return .none
 
-    case .savedGamesLoaded(.failure):
-      return .none
+      case .savedGamesLoaded(.failure):
+        return .none
 
-    case let .savedGamesLoaded(.success(savedGameState)):
-      state.inProgressGame = savedGameState.unlimited
-      return .none
+      case let .savedGamesLoaded(.success(savedGameState)):
+        state.inProgressGame = savedGameState.unlimited
+        return .none
 
-    case .task:
-      return .run { send in
-        await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+      case .task:
+        return .run { send in
+          await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+        }
       }
     }
   }

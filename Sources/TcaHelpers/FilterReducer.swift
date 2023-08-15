@@ -26,7 +26,7 @@ struct FilterReducer<Base: Reducer>: Reducer {
   @inlinable
   public func reduce(
     into state: inout Base.State, action: Base.Action
-  ) -> Effect<Base.Action> {
+  ) -> EffectOf<Base> {
     guard self.predicate(state, action) else { return .none }
     return self.base.reduce(into: &state, action: action)
   }

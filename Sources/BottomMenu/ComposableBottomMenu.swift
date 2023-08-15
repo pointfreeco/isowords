@@ -149,31 +149,33 @@ extension BottomMenuState.Button {
       case dismiss
     }
 
-    func reduce(into state: inout State, action: Action) -> Effect<Action> {
-      switch action {
-      case .show:
-        state = .init(
-          title: .init("vs mbrandonw"),
-          buttons: [
-            .init(
-              title: .init("Main menu"),
-              icon: Image(systemName: "flag")
+    var body: some ReducerOf<Self> {
+      Reduce { state, action in
+        switch action {
+        case .show:
+          state = .init(
+            title: .init("vs mbrandonw"),
+            buttons: [
+              .init(
+                title: .init("Main menu"),
+                icon: Image(systemName: "flag")
+              ),
+              .init(
+                title: .init("End game"),
+                icon: Image(systemName: "flag")
+              ),
+            ],
+            footerButton: .init(
+              title: .init("Settings"),
+              icon: Image(systemName: "gear")
             ),
-            .init(
-              title: .init("End game"),
-              icon: Image(systemName: "flag")
-            ),
-          ],
-          footerButton: .init(
-            title: .init("Settings"),
-            icon: Image(systemName: "gear")
-          ),
-          onDismiss: .init(action: .dismiss, animation: .default)
-        )
-        return .none
-      case .dismiss:
-        state = nil
-        return .none
+            onDismiss: .init(action: .dismiss, animation: .default)
+          )
+          return .none
+        case .dismiss:
+          state = nil
+          return .none
+        }
       }
     }
   }

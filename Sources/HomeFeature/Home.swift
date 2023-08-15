@@ -138,7 +138,7 @@ public struct Home: Reducer {
     }
   }
 
-  private func core(state: inout State, action: Action) -> Effect<Action> {
+  private func core(state: inout State, action: Action) -> EffectOf<Self> {
     switch action {
     case let .activeMatchesResponse(.success(response)):
       state.hasPastTurnBasedGames = response.hasPastTurnBasedGames

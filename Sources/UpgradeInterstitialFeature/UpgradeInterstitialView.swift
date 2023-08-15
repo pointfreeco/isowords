@@ -57,90 +57,92 @@ public struct UpgradeInterstitial: Reducer {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    enum CancelID { case timer }
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      enum CancelID { case timer }
 
-    switch action {
-    case .delegate:
-      return .none
+      switch action {
+      case .delegate:
+        return .none
 
-    case let .fullGameProductResponse(product):
-      state.fullGameProduct = product
-      return .none
+      case let .fullGameProductResponse(product):
+        state.fullGameProduct = product
+        return .none
 
-    case .maybeLaterButtonTapped:
-      return .send(.delegate(.close)).animation()
+      case .maybeLaterButtonTapped:
+        return .send(.delegate(.close)).animation()
 
-    case let .paymentTransaction(event):
-      switch event {
-      case .removedTransactions:
-        state.isPurchasing = false
-      case .restoreCompletedTransactionsFailed:
-        break
-      case .restoreCompletedTransactionsFinished:
-        state.isPurchasing = false
-      case let .updatedTransactions(transactions):
-        if transactions.contains(where: { $0.error != nil }) {
+      case let .paymentTransaction(event):
+        switch event {
+        case .removedTransactions:
           state.isPurchasing = false
+        case .restoreCompletedTransactionsFailed:
+          break
+        case .restoreCompletedTransactionsFinished:
+          state.isPurchasing = false
+        case let .updatedTransactions(transactions):
+          if transactions.contains(where: { $0.error != nil }) {
+            state.isPurchasing = false
+          }
         }
-      }
 
-      guard
-        event.isFullGamePurchased(
-          identifier: self.serverConfig().productIdentifiers.fullGame
-        )
-      else { return .none }
-      return .send(.delegate(.fullGamePurchased))
+        guard
+          event.isFullGamePurchased(
+            identifier: self.serverConfig().productIdentifiers.fullGame
+          )
+        else { return .none }
+        return .send(.delegate(.fullGamePurchased))
 
-    case .task:
-      state.upgradeInterstitialDuration =
-        self.serverConfig().upgradeInterstitial.duration
+      case .task:
+        state.upgradeInterstitialDuration =
+          self.serverConfig().upgradeInterstitial.duration
 
-      return .run { [isDismissable = state.isDismissable] send in
-        await withThrowingTaskGroup(of: Void.self) { group in
-          group.addTask {
-            for await event in self.storeKit.observer() {
-              await send(.paymentTransaction(event), animation: .default)
-            }
-          }
-
-          group.addTask {
-            let response = try await self.storeKit.fetchProducts([
-              self.serverConfig().productIdentifiers.fullGame
-            ])
-            guard
-              let product = response.products.first(where: { product in
-                product.productIdentifier == self.serverConfig().productIdentifiers.fullGame
-              })
-            else { return }
-            await send(.fullGameProductResponse(product), animation: .default)
-          }
-
-          if !isDismissable {
+        return .run { [isDismissable = state.isDismissable] send in
+          await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
-              await withTaskCancellation(id: CancelID.timer) {
-                for await _ in self.mainRunLoop.timer(interval: 1) {
-                  await send(.timerTick, animation: .default)
+              for await event in self.storeKit.observer() {
+                await send(.paymentTransaction(event), animation: .default)
+              }
+            }
+
+            group.addTask {
+              let response = try await self.storeKit.fetchProducts([
+                self.serverConfig().productIdentifiers.fullGame
+              ])
+              guard
+                let product = response.products.first(where: { product in
+                  product.productIdentifier == self.serverConfig().productIdentifiers.fullGame
+                })
+              else { return }
+              await send(.fullGameProductResponse(product), animation: .default)
+            }
+
+            if !isDismissable {
+              group.addTask {
+                await withTaskCancellation(id: CancelID.timer) {
+                  for await _ in self.mainRunLoop.timer(interval: 1) {
+                    await send(.timerTick, animation: .default)
+                  }
                 }
               }
             }
           }
         }
-      }
 
-    case .timerTick:
-      state.secondsPassedCount += 1
-      return state.secondsPassedCount == state.upgradeInterstitialDuration
-        ? .cancel(id: CancelID.timer)
-        : .none
+      case .timerTick:
+        state.secondsPassedCount += 1
+        return state.secondsPassedCount == state.upgradeInterstitialDuration
+          ? .cancel(id: CancelID.timer)
+          : .none
 
-    case .upgradeButtonTapped:
-      state.isPurchasing = true
-      return .run { _ in
-        let payment = SKMutablePayment()
-        payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
-        payment.quantity = 1
-        await self.storeKit.addPayment(payment)
+      case .upgradeButtonTapped:
+        state.isPurchasing = true
+        return .run { _ in
+          let payment = SKMutablePayment()
+          payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
+          payment.quantity = 1
+          await self.storeKit.addPayment(payment)
+        }
       }
     }
   }

@@ -48,68 +48,64 @@ public struct LeaderboardResults<TimeScope>: Reducer {
     self.loadResults = loadResults
   }
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    switch action {
-    case .dismissTimeScopeMenu:
-      state.isTimeScopeMenuVisible = false
-      return .none
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .dismissTimeScopeMenu:
+        state.isTimeScopeMenuVisible = false
+        return .none
 
-    case let .gameModeButtonTapped(gameMode):
-      state.gameMode = gameMode
-      state.isLoading = true
-      return .run { [timeScope = state.timeScope] send in
-        await send(
-          .resultsResponse(
-            TaskResult { try await self.loadResults(gameMode, timeScope) }
+      case let .gameModeButtonTapped(gameMode):
+        state.gameMode = gameMode
+        state.isLoading = true
+        return .run { [timeScope = state.timeScope] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
-        )
-      }
-      .animation()
+        }
 
-    case .resultsResponse(.failure):
-      state.isLoading = false
-      state.resultEnvelope = nil
-      return .none
+      case .resultsResponse(.failure):
+        state.isLoading = false
+        state.resultEnvelope = nil
+        return .none
 
-    case let .resultsResponse(.success(envelope)):
-      state.isLoading = false
-      state.resultEnvelope = envelope
-      return .none
+      case let .resultsResponse(.success(envelope)):
+        state.isLoading = false
+        state.resultEnvelope = envelope
+        return .none
 
-    case .tappedRow:
-      return .none
+      case .tappedRow:
+        return .none
 
-    case .tappedTimeScopeLabel:
-      state.isTimeScopeMenuVisible.toggle()
-      return .none
+      case .tappedTimeScopeLabel:
+        state.isTimeScopeMenuVisible.toggle()
+        return .none
 
-    case .task:
-      state.isLoading = true
-      state.isTimeScopeMenuVisible = false
-      state.resultEnvelope = .placeholder
+      case .task:
+        state.isLoading = true
+        state.isTimeScopeMenuVisible = false
+        state.resultEnvelope = .placeholder
 
-      return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
-        await send(
-          .resultsResponse(
-            TaskResult { try await self.loadResults(gameMode, timeScope) }
+        return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
-        )
-      }
-      .animation()
+        }
 
-    case let .timeScopeChanged(timeScope):
-      state.isLoading = true
-      state.isTimeScopeMenuVisible = false
-      state.timeScope = timeScope
+      case let .timeScopeChanged(timeScope):
+        state.isLoading = true
+        state.isTimeScopeMenuVisible = false
+        state.timeScope = timeScope
 
-      return .run { [gameMode = state.gameMode] send in
-        await send(
-          .resultsResponse(
-            TaskResult { try await self.loadResults(gameMode, timeScope) }
+        return .run { [gameMode = state.gameMode] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
-        )
+        }
       }
-      .animation()
     }
   }
 }
