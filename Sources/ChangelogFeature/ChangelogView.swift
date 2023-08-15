@@ -180,9 +180,9 @@ public struct ChangelogView: View {
             ChangelogReducer()
               .dependency(
                 \.apiClient,
-                 {
-                   var apiClient = ApiClient.noop
-                   apiClient.override(
+                {
+                  var apiClient = ApiClient.noop
+                  apiClient.override(
                     routeCase: /ServerRoute.Api.Route.changelog(build:),
                     withResponse: { _ in
                       try await OK(
