@@ -23,9 +23,9 @@ struct HomeFeaturePreviewApp: App {
             Home()
               .dependency(
                 \.apiClient,
-                 update(.noop) {
-                   $0.authenticate = { _ in .init(appleReceipt: nil, player: .blob) }
-                   $0.override(
+                update(.noop) {
+                  $0.authenticate = { _ in .init(appleReceipt: nil, player: .blob) }
+                  $0.override(
                     route: .dailyChallenge(.today(language: .en)),
                     withResponse: {
                       try await OK([
