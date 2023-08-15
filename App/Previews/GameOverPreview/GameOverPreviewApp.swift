@@ -58,8 +58,8 @@ extension StoreOf<GameOver> {
                   )
                 )
               }
-             )
-           }
+            )
+          }
         )
         .dependency(\.audioPlayer, .noop)
         .dependency(
