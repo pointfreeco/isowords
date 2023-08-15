@@ -9,6 +9,10 @@ on:
       - '*'
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   mac:
     name: macOS
