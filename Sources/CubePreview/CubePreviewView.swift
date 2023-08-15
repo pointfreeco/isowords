@@ -110,11 +110,12 @@ public struct CubePreview: Reducer {
               let moveDuration = Double.random(in: (0.6...0.8))
 
               // Move the nub to the face
-              await send(
-                .set(\.$nub.location, .face(face)),
-                animateWithDuration: moveDuration,
-                delay: 0, options: .curveEaseInOut
-              )
+              // XXXXX
+//              await send(
+//                .set(\.$nub.location, .face(face)),
+//                animateWithDuration: moveDuration,
+//                delay: 0, options: .curveEaseInOut
+//              )
 
               // Pause a bit to allow the nub to animate to the face
               try await self.mainQueue.sleep(
@@ -123,7 +124,8 @@ public struct CubePreview: Reducer {
 
               // Press the nub on the first character
               if faceIndex == 0 {
-                await send(.set(\.$nub.isPressed, true), animation: .default)
+                // XXXXX
+//                await send(.set(\.$nub.isPressed, true), animation: .default)
               }
 
               // Select the faces that have been tapped so far
@@ -131,15 +133,17 @@ public struct CubePreview: Reducer {
             }
 
             // Un-press the nub once finished selecting all faces
-            await send(.set(\.$nub.isPressed, false))
+            // XXXXX
+//            await send(.set(\.$nub.isPressed, false))
 
             // Move the nub off the screen
-            await send(
-              .set(\.$nub.location, .offScreenRight),
-              animateWithDuration: 1,
-              delay: 0,
-              options: .curveEaseInOut
-            )
+            // XXXXX
+//            await send(
+//              .set(\.$nub.location, .offScreenRight),
+//              animateWithDuration: 1,
+//              delay: 0,
+//              options: .curveEaseInOut
+//            )
 
           case .removedCube:
             break

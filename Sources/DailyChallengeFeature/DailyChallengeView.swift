@@ -392,7 +392,8 @@ public struct DailyChallengeView: View {
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .task { await self.viewStore.send(.task).finish() }
-      .alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .dismissAlert)
+      // XXXXX
+      //.alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .dismissAlert)
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,

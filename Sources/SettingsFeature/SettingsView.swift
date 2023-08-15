@@ -175,7 +175,8 @@ public struct SettingsView: View {
       onDismiss: { self.viewStore.send(.onDismiss) }
     )
     .task { await self.viewStore.send(.task).finish() }
-    .alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .set(\.$alert, nil))
+    // XXXXX
+    //.alert(self.store.scope(state: \.alert, action: { $0 }), dismiss: .set(\.$alert, nil))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()

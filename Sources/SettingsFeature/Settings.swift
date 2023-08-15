@@ -501,10 +501,10 @@ public struct Settings: Reducer {
       }
     }
     .onChange(of: \.userSettings) { userSettings, _, _ in
-      enum SaveDebounceID {}
+      enum CancelID { case saveDebounce }
 
       return .run { _ in try await self.fileClient.save(userSettings: userSettings) }
-        .debounce(id: SaveDebounceID.self, for: .seconds(1), scheduler: self.mainQueue)
+        .debounce(id: CancelID.saveDebounce, for: .seconds(1), scheduler: self.mainQueue)
     }
 
     Scope(state: \.stats, action: /Action.stats) {
