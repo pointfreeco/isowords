@@ -15,7 +15,7 @@ class LeaderboardTests: XCTestCase {
     let store = TestStore(
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
     ) {
-      LeaderboardResults.happyPath
+      LeaderboardResults<TimeScope>.happyPath
     }
 
     await store.send(.task) {
@@ -32,7 +32,7 @@ class LeaderboardTests: XCTestCase {
     let store = TestStore(
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
     ) {
-      LeaderboardResults.happyPath
+      LeaderboardResults<TimeScope>.happyPath
     }
 
     await store.send(.gameModeButtonTapped(.unlimited)) {
@@ -49,7 +49,7 @@ class LeaderboardTests: XCTestCase {
     let store = TestStore(
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
     ) {
-      LeaderboardResults.happyPath
+      LeaderboardResults<TimeScope>.happyPath
     }
 
     await store.send(.tappedTimeScopeLabel) {
@@ -70,9 +70,9 @@ class LeaderboardTests: XCTestCase {
     struct SomeError: Error {}
 
     let store = TestStore(
-      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
+      initialState: LeaderboardResults<TimeScope>.State(timeScope: TimeScope.lastWeek)
     ) {
-      LeaderboardResults(loadResults: { _, _ in throw SomeError() })
+      LeaderboardResults<TimeScope>(loadResults: { _, _ in throw SomeError() })
     }
 
     await store.send(.task) {
