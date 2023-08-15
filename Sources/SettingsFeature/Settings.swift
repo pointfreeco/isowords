@@ -296,14 +296,31 @@ public struct Settings: ReducerProtocol {
             .debounce(id: CancelID.updateRemoveSettings, for: 1, scheduler: self.mainQueue)
           }
         }
-        .onChange(of: \.userSettings) { _, userSettings in
+        .onChange(of: \.userSettings.appIcon) { _, appIcon in
           Reduce { _, _ in
             .run { _ in
-              try await self.applicationClient.setAlternateIconName(userSettings.appIcon?.rawValue)
-              await self.applicationClient.setUserInterfaceStyle(
-                userSettings.colorScheme.userInterfaceStyle)
-              await self.audioPlayer.setGlobalVolumeForMusic(userSettings.musicVolume)
-              await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
+              try await self.applicationClient.setAlternateIconName(appIcon?.rawValue)
+            }
+          }
+        }
+        .onChange(of: \.userSettings.colorScheme) { _, colorScheme in
+          Reduce { _, _ in
+            .run { _ in
+              await self.applicationClient.setUserInterfaceStyle(colorScheme.userInterfaceStyle)
+            }
+          }
+        }
+        .onChange(of: \.userSettings.musicVolume) { _, musicVolume in
+          Reduce { _, _ in
+            .run { _ in
+              await self.audioPlayer.setGlobalVolumeForMusic(musicVolume)
+            }
+          }
+        }
+        .onChange(of: \.userSettings.soundEffectsVolume) { _, soundEffectsVolume in
+          Reduce { _, _ in
+            .run { _ in
+              await self.audioPlayer.setGlobalVolumeForSoundEffects(soundEffectsVolume)
             }
           }
         }

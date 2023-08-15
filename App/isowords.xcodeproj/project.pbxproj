@@ -927,7 +927,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# TODO: Fix this\n#/usr/libexec/PlistBuddy -c \"Set GitSHA '$(git rev-parse --short HEAD)'\" \"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n";
+			shellScript = "/usr/libexec/PlistBuddy -c \"Set GitSHA '$(git rev-parse --short HEAD)'\" \"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1360,6 +1360,7 @@
 				CURRENT_PROJECT_VERSION = 105;
 				DEVELOPMENT_TEAM = VFRXY8HC3H;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1906,6 +1907,7 @@
 				CURRENT_PROJECT_VERSION = 105;
 				DEVELOPMENT_TEAM = VFRXY8HC3H;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1931,6 +1933,7 @@
 				CURRENT_PROJECT_VERSION = 105;
 				DEVELOPMENT_TEAM = VFRXY8HC3H;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

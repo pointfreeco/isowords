@@ -233,28 +233,28 @@ class SettingsFeatureTests: XCTestCase {
 
   func testNotifications_DebounceRemoteSettingsUpdates() async {
     await withMainSerialExecutor {
+      let mainQueue = DispatchQueue.test
       let store = TestStore(
         initialState: Settings.State(sendDailyChallengeReminder: false)
       ) {
         Settings()
-      }
-
-      let mainQueue = DispatchQueue.test
-      store.dependencies.setUpDefaults()
-      store.dependencies.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
-      store.dependencies.apiClient.override(
-        route: .push(
-          .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
-        ),
-        withResponse: { try await OK([:] as [String: Any]) }
-      )
-      store.dependencies.applicationClient.alternateIconName = { nil }
-      store.dependencies.fileClient.save = { @Sendable _, _ in }
-      store.dependencies.mainQueue = mainQueue.eraseToAnyScheduler()
-      store.dependencies.serverConfig.config = { .init() }
-      store.dependencies.userDefaults.boolForKey = { _ in false }
-      store.dependencies.userNotifications.getNotificationSettings = {
-        .init(authorizationStatus: .authorized)
+      } withDependencies: {
+        $0.setUpDefaults()
+        $0.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
+        $0.apiClient.override(
+          route: .push(
+            .updateSetting(.init(notificationType: .dailyChallengeReport, sendNotifications: true))
+          ),
+          withResponse: { try await OK([:] as [String: Any]) }
+        )
+        $0.applicationClient.alternateIconName = { nil }
+        $0.fileClient.save = { @Sendable _, _ in }
+        $0.mainQueue = mainQueue.eraseToAnyScheduler()
+        $0.serverConfig.config = { .init() }
+        $0.userDefaults.boolForKey = { _ in false }
+        $0.userNotifications.getNotificationSettings = {
+          .init(authorizationStatus: .authorized)
+        }
       }
 
       let task = await store.send(.task) {
