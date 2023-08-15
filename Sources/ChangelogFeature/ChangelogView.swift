@@ -197,9 +197,9 @@ public struct ChangelogView: View {
                         }
                       )
                     }
-                   )
-                   return apiClient
-                 }()
+                  )
+                  return apiClient
+                }()
               )
               .dependency(\.applicationClient, .noop)
               .dependency(\.build.number) { 98 }
