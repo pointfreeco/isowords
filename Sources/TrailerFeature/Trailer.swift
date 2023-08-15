@@ -90,7 +90,7 @@ public struct Trailer: ReducerProtocol {
           try await self.mainQueue.sleep(for: firstWordDelay)
 
           // Play each word
-          for (_, word) in replayableWords.enumerated() {
+          for word in replayableWords {
             // Play each character in the word
             for (characterIndex, character) in word.enumerated() {
               let face = IndexedCubeFace(index: character.index, side: character.side)
