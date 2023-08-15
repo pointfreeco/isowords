@@ -44,8 +44,8 @@ struct HomeFeaturePreviewApp: App {
                         )
                       ])
                     }
-                   )
-                 }
+                  )
+                }
               )
               .dependency(\.applicationClient, .noop)
               .dependency(\.audioPlayer, .noop)
