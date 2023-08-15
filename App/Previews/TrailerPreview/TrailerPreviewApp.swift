@@ -36,7 +36,7 @@ struct TrailerPreviewApp: App {
                     "FOR", "YOUR", "PHONE",
                     "COMING", "NEXT", "YEAR",
                   ]
-                    .contains(string.uppercased())
+                  .contains(string.uppercased())
                 },
                 load: { _ in true },
                 lookup: { _, _ in nil },
