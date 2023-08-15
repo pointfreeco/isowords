@@ -75,9 +75,10 @@ class DailyChallengeFeatureTests: XCTestCase {
       }
 
       let store = TestStore(
-        initialState: .init(),
-        reducer: DailyChallengeResults()
-      )
+        initialState: .init()
+      ) {
+        DailyChallengeResults()
+      }
 
       store.dependencies.apiClient = ApiClient(
         middleware: siteMiddleware(environment: serverEnvironment),

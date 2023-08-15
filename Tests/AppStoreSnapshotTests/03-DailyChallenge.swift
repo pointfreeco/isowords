@@ -17,10 +17,10 @@ var dailyChallengeAppStoreView: AnyView {
           resultEnvelope: ResultEnvelope(.snapshot),
           timeScope: nil
         )
-      ),
-      reducer: .empty,
-      environment: ()
-    )
+      )
+    ) {
+      
+    }
   )
   return AnyView(view)
 }

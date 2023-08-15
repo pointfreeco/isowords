@@ -17,10 +17,10 @@ struct CubeCorePreviewApp: App {
             selectedWordIsValid: false,
             selectedWordString: "",
             settings: .init(showSceneStatistics: true)
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+          
+        }
       )
     }
   }

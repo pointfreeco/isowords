@@ -156,7 +156,7 @@ public struct LeaderboardView: View {
 
   public init(store: StoreOf<Leaderboard>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
@@ -344,15 +344,16 @@ extension ResultEnvelope.Result {
                 isAnimationReduced: false,
                 isHapticsEnabled: true,
                 settings: .init()
-              ),
-              reducer: Leaderboard().dependency(
+              )
+            ) {
+              Leaderboard().dependency(
                 \.apiClient,
-                update(.noop) {
-                  $0.apiRequest = { @Sendable route in
-                    switch route {
-                    case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
-                      return try await OK(
+                 update(.noop) {
+                   $0.apiRequest = { @Sendable route in
+                     switch route {
+                     case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
+                       try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                       return try await OK(
                         FetchLeaderboardResponse(
                           entries: (1...20).map { idx in
                             FetchLeaderboardResponse.Entry(
@@ -366,15 +367,15 @@ extension ResultEnvelope.Result {
                             )
                           }
                         )
-                      )
+                       )
 
-                    default:
-                      throw CancellationError()
-                    }
-                  }
-                }
+                     default:
+                       throw CancellationError()
+                     }
+                   }
+                 }
               )
-            )
+            }
           )
         }
       }

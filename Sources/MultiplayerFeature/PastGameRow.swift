@@ -102,7 +102,7 @@ struct PastGameRow: View {
 
   init(store: StoreOf<PastGame>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {

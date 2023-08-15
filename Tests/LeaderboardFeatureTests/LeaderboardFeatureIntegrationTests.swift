@@ -42,9 +42,10 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       let middleware = siteMiddleware(environment: siteEnvironment)
 
       let store = TestStore(
-        initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
-        reducer: Leaderboard()
-      )
+        initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+      ) {
+        Leaderboard()
+      }
 
       store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
       store.dependencies.mainQueue = .immediate
@@ -99,9 +100,10 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     let middleware = siteMiddleware(environment: siteEnvironment)
 
     let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init()),
-      reducer: Leaderboard()
-    )
+      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+    ) {
+      Leaderboard()
+    }
 
     store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
     store.dependencies.mainQueue = .immediate

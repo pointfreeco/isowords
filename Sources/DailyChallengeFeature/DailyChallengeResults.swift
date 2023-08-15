@@ -90,7 +90,7 @@ public struct DailyChallengeResultsView: View {
 
   public init(store: StoreOf<DailyChallengeResults>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {

@@ -103,9 +103,10 @@ public struct GameFeatureView<Content>: View where Content: View {
                 //              ]
               ),
               settings: .init()
-            ),
-            reducer: GameFeature()
-          )
+            )
+          ) {
+            GameFeature()
+          }
         )
       }
       .ignoresSafeArea()

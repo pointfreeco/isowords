@@ -424,7 +424,7 @@ public struct GameOverView: View {
 
   public init(store: StoreOf<GameOver>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:), action: { $0 }))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -1064,9 +1064,10 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
               .lastWeek: .init(outOf: 1000, rank: 10),
               .allTime: .init(outOf: 10000, rank: 100),
             ])
-          ),
-          reducer: GameOver()
-        )
+          )
+        ) {
+          GameOver()
+        }
       )
       .background(Color.white)
     }
@@ -1086,9 +1087,10 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
                 score: 1000
               )
             )
-          ),
-          reducer: GameOver()
-        )
+          )
+        ) {
+          GameOver()
+        }
       )
       .background(Color.white)
     }
@@ -1112,9 +1114,10 @@ private let lastReviewRequestTimeIntervalKey = "last-review-request-timeinterval
               },
               metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
             )
-          ),
-          reducer: GameOver()
-        )
+          )
+        ) {
+          GameOver()
+        }
       )
       .background(Color.white)
     }

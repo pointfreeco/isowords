@@ -24,9 +24,10 @@ fileprivate extension DependencyValues {
 class SettingsPurchaseTests: XCTestCase {
   func testUpgrade_HappyPath() async throws {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let didAddPaymentProductIdentifier = ActorIsolated<String?>(nil)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -78,9 +79,10 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testRestore_HappyPath() async throws {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -134,9 +136,10 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testRestore_NoPurchasesPath() async throws {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -183,9 +186,10 @@ class SettingsPurchaseTests: XCTestCase {
 
   func testRestore_ErrorPath() async throws {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>

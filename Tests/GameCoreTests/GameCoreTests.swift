@@ -18,9 +18,10 @@ class GameCoreTests: XCTestCase {
     )
 
     let store = TestStore(
-      initialState: gameState,
-      reducer: Game()
-    )
+      initialState: gameState
+    ) {
+      Game()
+    }
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
@@ -42,7 +43,7 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    await store.send(.alert(.forfeitButtonTapped)) {
+    await store.send(.alert(.presented(.forfeitButtonTapped))) {
       $0.alert = nil
       $0.gameOver = .init(
         completedGame: .init(gameState: gameState),

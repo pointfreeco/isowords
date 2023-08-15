@@ -69,9 +69,10 @@ struct SoundsSettingsView: View {
             store: .init(
               initialState: Settings.State(
                 userSettings: .init(musicVolume: 0.5, soundEffectsVolume: 0.5)
-              ),
-              reducer: Settings()
-            )
+              )
+            ) {
+              Settings()
+            }
           )
         }
       }

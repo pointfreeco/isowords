@@ -76,7 +76,7 @@ struct NotificationsAuthAlertView: View {
   let store: StoreOf<NotificationsAuthAlert>
 
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       Rectangle()
         .fill(Color.dailyChallenge.opacity(0.8))
         .ignoresSafeArea()
@@ -121,9 +121,10 @@ struct NotificationMenu_Previews: PreviewProvider {
   static var previews: some View {
     NotificationsAuthAlertView(
       store: Store(
-        initialState: NotificationsAuthAlert.State(),
-        reducer: NotificationsAuthAlert()
-      )
+        initialState: NotificationsAuthAlert.State()
+      ) {
+        NotificationsAuthAlert()
+      }
     )
   }
 }

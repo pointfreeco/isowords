@@ -17,10 +17,9 @@ class OnboardingFeatureTests: XCTestCase {
   func testBasics_FirstLaunch() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
     
-    let store = TestStore(
-      initialState: Onboarding.State(presentationStyle: .firstLaunch),
-      reducer: Onboarding()
-    )
+    let store = TestStore(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
+      Onboarding()
+    }
 
     store.dependencies.audioPlayer = .noop
     store.dependencies.dictionary.load = { _ in true }
@@ -313,9 +312,10 @@ class OnboardingFeatureTests: XCTestCase {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
     let store = TestStore(
-      initialState: Onboarding.State(presentationStyle: .help),
-      reducer: Onboarding()
-    )
+      initialState: Onboarding.State(presentationStyle: .help)
+    ) {
+      Onboarding()
+    }
 
     store.dependencies.audioPlayer = .noop
     store.dependencies.dictionary.load = { _ in true }
@@ -348,9 +348,10 @@ class OnboardingFeatureTests: XCTestCase {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
     let store = TestStore(
-      initialState: Onboarding.State(presentationStyle: .firstLaunch),
-      reducer: Onboarding()
-    )
+      initialState: Onboarding.State(presentationStyle: .firstLaunch)
+    ) {
+      Onboarding()
+    }
 
     store.dependencies.audioPlayer = .noop
     store.dependencies.dictionary.load = { _ in true }
@@ -388,7 +389,7 @@ class OnboardingFeatureTests: XCTestCase {
       )
     }
 
-    await store.send(.alert(.skipButtonTapped)) {
+    await store.send(.alert(.presented(.skipButtonTapped))) {
       $0.alert = nil
       $0.step = .step21_PlayAGameYourself
     }

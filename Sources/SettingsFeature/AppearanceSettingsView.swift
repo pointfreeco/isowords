@@ -202,9 +202,10 @@ extension UserSettings.ColorScheme {
         NavigationView {
           AppearanceSettingsView(
             store: .init(
-              initialState: Settings.State(),
-              reducer: Settings()
-            )
+              initialState: Settings.State()
+            ) {
+              Settings()
+            }
           )
         }
       }

@@ -13,9 +13,10 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   func testOnAppear() async {
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State()
+    ) {
+      DailyChallengeReducer()
+    }
 
     store.dependencies.apiClient.override(
       route: .dailyChallenge(.today(language: .en)),
@@ -28,7 +29,8 @@ class DailyChallengeFeatureTests: XCTestCase {
 
     await store.send(.task)
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
+    {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
     await store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
@@ -41,9 +43,10 @@ class DailyChallengeFeatureTests: XCTestCase {
     dailyChallengeResponse.dailyChallenge.endsAt = Date().addingTimeInterval(60 * 60 * 2 + 1)
 
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(dailyChallenges: [dailyChallengeResponse]),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State(dailyChallenges: [dailyChallengeResponse])
+    ) {
+      DailyChallengeReducer()
+    }
 
     await store.send(.gameButtonTapped(.unlimited)) {
       $0.alert = .init(
@@ -62,9 +65,10 @@ class DailyChallengeFeatureTests: XCTestCase {
     inProgressGame.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
 
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted]),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted])
+    ) {
+      DailyChallengeReducer()
+    }
 
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     store.dependencies.apiClient.override(
@@ -112,9 +116,10 @@ class DailyChallengeFeatureTests: XCTestCase {
       initialState: DailyChallengeReducer.State(
         dailyChallenges: [.started],
         inProgressDailyChallengeUnlimited: inProgressGame
-      ),
-      reducer: DailyChallengeReducer()
-    )
+      )
+    ) {
+      DailyChallengeReducer()
+    }
 
     store.dependencies.fileClient.load = { @Sendable [inProgressGame] _ in
       try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
@@ -133,9 +138,10 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   func testNotifications_OpenThenClose() async {
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State()
+    ) {
+      DailyChallengeReducer()
+    }
 
     await store.send(.notificationButtonTapped) {
       $0.notificationsAuthAlert = .init()
@@ -150,9 +156,10 @@ class DailyChallengeFeatureTests: XCTestCase {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State()
+    ) {
+      DailyChallengeReducer()
+    }
 
     store.dependencies.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .authorized)
@@ -181,9 +188,10 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   func testNotifications_DenyAccess() async {
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State()
+    ) {
+      DailyChallengeReducer()
+    }
 
     store.dependencies.userNotifications.getNotificationSettings = {
       .init(authorizationStatus: .denied)

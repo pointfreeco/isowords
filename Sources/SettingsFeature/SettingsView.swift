@@ -258,12 +258,13 @@ public struct SupportButtonStyle: ButtonStyle {
                     productIdentifier: ""
                   )
                 )
-              ),
-              reducer: Settings()
+              )
+            ) {
+              Settings()
                 .dependency(\.apiClient.currentPlayer) {
                   .init(appleReceipt: .mock, player: .blob)
                 }
-            ),
+            },
             navPresentationStyle: .navigation
           )
         }

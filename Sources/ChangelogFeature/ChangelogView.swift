@@ -173,13 +173,14 @@ public struct ChangelogView: View {
       Preview {
         ChangelogView(
           store: .init(
-            initialState: ChangelogReducer.State(),
-            reducer: ChangelogReducer()
+            initialState: ChangelogReducer.State()
+          ) {
+            ChangelogReducer()
               .dependency(
                 \.apiClient,
-                {
-                  var apiClient = ApiClient.noop
-                  apiClient.override(
+                 {
+                   var apiClient = ApiClient.noop
+                   apiClient.override(
                     routeCase: /ServerRoute.Api.Route.changelog(build:),
                     withResponse: { _ in
                       try await OK(
@@ -194,14 +195,14 @@ public struct ChangelogView: View {
                         }
                       )
                     }
-                  )
-                  return apiClient
-                }()
+                   )
+                   return apiClient
+                 }()
               )
               .dependency(\.applicationClient, .noop)
               .dependency(\.build.number) { 98 }
               .dependency(\.serverConfig, .noop)
-          )
+          }
         )
         .navigationStyle(
           title: Text("Updates"),

@@ -7,9 +7,10 @@ import XCTest
 class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterAuthenticated() async {
     let store = TestStore(
-      initialState: Multiplayer.State(hasPastGames: false),
-      reducer: Multiplayer()
-    )
+      initialState: Multiplayer.State(hasPastGames: false)
+    ) {
+      Multiplayer()
+    }
 
     let didPresentMatchmakerViewController = ActorIsolated(false)
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
@@ -23,9 +24,10 @@ class MultiplayerFeatureTests: XCTestCase {
 
   func testStartGame_GameCenterNotAuthenticated() async {
     let store = TestStore(
-      initialState: Multiplayer.State(hasPastGames: false),
-      reducer: Multiplayer()
-    )
+      initialState: Multiplayer.State(hasPastGames: false)
+    ) {
+      Multiplayer()
+    }
 
     let didPresentAuthentication = ActorIsolated(false)
     store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
@@ -39,9 +41,10 @@ class MultiplayerFeatureTests: XCTestCase {
 
   func testNavigateToPastGames() async {
     let store = TestStore(
-      initialState: Multiplayer.State(hasPastGames: true),
-      reducer: Multiplayer()
-    )
+      initialState: Multiplayer.State(hasPastGames: true)
+    ) {
+      Multiplayer()
+    }
 
     await store.send(.setNavigation(tag: .pastGames)) {
       $0.destination = .pastGames(.init(pastGames: []))

@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import SnapshotTesting
 import Styleguide
 import UpgradeInterstitialFeature
@@ -14,8 +15,8 @@ class UpgradeInterstitialViewTests: XCTestCase {
   func testBeginning() {
     assertSnapshot(
       matching: UpgradeInterstitialView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: UpgradeInterstitial.State(
             fullGameProduct: .init(
               downloadContentLengths: [],
               downloadContentVersion: "",
@@ -28,10 +29,10 @@ class UpgradeInterstitialViewTests: XCTestCase {
             ),
             isDismissable: false,
             secondsPassedCount: 0
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -41,10 +42,10 @@ class UpgradeInterstitialViewTests: XCTestCase {
     assertSnapshot(
       matching: UpgradeInterstitialView(
         store: .init(
-          initialState: .init(secondsPassedCount: 15, upgradeInterstitialDuration: 15),
-          reducer: .empty,
-          environment: ()
-        )
+          initialState: .init(secondsPassedCount: 15, upgradeInterstitialDuration: 15)
+        ) {
+          
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )

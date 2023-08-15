@@ -140,7 +140,7 @@ where
     self.isFilterable = isFilterable
     self.subtitle = subtitle
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
     self.timeScopeLabel = timeScopeLabel
     self.timeScopeMenu = timeScopeMenu
     self.title = title
@@ -389,14 +389,15 @@ extension ResultEnvelope {
   struct LeaderboardResultsView_Previews: PreviewProvider {
     static var previews: some View {
       LeaderboardResultsView(
-        store: .init(
+        store: Store(
           initialState: LeaderboardResults.State(
             gameMode: GameMode.timed,
             timeScope: TimeScope.lastWeek
-          ),
-          reducer: LeaderboardResults(
+          )
+        ) {
+          LeaderboardResults<TimeScope>(
             loadResults: { _, _ in
-              .init(
+              ResultEnvelope(
                 outOf: 1000,
                 results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
                   ResultEnvelope.Result(
@@ -412,7 +413,7 @@ extension ResultEnvelope {
               )
             }
           )
-        ),
+        },
         title: Text("362,998 words"),
         subtitle: nil,
         isFilterable: false,
@@ -424,14 +425,15 @@ extension ResultEnvelope {
       .previewDisplayName("Words")
 
       LeaderboardResultsView(
-        store: .init(
+        store: Store(
           initialState: LeaderboardResults.State(
             gameMode: GameMode.timed,
             timeScope: TimeScope.lastWeek
-          ),
-          reducer: LeaderboardResults(
+          )
+        ) {
+          LeaderboardResults<TimeScope>(
             loadResults: { _, _ in
-              .init(
+              ResultEnvelope(
                 outOf: 1000,
                 results: (1...5).map { index in
                   ResultEnvelope.Result(
@@ -446,7 +448,7 @@ extension ResultEnvelope {
               )
             }
           )
-        ),
+        },
         title: Text("Daily challenge"),
         subtitle: Text("1,234 games"),
         isFilterable: true,
@@ -458,20 +460,21 @@ extension ResultEnvelope {
       .previewDisplayName("Daily challenge")
 
       LeaderboardResultsView(
-        store: .init(
+        store: Store(
           initialState: LeaderboardResults.State(
             gameMode: GameMode.timed,
             isLoading: false,
             resultEnvelope: nil,
             timeScope: TimeScope.lastWeek
-          ),
-          reducer: LeaderboardResults(
+          )
+        ) {
+          LeaderboardResults<TimeScope>(
             loadResults: { _, _ in
               struct Failure: Error {}
               throw Failure()
             }
           )
-        ),
+        },
         title: Text("Solo"),
         subtitle: Text("1,234 games"),
         isFilterable: true,

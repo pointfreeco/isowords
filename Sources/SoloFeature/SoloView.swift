@@ -134,7 +134,7 @@ public struct SoloView: View {
 
   extension Store where State == Solo.State, Action == Solo.Action {
     static let solo = Store(
-      initialState: .init(
+      initialState: Solo.State(
         inProgressGame: .some(
           update(.mock) {
             $0.moves = [
@@ -160,8 +160,9 @@ public struct SoloView: View {
               )
             ]
           })
-      ),
-      reducer: Solo()
-    )
+      )
+    ) {
+      Solo()
+    }
   }
 #endif

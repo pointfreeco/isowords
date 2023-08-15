@@ -15,7 +15,7 @@ import UserDefaultsClient
 
 public struct Onboarding: ReducerProtocol {
   public struct State: Equatable {
-    public var alert: AlertState<AlertAction>?
+    @PresentationState public var alert: AlertState<AlertAction>?
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
@@ -134,7 +134,7 @@ public struct Onboarding: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case alert(AlertAction)
+    case alert(PresentationAction<AlertAction>)
     case delayedNextStep
     case delegate(DelegateAction)
     case game(Game.Action)
@@ -145,7 +145,6 @@ public struct Onboarding: ReducerProtocol {
   }
 
   public enum AlertAction: Equatable {
-    case dismiss
     case resumeButtonTapped
     case skipButtonTapped
   }
@@ -169,14 +168,11 @@ public struct Onboarding: ReducerProtocol {
   public var body: some ReducerProtocol<State, Action> {
     Reduce { state, action in
       switch action {
-      case .alert(.dismiss), .alert(.resumeButtonTapped):
-        state.alert = nil
+      case .alert(.dismiss), .alert(.presented(.resumeButtonTapped)):
         return .none
 
-      case .alert(.skipButtonTapped):
-        state.alert = nil
+      case .alert(.presented(.skipButtonTapped)):
         state.step = State.Step.allCases.last!
-
         return .run { _ in
           await self.audioPlayer.play(.uiSfxTap)
           Task.cancel(id: CancelID.delayedNextStep)
@@ -297,6 +293,7 @@ public struct Onboarding: ReducerProtocol {
         .cancellable(id: CancelID.delayedNextStep)
       }
     }
+    .ifLet(\.$alert, action: /Action.alert)
     .onChange(of: \.game.selectedWordString) { selectedWord, state, _ in
       switch state.step {
       case .step4_FindGame where selectedWord == "GAME",
@@ -469,11 +466,9 @@ private enum CancelID {
   struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
       OnboardingView(
-        store: Store(
-          initialState: .init(presentationStyle: .firstLaunch),
-          reducer: .empty,
-          environment: ()
-        )
+        store: Store(initialState: .init(presentationStyle: .firstLaunch)) {
+          
+        }
       )
     }
   }

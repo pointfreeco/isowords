@@ -196,8 +196,9 @@ public struct MultiplayerView: View {
 
   extension Store where State == Multiplayer.State, Action == Multiplayer.Action {
     static let multiplayer = Store(
-      initialState: .init(hasPastGames: true),
-      reducer: Multiplayer()
-    )
+      initialState: .init(hasPastGames: true)
+    ) {
+      Multiplayer()
+    }
   }
 #endif

@@ -142,7 +142,7 @@ public struct WordSubmitButton: View {
     store: StoreOf<WordSubmitButtonFeature>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
@@ -221,7 +221,7 @@ struct ReactionsView: View {
 
   public init(store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
@@ -268,9 +268,10 @@ struct ReactionsView: View {
               isTurnBasedMatch: true,
               isYourTurn: true,
               wordSubmitButton: WordSubmitButtonFeature.ButtonState()
-            ),
-            reducer: WordSubmitButtonFeature()
-          )
+            )
+          ) {
+            WordSubmitButtonFeature()
+          }
         )
         .background(Color.blue)
         .navigationBarHidden(true)

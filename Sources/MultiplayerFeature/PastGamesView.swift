@@ -61,7 +61,7 @@ struct PastGamesView: View {
 
   init(store: StoreOf<PastGames>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
@@ -102,9 +102,10 @@ struct PastGamesView: View {
         NavigationView {
           PastGamesView(
             store: .init(
-              initialState: PastGames.State(pastGames: pastGames),
-              reducer: PastGames()
-            )
+              initialState: PastGames.State(pastGames: pastGames)
+            ) {
+              PastGames()
+            }
           )
         }
       }

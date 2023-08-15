@@ -87,9 +87,10 @@ var gameplayAppStoreView: AnyView {
     settings: .init()
   )
   let store = StoreOf<GameFeature>(
-    initialState: state,
-    reducer: EmptyReducer()
-  )
+    initialState: state
+  ) {
+
+  }
   let view = GameFeatureView(
     content: CubeView(
       store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>(
@@ -97,10 +98,10 @@ var gameplayAppStoreView: AnyView {
           game: state.game!,
           nub: nil,
           settings: .init()
-        ),
-        reducer: .empty,
-        environment: ()
-      )
+        )
+      ) {
+        
+      }
     )
     .background(
       Blooms(blooms: blooms).ignoresSafeArea()

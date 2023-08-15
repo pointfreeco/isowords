@@ -198,8 +198,9 @@ public struct VocabView: View {
             .init(letters: "PUZZLE", playCount: 10, score: 560),
           ]
         )
-      ),
-      reducer: Vocab()
-    )
+      )
+    ) {
+      Vocab()
+    }
   }
 #endif

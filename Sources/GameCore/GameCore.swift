@@ -19,7 +19,7 @@ import UpgradeInterstitialFeature
 public struct Game: ReducerProtocol {
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    public var alert: AlertState<AlertAction>?
+    @PresentationState public var alert: AlertState<AlertAction>?
     public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
@@ -136,7 +136,7 @@ public struct Game: ReducerProtocol {
 
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
-    case alert(AlertAction)
+    case alert(PresentationAction<AlertAction>)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
@@ -164,7 +164,6 @@ public struct Game: ReducerProtocol {
   }
 
   public enum AlertAction: Equatable {
-    case dismiss
     case dontForfeitButtonTapped
     case forfeitButtonTapped
   }
@@ -203,6 +202,7 @@ public struct Game: ReducerProtocol {
       .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
         UpgradeInterstitial()
       }
+      .ifLet(\.$alert, action: /Action.alert)
       .sounds()
   }
 
@@ -213,13 +213,10 @@ public struct Game: ReducerProtocol {
       case .activeGames:
         return .none
 
-      case .alert(.dismiss), .alert(.dontForfeitButtonTapped):
-        state.alert = nil
+      case .alert(.dismiss), .alert(.presented(.dontForfeitButtonTapped)):
         return .none
 
-      case .alert(.forfeitButtonTapped):
-        state.alert = nil
-
+      case .alert(.presented(.forfeitButtonTapped)):
         guard let match = state.turnBasedContext?.match
         else { return .none }
 

@@ -237,9 +237,8 @@ public struct CubePreviewView: View {
                     word: self.viewStore.selectedWordString
                   )
                 },
-                action: { $0 }
+                action: absurd
               )
-              .actionless
           )
       )
     }
@@ -306,3 +305,5 @@ extension CubeSceneView.ViewState {
     )
   }
 }
+
+private func absurd<A>(_: Never) -> A { }

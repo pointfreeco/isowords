@@ -29,9 +29,10 @@ class PersistenceTests: XCTestCase {
     let store = TestStore(
       initialState: AppReducer.State(
         home: .init(destination: .solo(.init()))
-      ),
-      reducer: AppReducer()
-    )
+      )
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.audioPlayer.play = { _ in }
     store.dependencies.audioPlayer.stop = { _ in }
@@ -159,9 +160,10 @@ class PersistenceTests: XCTestCase {
       initialState: AppReducer.State(
         game: update(.mock) { $0.gameMode = .unlimited },
         home: Home.State(savedGames: SavedGamesState(unlimited: .mock))
-      ),
-      reducer: AppReducer()
-    )
+      )
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
@@ -216,9 +218,10 @@ class PersistenceTests: XCTestCase {
     let didArchiveGame = ActorIsolated(false)
 
     let store = TestStore(
-      initialState: AppReducer.State(game: update(.mock) { $0.gameMode = .timed }),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State(game: update(.mock) { $0.gameMode = .timed })
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.audioPlayer.stop = { _ in }
     store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
@@ -262,9 +265,10 @@ class PersistenceTests: XCTestCase {
   func testUnlimitedResume() async {
     let savedGames = SavedGamesState(dailyChallengeUnlimited: nil, unlimited: .mock)
     let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.didFinishLaunching()
     store.dependencies.fileClient.override(load: savedGamesFileName, savedGames)
@@ -300,9 +304,10 @@ class PersistenceTests: XCTestCase {
             unlimited: .mock
           )
         )
-      ),
-      reducer: AppReducer()
-    )
+      )
+    ) {
+      AppReducer()
+    }
 
     store.dependencies.audioPlayer.stop = { _ in }
 

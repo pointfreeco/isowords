@@ -355,9 +355,10 @@ struct UpgradeInterstitialPreviews: PreviewProvider {
               ),
               isDismissable: false,
               secondsPassedCount: 0
-            ),
-            reducer: UpgradeInterstitial()
-          )
+            )
+          ) {
+            UpgradeInterstitial()
+          }
         )
         .navigationBarHidden(true)
       }

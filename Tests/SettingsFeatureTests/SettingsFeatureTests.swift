@@ -11,8 +11,8 @@ import XCTest
 
 @testable import SettingsFeature
 
-fileprivate extension DependencyValues {
-  mutating func setUpDefaults() {
+extension DependencyValues {
+  fileprivate mutating func setUpDefaults() {
     self.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     self.apiClient.currentPlayer = { .some(.init(appleReceipt: .mock, player: .blob)) }
     self.build.number = { 42 }
@@ -62,9 +62,10 @@ class SettingsFeatureTests: XCTestCase {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { nil }
@@ -86,7 +87,9 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))) {
+    await store.receive(
+      .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
+    ) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
@@ -103,9 +106,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testEnableNotifications_NotDetermined_DenyAuthorization() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { nil }
@@ -124,7 +128,9 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))) {
+    await store.receive(
+      .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
+    ) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
@@ -141,9 +147,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testNotifications_PreviouslyGranted() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { nil }
@@ -161,7 +168,8 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
+    {
       $0.enableNotifications = true
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
@@ -175,9 +183,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testNotifications_PreviouslyDenied() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let openedUrl = ActorIsolated<URL?>(nil)
     store.dependencies.setUpDefaults()
@@ -227,9 +236,10 @@ class SettingsFeatureTests: XCTestCase {
   func testNotifications_DebounceRemoteSettingsUpdates() async {
     await withMainSerialExecutor {
       let store = TestStore(
-        initialState: Settings.State(sendDailyChallengeReminder: false),
-        reducer: Settings()
-      )
+        initialState: Settings.State(sendDailyChallengeReminder: false)
+      ) {
+        Settings()
+      }
 
       let mainQueue = DispatchQueue.test
       store.dependencies.setUpDefaults()
@@ -257,7 +267,9 @@ class SettingsFeatureTests: XCTestCase {
 
       await mainQueue.advance()
 
-      await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+      await store.receive(
+        .userNotificationSettingsResponse(.init(authorizationStatus: .authorized))
+      ) {
         $0.enableNotifications = true
         $0.userNotificationSettings = .init(authorizationStatus: .authorized)
       }
@@ -281,9 +293,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testSetMusicVolume() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let setMusicVolume = ActorIsolated<Float?>(nil)
     store.dependencies.setUpDefaults()
@@ -298,9 +311,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testSetSoundEffectsVolume() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
     store.dependencies.setUpDefaults()
@@ -319,9 +333,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testSetColorScheme() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
     store.dependencies.setUpDefaults()
@@ -342,9 +357,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testSetAppIcon() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let overriddenIconName = ActorIsolated<String?>(nil)
     store.dependencies.setUpDefaults()
@@ -360,14 +376,17 @@ class SettingsFeatureTests: XCTestCase {
 
   func testUnsetAppIcon() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let overriddenIconName = ActorIsolated<String?>(nil)
     store.dependencies.setUpDefaults()
     store.dependencies.applicationClient.alternateIconName = { "icon-2" }
-    store.dependencies.applicationClient.setAlternateIconName = { await overriddenIconName.setValue($0) }
+    store.dependencies.applicationClient.setAlternateIconName = {
+      await overriddenIconName.setValue($0)
+    }
     store.dependencies.mainQueue = .immediate
     store.dependencies.serverConfig.config = { .init() }
     store.dependencies.userDefaults.boolForKey = { _ in false }
@@ -394,9 +413,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testSetApiBaseUrl() async {
     let store = TestStore(
-      initialState: Settings.State(),
-      reducer: Settings()
-    )
+      initialState: Settings.State()
+    ) {
+      Settings()
+    }
 
     let setBaseUrl = ActorIsolated<URL?>(nil)
     let didLogout = ActorIsolated(false)
@@ -414,9 +434,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testToggleEnableCubeShadow() async {
     let store = TestStore(
-      initialState: Settings.State(enableCubeShadow: true),
-      reducer: Settings()
-    )
+      initialState: Settings.State(enableCubeShadow: true)
+    ) {
+      Settings()
+    }
 
     await store.send(.set(\.$enableCubeShadow, false)) {
       $0.enableCubeShadow = false
@@ -428,9 +449,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testSetShadowRadius() async {
     let store = TestStore(
-      initialState: Settings.State(cubeShadowRadius: 5),
-      reducer: Settings()
-    )
+      initialState: Settings.State(cubeShadowRadius: 5)
+    ) {
+      Settings()
+    }
 
     await store.send(.set(\.$cubeShadowRadius, 20)) {
       $0.cubeShadowRadius = 20
@@ -442,9 +464,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testToggleShowSceneStatistics() async {
     let store = TestStore(
-      initialState: Settings.State(showSceneStatistics: false),
-      reducer: Settings()
-    )
+      initialState: Settings.State(showSceneStatistics: false)
+    ) {
+      Settings()
+    }
 
     await store.send(.set(\.$showSceneStatistics, true)) {
       $0.showSceneStatistics = true
@@ -456,9 +479,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testToggleEnableGyroMotion() async {
     let store = TestStore(
-      initialState: Settings.State(userSettings: .init(enableGyroMotion: true)),
-      reducer: Settings()
-    )
+      initialState: Settings.State(userSettings: .init(enableGyroMotion: true))
+    ) {
+      Settings()
+    }
 
     store.dependencies.setUpDefaults()
 
@@ -472,9 +496,10 @@ class SettingsFeatureTests: XCTestCase {
 
   func testToggleEnableHaptics() async {
     let store = TestStore(
-      initialState: Settings.State(userSettings: .init(enableHaptics: true)),
-      reducer: Settings()
-    )
+      initialState: Settings.State(userSettings: .init(enableHaptics: true))
+    ) {
+      Settings()
+    }
 
     store.dependencies.setUpDefaults()
 

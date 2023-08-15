@@ -36,12 +36,13 @@ extension StoreOf<GameOver> {
           secondsPlayed: 0
         ),
         isDemo: false
-      ),
-      reducer: GameOver()
+      )
+    ) {
+      GameOver()
         .dependency(
           \.apiClient,
-          update(.noop) {
-            $0.override(
+           update(.noop) {
+             $0.override(
               routeCase: (/ServerRoute.Api.Route.games)
                 .appending(path: /ServerRoute.Api.Route.Games.submit),
               withResponse: { _ in
@@ -57,26 +58,26 @@ extension StoreOf<GameOver> {
                   )
                 )
               }
-            )
-          }
+             )
+           }
         )
         .dependency(\.audioPlayer, .noop)
         .dependency(
           \.database,
-          .autoMigratingLive(
+           .autoMigratingLive(
             path: FileManager.default
               .urls(for: .documentDirectory, in: .userDomainMask)
               .first!
               .appendingPathComponent("co.pointfree.Isowords")
               .appendingPathComponent("Isowords.sqlite3")
-          )
+           )
         )
         .dependency(\.fileClient, .noop)
         .dependency(\.remoteNotifications, .noop)
         .dependency(\.serverConfig, .noop)
         .dependency(\.userDefaults.boolForKey) { _ in false }
         .dependency(\.userNotifications, .noop)
-    )
+    }
   }
 
   static var multiplayer: Self {
@@ -95,9 +96,10 @@ extension StoreOf<GameOver> {
           },
           metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
-      ),
-      reducer: GameOver()
+      )
+    ) {
+      GameOver()
         .dependency(\.context, .preview)
-    )
+    }
   }
 }

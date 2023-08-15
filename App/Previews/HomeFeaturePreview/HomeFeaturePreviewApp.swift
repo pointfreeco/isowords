@@ -18,13 +18,14 @@ struct HomeFeaturePreviewApp: App {
       NavigationView {
         HomeView(
           store: Store(
-            initialState: Home.State(),
-            reducer: Home()
+            initialState: Home.State()
+          ) {
+            Home()
               .dependency(
                 \.apiClient,
-                update(.noop) {
-                  $0.authenticate = { _ in .init(appleReceipt: nil, player: .blob) }
-                  $0.override(
+                 update(.noop) {
+                   $0.authenticate = { _ in .init(appleReceipt: nil, player: .blob) }
+                   $0.override(
                     route: .dailyChallenge(.today(language: .en)),
                     withResponse: {
                       try await OK([
@@ -43,8 +44,8 @@ struct HomeFeaturePreviewApp: App {
                         )
                       ])
                     }
-                  )
-                }
+                   )
+                 }
               )
               .dependency(\.applicationClient, .noop)
               .dependency(\.audioPlayer, .noop)
@@ -57,7 +58,7 @@ struct HomeFeaturePreviewApp: App {
               .dependency(\.storeKit, .noop)
               .dependency(\.userDefaults, .noop)
               .dependency(\.userNotifications, .noop)
-          )
+          }
         )
       }
     }

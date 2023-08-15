@@ -45,10 +45,11 @@ class GameOverFeatureIntegrationTests: XCTestCase {
         initialState: GameOver.State(
           completedGame: .mock,
           isDemo: false
-        ),
-        reducer: GameOver()
-      )
-      
+        )
+      ) {
+        GameOver()
+      }
+
       store.dependencies.audioPlayer = .noop
       store.dependencies.apiClient = .init(
         middleware: siteMiddleware(environment: serverEnvironment),

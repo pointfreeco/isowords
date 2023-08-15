@@ -10,8 +10,8 @@ import UIApplicationClient
 public struct Trailer: ReducerProtocol {
   public struct State: Equatable {
     var game: Game.State
-    @BindableState var nub: CubeSceneView.ViewState.NubState
-    @BindableState var opacity: Double
+    @BindingState var nub: CubeSceneView.ViewState.NubState
+    @BindingState var opacity: Double
 
     public init(
       game: Game.State,
@@ -90,7 +90,7 @@ public struct Trailer: ReducerProtocol {
           try await self.mainQueue.sleep(for: firstWordDelay)
 
           // Play each word
-          for (wordIndex, word) in replayableWords.enumerated() {
+          for (_, word) in replayableWords.enumerated() {
             // Play each character in the word
             for (characterIndex, character) in word.enumerated() {
               let face = IndexedCubeFace(index: character.index, side: character.side)
@@ -192,7 +192,7 @@ public struct TrailerView: View {
 
   public init(store: StoreOf<Trailer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -265,14 +265,15 @@ public struct TrailerView: View {
       .background(
         BloomBackground(
           size: proxy.size,
-          store: self.store.actionless
+          store: self.store
             .scope(
               state: {
                 BloomBackground.ViewState(
                   bloomCount: $0.game.selectedWord.count,
                   word: $0.game.selectedWordString
                 )
-              }
+              },
+              action: absurd
             )
         )
       )
@@ -309,3 +310,5 @@ private let fadeInDuration = 0.3
 private let fadeOutDuration = 0.3
 private let submitPressDuration = 0.05
 private let submitHestitationDuration = 0.15
+
+private func absurd<A>(_: Never) -> A { }

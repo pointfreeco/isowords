@@ -12,9 +12,10 @@ import XCTest
 class PastGamesTests: XCTestCase {
   func testLoadMatches() async {
     let store = TestStore(
-      initialState: PastGames.State(),
-      reducer: PastGames()
-    )
+      initialState: PastGames.State()
+    ) {
+      PastGames()
+    }
 
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.gameCenter.turnBasedMatch.loadMatches = { [match] }
@@ -28,9 +29,10 @@ class PastGamesTests: XCTestCase {
 
   func testOpenMatch() async {
     let store = TestStore(
-      initialState: PastGames.State(pastGames: [pastGameState]),
-      reducer: PastGames()
-    )
+      initialState: PastGames.State(pastGames: [pastGameState])
+    ) {
+      PastGames()
+    }
 
     store.dependencies.gameCenter.turnBasedMatch.load = { _ in match }
 
@@ -43,9 +45,10 @@ class PastGamesTests: XCTestCase {
 
   func testRematch() async {
     let store = TestStore(
-      initialState: PastGames.State(pastGames: [pastGameState]),
-      reducer: PastGames()
-    )
+      initialState: PastGames.State(pastGames: [pastGameState])
+    ) {
+      PastGames()
+    }
 
     store.dependencies.gameCenter.turnBasedMatch.rematch = { _ in match }
 
@@ -68,9 +71,10 @@ class PastGamesTests: XCTestCase {
     struct RematchFailure: Error, Equatable {}
 
     let store = TestStore(
-      initialState: PastGames.State(pastGames: [pastGameState]),
-      reducer: PastGames()
-    )
+      initialState: PastGames.State(pastGames: [pastGameState])
+    ) {
+      PastGames()
+    }
 
     store.dependencies.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
 

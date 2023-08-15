@@ -87,18 +87,20 @@ struct PurchasesSettingsView: View {
             store: Store(
               initialState: Settings.State(
                 fullGamePurchasedAt: Date()
-              ),
-              reducer: Settings()
-            )
+              )
+            ) {
+              Settings()
+            }
           )
         }
 
         NavigationView {
           PurchasesSettingsView(
             store: Store(
-              initialState: Settings.State(),
-              reducer: Settings()
-            )
+              initialState: Settings.State()
+            ) {
+              Settings()
+            }
           )
         }
       }

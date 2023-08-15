@@ -62,9 +62,10 @@ struct NotificationsSettingsView: View {
         store: .init(
           initialState: Settings.State(
             userNotificationSettings: .init(authorizationStatus: .authorized)
-          ),
-          reducer: Settings()
-        )
+          )
+        ) {
+          Settings()
+        }
       )
     }
   }

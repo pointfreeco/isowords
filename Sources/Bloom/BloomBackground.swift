@@ -105,7 +105,7 @@ public struct BloomBackground: View {
   public init(size: CGSize, store: Store<ViewState, Never>) {
     self.size = size
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {

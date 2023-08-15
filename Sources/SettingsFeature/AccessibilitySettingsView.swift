@@ -53,9 +53,10 @@ struct AccessibilitySettingsView: View {
         NavigationView {
           AccessibilitySettingsView(
             store: .init(
-              initialState: Settings.State(),
-              reducer: EmptyReducer<Settings.State, Settings.Action>()
-            )
+              initialState: Settings.State()
+            ) {
+              
+            }
           )
         }
       }

@@ -16,18 +16,19 @@ struct TrailerPreviewApp: App {
     WindowGroup {
       TrailerView(
         store: .init(
-          initialState: Trailer.State(),
-          reducer: Trailer()
+          initialState: Trailer.State()
+        ) {
+          Trailer()
             .dependency(
               \.audioPlayer,
-              .live(bundles: [
+               .live(bundles: [
                 AppAudioLibrary.bundle,
                 AppClipAudioLibrary.bundle,
-              ])
+               ])
             )
             .dependency(
               \.dictionary,
-              .init(
+               .init(
                 contains: { string, _ in
                   [
                     "SAY", "HELLO", "TO", "ISOWORDS",
@@ -35,15 +36,15 @@ struct TrailerPreviewApp: App {
                     "FOR", "YOUR", "PHONE",
                     "COMING", "NEXT", "YEAR",
                   ]
-                  .contains(string.uppercased())
+                    .contains(string.uppercased())
                 },
                 load: { _ in true },
                 lookup: { _, _ in nil },
                 randomCubes: { _ in .mock },
                 unload: { _ in }
-              )
+               )
             )
-        )
+        }
       )
       .statusBar(hidden: true)
     }
