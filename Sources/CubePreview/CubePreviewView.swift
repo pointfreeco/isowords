@@ -3,6 +3,7 @@ import ComposableArchitecture
 import CubeCore
 import HapticsCore
 import LowPowerModeClient
+import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
@@ -93,7 +94,9 @@ public struct CubePreview: Reducer {
         return .cancel(id: CancelID.selection)
 
       case .task:
-        return .run { [move = state.moves[state.moveIndex]] send in
+        return .run { [move = state.moves[state.moveIndex], nub = state.nub] send in
+          var nub = nub
+
           await send(
             .lowPowerModeResponse(
               await self.lowPowerMode.start().first(where: { _ in true }) ?? false
@@ -110,12 +113,12 @@ public struct CubePreview: Reducer {
               let moveDuration = Double.random(in: (0.6...0.8))
 
               // Move the nub to the face
-              // XXXXX
-//              await send(
-//                .set(\.$nub.location, .face(face)),
-//                animateWithDuration: moveDuration,
-//                delay: 0, options: .curveEaseInOut
-//              )
+              nub.location = .face(face)
+              await send(
+                .set(\.$nub, nub),
+                animateWithDuration: moveDuration,
+                delay: 0, options: .curveEaseInOut
+              )
 
               // Pause a bit to allow the nub to animate to the face
               try await self.mainQueue.sleep(
@@ -124,8 +127,8 @@ public struct CubePreview: Reducer {
 
               // Press the nub on the first character
               if faceIndex == 0 {
-                // XXXXX
-//                await send(.set(\.$nub.isPressed, true), animation: .default)
+                nub.isPressed = true
+                await send(.set(\.$nub, nub), animation: .default)
               }
 
               // Select the faces that have been tapped so far
@@ -133,17 +136,17 @@ public struct CubePreview: Reducer {
             }
 
             // Un-press the nub once finished selecting all faces
-            // XXXXX
-//            await send(.set(\.$nub.isPressed, false))
+            nub.isPressed = false
+            await send(.set(\.$nub, nub))
 
             // Move the nub off the screen
-            // XXXXX
-//            await send(
-//              .set(\.$nub.location, .offScreenRight),
-//              animateWithDuration: 1,
-//              delay: 0,
-//              options: .curveEaseInOut
-//            )
+            nub.location = .offScreenRight
+            await send(
+              .set(\.$nub, nub),
+              animateWithDuration: 1,
+              delay: 0,
+              options: .curveEaseInOut
+            )
 
           case .removedCube:
             break
