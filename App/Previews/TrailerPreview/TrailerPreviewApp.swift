@@ -21,7 +21,7 @@ struct TrailerPreviewApp: App {
           Trailer()
             .dependency(
               \.audioPlayer,
-               .live(bundles: [
+              .live(bundles: [
                 AppAudioLibrary.bundle,
                 AppClipAudioLibrary.bundle,
                ])
