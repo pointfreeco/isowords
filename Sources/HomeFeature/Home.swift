@@ -120,7 +120,7 @@ public struct Home: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce(self.core)
       .ifLet(\.changelog, action: /Action.changelog) {
         ChangelogReducer()
@@ -359,7 +359,7 @@ public struct Home: Reducer {
       case solo(Solo.Action)
     }
 
-    public var body: some Reducer<State, Action> {
+    public var body: some ReducerOf<Self> {
       Scope(
         state: /State.dailyChallenge,
         action: /Action.dailyChallenge

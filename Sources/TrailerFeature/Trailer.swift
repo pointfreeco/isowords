@@ -48,7 +48,7 @@ public struct Trailer: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     IntegratedGame(state: \State.game, action: /Action.game, isHapticsEnabled: { _ in true })
       .dependency(\.apiClient, .noop)
       .dependency(\.applicationClient, .noop)

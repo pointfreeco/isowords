@@ -25,7 +25,7 @@ public struct GameFeature: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Scope(state: \.settings, action: /Action.settings) {
       Settings()
     }

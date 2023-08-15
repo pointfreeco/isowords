@@ -4,7 +4,7 @@ extension Reducer {
   @inlinable
   public func filter(
     _ predicate: @escaping (State, Action) -> Bool
-  ) -> some Reducer<State, Action> {
+  ) -> some ReducerOf<Self> {
     FilterReducer(base: self, predicate: predicate)
   }
 }

@@ -17,7 +17,7 @@ public struct PastGames: Reducer {
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case let .matchesResponse(.success(matches)):

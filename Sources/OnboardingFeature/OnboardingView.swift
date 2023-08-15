@@ -165,7 +165,7 @@ public struct Onboarding: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case .alert(.dismiss), .alert(.presented(.resumeButtonTapped)):
@@ -350,7 +350,7 @@ public struct Onboarding: Reducer {
     }
   }
 
-  var gameReducer: some Reducer<State, Action> {
+  var gameReducer: some ReducerOf<Self> {
     IntegratedGame(
       state: \State.game,
       action: /Action.game,

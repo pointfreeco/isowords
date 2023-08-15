@@ -84,7 +84,7 @@ public struct AppReducer: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     self.core
       .ifLet(\.onboarding, action: /Action.onboarding) {
         Onboarding()
@@ -119,7 +119,7 @@ public struct AppReducer: Reducer {
   }
 
   @ReducerBuilder<State, Action>
-  var core: some Reducer<State, Action> {
+  var core: some ReducerOf<Self> {
     Scope(state: \.home.settings.userSettings, action: /Action.appDelegate) {
       AppDelegateReducer()
     }

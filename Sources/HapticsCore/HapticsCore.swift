@@ -6,7 +6,7 @@ extension Reducer {
   public func haptics<Trigger: Equatable>(
     isEnabled: @escaping (State) -> Bool,
     triggerOnChangeOf trigger: @escaping (State) -> Trigger
-  ) -> some Reducer<State, Action> {
+  ) -> some ReducerOf<Self> {
     Haptics(base: self, isEnabled: isEnabled, trigger: trigger)
   }
 }

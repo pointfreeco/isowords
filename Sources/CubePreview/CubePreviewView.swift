@@ -67,7 +67,7 @@ public struct CubePreview: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     BindingReducer()
     Reduce { state, action in
       enum CancelID { case selection }

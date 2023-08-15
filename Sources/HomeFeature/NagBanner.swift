@@ -10,7 +10,7 @@ public struct NagBannerFeature: Reducer {
     case nagBanner(NagBanner.Action)
   }
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case .dismissUpgradeInterstitial:
@@ -41,7 +41,7 @@ public struct NagBanner: Reducer {
     case upgradeInterstitial(UpgradeInterstitial.Action)
   }
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case .tapped:

@@ -197,7 +197,7 @@ public struct Settings: Reducer {
     case paymentObserver
   }
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     CombineReducers {
       BindingReducer()
         .onChange(of: \.developer.currentBaseUrl.url) { _, url in

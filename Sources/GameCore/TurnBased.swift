@@ -172,7 +172,7 @@ struct TurnBasedLogic: Reducer {
 }
 
 extension Reducer where State == Game.State, Action == Game.Action {
-  func filterActionsForYourTurn() -> some Reducer<State, Action> {
+  func filterActionsForYourTurn() -> some ReducerOf<Self> {
     self.filter { state, action in
       switch action {
       case .pan,

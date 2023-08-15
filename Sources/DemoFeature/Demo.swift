@@ -59,7 +59,7 @@ public struct Demo: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Scope(state: \.step, action: .self) {
       Scope(
         state: /State.Step.onboarding,

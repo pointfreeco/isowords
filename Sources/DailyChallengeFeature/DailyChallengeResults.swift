@@ -29,7 +29,7 @@ public struct DailyChallengeResults: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Scope(state: \.leaderboardResults, action: /Action.leaderboardResults) {
       LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
     }
