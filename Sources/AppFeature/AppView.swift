@@ -352,7 +352,7 @@ public struct AppView: View {
   public var body: some View {
     Group {
       if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
-        NavigationView {
+        NavigationStack {
           HomeView(store: self.store.scope(state: \.home, action: AppReducer.Action.home))
         }
         .navigationViewStyle(StackNavigationViewStyle())
