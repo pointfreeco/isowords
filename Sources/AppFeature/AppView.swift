@@ -235,7 +235,7 @@ public struct AppReducer: Reducer {
         return .none
 
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.timed))))),
-        .home(.destination(.solo(.gameButtonTapped(.timed)))):
+        .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
         state.game = .init(
           cubes: self.randomCubes(.en),
           gameContext: .solo,
@@ -247,7 +247,7 @@ public struct AppReducer: Reducer {
         return .none
 
       case .currentGame(.game(.gameOver(.delegate(.startSoloGame(.unlimited))))),
-        .home(.destination(.solo(.gameButtonTapped(.unlimited)))):
+        .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
         state.game =
           state.home.savedGames.unlimited
           .map { Game.State(inProgressGame: $0) }
@@ -264,7 +264,9 @@ public struct AppReducer: Reducer {
       case .currentGame:
         return .none
 
-      case let .home(.destination(.dailyChallenge(.delegate(.startGame(inProgressGame))))):
+      case let .home(
+        .destination(.presented(.dailyChallenge(.delegate(.startGame(inProgressGame)))))
+      ):
         state.game = .init(inProgressGame: inProgressGame)
         return .none
 

@@ -94,9 +94,11 @@ public struct GameCenterLogic: Reducer {
       case let .gameCenter(.rematchResponse(.success(turnBasedMatch))),
         let .home(
           .destination(
-            .multiplayer(
-              .destination(
-                .presented(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+            .presented(
+              .multiplayer(
+                .destination(
+                  .presented(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+                )
               )
             )
           )
