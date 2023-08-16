@@ -20,7 +20,7 @@ private struct GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
 
   var body: some Reducer<Game.State, Game.Action> {
     self.core
-      .onChange(of: { $0.gameOver == nil }) { _, _ in
+      .onChange(of: { /Game.Destination.State.gameOver ~= $0.destination }) { _, _ in
         Reduce { _, _ in
           .run { _ in
             Task.cancel(id: CancelID.cubeShaking)

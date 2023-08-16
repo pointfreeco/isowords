@@ -61,10 +61,7 @@ public struct Demo: Reducer {
 
   public var body: some ReducerOf<Self> {
     Scope(state: \.step, action: .self) {
-      Scope(
-        state: /State.Step.onboarding,
-        action: /Action.onboarding
-      ) {
+      Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
     }
@@ -82,7 +79,7 @@ public struct Demo: Reducer {
     .dependency(\.storeKit, .noop)
     .dependency(\.userDefaults, .noop)
     .dependency(\.userNotifications, .noop)
-    .onChange(of: { $0.game?.gameOver != nil }) { _, _ in
+    .onChange(of: { /Game.Destination.State.gameOver ~= $0.game?.destination }) { _, _ in
       Reduce { _, _ in
         .run { send in
           try await self.mainQueue.sleep(for: .seconds(2))
@@ -102,7 +99,7 @@ public struct Demo: Reducer {
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.gameOver(.submitGameResponse(.success))):
+      case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
         state.appStoreOverlayIsPresented = true
         return .none
 
@@ -148,7 +145,7 @@ public struct DemoView: View {
 
     init(state: Demo.State) {
       self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = state.game?.gameOver != nil
+      self.isGameOver = /Game.Destination.State.gameOver ~= state.game?.destination
     }
   }
 
@@ -163,38 +160,30 @@ public struct DemoView: View {
     SwitchStore(self.store.scope(state: \.step, action: { $0 })) { step in
       switch step {
       case .onboarding:
-        CaseLet(
-          /Demo.State.Step.onboarding,
-          action: Demo.Action.onboarding,
-          then: {
-            OnboardingView(store: $0)
-              .onAppear { self.viewStore.send(.onAppear) }
-          }
-        )
+        CaseLet(/Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
+          OnboardingView(store: $0)
+            .onAppear { self.viewStore.send(.onAppear) }
+        }
 
       case .game:
-        CaseLet(
-          /Demo.State.Step.game,
-          action: Demo.Action.game,
-          then: { store in
-            GameWrapper(
-              content: GameView(
-                content: CubeView(
-                  store: store.scope(
-                    state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
-                    action: { CubeSceneView.ViewAction.to(gameAction: $0) }
-                  )
-                ),
-                isAnimationReduced: false,
-                store: store
+        CaseLet(/Demo.State.Step.game, action: Demo.Action.game) { store in
+          GameWrapper(
+            content: GameView(
+              content: CubeView(
+                store: store.scope(
+                  state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
+                  action: { CubeSceneView.ViewAction.to(gameAction: $0) }
+                )
               ),
-              isGameOver: self.viewStore.isGameOver,
-              bannerAction: {
-                self.viewStore.send(.fullVersionButtonTapped)
-              }
-            )
-          }
-        )
+              isAnimationReduced: false,
+              store: store
+            ),
+            isGameOver: self.viewStore.isGameOver,
+            bannerAction: {
+              self.viewStore.send(.fullVersionButtonTapped)
+            }
+          )
+        }
       }
     }
     .appStoreOverlay(

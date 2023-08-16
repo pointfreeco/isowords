@@ -66,7 +66,6 @@ var gameplayAppStoreView: AnyView {
       gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
       gameCurrentTime: Date(),
       gameMode: .unlimited,
-      gameOver: nil,
       gameStartTime: Date(),
       isDemo: false,
       isGameLoaded: true,

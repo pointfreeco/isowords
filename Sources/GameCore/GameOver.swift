@@ -21,16 +21,18 @@ struct GameOverLogic: Reducer {
 
       guard
         !state.isGameOver
-          && action == .alert(.presented(.forfeitButtonTapped))
+          && action == .destination(.presented(.alert(.forfeitButtonTapped)))
           || action == .endGameButtonTapped
           || timesUp
           || allCubesRemoved
       else { return .none }
 
       state.bottomMenu = nil
-      state.gameOver = GameOver.State(
-        completedGame: CompletedGame(gameState: state),
-        isDemo: state.isDemo
+      state.destination = .gameOver(
+        GameOver.State(
+          completedGame: CompletedGame(gameState: state),
+          isDemo: state.isDemo
+        )
       )
 
       switch state.gameContext {
@@ -40,7 +42,8 @@ struct GameOverLogic: Reducer {
         }
 
       case let .turnBased(turnBasedMatch):
-        state.gameOver?.turnBasedContext = turnBasedMatch
+        state.$destination[case: /Game.Destination.State.gameOver]?.turnBasedContext =
+          turnBasedMatch
         return .none
       }
     }

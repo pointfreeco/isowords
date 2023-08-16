@@ -17,16 +17,35 @@ import TcaHelpers
 import UpgradeInterstitialFeature
 
 public struct Game: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case alert(AlertState<Action.Alert>)
+      case gameOver(GameOver.State)
+    }
+    public enum Action: Equatable {
+      case alert(Alert)
+      case gameOver(GameOver.Action)
+
+      public enum Alert: Equatable {
+        case forfeitButtonTapped
+      }
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.gameOver, action: /Action.gameOver) {
+        GameOver()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    @PresentationState public var alert: AlertState<AlertAction>?
     public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
+    @PresentationState public var destination: Destination.State?
     public var gameContext: ClientModels.GameContext
     public var gameCurrentTime: Date
     public var gameMode: GameMode
-    public var gameOver: GameOver.State?
     public var gameStartTime: Date
     public var isDemo: Bool
     public var isGameLoaded: Bool
@@ -45,14 +64,13 @@ public struct Game: Reducer {
 
     public init(
       activeGames: ActiveGamesState = .init(),
-      alert: AlertState<AlertAction>? = nil,
       bottomMenu: BottomMenuState<Action>? = nil,
       cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
+      destination: Destination.State? = nil,
       gameContext: ClientModels.GameContext,
       gameCurrentTime: Date,
       gameMode: GameMode,
-      gameOver: GameOver.State? = nil,
       gameStartTime: Date,
       isDemo: Bool = false,
       isGameLoaded: Bool = false,
@@ -70,14 +88,13 @@ public struct Game: Reducer {
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       self.activeGames = activeGames
-      self.alert = alert
       self.bottomMenu = bottomMenu
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
+      self.destination = destination
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
-      self.gameOver = gameOver
       self.gameStartTime = gameStartTime
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
@@ -136,10 +153,10 @@ public struct Game: Reducer {
 
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
-    case alert(PresentationAction<AlertAction>)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
+    case destination(PresentationAction<Destination.Action>)
     case dismissBottomMenu
     case doubleTap(index: LatticePoint)
     case endGameButtonTapped
@@ -147,7 +164,6 @@ public struct Game: Reducer {
     case forfeitGameButtonTapped
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case gameOver(GameOver.Action)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
@@ -161,11 +177,6 @@ public struct Game: Reducer {
     case trayButtonTapped
     case upgradeInterstitial(UpgradeInterstitial.Action)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
-  }
-
-  public enum AlertAction: Equatable {
-    case dontForfeitButtonTapped
-    case forfeitButtonTapped
   }
 
   public enum GameCenterAction: Equatable {
@@ -198,13 +209,12 @@ public struct Game: Reducer {
         }
       }
       .filterActionsForYourTurn()
-      .ifLet(\.gameOver, action: /Action.gameOver) {
-        GameOver()
+      .ifLet(\.$destination, action: /Action.destination) {
+        Destination()
       }
       .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
         UpgradeInterstitial()
       }
-      .ifLet(\.$alert, action: /Action.alert)
       .sounds()
   }
 
@@ -215,10 +225,21 @@ public struct Game: Reducer {
       case .activeGames:
         return .none
 
-      case .alert(.dismiss), .alert(.presented(.dontForfeitButtonTapped)):
+      case .cancelButtonTapped:
+        state.selectedWord = []
         return .none
 
-      case .alert(.presented(.forfeitButtonTapped)):
+      case let .confirmRemoveCube(index):
+        state.bottomMenu = nil
+        state.removeCube(at: index, playedAt: self.date())
+        state.selectedWord = []
+        return .none
+
+      case .delayedShowUpgradeInterstitial:
+        state.upgradeInterstitial = .init()
+        return .none
+
+      case .destination(.presented(.alert(.forfeitButtonTapped))):
         guard let match = state.turnBasedContext?.match
         else { return .none }
 
@@ -243,18 +264,14 @@ public struct Game: Reducer {
           }
         }
 
-      case .cancelButtonTapped:
-        state.selectedWord = []
+      case .destination(.presented(.gameOver(.delegate(.close)))):
         return .none
 
-      case let .confirmRemoveCube(index):
-        state.bottomMenu = nil
-        state.removeCube(at: index, playedAt: self.date())
-        state.selectedWord = []
+      case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
+        state = .init(inProgressGame: inProgressGame)
         return .none
 
-      case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
+      case .destination:
         return .none
 
       case .dismissBottomMenu:
@@ -274,16 +291,24 @@ public struct Game: Reducer {
         return .none
 
       case .forfeitGameButtonTapped:
-        state.alert = .init(
-          title: .init("Are you sure?"),
-          message: .init(
-            """
-            Forfeiting will end the game and your opponent will win. Are you sure you want to \
-            forfeit?
-            """
-          ),
-          primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
-          secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
+        state.destination = .alert(
+          AlertState {
+            TextState("Are you sure?")
+          } actions: {
+            ButtonState(role: .cancel) {
+              TextState("Don't forfeit")
+            }
+            ButtonState(role: .destructive, action: .forfeitButtonTapped) {
+              TextState("Yes, forfeit")
+            }
+          } message: {
+            TextState(
+              """
+              Forfeiting will end the game and your opponent will win. Are you sure you want to \
+              forfeit?
+              """
+            )
+          }
         )
         return .none
 
@@ -297,16 +322,6 @@ public struct Game: Reducer {
             await send(.timerTick(instant.date))
           }
         }
-
-      case .gameOver(.delegate(.close)):
-        return .none
-
-      case let .gameOver(.delegate(.startGame(inProgressGame))):
-        state = .init(inProgressGame: inProgressGame)
-        return .none
-
-      case .gameOver:
-        return .none
 
       case let .lowPowerModeChanged(isOn):
         state.isOnLowPowerMode = isOn
@@ -583,7 +598,7 @@ extension Game.State {
   }
 
   public var isGameOver: Bool {
-    self.gameOver != nil
+    /Game.Destination.State.gameOver ~= self.destination
   }
 
   public var isResumable: Bool {

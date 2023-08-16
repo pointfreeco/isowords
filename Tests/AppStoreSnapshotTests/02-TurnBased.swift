@@ -33,7 +33,6 @@ var turnBasedAppStoreView: AnyView {
       ),
       gameCurrentTime: Date(),
       gameMode: .unlimited,
-      gameOver: nil,
       gameStartTime: Date(),
       isDemo: false,
       isGameLoaded: true,

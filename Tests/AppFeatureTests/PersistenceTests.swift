@@ -199,9 +199,11 @@ class PersistenceTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOver.State(
-          completedGame: .init(gameState: $0),
-          isDemo: false
+        $0.destination = .gameOver(
+          GameOver.State(
+            completedGame: .init(gameState: $0),
+            isDemo: false
+          )
         )
         $0.bottomMenu = nil
       }
@@ -250,14 +252,15 @@ class PersistenceTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.endGameButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOver.State(
-          completedGame: .init(gameState: $0),
-          isDemo: false
+        $0.destination = .gameOver(
+          GameOver.State(
+            completedGame: .init(gameState: $0),
+            isDemo: false
+          )
         )
         $0.bottomMenu = nil
       }
     }
-    .finish()
 
     await didArchiveGame.withValue { XCTAssert($0) }
   }
@@ -318,7 +321,7 @@ class PersistenceTests: XCTestCase {
           isDemo: false
         )
         gameOver.turnBasedContext = $0.turnBasedContext
-        $0.gameOver = gameOver
+        $0.destination = .gameOver(gameOver)
       }
     }
   }

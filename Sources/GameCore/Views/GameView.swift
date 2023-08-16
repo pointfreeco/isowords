@@ -128,7 +128,9 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.gameOver, action: Game.Action.gameOver),
+          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          state: /Game.Destination.State.gameOver,
+          action: Game.Destination.Action.gameOver,
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -175,7 +177,11 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(self.store.scope(state: \.bottomMenu, action: { $0 }))
-      .alert(store: self.store.scope(state: \.$alert, action: Game.Action.alert))
+      .alert(
+        store: self.store.scope(state: \.$destination, action: Game.Action.destination),
+        state: /Game.Destination.State.alert,
+        action: Game.Destination.Action.alert
+      )
     }
     .task { await self.viewStore.send(.task).finish() }
   }

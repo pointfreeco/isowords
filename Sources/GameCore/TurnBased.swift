@@ -38,10 +38,12 @@ struct TurnBasedLogic: Reducer {
           match.status != .ended,
           match.participants.allSatisfy({ $0.matchOutcome == .none })
         else {
-          state.gameOver = .init(
-            completedGame: CompletedGame(gameState: state),
-            isDemo: state.isDemo,
-            turnBasedContext: state.turnBasedContext
+          state.destination = .gameOver(
+            GameOver.State(
+              completedGame: CompletedGame(gameState: state),
+              isDemo: state.isDemo,
+              turnBasedContext: state.turnBasedContext
+            )
           )
           return .run { _ in
             await self.feedbackGenerator.selectionChanged()
@@ -70,7 +72,7 @@ struct TurnBasedLogic: Reducer {
       case .gameCenter(.turnBasedMatchResponse(.failure)):
         return .none
 
-      case .gameOver(.delegate(.close)),
+      case .destination(.presented(.gameOver(.delegate(.close)))),
         .exitButtonTapped:
         return .none
 
@@ -182,10 +184,10 @@ extension Reducer where State == Game.State, Action == Game.Action {
         return state.isYourTurn
 
       case .activeGames,
-        .alert,
         .cancelButtonTapped,
         .confirmRemoveCube,
         .delayedShowUpgradeInterstitial,
+        .destination,
         .dismissBottomMenu,
         .doubleTap,
         .endGameButtonTapped,
@@ -193,7 +195,6 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .forfeitGameButtonTapped,
         .gameCenter,
         .gameLoaded,
-        .gameOver,
         .lowPowerModeChanged,
         .matchesLoaded,
         .menuButtonTapped,
