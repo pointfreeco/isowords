@@ -61,30 +61,29 @@ extension View {
   public func bottomMenu(
     item: Binding<BottomMenu?>
   ) -> some View {
-    BottomMenuWrapper(content: self, item: item)
+    self.modifier(BottomMenuModifier(item: item))
   }
 }
 
-private struct BottomMenuWrapper<Content: View>: View {
+private struct BottomMenuModifier: ViewModifier {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
-  let content: Content
   @Binding var item: BottomMenu?
 
-  var body: some View {
-    ZStack(alignment: .bottom) {
-      self.content
-        .zIndex(0)
-
-      ZStack(alignment: .bottom) {
-        if let menu = self.item {
+  func body(content: Content) -> some View {
+    content
+      .overlay {
+        if self.item != nil {
           Rectangle()
             .fill(Color.isowordsBlack.opacity(0.4))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onTapGesture { self.item = nil }
-            .zIndex(1)
-            .transition(.opacity)
-
+            .transition(.opacity.animation(.default))
+            .ignoresSafeArea()
+        }
+      }
+      .overlay(alignment: .bottom) {
+        if let menu = self.item {
           VStack(spacing: 24) {
             Group {
               HStack {
@@ -139,15 +138,17 @@ private struct BottomMenuWrapper<Content: View>: View {
           .frame(maxWidth: .infinity)
           .padding(24)
           .padding(.bottom)
-          .background(self.colorScheme == .light ? Color.isowordsOrange : .hex(0x242424))
-          .adaptiveCornerRadius([UIRectCorner.topLeft, .topRight], .grid(3))
-          .zIndex(2)
-          .transition(.move(edge: .bottom))
+          .background {
+            Group {
+              self.colorScheme == .light ? Color.isowordsOrange : .hex(0x242424)
+            }
+            .adaptiveCornerRadius([UIRectCorner.topLeft, .topRight], .grid(3))
+            .ignoresSafeArea()
+          }
+          .transition(.move(edge: .bottom).animation(.default))
           .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
         }
       }
-      .ignoresSafeArea()
-    }
   }
 }
 

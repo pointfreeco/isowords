@@ -113,31 +113,34 @@ class PersistenceTests: XCTestCase {
     }
     await store.send(.currentGame(.game(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.bottomMenu = .init(
-          title: .init("Solo"),
-          message: nil,
-          buttons: [
-            .init(
-              title: .init("Main menu"),
-              icon: .exit,
-              action: .init(action: .exitButtonTapped, animation: .default)
-            ),
-            .init(
-              title: .init("End game"),
-              icon: .flag,
-              action: .init(action: .endGameButtonTapped, animation: .default)
-            ),
-          ],
-          footerButton: .init(
-            title: .init("Settings"),
-            icon: .init(systemName: "gear"),
-            action: .init(action: .settingsButtonTapped, animation: .default)
-          ),
-          onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+        $0.destination = .bottomMenu(
+          .init(
+            title: .init("Solo"),
+            message: nil,
+            buttons: [
+              .init(
+                title: .init("Main menu"),
+                icon: .exit,
+                action: .init(action: .exitButtonTapped, animation: .default)
+              ),
+              .init(
+                title: .init("End game"),
+                icon: .flag,
+                action: .init(action: .endGameButtonTapped, animation: .default)
+              ),
+            ],
+            footerButton: .init(
+              title: .init("Settings"),
+              icon: .init(systemName: "gear"),
+              action: .init(action: .settingsButtonTapped, animation: .default)
+            )
+          )
         )
       }
     }
-    await store.send(.currentGame(.game(.exitButtonTapped))) { appState in
+    await store.send(
+      .currentGame(.game(.destination(.presented(.bottomMenu(.exitButtonTapped)))))
+    ) { appState in
       try XCTUnwrap(&appState.game) { game in
         appState.home.savedGames.unlimited = InProgressGame(gameState: game)
       }
@@ -173,31 +176,34 @@ class PersistenceTests: XCTestCase {
 
     await store.send(.currentGame(.game(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.bottomMenu = .init(
-          title: .init("Solo"),
-          message: nil,
-          buttons: [
-            .init(
-              title: .init("Main menu"),
-              icon: .exit,
-              action: .init(action: .exitButtonTapped, animation: .default)
-            ),
-            .init(
-              title: .init("End game"),
-              icon: .flag,
-              action: .init(action: .endGameButtonTapped, animation: .default)
-            ),
-          ],
-          footerButton: .init(
-            title: .init("Settings"),
-            icon: .init(systemName: "gear"),
-            action: .init(action: .settingsButtonTapped, animation: .default)
-          ),
-          onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+        $0.destination = .bottomMenu(
+          .init(
+            title: .init("Solo"),
+            message: nil,
+            buttons: [
+              .init(
+                title: .init("Main menu"),
+                icon: .exit,
+                action: .init(action: .exitButtonTapped, animation: .default)
+              ),
+              .init(
+                title: .init("End game"),
+                icon: .flag,
+                action: .init(action: .endGameButtonTapped, animation: .default)
+              ),
+            ],
+            footerButton: .init(
+              title: .init("Settings"),
+              icon: .init(systemName: "gear"),
+              action: .init(action: .settingsButtonTapped, animation: .default)
+            )
+          )
         )
       }
     }
-    await store.send(.currentGame(.game(.endGameButtonTapped))) {
+    await store.send(
+      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+    ) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
           GameOver.State(
@@ -205,7 +211,6 @@ class PersistenceTests: XCTestCase {
             isDemo: false
           )
         )
-        $0.bottomMenu = nil
       }
       $0.home.savedGames.unlimited = nil
     }
@@ -231,26 +236,29 @@ class PersistenceTests: XCTestCase {
 
     await store.send(.currentGame(.game(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
-        $0.bottomMenu = .init(
-          title: .init("Solo"),
-          message: nil,
-          buttons: [
-            .init(
-              title: .init("End game"),
-              icon: .flag,
-              action: .init(action: .endGameButtonTapped, animation: .default)
+        $0.destination = .bottomMenu(
+          .init(
+            title: .init("Solo"),
+            message: nil,
+            buttons: [
+              .init(
+                title: .init("End game"),
+                icon: .flag,
+                action: .init(action: .endGameButtonTapped, animation: .default)
+              )
+            ],
+            footerButton: .init(
+              title: .init("Settings"),
+              icon: .init(systemName: "gear"),
+              action: .init(action: .settingsButtonTapped, animation: .default)
             )
-          ],
-          footerButton: .init(
-            title: .init("Settings"),
-            icon: .init(systemName: "gear"),
-            action: .init(action: .settingsButtonTapped, animation: .default)
-          ),
-          onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+          )
         )
       }
     }
-    await store.send(.currentGame(.game(.endGameButtonTapped))) {
+    await store.send(
+      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+    ) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
           GameOver.State(
@@ -258,7 +266,6 @@ class PersistenceTests: XCTestCase {
             isDemo: false
           )
         )
-        $0.bottomMenu = nil
       }
     }
 
@@ -314,7 +321,14 @@ class PersistenceTests: XCTestCase {
 
     store.dependencies.audioPlayer.stop = { _ in }
 
-    await store.send(.currentGame(.game(.endGameButtonTapped))) {
+    await store.send(.currentGame(.game(.menuButtonTapped))) {
+      try XCTUnwrap(&$0.game) {
+        $0.destination = .bottomMenu(.gameMenu(state: $0))
+      }
+    }
+    await store.send(
+      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+    ) {
       try XCTUnwrap(&$0.game) {
         var gameOver = GameOver.State(
           completedGame: .init(gameState: $0),

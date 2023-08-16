@@ -180,7 +180,7 @@ public struct AppReducer: Reducer {
       case .appDelegate:
         return .none
 
-      case .currentGame(.game(.endGameButtonTapped)),
+      case .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))),
         .currentGame(.game(.destination(.presented(.gameOver(.task))))):
 
         switch (state.game?.gameContext, state.game?.gameMode) {
@@ -229,7 +229,7 @@ public struct AppReducer: Reducer {
           } catch {}
         }
 
-      case .currentGame(.game(.exitButtonTapped)),
+      case .currentGame(.game(.destination(.presented(.bottomMenu(.exitButtonTapped))))),
           .currentGame(.game(.destination(.presented(.gameOver(.delegate(.close)))))):
         state.game = nil
         return .none

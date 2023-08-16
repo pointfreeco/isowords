@@ -29,14 +29,18 @@ class DailyChallengeTests: XCTestCase {
 
     let store = TestStore(
       initialState: GameFeature.State(
-        game: Game.State(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
-          gameCurrentTime: .mock,
-          gameMode: .timed,
-          gameStartTime: .mock,
-          moves: [move]
-        ),
+        game: update(
+          Game.State(
+            cubes: .mock,
+            gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
+            gameCurrentTime: .mock,
+            gameMode: .timed,
+            gameStartTime: .mock,
+            moves: [move]
+          )
+        ) {
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
+        },
         settings: .init()
       )
     ) {
@@ -49,7 +53,7 @@ class DailyChallengeTests: XCTestCase {
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = .immediate
 
-    await store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
           GameOver.State(
@@ -80,14 +84,18 @@ class DailyChallengeTests: XCTestCase {
 
     let store = TestStore(
       initialState: GameFeature.State(
-        game: Game.State(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
-          gameCurrentTime: .mock,
-          gameMode: .unlimited,
-          gameStartTime: .mock,
-          moves: [move]
-        ),
+        game: update(
+          Game.State(
+            cubes: .mock,
+            gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
+            gameCurrentTime: .mock,
+            gameMode: .unlimited,
+            gameStartTime: .mock,
+            moves: [move]
+          )
+        ) {
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
+        },
         settings: .init()
       )
     ) {
@@ -100,7 +108,7 @@ class DailyChallengeTests: XCTestCase {
     store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
     store.dependencies.mainQueue = .immediate
 
-    await store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
           GameOver.State(

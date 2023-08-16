@@ -73,7 +73,7 @@ struct TurnBasedLogic: Reducer {
         return .none
 
       case .destination(.presented(.gameOver(.delegate(.close)))),
-        .exitButtonTapped:
+        .destination(.presented(.bottomMenu(.exitButtonTapped))):
         return .none
 
       case .task:
@@ -85,7 +85,8 @@ struct TurnBasedLogic: Reducer {
 
       case .submitButtonTapped,
         .wordSubmitButton(.delegate(.confirmSubmit)),
-        .confirmRemoveCube:
+        .confirmRemoveCube,
+        .destination(.presented(.bottomMenu(.confirmRemoveCube))):
         guard
           let move = state.moves.last,
           let localPlayerIndex = turnBasedContext.localPlayerIndex,
@@ -188,11 +189,7 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .confirmRemoveCube,
         .delayedShowUpgradeInterstitial,
         .destination,
-        .dismissBottomMenu,
         .doubleTap,
-        .endGameButtonTapped,
-        .exitButtonTapped,
-        .forfeitGameButtonTapped,
         .gameCenter,
         .gameLoaded,
         .lowPowerModeChanged,
@@ -200,7 +197,6 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .menuButtonTapped,
         .task,
         .savedGamesLoaded,
-        .settingsButtonTapped,
         .timerTick,
         .trayButtonTapped,
         .upgradeInterstitial,

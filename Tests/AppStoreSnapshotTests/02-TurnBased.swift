@@ -17,7 +17,6 @@ var turnBasedAppStoreView: AnyView {
   let state = GameFeature.State(
     game: Game.State(
       activeGames: ActiveGamesState(),
-      bottomMenu: nil,
       cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
       cubeStartedShakingAt: nil,
       gameContext: .turnBased(

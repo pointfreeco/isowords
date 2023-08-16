@@ -30,7 +30,10 @@ class GameCoreTests: XCTestCase {
       await didEndMatchInTurn.setValue(true)
     }
 
-    await store.send(.forfeitGameButtonTapped) {
+    await store.send(.menuButtonTapped) {
+      $0.destination = .bottomMenu(.gameMenu(state: $0))
+    }
+    await store.send(.destination(.presented(.bottomMenu(.forfeitGameButtonTapped)))) {
       $0.destination = .alert(
         AlertState {
           TextState("Are you sure?")

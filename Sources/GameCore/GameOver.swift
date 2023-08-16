@@ -22,12 +22,11 @@ struct GameOverLogic: Reducer {
       guard
         !state.isGameOver
           && action == .destination(.presented(.alert(.forfeitButtonTapped)))
-          || action == .endGameButtonTapped
+          || action == .destination(.presented(.bottomMenu(.endGameButtonTapped)))
           || timesUp
           || allCubesRemoved
       else { return .none }
 
-      state.bottomMenu = nil
       state.destination = .gameOver(
         GameOver.State(
           completedGame: CompletedGame(gameState: state),

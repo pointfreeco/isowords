@@ -176,7 +176,11 @@ public struct GameView<Content>: View where Content: View {
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
       )
-      .bottomMenu(self.store.scope(state: \.bottomMenu, action: { $0 }))
+      .bottomMenu(
+        store: self.store.scope(state: \.$destination, action: Game.Action.destination),
+        state: /Game.Destination.State.bottomMenu,
+        action: Game.Destination.Action.bottomMenu
+      )
       .alert(
         store: self.store.scope(state: \.$destination, action: Game.Action.destination),
         state: /Game.Destination.State.alert,
