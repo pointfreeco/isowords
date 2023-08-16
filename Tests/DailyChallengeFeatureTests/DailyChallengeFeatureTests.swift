@@ -1,6 +1,7 @@
 import ApiClient
 import ClientModels
 import ComposableArchitecture
+import NotificationsAuthAlert
 import XCTest
 
 @testable import DailyChallengeFeature
@@ -49,7 +50,9 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
 
     await store.send(.gameButtonTapped(.unlimited)) {
-      $0.alert = .alreadyPlayed(nextStartsAt: Date().addingTimeInterval(60 * 60 * 2 + 1))
+      $0.destination = .alert(
+        .alreadyPlayed(nextStartsAt: Date().addingTimeInterval(60 * 60 * 2 + 1))
+      )
     }
   }
 
@@ -138,11 +141,10 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
 
     await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.closeButtonTapped))
-    await store.receive(.notificationsAuthAlert(.delegate(.close))) {
-      $0.notificationsAuthAlert = nil
+    await store.send(.destination(.dismiss)) {
+      $0.destination = nil
     }
   }
 
@@ -165,16 +167,24 @@ class DailyChallengeFeatureTests: XCTestCase {
     store.dependencies.mainRunLoop = .immediate
 
     await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
+    await store.send(
+      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
+    )
     await store.receive(
-      .notificationsAuthAlert(
-        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
+      .destination(
+        .presented(
+          .notificationsAuthAlert(
+            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
+          )
+        )
       )
     ) {
-      $0.notificationsAuthAlert = nil
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+    }
+    await store.receive(.destination(.dismiss)) {
+      $0.destination = nil
     }
 
     await didRegisterForRemoteNotifications.withValue { XCTAssertNoDifference($0, true) }
@@ -194,16 +204,24 @@ class DailyChallengeFeatureTests: XCTestCase {
     store.dependencies.mainRunLoop = .immediate
 
     await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
+    await store.send(
+      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
+    )
     await store.receive(
-      .notificationsAuthAlert(
-        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
+      .destination(
+        .presented(
+          .notificationsAuthAlert(
+            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
+          )
+        )
       )
     ) {
-      $0.notificationsAuthAlert = nil
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
+    }
+    await store.receive(.destination(.dismiss)) {
+      $0.destination = nil
     }
   }
 }

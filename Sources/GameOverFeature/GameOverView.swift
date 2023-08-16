@@ -16,14 +16,28 @@ import UpgradeInterstitialFeature
 import UserDefaultsClient
 
 public struct GameOver: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
+    }
+    public enum Action: Equatable {
+      case notificationsAuthAlert(NotificationsAuthAlert.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+        NotificationsAuthAlert()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var completedGame: CompletedGame
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
+    @PresentationState public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
     public var isDemo: Bool
     public var isNotificationMenuPresented: Bool
     public var isViewEnabled: Bool
-    public var notificationsAuthAlert: NotificationsAuthAlert.State?
     public var showConfetti: Bool
     public var summary: RankSummary?
     public var turnBasedContext: TurnBasedContext?
@@ -33,11 +47,11 @@ public struct GameOver: Reducer {
     public init(
       completedGame: CompletedGame,
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
+      destination: Destination.State? = nil,
       gameModeIsLoading: GameMode? = nil,
       isDemo: Bool,
       isNotificationMenuPresented: Bool = false,
       isViewEnabled: Bool = false,
-      notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
       showConfetti: Bool = false,
       summary: RankSummary? = nil,
       turnBasedContext: TurnBasedContext? = nil,
@@ -46,11 +60,11 @@ public struct GameOver: Reducer {
     ) {
       self.completedGame = completedGame
       self.dailyChallenges = dailyChallenges
+      self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
       self.isDemo = isDemo
       self.isNotificationMenuPresented = isNotificationMenuPresented
       self.isViewEnabled = isViewEnabled
-      self.notificationsAuthAlert = notificationsAuthAlert
       self.showConfetti = showConfetti
       self.summary = summary
       self.turnBasedContext = turnBasedContext
@@ -70,8 +84,8 @@ public struct GameOver: Reducer {
     case delayedOnAppear
     case delayedShowUpgradeInterstitial
     case delegate(DelegateAction)
+    case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameMode)
-    case notificationsAuthAlert(NotificationsAuthAlert.Action)
     case rematchButtonTapped
     case showConfetti
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
@@ -114,7 +128,7 @@ public struct GameOver: Reducer {
           }
         }
 
-        state.notificationsAuthAlert = .init()
+        state.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
         return .none
 
       case .dailyChallengeResponse(.failure):
@@ -169,17 +183,19 @@ public struct GameOver: Reducer {
           return .none
         }
 
-      case .notificationsAuthAlert(.delegate(.close)):
-        state.notificationsAuthAlert = nil
+      case .destination(.dismiss)
+      where /Destination.State.notificationsAuthAlert ~= state.destination:
         return .run { send in
           try? await self.requestReviewAsync()
           await send(.delegate(.close), animation: .default)
         }
 
-      case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
+      case .destination(
+        .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings)))
+      ):
         return .send(.delegate(.close)).animation()
 
-      case .notificationsAuthAlert:
+      case .destination:
         return .none
 
       case .rematchButtonTapped:
@@ -326,8 +342,8 @@ public struct GameOver: Reducer {
         return .none
       }
     }
-    .ifLet(\.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
-      NotificationsAuthAlert()
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
     .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
       UpgradeInterstitial()
@@ -501,10 +517,9 @@ public struct GameOverView: View {
     )
     .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
-      store: self.store.scope(
-        state: \.notificationsAuthAlert,
-        action: GameOver.Action.notificationsAuthAlert
-      )
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /GameOver.Destination.State.notificationsAuthAlert,
+      action: GameOver.Destination.Action.notificationsAuthAlert
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
