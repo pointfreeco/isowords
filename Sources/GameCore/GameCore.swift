@@ -22,11 +22,13 @@ public struct Game: Reducer {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
       case gameOver(GameOver.State)
+      case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
     public enum Action: Equatable {
       case alert(Alert)
       case bottomMenu(BottomMenu)
       case gameOver(GameOver.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
 
       public enum Alert: Equatable {
         case forfeitButtonTapped
@@ -42,6 +44,9 @@ public struct Game: Reducer {
     public var body: some ReducerOf<Self> {
       Scope(state: /State.gameOver, action: /Action.gameOver) {
         GameOver()
+      }
+      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
       }
     }
   }
@@ -67,7 +72,6 @@ public struct Game: Reducer {
     public var secondsPlayed: Int
     public var selectedWord: [IndexedCubeFace]
     public var selectedWordIsValid: Bool
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
     public init(
@@ -91,7 +95,6 @@ public struct Game: Reducer {
       secondsPlayed: Int = 0,
       selectedWord: [IndexedCubeFace] = [],
       selectedWordIsValid: Bool = false,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       self.activeGames = activeGames
@@ -114,7 +117,6 @@ public struct Game: Reducer {
       self.secondsPlayed = secondsPlayed
       self.selectedWord = selectedWord
       self.selectedWordIsValid = selectedWordIsValid
-      self.upgradeInterstitial = upgradeInterstitial
       self.wordSubmitButton = wordSubmit
     }
 
@@ -176,7 +178,6 @@ public struct Game: Reducer {
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
@@ -213,9 +214,6 @@ public struct Game: Reducer {
       .ifLet(\.$destination, action: /Action.destination) {
         Destination()
       }
-      .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-        UpgradeInterstitial()
-      }
       .sounds()
   }
 
@@ -235,7 +233,7 @@ public struct Game: Reducer {
         return .none
 
       case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
+        state.destination = .upgradeInterstitial()
         return .none
 
       case .destination(.presented(.alert(.forfeitButtonTapped))):
@@ -516,14 +514,6 @@ public struct Game: Reducer {
         return .none
 
       case .trayButtonTapped:
-        return .none
-
-      case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
         return .none
 
       case .wordSubmitButton:

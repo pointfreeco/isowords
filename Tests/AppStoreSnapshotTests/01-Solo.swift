@@ -79,7 +79,6 @@ var gameplayAppStoreView: AnyView {
       selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
         ?? [],
       selectedWordIsValid: true,
-      upgradeInterstitial: nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState()
     ),
     settings: .init()

@@ -199,7 +199,6 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .savedGamesLoaded,
         .timerTick,
         .trayButtonTapped,
-        .upgradeInterstitial,
         .wordSubmitButton:
         return true
       }

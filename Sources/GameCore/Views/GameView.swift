@@ -143,15 +143,13 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(
-            state: \.upgradeInterstitial,
-            action: Game.Action.upgradeInterstitial
-          ),
-          then: { store in
-            UpgradeInterstitialView(store: store)
-              .transition(.opacity)
-          }
-        )
+          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          state: /Game.Destination.State.upgradeInterstitial,
+          action: Game.Destination.Action.upgradeInterstitial
+        ) { store in
+          UpgradeInterstitialView(store: store)
+            .transition(.opacity)
+        }
         .zIndex(2)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
