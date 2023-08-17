@@ -451,51 +451,6 @@ class SettingsFeatureTests: XCTestCase {
     await didLogout.withValue { XCTAssert($0) }
   }
 
-  func testToggleEnableCubeShadow() async {
-    let store = TestStore(
-      initialState: Settings.State(enableCubeShadow: true)
-    ) {
-      Settings()
-    }
-
-    await store.send(.set(\.$enableCubeShadow, false)) {
-      $0.enableCubeShadow = false
-    }
-    await store.send(.set(\.$enableCubeShadow, true)) {
-      $0.enableCubeShadow = true
-    }
-  }
-
-  func testSetShadowRadius() async {
-    let store = TestStore(
-      initialState: Settings.State(cubeShadowRadius: 5)
-    ) {
-      Settings()
-    }
-
-    await store.send(.set(\.$cubeShadowRadius, 20)) {
-      $0.cubeShadowRadius = 20
-    }
-    await store.send(.set(\.$cubeShadowRadius, 1.5)) {
-      $0.cubeShadowRadius = 1.5
-    }
-  }
-
-  func testToggleShowSceneStatistics() async {
-    let store = TestStore(
-      initialState: Settings.State(showSceneStatistics: false)
-    ) {
-      Settings()
-    } 
-
-    await store.send(.set(\.$showSceneStatistics, true)) {
-      $0.showSceneStatistics = true
-    }
-    await store.send(.set(\.$showSceneStatistics, false)) {
-      $0.showSceneStatistics = false
-    }
-  }
-
   func testToggleEnableGyroMotion() async {
     let store = TestStore(
       initialState: Settings.State()

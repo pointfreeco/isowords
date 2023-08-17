@@ -291,9 +291,7 @@ public struct Home: Reducer {
       state.destination = .leaderboard(
         .init(
           settings: .init(
-            enableCubeShadow: state.settings.enableCubeShadow,
-            enableGyroMotion: state.settings.userSettings.enableGyroMotion,
-            showSceneStatistics: state.settings.showSceneStatistics
+            enableGyroMotion: state.settings.userSettings.enableGyroMotion
           )
         )
       )

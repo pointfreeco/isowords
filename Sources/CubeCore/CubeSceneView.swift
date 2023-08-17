@@ -64,16 +64,13 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     }
 
     public struct Settings: Equatable {
-      public var enableCubeShadow: Bool
       public var enableGyroMotion: Bool
       public var showSceneStatistics: Bool
 
       public init(
-        enableCubeShadow: Bool = true,
         enableGyroMotion: Bool = true,
         showSceneStatistics: Bool = false
       ) {
-        self.enableCubeShadow = enableCubeShadow
         self.enableGyroMotion = enableGyroMotion
         self.showSceneStatistics = showSceneStatistics
       }
@@ -91,11 +88,19 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let cameraNode = SCNNode()
   private var cancellables: Set<AnyCancellable> = []
   private let gameCubeNode = SCNNode()
+  private let light = SCNLight()
   private var motionManager: CMMotionManager?
   private var startingAttitude: Attitude?
   private let store: Store<ViewState, ViewAction>
   private let viewStore: ViewStore<ViewState, ViewAction>
   private var worldScale: Float = 1.0
+
+  var enableCubeShadow = true {
+    didSet { self.update() }
+  }
+  var showSceneStatistics = false {
+    didSet { self.update() }
+  }
 
   public init(
     size: CGSize,
@@ -184,7 +189,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     cameraLookAtOriginConstraint.isGimbalLockEnabled = true
     self.cameraNode.constraints = [cameraLookAtOriginConstraint]
 
-    let light = SCNLight()
     light.automaticallyAdjustsShadowProjection = true
     light.shadowSampleCount = 8
     light.shadowRadius = 5
@@ -211,8 +215,8 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       .sink { [weak self] settings, isOnLowPowerMode in
         guard let self = self else { return }
 
-        self.showsStatistics = settings.showSceneStatistics
-        light.castsShadow = settings.enableCubeShadow && !isOnLowPowerMode
+        self.showsStatistics = self.showSceneStatistics
+        light.castsShadow = self.enableCubeShadow && !isOnLowPowerMode
 
         if isOnLowPowerMode || !settings.enableGyroMotion {
           self.stopMotionManager()
@@ -300,6 +304,12 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         }
       }
       .store(in: &self.cancellables)
+  }
+
+  // TODO: rename
+  private func update() {
+    self.showsStatistics = self.showSceneStatistics
+    self.light.castsShadow = self.enableCubeShadow && !self.viewStore.isOnLowPowerMode
   }
 
   deinit {

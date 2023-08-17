@@ -44,14 +44,11 @@ public struct Settings: Reducer {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var buildNumber: Build.Number?
-    @BindingState public var cubeShadowRadius: CGFloat
     @BindingState public var developer: DeveloperSettings
-    @BindingState public var enableCubeShadow: Bool
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
     public var isRestoring: Bool
-    @BindingState public var showSceneStatistics: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
     @BindingState public var userSettings: UserSettings
@@ -61,28 +58,22 @@ public struct Settings: Reducer {
     public init(
       alert: AlertState<Action.Alert>? = nil,
       buildNumber: Build.Number? = nil,
-      cubeShadowRadius: CGFloat = 50,
       developer: DeveloperSettings = DeveloperSettings(),
-      enableCubeShadow: Bool = true,
       fullGameProduct: Result<StoreKitClient.Product, ProductError>? = nil,
       fullGamePurchasedAt: Date? = nil,
       isPurchasing: Bool = false,
       isRestoring: Bool = false,
-      showSceneStatistics: Bool = false,
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       @Dependency(\.userSettings) var userSettings
       self.alert = alert
       self.buildNumber = buildNumber
-      self.cubeShadowRadius = cubeShadowRadius
       self.developer = developer
-      self.enableCubeShadow = enableCubeShadow
       self.fullGameProduct = fullGameProduct
       self.fullGamePurchasedAt = fullGamePurchasedAt
       self.isPurchasing = isPurchasing
       self.isRestoring = isRestoring
-      self.showSceneStatistics = showSceneStatistics
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
       self.userSettings = userSettings.get()
