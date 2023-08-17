@@ -15,12 +15,12 @@ struct NotificationsSettingsView: View {
     SettingsForm {
       SettingsRow {
         Toggle(
-          "Enable notifications", isOn: self.viewStore.$enableNotifications.animation()
+          "Enable notifications", isOn: self.viewStore.$userSettings.enableNotifications.animation()
         )
         .adaptiveFont(.matterMedium, size: 16)
       }
 
-      if self.viewStore.enableNotifications {
+      if self.viewStore.userSettings.enableNotifications {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(

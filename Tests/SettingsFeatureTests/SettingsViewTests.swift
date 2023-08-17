@@ -62,10 +62,10 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: NotificationsSettingsView(
         store: .init(
-          initialState: .init(
-            enableNotifications: true
-          )
+          initialState: .init()
         ) {
+        } withDependencies: {
+          $0.userSettings = .mock(initialUserSettings: UserSettings(enableNotifications: true))
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

@@ -6,6 +6,7 @@ public struct UserSettings: Codable, Equatable {
   public var colorScheme: ColorScheme
   public var enableGyroMotion: Bool
   public var enableHaptics: Bool
+  public var enableNotifications: Bool
   public var enableReducedAnimation: Bool
   public var musicVolume: Float
   public var sendDailyChallengeReminder: Bool
@@ -34,6 +35,7 @@ public struct UserSettings: Codable, Equatable {
     colorScheme: ColorScheme = .system,
     enableGyroMotion: Bool = true,
     enableHaptics: Bool = true,
+    enableNotifications: Bool = false,
     enableReducedAnimation: Bool = false,
     musicVolume: Float = 1,
     sendDailyChallengeReminder: Bool = true,
@@ -44,6 +46,7 @@ public struct UserSettings: Codable, Equatable {
     self.colorScheme = colorScheme
     self.enableGyroMotion = enableGyroMotion
     self.enableHaptics = enableHaptics
+    self.enableNotifications = enableNotifications
     self.enableReducedAnimation = enableReducedAnimation
     self.musicVolume = musicVolume
     self.sendDailyChallengeReminder = sendDailyChallengeReminder
@@ -57,6 +60,7 @@ public struct UserSettings: Codable, Equatable {
     self.colorScheme = (try? container.decode(ColorScheme.self, forKey: .colorScheme)) ?? .system
     self.enableGyroMotion = (try? container.decode(Bool.self, forKey: .enableGyroMotion)) ?? true
     self.enableHaptics = (try? container.decode(Bool.self, forKey: .enableHaptics)) ?? true
+    self.enableNotifications = (try? container.decode(Bool.self, forKey: .enableNotifications)) ?? true
     self.enableReducedAnimation =
     (try? container.decode(Bool.self, forKey: .enableReducedAnimation)) ?? false
     self.musicVolume = (try? container.decode(Float.self, forKey: .musicVolume)) ?? 1

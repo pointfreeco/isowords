@@ -47,7 +47,6 @@ public struct Settings: Reducer {
     @BindingState public var cubeShadowRadius: CGFloat
     @BindingState public var developer: DeveloperSettings
     @BindingState public var enableCubeShadow: Bool
-    @BindingState public var enableNotifications: Bool
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
@@ -65,7 +64,6 @@ public struct Settings: Reducer {
       cubeShadowRadius: CGFloat = 50,
       developer: DeveloperSettings = DeveloperSettings(),
       enableCubeShadow: Bool = true,
-      enableNotifications: Bool = false,
       fullGameProduct: Result<StoreKitClient.Product, ProductError>? = nil,
       fullGamePurchasedAt: Date? = nil,
       isPurchasing: Bool = false,
@@ -80,7 +78,6 @@ public struct Settings: Reducer {
       self.cubeShadowRadius = cubeShadowRadius
       self.developer = developer
       self.enableCubeShadow = enableCubeShadow
-      self.enableNotifications = enableNotifications
       self.fullGameProduct = fullGameProduct
       self.fullGamePurchasedAt = fullGamePurchasedAt
       self.isPurchasing = isPurchasing
@@ -146,20 +143,20 @@ public struct Settings: Reducer {
             }
           }
         }
-        .onChange(of: \.enableNotifications) { _, _ in
+        .onChange(of: \.userSettings.enableNotifications) { _, enableNotifications in
           Reduce { state, _ in
             guard
-              state.enableNotifications,
+              enableNotifications,
               let userNotificationSettings = state.userNotificationSettings
             else {
               // TODO: API request to opt out of all notifications
-              state.enableNotifications = false
+              state.userSettings.enableNotifications = false
               return .none
             }
 
             switch userNotificationSettings.authorizationStatus {
             case .notDetermined, .provisional:
-              state.enableNotifications = true
+              state.userSettings.enableNotifications = true
               return .run { send in
                 await send(
                   .userNotificationAuthorizationResponse(
@@ -173,15 +170,15 @@ public struct Settings: Reducer {
 
             case .denied:
               state.alert = .userNotificationAuthorizationDenied
-              state.enableNotifications = false
+              state.userSettings.enableNotifications = false
               return .none
 
             case .authorized:
-              state.enableNotifications = true
+              state.userSettings.enableNotifications = true
               return .send(.userNotificationAuthorizationResponse(.success(true)))
 
             case .ephemeral:
-              state.enableNotifications = true
+              state.userSettings.enableNotifications = true
               return .none
 
             @unknown default:
@@ -449,7 +446,7 @@ public struct Settings: Reducer {
           )
 
         case let .userNotificationAuthorizationResponse(.success(granted)):
-          state.enableNotifications = granted
+          state.userSettings.enableNotifications = granted
           return granted
             ? .run { _ in await self.registerForRemoteNotifications() }
             : .none
@@ -459,7 +456,7 @@ public struct Settings: Reducer {
 
         case let .userNotificationSettingsResponse(settings):
           state.userNotificationSettings = settings
-          state.enableNotifications = settings.authorizationStatus == .authorized
+          state.userSettings.enableNotifications = settings.authorizationStatus == .authorized
           return .none
         }
       }
