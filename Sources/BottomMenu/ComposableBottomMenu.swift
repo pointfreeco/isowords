@@ -90,15 +90,17 @@ extension View {
         item: Binding(
           get: {
             viewStore.wrappedValue.flatMap(toMenuState)?.converted(
-              send: { viewStore.send(.presented(fromMenuAction($0))) },
-              sendWithAnimation: { viewStore.send(.presented(fromMenuAction($0)), animation: $1) }
+              send: {
+                viewStore.send(.presented(fromMenuAction($0)))
+              },
+              sendWithAnimation: {
+                viewStore.send(.presented(fromMenuAction($0)), animation: $1)
+              }
             )
           },
-          set: { state, transaction in
-            withAnimation(transaction.disablesAnimations ? nil : transaction.animation) {
-              if state == nil {
-                viewStore.send(.dismiss)
-              }
+          set: { state in
+            if state == nil {
+              viewStore.send(.dismiss, animation: .default)
             }
           }
         )
