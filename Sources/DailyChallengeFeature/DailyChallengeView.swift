@@ -57,7 +57,7 @@ public struct DailyChallengeReducer: Reducer {
   }
 
   public enum Action: Equatable {
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
     case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case gameButtonTapped(GameMode)
@@ -66,10 +66,10 @@ public struct DailyChallengeReducer: Reducer {
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
-  }
 
-  public enum DelegateAction: Equatable {
-    case startGame(InProgressGame)
+    public enum Delegate: Equatable {
+      case startGame(InProgressGame)
+    }
   }
 
   public enum DestinationAction: Equatable {

@@ -85,7 +85,7 @@ public struct GameOver: Reducer {
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case delayedOnAppear
     case delayedShowUpgradeInterstitial
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameMode)
     case rematchButtonTapped
@@ -94,12 +94,12 @@ public struct GameOver: Reducer {
     case task
     case submitGameResponse(TaskResult<SubmitGameResponse>)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
-  }
 
-  public enum DelegateAction: Equatable {
-    case close
-    case startGame(InProgressGame)
-    case startSoloGame(GameMode)
+    public enum Delegate: Equatable {
+      case close
+      case startGame(InProgressGame)
+      case startSoloGame(GameMode)
+    }
   }
 
   @Dependency(\.apiClient) var apiClient

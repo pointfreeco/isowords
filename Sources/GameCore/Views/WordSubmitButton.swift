@@ -44,13 +44,13 @@ public struct WordSubmitButtonFeature: Reducer {
   public enum Action: Equatable {
     case backgroundTapped
     case delayedSubmitButtonPressed
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case reactionButtonTapped(Move.Reaction)
     case submitButtonPressed
     case submitButtonReleased
     case submitButtonTapped
 
-    public enum DelegateAction: Equatable {
+    public enum Delegate: Equatable {
       case confirmSubmit(reaction: Move.Reaction?)
     }
   }

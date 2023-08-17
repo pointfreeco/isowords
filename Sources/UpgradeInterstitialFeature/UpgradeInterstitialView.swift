@@ -37,17 +37,17 @@ public struct UpgradeInterstitial: Reducer {
   }
 
   public enum Action: Equatable {
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case fullGameProductResponse(StoreKitClient.Product)
     case maybeLaterButtonTapped
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
     case task
     case timerTick
     case upgradeButtonTapped
-  }
 
-  public enum DelegateAction {
-    case fullGamePurchased
+    public enum Delegate {
+      case fullGamePurchased
+    }
   }
 
   @Dependency(\.dismiss) var dismiss

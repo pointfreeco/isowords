@@ -36,7 +36,7 @@ public struct PastGame: Reducer {
 
   public enum Action: Equatable {
     case alert(PresentationAction<Alert>)
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case matchResponse(TaskResult<TurnBasedMatch>)
     case rematchButtonTapped
     case rematchResponse(TaskResult<TurnBasedMatch>)
@@ -44,10 +44,10 @@ public struct PastGame: Reducer {
 
     public enum Alert: Equatable {
     }
-  }
 
-  public enum DelegateAction: Equatable {
-    case openMatch(TurnBasedMatch)
+    public enum Delegate: Equatable {
+      case openMatch(TurnBasedMatch)
+    }
   }
 
   @Dependency(\.gameCenter) var gameCenter
