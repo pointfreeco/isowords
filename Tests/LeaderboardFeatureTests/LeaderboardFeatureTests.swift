@@ -124,18 +124,20 @@ class LeaderboardFeatureTests: XCTestCase {
     }
     await store.send(.vocab(.tappedRow(id: wordId.rawValue)))
     await store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
-      $0.cubePreview = .init(
-        cubes: .mock,
-        isAnimationReduced: false,
-        isHapticsEnabled: false,
-        isOnLowPowerMode: false,
-        moveIndex: 0,
-        moves: [],
-        settings: .init()
+      $0.destination = .cubePreview(
+        .init(
+          cubes: .mock,
+          isAnimationReduced: false,
+          isHapticsEnabled: false,
+          isOnLowPowerMode: false,
+          moveIndex: 0,
+          moves: [],
+          settings: .init()
+        )
       )
     }
-    await store.send(.dismissCubePreview) {
-      $0.cubePreview = nil
+    await store.send(.destination(.dismiss)) {
+      $0.destination = nil
     }
   }
 }

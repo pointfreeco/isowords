@@ -29,8 +29,22 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 }
 
 public struct Leaderboard: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case cubePreview(CubePreview.State)
+    }
+    public enum Action: Equatable {
+      case cubePreview(CubePreview.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+        CubePreview()
+      }
+    }
+  }
+
   public struct State: Equatable {
-    public var cubePreview: CubePreview.State?
+    @PresentationState public var destination: Destination.State?
     public var isAnimationReduced: Bool
     public var isHapticsEnabled: Bool
     public var scope: LeaderboardScope = .games
@@ -38,10 +52,8 @@ public struct Leaderboard: Reducer {
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
 
-    public var isCubePreviewPresented: Bool { self.cubePreview != nil }
-
     public init(
-      cubePreview: CubePreview.State? = nil,
+      destination: Destination.State? = nil,
       isAnimationReduced: Bool = false,
       isHapticsEnabled: Bool,
       scope: LeaderboardScope = .games,
@@ -49,7 +61,7 @@ public struct Leaderboard: Reducer {
       solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
       vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     ) {
-      self.cubePreview = cubePreview
+      self.destination = destination
       self.isAnimationReduced = isAnimationReduced
       self.isHapticsEnabled = isHapticsEnabled
       self.scope = scope
@@ -60,8 +72,7 @@ public struct Leaderboard: Reducer {
   }
 
   public enum Action: Equatable {
-    case cubePreview(CubePreview.Action)
-    case dismissCubePreview
+    case destination(PresentationAction<Destination.Action>)
     case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
     case scopeTapped(LeaderboardScope)
     case solo(LeaderboardResults<TimeScope>.Action)
@@ -75,24 +86,22 @@ public struct Leaderboard: Reducer {
   public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .cubePreview:
-        return .none
-
-      case .dismissCubePreview:
-        state.cubePreview = nil
+      case .destination:
         return .none
 
       case .fetchWordResponse(.failure):
         return .none
 
       case let .fetchWordResponse(.success(response)):
-        state.cubePreview = CubePreview.State(
-          cubes: response.puzzle,
-          isAnimationReduced: state.isAnimationReduced,
-          isHapticsEnabled: state.isHapticsEnabled,
-          moveIndex: response.moveIndex,
-          moves: response.moves,
-          settings: state.settings
+        state.destination = .cubePreview(
+          CubePreview.State(
+            cubes: response.puzzle,
+            isAnimationReduced: state.isAnimationReduced,
+            isHapticsEnabled: state.isHapticsEnabled,
+            moveIndex: response.moveIndex,
+            moves: response.moves,
+            settings: state.settings
+          )
         )
         return .none
 
@@ -138,8 +147,8 @@ public struct Leaderboard: Reducer {
         return .none
       }
     }
-    .ifLet(\.cubePreview, action: /Action.cubePreview) {
-      CubePreview()
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
 
     Scope(state: \.solo, action: /Action.solo) {
@@ -232,7 +241,7 @@ public struct LeaderboardView: View {
         }
       }
       .padding(.top, .grid(4))
-      .adaptivePadding([.bottom])
+      .adaptivePadding(.bottom)
       .screenEdgePadding(.horizontal)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -245,13 +254,11 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      isPresented: self.viewStore.binding(get: \.isCubePreviewPresented, send: .dismissCubePreview)
-    ) {
-      IfLetStore(
-        self.store.scope(state: \.cubePreview, action: Leaderboard.Action.cubePreview),
-        then: CubePreviewView.init(store:)
-      )
-    }
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Leaderboard.Destination.State.cubePreview,
+      action: Leaderboard.Destination.Action.cubePreview,
+      content: CubePreviewView.init(store:)
+    )
   }
 }
 
