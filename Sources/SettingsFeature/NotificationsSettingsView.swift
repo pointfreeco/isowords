@@ -25,7 +25,7 @@ struct NotificationsSettingsView: View {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(
               "Daily challenge reminders",
-              isOn: self.viewStore.$sendDailyChallengeReminder
+              isOn: self.viewStore.$userSettings.sendDailyChallengeReminder
             )
             .adaptiveFont(.matterMedium, size: 16)
 
@@ -38,7 +38,7 @@ struct NotificationsSettingsView: View {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(
-              "Daily challenge summary", isOn: self.viewStore.$sendDailyChallengeSummary
+              "Daily challenge summary", isOn: self.viewStore.$userSettings.sendDailyChallengeSummary
             )
             .adaptiveFont(.matterMedium, size: 16)
 

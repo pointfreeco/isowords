@@ -239,11 +239,6 @@ public struct Home: Reducer {
       return .none
 
     case let .authenticationResponse(currentPlayerEnvelope):
-      state.settings.sendDailyChallengeReminder =
-        currentPlayerEnvelope.player.sendDailyChallengeReminder
-      state.settings.sendDailyChallengeSummary =
-        currentPlayerEnvelope.player.sendDailyChallengeSummary
-
       let now = self.now.timeIntervalSinceReferenceDate
       let itsNagTime =
         Int(now - self.userDefaults.installationTime)

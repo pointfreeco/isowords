@@ -3,6 +3,7 @@ import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
 @_spi(Concurrency) import Dependencies
+import Overture
 import SharedModels
 import TestHelpers
 import UserDefaultsClient
@@ -234,19 +235,30 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testNotifications_RemoteSettingsUpdates() async {
+    var userSettings = UserSettings(sendDailyChallengeReminder: false)
+    let didUpdate = LockIsolated(false)
+    let updatedBlobWithPurchase = update(CurrentPlayerEnvelope.blobWithPurchase) {
+      $0.player.sendDailyChallengeReminder = false
+    }
+
     await withMainSerialExecutor {
       let store = TestStore(
-        initialState: Settings.State(sendDailyChallengeReminder: false)
+        initialState: Settings.State()
       ) {
         Settings()
       } withDependencies: {
         $0.setUpDefaults()
-        $0.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
+        $0.apiClient.refreshCurrentPlayer = {
+          didUpdate.value ? updatedBlobWithPurchase : .blobWithPurchase
+        }
         $0.apiClient.override(
           route: .push(
-            .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: true))
+            .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: false))
           ),
-          withResponse: { try await OK([:] as [String: Any]) }
+          withResponse: {
+            didUpdate.withValue { $0 = true }
+            return try await OK([:] as [String: Any])
+          }
         )
         $0.applicationClient.alternateIconName = { nil }
         $0.fileClient.save = { @Sendable _, _ in }
@@ -256,12 +268,14 @@ class SettingsFeatureTests: XCTestCase {
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .authorized)
         }
+        $0.userSettings = .mock(initialUserSettings: userSettings)
       }
 
       let task = await store.send(.task) {
         $0.buildNumber = 42
         $0.developer.currentBaseUrl = .localhost
         $0.fullGamePurchasedAt = .mock
+        $0.userSettings.sendDailyChallengeReminder = true
       }
 
       await store.receive(
@@ -271,10 +285,11 @@ class SettingsFeatureTests: XCTestCase {
         $0.userNotificationSettings = .init(authorizationStatus: .authorized)
       }
 
-      await store.send(.set(\.$sendDailyChallengeReminder, true)) {
-        $0.sendDailyChallengeReminder = true
+      userSettings.sendDailyChallengeReminder = false
+      await store.send(.set(\.$userSettings, userSettings)) {
+        $0.userSettings.sendDailyChallengeReminder = false
       }
-      await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
+      await store.receive(.currentPlayerRefreshed(.success(updatedBlobWithPurchase))) 
 
       await task.cancel()
     }

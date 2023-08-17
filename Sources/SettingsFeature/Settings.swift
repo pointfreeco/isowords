@@ -52,8 +52,6 @@ public struct Settings: Reducer {
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
     public var isRestoring: Bool
-    @BindingState public var sendDailyChallengeReminder: Bool
-    @BindingState public var sendDailyChallengeSummary: Bool
     @BindingState public var showSceneStatistics: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
@@ -72,8 +70,6 @@ public struct Settings: Reducer {
       fullGamePurchasedAt: Date? = nil,
       isPurchasing: Bool = false,
       isRestoring: Bool = false,
-      sendDailyChallengeReminder: Bool = true,
-      sendDailyChallengeSummary: Bool = true,
       showSceneStatistics: Bool = false,
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
@@ -89,8 +85,6 @@ public struct Settings: Reducer {
       self.fullGamePurchasedAt = fullGamePurchasedAt
       self.isPurchasing = isPurchasing
       self.isRestoring = isRestoring
-      self.sendDailyChallengeReminder = sendDailyChallengeReminder
-      self.sendDailyChallengeSummary = sendDailyChallengeSummary
       self.showSceneStatistics = showSceneStatistics
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
@@ -195,9 +189,9 @@ public struct Settings: Reducer {
             }
           }
         }
-        .onChange(of: \.sendDailyChallengeReminder) { _, _ in
+        .onChange(of: \.userSettings.sendDailyChallengeReminder) { _, sendDailyChallengeReminder in
           Reduce { state, _ in
-            .run { [sendDailyChallengeReminder = state.sendDailyChallengeReminder] send in
+            .run { send in
               _ = try await self.apiClient.apiRequest(
                 route: .push(
                   .updateSetting(
@@ -216,9 +210,9 @@ public struct Settings: Reducer {
             }
           }
         }
-        .onChange(of: \.sendDailyChallengeSummary) { _, _ in
+        .onChange(of: \.userSettings.sendDailyChallengeSummary) { _, sendDailyChallengeSummary in
           Reduce { state, _ in
-            .run { [sendDailyChallengeSummary = state.sendDailyChallengeSummary] send in
+            .run { send in
               _ = try await self.apiClient.apiRequest(
                 route: .push(
                   .updateSetting(
@@ -285,8 +279,8 @@ public struct Settings: Reducer {
         case let .currentPlayerRefreshed(.success(envelope)):
           state.isRestoring = false
           state.fullGamePurchasedAt = envelope.appleReceipt?.receipt.originalPurchaseDate
-          state.sendDailyChallengeReminder = envelope.player.sendDailyChallengeReminder
-          state.sendDailyChallengeSummary = envelope.player.sendDailyChallengeSummary
+          state.userSettings.sendDailyChallengeReminder = envelope.player.sendDailyChallengeReminder
+          state.userSettings.sendDailyChallengeSummary = envelope.player.sendDailyChallengeSummary
           return .none
 
         case .currentPlayerRefreshed(.failure):
@@ -401,6 +395,12 @@ public struct Settings: Reducer {
           state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
           state.userSettings.appIcon = self.applicationClient.alternateIconName()
             .flatMap(AppIcon.init(rawValue:))
+          state.userSettings.sendDailyChallengeSummary =
+            self.apiClient.currentPlayer()?.player.sendDailyChallengeSummary
+            ?? state.userSettings.sendDailyChallengeSummary
+          state.userSettings.sendDailyChallengeReminder =
+            self.apiClient.currentPlayer()?.player.sendDailyChallengeReminder
+            ?? state.userSettings.sendDailyChallengeReminder
 
           if let baseUrl = DeveloperSettings.BaseUrl(
             rawValue: self.apiClient.baseUrl().absoluteString)
