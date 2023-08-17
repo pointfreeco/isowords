@@ -3,43 +3,45 @@ import SwiftUI
 import UpgradeInterstitialFeature
 
 public struct NagBannerFeature: Reducer {
-  public typealias State = NagBanner.State?
+  public struct State: Equatable {
+    @PresentationState var nagBanner: NagBanner.State?
 
-  public enum Action: Equatable {
-    case dismissUpgradeInterstitial
-    case nagBanner(NagBanner.Action)
+    public init(nagBanner: NagBanner.State? = nil) {
+      self.nagBanner = nagBanner
+    }
   }
 
+  public enum Action: Equatable {
+    case nagBanner(PresentationAction<NagBanner.Action>)
+  }
+
+  init() {}
+
   public var body: some ReducerOf<Self> {
-    Reduce { state, action in
-      switch action {
-      case .dismissUpgradeInterstitial:
-        state?.upgradeInterstitial = nil
-        return .none
-
-      case .nagBanner(.upgradeInterstitial(.delegate(.fullGamePurchased))):
-        state = nil
-        return .none
-
-      case .nagBanner:
-        return .none
+    EmptyReducer()
+      .ifLet(\.$nagBanner, action: /Action.nagBanner) {
+        NagBanner()
       }
-    }
-    .ifLet(\.self, action: /Action.nagBanner) {
-      NagBanner()
-    }
   }
 }
 
 public struct NagBanner: Reducer {
   public struct State: Equatable {
-    var upgradeInterstitial: UpgradeInterstitial.State? = nil
+    @PresentationState var upgradeInterstitial: UpgradeInterstitial.State? = nil
+
+    public init(upgradeInterstitial: UpgradeInterstitial.State? = nil) {
+      self.upgradeInterstitial = upgradeInterstitial
+    }
   }
 
   public enum Action: Equatable {
     case tapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
+    case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)
   }
+
+  @Dependency(\.dismiss) var dismiss
+
+  public init() {}
 
   public var body: some ReducerOf<Self> {
     Reduce { state, action in
@@ -48,19 +50,16 @@ public struct NagBanner: Reducer {
         state.upgradeInterstitial = .init(isDismissable: true)
         return .none
 
-      case .upgradeInterstitial(.delegate(.close)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
+      case .upgradeInterstitial(.presented(.delegate(.fullGamePurchased))):
+        return .run { _ in
+          await self.dismiss()
+        }
 
       case .upgradeInterstitial:
         return .none
       }
     }
-    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .ifLet(\.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }
@@ -70,32 +69,10 @@ struct NagBannerFeatureView: View {
   let store: StoreOf<NagBannerFeature>
 
   var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      IfLetStore(
-        self.store.scope(state: { $0 }, action: NagBannerFeature.Action.nagBanner),
-        then: NagBannerView.init(store:)
-      )
-      .background(
-        // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-        // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-        // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-        EmptyView()
-          .sheet(
-            isPresented: viewStore.binding(
-              get: { $0?.upgradeInterstitial != nil },
-              send: NagBannerFeature.Action.dismissUpgradeInterstitial
-            )
-          ) {
-            IfLetStore(
-              self.store.scope(
-                state: { $0?.upgradeInterstitial },
-                action: { .nagBanner(.upgradeInterstitial($0)) }
-              ),
-              then: UpgradeInterstitialView.init(store:)
-            )
-          }
-      )
-    }
+    IfLetStore(
+      self.store.scope(state: \.$nagBanner, action: { .nagBanner($0) }),
+      then: NagBannerView.init(store:)
+    )
   }
 }
 
@@ -118,6 +95,10 @@ private struct NagBannerView: View {
       .frame(height: 56)
       .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
+    .sheet(
+      store: self.store.scope(state: \.$upgradeInterstitial, action: { .upgradeInterstitial($0) }),
+      content: UpgradeInterstitialView.init(store:)
+    )
   }
 }
 

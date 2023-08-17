@@ -62,7 +62,7 @@ public struct Home: Reducer {
     @PresentationState public var destination: Destination.State?
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
-    public var nagBanner: NagBanner.State?
+    public var nagBannerFeature: NagBannerFeature.State
     public var savedGames: SavedGamesState {
       didSet {
         guard case var .dailyChallenge(dailyChallengeState) = self.destination
@@ -93,7 +93,7 @@ public struct Home: Reducer {
       dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
       hasChangelog: Bool = false,
       hasPastTurnBasedGames: Bool = false,
-      nagBanner: NagBanner.State? = nil,
+      nagBannerFeature: NagBannerFeature.State = .init(),
       destination: Destination.State? = nil,
       savedGames: SavedGamesState = SavedGamesState(),
       settings: Settings.State = .init(),
@@ -104,7 +104,7 @@ public struct Home: Reducer {
       self.destination = destination
       self.hasChangelog = hasChangelog
       self.hasPastTurnBasedGames = hasPastTurnBasedGames
-      self.nagBanner = nagBanner
+      self.nagBannerFeature = nagBannerFeature
       self.savedGames = savedGames
       self.settings = settings
       self.turnBasedMatches = turnBasedMatches
@@ -163,7 +163,7 @@ public struct Home: Reducer {
         Destination()
       }
 
-    Scope(state: \.nagBanner, action: /Action.nagBannerFeature) {
+    Scope(state: \.nagBannerFeature, action: /Action.nagBannerFeature) {
       NagBannerFeature()
     }
 
@@ -251,7 +251,7 @@ public struct Home: Reducer {
       let isFullGamePurchased =
         currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
 
-      state.nagBanner =
+      state.nagBannerFeature.nagBanner =
         !isFullGamePurchased && itsNagTime
         ? .init()
         : nil
@@ -441,7 +441,7 @@ public struct HomeView: View {
         || state.savedGames.unlimited != nil
         || !state.turnBasedMatches.isEmpty
       self.hasChangelog = state.hasChangelog
-      self.isNagBannerVisible = state.nagBanner != nil
+      self.isNagBannerVisible = state.nagBannerFeature.nagBanner != nil
     }
   }
 
@@ -547,10 +547,7 @@ public struct HomeView: View {
       )
 
       NagBannerFeatureView(
-        store: self.store.scope(
-          state: \.nagBanner,
-          action: Home.Action.nagBannerFeature
-        )
+        store: self.store.scope(state: \.nagBannerFeature, action: { .nagBannerFeature($0) })
       )
     }
     .navigationBarHidden(true)

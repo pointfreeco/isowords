@@ -19,13 +19,18 @@ public struct GameOver: Reducer {
   public struct Destination: Reducer {
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
+      case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
     public enum Action: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
     }
     public var body: some ReducerOf<Self> {
       Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
         NotificationsAuthAlert()
+      }
+      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
       }
     }
   }
@@ -41,7 +46,6 @@ public struct GameOver: Reducer {
     public var showConfetti: Bool
     public var summary: RankSummary?
     public var turnBasedContext: TurnBasedContext?
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
@@ -55,7 +59,6 @@ public struct GameOver: Reducer {
       showConfetti: Bool = false,
       summary: RankSummary? = nil,
       turnBasedContext: TurnBasedContext? = nil,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.completedGame = completedGame
@@ -68,7 +71,6 @@ public struct GameOver: Reducer {
       self.showConfetti = showConfetti
       self.summary = summary
       self.turnBasedContext = turnBasedContext
-      self.upgradeInterstitial = upgradeInterstitial
       self.userNotificationSettings = userNotificationSettings
     }
 
@@ -91,7 +93,6 @@ public struct GameOver: Reducer {
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case submitGameResponse(TaskResult<SubmitGameResponse>)
-    case upgradeInterstitial(UpgradeInterstitial.Action)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
   }
 
@@ -143,7 +144,7 @@ public struct GameOver: Reducer {
         return .none
 
       case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
+        state.destination = .upgradeInterstitial()
         return .none
 
       case .delegate(.close):
@@ -329,14 +330,6 @@ public struct GameOver: Reducer {
           }
         }
 
-      case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
-        return .none
-
       case let .userNotificationSettingsResponse(settings):
         state.userNotificationSettings = settings
         return .none
@@ -344,9 +337,6 @@ public struct GameOver: Reducer {
     }
     .ifLet(\.$destination, action: /Action.destination) {
       Destination()
-    }
-    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-      UpgradeInterstitial()
     }
   }
 
@@ -420,7 +410,8 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented = state.upgradeInterstitial != nil
+      self.isUpgradeInterstitialPresented =
+        /GameOver.Destination.State.upgradeInterstitial ~= state.destination
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
@@ -500,15 +491,13 @@ public struct GameOverView: View {
       }
 
       IfLetStore(
-        self.store.scope(
-          state: \.upgradeInterstitial,
-          action: GameOver.Action.upgradeInterstitial
-        ),
-        then: { store in
-          UpgradeInterstitialView(store: store)
-            .transition(.opacity)
-        }
-      )
+        self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /GameOver.Destination.State.upgradeInterstitial,
+        action: GameOver.Destination.Action.upgradeInterstitial
+      ) { store in
+        UpgradeInterstitialView(store: store)
+          .transition(.opacity)
+      }
     }
     .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
     .background(

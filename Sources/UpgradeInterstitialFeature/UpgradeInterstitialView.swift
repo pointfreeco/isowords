@@ -47,10 +47,10 @@ public struct UpgradeInterstitial: Reducer {
   }
 
   public enum DelegateAction {
-    case close
     case fullGamePurchased
   }
 
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
@@ -70,7 +70,9 @@ public struct UpgradeInterstitial: Reducer {
         return .none
 
       case .maybeLaterButtonTapped:
-        return .send(.delegate(.close)).animation()
+        return .run { _ in
+          await dismiss(animation: .default)
+        }
 
       case let .paymentTransaction(event):
         switch event {
@@ -91,7 +93,10 @@ public struct UpgradeInterstitial: Reducer {
             identifier: self.serverConfig().productIdentifiers.fullGame
           )
         else { return .none }
-        return .send(.delegate(.fullGamePurchased))
+        return .run { send in
+          await send(.delegate(.fullGamePurchased))
+          await self.dismiss(animation: .default)
+        }
 
       case .task:
         state.upgradeInterstitialDuration =
