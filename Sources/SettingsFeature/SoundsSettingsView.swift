@@ -60,6 +60,7 @@ struct SoundsSettingsView: View {
 
 #if DEBUG
   import SwiftUIHelpers
+  import UserSettingsClient
 
   struct SoundsSettingsView_Previews: PreviewProvider {
     static var previews: some View {

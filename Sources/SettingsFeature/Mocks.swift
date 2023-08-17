@@ -1,5 +1,6 @@
 #if DEBUG
   import Dependencies
+  import UserSettingsClient
 
   extension Settings.State {
     public static let everythingOff = withDependencies {

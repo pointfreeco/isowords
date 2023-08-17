@@ -8,6 +8,7 @@ import SharedModels
 import StatsFeature
 import StoreKit
 import UIApplicationClient
+import UserSettingsClient
 
 public struct DeveloperSettings: Equatable {
   public var currentBaseUrl: BaseUrl
