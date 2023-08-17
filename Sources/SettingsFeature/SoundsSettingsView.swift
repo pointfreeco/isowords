@@ -66,12 +66,15 @@ struct SoundsSettingsView: View {
       Preview {
         NavigationView {
           SoundsSettingsView(
-            store: .init(
-              initialState: Settings.State(
-                userSettings: .init(musicVolume: 0.5, soundEffectsVolume: 0.5)
-              )
-            ) {
+            store: Store(initialState: Settings.State()) {
               Settings()
+            } withDependencies: {
+              $0.userSettings = .mock(
+                initialUserSettings: UserSettings(
+                  musicVolume: 0.5,
+                  soundEffectsVolume: 0.5
+                )
+              )
             }
           )
         }

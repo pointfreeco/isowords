@@ -12,15 +12,18 @@ import SwiftUI
 
 public struct AppReducer: Reducer {
   public struct State: Equatable {
+    public var appDelegate: AppDelegateReducer.State
     public var game: Game.State?
     public var onboarding: Onboarding.State?
     public var home: Home.State
 
     public init(
+      appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
       game: Game.State? = nil,
       home: Home.State = .init(),
       onboarding: Onboarding.State? = nil
     ) {
+      self.appDelegate = appDelegate
       self.game = game
       self.home = home
       self.onboarding = onboarding
@@ -120,7 +123,7 @@ public struct AppReducer: Reducer {
 
   @ReducerBuilder<State, Action>
   var core: some ReducerOf<Self> {
-    Scope(state: \.home.settings.userSettings, action: /Action.appDelegate) {
+    Scope(state: \.appDelegate, action: /Action.appDelegate) {
       AppDelegateReducer()
     }
     Scope(state: \.currentGame, action: /Action.currentGame) {
