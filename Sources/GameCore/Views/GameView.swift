@@ -89,7 +89,7 @@ public struct GameView<Content>: View where Content: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.wordSubmitButtonFeature,
-                action: Game.Action.wordSubmitButton
+                action: { .wordSubmitButton($0) }
               )
             )
             .ignoresSafeArea()
@@ -103,10 +103,10 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: Game.Action.activeGames),
+            store: self.store.scope(state: \.activeGames, action: { .activeGames($0) }),
             showMenuItems: false
           )
-          .adaptivePadding([.top, .bottom], 8)
+          .adaptivePadding(.vertical, 8)
           .frame(maxWidth: .infinity, minHeight: ActiveGamesView.height)
           .background(
             LinearGradient(
@@ -175,12 +175,12 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(
-        store: self.store.scope(state: \.$destination, action: Game.Action.destination),
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
         state: /Game.Destination.State.bottomMenu,
         action: Game.Destination.Action.bottomMenu
       )
       .alert(
-        store: self.store.scope(state: \.$destination, action: Game.Action.destination),
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
         state: /Game.Destination.State.alert,
         action: Game.Destination.Action.alert
       )

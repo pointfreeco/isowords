@@ -165,7 +165,7 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(store: self.store.scope(state: \.$alert, action: PastGame.Action.alert))
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {

@@ -226,7 +226,7 @@ public struct CubePreviewView: View {
         CubeView(
           store: self.store.scope(
             state: CubeSceneView.ViewState.init(preview:),
-            action: CubePreview.Action.cubeScene
+            action: { .cubeScene($0) }
           )
         )
         .task { await self.viewStore.send(.task).finish() }

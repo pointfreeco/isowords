@@ -193,10 +193,7 @@ public struct LeaderboardView: View {
         switch self.viewStore.state.scope {
         case .games:
           LeaderboardResultsView(
-            store: self.store.scope(
-              state: \.solo,
-              action: Leaderboard.Action.solo
-            ),
+            store: self.store.scope(state: \.solo, action: { .solo($0) }),
             title: Text("Solo"),
             subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
@@ -216,10 +213,7 @@ public struct LeaderboardView: View {
 
         case .vocab:
           LeaderboardResultsView(
-            store: self.store.scope(
-              state: \.vocab,
-              action: Leaderboard.Action.vocab
-            ),
+            store: self.store.scope(state: \.vocab, action: { .vocab($0) }),
             title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },

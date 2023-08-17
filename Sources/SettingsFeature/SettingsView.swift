@@ -126,9 +126,7 @@ public struct SettingsView: View {
         title: "Accessibility"
       )
       SettingsNavigationLink(
-        destination: StatsView(
-          store: self.store.scope(state: \.stats, action: Settings.Action.stats)
-        ),
+        destination: StatsView(store: self.store.scope(state: \.stats, action: { .stats($0) })),
         title: "Stats"
       )
       SettingsNavigationLink(
@@ -175,7 +173,7 @@ public struct SettingsView: View {
       onDismiss: { self.viewStore.send(.onDismiss) }
     )
     .task { await self.viewStore.send(.task).finish() }
-    .alert(store: self.store.scope(state: \.$alert, action: Settings.Action.alert))
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()
@@ -220,7 +218,7 @@ public struct SupportButtonStyle: ButtonStyle {
     VStack(spacing: 12) {
       configuration.label
         .frame(minWidth: 100 - 16 * 2, minHeight: 100)
-        .padding([.leading, .trailing], 16)
+        .padding(.horizontal, 16)
         .overlay(
           RoundedRectangle(cornerRadius: 12)
             .stroke(Color.adaptiveWhite, lineWidth: 3)
@@ -228,7 +226,7 @@ public struct SupportButtonStyle: ButtonStyle {
 
       Text(self.title)
     }
-    .foregroundColor(Color.adaptiveWhite)
+    .foregroundColor(.adaptiveWhite)
     .frame(width: 240, height: 210, alignment: .center)
     .background(self.backgroundColor)
     .cornerRadius(12)

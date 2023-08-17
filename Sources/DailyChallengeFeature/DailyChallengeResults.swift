@@ -97,10 +97,7 @@ public struct DailyChallengeResultsView: View {
 
   public var body: some View {
     LeaderboardResultsView(
-      store: self.store.scope(
-        state: \.leaderboardResults,
-        action: DailyChallengeResults.Action.leaderboardResults
-      ),
+      store: self.store.scope(state: \.leaderboardResults, action: {.leaderboardResults($0) }),
       title: Text("Daily Challenge"),
       subtitle: (self.viewStore.leaderboardResults.resultEnvelope?.outOf)
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },

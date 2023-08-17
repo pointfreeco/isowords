@@ -143,10 +143,11 @@ public struct ChangelogView: View {
           ForEachStore(
             self.store.scope(
               state: { $0.changelog.filter { $0.change.build >= viewStore.currentBuild } },
-              action: ChangelogReducer.Action.change(id:action:)
-            ),
-            content: { ChangeView(currentBuild: viewStore.currentBuild, store: $0) }
-          )
+              action: { .change(id: $0, action: $1) }
+            )
+          ) {
+            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+          }
 
           Text("Past updates")
             .font(.largeTitle)
@@ -154,10 +155,11 @@ public struct ChangelogView: View {
           ForEachStore(
             self.store.scope(
               state: { $0.changelog.filter { $0.change.build < viewStore.currentBuild } },
-              action: ChangelogReducer.Action.change(id:action:)
-            ),
-            content: { ChangeView(currentBuild: viewStore.currentBuild, store: $0) }
-          )
+              action: { .change(id: $0, action: $1) }
+            )
+          ) {
+            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+          }
         }
         .padding()
       }

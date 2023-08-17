@@ -25,7 +25,7 @@ public struct GameFeatureView<Content>: View where Content: View {
           GameView(
             content: self.content,
             isAnimationReduced: viewStore.state,
-            store: store.scope(state: { $0 }, action: GameFeature.Action.game)
+            store: store.scope(state: { $0 }, action: { .game($0) })
           )
         }
       }
@@ -44,10 +44,7 @@ public struct GameFeatureView<Content>: View where Content: View {
           .sheet(isPresented: viewStore.binding(send: .dismissSettings)) {
             NavigationView {
               SettingsView(
-                store: self.store.scope(
-                  state: \.settings,
-                  action: GameFeature.Action.settings
-                ),
+                store: self.store.scope(state: \.settings, action: { .settings($0) }),
                 navPresentationStyle: .modal
               )
             }

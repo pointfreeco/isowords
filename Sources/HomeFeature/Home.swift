@@ -552,20 +552,17 @@ public struct HomeView: View {
     }
     .navigationBarHidden(true)
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: /Home.Destination.State.settings,
       action: Home.Destination.Action.settings
     ) { _ in
       SettingsView(
-        store: self.store.scope(
-          state: \.settings,
-          action: Home.Action.settings
-        ),
+        store: self.store.scope(state: \.settings, action: { .settings($0) }),
         navPresentationStyle: .navigation
       )
     }
     .sheet(
-      store: self.store.scope(state: \.$destination, action: Home.Action.destination),
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: /Home.Destination.State.changelog,
       action: Home.Destination.Action.changelog,
       content: ChangelogView.init(store:)

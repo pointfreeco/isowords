@@ -242,10 +242,7 @@ public struct TrailerView: View {
 
           WordListView(
             isLeftToRight: true,
-            store: self.store.scope(
-              state: \.game,
-              action: Trailer.Action.game
-            )
+            store: self.store.scope(state: \.game, action: { .game($0) })
           )
         }
         .adaptivePadding(.top, .grid(18))

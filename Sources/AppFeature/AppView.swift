@@ -359,7 +359,7 @@ public struct AppView: View {
     Group {
       if !self.viewStore.isOnboardingPresented && !self.viewStore.isGameActive {
         NavigationStack {
-          HomeView(store: self.store.scope(state: \.home, action: AppReducer.Action.home))
+          HomeView(store: self.store.scope(state: \.home, action: { .home($0) }))
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .zIndex(0)
@@ -389,7 +389,7 @@ public struct AppView: View {
                   action: { .currentGame(.game(CubeSceneView.ViewAction.to(gameAction: $0))) }
                 )
               ),
-              store: self.store.scope(state: \.currentGame, action: AppReducer.Action.currentGame)
+              store: self.store.scope(state: \.currentGame, action: { .currentGame($0) })
             )
           }
         )
@@ -397,7 +397,7 @@ public struct AppView: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.onboarding, action: AppReducer.Action.onboarding),
+          self.store.scope(state: \.onboarding, action: { .onboarding($0) }),
           then: OnboardingView.init(store:)
         )
         .zIndex(2)

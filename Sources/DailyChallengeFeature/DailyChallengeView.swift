@@ -386,18 +386,12 @@ public struct DailyChallengeView: View {
       .edgesIgnoringSafeArea(.bottom)
     }
     .alert(
-      store: self.store.scope(
-        state: \.$destination,
-        action: DailyChallengeReducer.Action.destination
-      ),
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: /DailyChallengeReducer.Destination.State.alert,
       action: DailyChallengeReducer.Destination.Action.alert
     )
     .navigationDestination(
-      store: self.store.scope(
-        state: \.$destination,
-        action: DailyChallengeReducer.Action.destination
-      ),
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: /DailyChallengeReducer.Destination.State.results,
       action: DailyChallengeReducer.Destination.Action.results,
       destination: DailyChallengeResultsView.init(store:)
