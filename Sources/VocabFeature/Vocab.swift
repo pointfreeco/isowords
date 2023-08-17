@@ -4,19 +4,33 @@ import LocalDatabaseClient
 import SwiftUI
 
 public struct Vocab: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case cubePreview(CubePreview.State)
+    }
+    public enum Action: Equatable {
+      case cubePreview(CubePreview.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+        CubePreview()
+      }
+    }
+  }
+
   public struct State: Equatable {
-    var cubePreview: CubePreview.State?
+    @PresentationState var destination: Destination.State?
     var isAnimationReduced: Bool
     var isHapticsEnabled: Bool
     var vocab: LocalDatabaseClient.Vocab?
 
     public init(
-      cubePreview: CubePreview.State? = nil,
+      destination: Destination.State? = nil,
       isAnimationReduced: Bool,
       isHapticsEnabled: Bool,
       vocab: LocalDatabaseClient.Vocab? = nil
     ) {
-      self.cubePreview = cubePreview
+      self.destination = destination
       self.isAnimationReduced = isAnimationReduced
       self.isHapticsEnabled = isHapticsEnabled
       self.vocab = vocab
@@ -29,9 +43,8 @@ public struct Vocab: Reducer {
   }
 
   public enum Action: Equatable {
-    case dismissCubePreview
+    case destination(PresentationAction<Destination.Action>)
     case gamesResponse(TaskResult<State.GamesResponse>)
-    case preview(CubePreview.Action)
     case task
     case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
@@ -44,8 +57,7 @@ public struct Vocab: Reducer {
   public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .dismissCubePreview:
-        state.cubePreview = nil
+      case .destination:
         return .none
 
       case .gamesResponse(.failure):
@@ -66,17 +78,16 @@ public struct Vocab: Reducer {
         guard let moveIndex = possibleMoveIndex
         else { return .none }
 
-        state.cubePreview = CubePreview.State(
-          cubes: game.completedGame.cubes,
-          isAnimationReduced: state.isAnimationReduced,
-          isHapticsEnabled: state.isHapticsEnabled,
-          moveIndex: moveIndex,
-          moves: game.completedGame.moves,
-          settings: .init()
+        state.destination = .cubePreview(
+          CubePreview.State(
+            cubes: game.completedGame.cubes,
+            isAnimationReduced: state.isAnimationReduced,
+            isHapticsEnabled: state.isHapticsEnabled,
+            moveIndex: moveIndex,
+            moves: game.completedGame.moves,
+            settings: .init()
+          )
         )
-        return .none
-
-      case .preview:
         return .none
 
       case .task:
@@ -106,8 +117,8 @@ public struct Vocab: Reducer {
         }
       }
     }
-    .ifLet(\.cubePreview, action: /Action.preview) {
-      CubePreview()
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
   }
 }
@@ -153,16 +164,11 @@ public struct VocabView: View {
       }
       .task { await viewStore.send(.task).finish() }
       .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.cubePreview != nil },
-          send: .dismissCubePreview
-        )
-      ) {
-        IfLetStore(
-          self.store.scope(state: \.cubePreview, action: Vocab.Action.preview),
-          then: CubePreviewView.init(store:)
-        )
-      }
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Vocab.Destination.State.cubePreview,
+        action: Vocab.Destination.Action.cubePreview,
+        content: CubePreviewView.init(store:)
+      )
     }
     .adaptiveFont(.matterMedium, size: 16)
     .navigationStyle(title: Text("Words Found"))
@@ -191,7 +197,7 @@ public struct VocabView: View {
   extension Store where State == Vocab.State, Action == Vocab.Action {
     static let vocab = Store(
       initialState: Vocab.State(
-        cubePreview: nil,
+        destination: nil,
         isAnimationReduced: false,
         isHapticsEnabled: false,
         vocab: .init(
