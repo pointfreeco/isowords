@@ -18,16 +18,10 @@ public struct GameFeatureView<Content>: View where Content: View {
     IfLetStore(
       self.store.scope(state: \.game, action: { $0 }),
       then: { store in
-        WithViewStore(
-          self.store,
-          observe: \.settings.userSettings.enableReducedAnimation
-        ) { viewStore in
-          GameView(
-            content: self.content,
-            isAnimationReduced: viewStore.state,
-            store: store.scope(state: { $0 }, action: { .game($0) })
-          )
-        }
+        GameView(
+          content: self.content,
+          store: store.scope(state: { $0 }, action: { .game($0) })
+        )
       }
     )
     .background(Color.adaptiveWhite)

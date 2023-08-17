@@ -31,6 +31,7 @@ struct ActiveGamesTray: Reducer {
         .destination,
         .gameCenter,
         .gameLoaded,
+        .isAnimationReducedUpdated,
         .lowPowerModeChanged,
         .matchesLoaded(.failure),
         .savedGamesLoaded(.failure),

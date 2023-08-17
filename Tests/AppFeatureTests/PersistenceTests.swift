@@ -278,6 +278,11 @@ class PersistenceTests: XCTestCase {
       initialState: AppReducer.State()
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.secondaryAudioShouldBeSilencedHint = { false }
+      $0.audioPlayer.setGlobalVolumeForMusic = { _ in }
+      $0.audioPlayer.setGlobalVolumeForSoundEffects = { _ in }
+      $0.applicationClient.setUserInterfaceStyle = { _ in }
     }
 
     store.dependencies.didFinishLaunching()

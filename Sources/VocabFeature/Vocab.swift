@@ -78,7 +78,6 @@ public struct Vocab: Reducer {
         state.destination = .cubePreview(
           CubePreview.State(
             cubes: game.completedGame.cubes,
-            isAnimationReduced: state.isAnimationReduced,
             moveIndex: moveIndex,
             moves: game.completedGame.moves,
             settings: .init()

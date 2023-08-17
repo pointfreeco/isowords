@@ -99,11 +99,7 @@ extension UserSettingsClient: DependencyKey {
     )
   }
 
-  public static let testValue = Self(
-    get: unimplemented(placeholder: UserSettings()),
-    set: unimplemented(),
-    stream: unimplemented(placeholder: .never)
-  )
+  public static let testValue = Self.mock()
 
   public static func mock(initialUserSettings: UserSettings = UserSettings()) -> Self {
     let userSettings = LockIsolated<UserSettings>(initialUserSettings)

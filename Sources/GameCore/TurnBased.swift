@@ -192,6 +192,7 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .doubleTap,
         .gameCenter,
         .gameLoaded,
+        .isAnimationReducedUpdated,
         .lowPowerModeChanged,
         .matchesLoaded,
         .menuButtonTapped,

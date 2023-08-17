@@ -93,7 +93,6 @@ public struct Leaderboard: Reducer {
         state.destination = .cubePreview(
           CubePreview.State(
             cubes: response.puzzle,
-            isAnimationReduced: state.isAnimationReduced,
             moveIndex: response.moveIndex,
             moves: response.moves,
             settings: state.settings

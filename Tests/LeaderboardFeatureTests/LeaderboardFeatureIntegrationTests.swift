@@ -42,7 +42,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       let middleware = siteMiddleware(environment: siteEnvironment)
 
       let store = TestStore(
-        initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+        initialState: Leaderboard.State(settings: .init())
       ) {
         Leaderboard()
       }
@@ -100,7 +100,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     let middleware = siteMiddleware(environment: siteEnvironment)
 
     let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+      initialState: Leaderboard.State(settings: .init())
     ) {
       Leaderboard()
     }

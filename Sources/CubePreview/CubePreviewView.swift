@@ -22,7 +22,6 @@ public struct CubePreview: Reducer {
 
     public init(
       cubes: ArchivablePuzzle,
-      isAnimationReduced: Bool,
       isOnLowPowerMode: Bool = false,
       moveIndex: Int,
       moves: Moves,
@@ -30,10 +29,12 @@ public struct CubePreview: Reducer {
       selectedCubeFaces: [IndexedCubeFace] = [],
       settings: CubeSceneView.ViewState.Settings
     ) {
+      @Dependency(\.userSettings.get) var userSettings
+
       self.cubes = .init(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
-      self.isAnimationReduced = isAnimationReduced
+      self.isAnimationReduced = userSettings().enableReducedAnimation
       self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves

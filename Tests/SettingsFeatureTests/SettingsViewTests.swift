@@ -2,6 +2,7 @@ import ComposableArchitecture
 @testable import SettingsFeature
 import SnapshotTesting
 import Styleguide
+import UserSettingsClient
 import XCTest
 
 class SettingsViewTests: XCTestCase {
@@ -85,10 +86,12 @@ class SettingsViewTests: XCTestCase {
     assertSnapshot(
       matching: SoundsSettingsView(
         store: Store(
-          initialState: Settings.State(
-            userSettings: .init(musicVolume: 0, soundEffectsVolume: 0)
-          )
+          initialState: Settings.State()
         ) {
+        } withDependencies: {
+          $0.userSettings = .mock(
+            initialUserSettings: UserSettings(musicVolume: 0, soundEffectsVolume: 0)
+          )
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

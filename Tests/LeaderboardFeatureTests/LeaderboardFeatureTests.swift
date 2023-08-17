@@ -13,7 +13,7 @@ import XCTest
 class LeaderboardFeatureTests: XCTestCase {
   func testScopeSwitcher() async {
     let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+      initialState: Leaderboard.State(settings: .init())
     ) {
       Leaderboard()
     }
@@ -28,7 +28,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
   func testTimeScopeSynchronization() async {
     let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
+      initialState: Leaderboard.State(settings: .init())
     ) {
       Leaderboard()
     }
@@ -103,16 +103,16 @@ class LeaderboardFeatureTests: XCTestCase {
 
     let store = TestStore(
       initialState: Leaderboard.State(
-        isHapticsEnabled: false,
         scope: .vocab,
         settings: .init()
       )
     ) {
       Leaderboard()
+    } withDependencies: {
+      $0.apiClient = ApiClient(middleware: middleware, router: .test)
+      $0.mainQueue = .immediate
     }
 
-    store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
-    store.dependencies.mainQueue = .immediate
 
     await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true
@@ -127,8 +127,6 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.destination = .cubePreview(
         .init(
           cubes: .mock,
-          isAnimationReduced: false,
-          isHapticsEnabled: false,
           isOnLowPowerMode: false,
           moveIndex: 0,
           moves: [],

@@ -61,6 +61,7 @@ public struct Game: Reducer {
     public var gameCurrentTime: Date
     public var gameMode: GameMode
     public var gameStartTime: Date
+    public var isAnimationReduced: Bool
     public var isDemo: Bool
     public var isGameLoaded: Bool
     public var isOnLowPowerMode: Bool
@@ -98,6 +99,7 @@ public struct Game: Reducer {
       selectedWordIsValid: Bool = false,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
+      @Dependency(\.userSettings) var userSettings
       self.activeGames = activeGames
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
@@ -106,6 +108,7 @@ public struct Game: Reducer {
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
       self.gameStartTime = gameStartTime
+      self.isAnimationReduced = userSettings.get().enableReducedAnimation
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
       self.isOnLowPowerMode = isOnLowPowerMode
@@ -169,6 +172,7 @@ public struct Game: Reducer {
     case doubleTap(index: LatticePoint)
     case gameCenter(GameCenterAction)
     case gameLoaded
+    case isAnimationReducedUpdated(Bool)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
@@ -196,6 +200,7 @@ public struct Game: Reducer {
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -319,6 +324,10 @@ public struct Game: Reducer {
           }
         }
 
+      case let .isAnimationReducedUpdated(isEnabled):
+        state.isAnimationReduced = isEnabled
+        return .none
+
       case let .lowPowerModeChanged(isOn):
         state.isOnLowPowerMode = isOn
         return .none
@@ -363,6 +372,12 @@ public struct Game: Reducer {
             group.addTask {
               try await self.mainQueue.sleep(for: 0.5)
               await send(.gameLoaded)
+            }
+
+            group.addTask {
+              for await userSettings in await self.userSettings.stream() {
+                await send(.isAnimationReducedUpdated(userSettings.enableReducedAnimation))
+              }
             }
           }
           for music in AudioPlayerClient.Sound.allMusic {

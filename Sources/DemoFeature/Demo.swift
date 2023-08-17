@@ -174,7 +174,6 @@ public struct DemoView: View {
                   action: { CubeSceneView.ViewAction.to(gameAction: $0) }
                 )
               ),
-              isAnimationReduced: false,
               store: store
             ),
             isGameOver: self.viewStore.isGameOver,
