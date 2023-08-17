@@ -68,8 +68,7 @@ public struct Demo: Reducer {
 
     IntegratedGame(
       state: OptionalPath(\.game),
-      action: /Action.game,
-      isHapticsEnabled: { _ in true }
+      action: /Action.game
     )
     .dependency(\.database, .noop)
     .dependency(\.fileClient, .noop)

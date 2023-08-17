@@ -7,12 +7,12 @@ import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
+import UserSettingsClient
 
 public struct CubePreview: Reducer {
   public struct State: Equatable {
     var cubes: Puzzle
     var isAnimationReduced: Bool
-    var isHapticsEnabled: Bool
     var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
@@ -23,7 +23,6 @@ public struct CubePreview: Reducer {
     public init(
       cubes: ArchivablePuzzle,
       isAnimationReduced: Bool,
-      isHapticsEnabled: Bool,
       isOnLowPowerMode: Bool = false,
       moveIndex: Int,
       moves: Moves,
@@ -35,7 +34,6 @@ public struct CubePreview: Reducer {
       apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
       self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
@@ -64,6 +62,7 @@ public struct CubePreview: Reducer {
 
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
+  @Dependency(\.userSettings.get) var userSettings
 
   public init() {}
 
@@ -156,7 +155,7 @@ public struct CubePreview: Reducer {
       }
     }
     .haptics(
-      isEnabled: \.isHapticsEnabled,
+      isEnabled: { _ in self.userSettings().enableHaptics },
       triggerOnChangeOf: \.selectedCubeFaces
     )
     .selectionSounds(

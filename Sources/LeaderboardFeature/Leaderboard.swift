@@ -46,7 +46,6 @@ public struct Leaderboard: Reducer {
   public struct State: Equatable {
     @PresentationState public var destination: Destination.State?
     public var isAnimationReduced: Bool
-    public var isHapticsEnabled: Bool
     public var scope: LeaderboardScope = .games
     public var settings: CubeSceneView.ViewState.Settings
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
@@ -55,7 +54,6 @@ public struct Leaderboard: Reducer {
     public init(
       destination: Destination.State? = nil,
       isAnimationReduced: Bool = false,
-      isHapticsEnabled: Bool,
       scope: LeaderboardScope = .games,
       settings: CubeSceneView.ViewState.Settings,
       solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
@@ -63,7 +61,6 @@ public struct Leaderboard: Reducer {
     ) {
       self.destination = destination
       self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.scope = scope
       self.settings = settings
       self.solo = solo
@@ -97,7 +94,6 @@ public struct Leaderboard: Reducer {
           CubePreview.State(
             cubes: response.puzzle,
             isAnimationReduced: state.isAnimationReduced,
-            isHapticsEnabled: state.isHapticsEnabled,
             moveIndex: response.moveIndex,
             moves: response.moves,
             settings: state.settings
@@ -345,7 +341,6 @@ extension ResultEnvelope.Result {
             store: .init(
               initialState: Leaderboard.State(
                 isAnimationReduced: false,
-                isHapticsEnabled: true,
                 settings: .init()
               )
             ) {

@@ -15,6 +15,7 @@ import SwiftUI
 import Tagged
 import TcaHelpers
 import UpgradeInterstitialFeature
+import UserSettingsClient
 
 public struct Game: Reducer {
   public struct Destination: Reducer {
@@ -535,16 +536,15 @@ where StatePath.Value == Game.State {
 
   let toGameState: StatePath
   let toGameAction: CasePath<Action, Game.Action>
-  let isHapticsEnabled: (StatePath.Root) -> Bool
+
+  @Dependency(\.userSettings.get) var userSettings
 
   public init(
     state toGameState: StatePath,
-    action toGameAction: CasePath<Action, Game.Action>,
-    isHapticsEnabled: @escaping (StatePath.Root) -> Bool
+    action toGameAction: CasePath<Action, Game.Action>
   ) {
     self.toGameState = toGameState
     self.toGameAction = toGameAction
-    self.isHapticsEnabled = isHapticsEnabled
   }
 
   public var body: some Reducer<State, Action> {
@@ -552,7 +552,7 @@ where StatePath.Value == Game.State {
       Game()
     }
     .haptics(
-      isEnabled: self.isHapticsEnabled,
+      isEnabled: { _ in self.userSettings().enableHaptics },
       triggerOnChangeOf: { self.toGameState.extract(from: $0)?.selectedWord }
     )
   }

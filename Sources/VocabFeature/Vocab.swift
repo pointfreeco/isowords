@@ -21,18 +21,15 @@ public struct Vocab: Reducer {
   public struct State: Equatable {
     @PresentationState var destination: Destination.State?
     var isAnimationReduced: Bool
-    var isHapticsEnabled: Bool
     var vocab: LocalDatabaseClient.Vocab?
 
     public init(
       destination: Destination.State? = nil,
       isAnimationReduced: Bool,
-      isHapticsEnabled: Bool,
       vocab: LocalDatabaseClient.Vocab? = nil
     ) {
       self.destination = destination
       self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.vocab = vocab
     }
 
@@ -82,7 +79,6 @@ public struct Vocab: Reducer {
           CubePreview.State(
             cubes: game.completedGame.cubes,
             isAnimationReduced: state.isAnimationReduced,
-            isHapticsEnabled: state.isHapticsEnabled,
             moveIndex: moveIndex,
             moves: game.completedGame.moves,
             settings: .init()
@@ -199,7 +195,6 @@ public struct VocabView: View {
       initialState: Vocab.State(
         destination: nil,
         isAnimationReduced: false,
-        isHapticsEnabled: false,
         vocab: .init(
           words: [
             .init(letters: "STENOGRAPHER", playCount: 1, score: 1_230),

@@ -27,7 +27,6 @@ public struct Stats: Reducer {
     public var highScoreTimed: Int?
     public var highScoreUnlimited: Int?
     public var isAnimationReduced: Bool
-    public var isHapticsEnabled: Bool
     public var longestWord: String?
     public var secondsPlayed: Int
     public var wordsFound: Int
@@ -40,7 +39,6 @@ public struct Stats: Reducer {
       highScoreTimed: Int? = nil,
       highScoreUnlimited: Int? = nil,
       isAnimationReduced: Bool = false,
-      isHapticsEnabled: Bool = true,
       longestWord: String? = nil,
       secondsPlayed: Int = 0,
       wordsFound: Int = 0
@@ -52,7 +50,6 @@ public struct Stats: Reducer {
       self.highScoreTimed = highScoreTimed
       self.highScoreUnlimited = highScoreUnlimited
       self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.longestWord = longestWord
       self.secondsPlayed = secondsPlayed
       self.wordsFound = wordsFound
@@ -103,8 +100,7 @@ public struct Stats: Reducer {
       case .vocabButtonTapped:
         state.destination = .vocab(
           .init(
-            isAnimationReduced: state.isAnimationReduced,
-            isHapticsEnabled: state.isHapticsEnabled
+            isAnimationReduced: state.isAnimationReduced
           )
         )
         return .none
@@ -257,7 +253,6 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 gamesPlayed: 1234,
                 highestScoringWord: .init(letters: "ENFEEBLINGS", score: 1022),
                 isAnimationReduced: false,
-                isHapticsEnabled: true,
                 longestWord: "ENFEEBLINGS",
                 secondsPlayed: 42000,
                 wordsFound: 200

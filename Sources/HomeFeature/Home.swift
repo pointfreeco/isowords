@@ -296,7 +296,6 @@ public struct Home: Reducer {
       state.destination = .leaderboard(
         .init(
           isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
-          isHapticsEnabled: state.settings.userSettings.enableHaptics,
           settings: .init(
             enableCubeShadow: state.settings.enableCubeShadow,
             enableGyroMotion: state.settings.userSettings.enableGyroMotion,

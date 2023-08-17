@@ -31,8 +31,7 @@ public struct GameFeature: Reducer {
     }
     IntegratedGame(
       state: OptionalPath(\.game),
-      action: /Action.game,
-      isHapticsEnabled: \.settings.userSettings.enableHaptics
+      action: /Action.game
     )
     Reduce { state, action in
       switch action {

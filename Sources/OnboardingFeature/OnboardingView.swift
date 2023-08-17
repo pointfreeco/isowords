@@ -353,8 +353,7 @@ public struct Onboarding: Reducer {
   var gameReducer: some ReducerOf<Self> {
     IntegratedGame(
       state: \State.game,
-      action: /Action.game,
-      isHapticsEnabled: { _ in true }
+      action: /Action.game
     )
     .transformDependency(\.self) {
       $0.gameOnboarding()

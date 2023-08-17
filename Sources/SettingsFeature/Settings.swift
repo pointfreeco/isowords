@@ -399,7 +399,6 @@ public struct Settings: Reducer {
             .originalPurchaseDate
           state.buildNumber = self.build.number()
           state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
-          state.stats.isHapticsEnabled = state.userSettings.enableHaptics
           state.userSettings.appIcon = self.applicationClient.alternateIconName()
             .flatMap(AppIcon.init(rawValue:))
 
