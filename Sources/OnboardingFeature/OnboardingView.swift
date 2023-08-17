@@ -15,13 +15,13 @@ import UserDefaultsClient
 
 public struct Onboarding: Reducer {
   public struct State: Equatable {
-    @PresentationState public var alert: AlertState<AlertAction>?
+    @PresentationState public var alert: AlertState<Action.Alert>?
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
 
     public init(
-      alert: AlertState<AlertAction>? = nil,
+      alert: AlertState<Action.Alert>? = nil,
       game: Game.State = .onboarding,
       presentationStyle: PresentationStyle,
       step: Step = Step.allCases.first!
@@ -134,23 +134,23 @@ public struct Onboarding: Reducer {
   }
 
   public enum Action: Equatable {
-    case alert(PresentationAction<AlertAction>)
+    case alert(PresentationAction<Alert>)
     case delayedNextStep
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case game(Game.Action)
     case getStartedButtonTapped
     case nextButtonTapped
     case skipButtonTapped
     case task
-  }
 
-  public enum AlertAction: Equatable {
-    case resumeButtonTapped
-    case skipButtonTapped
-  }
+    public enum Alert: Equatable {
+      case resumeButtonTapped
+      case skipButtonTapped
+    }
 
-  public enum DelegateAction {
-    case getStarted
+    public enum Delegate {
+      case getStarted
+    }
   }
 
   @Dependency(\.audioPlayer) var _audioPlayer
