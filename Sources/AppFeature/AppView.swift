@@ -230,7 +230,7 @@ public struct AppReducer: Reducer {
         }
 
       case .currentGame(.game(.destination(.presented(.bottomMenu(.exitButtonTapped))))),
-          .currentGame(.game(.destination(.presented(.gameOver(.delegate(.close)))))):
+        .currentGame(.game(.destination(.presented(.gameOver(.delegate(.close)))))):
         state.game = nil
         return .none
 

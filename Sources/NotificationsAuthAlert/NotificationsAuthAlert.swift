@@ -104,8 +104,8 @@ struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: 
             }
             .transition(
               .scale(scale: 0.8, anchor: .center)
-              .animation(.spring())
-              .combined(with: .opacity.animation(.default))
+                .animation(.spring())
+                .combined(with: .opacity.animation(.default))
             )
           }
         }
@@ -120,12 +120,12 @@ struct NotificationsAuthAlertView: View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack(spacing: .grid(8)) {
         (Text("Want to get notified about ")
-         + Text("your ranks?").fontWeight(.medium))
-        .adaptiveFont(.matter, size: 28)
-        .foregroundColor(.dailyChallenge)
-        .lineLimit(.max)
-        .minimumScaleFactor(0.2)
-        .multilineTextAlignment(.center)
+          + Text("your ranks?").fontWeight(.medium))
+          .adaptiveFont(.matter, size: 28)
+          .foregroundColor(.dailyChallenge)
+          .lineLimit(.max)
+          .minimumScaleFactor(0.2)
+          .multilineTextAlignment(.center)
 
         Button("Turn on notifications") {
           viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)

@@ -228,10 +228,10 @@ public struct Settings: Reducer {
                     TaskResult {
                       try await self.userNotifications.requestAuthorization([.alert, .sound])
                     }
-                  )
+                  ),
+                  animation: .default
                 )
               }
-              .animation()
 
             case .denied:
               state.alert = .userNotificationAuthorizationDenied
@@ -373,10 +373,10 @@ public struct Settings: Reducer {
             await send(
               .currentPlayerRefreshed(
                 TaskResult { try await self.apiClient.refreshCurrentPlayer() }
-              )
+              ),
+              animation: .default
             )
           }
-          .animation()
 
         case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
           state.isRestoring = false

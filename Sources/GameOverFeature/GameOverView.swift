@@ -225,10 +225,10 @@ public struct GameOver: Reducer {
                   as: [FetchTodaysDailyChallengeResponse].self
                 )
               }
-            )
+            ),
+            animation: .default
           )
         }
-        .animation()
 
       case .submitGameResponse(.success(.shared)):
         return .none
