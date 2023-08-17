@@ -4,6 +4,7 @@ import CubeCore
 import CubePreview
 import SharedModels
 import SwiftUI
+import UserSettingsClient
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games
@@ -53,14 +54,14 @@ public struct Leaderboard: Reducer {
 
     public init(
       destination: Destination.State? = nil,
-      isAnimationReduced: Bool = false,
       scope: LeaderboardScope = .games,
       settings: CubeSceneView.ViewState.Settings,
       solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
       vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     ) {
+      @Dependency(\.userSettings.get) var userSettings
       self.destination = destination
-      self.isAnimationReduced = isAnimationReduced
+      self.isAnimationReduced = userSettings().enableReducedAnimation
       self.scope = scope
       self.settings = settings
       self.solo = solo
@@ -338,10 +339,7 @@ extension ResultEnvelope.Result {
         NavigationView {
           LeaderboardView(
             store: .init(
-              initialState: Leaderboard.State(
-                isAnimationReduced: false,
-                settings: .init()
-              )
+              initialState: Leaderboard.State(settings: .init())
             ) {
               Leaderboard().dependency(
                 \.apiClient,

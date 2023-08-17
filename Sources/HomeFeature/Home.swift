@@ -295,7 +295,6 @@ public struct Home: Reducer {
     case .leaderboardButtonTapped:
       state.destination = .leaderboard(
         .init(
-          isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
           settings: .init(
             enableCubeShadow: state.settings.enableCubeShadow,
             enableGyroMotion: state.settings.userSettings.enableGyroMotion,

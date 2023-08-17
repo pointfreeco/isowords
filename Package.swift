@@ -758,6 +758,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
       ]
