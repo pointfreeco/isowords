@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import Bloom
 import ComposableArchitecture
 import GameOverFeature
+import SettingsFeature
 import SwiftUI
 import UpgradeInterstitialFeature
 
@@ -183,6 +184,15 @@ public struct GameView<Content>: View where Content: View {
         state: /Game.Destination.State.alert,
         action: Game.Destination.Action.alert
       )
+      .sheet(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Game.Destination.State.settings,
+        action: Game.Destination.Action.settings
+      ) { store in
+        NavigationStack {
+          SettingsView(store: store, navPresentationStyle: .modal)
+        }
+      }
     }
     .task { await self.viewStore.send(.task).finish() }
   }

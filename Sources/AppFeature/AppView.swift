@@ -31,7 +31,7 @@ public struct AppReducer: Reducer {
 
     public var currentGame: GameFeature.State {
       get {
-        GameFeature.State(game: self.game, settings: self.home.settings)
+        GameFeature.State(game: self.game)
       }
       set {
         let oldValue = self
@@ -44,7 +44,6 @@ public struct AppReducer: Reducer {
         self.game = newValue.game
         self.game?.activeGames = activeGames ?? .init()
         self.game?.isGameLoaded = isGameLoaded
-        self.home.settings = newValue.settings
       }
     }
 
@@ -164,10 +163,7 @@ public struct AppReducer: Reducer {
           switch pushNotificationContent {
           case .dailyChallengeEndsSoon:
             if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
-              state.currentGame = GameFeature.State(
-                game: Game.State(inProgressGame: inProgressGame),
-                settings: state.home.settings
-              )
+              state.currentGame = GameFeature.State(game: Game.State(inProgressGame: inProgressGame))
             } else {
               // TODO: load/retry
             }
@@ -201,10 +197,7 @@ public struct AppReducer: Reducer {
         guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
         else { return .none }
 
-        state.currentGame = .init(
-          game: Game.State(inProgressGame: inProgressGame),
-          settings: state.home.settings
-        )
+        state.currentGame = .init(game: Game.State(inProgressGame: inProgressGame))
         return .none
 
       case .currentGame(.game(.activeGames(.soloTapped))),
@@ -212,10 +205,7 @@ public struct AppReducer: Reducer {
         guard let inProgressGame = state.home.savedGames.unlimited
         else { return .none }
 
-        state.currentGame = .init(
-          game: Game.State(inProgressGame: inProgressGame),
-          settings: state.home.settings
-        )
+        state.currentGame = .init(game: Game.State(inProgressGame: inProgressGame))
         return .none
 
       case let .currentGame(.game(.activeGames(.turnBasedGameTapped(matchId)))),

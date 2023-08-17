@@ -10,6 +10,7 @@ import GameOverFeature
 import HapticsCore
 import LowPowerModeClient
 import Overture
+import SettingsFeature
 import SharedModels
 import SwiftUI
 import Tagged
@@ -23,12 +24,14 @@ public struct Game: Reducer {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
       case gameOver(GameOver.State)
+      case settings(Settings.State = Settings.State())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
     public enum Action: Equatable {
       case alert(Alert)
       case bottomMenu(BottomMenu)
       case gameOver(GameOver.Action)
+      case settings(Settings.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
 
       public enum Alert: Equatable {
@@ -45,6 +48,9 @@ public struct Game: Reducer {
     public var body: some ReducerOf<Self> {
       Scope(state: /State.gameOver, action: /Action.gameOver) {
         GameOver()
+      }
+      Scope(state: /State.settings, action: /Action.settings) {
+        Settings()
       }
       Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
         UpgradeInterstitial()
@@ -66,7 +72,6 @@ public struct Game: Reducer {
     public var isGameLoaded: Bool
     public var isOnLowPowerMode: Bool
     public var isPanning: Bool
-    public var isSettingsPresented: Bool
     public var isTrayVisible: Bool
     public var language: Language
     public var moves: Moves
@@ -89,7 +94,6 @@ public struct Game: Reducer {
       isGameLoaded: Bool = false,
       isPanning: Bool = false,
       isOnLowPowerMode: Bool = false,
-      isSettingsPresented: Bool = false,
       isTrayVisible: Bool = false,
       language: Language = .en,
       moves: Moves = [],
@@ -113,7 +117,6 @@ public struct Game: Reducer {
       self.isGameLoaded = isGameLoaded
       self.isOnLowPowerMode = isOnLowPowerMode
       self.isPanning = isPanning
-      self.isSettingsPresented = isSettingsPresented
       self.isTrayVisible = isTrayVisible
       self.language = language
       self.moves = moves
@@ -294,7 +297,7 @@ public struct Game: Reducer {
         return .none
 
       case .destination(.presented(.bottomMenu(.settingsButtonTapped))):
-        state.isSettingsPresented = true
+        state.destination = .settings()
         return .none
 
       case .destination(.presented(.gameOver(.delegate(.close)))):

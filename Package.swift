@@ -587,6 +587,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "PuzzleGen",
         "RemoteNotificationsClient",
         "SelectionSoundsCore",
+        "SettingsFeature",
         "SharedSwiftUIEnvironment",
         "Styleguide",
         "TcaHelpers",

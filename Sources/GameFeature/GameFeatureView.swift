@@ -25,26 +25,26 @@ public struct GameFeatureView<Content>: View where Content: View {
       }
     )
     .background(Color.adaptiveWhite)
-    .background(
-      WithViewStore(
-        self.store,
-        observe: { $0.game?.isSettingsPresented ?? false }
-      ) {
-        viewStore in
-        // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-        // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-        // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-        EmptyView()
-          .sheet(isPresented: viewStore.binding(send: .dismissSettings)) {
-            NavigationView {
-              SettingsView(
-                store: self.store.scope(state: \.settings, action: { .settings($0) }),
-                navPresentationStyle: .modal
-              )
-            }
-          }
-      }
-    )
+//    .background(
+//      WithViewStore(
+//        self.store,
+//        observe: { $0.game?.isSettingsPresented ?? false }
+//      ) {
+//        viewStore in
+//        // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
+//        // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
+//        // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
+//        EmptyView()
+//          .sheet(isPresented: viewStore.binding(send: .dismissSettings)) {
+//            NavigationView {
+//              SettingsView(
+//                store: self.store.scope(state: \.settings, action: { .settings($0) }),
+//                navPresentationStyle: .modal
+//              )
+//            }
+//          }
+//      }
+//    )
   }
 }
 
@@ -92,8 +92,7 @@ public struct GameFeatureView<Content>: View where Content: View {
                 //                .init(index: .init(x: .two, y: .two, z: .two), side: .right),
                 //                .init(index: .init(x: .two, y: .two, z: .two), side: .top),
                 //              ]
-              ),
-              settings: .init()
+              )
             )
           ) {
             GameFeature()

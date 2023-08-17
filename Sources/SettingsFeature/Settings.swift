@@ -447,6 +447,7 @@ public struct Settings: Reducer {
 
         case let .userNotificationSettingsResponse(settings):
           state.userNotificationSettings = settings
+          // TODO: this is a bug, look into later
           state.userSettings.enableNotifications = settings.authorizationStatus == .authorized
           return .none
         }
@@ -458,7 +459,7 @@ public struct Settings: Reducer {
         enum CancelID { case saveDebounce }
 
         return .run { _ in await self.userSettings.set(userSettings) }
-          .debounce(id: CancelID.saveDebounce, for: .seconds(1), scheduler: self.mainQueue)
+          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
       }
     }
 

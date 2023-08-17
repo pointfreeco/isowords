@@ -146,10 +146,7 @@ public struct GameCenterLogic: Reducer {
         gameMode: .unlimited,
         gameStartTime: match.creationDate
       )
-      state.currentGame = .init(
-        game: game,
-        settings: state.home.settings
-      )
+      state.currentGame = .init(game: game)
       return .run { _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         try await self.gameCenter.turnBasedMatch.saveCurrentTurn(
@@ -191,10 +188,7 @@ public struct GameCenterLogic: Reducer {
           )
         )
       }
-      state.currentGame = .init(
-        game: gameState,
-        settings: state.home.settings
-      )
+      state.currentGame = .init(game: gameState)
       return .run { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         if isYourTurn {

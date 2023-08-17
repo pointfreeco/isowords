@@ -27,7 +27,7 @@ public struct Home: Reducer {
       case dailyChallenge(DailyChallengeReducer.State = .init())
       case leaderboard(Leaderboard.State)
       case multiplayer(Multiplayer.State)
-      case settings
+      case settings(Settings.State = Settings.State())
       case solo(Solo.State = .init())
     }
     public enum Action: Equatable {
@@ -35,7 +35,7 @@ public struct Home: Reducer {
       case dailyChallenge(DailyChallengeReducer.Action)
       case leaderboard(Leaderboard.Action)
       case multiplayer(Multiplayer.Action)
-      case settings(Never)
+      case settings(Settings.Action)
       case solo(Solo.Action)
     }
     public var body: some ReducerOf<Self> {
@@ -50,6 +50,9 @@ public struct Home: Reducer {
       }
       Scope(state: /State.multiplayer, action: /Action.multiplayer) {
         Multiplayer()
+      }
+      Scope(state: /State.settings, action: /Action.settings) {
+        Settings()
       }
       Scope(state: /State.solo, action: /Action.solo) {
         Solo()
@@ -308,7 +311,7 @@ public struct Home: Reducer {
       return .none
 
     case .settingsButtonTapped:
-      state.destination = .settings
+      state.destination = .settings()
       return .none
 
     case .soloButtonTapped:
@@ -546,11 +549,8 @@ public struct HomeView: View {
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: /Home.Destination.State.settings,
       action: Home.Destination.Action.settings
-    ) { _ in
-      SettingsView(
-        store: self.store.scope(state: \.settings, action: { .settings($0) }),
-        navPresentationStyle: .navigation
-      )
+    ) { store in
+      SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
