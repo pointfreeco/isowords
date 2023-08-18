@@ -65,7 +65,7 @@ struct AppIconPicker: View {
             }
           }
         }
-        .screenEdgePadding([.leading, .trailing])
+        .screenEdgePadding(.horizontal)
       }
       .onAppear {
         proxy.scrollTo(self.appIcon, anchor: .center)

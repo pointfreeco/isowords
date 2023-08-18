@@ -29,7 +29,7 @@ public struct SettingsRow<Content>: View where Content: View {
   public var body: some View {
     VStack(alignment: .leading) {
       self.content()
-        .padding([.top, .bottom])
+        .padding(.vertical)
       Rectangle()
         .fill(Color.hex(self.colorScheme == .dark ? 0x7d7d7d : 0xEEEEEE))
         .frame(maxWidth: .infinity, minHeight: 2, idealHeight: 2, maxHeight: 2)

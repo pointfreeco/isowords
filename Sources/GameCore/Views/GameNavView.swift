@@ -62,8 +62,8 @@ struct GameNavView: View {
       .cornerRadius(12)
     }
     .fixedSize(horizontal: false, vertical: true)
-    .padding([.leading, .trailing])
-    .adaptivePadding([.top, .bottom], 8)
+    .padding(.horizontal)
+    .adaptivePadding(.vertical, 8)
   }
 }
 

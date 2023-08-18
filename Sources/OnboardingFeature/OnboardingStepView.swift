@@ -243,7 +243,7 @@ struct OnboardingStepView: View {
           Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .padding(.bottom, 80)
 
         Group {

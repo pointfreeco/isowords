@@ -76,21 +76,21 @@ public struct GameButton: View {
     VStack(alignment: .leading, spacing: 12) {
       self.title
         .opacity(0.6)
-        .adaptivePadding([.leading, .trailing], .grid(2))
-        .adaptivePadding([.top], .grid(3))
+        .adaptivePadding(.horizontal, .grid(2))
+        .adaptivePadding(.top, .grid(3))
       Rectangle()
         .fill(Color.adaptiveWhite.opacity(0.2))
         .frame(maxWidth: .infinity)
         .frame(height: 1)
       context
-        .adaptivePadding([.leading, .trailing], .grid(3))
+        .adaptivePadding(.horizontal, .grid(3))
       Spacer()
       HStack {
         Image(systemName: "arrow.right")
         Text("Resume")
       }
-      .adaptivePadding([.top, .bottom], .grid(1))
-      .adaptivePadding([.leading, .trailing], .grid(2))
+      .adaptivePadding(.vertical, .grid(1))
+      .adaptivePadding(.horizontal, .grid(2))
       .background(
         self.colorScheme == .light
           ? self.color
@@ -116,7 +116,7 @@ public struct GameButton: View {
       Group {
         if let inactiveText = self.inactiveText {
           inactiveText
-            .padding([.leading, .trailing], .grid(2))
+            .padding(.horizontal, .grid(2))
             .lineLimit(2)
             .minimumScaleFactor(0.5)
         } else {
@@ -126,7 +126,7 @@ public struct GameButton: View {
       .multilineTextAlignment(.center)
       .adaptiveFont(.matterMedium, size: 16)
     }
-    .adaptivePadding([.top, .bottom], .grid(5))
+    .adaptivePadding(.vertical, .grid(5))
   }
 }
 

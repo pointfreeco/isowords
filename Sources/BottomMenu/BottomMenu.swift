@@ -167,7 +167,7 @@ private struct MenuButton: View {
       }
       .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
       .frame(maxWidth: .infinity)
-      .padding([.top, .bottom], 24)
+      .padding(.vertical, 24)
       .background(self.colorScheme == .light ? Color.white : .isowordsOrange)
       .continuousCornerRadius(12)
     }

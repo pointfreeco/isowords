@@ -75,7 +75,7 @@ struct PastGamesView: View {
           Divider()
             .frame(height: 2)
             .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
-            .padding([.top, .bottom], .grid(8))
+            .padding(.vertical, .grid(8))
         }
       }
       .padding()

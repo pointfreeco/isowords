@@ -170,8 +170,8 @@ where
                 .degrees(self.viewStore.isTimeScopeMenuVisible ? -180 : 0)
               )
           }
-          .padding([.top, .bottom], 8)
-          .padding([.leading, .trailing], 16)
+          .padding(.vertical, 8)
+          .padding(.horizontal, 16)
           .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
           .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
           .continuousCornerRadius(.grid(5))
@@ -270,8 +270,8 @@ where
           self.timeScopeMenu
             .adaptiveFont(.matterMedium, size: 12)
         }
-        .padding([.top, .bottom], .grid(4))
-        .padding([.leading, .trailing], .grid(5))
+        .padding(.vertical, .grid(4))
+        .padding(.horizontal, .grid(5))
         .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
         .background(Color.adaptiveWhite)
         .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
@@ -320,16 +320,16 @@ struct ResultRow: View {
         .formatted(font: .custom(.matterSemiBold, size: self.adaptiveSize.pad(12)))
     }
     .foregroundColor(self.result.isYourScore ? self.color : .isowordsBlack)
-    .padding([.vertical], self.result.isYourScore ? .grid(1) : 0)
-    .padding([.leading, .trailing], .grid(2))
+    .padding(.vertical, self.result.isYourScore ? .grid(1) : 0)
+    .padding(.horizontal, .grid(2))
     .background(
       self.result.isYourScore
         ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
           .fill(Color.isowordsBlack)
         : nil
     )
-    .padding([.leading, .trailing])
-    .padding([.top, .bottom], .grid(1) / 2)
+    .padding(.horizontal)
+    .padding(.vertical, .grid(1) / 2)
   }
 }
 

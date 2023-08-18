@@ -119,7 +119,7 @@ public struct MultiplayerView: View {
           .continuousCornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
-        .adaptivePadding([.top, .bottom])
+        .adaptivePadding(.vertical)
         .adaptivePadding(.bottom, .grid(self.viewStore.hasPastGames ? 0 : 8))
 
         if self.viewStore.hasPastGames {

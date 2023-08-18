@@ -99,7 +99,7 @@ struct CalendarView: View {
                     .opacity(0.4)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding([.top, .bottom], .grid(1) / 2)
+                .padding(.vertical, .grid(1) / 2)
                 .background(
                   self.viewStore.currentChallenge == result.gameNumber
                     ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
@@ -109,7 +109,7 @@ struct CalendarView: View {
               }
             }
           }
-          .padding([.leading, .trailing], -.grid(3))
+          .padding(.horizontal, -.grid(3))
           .padding(.bottom, -.grid(1))
         }
       }
