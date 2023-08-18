@@ -29,13 +29,15 @@ public struct GameCenterLogic: Reducer {
           }
         }
 
-      case .game(.presented(.destination(.presented(.gameOver(.rematchButtonTapped))))):
+      case .destination(
+        .presented(.game(.destination(.presented(.gameOver(.rematchButtonTapped)))))
+      ):
         guard
-          let game = state.game,
+          case let .game(game) = state.destination,
           let turnBasedMatch = game.turnBasedContext
         else { return .none }
 
-        state.game = nil
+        state.destination = nil
 
         return .run { send in
           await send(
@@ -53,7 +55,8 @@ public struct GameCenterLogic: Reducer {
 
       case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
         guard
-          state.game?.turnBasedContext?.match.matchId == match.matchId,
+          case let .game(game) = state.destination,
+          game.turnBasedContext?.match.matchId == match.matchId,
           let turnBasedMatchData = match.matchData?.turnBasedMatchData
         else { return .none }
 
@@ -63,7 +66,7 @@ public struct GameCenterLogic: Reducer {
           turnBasedMatch: match,
           turnBasedMatchData: turnBasedMatchData
         )
-        state.game = newGame
+        state.destination = .game(newGame)
 
         return .run { _ in
           try await self.saveGame(.init(gameState: newGame))
@@ -146,7 +149,7 @@ public struct GameCenterLogic: Reducer {
         gameMode: .unlimited,
         gameStartTime: match.creationDate
       )
-      state.game = game
+      state.destination = .game(game)
       return .run { _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         try await self.gameCenter.turnBasedMatch.saveCurrentTurn(
@@ -173,8 +176,9 @@ public struct GameCenterLogic: Reducer {
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
       )
-      gameState.activeGames = state.game?.activeGames ?? .init()
-      gameState.isGameLoaded = state.game != nil
+      let game = (/AppReducer.Destination.State.game).extract(from: state.destination)
+      gameState.activeGames = game?.activeGames ?? .init()
+      gameState.isGameLoaded = game != nil
       // TODO: Reuse game logic
       var isGameOver: Bool {
         match.participants.contains(where: { $0.matchOutcome != .none })
@@ -188,7 +192,7 @@ public struct GameCenterLogic: Reducer {
           )
         )
       }
-      state.game = gameState
+      state.destination = .game(gameState)
       return .run { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         if isYourTurn {
@@ -208,7 +212,8 @@ public struct GameCenterLogic: Reducer {
       metadata: turnBasedMatchData.metadata
     )
     guard
-      state.game?.turnBasedContext?.match.matchId != match.matchId,
+      (/AppReducer.Destination.State.game).extract(from: state.destination)?.turnBasedContext?
+        .match.matchId != match.matchId,
       context.currentParticipantIsLocalPlayer,
       match.participants.allSatisfy({ $0.matchOutcome == .none }),
       let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),
