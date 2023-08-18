@@ -105,18 +105,13 @@ private struct BottomMenuModifier: ViewModifier {
 
             HStack(spacing: 24) {
               ForEach(menu.buttons) { button in
-                MenuButton(
-                  button:
-                    button
-                    .additionalAction { self.item = nil }
-                )
+                MenuButton(button: button)
               }
             }
 
             if let footerButton = menu.footerButton {
               Button(
                 action: {
-                  self.item = nil
                   footerButton.action()
                 }
               ) {

@@ -352,7 +352,6 @@ public struct AppView: View {
         NavigationStack {
           HomeView(store: self.store.scope(state: \.home, action: { .home($0) }))
         }
-        .navigationViewStyle(StackNavigationViewStyle())
         .zIndex(0)
       } else {
         IfLetStore(
