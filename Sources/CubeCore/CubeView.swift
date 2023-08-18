@@ -18,8 +18,8 @@ public struct CubeView: View {
 }
 
 private struct CubeRepresentable: UIViewRepresentable {
-  @AppStorage("enableCubeShadow") var enableCubeShadow = true
-  @AppStorage("showSceneStatistics") var showSceneStatistics = false
+  @AppStorage(.enableCubeShadow) var enableCubeShadow
+  @AppStorage(.showSceneStatistics) var showSceneStatistics
 
   let size: CGSize
   let store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>

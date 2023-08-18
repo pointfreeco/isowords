@@ -5,8 +5,8 @@ import SwiftUI
 struct DeveloperSettingsView: View {
   let store: StoreOf<Settings>
   @ObservedObject var viewStore: ViewStoreOf<Settings>
-  @AppStorage("enableCubeShadow") var enableCubeShadow = true
-  @AppStorage("showSceneStatistics") var showSceneStatistics = false
+  @AppStorage(.enableCubeShadow) var enableCubeShadow
+  @AppStorage(.showSceneStatistics) var showSceneStatistics
 
   init(store: StoreOf<Settings>) {
     self.store = store
