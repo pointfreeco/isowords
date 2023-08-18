@@ -125,30 +125,28 @@ public struct VocabView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      VStack {
-        IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
-          WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
-            List {
-              ForEach(vocabViewStore.words, id: \.letters) { word in
-                Button {
-                  vocabViewStore.send(.wordTapped(word))
-                } label: {
-                  HStack {
-                    HStack(alignment: .top, spacing: 0) {
-                      Text(word.letters.capitalized)
-                        .adaptiveFont(.matterMedium, size: 20)
+    VStack {
+      IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
+        WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
+          List {
+            ForEach(vocabViewStore.words, id: \.letters) { word in
+              Button {
+                vocabViewStore.send(.wordTapped(word))
+              } label: {
+                HStack {
+                  HStack(alignment: .top, spacing: 0) {
+                    Text(word.letters.capitalized)
+                      .adaptiveFont(.matterMedium, size: 20)
 
-                      Text("\(word.score)")
-                        .padding(.top, -4)
-                        .adaptiveFont(.matterMedium, size: 14)
-                    }
+                    Text("\(word.score)")
+                      .padding(.top, -4)
+                      .adaptiveFont(.matterMedium, size: 14)
+                  }
 
-                    Spacer()
+                  Spacer()
 
-                    if word.playCount > 1 {
-                      Text("(\(word.playCount)x)")
-                    }
+                  if word.playCount > 1 {
+                    Text("(\(word.playCount)x)")
                   }
                 }
               }
@@ -156,7 +154,7 @@ public struct VocabView: View {
           }
         }
       }
-      .task { await viewStore.send(.task).finish() }
+      .task { await self.store.send(.task).finish() }
       .sheet(
         store: self.store.scope(state: \.$destination, action: { .destination($0) }),
         state: /Vocab.Destination.State.cubePreview,

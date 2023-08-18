@@ -102,7 +102,7 @@ public struct SoloView: View {
             color: .solo,
             inactiveText: nil,
             isLoading: false,
-            resumeText: (viewStore.currentScore).flatMap {
+            resumeText: viewStore.currentScore.flatMap {
               $0 > 0 ? Text("\($0) points") : nil
             },
             action: { viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
