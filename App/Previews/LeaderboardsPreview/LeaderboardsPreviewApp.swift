@@ -55,7 +55,7 @@ struct LeaderboardsPreviewApp: App {
 
     return WindowGroup {
       LeaderboardView(
-        store: Store(initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())) {
+        store: Store(initialState: Leaderboard.State()) {
           Leaderboard()
         } withDependencies: {
           $0.apiClient = apiClient
