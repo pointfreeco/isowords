@@ -200,7 +200,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "FeedbackGeneratorClient", targets: ["FeedbackGeneratorClient"]),
     .library(name: "FileClient", targets: ["FileClient"]),
     .library(name: "GameCore", targets: ["GameCore"]),
-    .library(name: "GameFeature", targets: ["GameFeature"]),
     .library(name: "GameOverFeature", targets: ["GameOverFeature"]),
     .library(name: "HapticsCore", targets: ["HapticsCore"]),
     .library(name: "HomeFeature", targets: ["HomeFeature"]),
@@ -291,7 +290,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DictionarySqliteClient",
         "FeedbackGeneratorClient",
         "FileClient",
-        "GameFeature",
         "GameOverFeature",
         "HomeFeature",
         "LeaderboardFeature",
@@ -607,41 +605,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ],
       exclude: ["__Snapshots__"]
     ),
-    .target(
-      name: "GameFeature",
-      dependencies: [
-        "ActiveGamesFeature",
-        "ApiClient",
-        "AudioPlayerClient",
-        "BottomMenu",
-        "ClientModels",
-        "ComposableGameCenter",
-        "ComposableUserNotifications",
-        "CubeCore",
-        "DictionaryClient",
-        "GameCore",
-        "GameOverFeature",
-        "FeedbackGeneratorClient",
-        "FileClient",
-        "LowPowerModeClient",
-        "PuzzleGen",
-        "RemoteNotificationsClient",
-        "SettingsFeature",
-        "Styleguide",
-        "TcaHelpers",
-        "UIApplicationClient",
-        "UpgradeInterstitialFeature",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
-    ),
-    .testTarget(
-      name: "GameFeatureTests",
-      dependencies: [
-        "AppFeature",
-        "TestHelpers",
-        .product(name: "Gen", package: "swift-gen"),
-      ]
-    ),
+//    .testTarget(
+//      name: "GameFeatureTests",
+//      dependencies: [
+//        "AppFeature",
+//        "TestHelpers",
+//        .product(name: "Gen", package: "swift-gen"),
+//      ]
+//    ),
     .target(
       name: "GameOverFeature",
       dependencies: [

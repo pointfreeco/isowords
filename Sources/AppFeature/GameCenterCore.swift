@@ -2,7 +2,7 @@ import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
 import Foundation
-import GameFeature
+import GameCore
 import GameOverFeature
 import SharedModels
 
@@ -29,7 +29,7 @@ public struct GameCenterLogic: Reducer {
           }
         }
 
-      case .currentGame(.game(.destination(.presented(.gameOver(.rematchButtonTapped))))):
+      case .game(.presented(.destination(.presented(.gameOver(.rematchButtonTapped))))):
         guard
           let game = state.game,
           let turnBasedMatch = game.turnBasedContext
@@ -146,7 +146,7 @@ public struct GameCenterLogic: Reducer {
         gameMode: .unlimited,
         gameStartTime: match.creationDate
       )
-      state.currentGame = .init(game: game)
+      state.game = game
       return .run { _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         try await self.gameCenter.turnBasedMatch.saveCurrentTurn(
@@ -173,7 +173,7 @@ public struct GameCenterLogic: Reducer {
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
       )
-      gameState.activeGames = state.currentGame.game?.activeGames ?? .init()
+      gameState.activeGames = state.game?.activeGames ?? .init()
       gameState.isGameLoaded = state.game != nil
       // TODO: Reuse game logic
       var isGameOver: Bool {
@@ -188,7 +188,7 @@ public struct GameCenterLogic: Reducer {
           )
         )
       }
-      state.currentGame = .init(game: gameState)
+      state.game = gameState
       return .run { [isYourTurn = gameState.isYourTurn, turnBasedMatchData] _ in
         await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
         if isYourTurn {

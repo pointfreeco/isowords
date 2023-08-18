@@ -26,18 +26,12 @@ public struct Demo: Reducer {
       case onboarding(Onboarding.State)
     }
 
-    var game: Game.State? {
-      get {
-        guard case let .game(game) = self.step
-        else { return nil }
-        return game
-      }
-      set {
-        guard
-          let newValue = newValue,
-          case .game = self.step
-        else { return }
-        self.step = .game(newValue)
+    var isGameOver: Bool {
+      switch self.step {
+      case let .game(game):
+        return /Game.Destination.State.gameOver ~= game.destination
+      case .onboarding:
+        return false
       }
     }
   }
@@ -64,26 +58,24 @@ public struct Demo: Reducer {
       Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
+      Scope(state: /State.Step.game, action: /Action.game) {
+        Game()
+          .dependency(\.database, .noop)
+          .dependency(\.fileClient, .noop)
+          .dependency(\.gameCenter, .noop)
+          .dependency(\.remoteNotifications, .noop)
+          .dependency(\.serverConfig, .noop)
+          .dependency(\.storeKit, .noop)
+          .dependency(\.userDefaults, .noop)
+          .dependency(\.userNotifications, .noop)
+      }
     }
-
-    IntegratedGame(
-      state: OptionalPath(\.game),
-      action: /Action.game
-    )
-    .dependency(\.database, .noop)
-    .dependency(\.fileClient, .noop)
-    .dependency(\.gameCenter, .noop)
-    .dependency(\.remoteNotifications, .noop)
-    .dependency(\.serverConfig, .noop)
-    .dependency(\.storeKit, .noop)
-    .dependency(\.userDefaults, .noop)
-    .dependency(\.userNotifications, .noop)
-    .onChange(of: { /Game.Destination.State.gameOver ~= $0.game?.destination }) { _, _ in
+    .onChange(of: \.isGameOver) { _, _ in
       Reduce { _, _ in
-        .run { send in
-          try await self.mainQueue.sleep(for: .seconds(2))
-          await send(.gameOverDelay)
-        }
+          .run { send in
+            try await self.mainQueue.sleep(for: .seconds(2))
+            await send(.gameOverDelay)
+          }
       }
     }
 
@@ -144,7 +136,7 @@ public struct DemoView: View {
 
     init(state: Demo.State) {
       self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = /Game.Destination.State.gameOver ~= state.game?.destination
+      self.isGameOver = state.isGameOver
     }
   }
 

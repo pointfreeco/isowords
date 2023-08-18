@@ -5,7 +5,6 @@ import ComposableArchitecture
 import ComposableGameCenter
 @_spi(Concurrency) import Dependencies
 import DictionaryClient
-import GameFeature
 import GameKit
 import GameOverFeature
 import HomeKit

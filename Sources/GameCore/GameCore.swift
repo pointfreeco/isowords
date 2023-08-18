@@ -548,34 +548,6 @@ public struct Game: Reducer {
   }
 }
 
-public struct IntegratedGame<StatePath: TcaHelpers.Path, Action>: Reducer
-where StatePath.Value == Game.State {
-  public typealias State = StatePath.Root
-
-  let toGameState: StatePath
-  let toGameAction: CasePath<Action, Game.Action>
-
-  @Dependency(\.userSettings.get) var userSettings
-
-  public init(
-    state toGameState: StatePath,
-    action toGameAction: CasePath<Action, Game.Action>
-  ) {
-    self.toGameState = toGameState
-    self.toGameAction = toGameAction
-  }
-
-  public var body: some Reducer<State, Action> {
-    EmptyReducer()._ifLet(state: self.toGameState, action: self.toGameAction) {
-      Game()
-    }
-    .haptics(
-      isEnabled: { _ in self.userSettings().enableHaptics },
-      triggerOnChangeOf: { self.toGameState.extract(from: $0)?.selectedWord }
-    )
-  }
-}
-
 extension Game.State {
   public var displayTitle: String {
     switch self.gameContext {
