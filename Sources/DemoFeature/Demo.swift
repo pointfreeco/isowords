@@ -27,12 +27,9 @@ public struct Demo: Reducer {
     }
 
     var isGameOver: Bool {
-      switch self.step {
-      case let .game(game):
-        return /Game.Destination.State.gameOver ~= game.destination
-      case .onboarding:
-        return false
-      }
+      guard case let .game(game) = self.step, case .gameOver = game.destination
+      else { return false }
+      return true
     }
   }
 
