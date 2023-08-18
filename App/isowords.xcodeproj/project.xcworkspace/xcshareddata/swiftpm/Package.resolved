@@ -1,322 +1,320 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "async-kit",
-        "repositoryURL": "https://github.com/vapor/async-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "a61da00d404ec91d12766f1b9aac7d90777b484d",
-          "version": "1.17.0"
-        }
-      },
-      {
-        "package": "Cryptor",
-        "repositoryURL": "https://github.com/IBM-Swift/BlueCryptor.git",
-        "state": {
-          "branch": null,
-          "revision": "ee5880e031da4c609f372cf7472476ab51d5dd19",
-          "version": "1.0.200"
-        }
-      },
-      {
-        "package": "combine-schedulers",
-        "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
-        "state": {
-          "branch": null,
-          "revision": "9dc9cbe4bc45c65164fa653a563d8d8db61b09bb",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "postgres-kit",
-        "repositoryURL": "https://github.com/vapor/postgres-kit",
-        "state": {
-          "branch": null,
-          "revision": "cbbe3ef8a0a8800301b8b76ab0f09dfc9e7306a2",
-          "version": "2.2.0"
-        }
-      },
-      {
-        "package": "postgres-nio",
-        "repositoryURL": "https://github.com/vapor/postgres-nio.git",
-        "state": {
-          "branch": null,
-          "revision": "5d93f3e05f0493441ad46f6d7a76109ff685329c",
-          "version": "1.13.0"
-        }
-      },
-      {
-        "package": "sql-kit",
-        "repositoryURL": "https://github.com/vapor/sql-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "d547122756534d8224d4599739da0e82e4695623",
-          "version": "3.25.0"
-        }
-      },
-      {
-        "package": "swift-atomics",
-        "repositoryURL": "https://github.com/apple/swift-atomics.git",
-        "state": {
-          "branch": null,
-          "revision": "6c89474e62719ddcc1e9614989fff2f68208fe10",
-          "version": "1.1.0"
-        }
-      },
-      {
-        "package": "swift-backtrace",
-        "repositoryURL": "https://github.com/swift-server/swift-backtrace",
-        "state": {
-          "branch": null,
-          "revision": "f2fd8c4845a123419c348e0bc4b3839c414077d5",
-          "version": "1.2.0"
-        }
-      },
-      {
-        "package": "swift-case-paths",
-        "repositoryURL": "https://github.com/pointfreeco/swift-case-paths",
-        "state": {
-          "branch": null,
-          "revision": "5da6989aae464f324eef5c5b52bdb7974725ab81",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "swift-clocks",
-        "repositoryURL": "https://github.com/pointfreeco/swift-clocks",
-        "state": {
-          "branch": null,
-          "revision": "d1fd837326aa719bee979bdde1f53cd5797443eb",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "swift-collections",
-        "repositoryURL": "https://github.com/apple/swift-collections",
-        "state": {
-          "branch": null,
-          "revision": "937e904258d22af6e447a0b72c0bc67583ef64a2",
-          "version": "1.0.4"
-        }
-      },
-      {
-        "package": "swift-composable-architecture",
-        "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture",
-        "state": {
-          "branch": null,
-          "revision": "f62ba37cc0c51acb89f6dd1f552f6a1f9c58027c",
-          "version": "1.1.0"
-        }
-      },
-      {
-        "package": "swift-concurrency-extras",
-        "repositoryURL": "https://github.com/pointfreeco/swift-concurrency-extras",
-        "state": {
-          "branch": null,
-          "revision": "ea631ce892687f5432a833312292b80db238186a",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "swift-crypto",
-        "repositoryURL": "https://github.com/apple/swift-crypto",
-        "state": {
-          "branch": null,
-          "revision": "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
-          "version": "1.1.7"
-        }
-      },
-      {
-        "package": "swift-custom-dump",
-        "repositoryURL": "https://github.com/pointfreeco/swift-custom-dump",
-        "state": {
-          "branch": null,
-          "revision": "edd66cace818e1b1c6f1b3349bb1d8e00d6f8b01",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "swift-dependencies",
-        "repositoryURL": "https://github.com/pointfreeco/swift-dependencies",
-        "state": {
-          "branch": null,
-          "revision": "4e1eb6e28afe723286d8cc60611237ffbddba7c5",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "swift-gen",
-        "repositoryURL": "https://github.com/pointfreeco/swift-gen",
-        "state": {
-          "branch": null,
-          "revision": "5bd20fb662e1ead7ee47df6bb0a15398295f2e06",
-          "version": "0.4.0"
-        }
-      },
-      {
-        "package": "swift-html",
-        "repositoryURL": "https://github.com/pointfreeco/swift-html",
-        "state": {
-          "branch": "14d01d1",
-          "revision": "14d01d19e43598167a8f8965af478285835ca010",
-          "version": null
-        }
-      },
-      {
-        "package": "swift-identified-collections",
-        "repositoryURL": "https://github.com/pointfreeco/swift-identified-collections",
-        "state": {
-          "branch": null,
-          "revision": "d1e45f3e1eee2c9193f5369fa9d70a6ddad635e8",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "swift-log",
-        "repositoryURL": "https://github.com/apple/swift-log.git",
-        "state": {
-          "branch": null,
-          "revision": "32e8d724467f8fe623624570367e3d50c5638e46",
-          "version": "1.5.2"
-        }
-      },
-      {
-        "package": "swift-metrics",
-        "repositoryURL": "https://github.com/apple/swift-metrics.git",
-        "state": {
-          "branch": null,
-          "revision": "e8bced74bc6d747745935e469f45d03f048d6cbd",
-          "version": "2.3.4"
-        }
-      },
-      {
-        "package": "swift-nio",
-        "repositoryURL": "https://github.com/apple/swift-nio.git",
-        "state": {
-          "branch": null,
-          "revision": "e0cc6dd6ffa8e6a6f565938acd858b24e47902d0",
-          "version": "2.50.0"
-        }
-      },
-      {
-        "package": "swift-nio-extras",
-        "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
-        "state": {
-          "branch": null,
-          "revision": "0e0d0aab665ff1a0659ce75ac003081f2b1c8997",
-          "version": "1.19.0"
-        }
-      },
-      {
-        "package": "swift-nio-ssl",
-        "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
-        "state": {
-          "branch": null,
-          "revision": "9d0d5d8798a576fbf674a823734e65e15ca5f2ec",
-          "version": "2.23.1"
-        }
-      },
-      {
-        "package": "swift-nio-transport-services",
-        "repositoryURL": "https://github.com/apple/swift-nio-transport-services.git",
-        "state": {
-          "branch": null,
-          "revision": "59b966415dd336db6f388bbfe3fb43cfa549b981",
-          "version": "1.16.0"
-        }
-      },
-      {
-        "package": "Overture",
-        "repositoryURL": "https://github.com/pointfreeco/swift-overture",
-        "state": {
-          "branch": null,
-          "revision": "7977acd7597f413717058acc1e080731249a1d7e",
-          "version": "0.5.0"
-        }
-      },
-      {
-        "package": "swift-parsing",
-        "repositoryURL": "https://github.com/pointfreeco/swift-parsing",
-        "state": {
-          "branch": null,
-          "revision": "a0e7d73f462c1c38c59dc40a3969ac40cea42950",
-          "version": "0.13.0"
-        }
-      },
-      {
-        "package": "swift-prelude",
-        "repositoryURL": "https://github.com/pointfreeco/swift-prelude",
-        "state": {
-          "branch": "7ff9911",
-          "revision": "7ff9911580b2f9b7ead5375099781f28b8aad6a8",
-          "version": null
-        }
-      },
-      {
-        "package": "swift-snapshot-testing",
-        "repositoryURL": "https://github.com/pointfreeco/swift-snapshot-testing",
-        "state": {
-          "branch": null,
-          "revision": "cef5b3f6f11781dd4591bdd1dd0a3d22bd609334",
-          "version": "1.11.0"
-        }
-      },
-      {
-        "package": "swift-tagged",
-        "repositoryURL": "https://github.com/pointfreeco/swift-tagged",
-        "state": {
-          "branch": null,
-          "revision": "3907a9438f5b57d317001dc99f3f11b46882272b",
-          "version": "0.10.0"
-        }
-      },
-      {
-        "package": "swift-url-routing",
-        "repositoryURL": "https://github.com/pointfreeco/swift-url-routing",
-        "state": {
-          "branch": null,
-          "revision": "13f65cec4de950ba30f08d9bc4abcfa41f9479b9",
-          "version": "0.6.0"
-        }
-      },
-      {
-        "package": "swift-web",
-        "repositoryURL": "https://github.com/pointfreeco/swift-web",
-        "state": {
-          "branch": "2ad82ec",
-          "revision": "2ad82ec94983029566d009f12dca8d235983616a",
-          "version": null
-        }
-      },
-      {
-        "package": "SwiftAWSSignatureV4",
-        "repositoryURL": "https://github.com/crspybits/SwiftAWSSignatureV4",
-        "state": {
-          "branch": null,
-          "revision": "c66f2db1211ad1969e3d11791b9de62361c78f45",
-          "version": "1.2.1"
-        }
-      },
-      {
-        "package": "swiftui-navigation",
-        "repositoryURL": "https://github.com/pointfreeco/swiftui-navigation",
-        "state": {
-          "branch": null,
-          "revision": "f5bcdac5b6bb3f826916b14705f37a3937c2fd34",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "xctest-dynamic-overlay",
-        "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
-        "state": {
-          "branch": null,
-          "revision": "23cbf2294e350076ea4dbd7d5d047c1e76b03631",
-          "version": "1.0.2"
-        }
+  "pins" : [
+    {
+      "identity" : "async-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/async-kit.git",
+      "state" : {
+        "revision" : "a61da00d404ec91d12766f1b9aac7d90777b484d",
+        "version" : "1.17.0"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "bluecryptor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/IBM-Swift/BlueCryptor.git",
+      "state" : {
+        "revision" : "ee5880e031da4c609f372cf7472476ab51d5dd19",
+        "version" : "1.0.200"
+      }
+    },
+    {
+      "identity" : "combine-schedulers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/combine-schedulers",
+      "state" : {
+        "revision" : "9dc9cbe4bc45c65164fa653a563d8d8db61b09bb",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "postgres-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/postgres-kit",
+      "state" : {
+        "revision" : "cbbe3ef8a0a8800301b8b76ab0f09dfc9e7306a2",
+        "version" : "2.2.0"
+      }
+    },
+    {
+      "identity" : "postgres-nio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/postgres-nio.git",
+      "state" : {
+        "revision" : "5d93f3e05f0493441ad46f6d7a76109ff685329c",
+        "version" : "1.13.0"
+      }
+    },
+    {
+      "identity" : "sql-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/sql-kit.git",
+      "state" : {
+        "revision" : "d547122756534d8224d4599739da0e82e4695623",
+        "version" : "3.25.0"
+      }
+    },
+    {
+      "identity" : "swift-atomics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-atomics.git",
+      "state" : {
+        "revision" : "6c89474e62719ddcc1e9614989fff2f68208fe10",
+        "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "swift-backtrace",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-server/swift-backtrace",
+      "state" : {
+        "revision" : "f2fd8c4845a123419c348e0bc4b3839c414077d5",
+        "version" : "1.2.0"
+      }
+    },
+    {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths",
+      "state" : {
+        "revision" : "5da6989aae464f324eef5c5b52bdb7974725ab81",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-clocks",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-clocks",
+      "state" : {
+        "revision" : "d1fd837326aa719bee979bdde1f53cd5797443eb",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "937e904258d22af6e447a0b72c0bc67583ef64a2",
+        "version" : "1.0.4"
+      }
+    },
+    {
+      "identity" : "swift-composable-architecture",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-composable-architecture",
+      "state" : {
+        "revision" : "f62ba37cc0c51acb89f6dd1f552f6a1f9c58027c",
+        "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "swift-concurrency-extras",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
+      "state" : {
+        "revision" : "ea631ce892687f5432a833312292b80db238186a",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-crypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-crypto",
+      "state" : {
+        "revision" : "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
+        "version" : "1.1.7"
+      }
+    },
+    {
+      "identity" : "swift-custom-dump",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-custom-dump",
+      "state" : {
+        "revision" : "edd66cace818e1b1c6f1b3349bb1d8e00d6f8b01",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-dependencies",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-dependencies",
+      "state" : {
+        "revision" : "4e1eb6e28afe723286d8cc60611237ffbddba7c5",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-gen",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-gen",
+      "state" : {
+        "revision" : "5bd20fb662e1ead7ee47df6bb0a15398295f2e06",
+        "version" : "0.4.0"
+      }
+    },
+    {
+      "identity" : "swift-html",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-html",
+      "state" : {
+        "branch" : "14d01d1",
+        "revision" : "14d01d19e43598167a8f8965af478285835ca010"
+      }
+    },
+    {
+      "identity" : "swift-identified-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-identified-collections",
+      "state" : {
+        "revision" : "d1e45f3e1eee2c9193f5369fa9d70a6ddad635e8",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log.git",
+      "state" : {
+        "revision" : "32e8d724467f8fe623624570367e3d50c5638e46",
+        "version" : "1.5.2"
+      }
+    },
+    {
+      "identity" : "swift-metrics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-metrics.git",
+      "state" : {
+        "revision" : "e8bced74bc6d747745935e469f45d03f048d6cbd",
+        "version" : "2.3.4"
+      }
+    },
+    {
+      "identity" : "swift-nio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio.git",
+      "state" : {
+        "revision" : "e0cc6dd6ffa8e6a6f565938acd858b24e47902d0",
+        "version" : "2.50.0"
+      }
+    },
+    {
+      "identity" : "swift-nio-extras",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-extras.git",
+      "state" : {
+        "revision" : "0e0d0aab665ff1a0659ce75ac003081f2b1c8997",
+        "version" : "1.19.0"
+      }
+    },
+    {
+      "identity" : "swift-nio-ssl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-ssl.git",
+      "state" : {
+        "revision" : "9d0d5d8798a576fbf674a823734e65e15ca5f2ec",
+        "version" : "2.23.1"
+      }
+    },
+    {
+      "identity" : "swift-nio-transport-services",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-transport-services.git",
+      "state" : {
+        "revision" : "59b966415dd336db6f388bbfe3fb43cfa549b981",
+        "version" : "1.16.0"
+      }
+    },
+    {
+      "identity" : "swift-overture",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-overture",
+      "state" : {
+        "revision" : "7977acd7597f413717058acc1e080731249a1d7e",
+        "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "swift-parsing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-parsing",
+      "state" : {
+        "revision" : "a0e7d73f462c1c38c59dc40a3969ac40cea42950",
+        "version" : "0.13.0"
+      }
+    },
+    {
+      "identity" : "swift-prelude",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-prelude",
+      "state" : {
+        "branch" : "7ff9911",
+        "revision" : "7ff9911580b2f9b7ead5375099781f28b8aad6a8"
+      }
+    },
+    {
+      "identity" : "swift-snapshot-testing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-snapshot-testing",
+      "state" : {
+        "revision" : "cef5b3f6f11781dd4591bdd1dd0a3d22bd609334",
+        "version" : "1.11.0"
+      }
+    },
+    {
+      "identity" : "swift-tagged",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-tagged",
+      "state" : {
+        "revision" : "3907a9438f5b57d317001dc99f3f11b46882272b",
+        "version" : "0.10.0"
+      }
+    },
+    {
+      "identity" : "swift-url-routing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-url-routing",
+      "state" : {
+        "revision" : "13f65cec4de950ba30f08d9bc4abcfa41f9479b9",
+        "version" : "0.6.0"
+      }
+    },
+    {
+      "identity" : "swift-web",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-web",
+      "state" : {
+        "branch" : "2ad82ec",
+        "revision" : "2ad82ec94983029566d009f12dca8d235983616a"
+      }
+    },
+    {
+      "identity" : "swiftawssignaturev4",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/crspybits/SwiftAWSSignatureV4",
+      "state" : {
+        "revision" : "c66f2db1211ad1969e3d11791b9de62361c78f45",
+        "version" : "1.2.1"
+      }
+    },
+    {
+      "identity" : "swiftui-navigation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swiftui-navigation",
+      "state" : {
+        "revision" : "f5bcdac5b6bb3f826916b14705f37a3937c2fd34",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "xctest-dynamic-overlay",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "state" : {
+        "revision" : "23cbf2294e350076ea4dbd7d5d047c1e76b03631",
+        "version" : "1.0.2"
+      }
+    }
+  ],
+  "version" : 2
 }
