@@ -2,13 +2,27 @@ import Combine
 import Dependencies
 import UIKit
 
+@dynamicMemberLookup
 public struct UserSettingsClient {
   public var get: @Sendable () -> UserSettings
   public var set: @Sendable (UserSettings) async -> Void
-  public var stream: @Sendable () async -> AsyncStream<UserSettings>
+  public var stream: @Sendable () -> AsyncStream<UserSettings>
 
-  // setting: (KeyPath<UserSettings, A>) -> A
-  //var setting: @Sendable (KeyPath<UserSettings, A>) -> AsyncStream<A>
+  public subscript<Value>(dynamicMember keyPath: KeyPath<UserSettings, Value>) -> Value {
+    self.get()[keyPath: keyPath]
+  }
+
+  public subscript<Value>(
+    dynamicMember keyPath: KeyPath<UserSettings, Value>
+  ) -> AsyncStream<Value> {
+    self.stream().map { $0[keyPath: keyPath] }.eraseToStream()
+  }
+
+  public func modify(_ operation: (inout UserSettings) -> Void) async {
+    var userSettings = self.get()
+    operation(&userSettings)
+    await self.set(userSettings)
+  }
 }
 
 extension UserSettingsClient: DependencyKey {

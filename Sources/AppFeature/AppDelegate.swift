@@ -22,7 +22,7 @@ public struct AppDelegateReducer: Reducer {
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
   @Dependency(\.userNotifications) var userNotifications
-  @Dependency(\.userSettings.get) var userSettings
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -63,7 +63,6 @@ public struct AppDelegateReducer: Reducer {
             }
 
             group.addTask {
-              let userSettings = userSettings()
               await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
               await self.audioPlayer.setGlobalVolumeForMusic(
                 self.audioPlayer.secondaryAudioShouldBeSilencedHint()

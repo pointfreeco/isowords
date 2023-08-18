@@ -106,17 +106,17 @@ public struct Game: Reducer {
       selectedWordIsValid: Bool = false,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
-      @Dependency(\.userSettings.get) var userSettings
+      @Dependency(\.userSettings) var userSettings
       self.activeGames = activeGames
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.destination = destination
-      self.enableGyroMotion = userSettings().enableGyroMotion
+      self.enableGyroMotion = userSettings.enableGyroMotion
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
       self.gameStartTime = gameStartTime
-      self.isAnimationReduced = userSettings().enableReducedAnimation
+      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
       self.isOnLowPowerMode = isOnLowPowerMode
@@ -381,7 +381,7 @@ public struct Game: Reducer {
             }
 
             group.addTask {
-              for await userSettings in await self.userSettings.stream() {
+              for await userSettings in self.userSettings.stream() {
                 await send(.userSettingsUpdated(userSettings))
               }
             }

@@ -161,7 +161,7 @@ public struct Onboarding: Reducer {
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userSettings.get) var userSettings
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -359,7 +359,7 @@ public struct Onboarding: Reducer {
     Scope(state: \.game, action: /Action.game) {
       Game()
         .haptics(
-          isEnabled: { _ in self.userSettings().enableHaptics },
+          isEnabled: { _ in self.userSettings.enableHaptics },
           triggerOnChangeOf: \.selectedWord
         )
     }

@@ -4,9 +4,7 @@ import SwiftUI
 public struct CubeView: View {
   public let store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>
 
-  public init(
-    store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>
-  ) {
+  public init(store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>) {
     self.store = store
   }
 

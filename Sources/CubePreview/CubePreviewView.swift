@@ -28,13 +28,13 @@ public struct CubePreview: Reducer {
       nub: CubeSceneView.ViewState.NubState = .init(),
       selectedCubeFaces: [IndexedCubeFace] = []
     ) {
-      @Dependency(\.userSettings.get) var userSettings
+      @Dependency(\.userSettings) var userSettings
 
       self.cubes = .init(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
-      self.enableGyroMotion = userSettings().enableGyroMotion
-      self.isAnimationReduced = userSettings().enableReducedAnimation
+      self.enableGyroMotion = userSettings.enableGyroMotion
+      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
@@ -62,7 +62,7 @@ public struct CubePreview: Reducer {
 
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.userSettings.get) var userSettings
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -155,7 +155,7 @@ public struct CubePreview: Reducer {
       }
     }
     .haptics(
-      isEnabled: { _ in self.userSettings().enableHaptics },
+      isEnabled: { _ in self.userSettings.enableHaptics },
       triggerOnChangeOf: \.selectedCubeFaces
     )
     .selectionSounds(
