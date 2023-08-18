@@ -67,6 +67,7 @@ public struct Game: Reducer {
     public var gameCurrentTime: Date
     public var gameMode: GameMode
     public var gameStartTime: Date
+    public var enableGyroMotion: Bool
     public var isAnimationReduced: Bool
     public var isDemo: Bool
     public var isGameLoaded: Bool
@@ -103,16 +104,17 @@ public struct Game: Reducer {
       selectedWordIsValid: Bool = false,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
-      @Dependency(\.userSettings) var userSettings
+      @Dependency(\.userSettings.get) var userSettings
       self.activeGames = activeGames
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.destination = destination
+      self.enableGyroMotion = userSettings().enableGyroMotion
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
       self.gameStartTime = gameStartTime
-      self.isAnimationReduced = userSettings.get().enableReducedAnimation
+      self.isAnimationReduced = userSettings().enableReducedAnimation
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
       self.isOnLowPowerMode = isOnLowPowerMode
@@ -175,7 +177,6 @@ public struct Game: Reducer {
     case doubleTap(index: LatticePoint)
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case isAnimationReducedUpdated(Bool)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
@@ -186,6 +187,7 @@ public struct Game: Reducer {
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
+    case userSettingsUpdated(UserSettings)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
@@ -327,10 +329,6 @@ public struct Game: Reducer {
           }
         }
 
-      case let .isAnimationReducedUpdated(isEnabled):
-        state.isAnimationReduced = isEnabled
-        return .none
-
       case let .lowPowerModeChanged(isOn):
         state.isOnLowPowerMode = isOn
         return .none
@@ -379,7 +377,7 @@ public struct Game: Reducer {
 
             group.addTask {
               for await userSettings in await self.userSettings.stream() {
-                await send(.isAnimationReducedUpdated(userSettings.enableReducedAnimation))
+                await send(.userSettingsUpdated(userSettings))
               }
             }
           }
@@ -533,6 +531,11 @@ public struct Game: Reducer {
         return .none
 
       case .trayButtonTapped:
+        return .none
+
+      case let .userSettingsUpdated(userSettings):
+        state.enableGyroMotion = userSettings.enableGyroMotion
+        state.isAnimationReduced = userSettings.enableReducedAnimation
         return .none
 
       case .wordSubmitButton:

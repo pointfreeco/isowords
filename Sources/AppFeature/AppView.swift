@@ -341,36 +341,18 @@ public struct AppView: View {
         .zIndex(0)
       } else {
         IfLetStore(
-          self.store.scope(
-            state: { appState in
-              appState.game.map {
-                (
-                  game: $0,
-                  nub: CubeSceneView.ViewState.NubState?.none,
-                  settings: CubeSceneView.ViewState.Settings(
-                    enableGyroMotion: appState.home.settings.userSettings.enableGyroMotion
-                  )
-                )
-              }
-            },
-            action: { $0 }
-          ),
-          then: { gameAndSettingsStore in
-            IfLetStore(
-              self.store.scope(state: \.$game, action: { .game($0) })
-            ) { store in
-              GameView(
-                content: CubeView(
-                  store: gameAndSettingsStore.scope(
-                    state: CubeSceneView.ViewState.init(game:nub:settings:),
-                    action: { .game(.presented(CubeSceneView.ViewAction.to(gameAction: $0))) }
-                  )
-                ),
-                store: store
+          self.store.scope(state: \.$game, action: { .game($0) })
+        ) { store in
+          GameView(
+            content: CubeView(
+              store: store.scope(
+                state: { CubeSceneView.ViewState(game: $0) },
+                action: { CubeSceneView.ViewAction.to(gameAction: $0) }
               )
-            }
-          }
-        )
+            ),
+            store: store
+          )
+        }
         .transition(.game)
         .zIndex(1)
 

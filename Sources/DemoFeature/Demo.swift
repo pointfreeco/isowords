@@ -162,7 +162,7 @@ public struct DemoView: View {
             content: GameView(
               content: CubeView(
                 store: store.scope(
-                  state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
+                  state: { CubeSceneView.ViewState(game: $0, nub: nil) },
                   action: { CubeSceneView.ViewAction.to(gameAction: $0) }
                 )
               ),

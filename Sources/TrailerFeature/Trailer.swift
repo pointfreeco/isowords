@@ -49,24 +49,26 @@ public struct Trailer: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    IntegratedGame(state: \State.game, action: /Action.game, isHapticsEnabled: { _ in true })
-      .dependency(\.apiClient, .noop)
-      .dependency(\.applicationClient, .noop)
-      .dependency(
-        \.audioPlayer,
-        self.audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
-      )
-      .dependency(\.build, .noop)
-      .dependency(\.database, .noop)
-      .dependency(\.feedbackGenerator, .noop)
-      .dependency(\.fileClient, .noop)
-      .dependency(\.gameCenter, .noop)
-      .dependency(\.lowPowerMode, .false)
-      .dependency(\.remoteNotifications, .noop)
-      .dependency(\.serverConfig, .noop)
-      .dependency(\.storeKit, .noop)
-      .dependency(\.userDefaults, .noop)
-      .dependency(\.userNotifications, .noop)
+    Scope(state: \.game, action: /Action.game) {
+      Game()    
+        .dependency(\.apiClient, .noop)
+        .dependency(\.applicationClient, .noop)
+        .dependency(
+          \.audioPlayer,
+          self.audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
+        )
+        .dependency(\.build, .noop)
+        .dependency(\.database, .noop)
+        .dependency(\.feedbackGenerator, .noop)
+        .dependency(\.fileClient, .noop)
+        .dependency(\.gameCenter, .noop)
+        .dependency(\.lowPowerMode, .false)
+        .dependency(\.remoteNotifications, .noop)
+        .dependency(\.serverConfig, .noop)
+        .dependency(\.storeKit, .noop)
+        .dependency(\.userDefaults, .noop)
+        .dependency(\.userNotifications, .noop)
+    }
 
     BindingReducer()
 
@@ -79,7 +81,8 @@ public struct Trailer: Reducer {
         return .none
 
       case .task:
-        return .run { send in
+        return .run { [nub = state.nub] send in
+          var nub = nub
           await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
 
           // Play trailer music
@@ -96,8 +99,9 @@ public struct Trailer: Reducer {
               let face = IndexedCubeFace(index: character.index, side: character.side)
 
               // Move the nub to the face being played
+              nub.location = .face(face)
               await send(
-                .set(\.$nub.location, .face(face)),
+                .set(\.$nub, nub),
                 animateWithDuration: moveNubToFaceDuration,
                 options: .curveEaseInOut
               )
@@ -110,20 +114,24 @@ public struct Trailer: Reducer {
                   .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
               )
               // Press the nub on the first character
+              nub.isPressed = true
               if characterIndex == 0 {
-                await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
+                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
               }
               // Select the cube face
               await send(.game(.tap(.began, face)), animation: .default)
             }
 
             // Release the  nub when the last character is played
-            await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
+            nub.isPressed = false
+            await send(.set(\.$nub, nub), animateWithDuration: 0.3)
 
             // Move the nub to the submit button
             try await self.mainQueue.sleep(for: .seconds(0.3))
+
+            nub.location = .submitButton
             await send(
-              .set(\.$nub.location, .submitButton),
+              .set(\.$nub, nub),
               animateWithDuration: moveNubToSubmitButtonDuration,
               options: .curveEaseInOut
             )
@@ -142,22 +150,27 @@ public struct Trailer: Reducer {
             // Submit the word
             try await self.mainQueue.sleep(for: .seconds(0.1))
             await withThrowingTaskGroup(of: Void.self) { group in
-              group.addTask {
-                await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
+              group.addTask { [nub] in
+                var nub = nub
+                nub.isPressed = true
+                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
               }
-              group.addTask {
+              group.addTask { [nub] in
+                var nub = nub
                 try await self.mainQueue.sleep(for: .seconds(0.2))
                 await send(.game(.submitButtonTapped(reaction: nil)))
                 try await self.mainQueue.sleep(for: .seconds(0.3))
-                await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
+                nub.isPressed = false
+                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
               }
             }
           }
 
           // Move the nub off screen once all words have been played
           try await self.mainQueue.sleep(for: .seconds(0.3))
+          nub.location = .offScreenBottom
           await send(
-            .set(\.$nub.location, .offScreenBottom),
+            .set(\.$nub, nub),
             animateWithDuration: moveNubOffScreenDuration,
             options: .curveEaseInOut
           )
@@ -250,7 +263,7 @@ public struct TrailerView: View {
 
         CubeView(
           store: self.store.scope(
-            state: { CubeSceneView.ViewState(game: $0.game, nub: $0.nub, settings: .init()) },
+            state: { CubeSceneView.ViewState(game: $0.game, nub: $0.nub) },
             action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
           )
         )

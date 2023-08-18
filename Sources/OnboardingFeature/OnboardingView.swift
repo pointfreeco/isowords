@@ -417,7 +417,7 @@ public struct OnboardingView: View {
 }
 
 private func cubeSceneViewState(onboardingState: Onboarding.State) -> CubeSceneView.ViewState {
-  var viewState = CubeSceneView.ViewState(game: onboardingState.game, nub: nil, settings: .init())
+  var viewState = CubeSceneView.ViewState(game: onboardingState.game, nub: nil)
 
   LatticePoint.cubeIndices.forEach { index in
     CubeFace.Side.allCases.forEach { side in

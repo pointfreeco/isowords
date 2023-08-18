@@ -25,7 +25,7 @@ public struct Home: Reducer {
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())
-      case leaderboard(Leaderboard.State)
+      case leaderboard(Leaderboard.State = .init())
       case multiplayer(Multiplayer.State)
       case settings(Settings.State = Settings.State())
       case solo(Solo.State = .init())
@@ -291,13 +291,7 @@ public struct Home: Reducer {
       return .none
 
     case .leaderboardButtonTapped:
-      state.destination = .leaderboard(
-        .init(
-          settings: .init(
-            enableGyroMotion: state.settings.userSettings.enableGyroMotion
-          )
-        )
-      )
+      state.destination = .leaderboard()
       return .none
 
     case .multiplayerButtonTapped:

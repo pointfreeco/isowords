@@ -12,32 +12,32 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     public typealias ViewPuzzle = Three<Three<Three<CubeNode.ViewState>>>
 
     public var cubes: ViewPuzzle
+    public var enableGyroMotion: Bool
     public var isOnLowPowerMode: Bool
     public var nub: NubState?
     public var playedWords: [PlayedWord]
     public var selectedFaceCount: Int
     public var selectedWordIsValid: Bool
     public var selectedWordString: String
-    public var settings: Settings
 
     public init(
       cubes: ViewPuzzle,
+      enableGyroMotion: Bool,
       isOnLowPowerMode: Bool,
       nub: NubState?,
       playedWords: [PlayedWord],
       selectedFaceCount: Int,
       selectedWordIsValid: Bool,
-      selectedWordString: String,
-      settings: Settings
+      selectedWordString: String
     ) {
       self.cubes = cubes
+      self.enableGyroMotion = enableGyroMotion
       self.isOnLowPowerMode = isOnLowPowerMode
       self.nub = nub
       self.playedWords = playedWords
       self.selectedFaceCount = selectedFaceCount
       self.selectedWordIsValid = selectedWordIsValid
       self.selectedWordString = selectedWordString
-      self.settings = settings
     }
 
     public struct NubState: Equatable {
@@ -60,19 +60,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         case offScreenBottom
         case offScreenRight
         case submitButton
-      }
-    }
-
-    public struct Settings: Equatable {
-      public var enableGyroMotion: Bool
-      public var showSceneStatistics: Bool
-
-      public init(
-        enableGyroMotion: Bool = true,
-        showSceneStatistics: Bool = false
-      ) {
-        self.enableGyroMotion = enableGyroMotion
-        self.showSceneStatistics = showSceneStatistics
       }
     }
   }
@@ -210,15 +197,15 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
     self.viewStore.publisher
-      .map { ($0.settings, $0.isOnLowPowerMode) }
+      .map { ($0.enableGyroMotion, $0.isOnLowPowerMode) }
       .removeDuplicates(by: ==)
-      .sink { [weak self] settings, isOnLowPowerMode in
+      .sink { [weak self] enableGyroMotion, isOnLowPowerMode in
         guard let self = self else { return }
 
         self.showsStatistics = self.showSceneStatistics
         light.castsShadow = self.enableCubeShadow && !isOnLowPowerMode
 
-        if isOnLowPowerMode || !settings.enableGyroMotion {
+        if isOnLowPowerMode || !enableGyroMotion {
           self.stopMotionManager()
         } else {
           self.startMotionManager()

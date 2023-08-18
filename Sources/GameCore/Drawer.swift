@@ -31,11 +31,11 @@ struct ActiveGamesTray: Reducer {
         .destination,
         .gameCenter,
         .gameLoaded,
-        .isAnimationReducedUpdated,
         .lowPowerModeChanged,
         .matchesLoaded(.failure),
         .savedGamesLoaded(.failure),
-        .timerTick:
+        .timerTick,
+        .userSettingsUpdated:
 
         return .none
 

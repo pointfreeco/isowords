@@ -46,24 +46,18 @@ public struct Leaderboard: Reducer {
 
   public struct State: Equatable {
     @PresentationState public var destination: Destination.State?
-    public var isAnimationReduced: Bool
     public var scope: LeaderboardScope = .games
-    public var settings: CubeSceneView.ViewState.Settings
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
 
     public init(
       destination: Destination.State? = nil,
       scope: LeaderboardScope = .games,
-      settings: CubeSceneView.ViewState.Settings,
       solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
       vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     ) {
-      @Dependency(\.userSettings.get) var userSettings
       self.destination = destination
-      self.isAnimationReduced = userSettings().enableReducedAnimation
       self.scope = scope
-      self.settings = settings
       self.solo = solo
       self.vocab = vocab
     }
@@ -95,8 +89,7 @@ public struct Leaderboard: Reducer {
           CubePreview.State(
             cubes: response.puzzle,
             moveIndex: response.moveIndex,
-            moves: response.moves,
-            settings: state.settings
+            moves: response.moves
           )
         )
         return .none
@@ -338,9 +331,7 @@ extension ResultEnvelope.Result {
       Preview {
         NavigationView {
           LeaderboardView(
-            store: .init(
-              initialState: Leaderboard.State(settings: .init())
-            ) {
+            store: Store(initialState: Leaderboard.State()) {
               Leaderboard().dependency(
                 \.apiClient,
                 update(.noop) {
