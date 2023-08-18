@@ -12,9 +12,7 @@ import XCTest
 @MainActor
 class LeaderboardFeatureTests: XCTestCase {
   func testScopeSwitcher() async {
-    let store = TestStore(
-      initialState: Leaderboard.State(settings: .init())
-    ) {
+    let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
     }
 
@@ -27,9 +25,7 @@ class LeaderboardFeatureTests: XCTestCase {
   }
 
   func testTimeScopeSynchronization() async {
-    let store = TestStore(
-      initialState: Leaderboard.State(settings: .init())
-    ) {
+    let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
     }
 
@@ -101,12 +97,7 @@ class LeaderboardFeatureTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let store = TestStore(
-      initialState: Leaderboard.State(
-        scope: .vocab,
-        settings: .init()
-      )
-    ) {
+    let store = TestStore(initialState: Leaderboard.State(scope: .vocab)) {
       Leaderboard()
     } withDependencies: {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
@@ -129,8 +120,7 @@ class LeaderboardFeatureTests: XCTestCase {
           cubes: .mock,
           isOnLowPowerMode: false,
           moveIndex: 0,
-          moves: [],
-          settings: .init()
+          moves: []
         )
       )
     }

@@ -57,41 +57,41 @@ class PersistenceTests: XCTestCase {
       )
       $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
     }
-    await store.send(.currentGame(.game(.tap(.began, C)))) {
+    await store.send(.game(.presented(.tap(.began, C)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = C
         $0.selectedWord = [C]
       }
     }
-    await store.send(.currentGame(.game(.tap(.ended, C)))) {
+    await store.send(.game(.presented(.tap(.ended, C)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    await store.send(.currentGame(.game(.tap(.began, A)))) {
+    await store.send(.game(.presented(.tap(.began, A)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = A
         $0.selectedWord = [C, A]
       }
     }
-    await store.send(.currentGame(.game(.tap(.ended, A)))) {
+    await store.send(.game(.presented(.tap(.ended, A)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    await store.send(.currentGame(.game(.tap(.began, B)))) {
+    await store.send(.game(.presented(.tap(.began, B)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = B
         $0.selectedWord = [C, A, B]
         $0.selectedWordIsValid = true
       }
     }
-    await store.send(.currentGame(.game(.tap(.ended, B)))) {
+    await store.send(.game(.presented(.tap(.ended, B)))) {
       try XCTUnwrap(&$0.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    await store.send(.currentGame(.game(.submitButtonTapped(reaction: nil)))) {
+    await store.send(.game(.presented(.submitButtonTapped(reaction: nil)))) {
       try XCTUnwrap(&$0.game) {
         $0.moves = [
           .init(
@@ -110,7 +110,7 @@ class PersistenceTests: XCTestCase {
       }
       $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
     }
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.game(.presented(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .bottomMenu(
           .init(
@@ -138,11 +138,10 @@ class PersistenceTests: XCTestCase {
       }
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.exitButtonTapped)))))
+      .game(.presented(.destination(.presented(.bottomMenu(.exitButtonTapped)))))
     ) { appState in
-      try XCTUnwrap(&appState.game) { game in
-        appState.home.savedGames.unlimited = InProgressGame(gameState: game)
-      }
+      let game = try XCTUnwrap(appState.game)
+      appState.home.savedGames.unlimited = InProgressGame(gameState: game)
       appState.game = nil
     }
     try await saves.withValue {
@@ -173,7 +172,7 @@ class PersistenceTests: XCTestCase {
     store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
     store.dependencies.mainQueue = .immediate
 
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.game(.presented(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .bottomMenu(
           .init(
@@ -201,7 +200,7 @@ class PersistenceTests: XCTestCase {
       }
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+      .game(.presented(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
     ) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
@@ -233,7 +232,7 @@ class PersistenceTests: XCTestCase {
     store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
     store.dependencies.mainQueue = .immediate
 
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.game(.presented(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .bottomMenu(
           .init(
@@ -256,7 +255,7 @@ class PersistenceTests: XCTestCase {
       }
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+      .game(.presented(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
     ) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .gameOver(
@@ -325,13 +324,13 @@ class PersistenceTests: XCTestCase {
 
     store.dependencies.audioPlayer.stop = { _ in }
 
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
+    await store.send(.game(.presented(.menuButtonTapped))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .bottomMenu(.gameMenu(state: $0))
       }
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+      .game(.presented(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
     ) {
       try XCTUnwrap(&$0.game) {
         var gameOver = GameOver.State(

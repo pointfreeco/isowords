@@ -6,6 +6,7 @@ import ComposableGameCenter
 @_spi(Concurrency) import Dependencies
 import DictionaryClient
 import GameKit
+import GameCore
 import GameOverFeature
 import HomeKit
 import MultiplayerFeature
@@ -164,10 +165,10 @@ class TurnBasedTests: XCTestCase {
       await store.receive(
         .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
       )
-      let gameTask = await store.send(.currentGame(.game(.task)))
+      let gameTask = await store.send(.game(.presented(.task)))
 
-      await store.receive(.currentGame(.game(.matchesLoaded(.success([])))))
-      await store.receive(.currentGame(.game(.gameLoaded))) {
+      await store.receive(.game(.presented(.matchesLoaded(.success([])))))
+      await store.receive(.game(.presented(.gameLoaded))) {
         try XCTUnwrap(&$0.game) {
           $0.isGameLoaded = true
         }
@@ -182,36 +183,36 @@ class TurnBasedTests: XCTestCase {
       let A = IndexedCubeFace(index: index, side: .left)
       let B = IndexedCubeFace(index: index, side: .right)
 
-      await store.send(.currentGame(.game(.tap(.began, C)))) {
+      await store.send(.game(.presented(.tap(.began, C)))) {
         try XCTUnwrap(&$0.game) {
           $0.optimisticallySelectedFace = C
           $0.selectedWord = [C]
         }
       }
-      await store.send(.currentGame(.game(.tap(.ended, C)))) {
+      await store.send(.game(.presented(.tap(.ended, C)))) {
         try XCTUnwrap(&$0.game) {
           $0.optimisticallySelectedFace = nil
         }
       }
-      await store.send(.currentGame(.game(.tap(.began, A)))) {
+      await store.send(.game(.presented(.tap(.began, A)))) {
         try XCTUnwrap(&$0.game) {
           $0.optimisticallySelectedFace = A
           $0.selectedWord = [C, A]
         }
       }
-      await store.send(.currentGame(.game(.tap(.ended, A)))) {
+      await store.send(.game(.presented(.tap(.ended, A)))) {
         try XCTUnwrap(&$0.game) {
           $0.optimisticallySelectedFace = nil
         }
       }
-      await store.send(.currentGame(.game(.tap(.began, B)))) {
+      await store.send(.game(.presented(.tap(.began, B)))) {
         try XCTUnwrap(&$0.game) {
           $0.optimisticallySelectedFace = B
           $0.selectedWord = [C, A, B]
           $0.selectedWordIsValid = true
         }
       }
-      await store.send(.currentGame(.game(.tap(.ended, B)))) {
+      await store.send(.game(.presented(.tap(.ended, B)))) {
         try XCTUnwrap(&$0.game) {
           $0.optimisticallySelectedFace = nil
         }
@@ -256,7 +257,7 @@ class TurnBasedTests: XCTestCase {
       }
       store.dependencies.gameCenter.turnBasedMatch.load = { _ in updatedMatch }
 
-      await store.send(.currentGame(.game(.submitButtonTapped(reaction: .angel)))) {
+      await store.send(.game(.presented(.submitButtonTapped(reaction: .angel)))) {
         $0.game = updatedGameState
       }
       try await didEndTurnWithRequest.withValue {
@@ -266,7 +267,7 @@ class TurnBasedTests: XCTestCase {
             for: newMatch.matchId,
             matchData: Data(
               turnBasedMatchData: TurnBasedMatchData(
-                context: try XCTUnwrap(store.state.currentGame.game?.turnBasedContext),
+                context: try XCTUnwrap(store.state.game?.turnBasedContext),
                 gameState: try XCTUnwrap(store.state.game),
                 playerId: currentPlayer.player.id
               )
@@ -277,7 +278,7 @@ class TurnBasedTests: XCTestCase {
       }
 
       await store.receive(
-        .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
+        .game(.presented(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
       ) {
         try XCTUnwrap(&$0.game) {
           $0.turnBasedContext = .init(
@@ -570,7 +571,7 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.gameCenter.turnBasedMatch.endTurn = { await didEndTurnWithRequest.setValue($0) }
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
-    await store.send(.currentGame(.game(.doubleTap(index: .zero)))) {
+    await store.send(.game(.presented(.doubleTap(index: .zero)))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .bottomMenu(
           .removeCube(index: .zero, state: $0, isTurnEndingRemoval: false)
@@ -607,12 +608,12 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.confirmRemoveCube(.zero))))))
+      .game(.presented(.destination(.presented(.bottomMenu(.confirmRemoveCube(.zero))))))
     ) {
       $0.game = updatedGameState
     }
     await store.receive(
-      .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
+      .game(.presented(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
     ) {
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
@@ -620,7 +621,7 @@ class TurnBasedTests: XCTestCase {
         }
       }
     }
-    await store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
+    await store.send(.game(.presented(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
       try XCTUnwrap(&$0.game) {
         $0.destination = .bottomMenu(
           .removeCube(
@@ -663,8 +664,8 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.gameCenter.turnBasedMatch.load = { [updatedMatch] _ in updatedMatch }
 
     await store.send(
-      .currentGame(
-        .game(
+      .game(
+        .presented(
           .destination(
             .presented(.bottomMenu(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))
           )
@@ -674,7 +675,7 @@ class TurnBasedTests: XCTestCase {
       $0.game = updatedGameState
     }
     await store.receive(
-      .currentGame(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
+      .game(.presented(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
     ) {
       try XCTUnwrap(&$0.game) {
         try XCTUnwrap(&$0.turnBasedContext) {
@@ -682,7 +683,7 @@ class TurnBasedTests: XCTestCase {
         }
       }
     }
-    await store.send(.currentGame(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
+    await store.send(.game(.presented(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
 
     try await didEndTurnWithRequest.withValue {
       XCTAssertNoDifference(
@@ -758,7 +759,7 @@ class TurnBasedTests: XCTestCase {
     store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
 
     await store.send(
-      .currentGame(.game(.destination(.presented(.gameOver(.rematchButtonTapped)))))
+      .game(.presented(.destination(.presented(.gameOver(.rematchButtonTapped)))))
     ) {
       $0.game = nil
     }
@@ -766,21 +767,18 @@ class TurnBasedTests: XCTestCase {
     await self.mainQueue.advance()
 
     await store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
-      $0.currentGame = GameFeature.State(
-        game: Game.State(
-          cubes: .mock,
-          gameContext: .turnBased(
-            .init(
-              localPlayer: .mock,
-              match: newMatch,
-              metadata: .init(lastOpenedAt: self.mainRunLoop.now.date, playerIndexToId: [:])
-            )
-          ),
-          gameCurrentTime: self.mainRunLoop.now.date,
-          gameMode: .unlimited,
-          gameStartTime: newMatch.creationDate
+      $0.game = Game.State(
+        cubes: .mock,
+        gameContext: .turnBased(
+          .init(
+            localPlayer: .mock,
+            match: newMatch,
+            metadata: .init(lastOpenedAt: self.mainRunLoop.now.date, playerIndexToId: [:])
+          )
         ),
-        settings: $0.home.settings
+        gameCurrentTime: self.mainRunLoop.now.date,
+        gameMode: .unlimited,
+        gameStartTime: newMatch.creationDate
       )
     }
   }

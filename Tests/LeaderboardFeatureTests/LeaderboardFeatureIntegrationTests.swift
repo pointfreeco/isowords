@@ -41,9 +41,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       }
       let middleware = siteMiddleware(environment: siteEnvironment)
 
-      let store = TestStore(
-        initialState: Leaderboard.State(settings: .init())
-      ) {
+      let store = TestStore(initialState: Leaderboard.State()) {
         Leaderboard()
       }
 
@@ -99,9 +97,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let store = TestStore(
-      initialState: Leaderboard.State(settings: .init())
-    ) {
+    let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
     }
 

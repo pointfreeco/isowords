@@ -1,6 +1,7 @@
 import ClientModels
 import ComposableArchitecture
 import Foundation
+import GameCore
 import Overture
 import SettingsFeature
 import SharedModels

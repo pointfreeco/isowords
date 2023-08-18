@@ -543,12 +543,9 @@ class CubeViewTests: XCTestCase {
             gameCurrentTime: .mock,
             gameMode: .unlimited,
             gameStartTime: .mock
-          ),
-          nub: nil,
-          settings: .init()
+          )
         )
       ) {
-
       }
     )
 

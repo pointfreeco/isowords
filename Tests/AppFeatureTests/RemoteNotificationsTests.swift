@@ -2,7 +2,7 @@ import ClientModels
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
-import GameFeature
+import GameCore
 import Overture
 import UserNotifications
 import XCTest
