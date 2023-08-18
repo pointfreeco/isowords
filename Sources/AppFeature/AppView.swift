@@ -225,13 +225,6 @@ public struct AppReducer: Reducer {
         }
 
       case .destination(
-        .presented(.game(.destination(.presented(.bottomMenu(.exitButtonTapped)))))
-      ),
-        .destination(.presented(.game(.destination(.presented(.gameOver(.delegate(.close))))))):
-        state.destination = nil
-        return .none
-
-      case .destination(
         .presented(.game(.destination(.presented(.gameOver(.delegate(.startSoloGame(.timed)))))))
       ),
         .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
@@ -257,15 +250,15 @@ public struct AppReducer: Reducer {
         state.destination = .game(
           state.home.savedGames.unlimited
             .map { Game.State(inProgressGame: $0) }
-          ?? Game.State(
-            cubes: self.randomCubes(.en),
-            gameContext: .solo,
-            gameCurrentTime: self.now,
-            gameMode: .unlimited,
-            gameStartTime: self.now,
-            isGameLoaded: (/Destination.State.game).extract(from: state.destination)?
-              .isGameLoaded == .some(true)
-          )
+            ?? Game.State(
+              cubes: self.randomCubes(.en),
+              gameContext: .solo,
+              gameCurrentTime: self.now,
+              gameMode: .unlimited,
+              gameStartTime: self.now,
+              isGameLoaded: (/Destination.State.game).extract(from: state.destination)?
+                .isGameLoaded == .some(true)
+            )
         )
         return .none
 

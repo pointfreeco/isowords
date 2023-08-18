@@ -130,7 +130,10 @@ class PersistenceTests: XCTestCase {
       .destination(.presented(.game(.destination(.presented(.bottomMenu(.exitButtonTapped))))))
     ) {
       let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = nil
       $0.home.savedGames.unlimited = InProgressGame(gameState: game)
+    }
+    await store.receive(.destination(.dismiss)) {
       $0.destination = nil
     }
     try await saves.withValue {

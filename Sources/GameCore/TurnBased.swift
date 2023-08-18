@@ -72,10 +72,6 @@ struct TurnBasedLogic: Reducer {
       case .gameCenter(.turnBasedMatchResponse(.failure)):
         return .none
 
-      case .destination(.presented(.gameOver(.delegate(.close)))),
-        .destination(.presented(.bottomMenu(.exitButtonTapped))):
-        return .none
-
       case .task:
         return .run { send in
           for await event in self.gameCenter.localPlayer.listener() {

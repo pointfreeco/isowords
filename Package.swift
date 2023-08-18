@@ -605,14 +605,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ],
       exclude: ["__Snapshots__"]
     ),
-//    .testTarget(
-//      name: "GameFeatureTests",
-//      dependencies: [
-//        "AppFeature",
-//        "TestHelpers",
-//        .product(name: "Gen", package: "swift-gen"),
-//      ]
-//    ),
     .target(
       name: "GameOverFeature",
       dependencies: [

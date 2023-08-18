@@ -25,8 +25,8 @@ public enum AppIcon: String, Codable, CaseIterable, Hashable {
       return Color(
         UIColor { trait in
           trait.userInterfaceStyle == .light
-          ? .black
-          : .white
+            ? .black
+            : .white
         }
       )
     }

@@ -38,7 +38,8 @@ struct NotificationsSettingsView: View {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(
-              "Daily challenge summary", isOn: self.viewStore.$userSettings.sendDailyChallengeSummary
+              "Daily challenge summary",
+              isOn: self.viewStore.$userSettings.sendDailyChallengeSummary
             )
             .adaptiveFont(.matterMedium, size: 16)
 

@@ -50,7 +50,7 @@ public struct Trailer: Reducer {
 
   public var body: some ReducerOf<Self> {
     Scope(state: \.game, action: /Action.game) {
-      Game()    
+      Game()
         .dependency(\.apiClient, .noop)
         .dependency(\.applicationClient, .noop)
         .dependency(

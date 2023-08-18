@@ -74,7 +74,6 @@ struct AppIconPicker: View {
   }
 }
 
-
 struct ColorSchemePicker: View {
   @Environment(\.colorScheme) var envColorScheme
   @Binding var colorScheme: UserSettings.ColorScheme

@@ -61,14 +61,14 @@ public struct AppDelegateReducer: Reducer {
             group.addTask {
               await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
             }
-            
+
             group.addTask {
               let userSettings = userSettings()
               await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
               await self.audioPlayer.setGlobalVolumeForMusic(
                 self.audioPlayer.secondaryAudioShouldBeSilencedHint()
-                ? 0
-                : userSettings.musicVolume
+                  ? 0
+                  : userSettings.musicVolume
               )
               await self.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
             }

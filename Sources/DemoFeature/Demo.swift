@@ -72,10 +72,10 @@ public struct Demo: Reducer {
     }
     .onChange(of: \.isGameOver) { _, _ in
       Reduce { _, _ in
-          .run { send in
-            try await self.mainQueue.sleep(for: .seconds(2))
-            await send(.gameOverDelay)
-          }
+        .run { send in
+          try await self.mainQueue.sleep(for: .seconds(2))
+          await send(.gameOverDelay)
+        }
       }
     }
 

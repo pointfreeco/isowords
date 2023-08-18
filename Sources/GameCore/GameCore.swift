@@ -45,9 +45,11 @@ public struct Game: Reducer {
         case settingsButtonTapped
       }
     }
+    let dismissGame: DismissEffect
     public var body: some ReducerOf<Self> {
       Scope(state: /State.gameOver, action: /Action.gameOver) {
         GameOver()
+          .dependency(\.dismiss, self.dismissGame)
       }
       Scope(state: /State.settings, action: /Action.settings) {
         Settings()
@@ -198,6 +200,7 @@ public struct Game: Reducer {
 
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.apiClient.currentPlayer) var currentPlayer
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.lowPowerMode) var lowPowerMode
@@ -223,7 +226,7 @@ public struct Game: Reducer {
       }
       .filterActionsForYourTurn()
       .ifLet(\.$destination, action: /Action.destination) {
-        Destination()
+        Destination(dismissGame: self.dismiss)
       }
       .sounds()
   }
@@ -276,6 +279,11 @@ public struct Game: Reducer {
         state.removeCube(at: index, playedAt: self.date())
         return .none
 
+      case .destination(.presented(.bottomMenu(.exitButtonTapped))):
+        return .run { _ in
+          await self.dismiss(animation: .default)
+        }
+
       case .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))):
         state.destination = .alert(
           AlertState {
@@ -300,9 +308,6 @@ public struct Game: Reducer {
 
       case .destination(.presented(.bottomMenu(.settingsButtonTapped))):
         state.destination = .settings()
-        return .none
-
-      case .destination(.presented(.gameOver(.delegate(.close)))):
         return .none
 
       case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):

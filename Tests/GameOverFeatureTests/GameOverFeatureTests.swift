@@ -257,7 +257,7 @@ class GameOverFeatureTests: XCTestCase {
   func testRequestReviewOnClose() async {
     let lastReviewRequestTimeIntervalSet = ActorIsolated<Double?>(nil)
     let requestReviewCount = ActorIsolated(0)
-
+    
     let completedGame = CompletedGame(
       cubes: .mock,
       gameContext: .solo,
@@ -268,7 +268,7 @@ class GameOverFeatureTests: XCTestCase {
       moves: [.mock],
       secondsPlayed: 0
     )
-
+    
     let store = TestStore(
       initialState: GameOver.State(
         completedGame: completedGame,
@@ -278,7 +278,7 @@ class GameOverFeatureTests: XCTestCase {
     ) {
       GameOver()
     }
-
+    
     store.dependencies.database.fetchStats = {
       LocalDatabaseClient.Stats(
         averageWordLength: nil,
@@ -299,10 +299,10 @@ class GameOverFeatureTests: XCTestCase {
         await lastReviewRequestTimeIntervalSet.setValue(double)
       }
     }
+    store.dependencies.dismiss = DismissEffect {}
 
     // Assert that the first time game over appears we do not request review
     await store.send(.closeButtonTapped)
-    await store.receive(.delegate(.close))
     await self.mainRunLoop.advance()
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
@@ -319,14 +319,12 @@ class GameOverFeatureTests: XCTestCase {
       )
     }
     await store.send(.closeButtonTapped).finish()
-    await store.receive(.delegate(.close))
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 1) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
     await self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     await store.send(.closeButtonTapped).finish()
-    await store.receive(.delegate(.close))
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
   }
@@ -347,10 +345,11 @@ class GameOverFeatureTests: XCTestCase {
       )
     ) {
       GameOver()
+    } withDependencies: {
+      $0.dismiss = DismissEffect {}
     }
 
     await store.send(.task)
-    await store.receive(.delegate(.close))
   }
 
   func testShowUpgradeInterstitial() async {
