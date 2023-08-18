@@ -57,7 +57,6 @@ var homeAppStoreView: AnyView {
           ),
           unlimited: nil
         ),
-        settings: .init(),
         turnBasedMatches: [
           ActiveTurnBasedMatch(
             id: "deadbeef",
