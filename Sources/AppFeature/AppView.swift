@@ -14,7 +14,7 @@ public struct AppReducer: Reducer {
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @PresentationState public var game: Game.State?
-    public var onboarding: Onboarding.State?
+    @PresentationState public var onboarding: Onboarding.State?
     public var home: Home.State
 
     public init(
@@ -50,7 +50,7 @@ public struct AppReducer: Reducer {
     case game(PresentationAction<Game.Action>)
     case gameCenter(GameCenterAction)
     case home(Home.Action)
-    case onboarding(Onboarding.Action)
+    case onboarding(PresentationAction<Onboarding.Action>)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
     case savedGamesLoaded(TaskResult<SavedGamesState>)
     case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
@@ -70,9 +70,6 @@ public struct AppReducer: Reducer {
 
   public var body: some ReducerOf<Self> {
     self.core
-      .ifLet(\.onboarding, action: /Action.onboarding) {
-        Onboarding()
-      }
       .onChange(of: \.game?.moves) { _, moves in
         Reduce { state, _ in
           guard let game = state.game, game.isSavable
@@ -281,7 +278,7 @@ public struct AppReducer: Reducer {
       case .home:
         return .none
 
-      case let .onboarding(.delegate(action)):
+      case let .onboarding(.presented(.delegate(action))):
         switch action {
         case .getStarted:
           state.onboarding = nil
@@ -307,6 +304,9 @@ public struct AppReducer: Reducer {
     }
     .ifLet(\.$game, action: /Action.game) {
       Game()
+    }
+    .ifLet(\.$onboarding, action: /Action.onboarding) {
+      Onboarding()
     }
   }
 }
@@ -357,7 +357,7 @@ public struct AppView: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.onboarding, action: { .onboarding($0) }),
+          self.store.scope(state: \.$onboarding, action: { .onboarding($0) }),
           then: OnboardingView.init(store:)
         )
         .zIndex(2)
