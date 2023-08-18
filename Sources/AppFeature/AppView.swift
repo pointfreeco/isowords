@@ -45,10 +45,6 @@ public struct AppReducer: Reducer {
       self.home = home
     }
 
-    var isGameInActive: Bool {
-      /Destination.State.game ~= self.destination
-    }
-
     var firstLaunchOnboarding: Onboarding.State? {
       switch self.destination {
       case .game, .none:
