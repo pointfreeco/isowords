@@ -401,7 +401,7 @@ public struct OnboardingView: View {
         Button("Skip") { viewStore.send(.skipButtonTapped, animation: .default) }
           .adaptiveFont(.matterMedium, size: 18)
           .buttonStyle(PlainButtonStyle())
-          .padding([.leading, .trailing])
+          .padding(.horizontal)
           .foregroundColor(
             self.colorScheme == .dark
               ? viewStore.step.color
