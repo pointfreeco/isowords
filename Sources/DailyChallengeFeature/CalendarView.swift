@@ -84,11 +84,9 @@ struct CalendarView: View {
             spacing: .grid(1)
           ) {
             ForEach(month.results, id: \.gameNumber) { result in
-              Button(
-                action: {
-                  self.viewStore.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
-                }
-              ) {
+              Button {
+                self.viewStore.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
+              } label: {
                 VStack {
                   Text("\(dayFormatter.string(from: result.createdAt))")
                     .adaptiveFont(.matterMedium, size: 14)
@@ -116,7 +114,7 @@ struct CalendarView: View {
 
       if self.viewStore.months.isEmpty {
         HStack {
-          Button(action: { self.viewStore.send(.loadHistory) }) {
+          Button { self.viewStore.send(.loadHistory) } label: {
             Image(systemName: "arrow.clockwise")
           }
 

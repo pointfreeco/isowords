@@ -446,7 +446,7 @@ public struct GameOverView: View {
 
             if !self.viewStore.isDemo {
               Spacer()
-              Button(action: { self.viewStore.send(.closeButtonTapped, animation: .default) }) {
+              Button { self.viewStore.send(.closeButtonTapped, animation: .default) } label: {
                 Image(systemName: "xmark")
               }
             }
@@ -475,7 +475,7 @@ public struct GameOverView: View {
             .adaptiveFont(.matter, size: 34)
             .multilineTextAlignment(.center)
 
-          Button(action: { self.isSharePresented.toggle() }) {
+          Button { self.isSharePresented.toggle() } label: {
             Text("Share with a friend")
           }
           .buttonStyle(

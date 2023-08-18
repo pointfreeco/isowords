@@ -67,13 +67,11 @@ struct ActiveGameCard<Title: View, Message: View>: View {
 
       Group {
         if self.button.isActive {
-          Button(
-            action: {
-              (self.buttonAction ?? self.tapAction)()
-              guard self.button.shouldAnimate else { return }
-              withAnimation(.interactiveSpring()) { self.isAnimating = .icon }
-            }
-          ) {
+          Button {
+            (self.buttonAction ?? self.tapAction)()
+            guard self.button.shouldAnimate else { return }
+            withAnimation(.interactiveSpring()) { self.isAnimating = .icon }
+          } label: {
             HStack(alignment: .firstTextBaseline, spacing: .grid(1)) {
               self.button.icon?
                 .offset(x: self.button.shouldAnimate && isAnimating == .icon ? 8 : 0)

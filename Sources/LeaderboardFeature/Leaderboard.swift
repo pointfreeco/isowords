@@ -163,11 +163,9 @@ public struct LeaderboardView: View {
     VStack(alignment: .leading, spacing: .grid(10)) {
       HStack {
         ForEach(LeaderboardScope.allCases, id: \.self) { scope in
-          Button(
-            action: {
-              self.viewStore.send(.scopeTapped(scope), animation: .default)
-            }
-          ) {
+          Button {
+            self.viewStore.send(.scopeTapped(scope), animation: .default)
+          } label: {
             Text(scope.title)
               .foregroundColor(self.viewStore.state.scope == scope ? scope.color : nil)
               .opacity(self.viewStore.state.scope == scope ? 1 : 0.3)

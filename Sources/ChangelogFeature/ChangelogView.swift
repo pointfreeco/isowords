@@ -130,8 +130,8 @@ public struct ChangelogView: View {
           if viewStore.isUpdateButtonVisible {
             HStack {
               Spacer()
-              Button(action: { viewStore.send(.updateButtonTapped) }) {
-                Text("Update")
+              Button("Update") {
+                viewStore.send(.updateButtonTapped)
               }
               .buttonStyle(ActionButtonStyle())
             }

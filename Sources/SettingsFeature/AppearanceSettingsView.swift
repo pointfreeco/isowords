@@ -34,11 +34,9 @@ struct AppIconPicker: View {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: .grid(4)) {
           ForEach(Array(AppIcon.allCases.enumerated()), id: \.element) { offset, appIcon in
-            Button(
-              action: {
-                self.appIcon = self.appIcon == appIcon ? nil : appIcon
-              }
-            ) {
+            Button {
+              self.appIcon = self.appIcon == appIcon ? nil : appIcon
+            } label: {
               Image(uiImage: UIImage(named: appIcon.rawValue, in: Bundle.module, with: nil)!)
                 .resizable()
                 .scaledToFit()
@@ -106,13 +104,11 @@ struct ColorSchemePicker: View {
 
       HStack {
         ForEach([UserSettings.ColorScheme.system, .dark, .light], id: \.self) { colorScheme in
-          Button(
-            action: {
-              withAnimation(.easeOut(duration: 0.2)) {
-                self.colorScheme = colorScheme
-              }
+          Button {
+            withAnimation(.easeOut(duration: 0.2)) {
+              self.colorScheme = colorScheme
             }
-          ) {
+          } label: {
             Text(colorScheme.title)
               .foregroundColor(Color.white)
               .colorMultiply(

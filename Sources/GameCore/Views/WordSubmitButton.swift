@@ -165,9 +165,9 @@ public struct WordSubmitButton: View {
         ZStack {
           ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: { $0 }))
 
-          Button(action: {
+          Button {
             self.viewStore.send(.submitButtonTapped, animation: .default)
-          }) {
+          } label: {
             Group {
               if !self.viewStore.wordSubmitButton.areReactionsOpen {
                 Image(systemName: "hand.thumbsup")
@@ -230,8 +230,7 @@ struct ReactionsView: View {
     ForEach(Array(self.viewStore.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
       let offset = self.offset(index: idx)
 
-      Button(action: { self.viewStore.send(.reactionButtonTapped(reaction), animation: .default) })
-      {
+      Button { self.viewStore.send(.reactionButtonTapped(reaction), animation: .default) } label: {
         Text(reaction.rawValue)
           .font(.system(size: 32))
           .padding()
