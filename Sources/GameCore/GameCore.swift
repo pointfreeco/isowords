@@ -589,7 +589,7 @@ extension Game.State {
 
   public var isSavable: Bool {
     self.isResumable
-      && (/GameContext.turnBased).isNotMatching(self.gameContext)
+      && !(/GameContext.turnBased ~= self.gameContext)
   }
 
   public var playedWords: [PlayedWord] {
@@ -674,7 +674,7 @@ extension Game.State {
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard
-      (/Move.MoveType.removedCube).isNotMatching(lastMove.type),
+      !(/Move.MoveType.removedCube ~= lastMove.type),
       lastMove.playerIndex != turnBasedMatch.localPlayerIndex
     else {
       return true
