@@ -191,7 +191,7 @@ where
             }
           }
           .padding([.leading, .trailing, .bottom], .grid(5))
-          .padding(self.isFilterable ? [.top] : [], .grid(5))
+          .padding(self.isFilterable ? .top : [], .grid(5))
 
           Divider()
         }

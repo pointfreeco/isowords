@@ -17,7 +17,7 @@ struct StartNewGameView: View {
       Text("Start a game")
         .adaptiveFont(.matterMedium, size: 16)
         .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
-        .padding([.bottom, .top])
+        .padding(.vertical)
 
       Button {
         self.store.send(.soloButtonTapped)
