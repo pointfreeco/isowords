@@ -57,12 +57,12 @@ public struct SettingsSection<Content>: View where Content: View {
   public var body: some View {
     VStack(alignment: .leading) {
       Text(self.title)
-        .padding([.bottom], 24)
+        .padding(.bottom, 24)
         .screenEdgePadding(.horizontal)
 
       self.content()
         .screenEdgePadding(self.padContents ? .horizontal : [])
     }
-    .padding([.bottom], 40)
+    .padding(.bottom, 40)
   }
 }

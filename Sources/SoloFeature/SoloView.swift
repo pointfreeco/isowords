@@ -109,7 +109,7 @@ public struct SoloView: View {
           )
         }
       }
-      .adaptivePadding([.vertical])
+      .adaptivePadding(.vertical)
       .screenEdgePadding(.horizontal)
       .task { await viewStore.send(.task).finish() }
     }

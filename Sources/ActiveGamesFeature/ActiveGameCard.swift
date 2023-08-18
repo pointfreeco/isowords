@@ -80,9 +80,9 @@ struct ActiveGameCard<Title: View, Message: View>: View {
               self.button.title
                 .offset(x: self.button.shouldAnimate && isAnimating == .title ? 6 : 0)
             }
-            .padding([.vertical], .grid(2))
-            .padding([.leading], .grid(3))
-            .padding([.trailing], .grid(4))
+            .padding(.vertical, .grid(2))
+            .padding(.leading, .grid(3))
+            .padding(.trailing, .grid(4))
             .foregroundColor(self.colorScheme == .light ? .isowordsBlack : .isowordsOrange)
             .background(
               Capsule().fill(self.colorScheme == .light ? Color.isowordsOrange : .isowordsBlack)
@@ -98,8 +98,8 @@ struct ActiveGameCard<Title: View, Message: View>: View {
             .opacity(0.5)
         }
       }
-      .padding([.horizontal], .grid(3))
-      .padding([.bottom], .grid(4))
+      .padding(.horizontal, .grid(3))
+      .padding(.bottom, .grid(4))
       .adaptiveFont(.matterMedium, size: 12)
     }
     .frame(width: 180, height: 220)

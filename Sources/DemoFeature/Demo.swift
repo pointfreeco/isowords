@@ -215,9 +215,9 @@ struct GameWrapper<Content: View>: View {
           }
           .adaptiveFont(.matterMedium, size: 18)
           .foregroundColor(.isowordsBlack)
-          .adaptivePadding([.top], .grid(2))
-          .adaptivePadding([.bottom], .grid(4))
-          .adaptivePadding([.horizontal], .grid(4))
+          .adaptivePadding(.top, .grid(2))
+          .adaptivePadding(.bottom, .grid(4))
+          .adaptivePadding(.horizontal, .grid(4))
         }
         .frame(maxWidth: .infinity)
         .background(

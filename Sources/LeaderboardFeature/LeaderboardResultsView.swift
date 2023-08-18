@@ -232,7 +232,7 @@ where
                   .opacity(0.4)
                 Text("and \(self.viewStore.nonDisplayedResultsCount) more!")
               }
-              .adaptivePadding([.top], .grid(5))
+              .adaptivePadding(.top, .grid(5))
               .adaptiveFont(.matterMedium, size: 16)
             }
           }

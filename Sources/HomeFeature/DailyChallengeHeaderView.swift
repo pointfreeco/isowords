@@ -54,7 +54,7 @@ struct DailyChallengeHeaderView: View {
         }
       }
       .adaptiveFont(.matter, size: 56)
-      .adaptivePadding([.bottom])
+      .adaptivePadding(.bottom)
       .fixedSize(horizontal: false, vertical: true)
       .frame(maxWidth: .infinity)
 

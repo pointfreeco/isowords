@@ -184,8 +184,8 @@ struct PastGameRow: View {
           .adaptiveFont(.matterMedium, size: 14)
           .foregroundColor(self.colorScheme == .light ? .multiplayer : .isowordsBlack)
       }
-      .padding([.horizontal])
-      .padding([.vertical], .grid(2))
+      .padding(.horizontal)
+      .padding(.vertical, .grid(2))
     }
     .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
     .continuousCornerRadius(999)
