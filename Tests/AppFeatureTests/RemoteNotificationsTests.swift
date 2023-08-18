@@ -12,26 +12,26 @@ import XCTest
 @MainActor
 class RemoteNotificationsTests: XCTestCase {
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
+    let didRegisterForRemoteNotifications = ActorIsolated(false)
+    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
+
     let store = TestStore(
       initialState: AppReducer.State()
     ) {
       AppReducer()
-    }
-
-    let didRegisterForRemoteNotifications = ActorIsolated(false)
-    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
-
-    store.dependencies.didFinishLaunching()
-    store.dependencies.build.number = { 80 }
-    store.dependencies.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
-    }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
-    }
-    store.dependencies.userNotifications.requestAuthorization = { options in
-      await requestedAuthorizationOptions.setValue(options)
-      return true
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.build.number = { 80 }
+      $0.remoteNotifications.register = {
+        await didRegisterForRemoteNotifications.setValue(true)
+      }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .authorized)
+      }
+      $0.userNotifications.requestAuthorization = { options in
+        await requestedAuthorizationOptions.setValue(options)
+        return true
+      }
     }
 
     // Register remote notifications on .didFinishLaunching
@@ -74,18 +74,18 @@ class RemoteNotificationsTests: XCTestCase {
 
     let store = TestStore(initialState: AppReducer.State()) {
       AppReducer()
-    }
-
-    store.dependencies.didFinishLaunching()
-    store.dependencies.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
-    }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .notDetermined)
-    }
-    store.dependencies.userNotifications.requestAuthorization = { options in
-      await requestedAuthorizationOptions.setValue(options)
-      return true
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.remoteNotifications.register = {
+        await didRegisterForRemoteNotifications.setValue(true)
+      }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .notDetermined)
+      }
+      $0.userNotifications.requestAuthorization = { options in
+        await requestedAuthorizationOptions.setValue(options)
+        return true
+      }
     }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
@@ -103,10 +103,10 @@ class RemoteNotificationsTests: XCTestCase {
       }
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.fileClient.save = { @Sendable _, _ in }
     }
-
-    store.dependencies.didFinishLaunching()
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
 
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     store.dependencies.userNotifications.delegate = { delegate.stream }

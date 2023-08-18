@@ -18,16 +18,14 @@ class GameCoreTests: XCTestCase {
       )
     )
 
-    let store = TestStore(
-      initialState: gameState
-    ) {
+    let store = TestStore(initialState: gameState) {
       Game()
-    }
-
-    store.dependencies.audioPlayer.stop = { _ in }
-    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
-    store.dependencies.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
-      await didEndMatchInTurn.setValue(true)
+    } withDependencies: {
+      $0.audioPlayer.stop = { _ in }
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
+        await didEndMatchInTurn.setValue(true)
+      }
     }
 
     await store.send(.menuButtonTapped) {

@@ -74,16 +74,14 @@ class DailyChallengeFeatureTests: XCTestCase {
         }
       }
 
-      let store = TestStore(
-        initialState: .init()
-      ) {
+      let store = TestStore(initialState: DailyChallengeResults.State()) {
         DailyChallengeResults()
+      } withDependencies: {
+        $0.apiClient = ApiClient(
+          middleware: siteMiddleware(environment: serverEnvironment),
+          router: .test
+        )
       }
-
-      store.dependencies.apiClient = ApiClient(
-        middleware: siteMiddleware(environment: serverEnvironment),
-        router: .test
-      )
 
       await store.send(.leaderboardResults(.task)) {
         $0.leaderboardResults.isLoading = true

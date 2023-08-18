@@ -27,13 +27,13 @@ class LeaderboardFeatureTests: XCTestCase {
   func testTimeScopeSynchronization() async {
     let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
+    } withDependencies: {
+      $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+      $0.audioPlayer = .noop
+      $0.feedbackGenerator = .noop
+      $0.lowPowerMode = .false
+      $0.mainQueue = .immediate
     }
-
-    store.dependencies.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.feedbackGenerator = .noop
-    store.dependencies.lowPowerMode = .false
-    store.dependencies.mainQueue = .immediate
 
     let task1 = await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay

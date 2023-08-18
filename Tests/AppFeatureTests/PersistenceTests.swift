@@ -31,16 +31,16 @@ class PersistenceTests: XCTestCase {
       )
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.play = { _ in }
+      $0.audioPlayer.stop = { _ in }
+      $0.dictionary.contains = { word, _ in word == "CAB" }
+      $0.dictionary.randomCubes = { _ in .mock }
+      $0.feedbackGenerator = .noop
+      $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+      $0.mainRunLoop = .immediate
+      $0.mainQueue = .immediate
     }
-
-    store.dependencies.audioPlayer.play = { _ in }
-    store.dependencies.audioPlayer.stop = { _ in }
-    store.dependencies.dictionary.contains = { word, _ in word == "CAB" }
-    store.dependencies.dictionary.randomCubes = { _ in .mock }
-    store.dependencies.feedbackGenerator = .noop
-    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.mainQueue = .immediate
 
     let index = LatticePoint(x: .two, y: .two, z: .two)
     let C = IndexedCubeFace(index: index, side: .top)
@@ -263,14 +263,13 @@ class PersistenceTests: XCTestCase {
     ) {
       AppReducer()
     } withDependencies: {
+      $0.didFinishLaunching()
       $0.audioPlayer.secondaryAudioShouldBeSilencedHint = { false }
       $0.audioPlayer.setGlobalVolumeForMusic = { _ in }
       $0.audioPlayer.setGlobalVolumeForSoundEffects = { _ in }
       $0.applicationClient.setUserInterfaceStyle = { _ in }
+      $0.fileClient.override(load: savedGamesFileName, savedGames)
     }
-
-    store.dependencies.didFinishLaunching()
-    store.dependencies.fileClient.override(load: savedGamesFileName, savedGames)
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.receive(.savedGamesLoaded(.success(savedGames))) {
@@ -308,9 +307,9 @@ class PersistenceTests: XCTestCase {
       )
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.stop = { _ in }
     }
-
-    store.dependencies.audioPlayer.stop = { _ in }
 
     await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
       let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)

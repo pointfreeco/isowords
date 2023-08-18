@@ -43,10 +43,10 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
       let store = TestStore(initialState: Leaderboard.State()) {
         Leaderboard()
+      } withDependencies: {
+        $0.apiClient = ApiClient(middleware: middleware, router: .test)
+        $0.mainQueue = .immediate
       }
-
-      store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
-      store.dependencies.mainQueue = .immediate
 
       await store.send(.solo(.task)) {
         $0.solo.isLoading = true
@@ -99,10 +99,10 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
+    } withDependencies: {
+      $0.apiClient = ApiClient(middleware: middleware, router: .test)
+      $0.mainQueue = .immediate
     }
-
-    store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
-    store.dependencies.mainQueue = .immediate
 
     await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true
