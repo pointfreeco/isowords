@@ -743,7 +743,6 @@ public struct GameOverView: View {
       }
 
       VStack(spacing: 0) {
-
         HStack(alignment: .top, spacing: -1) {
           VStack(alignment: .trailing) {
             HStack {

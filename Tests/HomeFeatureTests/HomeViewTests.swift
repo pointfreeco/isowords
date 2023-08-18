@@ -45,7 +45,6 @@ class HomeFeatureTests: XCTestCase {
             )
           )
         ) {
-
         }
       )
       .environment(\.date, { .mock - 2*60*60 }),
@@ -74,7 +73,6 @@ class HomeFeatureTests: XCTestCase {
             )
           )
         ) {
-
         }
       )
       .environment(\.date, { .mock - 2*60*60 }),
@@ -122,7 +120,6 @@ class HomeFeatureTests: XCTestCase {
             ]
           )
         ) {
-
         }
       )
       .environment(\.date, { .mock - 2*60*60 }),
@@ -155,7 +152,6 @@ class HomeFeatureTests: XCTestCase {
             ]
           )
         ) {
-          
         }
       )
       .environment(\.date, { .mock - 2*60*60 }),

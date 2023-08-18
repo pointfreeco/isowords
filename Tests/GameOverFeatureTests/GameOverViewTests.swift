@@ -37,7 +37,6 @@ class GameOverViewTests: XCTestCase {
             ])
           )
         ) {
-
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -60,7 +59,6 @@ class GameOverViewTests: XCTestCase {
             )
           )
         ) {
-
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -85,7 +83,6 @@ class GameOverViewTests: XCTestCase {
             )
           )
         ) {
-          
         }
       )
       .environment(\.yourImage, UIImage(named: "you", in: .module, with: nil))

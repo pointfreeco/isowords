@@ -32,7 +32,6 @@ var leaderboardAppStoreView: AnyView {
         )
       )
     ) {
-      
     }
   )
   return AnyView(view)

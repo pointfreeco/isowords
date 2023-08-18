@@ -16,7 +16,6 @@ extension ApiClient: DependencyKey {
     baseUrl defaultBaseUrl: URL = URL(string: "http://localhost:9876")!,
     sha256: @escaping (Data) -> Data
   ) -> Self {
-
     #if DEBUG
       let baseUrl = UserDefaults.standard.url(forKey: baseUrlKey) ?? defaultBaseUrl
     #else
@@ -157,7 +156,6 @@ private func apiRequest(
   route: ServerRoute.Api.Route,
   router: ServerRouter
 ) async throws -> (Data, URLResponse) {
-
   guard let accessToken = accessToken
   else { throw URLError(.userAuthenticationRequired) }
 

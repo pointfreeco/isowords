@@ -220,7 +220,6 @@ extension WordListView.ViewState {
             )
           )
         ) {
-
         }
       )
       .previewLayout(.fixed(width: 500, height: 100))

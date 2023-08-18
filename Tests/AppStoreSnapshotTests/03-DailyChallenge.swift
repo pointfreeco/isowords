@@ -19,7 +19,6 @@ var dailyChallengeAppStoreView: AnyView {
         )
       )
     ) {
-      
     }
   )
   return AnyView(view)

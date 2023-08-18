@@ -16,7 +16,6 @@ struct DeveloperSettingsView: View {
   var body: some View {
     SettingsForm {
       SettingsRow {
-
         VStack(alignment: .leading) {
           Text("API")
           Text(self.viewStore.developer.currentBaseUrl.rawValue)
