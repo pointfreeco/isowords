@@ -330,35 +330,34 @@ extension ResultEnvelope.Result {
         NavigationView {
           LeaderboardView(
             store: Store(initialState: Leaderboard.State()) {
-              Leaderboard().dependency(
-                \.apiClient,
-                update(.noop) {
-                  $0.apiRequest = { @Sendable route in
-                    switch route {
-                    case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
-                      return try await OK(
-                        FetchLeaderboardResponse(
-                          entries: (1...20).map { idx in
-                            FetchLeaderboardResponse.Entry(
-                              id: .init(rawValue: .init()),
-                              isSupporter: idx == 2,
-                              isYourScore: false,
-                              outOf: 100,
-                              playerDisplayName: "Blob",
-                              rank: idx,
-                              score: 5000 - idx * 233
-                            )
-                          }
-                        )
+              Leaderboard()
+            } withDependencies: {
+              $0.apiClient = update(.noop) {
+                $0.apiRequest = { @Sendable route in
+                  switch route {
+                  case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
+                    try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                    return try await OK(
+                      FetchLeaderboardResponse(
+                        entries: (1...20).map { idx in
+                          FetchLeaderboardResponse.Entry(
+                            id: .init(rawValue: .init()),
+                            isSupporter: idx == 2,
+                            isYourScore: false,
+                            outOf: 100,
+                            playerDisplayName: "Blob",
+                            rank: idx,
+                            score: 5000 - idx * 233
+                          )
+                        }
                       )
+                    )
 
-                    default:
-                      throw CancellationError()
-                    }
+                  default:
+                    throw CancellationError()
                   }
                 }
-              )
+              }
             }
           )
         }

@@ -147,10 +147,7 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
     static var previews: some View {
       Preview {
         LeaderboardLinkView(
-          store: Store(
-            initialState: .init()
-          ) {
-
+          store: Store(initialState: .init()) {
           }
         )
       }

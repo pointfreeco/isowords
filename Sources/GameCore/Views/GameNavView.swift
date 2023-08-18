@@ -74,9 +74,7 @@ struct GameNavView: View {
     static var previews: some View {
       VStack {
         GameNavView(
-          store: Store(
-            initialState: .init(inProgressGame: .mock)
-          ) {
+          store: Store(initialState: .init(inProgressGame: .mock)) {
           }
         )
         Spacer()

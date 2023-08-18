@@ -115,9 +115,7 @@ let messages = [
       NavigationView {
         ZStack(alignment: .bottomLeading) {
           NagBannerView(
-            store: Store(
-              initialState: NagBanner.State()
-            ) {
+            store: Store(initialState: NagBanner.State()) {
               NagBanner()
             }
           )

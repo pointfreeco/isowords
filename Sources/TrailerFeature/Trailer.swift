@@ -50,24 +50,23 @@ public struct Trailer: Reducer {
 
   public var body: some ReducerOf<Self> {
     Scope(state: \.game, action: /Action.game) {
-      Game()
-        .dependency(\.apiClient, .noop)
-        .dependency(\.applicationClient, .noop)
-        .dependency(
-          \.audioPlayer,
-          self.audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
-        )
-        .dependency(\.build, .noop)
-        .dependency(\.database, .noop)
-        .dependency(\.feedbackGenerator, .noop)
-        .dependency(\.fileClient, .noop)
-        .dependency(\.gameCenter, .noop)
-        .dependency(\.lowPowerMode, .false)
-        .dependency(\.remoteNotifications, .noop)
-        .dependency(\.serverConfig, .noop)
-        .dependency(\.storeKit, .noop)
-        .dependency(\.userDefaults, .noop)
-        .dependency(\.userNotifications, .noop)
+      Game().transformDependency(\.self) {
+        $0.apiClient = .noop
+        $0.applicationClient = .noop
+        $0.audioPlayer = self.audioPlayer
+          .filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
+        $0.build = .noop
+        $0.database = .noop
+        $0.feedbackGenerator = .noop
+        $0.fileClient = .noop
+        $0.gameCenter = .noop
+        $0.lowPowerMode = .false
+        $0.remoteNotifications = .noop
+        $0.serverConfig = .noop
+        $0.storeKit = .noop
+        $0.userDefaults = .noop
+        $0.userNotifications = .noop
+      }
     }
 
     BindingReducer()

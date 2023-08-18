@@ -497,9 +497,10 @@ private struct RingEffect: GeometryEffect {
               )
             ) {
               DailyChallengeReducer()
-                .dependency(\.userNotifications.getNotificationSettings) {
-                  .init(authorizationStatus: .notDetermined)
-                }
+            } withDependencies: {
+              $0.userNotifications.getNotificationSettings = {
+                .init(authorizationStatus: .notDetermined)
+              }
             }
           )
         }

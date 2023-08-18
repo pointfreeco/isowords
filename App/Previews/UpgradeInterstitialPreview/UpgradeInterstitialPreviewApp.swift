@@ -13,11 +13,10 @@ struct UpgradeInterstitialPreviewApp: App {
   var body: some Scene {
     WindowGroup {
       UpgradeInterstitialView(
-        store: Store(
-          initialState: UpgradeInterstitial.State()
-        ) {
+        store: Store(initialState: UpgradeInterstitial.State()) {
           UpgradeInterstitial()
-            .dependency(\.serverConfig, .noop)
+        } withDependencies: {
+          $0.serverConfig = .noop
         }
       )
     }

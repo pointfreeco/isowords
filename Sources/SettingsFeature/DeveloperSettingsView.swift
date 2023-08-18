@@ -50,10 +50,7 @@ struct DeveloperSettingsView: View {
   struct DeveloperSettingsView_Previews: PreviewProvider {
     static var previews: some View {
       DeveloperSettingsView(
-        store: Store(
-          initialState: Settings.State()
-        ) {
-
+        store: Store(initialState: Settings.State()) {
         }
       )
     }

@@ -259,9 +259,8 @@ public struct SupportButtonStyle: ButtonStyle {
               )
             ) {
               Settings()
-                .dependency(\.apiClient.currentPlayer) {
-                  .init(appleReceipt: .mock, player: .blob)
-                }
+            } withDependencies: {
+              $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
             },
             navPresentationStyle: .navigation
           )
