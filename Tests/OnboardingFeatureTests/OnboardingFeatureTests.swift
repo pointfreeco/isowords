@@ -374,19 +374,24 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.skipButtonTapped) {
-      $0.alert = .init(
-        title: .init("Skip tutorial?"),
-        message: .init("""
+      $0.alert = AlertState {
+        TextState("Skip tutorial?")
+      } actions: {
+        ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
+          TextState("Yes, skip")
+        }
+        ButtonState(role: .cancel) {
+          TextState("No, resume")
+        }
+      } message: {
+        TextState(
+          """
           Are you sure you want to skip the tutorial? It only takes about a minute to complete.
 
           You can always view it again later in settings.
-          """),
-        primaryButton: .default(
-          .init("Yes, skip"),
-          action: .send(.skipButtonTapped, animation: .default)
-        ),
-        secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
-      )
+          """
+        )
+      }
     }
 
     await store.send(.alert(.presented(.skipButtonTapped))) {

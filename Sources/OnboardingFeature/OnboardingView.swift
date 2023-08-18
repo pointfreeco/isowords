@@ -144,7 +144,6 @@ public struct Onboarding: Reducer {
     case task
 
     public enum Alert: Equatable {
-      case resumeButtonTapped
       case skipButtonTapped
     }
 
@@ -169,7 +168,7 @@ public struct Onboarding: Reducer {
   public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .alert(.dismiss), .alert(.presented(.resumeButtonTapped)):
+      case .alert(.dismiss):
         return .none
 
       case .alert(.presented(.skipButtonTapped)):
@@ -254,19 +253,24 @@ public struct Onboarding: Reducer {
             await self.audioPlayer.play(.uiSfxTap)
           }
         }
-        state.alert = .init(
-          title: .init("Skip tutorial?"),
-          message: .init(
+        state.alert = AlertState {
+          TextState("Skip tutorial?")
+        } actions: {
+          ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
+            TextState("Yes, skip")
+          }
+          ButtonState(role: .cancel) {
+            TextState("No, resume")
+          }
+        } message: {
+          TextState(
             """
             Are you sure you want to skip the tutorial? It only takes about a minute to complete.
 
             You can always view it again later in settings.
-            """),
-          primaryButton: .default(
-            .init("Yes, skip"), action: .send(.skipButtonTapped, animation: .default)
-          ),
-          secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
-        )
+            """
+          )
+        }
         return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .task:
