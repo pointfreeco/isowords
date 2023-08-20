@@ -12,9 +12,11 @@ public struct UserSettingsClient {
     self.get()[keyPath: keyPath]
   }
 
+  @_disfavoredOverload
   public subscript<Value>(
     dynamicMember keyPath: KeyPath<UserSettings, Value>
   ) -> AsyncStream<Value> {
+    // TODO: This should probably remove duplicates.
     self.stream().map { $0[keyPath: keyPath] }.eraseToStream()
   }
 
