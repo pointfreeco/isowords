@@ -53,8 +53,8 @@ struct ChangeView: View {
           Spacer()
 
           if !viewStore.isExpanded {
-            Button(action: { viewStore.send(.showButtonTapped, animation: .default) }) {
-              Text("Show")
+            Button("Show") {
+              viewStore.send(.showButtonTapped, animation: .default)
             }
           }
         }

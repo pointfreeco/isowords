@@ -243,16 +243,14 @@ struct OnboardingStepView: View {
           Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .padding(.bottom, 80)
 
         Group {
           if self.viewStore.isNextButtonVisible {
-            Button(
-              action: {
-                self.viewStore.send(.nextButtonTapped, animation: .default)
-              }
-            ) {
+            Button {
+              self.viewStore.send(.nextButtonTapped, animation: .default)
+            } label: {
               Image(systemName: "arrow.right")
                 .frame(width: 80, height: 80)
                 .background(

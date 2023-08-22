@@ -12,9 +12,7 @@ import XCTest
 @MainActor
 class LeaderboardFeatureTests: XCTestCase {
   func testScopeSwitcher() async {
-    let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
-    ) {
+    let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
     }
 
@@ -27,17 +25,15 @@ class LeaderboardFeatureTests: XCTestCase {
   }
 
   func testTimeScopeSynchronization() async {
-    let store = TestStore(
-      initialState: Leaderboard.State(isHapticsEnabled: false, settings: .init())
-    ) {
+    let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
+    } withDependencies: {
+      $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+      $0.audioPlayer = .noop
+      $0.feedbackGenerator = .noop
+      $0.lowPowerMode = .false
+      $0.mainQueue = .immediate
     }
-
-    store.dependencies.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.feedbackGenerator = .noop
-    store.dependencies.lowPowerMode = .false
-    store.dependencies.mainQueue = .immediate
 
     let task1 = await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay
@@ -101,18 +97,13 @@ class LeaderboardFeatureTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let store = TestStore(
-      initialState: Leaderboard.State(
-        isHapticsEnabled: false,
-        scope: .vocab,
-        settings: .init()
-      )
-    ) {
+    let store = TestStore(initialState: Leaderboard.State(scope: .vocab)) {
       Leaderboard()
+    } withDependencies: {
+      $0.apiClient = ApiClient(middleware: middleware, router: .test)
+      $0.mainQueue = .immediate
     }
 
-    store.dependencies.apiClient = ApiClient(middleware: middleware, router: .test)
-    store.dependencies.mainQueue = .immediate
 
     await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true
@@ -127,12 +118,9 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.destination = .cubePreview(
         .init(
           cubes: .mock,
-          isAnimationReduced: false,
-          isHapticsEnabled: false,
           isOnLowPowerMode: false,
           moveIndex: 0,
-          moves: [],
-          settings: .init()
+          moves: []
         )
       )
     }

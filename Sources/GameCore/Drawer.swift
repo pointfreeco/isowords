@@ -34,7 +34,8 @@ struct ActiveGamesTray: Reducer {
         .lowPowerModeChanged,
         .matchesLoaded(.failure),
         .savedGamesLoaded(.failure),
-        .timerTick:
+        .timerTick,
+        .userSettingsUpdated:
 
         return .none
 

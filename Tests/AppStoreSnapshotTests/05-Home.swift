@@ -57,7 +57,6 @@ var homeAppStoreView: AnyView {
           ),
           unlimited: nil
         ),
-        settings: .init(),
         turnBasedMatches: [
           ActiveTurnBasedMatch(
             id: "deadbeef",
@@ -87,7 +86,6 @@ var homeAppStoreView: AnyView {
         )
       )
     ) {
-      
     }
   )
   .environment(\.date) { runLoop.now.advanced(by: -60 * 60 * 2).date }

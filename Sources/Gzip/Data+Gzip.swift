@@ -78,7 +78,6 @@ public struct GzipError: Swift.Error {
   public let message: String
 
   internal init(code: Int32, msg: UnsafePointer<CChar>?) {
-
     self.message = {
       guard let msg = msg, let message = String(validatingUTF8: msg) else {
         return "Unknown gzip error"
@@ -105,10 +104,8 @@ public struct GzipError: Swift.Error {
   }
 
   public var localizedDescription: String {
-
-    return self.message
+    self.message
   }
-
 }
 
 extension Data {
@@ -118,7 +115,6 @@ extension Data {
   /// - Returns: Gzip-decompressed `Data` instance.
   /// - Throws: `GzipError`
   public func gunzipped() throws -> Data {
-
     guard !self.isEmpty else {
       return Data()
     }

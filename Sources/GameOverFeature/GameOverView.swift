@@ -96,7 +96,6 @@ public struct GameOver: Reducer {
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
     public enum Delegate: Equatable {
-      case close
       case startGame(InProgressGame)
       case startSoloGame(GameMode)
     }
@@ -105,6 +104,7 @@ public struct GameOver: Reducer {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.storeKit.requestReview) var requestReview
@@ -125,7 +125,7 @@ public struct GameOver: Reducer {
         else {
           return .run { send in
             try? await self.requestReviewAsync()
-            await send(.delegate(.close))
+            await self.dismiss(animation: .default)
           }
         }
 
@@ -145,9 +145,6 @@ public struct GameOver: Reducer {
 
       case .delayedShowUpgradeInterstitial:
         state.destination = .upgradeInterstitial()
-        return .none
-
-      case .delegate(.close):
         return .none
 
       case .delegate:
@@ -186,15 +183,17 @@ public struct GameOver: Reducer {
 
       case .destination(.dismiss)
       where /Destination.State.notificationsAuthAlert ~= state.destination:
-        return .run { send in
+        return .run { _ in
           try? await self.requestReviewAsync()
-          await send(.delegate(.close), animation: .default)
+          await self.dismiss(animation: .default)
         }
 
       case .destination(
         .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings)))
       ):
-        return .send(.delegate(.close)).animation()
+        return .run { _ in
+          await self.dismiss(animation: .default)
+        }
 
       case .destination:
         return .none
@@ -254,7 +253,7 @@ public struct GameOver: Reducer {
         return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
           guard isDemo || completedGame.currentScore > 0
           else {
-            await send(.delegate(.close), animation: .default)
+            await self.dismiss(animation: .default)
             return
           }
 
@@ -323,7 +322,7 @@ public struct GameOver: Reducer {
             group.addTask {
               await send(
                 .userNotificationSettingsResponse(
-                  self.getUserNotificationSettings()
+                  getUserNotificationSettings()
                 )
               )
             }
@@ -447,7 +446,7 @@ public struct GameOverView: View {
 
             if !self.viewStore.isDemo {
               Spacer()
-              Button(action: { self.viewStore.send(.closeButtonTapped, animation: .default) }) {
+              Button { self.viewStore.send(.closeButtonTapped, animation: .default) } label: {
                 Image(systemName: "xmark")
               }
             }
@@ -476,7 +475,7 @@ public struct GameOverView: View {
             .adaptiveFont(.matter, size: 34)
             .multilineTextAlignment(.center)
 
-          Button(action: { self.isSharePresented.toggle() }) {
+          Button { self.isSharePresented.toggle() } label: {
             Text("Share with a friend")
           }
           .buttonStyle(
@@ -744,7 +743,6 @@ public struct GameOverView: View {
       }
 
       VStack(spacing: 0) {
-
         HStack(alignment: .top, spacing: -1) {
           VStack(alignment: .trailing) {
             HStack {

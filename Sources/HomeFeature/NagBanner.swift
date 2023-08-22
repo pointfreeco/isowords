@@ -2,29 +2,6 @@ import ComposableArchitecture
 import SwiftUI
 import UpgradeInterstitialFeature
 
-public struct NagBannerFeature: Reducer {
-  public struct State: Equatable {
-    @PresentationState var nagBanner: NagBanner.State?
-
-    public init(nagBanner: NagBanner.State? = nil) {
-      self.nagBanner = nagBanner
-    }
-  }
-
-  public enum Action: Equatable {
-    case nagBanner(PresentationAction<NagBanner.Action>)
-  }
-
-  init() {}
-
-  public var body: some ReducerOf<Self> {
-    EmptyReducer()
-      .ifLet(\.$nagBanner, action: /Action.nagBanner) {
-        NagBanner()
-      }
-  }
-}
-
 public struct NagBanner: Reducer {
   public struct State: Equatable {
     @PresentationState var upgradeInterstitial: UpgradeInterstitial.State? = nil
@@ -65,23 +42,16 @@ public struct NagBanner: Reducer {
   }
 }
 
-struct NagBannerFeatureView: View {
-  let store: StoreOf<NagBannerFeature>
-
-  var body: some View {
-    IfLetStore(
-      self.store.scope(state: \.$nagBanner, action: { .nagBanner($0) }),
-      then: NagBannerView.init(store:)
-    )
-  }
-}
-
-private struct NagBannerView: View {
+public struct NagBannerView: View {
   let store: StoreOf<NagBanner>
 
-  var body: some View {
+  public init(store: StoreOf<NagBanner>) {
+    self.store = store
+  }
+
+  public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
-      Button(action: { viewStore.send(.tapped) }) {
+      Button { viewStore.send(.tapped) } label: {
         Marquee(duration: TimeInterval(messages.count) * 9) {
           ForEach(messages, id: \.self) { message in
             Text(message)
@@ -115,9 +85,7 @@ let messages = [
       NavigationView {
         ZStack(alignment: .bottomLeading) {
           NagBannerView(
-            store: Store(
-              initialState: NagBanner.State()
-            ) {
+            store: Store(initialState: NagBanner.State()) {
               NagBanner()
             }
           )

@@ -90,7 +90,7 @@ private struct BottomMenuModifier: ViewModifier {
                 menu.title
                   .adaptiveFont(.matterMedium, size: 18)
                 Spacer()
-                Button(action: { self.item = nil }) {
+                Button { self.item = nil } label: {
                   Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 24))
                 }
@@ -105,18 +105,13 @@ private struct BottomMenuModifier: ViewModifier {
 
             HStack(spacing: 24) {
               ForEach(menu.buttons) { button in
-                MenuButton(
-                  button:
-                    button
-                    .additionalAction { self.item = nil }
-                )
+                MenuButton(button: button)
               }
             }
 
             if let footerButton = menu.footerButton {
               Button(
                 action: {
-                  self.item = nil
                   footerButton.action()
                 }
               ) {
@@ -167,7 +162,7 @@ private struct MenuButton: View {
       }
       .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
       .frame(maxWidth: .infinity)
-      .padding([.top, .bottom], 24)
+      .padding(.vertical, 24)
       .background(self.colorScheme == .light ? Color.white : .isowordsOrange)
       .continuousCornerRadius(12)
     }

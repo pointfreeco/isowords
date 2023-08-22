@@ -4,6 +4,7 @@ import CubeCore
 import CubePreview
 import SharedModels
 import SwiftUI
+import UserSettingsClient
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games
@@ -45,27 +46,18 @@ public struct Leaderboard: Reducer {
 
   public struct State: Equatable {
     @PresentationState public var destination: Destination.State?
-    public var isAnimationReduced: Bool
-    public var isHapticsEnabled: Bool
     public var scope: LeaderboardScope = .games
-    public var settings: CubeSceneView.ViewState.Settings
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
 
     public init(
       destination: Destination.State? = nil,
-      isAnimationReduced: Bool = false,
-      isHapticsEnabled: Bool,
       scope: LeaderboardScope = .games,
-      settings: CubeSceneView.ViewState.Settings,
       solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
       vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     ) {
       self.destination = destination
-      self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.scope = scope
-      self.settings = settings
       self.solo = solo
       self.vocab = vocab
     }
@@ -96,11 +88,8 @@ public struct Leaderboard: Reducer {
         state.destination = .cubePreview(
           CubePreview.State(
             cubes: response.puzzle,
-            isAnimationReduced: state.isAnimationReduced,
-            isHapticsEnabled: state.isHapticsEnabled,
             moveIndex: response.moveIndex,
-            moves: response.moves,
-            settings: state.settings
+            moves: response.moves
           )
         )
         return .none
@@ -174,11 +163,9 @@ public struct LeaderboardView: View {
     VStack(alignment: .leading, spacing: .grid(10)) {
       HStack {
         ForEach(LeaderboardScope.allCases, id: \.self) { scope in
-          Button(
-            action: {
-              self.viewStore.send(.scopeTapped(scope), animation: .default)
-            }
-          ) {
+          Button {
+            self.viewStore.send(.scopeTapped(scope), animation: .default)
+          } label: {
             Text(scope.title)
               .foregroundColor(self.viewStore.state.scope == scope ? scope.color : nil)
               .opacity(self.viewStore.state.scope == scope ? 1 : 0.3)
@@ -342,42 +329,35 @@ extension ResultEnvelope.Result {
       Preview {
         NavigationView {
           LeaderboardView(
-            store: .init(
-              initialState: Leaderboard.State(
-                isAnimationReduced: false,
-                isHapticsEnabled: true,
-                settings: .init()
-              )
-            ) {
-              Leaderboard().dependency(
-                \.apiClient,
-                update(.noop) {
-                  $0.apiRequest = { @Sendable route in
-                    switch route {
-                    case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
-                      return try await OK(
-                        FetchLeaderboardResponse(
-                          entries: (1...20).map { idx in
-                            FetchLeaderboardResponse.Entry(
-                              id: .init(rawValue: .init()),
-                              isSupporter: idx == 2,
-                              isYourScore: false,
-                              outOf: 100,
-                              playerDisplayName: "Blob",
-                              rank: idx,
-                              score: 5000 - idx * 233
-                            )
-                          }
-                        )
+            store: Store(initialState: Leaderboard.State()) {
+              Leaderboard()
+            } withDependencies: {
+              $0.apiClient = update(.noop) {
+                $0.apiRequest = { @Sendable route in
+                  switch route {
+                  case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
+                    try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                    return try await OK(
+                      FetchLeaderboardResponse(
+                        entries: (1...20).map { idx in
+                          FetchLeaderboardResponse.Entry(
+                            id: .init(rawValue: .init()),
+                            isSupporter: idx == 2,
+                            isYourScore: false,
+                            outOf: 100,
+                            playerDisplayName: "Blob",
+                            rank: idx,
+                            score: 5000 - idx * 233
+                          )
+                        }
                       )
+                    )
 
-                    default:
-                      throw CancellationError()
-                    }
+                  default:
+                    throw CancellationError()
                   }
                 }
-              )
+              }
             }
           )
         }

@@ -20,15 +20,14 @@ struct SettingsPreviewApp: App {
     WindowGroup {
       NavigationView {
         SettingsView(
-          store: .init(
-            initialState: Settings.State()
-          ) {
+          store: .init(initialState: Settings.State()) {
             Settings()
-              .dependency(\.apiClient, .noop)
-              .dependency(\.audioPlayer, .noop)
-              .dependency(\.build, .noop)
-              .dependency(\.database, .noop)
-              .dependency(\.serverConfig, .live(fetch: { .init() }))
+          } withDependencies: {
+            $0.apiClient = .noop
+            $0.audioPlayer = .noop
+            $0.build = .noop
+            $0.database = .noop
+            $0.serverConfig = .live(fetch: { .init() })
           },
           navPresentationStyle: .modal
         )

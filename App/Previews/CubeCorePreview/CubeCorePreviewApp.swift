@@ -11,16 +11,15 @@ struct CubeCorePreviewApp: App {
         store: Store(
           initialState: CubeSceneView.ViewState(
             cubes: .mock,
+            enableGyroMotion: false,
             isOnLowPowerMode: false,
             nub: nil,
             playedWords: [],
             selectedFaceCount: 0,
             selectedWordIsValid: false,
-            selectedWordString: "",
-            settings: .init(showSceneStatistics: true)
+            selectedWordString: ""
           )
         ) {
-
         }
       )
     }

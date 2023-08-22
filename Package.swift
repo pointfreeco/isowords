@@ -200,7 +200,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "FeedbackGeneratorClient", targets: ["FeedbackGeneratorClient"]),
     .library(name: "FileClient", targets: ["FileClient"]),
     .library(name: "GameCore", targets: ["GameCore"]),
-    .library(name: "GameFeature", targets: ["GameFeature"]),
     .library(name: "GameOverFeature", targets: ["GameOverFeature"]),
     .library(name: "HapticsCore", targets: ["HapticsCore"]),
     .library(name: "HomeFeature", targets: ["HomeFeature"]),
@@ -223,6 +222,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "SwiftUIHelpers", targets: ["SwiftUIHelpers"]),
     .library(name: "TcaHelpers", targets: ["TcaHelpers"]),
     .library(name: "TrailerFeature", targets: ["TrailerFeature"]),
+    .library(name: "UserSettingsClient", targets: ["UserSettingsClient"]),
     .library(name: "UIApplicationClient", targets: ["UIApplicationClient"]),
     .library(name: "UpgradeInterstitialFeature", targets: ["UpgradeInterstitialFeature"]),
     .library(name: "UserDefaultsClient", targets: ["UserDefaultsClient"]),
@@ -290,7 +290,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DictionarySqliteClient",
         "FeedbackGeneratorClient",
         "FileClient",
-        "GameFeature",
         "GameOverFeature",
         "HomeFeature",
         "LeaderboardFeature",
@@ -307,6 +306,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "StatsFeature",
         "TcaHelpers",
         "UIApplicationClient",
+        "UserSettingsClient",
         "VocabFeature",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Gen", package: "swift-gen"),
@@ -449,6 +449,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "SelectionSoundsCore",
         "SharedModels",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -584,11 +585,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "PuzzleGen",
         "RemoteNotificationsClient",
         "SelectionSoundsCore",
+        "SettingsFeature",
         "SharedSwiftUIEnvironment",
         "Styleguide",
         "TcaHelpers",
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ],
       resources: [.process("Resources/")]
@@ -601,41 +604,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
-    ),
-    .target(
-      name: "GameFeature",
-      dependencies: [
-        "ActiveGamesFeature",
-        "ApiClient",
-        "AudioPlayerClient",
-        "BottomMenu",
-        "ClientModels",
-        "ComposableGameCenter",
-        "ComposableUserNotifications",
-        "CubeCore",
-        "DictionaryClient",
-        "GameCore",
-        "GameOverFeature",
-        "FeedbackGeneratorClient",
-        "FileClient",
-        "LowPowerModeClient",
-        "PuzzleGen",
-        "RemoteNotificationsClient",
-        "SettingsFeature",
-        "Styleguide",
-        "TcaHelpers",
-        "UIApplicationClient",
-        "UpgradeInterstitialFeature",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
-    ),
-    .testTarget(
-      name: "GameFeatureTests",
-      dependencies: [
-        "AppFeature",
-        "TestHelpers",
-        .product(name: "Gen", package: "swift-gen"),
-      ]
     ),
     .target(
       name: "GameOverFeature",
@@ -754,6 +722,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
       ]
@@ -880,6 +849,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UserDefaultsClient",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ],
@@ -957,6 +927,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
+      name: "UserSettingsClient",
+      dependencies: [
+        "Styleguide",
+        .product(name: "Dependencies", package: "swift-dependencies"),
       ]
     ),
     .target(

@@ -113,13 +113,13 @@ public struct ActiveGamesView: View {
                 if match.status == .open, !match.isYourTurn,
                   let sendReminderAction = sendReminderAction
                 {
-                  Button(action: { self.viewStore.send(sendReminderAction) }) {
+                  Button { self.viewStore.send(sendReminderAction) } label: {
                     Label("Send Reminder", systemImage: "clock")
                   }
                 }
-                Button(action: {
+                Button {
                   self.viewStore.send(.turnBasedGameMenuItemTapped(.deleteMatch(match.id)))
-                }) {
+                } label: {
                   Label("Delete Match", systemImage: "trash")
                     .foregroundColor(.red)
                 }

@@ -106,7 +106,7 @@ public struct MultiplayerView: View {
 
         Spacer()
 
-        Button(action: { self.viewStore.send(.startButtonTapped) }) {
+        Button { self.viewStore.send(.startButtonTapped) } label: {
           VStack(spacing: 20) {
             Image(systemName: "person.2.fill")
               .font(.system(size: self.adaptiveSize.pad(40)))
@@ -119,7 +119,7 @@ public struct MultiplayerView: View {
           .continuousCornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
-        .adaptivePadding([.top, .bottom])
+        .adaptivePadding(.vertical)
         .adaptivePadding(.bottom, .grid(self.viewStore.hasPastGames ? 0 : 8))
 
         if self.viewStore.hasPastGames {
@@ -172,9 +172,7 @@ public struct MultiplayerView: View {
   }
 
   extension Store where State == Multiplayer.State, Action == Multiplayer.Action {
-    static let multiplayer = Store(
-      initialState: .init(hasPastGames: true)
-    ) {
+    static let multiplayer = Store(initialState: .init(hasPastGames: true)) {
       Multiplayer()
     }
   }

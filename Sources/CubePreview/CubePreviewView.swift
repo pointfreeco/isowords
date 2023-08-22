@@ -7,41 +7,39 @@ import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
+import UserSettingsClient
 
 public struct CubePreview: Reducer {
   public struct State: Equatable {
     var cubes: Puzzle
+    var enableGyroMotion: Bool
     var isAnimationReduced: Bool
-    var isHapticsEnabled: Bool
     var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
     @BindingState var nub: CubeSceneView.ViewState.NubState
     @BindingState var selectedCubeFaces: [IndexedCubeFace]
-    let settings: CubeSceneView.ViewState.Settings
 
     public init(
       cubes: ArchivablePuzzle,
-      isAnimationReduced: Bool,
-      isHapticsEnabled: Bool,
       isOnLowPowerMode: Bool = false,
       moveIndex: Int,
       moves: Moves,
       nub: CubeSceneView.ViewState.NubState = .init(),
-      selectedCubeFaces: [IndexedCubeFace] = [],
-      settings: CubeSceneView.ViewState.Settings
+      selectedCubeFaces: [IndexedCubeFace] = []
     ) {
+      @Dependency(\.userSettings) var userSettings
+
       self.cubes = .init(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
-      self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
+      self.enableGyroMotion = userSettings.enableGyroMotion
+      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
       self.nub = nub
       self.selectedCubeFaces = selectedCubeFaces
-      self.settings = settings
     }
 
     var finalWordString: String? {
@@ -64,6 +62,7 @@ public struct CubePreview: Reducer {
 
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -156,7 +155,7 @@ public struct CubePreview: Reducer {
       }
     }
     .haptics(
-      isEnabled: \.isHapticsEnabled,
+      isEnabled: { _ in self.userSettings.enableHaptics },
       triggerOnChangeOf: \.selectedCubeFaces
     )
     .selectionSounds(
@@ -302,13 +301,13 @@ extension CubeSceneView.ViewState {
           }
         }
       },
+      enableGyroMotion: state.enableGyroMotion,
       isOnLowPowerMode: state.isOnLowPowerMode,
       nub: state.nub,
       playedWords: [],
       selectedFaceCount: state.selectedCubeFaces.count,
       selectedWordIsValid: selectedWordString == state.finalWordString,
-      selectedWordString: selectedWordString,
-      settings: state.settings
+      selectedWordString: selectedWordString
     )
   }
 }

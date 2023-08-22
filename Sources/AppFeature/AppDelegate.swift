@@ -5,23 +5,24 @@ import Foundation
 import SettingsFeature
 
 public struct AppDelegateReducer: Reducer {
-  public typealias State = UserSettings
+  public struct State: Equatable {
+    public init() {}
+  }
 
   public enum Action: Equatable {
     case didFinishLaunching
     case didRegisterForRemoteNotifications(TaskResult<Data>)
     case userNotifications(UserNotificationClient.DelegateEvent)
-    case userSettingsLoaded(TaskResult<UserSettings>)
   }
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build.number) var buildNumber
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.dictionary.load) var loadDictionary
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
   @Dependency(\.userNotifications) var userNotifications
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -62,11 +63,13 @@ public struct AppDelegateReducer: Reducer {
             }
 
             group.addTask {
-              await send(
-                .userSettingsLoaded(
-                  TaskResult { try await self.fileClient.loadUserSettings() }
-                )
+              await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
+              await self.audioPlayer.setGlobalVolumeForMusic(
+                self.audioPlayer.secondaryAudioShouldBeSilencedHint()
+                  ? 0
+                  : userSettings.musicVolume
               )
+              await self.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
             }
           }
         }
@@ -98,21 +101,6 @@ public struct AppDelegateReducer: Reducer {
 
       case .userNotifications:
         return .none
-
-      case let .userSettingsLoaded(result):
-        state = (try? result.value) ?? state
-        return .run { [state] _ in
-          async let setSoundEffects: Void =
-            await self.audioPlayer.setGlobalVolumeForSoundEffects(state.soundEffectsVolume)
-          async let setMusic: Void = await self.audioPlayer.setGlobalVolumeForMusic(
-            self.audioPlayer.secondaryAudioShouldBeSilencedHint()
-              ? 0
-              : state.musicVolume
-          )
-          async let setUI: Void =
-            await self.setUserInterfaceStyle(state.colorScheme.userInterfaceStyle)
-          _ = await (setSoundEffects, setMusic, setUI)
-        }
       }
     }
   }

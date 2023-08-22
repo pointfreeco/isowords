@@ -19,7 +19,6 @@ public final class Isolated<Value>: @unchecked Sendable {
   let willSet: @Sendable (Value, Value) -> Void
   let didSet: @Sendable (Value, Value) -> Void
 
-  // TODO: Make configurable with `willSet`, `didSet`, etc.?
   public init(
     _ value: Value,
     willSet: @escaping @Sendable (Value, Value) -> Void = { _, _ in },

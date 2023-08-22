@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import Bloom
 import ComposableArchitecture
 import GameOverFeature
+import SettingsFeature
 import SwiftUI
 import UpgradeInterstitialFeature
 
@@ -14,12 +15,12 @@ public struct GameView<Content>: View where Content: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
   let content: Content
-  let isAnimationReduced: Bool
   let store: StoreOf<Game>
   var trayHeight: CGFloat { ActiveGamesView.height + (16 + self.adaptiveSize.padding) * 2 }
   @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
+    let isAnimationReduced: Bool
     let isDailyChallenge: Bool
     let isGameLoaded: Bool
     let isNavVisible: Bool
@@ -27,6 +28,7 @@ public struct GameView<Content>: View where Content: View {
     let selectedWordString: String
 
     init(state: Game.State) {
+      self.isAnimationReduced = state.isAnimationReduced
       self.isDailyChallenge = state.dailyChallengeId != nil
       self.isGameLoaded = state.isGameLoaded
       self.isNavVisible = state.isNavVisible
@@ -37,11 +39,9 @@ public struct GameView<Content>: View where Content: View {
 
   public init(
     content: Content,
-    isAnimationReduced: Bool,
     store: StoreOf<Game>
   ) {
     self.content = content
-    self.isAnimationReduced = isAnimationReduced
     self.store = store
     self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
@@ -80,7 +80,7 @@ public struct GameView<Content>: View where Content: View {
             }
             .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
             Spacer()
-            GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
+            GameFooterView(store: self.store)
               .padding(.bottom)
           }
           .ignoresSafeArea(.keyboard)
@@ -94,7 +94,7 @@ public struct GameView<Content>: View where Content: View {
             )
             .ignoresSafeArea()
             .transition(
-              self.isAnimationReduced
+              viewStore.isAnimationReduced
                 ? .opacity
                 : AnyTransition
                   .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
@@ -154,7 +154,7 @@ public struct GameView<Content>: View where Content: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(
-        self.isAnimationReduced
+        viewStore.isAnimationReduced
           ? nil
           : BloomBackground(
             size: proxy.size,
@@ -184,6 +184,15 @@ public struct GameView<Content>: View where Content: View {
         state: /Game.Destination.State.alert,
         action: Game.Destination.Action.alert
       )
+      .sheet(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Game.Destination.State.settings,
+        action: Game.Destination.Action.settings
+      ) { store in
+        NavigationStack {
+          SettingsView(store: store, navPresentationStyle: .modal)
+        }
+      }
     }
     .task { await self.viewStore.send(.task).finish() }
   }

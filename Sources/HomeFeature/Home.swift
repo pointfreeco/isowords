@@ -25,9 +25,9 @@ public struct Home: Reducer {
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())
-      case leaderboard(Leaderboard.State)
+      case leaderboard(Leaderboard.State = .init())
       case multiplayer(Multiplayer.State)
-      case settings
+      case settings(Settings.State = Settings.State())
       case solo(Solo.State = .init())
     }
     public enum Action: Equatable {
@@ -35,7 +35,7 @@ public struct Home: Reducer {
       case dailyChallenge(DailyChallengeReducer.Action)
       case leaderboard(Leaderboard.Action)
       case multiplayer(Multiplayer.Action)
-      case settings(Never)
+      case settings(Settings.Action)
       case solo(Solo.Action)
     }
     public var body: some ReducerOf<Self> {
@@ -51,6 +51,9 @@ public struct Home: Reducer {
       Scope(state: /State.multiplayer, action: /Action.multiplayer) {
         Multiplayer()
       }
+      Scope(state: /State.settings, action: /Action.settings) {
+        Settings()
+      }
       Scope(state: /State.solo, action: /Action.solo) {
         Solo()
       }
@@ -62,7 +65,7 @@ public struct Home: Reducer {
     @PresentationState public var destination: Destination.State?
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
-    public var nagBannerFeature: NagBannerFeature.State
+    @PresentationState public var nagBanner: NagBanner.State?
     public var savedGames: SavedGamesState {
       didSet {
         guard case var .dailyChallenge(dailyChallengeState) = self.destination
@@ -72,7 +75,6 @@ public struct Home: Reducer {
         self.destination = .dailyChallenge(dailyChallengeState)
       }
     }
-    public var settings: Settings.State
     public var turnBasedMatches: [ActiveTurnBasedMatch]
     public var weekInReview: FetchWeekInReviewResponse?
 
@@ -93,10 +95,9 @@ public struct Home: Reducer {
       dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
       hasChangelog: Bool = false,
       hasPastTurnBasedGames: Bool = false,
-      nagBannerFeature: NagBannerFeature.State = .init(),
+      nagBanner: NagBanner.State? = nil,
       destination: Destination.State? = nil,
       savedGames: SavedGamesState = SavedGamesState(),
-      settings: Settings.State = .init(),
       turnBasedMatches: [ActiveTurnBasedMatch] = [],
       weekInReview: FetchWeekInReviewResponse? = nil
     ) {
@@ -104,9 +105,8 @@ public struct Home: Reducer {
       self.destination = destination
       self.hasChangelog = hasChangelog
       self.hasPastTurnBasedGames = hasPastTurnBasedGames
-      self.nagBannerFeature = nagBannerFeature
+      self.nagBanner = nagBanner
       self.savedGames = savedGames
-      self.settings = settings
       self.turnBasedMatches = turnBasedMatches
       self.weekInReview = weekInReview
     }
@@ -130,9 +130,8 @@ public struct Home: Reducer {
     case howToPlayButtonTapped
     case leaderboardButtonTapped
     case multiplayerButtonTapped
-    case nagBannerFeature(NagBannerFeature.Action)
+    case nagBanner(PresentationAction<NagBanner.Action>)
     case serverConfigResponse(ServerConfig)
-    case settings(Settings.Action)
     case settingsButtonTapped
     case soloButtonTapped
     case task
@@ -162,14 +161,9 @@ public struct Home: Reducer {
       .ifLet(\.$destination, action: /Action.destination) {
         Destination()
       }
-
-    Scope(state: \.nagBannerFeature, action: /Action.nagBannerFeature) {
-      NagBannerFeature()
-    }
-
-    Scope(state: \.settings, action: /Action.settings) {
-      Settings()
-    }
+      .ifLet(\.$nagBanner, action: /Action.nagBanner) {
+        NagBanner()
+      }
   }
 
   private func core(state: inout State, action: Action) -> EffectOf<Self> {
@@ -239,11 +233,6 @@ public struct Home: Reducer {
       return .none
 
     case let .authenticationResponse(currentPlayerEnvelope):
-      state.settings.sendDailyChallengeReminder =
-        currentPlayerEnvelope.player.sendDailyChallengeReminder
-      state.settings.sendDailyChallengeSummary =
-        currentPlayerEnvelope.player.sendDailyChallengeSummary
-
       let now = self.now.timeIntervalSinceReferenceDate
       let itsNagTime =
         Int(now - self.userDefaults.installationTime)
@@ -251,7 +240,7 @@ public struct Home: Reducer {
       let isFullGamePurchased =
         currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
 
-      state.nagBannerFeature.nagBanner =
+      state.nagBanner =
         !isFullGamePurchased && itsNagTime
         ? .init()
         : nil
@@ -293,31 +282,18 @@ public struct Home: Reducer {
       return .none
 
     case .leaderboardButtonTapped:
-      state.destination = .leaderboard(
-        .init(
-          isAnimationReduced: state.settings.userSettings.enableReducedAnimation,
-          isHapticsEnabled: state.settings.userSettings.enableHaptics,
-          settings: .init(
-            enableCubeShadow: state.settings.enableCubeShadow,
-            enableGyroMotion: state.settings.userSettings.enableGyroMotion,
-            showSceneStatistics: state.settings.showSceneStatistics
-          )
-        )
-      )
+      state.destination = .leaderboard()
       return .none
 
     case .multiplayerButtonTapped:
       state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
       return .none
 
-    case .nagBannerFeature:
-      return .none
-
-    case .settings:
+    case .nagBanner:
       return .none
 
     case .settingsButtonTapped:
-      state.destination = .settings
+      state.destination = .settings()
       return .none
 
     case .soloButtonTapped:
@@ -441,7 +417,7 @@ public struct HomeView: View {
         || state.savedGames.unlimited != nil
         || !state.turnBasedMatches.isEmpty
       self.hasChangelog = state.hasChangelog
-      self.isNagBannerVisible = state.nagBannerFeature.nagBanner != nil
+      self.isNagBannerVisible = state.nagBanner != nil
     }
   }
 
@@ -546,8 +522,9 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      NagBannerFeatureView(
-        store: self.store.scope(state: \.nagBannerFeature, action: { .nagBannerFeature($0) })
+      IfLetStore(
+        self.store.scope(state: \.$nagBanner, action: { .nagBanner($0) }),
+        then: NagBannerView.init(store:)
       )
     }
     .navigationBarHidden(true)
@@ -555,11 +532,8 @@ public struct HomeView: View {
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: /Home.Destination.State.settings,
       action: Home.Destination.Action.settings
-    ) { _ in
-      SettingsView(
-        store: self.store.scope(state: \.settings, action: { .settings($0) }),
-        navPresentationStyle: .navigation
-      )
+    ) { store in
+      SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
@@ -658,7 +632,6 @@ private struct ShakeEffect: GeometryEffect {
             secondsPlayed: 0
           )
         )
-        $0.settings.fullGamePurchasedAt = .mock
         $0.turnBasedMatches = [
           .init(
             id: "1",

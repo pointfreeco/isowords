@@ -4,7 +4,6 @@ import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
 import FeedbackGeneratorClient
-import GameFeature
 import GameOverFeature
 import HomeFeature
 import Overture
@@ -32,16 +31,16 @@ class PersistenceTests: XCTestCase {
       )
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.play = { _ in }
+      $0.audioPlayer.stop = { _ in }
+      $0.dictionary.contains = { word, _ in word == "CAB" }
+      $0.dictionary.randomCubes = { _ in .mock }
+      $0.feedbackGenerator = .noop
+      $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+      $0.mainRunLoop = .immediate
+      $0.mainQueue = .immediate
     }
-
-    store.dependencies.audioPlayer.play = { _ in }
-    store.dependencies.audioPlayer.stop = { _ in }
-    store.dependencies.dictionary.contains = { word, _ in word == "CAB" }
-    store.dependencies.dictionary.randomCubes = { _ in .mock }
-    store.dependencies.feedbackGenerator = .noop
-    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.mainQueue = .immediate
 
     let index = LatticePoint(x: .two, y: .two, z: .two)
     let C = IndexedCubeFace(index: index, side: .top)
@@ -49,102 +48,93 @@ class PersistenceTests: XCTestCase {
     let B = IndexedCubeFace(index: index, side: .right)
 
     await store.send(.home(.destination(.presented(.solo(.gameButtonTapped(.unlimited)))))) {
-      $0.game = Game.State(
-        cubes: .mock,
-        gameContext: .solo,
-        gameCurrentTime: RunLoop.immediate.now.date,
-        gameMode: .unlimited,
-        gameStartTime: RunLoop.immediate.now.date
+      $0.destination = .game(
+        Game.State(
+          cubes: .mock,
+          gameContext: .solo,
+          gameCurrentTime: RunLoop.immediate.now.date,
+          gameMode: .unlimited,
+          gameStartTime: RunLoop.immediate.now.date
+        )
       )
-      $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
+      $0.home.savedGames.unlimited = $0.$destination[case: /AppReducer.Destination.State.game]
+        .map(InProgressGame.init)
     }
-    await store.send(.currentGame(.game(.tap(.began, C)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.optimisticallySelectedFace = C
-        $0.selectedWord = [C]
-      }
+    await store.send(.destination(.presented(.game(.tap(.began, C))))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = C
+      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C]
     }
-    await store.send(.currentGame(.game(.tap(.ended, C)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.optimisticallySelectedFace = nil
-      }
+    await store.send(.destination(.presented(.game(.tap(.ended, C))))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
     }
-    await store.send(.currentGame(.game(.tap(.began, A)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.optimisticallySelectedFace = A
-        $0.selectedWord = [C, A]
-      }
+    await store.send(.destination(.presented(.game(.tap(.began, A))))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = A
+      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C, A]
     }
-    await store.send(.currentGame(.game(.tap(.ended, A)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.optimisticallySelectedFace = nil
-      }
+    await store.send(.destination(.presented(.game(.tap(.ended, A))))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
     }
-    await store.send(.currentGame(.game(.tap(.began, B)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.optimisticallySelectedFace = B
-        $0.selectedWord = [C, A, B]
-        $0.selectedWordIsValid = true
-      }
+    await store.send(.destination(.presented(.game(.tap(.began, B))))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = B
+      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C, A, B]
+      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWordIsValid = true
     }
-    await store.send(.currentGame(.game(.tap(.ended, B)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.optimisticallySelectedFace = nil
-      }
+    await store.send(.destination(.presented(.game(.tap(.ended, B))))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
     }
-    await store.send(.currentGame(.game(.submitButtonTapped(reaction: nil)))) {
-      try XCTUnwrap(&$0.game) {
-        $0.moves = [
-          .init(
-            playedAt: RunLoop.immediate.now.date,
-            playerIndex: nil,
-            reactions: nil,
-            score: 27,
-            type: .playedWord($0.selectedWord)
-          )
-        ]
-        $0.selectedWord = []
-        $0.selectedWordIsValid = false
-        $0.cubes[index].left.useCount = 1
-        $0.cubes[index].right.useCount = 1
-        $0.cubes[index].top.useCount = 1
-      }
-      $0.home.savedGames.unlimited = $0.game.map(InProgressGame.init)
+    await store.send(.destination(.presented(.game(.submitButtonTapped(reaction: nil))))) {
+      let game = try XCTUnwrap($0.$destination[case: /AppReducer.Destination.State.game])
+      $0.$destination[case: /AppReducer.Destination.State.game]?.moves = [
+        .init(
+          playedAt: RunLoop.immediate.now.date,
+          playerIndex: nil,
+          reactions: nil,
+          score: 27,
+          type: .playedWord(game.selectedWord)
+        )
+      ]
+      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = []
+      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWordIsValid = false
+      $0.$destination[case: /AppReducer.Destination.State.game]?.cubes[index].left.useCount = 1
+      $0.$destination[case: /AppReducer.Destination.State.game]?.cubes[index].right.useCount = 1
+      $0.$destination[case: /AppReducer.Destination.State.game]?.cubes[index].top.useCount = 1
+      $0.home.savedGames.unlimited = $0.$destination[case: /AppReducer.Destination.State.game]
+        .map(InProgressGame.init)
     }
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
-      try XCTUnwrap(&$0.game) {
-        $0.destination = .bottomMenu(
-          .init(
-            title: .init("Solo"),
-            message: nil,
-            buttons: [
-              .init(
-                title: .init("Main menu"),
-                icon: .exit,
-                action: .init(action: .exitButtonTapped, animation: .default)
-              ),
-              .init(
-                title: .init("End game"),
-                icon: .flag,
-                action: .init(action: .endGameButtonTapped, animation: .default)
-              ),
-            ],
-            footerButton: .init(
-              title: .init("Settings"),
-              icon: .init(systemName: "gear"),
-              action: .init(action: .settingsButtonTapped, animation: .default)
-            )
+    await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+        .init(
+          title: .init("Solo"),
+          message: nil,
+          buttons: [
+            .init(
+              title: .init("Main menu"),
+              icon: .exit,
+              action: .init(action: .exitButtonTapped, animation: .default)
+            ),
+            .init(
+              title: .init("End game"),
+              icon: .flag,
+              action: .init(action: .endGameButtonTapped, animation: .default)
+            ),
+          ],
+          footerButton: .init(
+            title: .init("Settings"),
+            icon: .init(systemName: "gear"),
+            action: .init(action: .settingsButtonTapped, animation: .default)
           )
         )
-      }
+      )
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.exitButtonTapped)))))
-    ) { appState in
-      try XCTUnwrap(&appState.game) { game in
-        appState.home.savedGames.unlimited = InProgressGame(gameState: game)
-      }
-      appState.game = nil
+      .destination(.presented(.game(.destination(.presented(.bottomMenu(.exitButtonTapped))))))
+    ) {
+      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = nil
+      $0.home.savedGames.unlimited = InProgressGame(gameState: game)
+    }
+    await store.receive(.destination(.dismiss)) {
+      $0.destination = nil
     }
     try await saves.withValue {
       XCTAssertNoDifference(2, $0.count)
@@ -161,57 +151,54 @@ class PersistenceTests: XCTestCase {
 
     let store = TestStore(
       initialState: AppReducer.State(
-        game: update(.mock) { $0.gameMode = .unlimited },
+        destination: .game(update(.mock) { $0.gameMode = .unlimited }),
         home: Home.State(savedGames: SavedGamesState(unlimited: .mock))
       )
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.stop = { _ in }
+      $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
+      $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
+      $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
+      $0.mainQueue = .immediate
     }
 
-    store.dependencies.audioPlayer.stop = { _ in }
-    store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
-    store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-    store.dependencies.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
-    store.dependencies.mainQueue = .immediate
-
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
-      try XCTUnwrap(&$0.game) {
-        $0.destination = .bottomMenu(
-          .init(
-            title: .init("Solo"),
-            message: nil,
-            buttons: [
-              .init(
-                title: .init("Main menu"),
-                icon: .exit,
-                action: .init(action: .exitButtonTapped, animation: .default)
-              ),
-              .init(
-                title: .init("End game"),
-                icon: .flag,
-                action: .init(action: .endGameButtonTapped, animation: .default)
-              ),
-            ],
-            footerButton: .init(
-              title: .init("Settings"),
-              icon: .init(systemName: "gear"),
-              action: .init(action: .settingsButtonTapped, animation: .default)
-            )
+    await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+        .init(
+          title: .init("Solo"),
+          message: nil,
+          buttons: [
+            .init(
+              title: .init("Main menu"),
+              icon: .exit,
+              action: .init(action: .exitButtonTapped, animation: .default)
+            ),
+            .init(
+              title: .init("End game"),
+              icon: .flag,
+              action: .init(action: .endGameButtonTapped, animation: .default)
+            ),
+          ],
+          footerButton: .init(
+            title: .init("Settings"),
+            icon: .init(systemName: "gear"),
+            action: .init(action: .settingsButtonTapped, animation: .default)
           )
         )
-      }
+      )
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+      .destination(.presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))))
     ) {
-      try XCTUnwrap(&$0.game) {
-        $0.destination = .gameOver(
-          GameOver.State(
-            completedGame: .init(gameState: $0),
-            isDemo: false
-          )
+      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .gameOver(
+        GameOver.State(
+          completedGame: .init(gameState: game),
+          isDemo: false
         )
-      }
+      )
       $0.home.savedGames.unlimited = nil
     }
 
@@ -225,48 +212,45 @@ class PersistenceTests: XCTestCase {
     let didArchiveGame = ActorIsolated(false)
 
     let store = TestStore(
-      initialState: AppReducer.State(game: update(.mock) { $0.gameMode = .timed })
+      initialState: AppReducer.State(destination: .game(update(.mock) { $0.gameMode = .timed }))
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.stop = { _ in }
+      $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
+      $0.mainQueue = .immediate
     }
 
-    store.dependencies.audioPlayer.stop = { _ in }
-    store.dependencies.database.saveGame = { _ in await didArchiveGame.setValue(true) }
-    store.dependencies.mainQueue = .immediate
-
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
-      try XCTUnwrap(&$0.game) {
-        $0.destination = .bottomMenu(
-          .init(
-            title: .init("Solo"),
-            message: nil,
-            buttons: [
-              .init(
-                title: .init("End game"),
-                icon: .flag,
-                action: .init(action: .endGameButtonTapped, animation: .default)
-              )
-            ],
-            footerButton: .init(
-              title: .init("Settings"),
-              icon: .init(systemName: "gear"),
-              action: .init(action: .settingsButtonTapped, animation: .default)
+    await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+        .init(
+          title: .init("Solo"),
+          message: nil,
+          buttons: [
+            .init(
+              title: .init("End game"),
+              icon: .flag,
+              action: .init(action: .endGameButtonTapped, animation: .default)
             )
+          ],
+          footerButton: .init(
+            title: .init("Settings"),
+            icon: .init(systemName: "gear"),
+            action: .init(action: .settingsButtonTapped, animation: .default)
           )
         )
-      }
+      )
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+      .destination(.presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))))
     ) {
-      try XCTUnwrap(&$0.game) {
-        $0.destination = .gameOver(
-          GameOver.State(
-            completedGame: .init(gameState: $0),
-            isDemo: false
-          )
+      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .gameOver(
+        GameOver.State(
+          completedGame: .init(gameState: game),
+          isDemo: false
         )
-      }
+      )
     }
 
     await didArchiveGame.withValue { XCTAssert($0) }
@@ -278,10 +262,14 @@ class PersistenceTests: XCTestCase {
       initialState: AppReducer.State()
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.audioPlayer.secondaryAudioShouldBeSilencedHint = { false }
+      $0.audioPlayer.setGlobalVolumeForMusic = { _ in }
+      $0.audioPlayer.setGlobalVolumeForSoundEffects = { _ in }
+      $0.applicationClient.setUserInterfaceStyle = { _ in }
+      $0.fileClient.override(load: savedGamesFileName, savedGames)
     }
-
-    store.dependencies.didFinishLaunching()
-    store.dependencies.fileClient.override(load: savedGamesFileName, savedGames)
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
     await store.receive(.savedGamesLoaded(.success(savedGames))) {
@@ -291,7 +279,7 @@ class PersistenceTests: XCTestCase {
       $0.home.destination = .solo(.init(inProgressGame: .mock))
     }
     await store.send(.home(.destination(.presented(.solo(.gameButtonTapped(.unlimited)))))) {
-      $0.game = Game.State(inProgressGame: .mock)
+      $0.destination = .game(Game.State(inProgressGame: .mock))
     }
     await task.cancel()
   }
@@ -299,15 +287,17 @@ class PersistenceTests: XCTestCase {
   func testTurnBasedAbandon() async {
     let store = TestStore(
       initialState: AppReducer.State(
-        game: update(.mock) {
-          $0.gameContext = .turnBased(
-            .init(
-              localPlayer: .mock,
-              match: .inProgress,
-              metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+        destination: .game(
+          update(.mock) {
+            $0.gameContext = .turnBased(
+              .init(
+                localPlayer: .mock,
+                match: .inProgress,
+                metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+              )
             )
-          )
-        },
+          }
+        ),
         home: Home.State(
           savedGames: SavedGamesState(
             dailyChallengeUnlimited: .mock,
@@ -317,26 +307,26 @@ class PersistenceTests: XCTestCase {
       )
     ) {
       AppReducer()
+    } withDependencies: {
+      $0.audioPlayer.stop = { _ in }
     }
 
-    store.dependencies.audioPlayer.stop = { _ in }
-
-    await store.send(.currentGame(.game(.menuButtonTapped))) {
-      try XCTUnwrap(&$0.game) {
-        $0.destination = .bottomMenu(.gameMenu(state: $0))
-      }
+    await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
+      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+        .gameMenu(state: game)
+      )
     }
     await store.send(
-      .currentGame(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
+      .destination(.presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))))
     ) {
-      try XCTUnwrap(&$0.game) {
-        var gameOver = GameOver.State(
-          completedGame: .init(gameState: $0),
-          isDemo: false
-        )
-        gameOver.turnBasedContext = $0.turnBasedContext
-        $0.destination = .gameOver(gameOver)
-      }
+      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      var gameOver = GameOver.State(
+        completedGame: .init(gameState: game),
+        isDemo: false
+      )
+      gameOver.turnBasedContext = game.turnBasedContext
+      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .gameOver(gameOver)
     }
   }
 }

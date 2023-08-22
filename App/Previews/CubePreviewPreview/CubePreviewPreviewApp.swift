@@ -19,8 +19,6 @@ struct CubePreviewPreviewApp: App {
         store: Store(
           initialState: CubePreview.State(
             cubes: .mock,
-            isAnimationReduced: false,
-            isHapticsEnabled: true,
             isOnLowPowerMode: false,
             moveIndex: 0,
             moves: [
@@ -56,12 +54,12 @@ struct CubePreviewPreviewApp: App {
                   ),
                 ])
               )
-            ],
-            settings: .init()
+            ]
           )
         ) {
           CubePreview()
-            .dependency(\.audioPlayer, .noop)
+        } withDependencies: {
+          $0.audioPlayer = .noop
         }
       )
     }

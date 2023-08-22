@@ -21,10 +21,7 @@ class DailyChallengeViewTests: XCTestCase {
   func testDefault() {
     assertSnapshot(
       matching: DailyChallengeView(
-        store: .init(
-          initialState: .init()
-        ) {
-
+        store: .init(initialState: .init()) {
         }
       )
       .environment(\.date) { .mock },
@@ -68,7 +65,6 @@ class DailyChallengeViewTests: XCTestCase {
             userNotificationSettings: .init(authorizationStatus: .notDetermined)
           )
         ) {
-          
         }
       )
       .environment(\.date) { .mock },

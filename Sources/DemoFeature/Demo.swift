@@ -26,19 +26,10 @@ public struct Demo: Reducer {
       case onboarding(Onboarding.State)
     }
 
-    var game: Game.State? {
-      get {
-        guard case let .game(game) = self.step
-        else { return nil }
-        return game
-      }
-      set {
-        guard
-          let newValue = newValue,
-          case .game = self.step
-        else { return }
-        self.step = .game(newValue)
-      }
+    var isGameOver: Bool {
+      guard case let .game(game) = self.step, case .gameOver = game.destination
+      else { return false }
+      return true
     }
   }
 
@@ -64,22 +55,20 @@ public struct Demo: Reducer {
       Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
+      Scope(state: /State.Step.game, action: /Action.game) {
+        Game().transformDependency(\.self) {
+          $0.database = .noop
+          $0.fileClient = .noop
+          $0.gameCenter = .noop
+          $0.remoteNotifications = .noop
+          $0.serverConfig = .noop
+          $0.storeKit = .noop
+          $0.userDefaults = .noop
+          $0.userNotifications = .noop
+        }
+      }
     }
-
-    IntegratedGame(
-      state: OptionalPath(\.game),
-      action: /Action.game,
-      isHapticsEnabled: { _ in true }
-    )
-    .dependency(\.database, .noop)
-    .dependency(\.fileClient, .noop)
-    .dependency(\.gameCenter, .noop)
-    .dependency(\.remoteNotifications, .noop)
-    .dependency(\.serverConfig, .noop)
-    .dependency(\.storeKit, .noop)
-    .dependency(\.userDefaults, .noop)
-    .dependency(\.userNotifications, .noop)
-    .onChange(of: { /Game.Destination.State.gameOver ~= $0.game?.destination }) { _, _ in
+    .onChange(of: \.isGameOver) { _, _ in
       Reduce { _, _ in
         .run { send in
           try await self.mainQueue.sleep(for: .seconds(2))
@@ -145,7 +134,7 @@ public struct DemoView: View {
 
     init(state: Demo.State) {
       self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = /Game.Destination.State.gameOver ~= state.game?.destination
+      self.isGameOver = state.isGameOver
     }
   }
 
@@ -171,11 +160,10 @@ public struct DemoView: View {
             content: GameView(
               content: CubeView(
                 store: store.scope(
-                  state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
+                  state: { CubeSceneView.ViewState(game: $0, nub: nil) },
                   action: { CubeSceneView.ViewAction.to(gameAction: $0) }
                 )
               ),
-              isAnimationReduced: false,
               store: store
             ),
             isGameOver: self.viewStore.isGameOver,
@@ -208,7 +196,7 @@ struct GameWrapper<Content: View>: View {
       self.content
 
       if !self.isGameOver {
-        Button(action: { self.bannerAction() }) {
+        Button { self.bannerAction() } label: {
           HStack {
             Text("Having fun?")
               .foregroundColor(.isowordsRed)
@@ -227,9 +215,9 @@ struct GameWrapper<Content: View>: View {
           }
           .adaptiveFont(.matterMedium, size: 18)
           .foregroundColor(.isowordsBlack)
-          .adaptivePadding([.top], .grid(2))
-          .adaptivePadding([.bottom], .grid(4))
-          .adaptivePadding([.horizontal], .grid(4))
+          .adaptivePadding(.top, .grid(2))
+          .adaptivePadding(.bottom, .grid(4))
+          .adaptivePadding(.horizontal, .grid(4))
         }
         .frame(maxWidth: .infinity)
         .background(

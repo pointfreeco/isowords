@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Styleguide
 import SwiftUI
+import UserSettingsClient
 
 struct AppearanceSettingsView: View {
   let store: StoreOf<Settings>
@@ -33,11 +34,9 @@ struct AppIconPicker: View {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: .grid(4)) {
           ForEach(Array(AppIcon.allCases.enumerated()), id: \.element) { offset, appIcon in
-            Button(
-              action: {
-                self.appIcon = self.appIcon == appIcon ? nil : appIcon
-              }
-            ) {
+            Button {
+              self.appIcon = self.appIcon == appIcon ? nil : appIcon
+            } label: {
               Image(uiImage: UIImage(named: appIcon.rawValue, in: Bundle.module, with: nil)!)
                 .resizable()
                 .scaledToFit()
@@ -64,43 +63,11 @@ struct AppIconPicker: View {
             }
           }
         }
-        .screenEdgePadding([.leading, .trailing])
+        .screenEdgePadding(.horizontal)
       }
       .onAppear {
         proxy.scrollTo(self.appIcon, anchor: .center)
       }
-    }
-  }
-}
-
-public enum AppIcon: String, Codable, CaseIterable, Hashable {
-  case icon1 = "icon-1"
-  case icon2 = "icon-2"
-  case icon3 = "icon-3"
-  case icon4 = "icon-4"
-  case icon5 = "icon-5"
-  case icon6 = "icon-6"
-  case icon7 = "icon-7"
-  case icon8 = "icon-8"
-  case iso = "icon-iso"
-
-  var color: Color {
-    switch self {
-    case .icon1:
-      return .isowordsYellow
-    case .icon2:
-      return .isowordsOrange
-    case .icon3:
-      return .isowordsRed
-
-    case .icon4, .icon5, .icon6, .icon7, .icon8, .iso:
-      return Color(
-        UIColor { trait in
-          trait.userInterfaceStyle == .light
-            ? .black
-            : .white
-        }
-      )
     }
   }
 }
@@ -137,13 +104,11 @@ struct ColorSchemePicker: View {
 
       HStack {
         ForEach([UserSettings.ColorScheme.system, .dark, .light], id: \.self) { colorScheme in
-          Button(
-            action: {
-              withAnimation(.easeOut(duration: 0.2)) {
-                self.colorScheme = colorScheme
-              }
+          Button {
+            withAnimation(.easeOut(duration: 0.2)) {
+              self.colorScheme = colorScheme
             }
-          ) {
+          } label: {
             Text(colorScheme.title)
               .foregroundColor(Color.white)
               .colorMultiply(

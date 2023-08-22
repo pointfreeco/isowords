@@ -48,20 +48,20 @@ class GameOverFeatureIntegrationTests: XCTestCase {
         )
       ) {
         GameOver()
+      } withDependencies: {
+        $0.audioPlayer = .noop
+        $0.apiClient = .init(
+          middleware: siteMiddleware(environment: serverEnvironment),
+          router: .test
+        )
+        $0.database.playedGamesCount = { _ in 0 }
+        $0.mainRunLoop = .immediate
+        $0.serverConfig.config = { .init() }
+        $0.userNotifications.getNotificationSettings = {
+          (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+        }
       }
 
-      store.dependencies.audioPlayer = .noop
-      store.dependencies.apiClient = .init(
-        middleware: siteMiddleware(environment: serverEnvironment),
-        router: .test
-      )
-      store.dependencies.database.playedGamesCount = { _ in 0 }
-      store.dependencies.mainRunLoop = .immediate
-      store.dependencies.serverConfig.config = { .init() }
-      store.dependencies.userNotifications.getNotificationSettings = {
-        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
-      }
-      
       let task = await store.send(.task)
       
       await store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {

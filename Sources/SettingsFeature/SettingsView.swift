@@ -49,9 +49,9 @@ public struct SettingsView: View {
                 {
                   switch fullGameProduct {
                   case let .success(product):
-                    Button(
-                      action: { self.viewStore.send(.tappedProduct(product), animation: .default) }
-                    ) {
+                    Button {
+                      self.viewStore.send(.tappedProduct(product), animation: .default)
+                    } label: {
                       HStack(alignment: .top, spacing: 0) {
                         Text(product.priceLocale.currencySymbol ?? "$")
                           .adaptiveFont(.matter, size: 24)
@@ -64,7 +64,7 @@ public struct SettingsView: View {
                     EmptyView()
                   }
                 } else {
-                  Button(action: {}) {
+                  Button {} label: {
                     ProgressView()
                       .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveWhite))
                       .scaleEffect(1.5, anchor: .center)
@@ -79,7 +79,7 @@ public struct SettingsView: View {
               )
             }
 
-            Button(action: { self.viewStore.send(.leaveUsAReviewButtonTapped) }) {
+            Button { self.viewStore.send(.leaveUsAReviewButtonTapped) } label: {
               Image(systemName: "star")
                 .font(.system(size: 40))
             }
@@ -90,7 +90,7 @@ public struct SettingsView: View {
               )
             )
 
-            Button(action: { self.isSharePresented.toggle() }) {
+            Button { self.isSharePresented.toggle() } label: {
               Image(systemName: "person.2.fill")
                 .font(.system(size: 40))
             }
@@ -135,7 +135,7 @@ public struct SettingsView: View {
       )
       if self.viewStore.isFullGamePurchased {
         SettingsRow {
-          Button(action: { self.viewStore.send(.leaveUsAReviewButtonTapped) }) {
+          Button { self.viewStore.send(.leaveUsAReviewButtonTapped) } label: {
             HStack {
               Text("Leave us a review")
               Spacer()
@@ -156,7 +156,7 @@ public struct SettingsView: View {
         if let buildNumber = self.viewStore.buildNumber {
           Text("Build \(buildNumber.rawValue)")
         }
-        Button(action: { self.viewStore.send(.reportABugButtonTapped) }) {
+        Button { self.viewStore.send(.reportABugButtonTapped) } label: {
           Text("Report a bug")
             .underline()
         }
@@ -259,9 +259,8 @@ public struct SupportButtonStyle: ButtonStyle {
               )
             ) {
               Settings()
-                .dependency(\.apiClient.currentPlayer) {
-                  .init(appleReceipt: .mock, player: .blob)
-                }
+            } withDependencies: {
+              $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
             },
             navPresentationStyle: .navigation
           )

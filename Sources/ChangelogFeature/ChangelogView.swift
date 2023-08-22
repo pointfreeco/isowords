@@ -130,8 +130,8 @@ public struct ChangelogView: View {
           if viewStore.isUpdateButtonVisible {
             HStack {
               Spacer()
-              Button(action: { viewStore.send(.updateButtonTapped) }) {
-                Text("Update")
+              Button("Update") {
+                viewStore.send(.updateButtonTapped)
               }
               .buttonStyle(ActionButtonStyle())
             }
@@ -176,36 +176,32 @@ public struct ChangelogView: View {
     static var previews: some View {
       Preview {
         ChangelogView(
-          store: .init(
-            initialState: ChangelogReducer.State()
-          ) {
+          store: Store(initialState: ChangelogReducer.State()) {
             ChangelogReducer()
-              .dependency(
-                \.apiClient,
-                {
-                  var apiClient = ApiClient.noop
-                  apiClient.override(
-                    routeCase: /ServerRoute.Api.Route.changelog(build:),
-                    withResponse: { _ in
-                      try await OK(
-                        update(Changelog.current) {
-                          $0.changes.append(
-                            Changelog.Change(
-                              version: "1.0",
-                              build: 60,
-                              log: "We launched!"
-                            )
-                          )
-                        }
+          } withDependencies: {
+            $0.apiClient = {
+              var apiClient = ApiClient.noop
+              apiClient.override(
+                routeCase: /ServerRoute.Api.Route.changelog(build:),
+                withResponse: { _ in
+                  try await OK(
+                    update(Changelog.current) {
+                      $0.changes.append(
+                        Changelog.Change(
+                          version: "1.0",
+                          build: 60,
+                          log: "We launched!"
+                        )
                       )
                     }
                   )
-                  return apiClient
-                }()
+                }
               )
-              .dependency(\.applicationClient, .noop)
-              .dependency(\.build.number) { 98 }
-              .dependency(\.serverConfig, .noop)
+              return apiClient
+            }()
+            $0.applicationClient = .noop
+            $0.build.number = { 98 }
+            $0.serverConfig = .noop
           }
         )
         .navigationStyle(

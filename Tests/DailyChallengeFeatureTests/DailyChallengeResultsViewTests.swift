@@ -39,7 +39,6 @@ class DailyChallengeResultsViewTests: XCTestCase {
             )
           )
         ) {
-
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -72,7 +71,6 @@ class DailyChallengeResultsViewTests: XCTestCase {
             )
           )
         ) {
-
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -117,7 +115,6 @@ class DailyChallengeResultsViewTests: XCTestCase {
             )
           )
         ) {
-          
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

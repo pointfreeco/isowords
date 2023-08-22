@@ -26,7 +26,7 @@ struct GameNavView: View {
 
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
-      Button(action: { self.viewStore.send(.trayButtonTapped, animation: .default) }) {
+      Button { self.viewStore.send(.trayButtonTapped, animation: .default) } label: {
         HStack {
           Text(self.viewStore.trayTitle)
             .lineLimit(1)
@@ -48,7 +48,7 @@ struct GameNavView: View {
       .cornerRadius(12)
       .disabled(!self.viewStore.isTrayAvailable)
 
-      Button(action: { self.viewStore.send(.menuButtonTapped, animation: .default) }) {
+      Button { self.viewStore.send(.menuButtonTapped, animation: .default) } label: {
         Image(systemName: "ellipsis")
           .foregroundColor(.adaptiveBlack)
           .adaptivePadding()
@@ -62,8 +62,8 @@ struct GameNavView: View {
       .cornerRadius(12)
     }
     .fixedSize(horizontal: false, vertical: true)
-    .padding([.leading, .trailing])
-    .adaptivePadding([.top, .bottom], 8)
+    .padding(.horizontal)
+    .adaptivePadding(.vertical, 8)
   }
 }
 
@@ -74,9 +74,7 @@ struct GameNavView: View {
     static var previews: some View {
       VStack {
         GameNavView(
-          store: Store(
-            initialState: .init(inProgressGame: .mock)
-          ) {
+          store: Store(initialState: .init(inProgressGame: .mock)) {
           }
         )
         Spacer()
