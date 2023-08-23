@@ -30,10 +30,11 @@ public struct AppDelegateReducer: Reducer {
     Reduce { state, action in
       switch action {
       case .didFinishLaunching:
+        let userNotificationsEventStream = self.userNotifications.delegate()
         return .run { send in
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
-              for await event in self.userNotifications.delegate() {
+              for await event in userNotificationsEventStream {
                 await send(.userNotifications(event))
               }
             }
