@@ -3,10 +3,12 @@ import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
 @_spi(Concurrency) import Dependencies
+import Overture
 import SharedModels
 import TestHelpers
 import UserDefaultsClient
 import UserNotifications
+import UserSettingsClient
 import XCTest
 
 @testable import SettingsFeature
@@ -22,6 +24,7 @@ extension DependencyValues {
       .init(invalidProductIdentifiers: [], products: [])
     }
     self.storeKit.observer = { .finished }
+    self.userSettings = .mock()
   }
 }
 
@@ -58,6 +61,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Notifications
 
+  // TODO: Fix once we have the TestStore binding test helper
   func testEnableNotifications_NotDetermined_GrantAuthorization() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
@@ -65,20 +69,20 @@ class SettingsFeatureTests: XCTestCase {
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.alternateIconName = { nil }
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.mainQueue = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.boolForKey = { _ in false }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .notDetermined)
-    }
-    store.dependencies.userNotifications.requestAuthorization = { _ in true }
-    store.dependencies.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.alternateIconName = { nil }
+      $0.fileClient.save = { @Sendable _, _ in }
+      $0.mainQueue = .immediate
+      $0.serverConfig.config = { .init() }
+      $0.userDefaults.boolForKey = { _ in false }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .notDetermined)
+      }
+      $0.userNotifications.requestAuthorization = { _ in true }
+      $0.remoteNotifications.register = {
+        await didRegisterForRemoteNotifications.setValue(true)
+      }
     }
 
     let task = await store.send(.task) {
@@ -93,8 +97,10 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    await store.send(.set(\.$enableNotifications, true)) {
-      $0.enableNotifications = true
+    var userSettings = store.state.userSettings
+    userSettings.enableNotifications = true
+    await store.send(.set(\.$userSettings, userSettings)) {
+      $0.userSettings.enableNotifications = true
     }
 
     await store.receive(.userNotificationAuthorizationResponse(.success(true)))
@@ -109,18 +115,18 @@ class SettingsFeatureTests: XCTestCase {
       initialState: Settings.State()
     ) {
       Settings()
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.alternateIconName = { nil }
+      $0.fileClient.save = { @Sendable _, _ in }
+      $0.mainQueue = .immediate
+      $0.serverConfig.config = { .init() }
+      $0.userDefaults.boolForKey = { _ in false }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .notDetermined)
+      }
+      $0.userNotifications.requestAuthorization = { _ in false }
     }
-
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.alternateIconName = { nil }
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.mainQueue = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.boolForKey = { _ in false }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .notDetermined)
-    }
-    store.dependencies.userNotifications.requestAuthorization = { _ in false }
 
     let task = await store.send(.task) {
       $0.buildNumber = 42
@@ -134,12 +140,14 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    await store.send(.set(\.$enableNotifications, true)) {
-      $0.enableNotifications = true
+    var userSettings = store.state.userSettings
+    userSettings.enableNotifications = true
+    await store.send(.set(\.$userSettings, userSettings)) {
+      $0.userSettings.enableNotifications = true
     }
 
     await store.receive(.userNotificationAuthorizationResponse(.success(false))) {
-      $0.enableNotifications = false
+      $0.userSettings.enableNotifications = false
     }
 
     await task.cancel()
@@ -150,16 +158,16 @@ class SettingsFeatureTests: XCTestCase {
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.alternateIconName = { nil }
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.mainQueue = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.boolForKey = { _ in false }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.alternateIconName = { nil }
+      $0.fileClient.save = { @Sendable _, _ in }
+      $0.mainQueue = .immediate
+      $0.serverConfig.config = { .init() }
+      $0.userDefaults.boolForKey = { _ in false }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .authorized)
+      }
     }
 
     let task = await store.send(.task) {
@@ -170,40 +178,42 @@ class SettingsFeatureTests: XCTestCase {
 
     await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
     {
-      $0.enableNotifications = true
+      $0.userSettings.enableNotifications = true
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    await store.send(.set(\.$enableNotifications, false)) {
-      $0.enableNotifications = false
+    var userSettings = store.state.userSettings
+    userSettings.enableNotifications = false
+    await store.send(.set(\.$userSettings, userSettings)) {
+      $0.userSettings.enableNotifications = false
     }
 
     await task.cancel()
   }
 
   func testNotifications_PreviouslyDenied() async {
+    let openedUrl = ActorIsolated<URL?>(nil)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    let openedUrl = ActorIsolated<URL?>(nil)
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.alternateIconName = { nil }
-    store.dependencies.applicationClient.openSettingsURLString = {
-      "settings:isowords//isowords/settings"
-    }
-    store.dependencies.applicationClient.open = { url, _ in
-      await openedUrl.setValue(url)
-      return true
-    }
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
-    store.dependencies.mainQueue = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.boolForKey = { _ in false }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .denied)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.alternateIconName = { nil }
+      $0.applicationClient.openSettingsURLString = {
+        "settings:isowords//isowords/settings"
+      }
+      $0.applicationClient.open = { url, _ in
+        await openedUrl.setValue(url)
+        return true
+      }
+      $0.fileClient.save = { @Sendable _, _ in }
+      $0.mainQueue = .immediate
+      $0.serverConfig.config = { .init() }
+      $0.userDefaults.boolForKey = { _ in false }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .denied)
+      }
     }
 
     let task = await store.send(.task) {
@@ -216,7 +226,9 @@ class SettingsFeatureTests: XCTestCase {
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
 
-    await store.send(.set(\.$enableNotifications, true)) {
+    var userSettings = store.state.userSettings
+    userSettings.enableNotifications = true
+    await store.send(.set(\.$userSettings, userSettings)) {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
@@ -232,19 +244,30 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testNotifications_RemoteSettingsUpdates() async {
+    var userSettings = UserSettings(sendDailyChallengeReminder: false)
+    let didUpdate = LockIsolated(false)
+    let updatedBlobWithPurchase = update(CurrentPlayerEnvelope.blobWithPurchase) {
+      $0.player.sendDailyChallengeReminder = false
+    }
+
     await withMainSerialExecutor {
       let store = TestStore(
-        initialState: Settings.State(sendDailyChallengeReminder: false)
+        initialState: Settings.State()
       ) {
         Settings()
       } withDependencies: {
         $0.setUpDefaults()
-        $0.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
+        $0.apiClient.refreshCurrentPlayer = {
+          didUpdate.value ? updatedBlobWithPurchase : .blobWithPurchase
+        }
         $0.apiClient.override(
           route: .push(
-            .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: true))
+            .updateSetting(.init(notificationType: .dailyChallengeEndsSoon, sendNotifications: false))
           ),
-          withResponse: { try await OK([:] as [String: Any]) }
+          withResponse: {
+            didUpdate.withValue { $0 = true }
+            return try await OK([:] as [String: Any])
+          }
         )
         $0.applicationClient.alternateIconName = { nil }
         $0.fileClient.save = { @Sendable _, _ in }
@@ -254,25 +277,29 @@ class SettingsFeatureTests: XCTestCase {
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .authorized)
         }
+        $0.userSettings = .mock(initialUserSettings: userSettings)
       }
 
       let task = await store.send(.task) {
         $0.buildNumber = 42
         $0.developer.currentBaseUrl = .localhost
         $0.fullGamePurchasedAt = .mock
+        $0.userSettings.sendDailyChallengeReminder = true
       }
 
       await store.receive(
         .userNotificationSettingsResponse(.init(authorizationStatus: .authorized))
       ) {
-        $0.enableNotifications = true
         $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+        $0.userSettings.enableNotifications = true
       }
 
-      await store.send(.set(\.$sendDailyChallengeReminder, true)) {
-        $0.sendDailyChallengeReminder = true
+      userSettings.sendDailyChallengeReminder = false
+      await store.send(.set(\.$userSettings, userSettings)) {
+        $0.userSettings.enableNotifications = false
+        $0.userSettings.sendDailyChallengeReminder = false
       }
-      await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase)))
+      await store.receive(.currentPlayerRefreshed(.success(updatedBlobWithPurchase)))
 
       await task.cancel()
     }
@@ -281,15 +308,15 @@ class SettingsFeatureTests: XCTestCase {
   // MARK: - Sounds
 
   func testSetMusicVolume() async {
+    let setMusicVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.audioPlayer.setGlobalVolumeForMusic = { await setMusicVolume.setValue($0) }
     }
-
-    let setMusicVolume = ActorIsolated<Float?>(nil)
-    store.dependencies.setUpDefaults()
-    store.dependencies.audioPlayer.setGlobalVolumeForMusic = { await setMusicVolume.setValue($0) }
 
     var userSettings = store.state.userSettings
     userSettings.musicVolume = 0.5
@@ -301,16 +328,16 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testSetSoundEffectsVolume() async {
+    let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
-    store.dependencies.setUpDefaults()
-    store.dependencies.audioPlayer.setGlobalVolumeForSoundEffects = {
-      await setSoundEffectsVolume.setValue($0)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.audioPlayer.setGlobalVolumeForSoundEffects = {
+        await setSoundEffectsVolume.setValue($0)
+      }
     }
 
     var userSettings = store.state.userSettings
@@ -325,16 +352,16 @@ class SettingsFeatureTests: XCTestCase {
   // MARK: - Appearance
 
   func testSetColorScheme() async {
+    let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.setUserInterfaceStyle = {
-      await overriddenUserInterfaceStyle.setValue($0)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.setUserInterfaceStyle = {
+        await overriddenUserInterfaceStyle.setValue($0)
+      }
     }
 
     var userSettings = store.state.userSettings
@@ -352,16 +379,16 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testSetAppIcon() async {
+    let overriddenIconName = ActorIsolated<String?>(nil)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    let overriddenIconName = ActorIsolated<String?>(nil)
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.setAlternateIconName = {
-      await overriddenIconName.setValue($0)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.setAlternateIconName = {
+        await overriddenIconName.setValue($0)
+      }
     }
 
     var userSettings = store.state.userSettings
@@ -373,23 +400,23 @@ class SettingsFeatureTests: XCTestCase {
   }
 
   func testUnsetAppIcon() async {
+    let overriddenIconName = ActorIsolated<String?>(nil)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
-    }
-
-    let overriddenIconName = ActorIsolated<String?>(nil)
-    store.dependencies.setUpDefaults()
-    store.dependencies.applicationClient.alternateIconName = { "icon-2" }
-    store.dependencies.applicationClient.setAlternateIconName = {
-      await overriddenIconName.setValue($0)
-    }
-    store.dependencies.mainQueue = .immediate
-    store.dependencies.serverConfig.config = { .init() }
-    store.dependencies.userDefaults.boolForKey = { _ in false }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.applicationClient.alternateIconName = { "icon-2" }
+      $0.applicationClient.setAlternateIconName = {
+        await overriddenIconName.setValue($0)
+      }
+      $0.mainQueue = .immediate
+      $0.serverConfig.config = { .init() }
+      $0.userDefaults.boolForKey = { _ in false }
+      $0.userNotifications.getNotificationSettings = {
+        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+      }
     }
 
     let task = await store.send(.task) {
@@ -412,18 +439,17 @@ class SettingsFeatureTests: XCTestCase {
   // MARK: - Developer
 
   func testSetApiBaseUrl() async {
+    let setBaseUrl = ActorIsolated<URL?>(nil)
+    let didLogout = ActorIsolated(false)
     let store = TestStore(
       initialState: Settings.State()
     ) {
       Settings()
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.apiClient.logout = { await didLogout.setValue(true) }
+      $0.apiClient.setBaseUrl = { await setBaseUrl.setValue($0) }
     }
-
-    let setBaseUrl = ActorIsolated<URL?>(nil)
-    let didLogout = ActorIsolated(false)
-
-    store.dependencies.setUpDefaults()
-    store.dependencies.apiClient.logout = { await didLogout.setValue(true) }
-    store.dependencies.apiClient.setBaseUrl = { await setBaseUrl.setValue($0) }
 
     var developer = store.state.developer
     developer.currentBaseUrl = .localhost
@@ -434,59 +460,15 @@ class SettingsFeatureTests: XCTestCase {
     await didLogout.withValue { XCTAssert($0) }
   }
 
-  func testToggleEnableCubeShadow() async {
-    let store = TestStore(
-      initialState: Settings.State(enableCubeShadow: true)
-    ) {
-      Settings()
-    }
-
-    await store.send(.set(\.$enableCubeShadow, false)) {
-      $0.enableCubeShadow = false
-    }
-    await store.send(.set(\.$enableCubeShadow, true)) {
-      $0.enableCubeShadow = true
-    }
-  }
-
-  func testSetShadowRadius() async {
-    let store = TestStore(
-      initialState: Settings.State(cubeShadowRadius: 5)
-    ) {
-      Settings()
-    }
-
-    await store.send(.set(\.$cubeShadowRadius, 20)) {
-      $0.cubeShadowRadius = 20
-    }
-    await store.send(.set(\.$cubeShadowRadius, 1.5)) {
-      $0.cubeShadowRadius = 1.5
-    }
-  }
-
-  func testToggleShowSceneStatistics() async {
-    let store = TestStore(
-      initialState: Settings.State(showSceneStatistics: false)
-    ) {
-      Settings()
-    }
-
-    await store.send(.set(\.$showSceneStatistics, true)) {
-      $0.showSceneStatistics = true
-    }
-    await store.send(.set(\.$showSceneStatistics, false)) {
-      $0.showSceneStatistics = false
-    }
-  }
-
   func testToggleEnableGyroMotion() async {
     let store = TestStore(
-      initialState: Settings.State(userSettings: .init(enableGyroMotion: true))
+      initialState: Settings.State()
     ) {
       Settings()
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.userSettings = .mock(initialUserSettings: UserSettings(enableGyroMotion: true))
     }
-
-    store.dependencies.setUpDefaults()
 
     var userSettings = store.state.userSettings
     userSettings.enableGyroMotion = false
@@ -501,12 +483,14 @@ class SettingsFeatureTests: XCTestCase {
 
   func testToggleEnableHaptics() async {
     let store = TestStore(
-      initialState: Settings.State(userSettings: .init(enableHaptics: true))
+      initialState: Settings.State()
     ) {
       Settings()
+    } withDependencies: {
+      $0.setUpDefaults()
+      $0.userSettings = .mock(initialUserSettings: UserSettings(enableHaptics: true))
     }
 
-    store.dependencies.setUpDefaults()
 
     var userSettings = store.state.userSettings
     userSettings.enableHaptics = false

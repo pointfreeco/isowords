@@ -48,68 +48,64 @@ public struct LeaderboardResults<TimeScope>: Reducer {
     self.loadResults = loadResults
   }
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    switch action {
-    case .dismissTimeScopeMenu:
-      state.isTimeScopeMenuVisible = false
-      return .none
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .dismissTimeScopeMenu:
+        state.isTimeScopeMenuVisible = false
+        return .none
 
-    case let .gameModeButtonTapped(gameMode):
-      state.gameMode = gameMode
-      state.isLoading = true
-      return .run { [timeScope = state.timeScope] send in
-        await send(
-          .resultsResponse(
-            TaskResult { try await self.loadResults(gameMode, timeScope) }
+      case let .gameModeButtonTapped(gameMode):
+        state.gameMode = gameMode
+        state.isLoading = true
+        return .run { [timeScope = state.timeScope] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
-        )
-      }
-      .animation()
+        }
 
-    case .resultsResponse(.failure):
-      state.isLoading = false
-      state.resultEnvelope = nil
-      return .none
+      case .resultsResponse(.failure):
+        state.isLoading = false
+        state.resultEnvelope = nil
+        return .none
 
-    case let .resultsResponse(.success(envelope)):
-      state.isLoading = false
-      state.resultEnvelope = envelope
-      return .none
+      case let .resultsResponse(.success(envelope)):
+        state.isLoading = false
+        state.resultEnvelope = envelope
+        return .none
 
-    case .tappedRow:
-      return .none
+      case .tappedRow:
+        return .none
 
-    case .tappedTimeScopeLabel:
-      state.isTimeScopeMenuVisible.toggle()
-      return .none
+      case .tappedTimeScopeLabel:
+        state.isTimeScopeMenuVisible.toggle()
+        return .none
 
-    case .task:
-      state.isLoading = true
-      state.isTimeScopeMenuVisible = false
-      state.resultEnvelope = .placeholder
+      case .task:
+        state.isLoading = true
+        state.isTimeScopeMenuVisible = false
+        state.resultEnvelope = .placeholder
 
-      return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
-        await send(
-          .resultsResponse(
-            TaskResult { try await self.loadResults(gameMode, timeScope) }
+        return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
-        )
-      }
-      .animation()
+        }
 
-    case let .timeScopeChanged(timeScope):
-      state.isLoading = true
-      state.isTimeScopeMenuVisible = false
-      state.timeScope = timeScope
+      case let .timeScopeChanged(timeScope):
+        state.isLoading = true
+        state.isTimeScopeMenuVisible = false
+        state.timeScope = timeScope
 
-      return .run { [gameMode = state.gameMode] send in
-        await send(
-          .resultsResponse(
-            TaskResult { try await self.loadResults(gameMode, timeScope) }
+        return .run { [gameMode = state.gameMode] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
-        )
+        }
       }
-      .animation()
     }
   }
 }
@@ -164,7 +160,7 @@ where
 
         Spacer()
 
-        Button(action: { self.viewStore.send(.tappedTimeScopeLabel, animation: .default) }) {
+        Button { self.viewStore.send(.tappedTimeScopeLabel, animation: .default) } label: {
           HStack {
             self.timeScopeLabel
               .adaptiveFont(.matterMedium, size: 10)
@@ -174,8 +170,8 @@ where
                 .degrees(self.viewStore.isTimeScopeMenuVisible ? -180 : 0)
               )
           }
-          .padding([.top, .bottom], 8)
-          .padding([.leading, .trailing], 16)
+          .padding(.vertical, 8)
+          .padding(.horizontal, 16)
           .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
           .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
           .continuousCornerRadius(.grid(5))
@@ -186,7 +182,7 @@ where
         if self.isFilterable {
           HStack(spacing: .grid(4)) {
             ForEach(GameMode.allCases) { gameMode in
-              Button(action: { self.viewStore.send(.gameModeButtonTapped(gameMode)) }) {
+              Button { self.viewStore.send(.gameModeButtonTapped(gameMode)) } label: {
                 Text(gameMode.title)
                   .adaptiveFont(.matterMedium, size: 12)
                   .opacity(self.viewStore.gameMode == gameMode ? 1 : 0.4)
@@ -195,7 +191,7 @@ where
             }
           }
           .padding([.leading, .trailing, .bottom], .grid(5))
-          .padding(self.isFilterable ? [.top] : [], .grid(5))
+          .padding(self.isFilterable ? .top : [], .grid(5))
 
           Divider()
         }
@@ -214,7 +210,7 @@ where
             ForEach(
               self.viewStore.resultEnvelope?.contiguousResults ?? [], id: \.id
             ) { result in
-              Button(action: { self.viewStore.send(.tappedRow(id: result.id)) }) {
+              Button { self.viewStore.send(.tappedRow(id: result.id)) } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
@@ -225,7 +221,7 @@ where
                 .adaptivePadding(.vertical, .grid(5))
                 .adaptiveFont(.matterMedium, size: 16)
 
-              Button(action: { self.viewStore.send(.tappedRow(id: result.id)) }) {
+              Button { self.viewStore.send(.tappedRow(id: result.id)) } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
@@ -236,7 +232,7 @@ where
                   .opacity(0.4)
                 Text("and \(self.viewStore.nonDisplayedResultsCount) more!")
               }
-              .adaptivePadding([.top], .grid(5))
+              .adaptivePadding(.top, .grid(5))
               .adaptiveFont(.matterMedium, size: 16)
             }
           }
@@ -274,8 +270,8 @@ where
           self.timeScopeMenu
             .adaptiveFont(.matterMedium, size: 12)
         }
-        .padding([.top, .bottom], .grid(4))
-        .padding([.leading, .trailing], .grid(5))
+        .padding(.vertical, .grid(4))
+        .padding(.horizontal, .grid(5))
         .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
         .background(Color.adaptiveWhite)
         .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
@@ -324,16 +320,16 @@ struct ResultRow: View {
         .formatted(font: .custom(.matterSemiBold, size: self.adaptiveSize.pad(12)))
     }
     .foregroundColor(self.result.isYourScore ? self.color : .isowordsBlack)
-    .padding([.vertical], self.result.isYourScore ? .grid(1) : 0)
-    .padding([.leading, .trailing], .grid(2))
+    .padding(.vertical, self.result.isYourScore ? .grid(1) : 0)
+    .padding(.horizontal, .grid(2))
     .background(
       self.result.isYourScore
         ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
           .fill(Color.isowordsBlack)
         : nil
     )
-    .padding([.leading, .trailing])
-    .padding([.top, .bottom], .grid(1) / 2)
+    .padding(.horizontal)
+    .padding(.vertical, .grid(1) / 2)
   }
 }
 

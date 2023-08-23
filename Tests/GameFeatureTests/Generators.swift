@@ -1,6 +1,5 @@
 import ClientModels
 import ComposableGameCenter
-import GameFeature
 import GameKit
 import Gen
 import PuzzleGen

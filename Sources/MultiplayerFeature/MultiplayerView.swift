@@ -3,12 +3,26 @@ import SwiftUI
 import TcaHelpers
 
 public struct Multiplayer: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case pastGames(PastGames.State)
+    }
+    public enum Action: Equatable {
+      case pastGames(PastGames.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.pastGames, action: /Action.pastGames) {
+        PastGames()
+      }
+    }
+  }
+
   public struct State: Equatable {
-    public var destination: DestinationState?
+    @PresentationState public var destination: Destination.State?
     public var hasPastGames: Bool
 
     public init(
-      destination: DestinationState? = nil,
+      destination: Destination.State? = nil,
       hasPastGames: Bool
     ) {
       self.destination = destination
@@ -17,38 +31,19 @@ public struct Multiplayer: Reducer {
   }
 
   public enum Action: Equatable {
-    case destination(DestinationAction)
-    case setNavigation(tag: DestinationState.Tag?)
+    case destination(PresentationAction<Destination.Action>)
+    case pastGamesButtonTapped
     case startButtonTapped
-  }
-
-  public enum DestinationState: Equatable {
-    case pastGames(PastGames.State)
-
-    public enum Tag: Int {
-      case pastGames
-    }
-
-    var tag: Tag {
-      switch self {
-      case .pastGames:
-        return .pastGames
-      }
-    }
-  }
-
-  public enum DestinationAction: Equatable {
-    case pastGames(PastGames.Action)
   }
 
   @Dependency(\.gameCenter) var gameCenter
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .destination(.pastGames):
+      case .destination:
         return .none
 
       case .startButtonTapped:
@@ -60,22 +55,13 @@ public struct Multiplayer: Reducer {
           }
         }
 
-      case .setNavigation(tag: .pastGames):
-        state.destination = .pastGames(.init())
-        return .none
-
-      case .setNavigation(tag: .none):
-        state.destination = nil
+      case .pastGamesButtonTapped:
+        state.destination = .pastGames(PastGames.State())
         return .none
       }
     }
-    .ifLet(\.destination, action: /Action.destination) {
-      Scope(
-        state: /DestinationState.pastGames,
-        action: /DestinationAction.pastGames
-      ) {
-        PastGames()
-      }
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
   }
 }
@@ -92,11 +78,9 @@ public struct MultiplayerView: View {
   }
 
   struct ViewState: Equatable {
-    let destinationTag: Multiplayer.DestinationState.Tag?
     let hasPastGames: Bool
 
     init(state: Multiplayer.State) {
-      self.destinationTag = state.destination?.tag
       self.hasPastGames = state.hasPastGames
     }
   }
@@ -122,7 +106,7 @@ public struct MultiplayerView: View {
 
         Spacer()
 
-        Button(action: { self.viewStore.send(.startButtonTapped) }) {
+        Button { self.viewStore.send(.startButtonTapped) } label: {
           VStack(spacing: 20) {
             Image(systemName: "person.2.fill")
               .font(.system(size: self.adaptiveSize.pad(40)))
@@ -135,26 +119,13 @@ public struct MultiplayerView: View {
           .continuousCornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
-        .adaptivePadding([.top, .bottom])
+        .adaptivePadding(.vertical)
         .adaptivePadding(.bottom, .grid(self.viewStore.hasPastGames ? 0 : 8))
 
         if self.viewStore.hasPastGames {
-          NavigationLink(
-            destination: IfLetStore(
-              self.store.scope(
-                state: (\Multiplayer.State.destination)
-                  .appending(path: /Multiplayer.DestinationState.pastGames)
-                  .extract(from:),
-                action: { .destination(.pastGames($0)) }
-              ),
-              then: { PastGamesView(store: $0) }
-            ),
-            tag: Multiplayer.DestinationState.Tag.pastGames,
-            selection: viewStore.binding(
-              get: \.destinationTag,
-              send: Multiplayer.Action.setNavigation
-            )
-          ) {
+          Button {
+            self.viewStore.send(.pastGamesButtonTapped)
+          } label: {
             HStack {
               Text("View past games")
                 .adaptiveFont(.matterMedium, size: 16)
@@ -171,6 +142,12 @@ public struct MultiplayerView: View {
           .background(self.colorScheme == .dark ? Color.multiplayer : .isowordsBlack)
         }
       }
+      .navigationDestination(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Multiplayer.Destination.State.pastGames,
+        action: Multiplayer.Destination.Action.pastGames,
+        destination: PastGamesView.init(store:)
+      )
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
         foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,
@@ -195,9 +172,7 @@ public struct MultiplayerView: View {
   }
 
   extension Store where State == Multiplayer.State, Action == Multiplayer.Action {
-    static let multiplayer = Store(
-      initialState: .init(hasPastGames: true)
-    ) {
+    static let multiplayer = Store(initialState: .init(hasPastGames: true)) {
       Multiplayer()
     }
   }

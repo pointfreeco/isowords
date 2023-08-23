@@ -2,6 +2,7 @@ import ActiveGamesFeature
 import Bloom
 import ComposableArchitecture
 import GameOverFeature
+import SettingsFeature
 import SwiftUI
 import UpgradeInterstitialFeature
 
@@ -14,12 +15,12 @@ public struct GameView<Content>: View where Content: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
   let content: Content
-  let isAnimationReduced: Bool
   let store: StoreOf<Game>
   var trayHeight: CGFloat { ActiveGamesView.height + (16 + self.adaptiveSize.padding) * 2 }
   @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
+    let isAnimationReduced: Bool
     let isDailyChallenge: Bool
     let isGameLoaded: Bool
     let isNavVisible: Bool
@@ -27,6 +28,7 @@ public struct GameView<Content>: View where Content: View {
     let selectedWordString: String
 
     init(state: Game.State) {
+      self.isAnimationReduced = state.isAnimationReduced
       self.isDailyChallenge = state.dailyChallengeId != nil
       self.isGameLoaded = state.isGameLoaded
       self.isNavVisible = state.isNavVisible
@@ -37,11 +39,9 @@ public struct GameView<Content>: View where Content: View {
 
   public init(
     content: Content,
-    isAnimationReduced: Bool,
     store: StoreOf<Game>
   ) {
     self.content = content
-    self.isAnimationReduced = isAnimationReduced
     self.store = store
     self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
@@ -80,7 +80,7 @@ public struct GameView<Content>: View where Content: View {
             }
             .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
             Spacer()
-            GameFooterView(isAnimationReduced: self.isAnimationReduced, store: self.store)
+            GameFooterView(store: self.store)
               .padding(.bottom)
           }
           .ignoresSafeArea(.keyboard)
@@ -89,12 +89,12 @@ public struct GameView<Content>: View where Content: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.wordSubmitButtonFeature,
-                action: Game.Action.wordSubmitButton
+                action: { .wordSubmitButton($0) }
               )
             )
             .ignoresSafeArea()
             .transition(
-              self.isAnimationReduced
+              viewStore.isAnimationReduced
                 ? .opacity
                 : AnyTransition
                   .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
@@ -103,10 +103,10 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: Game.Action.activeGames),
+            store: self.store.scope(state: \.activeGames, action: { .activeGames($0) }),
             showMenuItems: false
           )
-          .adaptivePadding([.top, .bottom], 8)
+          .adaptivePadding(.vertical, 8)
           .frame(maxWidth: .infinity, minHeight: ActiveGamesView.height)
           .background(
             LinearGradient(
@@ -128,7 +128,9 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.gameOver, action: Game.Action.gameOver),
+          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          state: /Game.Destination.State.gameOver,
+          action: Game.Destination.Action.gameOver,
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -141,20 +143,18 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(
-            state: \.upgradeInterstitial,
-            action: Game.Action.upgradeInterstitial
-          ),
-          then: { store in
-            UpgradeInterstitialView(store: store)
-              .transition(.opacity)
-          }
-        )
+          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          state: /Game.Destination.State.upgradeInterstitial,
+          action: Game.Destination.Action.upgradeInterstitial
+        ) { store in
+          UpgradeInterstitialView(store: store)
+            .transition(.opacity)
+        }
         .zIndex(2)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(
-        self.isAnimationReduced
+        viewStore.isAnimationReduced
           ? nil
           : BloomBackground(
             size: proxy.size,
@@ -174,8 +174,25 @@ public struct GameView<Content>: View where Content: View {
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
       )
-      .bottomMenu(self.store.scope(state: \.bottomMenu, action: { $0 }))
-      .alert(store: self.store.scope(state: \.$alert, action: Game.Action.alert))
+      .bottomMenu(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Game.Destination.State.bottomMenu,
+        action: Game.Destination.Action.bottomMenu
+      )
+      .alert(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Game.Destination.State.alert,
+        action: Game.Destination.Action.alert
+      )
+      .sheet(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Game.Destination.State.settings,
+        action: Game.Destination.Action.settings
+      ) { store in
+        NavigationStack {
+          SettingsView(store: store, navPresentationStyle: .modal)
+        }
+      }
     }
     .task { await self.viewStore.send(.task).finish() }
   }

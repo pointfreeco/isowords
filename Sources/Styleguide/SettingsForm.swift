@@ -29,7 +29,7 @@ public struct SettingsRow<Content>: View where Content: View {
   public var body: some View {
     VStack(alignment: .leading) {
       self.content()
-        .padding([.top, .bottom])
+        .padding(.vertical)
       Rectangle()
         .fill(Color.hex(self.colorScheme == .dark ? 0x7d7d7d : 0xEEEEEE))
         .frame(maxWidth: .infinity, minHeight: 2, idealHeight: 2, maxHeight: 2)
@@ -57,12 +57,12 @@ public struct SettingsSection<Content>: View where Content: View {
   public var body: some View {
     VStack(alignment: .leading) {
       Text(self.title)
-        .padding([.bottom], 24)
+        .padding(.bottom, 24)
         .screenEdgePadding(.horizontal)
 
       self.content()
         .screenEdgePadding(self.padContents ? .horizontal : [])
     }
-    .padding([.bottom], 40)
+    .padding(.bottom, 40)
   }
 }

@@ -12,32 +12,32 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     public typealias ViewPuzzle = Three<Three<Three<CubeNode.ViewState>>>
 
     public var cubes: ViewPuzzle
+    public var enableGyroMotion: Bool
     public var isOnLowPowerMode: Bool
     public var nub: NubState?
     public var playedWords: [PlayedWord]
     public var selectedFaceCount: Int
     public var selectedWordIsValid: Bool
     public var selectedWordString: String
-    public var settings: Settings
 
     public init(
       cubes: ViewPuzzle,
+      enableGyroMotion: Bool,
       isOnLowPowerMode: Bool,
       nub: NubState?,
       playedWords: [PlayedWord],
       selectedFaceCount: Int,
       selectedWordIsValid: Bool,
-      selectedWordString: String,
-      settings: Settings
+      selectedWordString: String
     ) {
       self.cubes = cubes
+      self.enableGyroMotion = enableGyroMotion
       self.isOnLowPowerMode = isOnLowPowerMode
       self.nub = nub
       self.playedWords = playedWords
       self.selectedFaceCount = selectedFaceCount
       self.selectedWordIsValid = selectedWordIsValid
       self.selectedWordString = selectedWordString
-      self.settings = settings
     }
 
     public struct NubState: Equatable {
@@ -62,22 +62,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         case submitButton
       }
     }
-
-    public struct Settings: Equatable {
-      public var enableCubeShadow: Bool
-      public var enableGyroMotion: Bool
-      public var showSceneStatistics: Bool
-
-      public init(
-        enableCubeShadow: Bool = true,
-        enableGyroMotion: Bool = true,
-        showSceneStatistics: Bool = false
-      ) {
-        self.enableCubeShadow = enableCubeShadow
-        self.enableGyroMotion = enableGyroMotion
-        self.showSceneStatistics = showSceneStatistics
-      }
-    }
   }
 
   public enum ViewAction: Equatable {
@@ -91,11 +75,19 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let cameraNode = SCNNode()
   private var cancellables: Set<AnyCancellable> = []
   private let gameCubeNode = SCNNode()
+  private let light = SCNLight()
   private var motionManager: CMMotionManager?
   private var startingAttitude: Attitude?
   private let store: Store<ViewState, ViewAction>
   private let viewStore: ViewStore<ViewState, ViewAction>
   private var worldScale: Float = 1.0
+
+  var enableCubeShadow = true {
+    didSet { self.update() }
+  }
+  var showSceneStatistics = false {
+    didSet { self.update() }
+  }
 
   public init(
     size: CGSize,
@@ -184,7 +176,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     cameraLookAtOriginConstraint.isGimbalLockEnabled = true
     self.cameraNode.constraints = [cameraLookAtOriginConstraint]
 
-    let light = SCNLight()
     light.automaticallyAdjustsShadowProjection = true
     light.shadowSampleCount = 8
     light.shadowRadius = 5
@@ -206,15 +197,15 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
     self.viewStore.publisher
-      .map { ($0.settings, $0.isOnLowPowerMode) }
+      .map { ($0.enableGyroMotion, $0.isOnLowPowerMode) }
       .removeDuplicates(by: ==)
-      .sink { [weak self] settings, isOnLowPowerMode in
+      .sink { [weak self] enableGyroMotion, isOnLowPowerMode in
         guard let self = self else { return }
 
-        self.showsStatistics = settings.showSceneStatistics
-        light.castsShadow = settings.enableCubeShadow && !isOnLowPowerMode
+        self.showsStatistics = self.showSceneStatistics
+        light.castsShadow = self.enableCubeShadow && !isOnLowPowerMode
 
-        if isOnLowPowerMode || !settings.enableGyroMotion {
+        if isOnLowPowerMode || !enableGyroMotion {
           self.stopMotionManager()
         } else {
           self.startMotionManager()
@@ -300,6 +291,12 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         }
       }
       .store(in: &self.cancellables)
+  }
+
+  // TODO: rename
+  private func update() {
+    self.showsStatistics = self.showSceneStatistics
+    self.light.castsShadow = self.enableCubeShadow && !self.viewStore.isOnLowPowerMode
   }
 
   deinit {

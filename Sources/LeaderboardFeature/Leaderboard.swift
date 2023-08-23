@@ -4,6 +4,7 @@ import CubeCore
 import CubePreview
 import SharedModels
 import SwiftUI
+import UserSettingsClient
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games
@@ -29,39 +30,41 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 }
 
 public struct Leaderboard: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case cubePreview(CubePreview.State)
+    }
+    public enum Action: Equatable {
+      case cubePreview(CubePreview.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+        CubePreview()
+      }
+    }
+  }
+
   public struct State: Equatable {
-    public var cubePreview: CubePreview.State?
-    public var isAnimationReduced: Bool
-    public var isHapticsEnabled: Bool
+    @PresentationState public var destination: Destination.State?
     public var scope: LeaderboardScope = .games
-    public var settings: CubeSceneView.ViewState.Settings
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
 
-    public var isCubePreviewPresented: Bool { self.cubePreview != nil }
-
     public init(
-      cubePreview: CubePreview.State? = nil,
-      isAnimationReduced: Bool = false,
-      isHapticsEnabled: Bool,
+      destination: Destination.State? = nil,
       scope: LeaderboardScope = .games,
-      settings: CubeSceneView.ViewState.Settings,
       solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek),
       vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     ) {
-      self.cubePreview = cubePreview
-      self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
+      self.destination = destination
       self.scope = scope
-      self.settings = settings
       self.solo = solo
       self.vocab = vocab
     }
   }
 
   public enum Action: Equatable {
-    case cubePreview(CubePreview.Action)
-    case dismissCubePreview
+    case destination(PresentationAction<Destination.Action>)
     case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
     case scopeTapped(LeaderboardScope)
     case solo(LeaderboardResults<TimeScope>.Action)
@@ -72,27 +75,22 @@ public struct Leaderboard: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .cubePreview:
-        return .none
-
-      case .dismissCubePreview:
-        state.cubePreview = nil
+      case .destination:
         return .none
 
       case .fetchWordResponse(.failure):
         return .none
 
       case let .fetchWordResponse(.success(response)):
-        state.cubePreview = CubePreview.State(
-          cubes: response.puzzle,
-          isAnimationReduced: state.isAnimationReduced,
-          isHapticsEnabled: state.isHapticsEnabled,
-          moveIndex: response.moveIndex,
-          moves: response.moves,
-          settings: state.settings
+        state.destination = .cubePreview(
+          CubePreview.State(
+            cubes: response.puzzle,
+            moveIndex: response.moveIndex,
+            moves: response.moves
+          )
         )
         return .none
 
@@ -138,8 +136,8 @@ public struct Leaderboard: Reducer {
         return .none
       }
     }
-    .ifLet(\.cubePreview, action: /Action.cubePreview) {
-      CubePreview()
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
 
     Scope(state: \.solo, action: /Action.solo) {
@@ -165,11 +163,9 @@ public struct LeaderboardView: View {
     VStack(alignment: .leading, spacing: .grid(10)) {
       HStack {
         ForEach(LeaderboardScope.allCases, id: \.self) { scope in
-          Button(
-            action: {
-              self.viewStore.send(.scopeTapped(scope), animation: .default)
-            }
-          ) {
+          Button {
+            self.viewStore.send(.scopeTapped(scope), animation: .default)
+          } label: {
             Text(scope.title)
               .foregroundColor(self.viewStore.state.scope == scope ? scope.color : nil)
               .opacity(self.viewStore.state.scope == scope ? 1 : 0.3)
@@ -184,10 +180,7 @@ public struct LeaderboardView: View {
         switch self.viewStore.state.scope {
         case .games:
           LeaderboardResultsView(
-            store: self.store.scope(
-              state: \.solo,
-              action: Leaderboard.Action.solo
-            ),
+            store: self.store.scope(state: \.solo, action: { .solo($0) }),
             title: Text("Solo"),
             subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
@@ -207,10 +200,7 @@ public struct LeaderboardView: View {
 
         case .vocab:
           LeaderboardResultsView(
-            store: self.store.scope(
-              state: \.vocab,
-              action: Leaderboard.Action.vocab
-            ),
+            store: self.store.scope(state: \.vocab, action: { .vocab($0) }),
             title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },
@@ -232,7 +222,7 @@ public struct LeaderboardView: View {
         }
       }
       .padding(.top, .grid(4))
-      .adaptivePadding([.bottom])
+      .adaptivePadding(.bottom)
       .screenEdgePadding(.horizontal)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -245,13 +235,11 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      isPresented: self.viewStore.binding(get: \.isCubePreviewPresented, send: .dismissCubePreview)
-    ) {
-      IfLetStore(
-        self.store.scope(state: \.cubePreview, action: Leaderboard.Action.cubePreview),
-        then: CubePreviewView.init(store:)
-      )
-    }
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Leaderboard.Destination.State.cubePreview,
+      action: Leaderboard.Destination.Action.cubePreview,
+      content: CubePreviewView.init(store:)
+    )
   }
 }
 
@@ -341,42 +329,35 @@ extension ResultEnvelope.Result {
       Preview {
         NavigationView {
           LeaderboardView(
-            store: .init(
-              initialState: Leaderboard.State(
-                isAnimationReduced: false,
-                isHapticsEnabled: true,
-                settings: .init()
-              )
-            ) {
-              Leaderboard().dependency(
-                \.apiClient,
-                update(.noop) {
-                  $0.apiRequest = { @Sendable route in
-                    switch route {
-                    case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
-                      try await Task.sleep(nanoseconds: NSEC_PER_SEC)
-                      return try await OK(
-                        FetchLeaderboardResponse(
-                          entries: (1...20).map { idx in
-                            FetchLeaderboardResponse.Entry(
-                              id: .init(rawValue: .init()),
-                              isSupporter: idx == 2,
-                              isYourScore: false,
-                              outOf: 100,
-                              playerDisplayName: "Blob",
-                              rank: idx,
-                              score: 5000 - idx * 233
-                            )
-                          }
-                        )
+            store: Store(initialState: Leaderboard.State()) {
+              Leaderboard()
+            } withDependencies: {
+              $0.apiClient = update(.noop) {
+                $0.apiRequest = { @Sendable route in
+                  switch route {
+                  case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
+                    try await Task.sleep(nanoseconds: NSEC_PER_SEC)
+                    return try await OK(
+                      FetchLeaderboardResponse(
+                        entries: (1...20).map { idx in
+                          FetchLeaderboardResponse.Entry(
+                            id: .init(rawValue: .init()),
+                            isSupporter: idx == 2,
+                            isYourScore: false,
+                            outOf: 100,
+                            playerDisplayName: "Blob",
+                            rank: idx,
+                            score: 5000 - idx * 233
+                          )
+                        }
                       )
+                    )
 
-                    default:
-                      throw CancellationError()
-                    }
+                  default:
+                    throw CancellationError()
                   }
                 }
-              )
+              }
             }
           )
         }

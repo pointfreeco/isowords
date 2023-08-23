@@ -25,21 +25,23 @@ public struct Solo: Reducer {
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action> {
-    switch action {
-    case .gameButtonTapped:
-      return .none
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .gameButtonTapped:
+        return .none
 
-    case .savedGamesLoaded(.failure):
-      return .none
+      case .savedGamesLoaded(.failure):
+        return .none
 
-    case let .savedGamesLoaded(.success(savedGameState)):
-      state.inProgressGame = savedGameState.unlimited
-      return .none
+      case let .savedGamesLoaded(.success(savedGameState)):
+        state.inProgressGame = savedGameState.unlimited
+        return .none
 
-    case .task:
-      return .run { send in
-        await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+      case .task:
+        return .run { send in
+          await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+        }
       }
     }
   }
@@ -100,14 +102,14 @@ public struct SoloView: View {
             color: .solo,
             inactiveText: nil,
             isLoading: false,
-            resumeText: (viewStore.currentScore).flatMap {
+            resumeText: viewStore.currentScore.flatMap {
               $0 > 0 ? Text("\($0) points") : nil
             },
             action: { viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
           )
         }
       }
-      .adaptivePadding([.vertical])
+      .adaptivePadding(.vertical)
       .screenEdgePadding(.horizontal)
       .task { await viewStore.send(.task).finish() }
     }

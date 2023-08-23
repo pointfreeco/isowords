@@ -5,28 +5,40 @@ import SwiftUI
 import VocabFeature
 
 public struct Stats: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case vocab(Vocab.State)
+    }
+    public enum Action: Equatable {
+      case vocab(Vocab.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.vocab, action: /Action.vocab) {
+        Vocab()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var averageWordLength: Double?
-    public var destination: DestinationState?
+    @PresentationState public var destination: Destination.State?
     public var gamesPlayed: Int
     public var highestScoringWord: LocalDatabaseClient.Stats.Word?
     public var highScoreTimed: Int?
     public var highScoreUnlimited: Int?
     public var isAnimationReduced: Bool
-    public var isHapticsEnabled: Bool
     public var longestWord: String?
     public var secondsPlayed: Int
     public var wordsFound: Int
 
     public init(
       averageWordLength: Double? = nil,
-      destination: DestinationState? = nil,
+      destination: Destination.State? = nil,
       gamesPlayed: Int = 0,
       highestScoringWord: LocalDatabaseClient.Stats.Word? = nil,
       highScoreTimed: Int? = nil,
       highScoreUnlimited: Int? = nil,
       isAnimationReduced: Bool = false,
-      isHapticsEnabled: Bool = true,
       longestWord: String? = nil,
       secondsPlayed: Int = 0,
       wordsFound: Int = 0
@@ -38,7 +50,6 @@ public struct Stats: Reducer {
       self.highScoreTimed = highScoreTimed
       self.highScoreUnlimited = highScoreUnlimited
       self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.longestWord = longestWord
       self.secondsPlayed = secondsPlayed
       self.wordsFound = wordsFound
@@ -47,42 +58,23 @@ public struct Stats: Reducer {
 
   public enum Action: Equatable {
     case backButtonTapped
-    case destination(DestinationAction)
-    case setNavigation(tag: DestinationState.Tag?)
+    case destination(PresentationAction<Destination.Action>)
     case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
     case task
-  }
-
-  public enum DestinationState: Equatable {
-    case vocab(Vocab.State)
-
-    public enum Tag: Int {
-      case vocab
-    }
-
-    var tag: Tag {
-      switch self {
-      case .vocab:
-        return .vocab
-      }
-    }
-  }
-
-  public enum DestinationAction: Equatable {
-    case vocab(Vocab.Action)
+    case vocabButtonTapped
   }
 
   @Dependency(\.database) var database
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case .backButtonTapped:
         return .none
 
-      case .destination(.vocab):
+      case .destination:
         return .none
 
       case .statsResponse(.failure):
@@ -100,32 +92,22 @@ public struct Stats: Reducer {
         state.wordsFound = stats.wordsFound
         return .none
 
-      case .setNavigation(tag: .vocab):
-        state.destination = .vocab(
-          .init(
-            isAnimationReduced: state.isAnimationReduced,
-            isHapticsEnabled: state.isHapticsEnabled
-          )
-        )
-        return .none
-
-      case .setNavigation(tag: .none):
-        state.destination = nil
-        return .none
-
       case .task:
         return .run { send in
           await send(.statsResponse(TaskResult { try await self.database.fetchStats() }))
         }
+
+      case .vocabButtonTapped:
+        state.destination = .vocab(
+          .init(
+            isAnimationReduced: state.isAnimationReduced
+          )
+        )
+        return .none
       }
     }
-    .ifLet(\.destination, action: /Action.destination) {
-      Scope(
-        state: /DestinationState.vocab,
-        action: /DestinationAction.vocab
-      ) {
-        Vocab()
-      }
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
   }
 }
@@ -189,21 +171,9 @@ public struct StatsView: View {
       }
 
       SettingsRow {
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\Stats.State.destination).appending(path: /Stats.DestinationState.vocab)
-                .extract(from:),
-              action: { .destination(.vocab($0)) }
-            ),
-            then: VocabView.init(store:)
-          ),
-          tag: Stats.DestinationState.Tag.vocab,
-          selection: self.viewStore.binding(
-            get: \.destination?.tag,
-            send: Stats.Action.setNavigation(tag:)
-          )
-        ) {
+        Button {
+          self.viewStore.send(.vocabButtonTapped)
+        } label: {
           HStack {
             Text("Words found")
             Spacer()
@@ -251,6 +221,12 @@ public struct StatsView: View {
       }
     }
     .task { await self.viewStore.send(.task).finish() }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Stats.Destination.State.vocab,
+      action: Stats.Destination.Action.vocab,
+      destination: VocabView.init(store:)
+    )
     .navigationStyle(title: Text("Stats"))
   }
 }
@@ -277,7 +253,6 @@ private func timePlayed(seconds: Int) -> LocalizedStringKey {
                 gamesPlayed: 1234,
                 highestScoringWord: .init(letters: "ENFEEBLINGS", score: 1022),
                 isAnimationReduced: false,
-                isHapticsEnabled: true,
                 longestWord: "ENFEEBLINGS",
                 secondsPlayed: 42000,
                 wordsFound: 200

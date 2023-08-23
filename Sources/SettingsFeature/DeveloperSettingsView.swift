@@ -5,6 +5,8 @@ import SwiftUI
 struct DeveloperSettingsView: View {
   let store: StoreOf<Settings>
   @ObservedObject var viewStore: ViewStoreOf<Settings>
+  @AppStorage(.enableCubeShadow) var enableCubeShadow
+  @AppStorage(.showSceneStatistics) var showSceneStatistics
 
   init(store: StoreOf<Settings>) {
     self.store = store
@@ -14,7 +16,6 @@ struct DeveloperSettingsView: View {
   var body: some View {
     SettingsForm {
       SettingsRow {
-
         VStack(alignment: .leading) {
           Text("API")
           Text(self.viewStore.developer.currentBaseUrl.rawValue)
@@ -31,21 +32,11 @@ struct DeveloperSettingsView: View {
       }
 
       SettingsRow {
-        Toggle("Shadows", isOn: self.viewStore.$enableCubeShadow)
+        Toggle("Shadows", isOn: self.$enableCubeShadow)
       }
 
       SettingsRow {
-        VStack(alignment: .leading, spacing: 24) {
-          Text("Shadow radius")
-            .adaptiveFont(.matterMedium, size: 16)
-
-          Slider(value: viewStore.$cubeShadowRadius, in: 0...200)
-            .accentColor(.isowordsOrange)
-        }
-      }
-
-      SettingsRow {
-        Toggle("Scene statistics", isOn: viewStore.$showSceneStatistics)
+        Toggle("Scene statistics", isOn: self.$showSceneStatistics)
       }
     }
     .navigationStyle(title: Text("Developer"))
@@ -58,10 +49,7 @@ struct DeveloperSettingsView: View {
   struct DeveloperSettingsView_Previews: PreviewProvider {
     static var previews: some View {
       DeveloperSettingsView(
-        store: Store(
-          initialState: Settings.State()
-        ) {
-
+        store: Store(initialState: Settings.State()) {
         }
       )
     }

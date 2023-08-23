@@ -1,7 +1,7 @@
 import ActiveGamesFeature
 import ComposableArchitecture
 import CubeCore
-import GameFeature
+import GameCore
 import Overture
 import SharedModels
 import SharedSwiftUIEnvironment
@@ -14,60 +14,47 @@ var turnBasedAppStoreView: AnyView {
   let vocab = try! JSONDecoder().decode(FetchVocabWordResponse.self, from: Data(json.utf8))
   let moves = Moves(vocab.moves.prefix(upTo: 15))
 
-  let state = GameFeature.State(
-    game: Game.State(
-      activeGames: ActiveGamesState(),
-      bottomMenu: nil,
-      cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
-      cubeStartedShakingAt: nil,
-      gameContext: .turnBased(
-        .init(
-          localPlayer: update(.authenticated) {
-            $0.displayName = "stephen"
-          },
-          match: update(.inProgress) {
-            $0.participants[1].player?.displayName = "mbrandonw"
-          },
-          metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
-        )
-      ),
-      gameCurrentTime: Date(),
-      gameMode: .unlimited,
-      gameOver: nil,
-      gameStartTime: Date(),
-      isDemo: false,
-      isGameLoaded: true,
-      isPanning: false,
-      isOnLowPowerMode: false,
-      isSettingsPresented: false,
-      isTrayVisible: false,
-      language: .en,
-      moves: moves,
-      optimisticallySelectedFace: nil,
-      secondsPlayed: 60 * 30,
-      selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
-        ?? [],
-      selectedWordIsValid: true,
-      upgradeInterstitial: nil,
-      wordSubmit: WordSubmitButtonFeature.ButtonState()
+  let state = Game.State(
+    activeGames: ActiveGamesState(),
+    cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
+    cubeStartedShakingAt: nil,
+    gameContext: .turnBased(
+      .init(
+        localPlayer: update(.authenticated) {
+          $0.displayName = "stephen"
+        },
+        match: update(.inProgress) {
+          $0.participants[1].player?.displayName = "mbrandonw"
+        },
+        metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
+      )
     ),
-    settings: .init()
+    gameCurrentTime: Date(),
+    gameMode: .unlimited,
+    gameStartTime: Date(),
+    isDemo: false,
+    isGameLoaded: true,
+    isPanning: false,
+    isOnLowPowerMode: false,
+    isTrayVisible: false,
+    language: .en,
+    moves: moves,
+    optimisticallySelectedFace: nil,
+    secondsPlayed: 60 * 30,
+    selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
+    ?? [],
+    selectedWordIsValid: true,
+    wordSubmit: WordSubmitButtonFeature.ButtonState()
   )
-  let store = StoreOf<GameFeature>(
+  let store = StoreOf<Game>(
     initialState: state
   ) {
-
   }
-  let view = GameFeatureView(
+  let view = GameView(
     content: CubeView(
       store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>(
-        initialState: CubeSceneView.ViewState(
-          game: state.game!,
-          nub: nil,
-          settings: .init()
-        )
+        initialState: CubeSceneView.ViewState(game: state)
       ) {
-        
       }
     ),
     store: store

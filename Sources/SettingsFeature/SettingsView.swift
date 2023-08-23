@@ -49,9 +49,9 @@ public struct SettingsView: View {
                 {
                   switch fullGameProduct {
                   case let .success(product):
-                    Button(
-                      action: { self.viewStore.send(.tappedProduct(product), animation: .default) }
-                    ) {
+                    Button {
+                      self.viewStore.send(.tappedProduct(product), animation: .default)
+                    } label: {
                       HStack(alignment: .top, spacing: 0) {
                         Text(product.priceLocale.currencySymbol ?? "$")
                           .adaptiveFont(.matter, size: 24)
@@ -64,7 +64,7 @@ public struct SettingsView: View {
                     EmptyView()
                   }
                 } else {
-                  Button(action: {}) {
+                  Button {} label: {
                     ProgressView()
                       .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveWhite))
                       .scaleEffect(1.5, anchor: .center)
@@ -79,7 +79,7 @@ public struct SettingsView: View {
               )
             }
 
-            Button(action: { self.viewStore.send(.leaveUsAReviewButtonTapped) }) {
+            Button { self.viewStore.send(.leaveUsAReviewButtonTapped) } label: {
               Image(systemName: "star")
                 .font(.system(size: 40))
             }
@@ -90,7 +90,7 @@ public struct SettingsView: View {
               )
             )
 
-            Button(action: { self.isSharePresented.toggle() }) {
+            Button { self.isSharePresented.toggle() } label: {
               Image(systemName: "person.2.fill")
                 .font(.system(size: 40))
             }
@@ -126,9 +126,7 @@ public struct SettingsView: View {
         title: "Accessibility"
       )
       SettingsNavigationLink(
-        destination: StatsView(
-          store: self.store.scope(state: \.stats, action: Settings.Action.stats)
-        ),
+        destination: StatsView(store: self.store.scope(state: \.stats, action: { .stats($0) })),
         title: "Stats"
       )
       SettingsNavigationLink(
@@ -137,7 +135,7 @@ public struct SettingsView: View {
       )
       if self.viewStore.isFullGamePurchased {
         SettingsRow {
-          Button(action: { self.viewStore.send(.leaveUsAReviewButtonTapped) }) {
+          Button { self.viewStore.send(.leaveUsAReviewButtonTapped) } label: {
             HStack {
               Text("Leave us a review")
               Spacer()
@@ -158,7 +156,7 @@ public struct SettingsView: View {
         if let buildNumber = self.viewStore.buildNumber {
           Text("Build \(buildNumber.rawValue)")
         }
-        Button(action: { self.viewStore.send(.reportABugButtonTapped) }) {
+        Button { self.viewStore.send(.reportABugButtonTapped) } label: {
           Text("Report a bug")
             .underline()
         }
@@ -175,7 +173,7 @@ public struct SettingsView: View {
       onDismiss: { self.viewStore.send(.onDismiss) }
     )
     .task { await self.viewStore.send(.task).finish() }
-    .alert(store: self.store.scope(state: \.$alert, action: Settings.Action.alert))
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()
@@ -220,7 +218,7 @@ public struct SupportButtonStyle: ButtonStyle {
     VStack(spacing: 12) {
       configuration.label
         .frame(minWidth: 100 - 16 * 2, minHeight: 100)
-        .padding([.leading, .trailing], 16)
+        .padding(.horizontal, 16)
         .overlay(
           RoundedRectangle(cornerRadius: 12)
             .stroke(Color.adaptiveWhite, lineWidth: 3)
@@ -228,7 +226,7 @@ public struct SupportButtonStyle: ButtonStyle {
 
       Text(self.title)
     }
-    .foregroundColor(Color.adaptiveWhite)
+    .foregroundColor(.adaptiveWhite)
     .frame(width: 240, height: 210, alignment: .center)
     .background(self.backgroundColor)
     .cornerRadius(12)
@@ -261,9 +259,8 @@ public struct SupportButtonStyle: ButtonStyle {
               )
             ) {
               Settings()
-                .dependency(\.apiClient.currentPlayer) {
-                  .init(appleReceipt: .mock, player: .blob)
-                }
+            } withDependencies: {
+              $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
             },
             navPresentationStyle: .navigation
           )

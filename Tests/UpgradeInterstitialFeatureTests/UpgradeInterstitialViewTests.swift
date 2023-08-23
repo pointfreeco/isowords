@@ -31,7 +31,6 @@ class UpgradeInterstitialViewTests: XCTestCase {
             secondsPassedCount: 0
           )
         ) {
-
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -44,7 +43,6 @@ class UpgradeInterstitialViewTests: XCTestCase {
         store: .init(
           initialState: .init(secondsPassedCount: 15, upgradeInterstitialDuration: 15)
         ) {
-          
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

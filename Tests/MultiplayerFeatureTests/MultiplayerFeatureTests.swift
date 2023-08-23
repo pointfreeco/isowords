@@ -6,16 +6,14 @@ import XCTest
 @MainActor
 class MultiplayerFeatureTests: XCTestCase {
   func testStartGame_GameCenterAuthenticated() async {
-    let store = TestStore(
-      initialState: Multiplayer.State(hasPastGames: false)
-    ) {
-      Multiplayer()
-    }
-
     let didPresentMatchmakerViewController = ActorIsolated(false)
-    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
-    store.dependencies.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
-      await didPresentMatchmakerViewController.setValue(true)
+    let store = TestStore(initialState: Multiplayer.State(hasPastGames: false)) {
+      Multiplayer()
+    } withDependencies: {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in
+        await didPresentMatchmakerViewController.setValue(true)
+      }
     }
 
     await store.send(.startButtonTapped)
@@ -23,16 +21,16 @@ class MultiplayerFeatureTests: XCTestCase {
   }
 
   func testStartGame_GameCenterNotAuthenticated() async {
+    let didPresentAuthentication = ActorIsolated(false)
     let store = TestStore(
       initialState: Multiplayer.State(hasPastGames: false)
     ) {
       Multiplayer()
-    }
-
-    let didPresentAuthentication = ActorIsolated(false)
-    store.dependencies.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-    store.dependencies.gameCenter.localPlayer.presentAuthenticationViewController = {
-      await didPresentAuthentication.setValue(true)
+    } withDependencies: {
+      $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
+      $0.gameCenter.localPlayer.presentAuthenticationViewController = {
+        await didPresentAuthentication.setValue(true)
+      }
     }
 
     await store.send(.startButtonTapped)
@@ -46,10 +44,10 @@ class MultiplayerFeatureTests: XCTestCase {
       Multiplayer()
     }
 
-    await store.send(.setNavigation(tag: .pastGames)) {
+    await store.send(.pastGamesButtonTapped) {
       $0.destination = .pastGames(.init(pastGames: []))
     }
-    await store.send(.setNavigation(tag: nil)) {
+    await store.send(.destination(.dismiss)) {
       $0.destination = nil
     }
   }

@@ -61,37 +61,36 @@ extension View {
   public func bottomMenu(
     item: Binding<BottomMenu?>
   ) -> some View {
-    BottomMenuWrapper(content: self, item: item)
+    self.modifier(BottomMenuModifier(item: item))
   }
 }
 
-private struct BottomMenuWrapper<Content: View>: View {
+private struct BottomMenuModifier: ViewModifier {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
-  let content: Content
   @Binding var item: BottomMenu?
 
-  var body: some View {
-    ZStack(alignment: .bottom) {
-      self.content
-        .zIndex(0)
-
-      ZStack(alignment: .bottom) {
-        if let menu = self.item {
+  func body(content: Content) -> some View {
+    content
+      .overlay {
+        if self.item != nil {
           Rectangle()
             .fill(Color.isowordsBlack.opacity(0.4))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onTapGesture { self.item = nil }
-            .zIndex(1)
-            .transition(.opacity)
-
+            .transition(.opacity.animation(.default))
+            .ignoresSafeArea()
+        }
+      }
+      .overlay(alignment: .bottom) {
+        if let menu = self.item {
           VStack(spacing: 24) {
             Group {
               HStack {
                 menu.title
                   .adaptiveFont(.matterMedium, size: 18)
                 Spacer()
-                Button(action: { self.item = nil }) {
+                Button { self.item = nil } label: {
                   Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 24))
                 }
@@ -106,18 +105,13 @@ private struct BottomMenuWrapper<Content: View>: View {
 
             HStack(spacing: 24) {
               ForEach(menu.buttons) { button in
-                MenuButton(
-                  button:
-                    button
-                    .additionalAction { self.item = nil }
-                )
+                MenuButton(button: button)
               }
             }
 
             if let footerButton = menu.footerButton {
               Button(
                 action: {
-                  self.item = nil
                   footerButton.action()
                 }
               ) {
@@ -139,15 +133,17 @@ private struct BottomMenuWrapper<Content: View>: View {
           .frame(maxWidth: .infinity)
           .padding(24)
           .padding(.bottom)
-          .background(self.colorScheme == .light ? Color.isowordsOrange : .hex(0x242424))
-          .adaptiveCornerRadius([UIRectCorner.topLeft, .topRight], .grid(3))
-          .zIndex(2)
-          .transition(.move(edge: .bottom))
+          .background {
+            Group {
+              self.colorScheme == .light ? Color.isowordsOrange : .hex(0x242424)
+            }
+            .adaptiveCornerRadius([UIRectCorner.topLeft, .topRight], .grid(3))
+            .ignoresSafeArea()
+          }
+          .transition(.move(edge: .bottom).animation(.default))
           .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
         }
       }
-      .ignoresSafeArea()
-    }
   }
 }
 
@@ -166,7 +162,7 @@ private struct MenuButton: View {
       }
       .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
       .frame(maxWidth: .infinity)
-      .padding([.top, .bottom], 24)
+      .padding(.vertical, 24)
       .background(self.colorScheme == .light ? Color.white : .isowordsOrange)
       .continuousCornerRadius(12)
     }

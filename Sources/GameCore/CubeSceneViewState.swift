@@ -4,8 +4,7 @@ import SharedModels
 extension CubeSceneView.ViewState {
   public init(
     game: Game.State,
-    nub: CubeSceneView.ViewState.NubState?,
-    settings: Settings
+    nub: CubeSceneView.ViewState.NubState? = nil
   ) {
     self.init(
       cubes: game.cubes.enumerated().map { x, cubes in
@@ -18,13 +17,13 @@ extension CubeSceneView.ViewState {
           }
         }
       },
+      enableGyroMotion: game.enableGyroMotion,
       isOnLowPowerMode: game.isOnLowPowerMode,
       nub: nub,
       playedWords: game.playedWords,
       selectedFaceCount: game.selectedWord.count,
       selectedWordIsValid: game.selectedWordIsValid,
-      selectedWordString: game.selectedWordString,
-      settings: settings
+      selectedWordString: game.selectedWordString
     )
   }
 }

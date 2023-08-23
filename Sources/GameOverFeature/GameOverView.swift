@@ -16,45 +16,61 @@ import UpgradeInterstitialFeature
 import UserDefaultsClient
 
 public struct GameOver: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
+      case upgradeInterstitial(UpgradeInterstitial.State = .init())
+    }
+    public enum Action: Equatable {
+      case notificationsAuthAlert(NotificationsAuthAlert.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+        NotificationsAuthAlert()
+      }
+      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var completedGame: CompletedGame
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
+    @PresentationState public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
     public var isDemo: Bool
     public var isNotificationMenuPresented: Bool
     public var isViewEnabled: Bool
-    public var notificationsAuthAlert: NotificationsAuthAlert.State?
     public var showConfetti: Bool
     public var summary: RankSummary?
     public var turnBasedContext: TurnBasedContext?
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
       completedGame: CompletedGame,
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
+      destination: Destination.State? = nil,
       gameModeIsLoading: GameMode? = nil,
       isDemo: Bool,
       isNotificationMenuPresented: Bool = false,
       isViewEnabled: Bool = false,
-      notificationsAuthAlert: NotificationsAuthAlert.State? = nil,
       showConfetti: Bool = false,
       summary: RankSummary? = nil,
       turnBasedContext: TurnBasedContext? = nil,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.completedGame = completedGame
       self.dailyChallenges = dailyChallenges
+      self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
       self.isDemo = isDemo
       self.isNotificationMenuPresented = isNotificationMenuPresented
       self.isViewEnabled = isViewEnabled
-      self.notificationsAuthAlert = notificationsAuthAlert
       self.showConfetti = showConfetti
       self.summary = summary
       self.turnBasedContext = turnBasedContext
-      self.upgradeInterstitial = upgradeInterstitial
       self.userNotificationSettings = userNotificationSettings
     }
 
@@ -69,27 +85,26 @@ public struct GameOver: Reducer {
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
     case delayedOnAppear
     case delayedShowUpgradeInterstitial
-    case delegate(DelegateAction)
+    case delegate(Delegate)
+    case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameMode)
-    case notificationsAuthAlert(NotificationsAuthAlert.Action)
     case rematchButtonTapped
     case showConfetti
     case startDailyChallengeResponse(TaskResult<InProgressGame>)
     case task
     case submitGameResponse(TaskResult<SubmitGameResponse>)
-    case upgradeInterstitial(UpgradeInterstitial.Action)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
-  }
 
-  public enum DelegateAction: Equatable {
-    case close
-    case startGame(InProgressGame)
-    case startSoloGame(GameMode)
+    public enum Delegate: Equatable {
+      case startGame(InProgressGame)
+      case startSoloGame(GameMode)
+    }
   }
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.storeKit.requestReview) var requestReview
@@ -99,7 +114,7 @@ public struct GameOver: Reducer {
 
   public init() {}
 
-  public var body: some Reducer<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case .closeButtonTapped:
@@ -110,11 +125,11 @@ public struct GameOver: Reducer {
         else {
           return .run { send in
             try? await self.requestReviewAsync()
-            await send(.delegate(.close))
+            await self.dismiss(animation: .default)
           }
         }
 
-        state.notificationsAuthAlert = .init()
+        state.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
         return .none
 
       case .dailyChallengeResponse(.failure):
@@ -129,10 +144,7 @@ public struct GameOver: Reducer {
         return .none
 
       case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
-        return .none
-
-      case .delegate(.close):
+        state.destination = .upgradeInterstitial()
         return .none
 
       case .delegate:
@@ -169,17 +181,21 @@ public struct GameOver: Reducer {
           return .none
         }
 
-      case .notificationsAuthAlert(.delegate(.close)):
-        state.notificationsAuthAlert = nil
-        return .run { send in
+      case .destination(.dismiss)
+      where /Destination.State.notificationsAuthAlert ~= state.destination:
+        return .run { _ in
           try? await self.requestReviewAsync()
-          await send(.delegate(.close), animation: .default)
+          await self.dismiss(animation: .default)
         }
 
-      case .notificationsAuthAlert(.delegate(.didChooseNotificationSettings)):
-        return .send(.delegate(.close)).animation()
+      case .destination(
+        .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings)))
+      ):
+        return .run { _ in
+          await self.dismiss(animation: .default)
+        }
 
-      case .notificationsAuthAlert:
+      case .destination:
         return .none
 
       case .rematchButtonTapped:
@@ -208,10 +224,10 @@ public struct GameOver: Reducer {
                   as: [FetchTodaysDailyChallengeResponse].self
                 )
               }
-            )
+            ),
+            animation: .default
           )
         }
-        .animation()
 
       case .submitGameResponse(.success(.shared)):
         return .none
@@ -237,7 +253,7 @@ public struct GameOver: Reducer {
         return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
           guard isDemo || completedGame.currentScore > 0
           else {
-            await send(.delegate(.close), animation: .default)
+            await self.dismiss(animation: .default)
             return
           }
 
@@ -306,31 +322,20 @@ public struct GameOver: Reducer {
             group.addTask {
               await send(
                 .userNotificationSettingsResponse(
-                  self.getUserNotificationSettings()
+                  getUserNotificationSettings()
                 )
               )
             }
           }
         }
 
-      case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
-        return .none
-
       case let .userNotificationSettingsResponse(settings):
         state.userNotificationSettings = settings
         return .none
       }
     }
-    .ifLet(\.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
-      NotificationsAuthAlert()
-    }
-    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-      UpgradeInterstitial()
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
   }
 
@@ -404,7 +409,8 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented = state.upgradeInterstitial != nil
+      self.isUpgradeInterstitialPresented =
+        /GameOver.Destination.State.upgradeInterstitial ~= state.destination
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
@@ -440,7 +446,7 @@ public struct GameOverView: View {
 
             if !self.viewStore.isDemo {
               Spacer()
-              Button(action: { self.viewStore.send(.closeButtonTapped, animation: .default) }) {
+              Button { self.viewStore.send(.closeButtonTapped, animation: .default) } label: {
                 Image(systemName: "xmark")
               }
             }
@@ -469,7 +475,7 @@ public struct GameOverView: View {
             .adaptiveFont(.matter, size: 34)
             .multilineTextAlignment(.center)
 
-          Button(action: { self.isSharePresented.toggle() }) {
+          Button { self.isSharePresented.toggle() } label: {
             Text("Share with a friend")
           }
           .buttonStyle(
@@ -484,15 +490,13 @@ public struct GameOverView: View {
       }
 
       IfLetStore(
-        self.store.scope(
-          state: \.upgradeInterstitial,
-          action: GameOver.Action.upgradeInterstitial
-        ),
-        then: { store in
-          UpgradeInterstitialView(store: store)
-            .transition(.opacity)
-        }
-      )
+        self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /GameOver.Destination.State.upgradeInterstitial,
+        action: GameOver.Destination.Action.upgradeInterstitial
+      ) { store in
+        UpgradeInterstitialView(store: store)
+          .transition(.opacity)
+      }
     }
     .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
     .background(
@@ -501,10 +505,9 @@ public struct GameOverView: View {
     )
     .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
-      store: self.store.scope(
-        state: \.notificationsAuthAlert,
-        action: GameOver.Action.notificationsAuthAlert
-      )
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /GameOver.Destination.State.notificationsAuthAlert,
+      action: GameOver.Destination.Action.notificationsAuthAlert
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
@@ -740,7 +743,6 @@ public struct GameOverView: View {
       }
 
       VStack(spacing: 0) {
-
         HStack(alignment: .top, spacing: -1) {
           VStack(alignment: .trailing) {
             HStack {

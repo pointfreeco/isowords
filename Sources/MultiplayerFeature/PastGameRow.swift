@@ -36,7 +36,7 @@ public struct PastGame: Reducer {
 
   public enum Action: Equatable {
     case alert(PresentationAction<Alert>)
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case matchResponse(TaskResult<TurnBasedMatch>)
     case rematchButtonTapped
     case rematchResponse(TaskResult<TurnBasedMatch>)
@@ -44,10 +44,10 @@ public struct PastGame: Reducer {
 
     public enum Alert: Equatable {
     }
-  }
 
-  public enum DelegateAction: Equatable {
-    case openMatch(TurnBasedMatch)
+    public enum Delegate: Equatable {
+      case openMatch(TurnBasedMatch)
+    }
   }
 
   @Dependency(\.gameCenter) var gameCenter
@@ -57,7 +57,7 @@ public struct PastGame: Reducer {
       .ifLet(\.$alert, action: /Action.alert)
   }
 
-  public func core(into state: inout State, action: Action) -> Effect<Action> {
+  public func core(into state: inout State, action: Action) -> EffectOf<Self> {
     switch action {
     case .alert:
       return .none
@@ -120,7 +120,7 @@ struct PastGameRow: View {
 
   var body: some View {
     ZStack(alignment: .bottomLeading) {
-      Button(action: { self.viewStore.send(.tappedRow, animation: .default) }) {
+      Button { self.viewStore.send(.tappedRow, animation: .default) } label: {
         VStack(alignment: .leading, spacing: .grid(6)) {
           HStack(spacing: .grid(1)) {
             Text("\(self.viewStore.endDate, formatter: dateFormatter)")
@@ -165,11 +165,11 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(store: self.store.scope(state: \.$alert, action: PastGame.Action.alert))
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
-    Button(action: { self.viewStore.send(.rematchButtonTapped, animation: .default) }) {
+    Button { self.viewStore.send(.rematchButtonTapped, animation: .default) } label: {
       HStack(spacing: .grid(1)) {
         if self.viewStore.isRematchRequestInFlight {
           ProgressView()
@@ -184,8 +184,8 @@ struct PastGameRow: View {
           .adaptiveFont(.matterMedium, size: 14)
           .foregroundColor(self.colorScheme == .light ? .multiplayer : .isowordsBlack)
       }
-      .padding([.horizontal])
-      .padding([.vertical], .grid(2))
+      .padding(.horizontal)
+      .padding(.vertical, .grid(2))
     }
     .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
     .continuousCornerRadius(999)

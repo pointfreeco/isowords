@@ -10,29 +10,71 @@ import GameOverFeature
 import HapticsCore
 import LowPowerModeClient
 import Overture
+import SettingsFeature
 import SharedModels
 import SwiftUI
 import Tagged
 import TcaHelpers
 import UpgradeInterstitialFeature
+import UserSettingsClient
 
 public struct Game: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case alert(AlertState<Action.Alert>)
+      case bottomMenu(BottomMenuState<Action.BottomMenu>)
+      case gameOver(GameOver.State)
+      case settings(Settings.State = Settings.State())
+      case upgradeInterstitial(UpgradeInterstitial.State = .init())
+    }
+    public enum Action: Equatable {
+      case alert(Alert)
+      case bottomMenu(BottomMenu)
+      case gameOver(GameOver.Action)
+      case settings(Settings.Action)
+      case upgradeInterstitial(UpgradeInterstitial.Action)
+
+      public enum Alert: Equatable {
+        case forfeitButtonTapped
+      }
+      public enum BottomMenu: Equatable {
+        case confirmRemoveCube(LatticePoint)
+        case endGameButtonTapped
+        case exitButtonTapped
+        case forfeitGameButtonTapped
+        case settingsButtonTapped
+      }
+    }
+    let dismissGame: DismissEffect
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.gameOver, action: /Action.gameOver) {
+        GameOver()
+          .dependency(\.dismiss, self.dismissGame)
+      }
+      Scope(state: /State.settings, action: /Action.settings) {
+        Settings()
+      }
+      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+        UpgradeInterstitial()
+      }
+    }
+  }
+
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    @PresentationState public var alert: AlertState<AlertAction>?
-    public var bottomMenu: BottomMenuState<Action>?
     public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
+    @PresentationState public var destination: Destination.State?
     public var gameContext: ClientModels.GameContext
     public var gameCurrentTime: Date
     public var gameMode: GameMode
-    public var gameOver: GameOver.State?
     public var gameStartTime: Date
+    public var enableGyroMotion: Bool
+    public var isAnimationReduced: Bool
     public var isDemo: Bool
     public var isGameLoaded: Bool
     public var isOnLowPowerMode: Bool
     public var isPanning: Bool
-    public var isSettingsPresented: Bool
     public var isTrayVisible: Bool
     public var language: Language
     public var moves: Moves
@@ -40,25 +82,21 @@ public struct Game: Reducer {
     public var secondsPlayed: Int
     public var selectedWord: [IndexedCubeFace]
     public var selectedWordIsValid: Bool
-    public var upgradeInterstitial: UpgradeInterstitial.State?
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
     public init(
       activeGames: ActiveGamesState = .init(),
-      alert: AlertState<AlertAction>? = nil,
-      bottomMenu: BottomMenuState<Action>? = nil,
       cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
+      destination: Destination.State? = nil,
       gameContext: ClientModels.GameContext,
       gameCurrentTime: Date,
       gameMode: GameMode,
-      gameOver: GameOver.State? = nil,
       gameStartTime: Date,
       isDemo: Bool = false,
       isGameLoaded: Bool = false,
       isPanning: Bool = false,
       isOnLowPowerMode: Bool = false,
-      isSettingsPresented: Bool = false,
       isTrayVisible: Bool = false,
       language: Language = .en,
       moves: Moves = [],
@@ -66,24 +104,23 @@ public struct Game: Reducer {
       secondsPlayed: Int = 0,
       selectedWord: [IndexedCubeFace] = [],
       selectedWordIsValid: Bool = false,
-      upgradeInterstitial: UpgradeInterstitial.State? = nil,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
+      @Dependency(\.userSettings) var userSettings
       self.activeGames = activeGames
-      self.alert = alert
-      self.bottomMenu = bottomMenu
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
+      self.destination = destination
+      self.enableGyroMotion = userSettings.enableGyroMotion
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
-      self.gameOver = gameOver
       self.gameStartTime = gameStartTime
+      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
       self.isOnLowPowerMode = isOnLowPowerMode
       self.isPanning = isPanning
-      self.isSettingsPresented = isSettingsPresented
       self.isTrayVisible = isTrayVisible
       self.language = language
       self.moves = moves
@@ -91,7 +128,6 @@ public struct Game: Reducer {
       self.secondsPlayed = secondsPlayed
       self.selectedWord = selectedWord
       self.selectedWordIsValid = selectedWordIsValid
-      self.upgradeInterstitial = upgradeInterstitial
       self.wordSubmitButton = wordSubmit
     }
 
@@ -136,36 +172,25 @@ public struct Game: Reducer {
 
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
-    case alert(PresentationAction<AlertAction>)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case delayedShowUpgradeInterstitial
-    case dismissBottomMenu
+    case destination(PresentationAction<Destination.Action>)
     case doubleTap(index: LatticePoint)
-    case endGameButtonTapped
-    case exitButtonTapped
-    case forfeitGameButtonTapped
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case gameOver(GameOver.Action)
     case lowPowerModeChanged(Bool)
     case matchesLoaded(TaskResult<[TurnBasedMatch]>)
     case menuButtonTapped
     case task
     case pan(UIGestureRecognizer.State, PanData?)
     case savedGamesLoaded(TaskResult<SavedGamesState>)
-    case settingsButtonTapped
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
+    case userSettingsUpdated(UserSettings)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
-  }
-
-  public enum AlertAction: Equatable {
-    case dontForfeitButtonTapped
-    case forfeitButtonTapped
   }
 
   public enum GameCenterAction: Equatable {
@@ -175,6 +200,7 @@ public struct Game: Reducer {
 
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.apiClient.currentPlayer) var currentPlayer
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.lowPowerMode) var lowPowerMode
@@ -182,6 +208,7 @@ public struct Game: Reducer {
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -189,20 +216,18 @@ public struct Game: Reducer {
 
   public var body: some Reducer<State, Action> {
     self.core
-      .onChange(of: \.selectedWord) { selectedWord, state, _ in
-        state.selectedWordIsValid =
-          !state.selectedWordHasAlreadyBeenPlayed
-          && self.dictionaryContains(state.selectedWordString, state.language)
-        return .none
+      .onChange(of: \.selectedWord) { _, selectedWord in
+        Reduce { state, _ in
+          state.selectedWordIsValid =
+            !state.selectedWordHasAlreadyBeenPlayed
+            && self.dictionaryContains(state.selectedWordString, state.language)
+          return .none
+        }
       }
       .filterActionsForYourTurn()
-      .ifLet(\.gameOver, action: /Action.gameOver) {
-        GameOver()
+      .ifLet(\.$destination, action: /Action.destination) {
+        Destination(dismissGame: self.dismiss)
       }
-      .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
-        UpgradeInterstitial()
-      }
-      .ifLet(\.$alert, action: /Action.alert)
       .sounds()
   }
 
@@ -213,10 +238,19 @@ public struct Game: Reducer {
       case .activeGames:
         return .none
 
-      case .alert(.dismiss), .alert(.presented(.dontForfeitButtonTapped)):
+      case .cancelButtonTapped:
+        state.selectedWord = []
         return .none
 
-      case .alert(.presented(.forfeitButtonTapped)):
+      case let .confirmRemoveCube(index):
+        state.removeCube(at: index, playedAt: self.date())
+        return .none
+
+      case .delayedShowUpgradeInterstitial:
+        state.destination = .upgradeInterstitial()
+        return .none
+
+      case .destination(.presented(.alert(.forfeitButtonTapped))):
         guard let match = state.turnBasedContext?.match
         else { return .none }
 
@@ -241,22 +275,46 @@ public struct Game: Reducer {
           }
         }
 
-      case .cancelButtonTapped:
-        state.selectedWord = []
-        return .none
-
-      case let .confirmRemoveCube(index):
-        state.bottomMenu = nil
+      case let .destination(.presented(.bottomMenu(.confirmRemoveCube(index)))):
         state.removeCube(at: index, playedAt: self.date())
-        state.selectedWord = []
         return .none
 
-      case .delayedShowUpgradeInterstitial:
-        state.upgradeInterstitial = .init()
+      case .destination(.presented(.bottomMenu(.exitButtonTapped))):
+        return .run { _ in
+          await self.dismiss(animation: .default)
+        }
+
+      case .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))):
+        state.destination = .alert(
+          AlertState {
+            TextState("Are you sure?")
+          } actions: {
+            ButtonState(role: .cancel) {
+              TextState("Don't forfeit")
+            }
+            ButtonState(role: .destructive, action: .forfeitButtonTapped) {
+              TextState("Yes, forfeit")
+            }
+          } message: {
+            TextState(
+              """
+              Forfeiting will end the game and your opponent will win. Are you sure you want to \
+              forfeit?
+              """
+            )
+          }
+        )
         return .none
 
-      case .dismissBottomMenu:
-        state.bottomMenu = nil
+      case .destination(.presented(.bottomMenu(.settingsButtonTapped))):
+        state.destination = .settings()
+        return .none
+
+      case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
+        state = .init(inProgressGame: inProgressGame)
+        return .none
+
+      case .destination:
         return .none
 
       case let .doubleTap(index):
@@ -264,26 +322,6 @@ public struct Game: Reducer {
         else { return .none }
 
         return state.tryToRemoveCube(at: index)
-
-      case .endGameButtonTapped:
-        return .none
-
-      case .exitButtonTapped:
-        return .none
-
-      case .forfeitGameButtonTapped:
-        state.alert = .init(
-          title: .init("Are you sure?"),
-          message: .init(
-            """
-            Forfeiting will end the game and your opponent will win. Are you sure you want to \
-            forfeit?
-            """
-          ),
-          primaryButton: .default(.init("Don’t forfeit"), action: .send(.dontForfeitButtonTapped)),
-          secondaryButton: .destructive(.init("Yes, forfeit"), action: .send(.forfeitButtonTapped))
-        )
-        return .none
 
       case .gameCenter:
         return .none
@@ -296,16 +334,6 @@ public struct Game: Reducer {
           }
         }
 
-      case .gameOver(.delegate(.close)):
-        return .none
-
-      case let .gameOver(.delegate(.startGame(inProgressGame))):
-        state = .init(inProgressGame: inProgressGame)
-        return .none
-
-      case .gameOver:
-        return .none
-
       case let .lowPowerModeChanged(isOn):
         state.isOnLowPowerMode = isOn
         return .none
@@ -314,7 +342,7 @@ public struct Game: Reducer {
         return .none
 
       case .menuButtonTapped:
-        state.bottomMenu = .gameMenu(state: state)
+        state.destination = .bottomMenu(.gameMenu(state: state))
         return .none
 
       case .task:
@@ -350,6 +378,12 @@ public struct Game: Reducer {
             group.addTask {
               try await self.mainQueue.sleep(for: 0.5)
               await send(.gameLoaded)
+            }
+
+            group.addTask {
+              for await userSettings in self.userSettings.stream() {
+                await send(.userSettingsUpdated(userSettings))
+              }
             }
           }
           for music in AudioPlayerClient.Sound.allMusic {
@@ -393,10 +427,6 @@ public struct Game: Reducer {
         return .none
 
       case .savedGamesLoaded:
-        return .none
-
-      case .settingsButtonTapped:
-        state.isSettingsPresented = true
         return .none
 
       case let .submitButtonTapped(reaction: reaction),
@@ -508,12 +538,9 @@ public struct Game: Reducer {
       case .trayButtonTapped:
         return .none
 
-      case .upgradeInterstitial(.delegate(.close)),
-        .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial:
+      case let .userSettingsUpdated(userSettings):
+        state.enableGyroMotion = userSettings.enableGyroMotion
+        state.isAnimationReduced = userSettings.enableReducedAnimation
         return .none
 
       case .wordSubmitButton:
@@ -526,35 +553,6 @@ public struct Game: Reducer {
     GameOverLogic()
     TurnBasedLogic()
     ActiveGamesTray()
-  }
-}
-
-public struct IntegratedGame<StatePath: TcaHelpers.Path, Action>: Reducer
-where StatePath.Value == Game.State {
-  public typealias State = StatePath.Root
-
-  let toGameState: StatePath
-  let toGameAction: CasePath<Action, Game.Action>
-  let isHapticsEnabled: (StatePath.Root) -> Bool
-
-  public init(
-    state toGameState: StatePath,
-    action toGameAction: CasePath<Action, Game.Action>,
-    isHapticsEnabled: @escaping (StatePath.Root) -> Bool
-  ) {
-    self.toGameState = toGameState
-    self.toGameAction = toGameAction
-    self.isHapticsEnabled = isHapticsEnabled
-  }
-
-  public var body: some Reducer<State, Action> {
-    EmptyReducer()._ifLet(state: self.toGameState, action: self.toGameAction) {
-      Game()
-    }
-    .haptics(
-      isEnabled: self.isHapticsEnabled,
-      triggerOnChangeOf: { self.toGameState.extract(from: $0)?.selectedWord }
-    )
   }
 }
 
@@ -581,7 +579,7 @@ extension Game.State {
   }
 
   public var isGameOver: Bool {
-    self.gameOver != nil
+    /Game.Destination.State.gameOver ~= self.destination
   }
 
   public var isResumable: Bool {
@@ -591,7 +589,7 @@ extension Game.State {
 
   public var isSavable: Bool {
     self.isResumable
-      && (/GameContext.turnBased).isNotMatching(self.gameContext)
+      && !(/GameContext.turnBased ~= self.gameContext)
   }
 
   public var playedWords: [PlayedWord] {
@@ -624,7 +622,7 @@ extension Game.State {
     })
   }
 
-  mutating func tryToRemoveCube(at index: LatticePoint) -> Effect<Game.Action> {
+  mutating func tryToRemoveCube(at index: LatticePoint) -> EffectOf<Game> {
     guard self.canRemoveCube else { return .none }
 
     // Don't show menu for timed games.
@@ -642,8 +640,8 @@ extension Game.State {
       isTurnEndingRemoval = false
     }
 
-    self.bottomMenu = .removeCube(
-      index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval
+    self.destination = .bottomMenu(
+      .removeCube(index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
     )
     return .none
   }
@@ -668,6 +666,7 @@ extension Game.State {
     else { return }
 
     self.moves.append(move)
+    self.selectedWord = []
   }
 
   var canRemoveCube: Bool {
@@ -675,7 +674,7 @@ extension Game.State {
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard
-      (/Move.MoveType.removedCube).isNotMatching(lastMove.type),
+      !(/Move.MoveType.removedCube ~= lastMove.type),
       lastMove.playerIndex != turnBasedMatch.localPlayerIndex
     else {
       return true
@@ -746,7 +745,7 @@ extension TurnBasedMatchData {
   }
 }
 
-extension BottomMenuState where Action == Game.Action {
+extension BottomMenuState where Action == Game.Destination.Action.BottomMenu {
   public static func removeCube(
     index: LatticePoint,
     state: Game.State,
@@ -763,14 +762,12 @@ extension BottomMenuState where Action == Game.Action {
           : .init("Remove cube"),
         icon: .init(systemName: "trash"),
         action: .init(action: .confirmRemoveCube(index), animation: .default)
-      ),
-      onDismiss: .init(action: .dismissBottomMenu, animation: .default)
+      )
     )
   }
 
-  static func gameMenu(state: Game.State) -> Self {
+  public static func gameMenu(state: Game.State) -> Self {
     var menu = BottomMenuState(title: menuTitle(state: state))
-    menu.onDismiss = .init(action: .dismissBottomMenu, animation: .default)
 
     if state.isResumable {
       menu.buttons.append(

@@ -13,11 +13,9 @@ struct DailyChallengeHeaderView: View {
 
   struct ViewState: Equatable {
     let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    let destinationTag: Home.Destinations.State.Tag?
 
     init(homeState: Home.State) {
       self.dailyChallenges = homeState.dailyChallenges
-      self.destinationTag = homeState.destination?.tag
     }
   }
 
@@ -56,27 +54,14 @@ struct DailyChallengeHeaderView: View {
         }
       }
       .adaptiveFont(.matter, size: 56)
-      .adaptivePadding([.bottom])
+      .adaptivePadding(.bottom)
       .fixedSize(horizontal: false, vertical: true)
       .frame(maxWidth: .infinity)
 
       VStack {
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\Home.State.destination)
-                .appending(path: /Home.Destinations.State.dailyChallenge).extract(from:),
-              action: { .destination(.dailyChallenge($0)) }
-            ),
-            then: DailyChallengeView.init(store:)
-          ),
-          tag: Home.Destinations.State.Tag.dailyChallenge,
-          selection: viewStore.binding(
-            get: \.destinationTag,
-            send: Home.Action.setNavigation(tag:)
-          )
-          .animation()
-        ) {
+        Button {
+          self.viewStore.send(.dailyChallengeButtonTapped)
+        } label: {
           HStack {
             Group {
               if self.hasPlayedAllDailyChallenges {
@@ -129,6 +114,12 @@ struct DailyChallengeHeaderView: View {
         .padding(.top)
       }
     }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Home.Destination.State.dailyChallenge,
+      action: Home.Destination.Action.dailyChallenge,
+      destination: DailyChallengeView.init(store:)
+    )
   }
 
   var hasPlayedAllDailyChallenges: Bool {
