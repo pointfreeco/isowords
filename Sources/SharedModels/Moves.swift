@@ -6,7 +6,6 @@ public struct Moves:
   RangeReplaceableCollection,
   Sendable
 {
-
   var rawValue: [Move]
 
   public init(_ rawValue: [Move]) {

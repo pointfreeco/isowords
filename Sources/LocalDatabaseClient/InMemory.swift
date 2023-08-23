@@ -1,6 +1,5 @@
 #if DEBUG
-  import ComposableArchitecture
-  import SQLite3
+  import Foundation
 
   extension LocalDatabaseClient {
     public static let inMemory = Self.live(path: URL(string: ":memory:")!)

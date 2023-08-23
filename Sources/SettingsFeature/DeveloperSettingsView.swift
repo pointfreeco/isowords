@@ -3,24 +3,25 @@ import Styleguide
 import SwiftUI
 
 struct DeveloperSettingsView: View {
-  let store: Store<SettingsState, SettingsAction>
-  @ObservedObject var viewStore: ViewStore<SettingsState, SettingsAction>
+  let store: StoreOf<Settings>
+  @ObservedObject var viewStore: ViewStoreOf<Settings>
+  @AppStorage(.enableCubeShadow) var enableCubeShadow
+  @AppStorage(.showSceneStatistics) var showSceneStatistics
 
-  init(store: Store<SettingsState, SettingsAction>) {
+  init(store: StoreOf<Settings>) {
     self.store = store
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   var body: some View {
     SettingsForm {
       SettingsRow {
-
         VStack(alignment: .leading) {
           Text("API")
           Text(self.viewStore.developer.currentBaseUrl.rawValue)
             .adaptiveFont(.matter, size: 14)
 
-          Picker("Base URL", selection: self.viewStore.binding(\.$developer.currentBaseUrl)) {
+          Picker("Base URL", selection: self.viewStore.$developer.currentBaseUrl) {
             ForEach(DeveloperSettings.BaseUrl.allCases, id: \.self) {
               Text($0.description)
             }
@@ -31,21 +32,11 @@ struct DeveloperSettingsView: View {
       }
 
       SettingsRow {
-        Toggle("Shadows", isOn: self.viewStore.binding(\.$enableCubeShadow))
+        Toggle("Shadows", isOn: self.$enableCubeShadow)
       }
 
       SettingsRow {
-        VStack(alignment: .leading, spacing: 24) {
-          Text("Shadow radius")
-            .adaptiveFont(.matterMedium, size: 16)
-
-          Slider(value: viewStore.binding(\.$cubeShadowRadius), in: 0...200)
-            .accentColor(.isowordsOrange)
-        }
-      }
-
-      SettingsRow {
-        Toggle("Scene statistics", isOn: viewStore.binding(\.$showSceneStatistics))
+        Toggle("Scene statistics", isOn: self.$showSceneStatistics)
       }
     }
     .navigationStyle(title: Text("Developer"))
@@ -58,11 +49,8 @@ struct DeveloperSettingsView: View {
   struct DeveloperSettingsView_Previews: PreviewProvider {
     static var previews: some View {
       DeveloperSettingsView(
-        store: Store(
-          initialState: SettingsState(),
-          reducer: settingsReducer,
-          environment: .noop
-        )
+        store: Store(initialState: Settings.State()) {
+        }
       )
     }
   }

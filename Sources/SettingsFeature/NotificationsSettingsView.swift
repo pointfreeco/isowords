@@ -3,29 +3,29 @@ import Styleguide
 import SwiftUI
 
 struct NotificationsSettingsView: View {
-  let store: Store<SettingsState, SettingsAction>
-  @ObservedObject var viewStore: ViewStore<SettingsState, SettingsAction>
+  let store: StoreOf<Settings>
+  @ObservedObject var viewStore: ViewStoreOf<Settings>
 
-  init(store: Store<SettingsState, SettingsAction>) {
+  init(store: StoreOf<Settings>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
     SettingsForm {
       SettingsRow {
         Toggle(
-          "Enable notifications", isOn: self.viewStore.binding(\.$enableNotifications).animation()
+          "Enable notifications", isOn: self.viewStore.$userSettings.enableNotifications.animation()
         )
         .adaptiveFont(.matterMedium, size: 16)
       }
 
-      if self.viewStore.enableNotifications {
+      if self.viewStore.userSettings.enableNotifications {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(
               "Daily challenge reminders",
-              isOn: self.viewStore.binding(\.$sendDailyChallengeReminder)
+              isOn: self.viewStore.$userSettings.sendDailyChallengeReminder
             )
             .adaptiveFont(.matterMedium, size: 16)
 
@@ -38,7 +38,8 @@ struct NotificationsSettingsView: View {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(
-              "Daily challenge summary", isOn: self.viewStore.binding(\.$sendDailyChallengeSummary)
+              "Daily challenge summary",
+              isOn: self.viewStore.$userSettings.sendDailyChallengeSummary
             )
             .adaptiveFont(.matterMedium, size: 16)
 
@@ -60,12 +61,12 @@ struct NotificationsSettingsView: View {
     static var previews: some View {
       NotificationsSettingsView(
         store: .init(
-          initialState: .init(
+          initialState: Settings.State(
             userNotificationSettings: .init(authorizationStatus: .authorized)
-          ),
-          reducer: settingsReducer,
-          environment: .noop
-        )
+          )
+        ) {
+          Settings()
+        }
       )
     }
   }

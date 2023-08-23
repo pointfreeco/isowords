@@ -1,50 +1,45 @@
-import ApiClient
 import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-public struct LeaderboardResultsState<TimeScope> {
-  public var gameMode: GameMode
-  public var isLoading: Bool
-  public var isTimeScopeMenuVisible: Bool
-  public var resultEnvelope: ResultEnvelope?
-  public var timeScope: TimeScope
+public struct LeaderboardResults<TimeScope>: Reducer {
+  public struct State {
+    public var gameMode: GameMode
+    public var isLoading: Bool
+    public var isTimeScopeMenuVisible: Bool
+    public var resultEnvelope: ResultEnvelope?
+    public var timeScope: TimeScope
 
-  public init(
-    gameMode: GameMode = .timed,
-    isLoading: Bool = false,
-    isTimeScopeMenuVisible: Bool = false,
-    resultEnvelope: ResultEnvelope? = nil,
-    timeScope: TimeScope
-  ) {
-    self.gameMode = gameMode
-    self.isLoading = isLoading
-    self.isTimeScopeMenuVisible = isTimeScopeMenuVisible
-    self.resultEnvelope = resultEnvelope
-    self.timeScope = timeScope
+    public init(
+      gameMode: GameMode = .timed,
+      isLoading: Bool = false,
+      isTimeScopeMenuVisible: Bool = false,
+      resultEnvelope: ResultEnvelope? = nil,
+      timeScope: TimeScope
+    ) {
+      self.gameMode = gameMode
+      self.isLoading = isLoading
+      self.isTimeScopeMenuVisible = isTimeScopeMenuVisible
+      self.resultEnvelope = resultEnvelope
+      self.timeScope = timeScope
+    }
+
+    var nonDisplayedResultsCount: Int {
+      (self.resultEnvelope?.outOf ?? 0)
+        - (self.resultEnvelope?.nonContiguousResult?.rank ?? self.resultEnvelope?.results.count ?? 0)
+    }
   }
 
-  var nonDisplayedResultsCount: Int {
-    (self.resultEnvelope?.outOf ?? 0)
-      - (self.resultEnvelope?.nonContiguousResult?.rank ?? self.resultEnvelope?.results.count ?? 0)
+  public enum Action {
+    case dismissTimeScopeMenu
+    case gameModeButtonTapped(GameMode)
+    case resultsResponse(TaskResult<ResultEnvelope>)
+    case tappedRow(id: UUID)
+    case tappedTimeScopeLabel
+    case task
+    case timeScopeChanged(TimeScope)
   }
-}
 
-extension LeaderboardResultsState: Equatable where TimeScope: Equatable {}
-
-public enum LeaderboardResultsAction<TimeScope> {
-  case dismissTimeScopeMenu
-  case gameModeButtonTapped(GameMode)
-  case resultsResponse(TaskResult<ResultEnvelope>)
-  case tappedRow(id: UUID)
-  case tappedTimeScopeLabel
-  case task
-  case timeScopeChanged(TimeScope)
-}
-
-extension LeaderboardResultsAction: Equatable where TimeScope: Equatable {}
-
-public struct LeaderboardResultsEnvironment<TimeScope> {
   public let loadResults: @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
 
   public init(
@@ -52,17 +47,9 @@ public struct LeaderboardResultsEnvironment<TimeScope> {
   ) {
     self.loadResults = loadResults
   }
-}
 
-extension Reducer {
-  public static func leaderboardResultsReducer<TimeScope>() -> Self
-  where
-    State == LeaderboardResultsState<TimeScope>,
-    Action == LeaderboardResultsAction<TimeScope>,
-    Environment == LeaderboardResultsEnvironment<TimeScope>
-  {
-
-    Self { state, action, environment in
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
       switch action {
       case .dismissTimeScopeMenu:
         state.isTimeScopeMenuVisible = false
@@ -71,12 +58,12 @@ extension Reducer {
       case let .gameModeButtonTapped(gameMode):
         state.gameMode = gameMode
         state.isLoading = true
-        return .task { [timeScope = state.timeScope] in
-          await .resultsResponse(
-            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+        return .run { [timeScope = state.timeScope] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
         }
-        .animation()
 
       case .resultsResponse(.failure):
         state.isLoading = false
@@ -100,28 +87,31 @@ extension Reducer {
         state.isTimeScopeMenuVisible = false
         state.resultEnvelope = .placeholder
 
-        return .task { [gameMode = state.gameMode, timeScope = state.timeScope] in
-          await .resultsResponse(
-            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+        return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
         }
-        .animation()
 
       case let .timeScopeChanged(timeScope):
         state.isLoading = true
         state.isTimeScopeMenuVisible = false
         state.timeScope = timeScope
 
-        return .task { [gameMode = state.gameMode] in
-          await .resultsResponse(
-            TaskResult { try await environment.loadResults(gameMode, timeScope) }
+        return .run { [gameMode = state.gameMode] send in
+          await send(
+            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            animation: .default
           )
         }
-        .animation()
       }
     }
   }
 }
+
+extension LeaderboardResults.State: Equatable where TimeScope: Equatable {}
+extension LeaderboardResults.Action: Equatable where TimeScope: Equatable {}
 
 public struct LeaderboardResultsView<TimeScope, TimeScopeMenu>: View
 where
@@ -136,14 +126,11 @@ where
   let timeScopeMenu: TimeScopeMenu?
   let title: Text?
 
-  public typealias State = LeaderboardResultsState<TimeScope>
-  public typealias Action = LeaderboardResultsAction<TimeScope>
-
-  let store: Store<State, Action>
-  @ObservedObject var viewStore: ViewStore<State, Action>
+  let store: StoreOf<LeaderboardResults<TimeScope>>
+  @ObservedObject var viewStore: ViewStoreOf<LeaderboardResults<TimeScope>>
 
   public init(
-    store: Store<State, Action>,
+    store: StoreOf<LeaderboardResults<TimeScope>>,
     title: Text?,
     subtitle: Text?,
     isFilterable: Bool,
@@ -155,7 +142,7 @@ where
     self.isFilterable = isFilterable
     self.subtitle = subtitle
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
     self.timeScopeLabel = timeScopeLabel
     self.timeScopeMenu = timeScopeMenu
     self.title = title
@@ -173,7 +160,7 @@ where
 
         Spacer()
 
-        Button(action: { self.viewStore.send(.tappedTimeScopeLabel, animation: .default) }) {
+        Button { self.viewStore.send(.tappedTimeScopeLabel, animation: .default) } label: {
           HStack {
             self.timeScopeLabel
               .adaptiveFont(.matterMedium, size: 10)
@@ -183,8 +170,8 @@ where
                 .degrees(self.viewStore.isTimeScopeMenuVisible ? -180 : 0)
               )
           }
-          .padding([.top, .bottom], 8)
-          .padding([.leading, .trailing], 16)
+          .padding(.vertical, 8)
+          .padding(.horizontal, 16)
           .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
           .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
           .continuousCornerRadius(.grid(5))
@@ -195,7 +182,7 @@ where
         if self.isFilterable {
           HStack(spacing: .grid(4)) {
             ForEach(GameMode.allCases) { gameMode in
-              Button(action: { self.viewStore.send(.gameModeButtonTapped(gameMode)) }) {
+              Button { self.viewStore.send(.gameModeButtonTapped(gameMode)) } label: {
                 Text(gameMode.title)
                   .adaptiveFont(.matterMedium, size: 12)
                   .opacity(self.viewStore.gameMode == gameMode ? 1 : 0.4)
@@ -204,7 +191,7 @@ where
             }
           }
           .padding([.leading, .trailing, .bottom], .grid(5))
-          .padding(self.isFilterable ? [.top] : [], .grid(5))
+          .padding(self.isFilterable ? .top : [], .grid(5))
 
           Divider()
         }
@@ -223,7 +210,7 @@ where
             ForEach(
               self.viewStore.resultEnvelope?.contiguousResults ?? [], id: \.id
             ) { result in
-              Button(action: { self.viewStore.send(.tappedRow(id: result.id)) }) {
+              Button { self.viewStore.send(.tappedRow(id: result.id)) } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
@@ -234,7 +221,7 @@ where
                 .adaptivePadding(.vertical, .grid(5))
                 .adaptiveFont(.matterMedium, size: 16)
 
-              Button(action: { self.viewStore.send(.tappedRow(id: result.id)) }) {
+              Button { self.viewStore.send(.tappedRow(id: result.id)) } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
@@ -245,7 +232,7 @@ where
                   .opacity(0.4)
                 Text("and \(self.viewStore.nonDisplayedResultsCount) more!")
               }
-              .adaptivePadding([.top], .grid(5))
+              .adaptivePadding(.top, .grid(5))
               .adaptiveFont(.matterMedium, size: 16)
             }
           }
@@ -283,8 +270,8 @@ where
           self.timeScopeMenu
             .adaptiveFont(.matterMedium, size: 12)
         }
-        .padding([.top, .bottom], .grid(4))
-        .padding([.leading, .trailing], .grid(5))
+        .padding(.vertical, .grid(4))
+        .padding(.horizontal, .grid(5))
         .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
         .background(Color.adaptiveWhite)
         .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
@@ -333,16 +320,16 @@ struct ResultRow: View {
         .formatted(font: .custom(.matterSemiBold, size: self.adaptiveSize.pad(12)))
     }
     .foregroundColor(self.result.isYourScore ? self.color : .isowordsBlack)
-    .padding([.vertical], self.result.isYourScore ? .grid(1) : 0)
-    .padding([.leading, .trailing], .grid(2))
+    .padding(.vertical, self.result.isYourScore ? .grid(1) : 0)
+    .padding(.horizontal, .grid(2))
     .background(
       self.result.isYourScore
         ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
           .fill(Color.isowordsBlack)
         : nil
     )
-    .padding([.leading, .trailing])
-    .padding([.top, .bottom], .grid(1) / 2)
+    .padding(.horizontal)
+    .padding(.vertical, .grid(1) / 2)
   }
 }
 
@@ -403,105 +390,102 @@ extension ResultEnvelope {
 
   struct LeaderboardResultsView_Previews: PreviewProvider {
     static var previews: some View {
-      Preview {
-        LeaderboardResultsView(
-          store: .init(
-            initialState: LeaderboardResultsState(
-              gameMode: GameMode.timed,
-              isLoading: false,
-              resultEnvelope: nil,
-              timeScope: TimeScope.lastWeek
-            ),
-            reducer: .leaderboardResultsReducer(),
-            environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in
-                .init(
-                  outOf: 1000,
-                  results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
-                    ResultEnvelope.Result(
-                      denseRank: index,
-                      id: UUID(),
-                      isYourScore: index == 15,
-                      rank: index,
-                      score: 6000 - index * 300,
-                      subtitle: "mbrandonw",
-                      title: "Longword\(index)"
-                    )
-                  }
-                )
-              }
-            )
-          ),
-          title: Text("362,998 words"),
-          subtitle: nil,
-          isFilterable: false,
-          color: .isowordsRed,
-          timeScopeLabel: Text("Today"),
-          timeScopeMenu: EmptyView()
-        )
-        .padding()
+      LeaderboardResultsView(
+        store: Store(
+          initialState: LeaderboardResults.State(
+            gameMode: GameMode.timed,
+            timeScope: TimeScope.lastWeek
+          )
+        ) {
+          LeaderboardResults<TimeScope>(
+            loadResults: { _, _ in
+              ResultEnvelope(
+                outOf: 1000,
+                results: ([1, 2, 3, 4, 5, 6, 7, 7, 15]).map { index in
+                  ResultEnvelope.Result(
+                    denseRank: index,
+                    id: UUID(),
+                    isYourScore: index == 15,
+                    rank: index,
+                    score: 6000 - index * 300,
+                    subtitle: "mbrandonw",
+                    title: "Longword\(index)"
+                  )
+                }
+              )
+            }
+          )
+        },
+        title: Text("362,998 words"),
+        subtitle: nil,
+        isFilterable: false,
+        color: .isowordsRed,
+        timeScopeLabel: Text("Today"),
+        timeScopeMenu: EmptyView()
+      )
+      .padding()
+      .previewDisplayName("Words")
 
-        LeaderboardResultsView(
-          store: .init(
-            initialState: LeaderboardResultsState(
-              gameMode: GameMode.timed,
-              isLoading: false,
-              resultEnvelope: nil,
-              timeScope: TimeScope.lastWeek
-            ),
-            reducer: .leaderboardResultsReducer(),
-            environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in
-                .init(
-                  outOf: 1000,
-                  results: (1...5).map { index in
-                    ResultEnvelope.Result(
-                      denseRank: index,
-                      id: UUID(),
-                      isYourScore: index == 3,
-                      rank: index,
-                      score: 6000 - index * 800,
-                      title: "Player \(index)"
-                    )
-                  }
-                )
-              }
-            )
-          ),
-          title: Text("Daily challenge"),
-          subtitle: Text("1,234 games"),
-          isFilterable: true,
-          color: .isowordsYellow,
-          timeScopeLabel: Text("Today"),
-          timeScopeMenu: EmptyView()
-        )
-        .padding()
+      LeaderboardResultsView(
+        store: Store(
+          initialState: LeaderboardResults.State(
+            gameMode: GameMode.timed,
+            timeScope: TimeScope.lastWeek
+          )
+        ) {
+          LeaderboardResults<TimeScope>(
+            loadResults: { _, _ in
+              ResultEnvelope(
+                outOf: 1000,
+                results: (1...5).map { index in
+                  ResultEnvelope.Result(
+                    denseRank: index,
+                    id: UUID(),
+                    isYourScore: index == 3,
+                    rank: index,
+                    score: 6000 - index * 800,
+                    title: "Player \(index)"
+                  )
+                }
+              )
+            }
+          )
+        },
+        title: Text("Daily challenge"),
+        subtitle: Text("1,234 games"),
+        isFilterable: true,
+        color: .isowordsYellow,
+        timeScopeLabel: Text("Today"),
+        timeScopeMenu: EmptyView()
+      )
+      .padding()
+      .previewDisplayName("Daily challenge")
 
-        LeaderboardResultsView(
-          store: .init(
-            initialState: LeaderboardResultsState(
-              gameMode: GameMode.timed,
-              isLoading: false,
-              resultEnvelope: nil,
-              timeScope: TimeScope.lastWeek
-            ),
-            reducer: .leaderboardResultsReducer(),
-            environment: LeaderboardResultsEnvironment(
-              loadResults: { _, _ in
-                struct Failure: Error {}
-                throw Failure()
-              }
-            )
-          ),
-          title: Text("Solo"),
-          subtitle: Text("1,234 games"),
-          isFilterable: true,
-          color: .isowordsOrange,
-          timeScopeLabel: Text("Today"),
-          timeScopeMenu: EmptyView()
-        )
-        .padding()
-      }
+      LeaderboardResultsView(
+        store: Store(
+          initialState: LeaderboardResults.State(
+            gameMode: GameMode.timed,
+            isLoading: false,
+            resultEnvelope: nil,
+            timeScope: TimeScope.lastWeek
+          )
+        ) {
+          LeaderboardResults<TimeScope>(
+            loadResults: { _, _ in
+              struct Failure: Error {}
+              throw Failure()
+            }
+          )
+        },
+        title: Text("Solo"),
+        subtitle: Text("1,234 games"),
+        isFilterable: true,
+        color: .isowordsOrange,
+        timeScopeLabel: Text("Today"),
+        timeScopeMenu: EmptyView()
+      )
+      .padding()
+      .previewDisplayName("Failed state")
     }
   }
 #endif

@@ -10,7 +10,7 @@ public struct Player: Codable, Equatable, Sendable {
   public let displayName: String?
   public let gameCenterLocalPlayerId: GameCenterLocalPlayerId?
   public let id: Id
-  public let sendDailyChallengeReminder: Bool
+  public var sendDailyChallengeReminder: Bool
   public let sendDailyChallengeSummary: Bool
   public let timeZone: String
 

@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import DailyChallengeFeature
 import LeaderboardFeature
 import SharedModels
@@ -16,8 +17,8 @@ class DailyChallengeResultsViewTests: XCTestCase {
   func testDefault() {
     assertSnapshot(
       matching: DailyChallengeResultsView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: DailyChallengeResults.State(
             leaderboardResults: .init(
               gameMode: .timed,
               resultEnvelope: .init(
@@ -36,20 +37,19 @@ class DailyChallengeResultsViewTests: XCTestCase {
               ),
               timeScope: 1
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
   func testTimeScopeOpenedLoading() {
     assertSnapshot(
       matching: DailyChallengeResultsView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: DailyChallengeResults.State(
             leaderboardResults: .init(
               gameMode: .timed,
               isTimeScopeMenuVisible: true,
@@ -69,12 +69,11 @@ class DailyChallengeResultsViewTests: XCTestCase {
               ),
               timeScope: 1
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
@@ -90,8 +89,8 @@ class DailyChallengeResultsViewTests: XCTestCase {
 
     assertSnapshot(
       matching: DailyChallengeResultsView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: DailyChallengeResults.State(
             history: .init(
               results: historyResults
             ),
@@ -114,12 +113,11 @@ class DailyChallengeResultsViewTests: XCTestCase {
               ),
               timeScope: 1
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }

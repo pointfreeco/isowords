@@ -27,7 +27,25 @@ class DailyChallengeTests: XCTestCase {
 
     let didSave = ActorIsolated(false)
 
-    let environment = update(GameEnvironment.unimplemented) {
+    let store = TestStore(
+      initialState: GameFeature.State(
+        game: update(
+          Game.State(
+            cubes: .mock,
+            gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
+            gameCurrentTime: .mock,
+            gameMode: .timed,
+            gameStartTime: .mock,
+            moves: [move]
+          )
+        ) {
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
+        },
+        settings: .init()
+      )
+    ) {
+      GameFeature()
+    } withDependencies: {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didSave.setValue(true) }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
@@ -35,27 +53,13 @@ class DailyChallengeTests: XCTestCase {
       $0.mainQueue = .immediate
     }
 
-    let store = TestStore(
-      initialState: GameFeatureState(
-        game: GameState(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
-          gameCurrentTime: .mock,
-          gameMode: .timed,
-          gameStartTime: .mock,
-          moves: [move]
-        ),
-        settings: .init()
-      ),
-      reducer: gameFeatureReducer,
-      environment: environment
-    )
-
-    await store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOverState(
-          completedGame: CompletedGame(gameState: $0),
-          isDemo: false
+        $0.destination = .gameOver(
+          GameOver.State(
+            completedGame: CompletedGame(gameState: $0),
+            isDemo: false
+          )
         )
       }
     }
@@ -78,7 +82,25 @@ class DailyChallengeTests: XCTestCase {
 
     let didSave = ActorIsolated(false)
 
-    let environment = update(GameEnvironment.unimplemented) {
+    let store = TestStore(
+      initialState: GameFeature.State(
+        game: update(
+          Game.State(
+            cubes: .mock,
+            gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
+            gameCurrentTime: .mock,
+            gameMode: .unlimited,
+            gameStartTime: .mock,
+            moves: [move]
+          )
+        ) {
+          $0.destination = .bottomMenu(.gameMenu(state: $0))
+        },
+        settings: .init()
+      )
+    ) {
+      GameFeature()
+    } withDependencies: {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didSave.setValue(true) }
       $0.fileClient.load = { @Sendable _ in try await Task.never() }
@@ -86,31 +108,16 @@ class DailyChallengeTests: XCTestCase {
       $0.mainQueue = .immediate
     }
 
-    let store = TestStore(
-      initialState: GameFeatureState(
-        game: GameState(
-          cubes: .mock,
-          gameContext: .dailyChallenge(.init(rawValue: .deadbeef)),
-          gameCurrentTime: .mock,
-          gameMode: .unlimited,
-          gameStartTime: .mock,
-          moves: [move]
-        ),
-        settings: .init()
-      ),
-      reducer: gameFeatureReducer,
-      environment: environment
-    )
-
-    await store.send(.game(.endGameButtonTapped)) {
+    await store.send(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))) {
       try XCTUnwrap(&$0.game) {
-        $0.gameOver = GameOverState(
-          completedGame: CompletedGame(gameState: $0),
-          isDemo: false
+        $0.destination = .gameOver(
+          GameOver.State(
+            completedGame: CompletedGame(gameState: $0),
+            isDemo: false
+          )
         )
       }
     }
-    .finish()
 
     await didSave.withValue { XCTAssert($0) }
   }

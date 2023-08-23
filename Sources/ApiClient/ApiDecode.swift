@@ -1,5 +1,5 @@
 import Combine
-import ComposableArchitecture
+import Foundation
 import SharedModels
 
 public func apiDecode<A: Decodable>(_ type: A.Type, from data: Data) throws -> A {

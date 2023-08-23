@@ -1,46 +1,42 @@
 import Build
 import ComposableArchitecture
 import ServerConfigClient
-import Styleguide
 import SwiftUI
-import UIApplicationClient
+import Tagged
 
-public struct ChangeState: Equatable, Identifiable {
-  public var change: Changelog.Change
-  public var isExpanded = false
+public struct Change: Reducer {
+  public struct State: Equatable, Identifiable {
+    public var change: Changelog.Change
+    public var isExpanded = false
 
-  public var id: Build.Number {
-    self.change.build
+    public var id: Build.Number {
+      self.change.build
+    }
   }
-}
 
-public enum ChangeAction: Equatable {
-  case showButtonTapped
-}
+  public enum Action: Equatable {
+    case showButtonTapped
+  }
 
-public struct ChangeEnvironment {
-  public var applicationClient: UIApplicationClient
-  public var serverConfig: ServerConfigClient
-}
+  public init() {}
 
-let changeReducer = Reducer<
-  ChangeState,
-  ChangeAction,
-  ChangeEnvironment
-> { state, action, environment in
-  switch action {
-  case .showButtonTapped:
-    state.isExpanded.toggle()
-    return .none
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .showButtonTapped:
+        state.isExpanded.toggle()
+        return .none
+      }
+    }
   }
 }
 
 struct ChangeView: View {
   var currentBuild: Build.Number
-  let store: Store<ChangeState, ChangeAction>
+  let store: StoreOf<Change>
 
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
       VStack(alignment: .leading, spacing: .grid(2)) {
         HStack {
           Text(viewStore.change.version)
@@ -57,8 +53,8 @@ struct ChangeView: View {
           Spacer()
 
           if !viewStore.isExpanded {
-            Button(action: { viewStore.send(.showButtonTapped, animation: .default) }) {
-              Text("Show")
+            Button("Show") {
+              viewStore.send(.showButtonTapped, animation: .default)
             }
           }
         }
@@ -67,7 +63,7 @@ struct ChangeView: View {
           Text(viewStore.change.log)
         }
       }
-      .adaptivePadding([.vertical])
+      .adaptivePadding(.vertical)
     }
     .buttonStyle(PlainButtonStyle())
   }

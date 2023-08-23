@@ -2,9 +2,9 @@ import ApiClientLive
 import AppAudioLibrary
 import AppClipAudioLibrary
 import AppFeature
+import AudioPlayerClient
 import Build
 import ComposableArchitecture
-import CryptoKit
 import DictionarySqliteClient
 import ServerConfig
 import ServerConfigClient
@@ -14,20 +14,26 @@ import UIApplicationClient
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
   let store = Store(
-    initialState: .init(),
-    reducer: appReducer,
-    environment: .live
-  )
-  lazy var viewStore = ViewStore(
-    self.store.scope(state: { _ in () }),
-    removeDuplicates: ==
-  )
+    initialState: AppReducer.State()
+  ) {
+    AppReducer().transformDependency(\.self) {
+      $0.audioPlayer = .liveValue
+      $0.database = .live(
+        path: FileManager.default
+          .urls(for: .documentDirectory, in: .userDomainMask)
+          .first!
+          .appendingPathComponent("co.pointfree.Isowords")
+          .appendingPathComponent("Isowords.sqlite3")
+      )
+      $0.serverConfig = .live(apiClient: $0.apiClient, build: $0.build)
+    }
+  }
 
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    self.viewStore.send(.appDelegate(.didFinishLaunching))
+    self.store.send(.appDelegate(.didFinishLaunching))
     return true
   }
 
@@ -35,14 +41,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
-    self.viewStore.send(.appDelegate(.didRegisterForRemoteNotifications(.success(deviceToken))))
+    self.store.send(.appDelegate(.didRegisterForRemoteNotifications(.success(deviceToken))))
   }
 
   func application(
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
-    self.viewStore.send(.appDelegate(.didRegisterForRemoteNotifications(.failure(error))))
+    self.store.send(.appDelegate(.didRegisterForRemoteNotifications(.failure(error))))
   }
 }
 
@@ -60,65 +66,13 @@ struct IsowordsApp: App {
       AppView(store: self.appDelegate.store)
     }
     .onChange(of: self.scenePhase) {
-      self.appDelegate.viewStore.send(.didChangeScenePhase($0))
+      self.appDelegate.store.send(.didChangeScenePhase($0))
     }
   }
 }
 
-extension AppEnvironment {
-  static var live: Self {
-    let apiClient = ApiClient.live
-    let build = Build.live
-
-    return Self(
-      apiClient: apiClient,
-      applicationClient: .live,
-      audioPlayer: .live(
-        bundles: [
-          AppAudioLibrary.bundle,
-          AppClipAudioLibrary.bundle,
-        ]
-      ),
-      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
-      build: build,
-      database: .live(
-        path: FileManager.default
-          .urls(for: .documentDirectory, in: .userDomainMask)
-          .first!
-          .appendingPathComponent("co.pointfree.Isowords")
-          .appendingPathComponent("Isowords.sqlite3")
-      ),
-      deviceId: .live,
-      dictionary: .sqlite(),
-      feedbackGenerator: .live,
-      fileClient: .live,
-      gameCenter: .live,
-      lowPowerMode: .live,
-      mainQueue: .main,
-      mainRunLoop: .main,
-      remoteNotifications: .live,
-      serverConfig: .live(apiClient: apiClient, build: build),
-      setUserInterfaceStyle: { userInterfaceStyle in
-        await MainActor.run {
-          guard
-            let scene = UIApplication.shared.connectedScenes.first(where: { $0 is UIWindowScene })
-              as? UIWindowScene
-          else { return }
-          scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
-        }
-      },
-      storeKit: .live(),
-      timeZone: { .autoupdatingCurrent },
-      userDefaults: .live(),
-      userNotifications: .live
-    )
-  }
-}
-
-extension ApiClient {
-  static let live = Self.live(
-    sha256: { Data(SHA256.hash(data: $0)) }
-  )
+extension AudioPlayerClient {
+  static let liveValue = Self.live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
 }
 
 extension ServerConfigClient {

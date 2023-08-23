@@ -6,75 +6,63 @@ import SwiftUI
 
 struct StartNewGameView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<HomeState, HomeAction>
+  let store: StoreOf<Home>
 
-  init(store: Store<HomeState, HomeAction>) {
+  init(store: StoreOf<Home>) {
     self.store = store
   }
 
   var body: some View {
-    WithViewStore(self.store.scope(state: \.route?.tag)) { viewStore in
-      VStack(alignment: .leading) {
-        Text("Start a game")
-          .adaptiveFont(.matterMedium, size: 16)
-          .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
-          .padding([.bottom, .top])
+    VStack(alignment: .leading) {
+      Text("Start a game")
+        .adaptiveFont(.matterMedium, size: 16)
+        .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
+        .padding(.vertical)
 
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.solo).extract(from:),
-              action: HomeAction.solo
-            ),
-            then: SoloView.init(store:)
-          ),
-          tag: HomeRoute.Tag.solo,
-          selection: viewStore.binding(
-            send: HomeAction.setNavigation(tag:)
-          )
-          .animation()
-        ) {
-          HStack {
-            Text("Solo")
-            Spacer()
-            Image(systemName: "arrow.right")
-          }
+      Button {
+        self.store.send(.soloButtonTapped)
+      } label: {
+        HStack {
+          Text("Solo")
+          Spacer()
+          Image(systemName: "arrow.right")
         }
-        .buttonStyle(
-          ActionButtonStyle(
-            backgroundColor: self.colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
-            foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
-          )
-        )
-
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.multiplayer).extract(from:),
-              action: HomeAction.multiplayer
-            ),
-            then: MultiplayerView.init(store:)
-          ),
-          tag: HomeRoute.Tag.multiplayer,
-          selection:
-            viewStore
-            .binding(send: HomeAction.setNavigation(tag:))
-            .animation()
-        ) {
-          HStack {
-            Text("Multiplayer")
-            Spacer()
-            Image(systemName: "arrow.right")
-          }
-        }
-        .buttonStyle(
-          ActionButtonStyle(
-            backgroundColor: self.colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
-            foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
-          )
-        )
       }
+      .buttonStyle(
+        ActionButtonStyle(
+          backgroundColor: self.colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
+          foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
+        )
+      )
+
+      Button {
+        self.store.send(.multiplayerButtonTapped)
+      } label: {
+        HStack {
+          Text("Multiplayer")
+          Spacer()
+          Image(systemName: "arrow.right")
+        }
+      }
+      .buttonStyle(
+        ActionButtonStyle(
+          backgroundColor: self.colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
+          foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
+        )
+      )
     }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Home.Destination.State.solo,
+      action: Home.Destination.Action.solo,
+      destination: SoloView.init(store:)
+    )
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Home.Destination.State.multiplayer,
+      action: Home.Destination.Action.multiplayer,
+      destination: MultiplayerView.init(store:)
+    )
   }
 }
 
@@ -85,11 +73,8 @@ struct StartNewGameView: View {
     static var previews: some View {
       Preview {
         StartNewGameView(
-          store: .init(
-            initialState: .init(),
-            reducer: .empty,
-            environment: ()
-          )
+          store: Store(initialState: .init() ) {
+          }
         )
       }
     }

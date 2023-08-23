@@ -11,49 +11,37 @@ import XCTest
 @MainActor
 class PastGamesTests: XCTestCase {
   func testLoadMatches() async {
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.localPlayer.localPlayer = { .authenticated }
-    environment.gameCenter.turnBasedMatch.loadMatches = { [match] }
-
-    let store = TestStore(
-      initialState: PastGamesState(),
-      reducer: pastGamesReducer,
-      environment: environment
-    )
+    let store = TestStore(initialState: PastGames.State()) {
+      PastGames()
+    } withDependencies: {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatch.loadMatches = { [match] }
+    }
 
     await store.send(.task)
-
     await store.receive(.matchesResponse(.success([pastGameState]))) {
       $0.pastGames = [pastGameState]
     }
   }
 
   func testOpenMatch() async {
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.turnBasedMatch.load = { _ in match }
-
-    let store = TestStore(
-      initialState: PastGamesState(pastGames: [pastGameState]),
-      reducer: pastGamesReducer,
-      environment: environment
-    )
+    let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
+      PastGames()
+    } withDependencies: {
+      $0.gameCenter.turnBasedMatch.load = { _ in match }
+    }
 
     await store.send(.pastGame("id", .tappedRow))
-
     await store.receive(.pastGame("id", .matchResponse(.success(match))))
-
     await store.receive(.pastGame("id", .delegate(.openMatch(match))))
   }
 
   func testRematch() async {
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.turnBasedMatch.rematch = { _ in match }
-
-    let store = TestStore(
-      initialState: PastGamesState(pastGames: [pastGameState]),
-      reducer: pastGamesReducer,
-      environment: environment
-    )
+    let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
+      PastGames()
+    } withDependencies: {
+      $0.gameCenter.turnBasedMatch.rematch = { _ in match }
+    }
 
     await store.send(.pastGame("id", .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
@@ -73,14 +61,11 @@ class PastGamesTests: XCTestCase {
   func testRematch_Failure() async {
     struct RematchFailure: Error, Equatable {}
 
-    var environment = PastGamesEnvironment.unimplemented
-    environment.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
-
-    let store = TestStore(
-      initialState: PastGamesState(pastGames: [pastGameState]),
-      reducer: pastGamesReducer,
-      environment: environment
-    )
+    let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
+      PastGames()
+    } withDependencies: {
+      $0.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
+    }
 
     await store.send(.pastGame("id", .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
@@ -91,21 +76,19 @@ class PastGamesTests: XCTestCase {
     await store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure())))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
-        $0.alert = .init(
-          title: .init("Error"),
-          message: .init("We couldn’t start the rematch. Try again later."),
-          dismissButton: .default(.init("Ok"), action: .send(.dismissAlert))
-        )
+        $0.alert = .init {
+          TextState("Error")
+        } actions: {
+          ButtonState { TextState("Ok") }
+        } message: {
+          TextState("We couldn’t start the rematch. Try again later.")
+        }
       }
     }
   }
 }
 
-extension PastGamesEnvironment {
-  static let unimplemented = Self(gameCenter: .unimplemented)
-}
-
-private let pastGameState = PastGameState(
+private let pastGameState = PastGame.State(
   challengeeDisplayName: "Blob Jr.",
   challengerDisplayName: "Blob",
   challengeeScore: 0,

@@ -1,6 +1,5 @@
 import ClientModels
 import ComposableGameCenter
-import GameFeature
 import GameKit
 import Gen
 import PuzzleGen
@@ -110,7 +109,7 @@ extension Gen where Value == TurnBasedContext {
   }
 }
 
-extension Gen where Value == GameState {
+extension Gen where Value == Game.State {
   static let gameState = zip(
     randomCubes(for: isowordsLetter),
     .frequency(
@@ -124,7 +123,7 @@ extension Gen where Value == GameState {
     Gen<Move>.move.array(of: .int(in: 0...30)).map(Moves.init)
   )
   .map {
-    GameState(
+    Game.State(
       cubes: $0,
       gameContext: $1,
       gameCurrentTime: $2,

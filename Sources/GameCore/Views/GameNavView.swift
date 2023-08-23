@@ -1,17 +1,16 @@
 import ComposableArchitecture
-import Styleguide
 import SwiftUI
 
 struct GameNavView: View {
-  let store: Store<GameState, GameAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameAction>
+  let store: StoreOf<Game>
+  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
     let isTrayAvailable: Bool
     let isTrayVisible: Bool
     let trayTitle: String
 
-    init(state: GameState) {
+    init(state: Game.State) {
       self.isTrayAvailable = state.isTrayAvailable
       self.isTrayVisible = state.isTrayVisible
       self.trayTitle = state.displayTitle
@@ -19,15 +18,15 @@ struct GameNavView: View {
   }
 
   public init(
-    store: Store<GameState, GameAction>
+    store: StoreOf<Game>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
-      Button(action: { self.viewStore.send(.trayButtonTapped, animation: .default) }) {
+      Button { self.viewStore.send(.trayButtonTapped, animation: .default) } label: {
         HStack {
           Text(self.viewStore.trayTitle)
             .lineLimit(1)
@@ -49,7 +48,7 @@ struct GameNavView: View {
       .cornerRadius(12)
       .disabled(!self.viewStore.isTrayAvailable)
 
-      Button(action: { self.viewStore.send(.menuButtonTapped, animation: .default) }) {
+      Button { self.viewStore.send(.menuButtonTapped, animation: .default) } label: {
         Image(systemName: "ellipsis")
           .foregroundColor(.adaptiveBlack)
           .adaptivePadding()
@@ -63,8 +62,8 @@ struct GameNavView: View {
       .cornerRadius(12)
     }
     .fixedSize(horizontal: false, vertical: true)
-    .padding([.leading, .trailing])
-    .adaptivePadding([.top, .bottom], 8)
+    .padding(.horizontal)
+    .adaptivePadding(.vertical, 8)
   }
 }
 
@@ -75,11 +74,8 @@ struct GameNavView: View {
     static var previews: some View {
       VStack {
         GameNavView(
-          store: .init(
-            initialState: .init(inProgressGame: .mock),
-            reducer: .empty,
-            environment: ()
-          )
+          store: Store(initialState: .init(inProgressGame: .mock)) {
+          }
         )
         Spacer()
       }

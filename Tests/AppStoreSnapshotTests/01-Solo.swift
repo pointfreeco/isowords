@@ -2,7 +2,7 @@ import ActiveGamesFeature
 import Bloom
 import ComposableArchitecture
 import CubeCore
-import GameFeature
+import GameCore
 import Gen
 import Overture
 import SharedModels
@@ -57,51 +57,38 @@ var gameplayAppStoreView: AnyView {
   let vocab = try! JSONDecoder().decode(FetchVocabWordResponse.self, from: Data(json.utf8))
   let moves = Moves(vocab.moves.prefix(upTo: vocab.moveIndex))
 
-  let state = GameFeatureState(
-    game: GameState(
-      activeGames: ActiveGamesState(),
-      bottomMenu: nil,
-      cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
-      cubeStartedShakingAt: nil,
-      gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
-      gameCurrentTime: Date(),
-      gameMode: .unlimited,
-      gameOver: nil,
-      gameStartTime: Date(),
-      isDemo: false,
-      isGameLoaded: true,
-      isPanning: false,
-      isOnLowPowerMode: false,
-      isSettingsPresented: false,
-      isTrayVisible: false,
-      language: .en,
-      moves: moves,
-      optimisticallySelectedFace: nil,
-      secondsPlayed: 60 * 30,
-      selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
-        ?? [],
-      selectedWordIsValid: true,
-      upgradeInterstitial: nil,
-      wordSubmit: WordSubmitButtonState()
-    ),
-    settings: .init()
+  let state = Game.State(
+    activeGames: ActiveGamesState(),
+    cubes: Puzzle(archivableCubes: vocab.puzzle, moves: moves),
+    cubeStartedShakingAt: nil,
+    gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
+    gameCurrentTime: Date(),
+    gameMode: .unlimited,
+    gameStartTime: Date(),
+    isDemo: false,
+    isGameLoaded: true,
+    isPanning: false,
+    isOnLowPowerMode: false,
+    isTrayVisible: false,
+    language: .en,
+    moves: moves,
+    optimisticallySelectedFace: nil,
+    secondsPlayed: 60 * 30,
+    selectedWord: (/Move.MoveType.playedWord).extract(from: vocab.moves[vocab.moveIndex].type)
+    ?? [],
+    selectedWordIsValid: true,
+    wordSubmit: WordSubmitButtonFeature.ButtonState()
   )
-  let store = Store<GameFeatureState, GameFeatureAction>(
-    initialState: state,
-    reducer: .empty,
-    environment: ()
-  )
-  let view = GameFeatureView(
+  let store = StoreOf<Game>(
+    initialState: state
+  ) {
+  }
+  let view = GameView(
     content: CubeView(
       store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>(
-        initialState: CubeSceneView.ViewState(
-          game: state.game!,
-          nub: nil,
-          settings: .init()
-        ),
-        reducer: .empty,
-        environment: ()
-      )
+        initialState: CubeSceneView.ViewState(game: state)
+      ) {
+      }
     )
     .background(
       Blooms(blooms: blooms).ignoresSafeArea()

@@ -3,28 +3,28 @@ import Styleguide
 import SwiftUI
 
 struct OnboardingStepView: View {
-  let store: Store<OnboardingState, OnboardingAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, OnboardingAction>
+  let store: StoreOf<Onboarding>
+  @ObservedObject var viewStore: ViewStore<ViewState, Onboarding.Action>
   @Environment(\.colorScheme) var colorScheme
 
-  init(store: Store<OnboardingState, OnboardingAction>) {
+  init(store: StoreOf<Onboarding>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   struct ViewState: Equatable {
     let isGetStartedButtonVisible: Bool
     let isNextButtonVisible: Bool
     let isSubmitButtonVisible: Bool
-    let presentationStyle: OnboardingState.PresentationStyle
-    let step: OnboardingState.Step
+    let presentationStyle: Onboarding.State.PresentationStyle
+    let step: Onboarding.State.Step
 
-    init(onboardingState state: OnboardingState) {
-      self.isGetStartedButtonVisible = state.step == OnboardingState.Step.allCases.last
+    init(onboardingState state: Onboarding.State) {
+      self.isGetStartedButtonVisible = state.step == Onboarding.State.Step.allCases.last
       self.isNextButtonVisible =
-        state.step != OnboardingState.Step.allCases.first
+        state.step != Onboarding.State.Step.allCases.first
         && state.step.isFullscreen
-        && state.step != OnboardingState.Step.allCases.last
+        && state.step != Onboarding.State.Step.allCases.last
 
       switch state.step {
       case .step5_SubmitGame:
@@ -243,16 +243,14 @@ struct OnboardingStepView: View {
           Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .padding(.bottom, 80)
 
         Group {
           if self.viewStore.isNextButtonVisible {
-            Button(
-              action: {
-                self.viewStore.send(.nextButtonTapped, animation: .default)
-              }
-            ) {
+            Button {
+              self.viewStore.send(.nextButtonTapped, animation: .default)
+            } label: {
               Image(systemName: "arrow.right")
                 .frame(width: 80, height: 80)
                 .background(
@@ -332,10 +330,7 @@ struct OnboardingStepView: View {
       }
     }
     .task { await self.viewStore.send(.task).finish() }
-    .alert(
-      self.store.scope(state: \.alert, action: OnboardingAction.alert),
-      dismiss: .dismiss
-    )
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
   }
 }
 
@@ -370,7 +365,7 @@ private struct InlineStepView: View {
   }
 }
 
-extension OnboardingState.Step {
+extension Onboarding.State.Step {
   var color: Color {
     let t = Double(self.rawValue) / Double(Self.allCases.count - 1)
     return Color(
@@ -390,22 +385,13 @@ extension OnboardingState.Step {
       Preview {
         OnboardingStepView(
           store: Store(
-            initialState: .init(
+            initialState: Onboarding.State(
               presentationStyle: .firstLaunch,
-              step: OnboardingState.Step.step16_FindAnyWord
-            ),
-            reducer: onboardingReducer,
-            environment: OnboardingEnvironment(
-              audioPlayer: .noop,
-              backgroundQueue: DispatchQueue.global(qos: .background).eraseToAnyScheduler(),
-              dictionary: .everyString,
-              feedbackGenerator: .live,
-              lowPowerMode: .false,
-              mainQueue: .main,
-              mainRunLoop: .main,
-              userDefaults: .noop
+              step: .step16_FindAnyWord
             )
-          )
+          ) {
+            Onboarding()
+          }
         )
       }
     }

@@ -2,7 +2,7 @@ import ServerTestHelpers
 
 #if DEBUG
   extension MailgunClient {
-    public static let unimplemented = Self(
+    public static let testValue = Self(
       sendEmail: { _ in
         .unimplemented("\(Self.self).sendEmail")
       }

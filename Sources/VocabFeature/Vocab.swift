@@ -1,184 +1,152 @@
-import AudioPlayerClient
 import ComposableArchitecture
 import CubePreview
-import FeedbackGeneratorClient
 import LocalDatabaseClient
-import LowPowerModeClient
-import SharedModels
-import Styleguide
 import SwiftUI
 
-public struct VocabState: Equatable {
-  var cubePreview: CubePreviewState?
-  var isAnimationReduced: Bool
-  var isHapticsEnabled: Bool
-  var vocab: LocalDatabaseClient.Vocab?
-
-  public init(
-    cubePreview: CubePreviewState? = nil,
-    isAnimationReduced: Bool,
-    isHapticsEnabled: Bool,
-    vocab: LocalDatabaseClient.Vocab? = nil
-  ) {
-    self.cubePreview = cubePreview
-    self.isAnimationReduced = isAnimationReduced
-    self.isHapticsEnabled = isHapticsEnabled
-    self.vocab = vocab
-  }
-
-  public struct GamesResponse: Equatable {
-    var games: [LocalDatabaseClient.Game]
-    var word: String
-  }
-}
-
-public enum VocabAction: Equatable {
-  case dismissCubePreview
-  case gamesResponse(TaskResult<VocabState.GamesResponse>)
-  case preview(CubePreviewAction)
-  case task
-  case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
-  case wordTapped(LocalDatabaseClient.Vocab.Word)
-}
-
-public struct VocabEnvironment {
-  var audioPlayer: AudioPlayerClient
-  var database: LocalDatabaseClient
-  var feedbackGenerator: FeedbackGeneratorClient
-  var lowPowerMode: LowPowerModeClient
-  var mainQueue: AnySchedulerOf<DispatchQueue>
-
-  public init(
-    audioPlayer: AudioPlayerClient,
-    database: LocalDatabaseClient,
-    feedbackGenerator: FeedbackGeneratorClient,
-    lowPowerMode: LowPowerModeClient,
-    mainQueue: AnySchedulerOf<DispatchQueue>
-  ) {
-    self.audioPlayer = audioPlayer
-    self.database = database
-    self.lowPowerMode = lowPowerMode
-    self.feedbackGenerator = feedbackGenerator
-    self.mainQueue = mainQueue
-  }
-}
-
-public let vocabReducer = Reducer<
-  VocabState,
-  VocabAction,
-  VocabEnvironment
->.combine(
-  cubePreviewReducer
-    .optional()
-    .pullback(
-      state: \.cubePreview,
-      action: /VocabAction.preview,
-      environment: {
-        CubePreviewEnvironment(
-          audioPlayer: $0.audioPlayer,
-          feedbackGenerator: $0.feedbackGenerator,
-          lowPowerMode: $0.lowPowerMode,
-          mainQueue: $0.mainQueue
-        )
-      }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case .dismissCubePreview:
-      state.cubePreview = nil
-      return .none
-
-    case let .gamesResponse(.failure(error)):
-      return .none
-
-    case let .gamesResponse(.success(response)):
-      guard let game = response.games.first
-      else { return .none }
-
-      let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
-        switch move.type {
-        case let .playedWord(cubeFaces):
-          return game.completedGame.cubes.string(from: cubeFaces) == response.word
-        case .removedCube:
-          return false
-        }
-      }
-      guard let moveIndex = possibleMoveIndex
-      else { return .none }
-
-      state.cubePreview = .init(
-        cubes: game.completedGame.cubes,
-        isAnimationReduced: state.isAnimationReduced,
-        isHapticsEnabled: state.isHapticsEnabled,
-        moveIndex: moveIndex,
-        moves: game.completedGame.moves,
-        settings: .init()
-      )
-      return .none
-
-    case .preview:
-      return .none
-
-    case .task:
-      return .task {
-        await .vocabResponse(TaskResult { try await environment.database.fetchVocab() })
-      }
-
-    case let .vocabResponse(.success(vocab)):
-      state.vocab = vocab
-      return .none
-
-    case let .vocabResponse(.failure(error)):
-      return .none
-
-    case let .wordTapped(word):
-      return .task {
-        await .gamesResponse(
-          TaskResult {
-            .init(
-              games: try await environment.database.fetchGamesForWord(word.letters),
-              word: word.letters
-            )
-          }
-        )
+public struct Vocab: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case cubePreview(CubePreview.State)
+    }
+    public enum Action: Equatable {
+      case cubePreview(CubePreview.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+        CubePreview()
       }
     }
   }
-)
+
+  public struct State: Equatable {
+    @PresentationState var destination: Destination.State?
+    var isAnimationReduced: Bool
+    var vocab: LocalDatabaseClient.Vocab?
+
+    public init(
+      destination: Destination.State? = nil,
+      isAnimationReduced: Bool,
+      vocab: LocalDatabaseClient.Vocab? = nil
+    ) {
+      self.destination = destination
+      self.isAnimationReduced = isAnimationReduced
+      self.vocab = vocab
+    }
+
+    public struct GamesResponse: Equatable {
+      var games: [LocalDatabaseClient.Game]
+      var word: String
+    }
+  }
+
+  public enum Action: Equatable {
+    case destination(PresentationAction<Destination.Action>)
+    case gamesResponse(TaskResult<State.GamesResponse>)
+    case task
+    case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
+    case wordTapped(LocalDatabaseClient.Vocab.Word)
+  }
+
+  @Dependency(\.database) var database
+
+  public init() {}
+
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .destination:
+        return .none
+
+      case .gamesResponse(.failure):
+        return .none
+
+      case let .gamesResponse(.success(response)):
+        guard let game = response.games.first
+        else { return .none }
+
+        let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
+          switch move.type {
+          case let .playedWord(cubeFaces):
+            return game.completedGame.cubes.string(from: cubeFaces) == response.word
+          case .removedCube:
+            return false
+          }
+        }
+        guard let moveIndex = possibleMoveIndex
+        else { return .none }
+
+        state.destination = .cubePreview(
+          CubePreview.State(
+            cubes: game.completedGame.cubes,
+            moveIndex: moveIndex,
+            moves: game.completedGame.moves
+          )
+        )
+        return .none
+
+      case .task:
+        return .run { send in
+          await send(.vocabResponse(TaskResult { try await self.database.fetchVocab() }))
+        }
+
+      case let .vocabResponse(.success(vocab)):
+        state.vocab = vocab
+        return .none
+
+      case .vocabResponse(.failure):
+        return .none
+
+      case let .wordTapped(word):
+        return .run { send in
+          await send(
+            .gamesResponse(
+              TaskResult {
+                .init(
+                  games: try await self.database.fetchGamesForWord(word.letters),
+                  word: word.letters
+                )
+              }
+            )
+          )
+        }
+      }
+    }
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
+    }
+  }
+}
 
 public struct VocabView: View {
-  public let store: Store<VocabState, VocabAction>
+  public let store: StoreOf<Vocab>
 
-  public init(store: Store<VocabState, VocabAction>) {
+  public init(store: StoreOf<Vocab>) {
     self.store = store
   }
 
   public var body: some View {
-    WithViewStore(self.store) { viewStore in
-      VStack {
-        IfLetStore(self.store.scope(state: \.vocab)) { vocabStore in
-          WithViewStore(vocabStore) { vocabViewStore in
-            List {
-              ForEach(vocabViewStore.words, id: \.letters) { word in
-                Button {
-                  vocabViewStore.send(.wordTapped(word))
-                } label: {
-                  HStack {
-                    HStack(alignment: .top, spacing: 0) {
-                      Text(word.letters.capitalized)
-                        .adaptiveFont(.matterMedium, size: 20)
+    VStack {
+      IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
+        WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
+          List {
+            ForEach(vocabViewStore.words, id: \.letters) { word in
+              Button {
+                vocabViewStore.send(.wordTapped(word))
+              } label: {
+                HStack {
+                  HStack(alignment: .top, spacing: 0) {
+                    Text(word.letters.capitalized)
+                      .adaptiveFont(.matterMedium, size: 20)
 
-                      Text("\(word.score)")
-                        .padding(.top, -4)
-                        .adaptiveFont(.matterMedium, size: 14)
-                    }
+                    Text("\(word.score)")
+                      .padding(.top, -4)
+                      .adaptiveFont(.matterMedium, size: 14)
+                  }
 
-                    Spacer()
+                  Spacer()
 
-                    if word.playCount > 1 {
-                      Text("(\(word.playCount)x)")
-                    }
+                  if word.playCount > 1 {
+                    Text("(\(word.playCount)x)")
                   }
                 }
               }
@@ -186,18 +154,13 @@ public struct VocabView: View {
           }
         }
       }
-      .task { await viewStore.send(.task).finish() }
+      .task { await self.store.send(.task).finish() }
       .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.cubePreview != nil },
-          send: .dismissCubePreview
-        )
-      ) {
-        IfLetStore(
-          self.store.scope(state: \.cubePreview, action: VocabAction.preview),
-          then: CubePreviewView.init(store:)
-        )
-      }
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Vocab.Destination.State.cubePreview,
+        action: Vocab.Destination.Action.cubePreview,
+        content: CubePreviewView.init(store:)
+      )
     }
     .adaptiveFont(.matterMedium, size: 16)
     .navigationStyle(title: Text("Words Found"))
@@ -223,27 +186,20 @@ public struct VocabView: View {
     }
   }
 
-  extension Store where State == VocabState, Action == VocabAction {
+  extension Store where State == Vocab.State, Action == Vocab.Action {
     static let vocab = Store(
-      initialState: .init(
-        cubePreview: nil,
+      initialState: Vocab.State(
+        destination: nil,
         isAnimationReduced: false,
-        isHapticsEnabled: false,
         vocab: .init(
           words: [
             .init(letters: "STENOGRAPHER", playCount: 1, score: 1_230),
             .init(letters: "PUZZLE", playCount: 10, score: 560),
           ]
         )
-      ),
-      reducer: vocabReducer,
-      environment: .init(
-        audioPlayer: .noop,
-        database: .noop,
-        feedbackGenerator: .noop,
-        lowPowerMode: .false,
-        mainQueue: .main
       )
-    )
+    ) {
+      Vocab()
+    }
   }
 #endif

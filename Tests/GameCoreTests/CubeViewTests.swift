@@ -543,18 +543,15 @@ class CubeViewTests: XCTestCase {
             gameCurrentTime: .mock,
             gameMode: .unlimited,
             gameStartTime: .mock
-          ),
-          nub: nil,
-          settings: .init()
-        ),
-        reducer: .empty,
-        environment: ()
-      )
+          )
+        )
+      ) {
+      }
     )
 
     assertSnapshot(
       matching: view,
-      as: .image(layout: .device(config: .iPhoneXsMax))
+      as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 }

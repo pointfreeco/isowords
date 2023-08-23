@@ -1,23 +1,10 @@
-import ClientModels
-import Combine
-import ComposableArchitecture
-import ComposableStoreKit
-import CoreMotion
 import CubeCore
-import Foundation
-import GameOverFeature
-import Overture
-import SceneKit
 import SharedModels
-import Styleguide
-import SwiftUI
-import SwiftUIHelpers
 
 extension CubeSceneView.ViewState {
   public init(
-    game: GameState,
-    nub: CubeSceneView.ViewState.NubState?,
-    settings: Settings
+    game: Game.State,
+    nub: CubeSceneView.ViewState.NubState? = nil
   ) {
     self.init(
       cubes: game.cubes.enumerated().map { x, cubes in
@@ -30,19 +17,19 @@ extension CubeSceneView.ViewState {
           }
         }
       },
+      enableGyroMotion: game.enableGyroMotion,
       isOnLowPowerMode: game.isOnLowPowerMode,
       nub: nub,
       playedWords: game.playedWords,
       selectedFaceCount: game.selectedWord.count,
       selectedWordIsValid: game.selectedWordIsValid,
-      selectedWordString: game.selectedWordString,
-      settings: settings
+      selectedWordString: game.selectedWordString
     )
   }
 }
 
 extension CubeSceneView.ViewAction {
-  public static func to(gameAction action: Self) -> GameAction {
+  public static func to(gameAction action: Self) -> Game.Action {
     switch action {
     case let .doubleTap(index: index):
       return .doubleTap(index: index)
@@ -55,7 +42,7 @@ extension CubeSceneView.ViewAction {
 }
 
 extension CubeNode.ViewState {
-  init(viewState: GameState, index: LatticePoint) {
+  init(viewState: Game.State, index: LatticePoint) {
     let isInPlay = viewState.cubes[index].isInPlay
 
     let leftIndex = IndexedCubeFace(index: index, side: .left)

@@ -8,22 +8,20 @@ import SwiftUI
 struct DailyChallengeHeaderView: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.date) var date
-  let store: Store<HomeState, HomeAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, HomeAction>
+  let store: StoreOf<Home>
+  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
 
   struct ViewState: Equatable {
     let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    let routeTag: HomeRoute.Tag?
 
-    init(homeState: HomeState) {
+    init(homeState: Home.State) {
       self.dailyChallenges = homeState.dailyChallenges
-      self.routeTag = homeState.route?.tag
     }
   }
 
-  init(store: Store<HomeState, HomeAction>) {
+  init(store: StoreOf<Home>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(homeState:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -56,26 +54,14 @@ struct DailyChallengeHeaderView: View {
         }
       }
       .adaptiveFont(.matter, size: 56)
-      .adaptivePadding([.bottom])
+      .adaptivePadding(.bottom)
       .fixedSize(horizontal: false, vertical: true)
       .frame(maxWidth: .infinity)
 
       VStack {
-        NavigationLink(
-          destination: IfLetStore(
-            self.store.scope(
-              state: (\HomeState.route).appending(path: /HomeRoute.dailyChallenge).extract(from:),
-              action: HomeAction.dailyChallenge
-            ),
-            then: DailyChallengeView.init(store:)
-          ),
-          tag: HomeRoute.Tag.dailyChallenge,
-          selection: viewStore.binding(
-            get: \.routeTag,
-            send: HomeAction.setNavigation(tag:)
-          )
-          .animation()
-        ) {
+        Button {
+          self.viewStore.send(.dailyChallengeButtonTapped)
+        } label: {
           HStack {
             Group {
               if self.hasPlayedAllDailyChallenges {
@@ -128,6 +114,12 @@ struct DailyChallengeHeaderView: View {
         .padding(.top)
       }
     }
+    .navigationDestination(
+      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      state: /Home.Destination.State.dailyChallenge,
+      action: Home.Destination.Action.dailyChallenge,
+      destination: DailyChallengeView.init(store:)
+    )
   }
 
   var hasPlayedAllDailyChallenges: Bool {

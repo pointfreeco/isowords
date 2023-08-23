@@ -9,7 +9,7 @@ struct CalendarView: View {
     let isLoading: Bool
     let months: [Month]
 
-    init(state: DailyChallengeResultsState) {
+    init(state: DailyChallengeResults.State) {
       self.currentChallenge =
         state.leaderboardResults.timeScope
         ?? state.history?.results.first?.gameNumber
@@ -62,14 +62,14 @@ struct CalendarView: View {
     }
   }
 
-  let store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>
-  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeResultsAction>
+  let store: StoreOf<DailyChallengeResults>
+  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeResults.Action>
 
   init(
-    store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>
+    store: StoreOf<DailyChallengeResults>
   ) {
     self.store = store
-    self.viewStore = ViewStore(store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -84,11 +84,9 @@ struct CalendarView: View {
             spacing: .grid(1)
           ) {
             ForEach(month.results, id: \.gameNumber) { result in
-              Button(
-                action: {
-                  self.viewStore.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
-                }
-              ) {
+              Button {
+                self.viewStore.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
+              } label: {
                 VStack {
                   Text("\(dayFormatter.string(from: result.createdAt))")
                     .adaptiveFont(.matterMedium, size: 14)
@@ -99,7 +97,7 @@ struct CalendarView: View {
                     .opacity(0.4)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding([.top, .bottom], .grid(1) / 2)
+                .padding(.vertical, .grid(1) / 2)
                 .background(
                   self.viewStore.currentChallenge == result.gameNumber
                     ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
@@ -109,14 +107,14 @@ struct CalendarView: View {
               }
             }
           }
-          .padding([.leading, .trailing], -.grid(3))
+          .padding(.horizontal, -.grid(3))
           .padding(.bottom, -.grid(1))
         }
       }
 
       if self.viewStore.months.isEmpty {
         HStack {
-          Button(action: { self.viewStore.send(.loadHistory) }) {
+          Button { self.viewStore.send(.loadHistory) } label: {
             Image(systemName: "arrow.clockwise")
           }
 

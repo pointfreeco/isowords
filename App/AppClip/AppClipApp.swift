@@ -16,31 +16,15 @@ struct AppClipApp: App {
   var body: some Scene {
     WindowGroup {
       DemoView(
-        store: Store(
-          initialState: DemoState(),
-          reducer: demoReducer,
-          environment: .live
-        )
+        store: Store(initialState: Demo.State()) {
+          Demo()
+        } withDependencies: {
+          $0.apiClient = .appClip
+          $0.audioPlayer = .live(bundles: [AppClipAudioLibrary.bundle])
+          $0.dictionary = .file()
+        }
       )
     }
-  }
-}
-
-extension DemoEnvironment {
-  static var live: Self {
-    Self(
-      apiClient: .appClip,
-      applicationClient: .live,
-      audioPlayer: .live(bundles: [AppClipAudioLibrary.bundle]),
-      backgroundQueue: DispatchQueue(label: "background-queue").eraseToAnyScheduler(),
-      build: .live,
-      dictionary: .file(),
-      feedbackGenerator: .live,
-      lowPowerMode: .live,
-      mainQueue: .main,
-      mainRunLoop: .main,
-      userDefaults: .live()
-    )
   }
 }
 

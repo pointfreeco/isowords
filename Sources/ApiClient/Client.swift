@@ -1,5 +1,3 @@
-import Combine
-import ComposableArchitecture
 import Foundation
 import SharedModels
 
@@ -34,8 +32,6 @@ public struct ApiClient {
     self.request = request
     self.setBaseUrl = setBaseUrl
   }
-
-  public struct Unit: Codable {}
 
   public func apiRequest(
     route: ServerRoute.Api.Route,
@@ -122,65 +118,19 @@ public struct ApiClient {
   }
 }
 
-#if DEBUG
-  import XCTestDebugSupport
-  import XCTestDynamicOverlay
-
-  extension ApiClient {
-    public static let unimplemented = Self(
-      apiRequest: XCTUnimplemented("\(Self.self).apiRequest"),
-      authenticate: XCTUnimplemented("\(Self.self).authenticate"),
-      baseUrl: XCTUnimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
-      currentPlayer: XCTUnimplemented("\(Self.self).currentPlayer"),
-      logout: XCTUnimplemented("\(Self.self).logout"),
-      refreshCurrentPlayer: XCTUnimplemented("\(Self.self).refreshCurrentPlayer"),
-      request: XCTUnimplemented("\(Self.self).request"),
-      setBaseUrl: XCTUnimplemented("\(Self.self).setBaseUrl")
-    )
-
-    public mutating func override(
-      route matchingRoute: ServerRoute.Api.Route,
-      withResponse response: @escaping @Sendable () async throws -> (Data, URLResponse)
-    ) {
-      let fulfill = expectation(description: "route")
-      self.apiRequest = { @Sendable [self] route in
-        if route == matchingRoute {
-          fulfill()
-          return try await response()
-        } else {
-          return try await self.apiRequest(route)
-        }
-      }
-    }
-
-    public mutating func override<Value>(
-      routeCase matchingRoute: CasePath<ServerRoute.Api.Route, Value>,
-      withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
-    ) {
-      let fulfill = expectation(description: "route")
-      self.apiRequest = { @Sendable [self] route in
-        if let value = matchingRoute.extract(from: route) {
-          fulfill()
-          return try await response(value)
-        } else {
-          return try await self.apiRequest(route)
-        }
-      }
-    }
-  }
-#endif
-
-extension ApiClient {
-  public static let noop = Self(
-    apiRequest: { _ in try await Task.never() },
-    authenticate: { _ in try await Task.never() },
-    baseUrl: { URL(string: "/")! },
-    currentPlayer: { nil },
-    logout: {},
-    refreshCurrentPlayer: { try await Task.never() },
-    request: { _ in try await Task.never() },
-    setBaseUrl: { _ in }
-  )
-}
-
 let jsonDecoder = JSONDecoder()
+
+extension Task where Failure == Never {
+  /// An async function that never returns.
+  static func never() async throws -> Success {
+    for await element in AsyncStream<Success>.never {
+      return element
+    }
+    throw _Concurrency.CancellationError()
+  }
+}
+extension AsyncStream {
+  static var never: Self {
+    Self { _ in }
+  }
+}

@@ -3,7 +3,7 @@ import XCTestDynamicOverlay
 
 #if DEBUG
   extension SnsClient {
-    public static let unimplemented = Self(
+    public static let testValue = Self(
       createPlatformEndpoint: { _ in
         .unimplemented("\(Self.self).createPlatformEndpoint is not implemented.")
       },

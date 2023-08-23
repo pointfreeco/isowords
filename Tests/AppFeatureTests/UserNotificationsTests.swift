@@ -10,7 +10,7 @@ import XCTest
 @MainActor
 class UserNotificationsTests: XCTestCase {
   func testReceiveBackgroundNotification() async {
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let response = UserNotificationClient.Notification.Response(
       notification: UserNotificationClient.Notification(
         date: .mock,
@@ -24,13 +24,12 @@ class UserNotificationsTests: XCTestCase {
     var didCallback = false
     let completionHandler = { didCallback = true }
 
-    let store = TestStore(
-      initialState: .init(),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.userNotifications.delegate = { delegate.stream }
-      }
-    )
+    let store = TestStore(initialState: AppReducer.State()) {
+      AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.userNotifications.delegate = { delegate.stream }
+    }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
 
@@ -51,7 +50,7 @@ class UserNotificationsTests: XCTestCase {
   }
 
   func testReceiveForegroundNotification() async {
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let notification = UserNotificationClient.Notification(
       date: .mock,
       request: UNNotificationRequest(
@@ -63,13 +62,12 @@ class UserNotificationsTests: XCTestCase {
     var didCallbackWithOptions: UNNotificationPresentationOptions?
     let completionHandler = { didCallbackWithOptions = $0 }
 
-    let store = TestStore(
-      initialState: .init(),
-      reducer: appReducer,
-      environment: update(.didFinishLaunching) {
-        $0.userNotifications.delegate = { delegate.stream }
-      }
-    )
+    let store = TestStore(initialState: AppReducer.State()) {
+      AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.userNotifications.delegate = { delegate.stream }
+    }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
 

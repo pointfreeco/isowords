@@ -22,7 +22,7 @@ struct GameOverPreviewApp: App {
   }
 }
 
-extension Store where State == GameOverState, Action == GameOverAction {
+extension StoreOf<GameOver> {
   static var solo: Self {
     Self(
       initialState: .init(
@@ -36,52 +36,48 @@ extension Store where State == GameOverState, Action == GameOverAction {
           secondsPlayed: 0
         ),
         isDemo: false
-      ),
-      reducer: gameOverReducer,
-      environment: .init(
-        apiClient: update(.noop) {
-          $0.override(
-            routeCase: (/ServerRoute.Api.Route.games)
-              .appending(path: /ServerRoute.Api.Route.Games.submit),
-            withResponse: { _ in
-              try await OK(
-                SubmitGameResponse.solo(
-                  .init(
-                    ranks: [
-                      .allTime: .init(outOf: 152122, rank: 3828),
-                      .lastDay: .init(outOf: 512, rank: 79),
-                      .lastWeek: .init(outOf: 1603, rank: 605),
-                    ]
-                  )
+      )
+    ) {
+      GameOver()
+    } withDependencies: {
+      $0.apiClient = update(.noop) {
+        $0.override(
+          routeCase: (/ServerRoute.Api.Route.games)
+            .appending(path: /ServerRoute.Api.Route.Games.submit),
+          withResponse: { _ in
+            try await OK(
+              SubmitGameResponse.solo(
+                .init(
+                  ranks: [
+                    .allTime: .init(outOf: 152122, rank: 3828),
+                    .lastDay: .init(outOf: 512, rank: 79),
+                    .lastWeek: .init(outOf: 1603, rank: 605),
+                  ]
                 )
               )
-            }
-          )
-        },
-        audioPlayer: .noop,
-        database: .autoMigratingLive(
-          path: FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)
-            .first!
-            .appendingPathComponent("co.pointfree.Isowords")
-            .appendingPathComponent("Isowords.sqlite3")
-        ),
-        fileClient: .noop,
-        mainRunLoop: .main,
-        remoteNotifications: .noop,
-        serverConfig: .noop,
-        storeKit: .live(),
-        userDefaults: update(.live()) {
-          $0.boolForKey = { _ in false }
-        },
-        userNotifications: .noop
+            )
+          }
+        )
+      }
+      $0.audioPlayer = .noop
+      $0.database = .autoMigratingLive(
+        path: FileManager.default
+          .urls(for: .documentDirectory, in: .userDomainMask)
+          .first!
+          .appendingPathComponent("co.pointfree.Isowords")
+          .appendingPathComponent("Isowords.sqlite3")
       )
-    )
+      $0.fileClient = .noop
+      $0.remoteNotifications = .noop
+      $0.serverConfig = .noop
+      $0.userDefaults.boolForKey = { _ in false }
+      $0.userNotifications = .noop
+    }
   }
 
   static var multiplayer: Self {
     Self(
-      initialState: .init(
+      initialState: GameOver.State(
         completedGame: .turnBased,
         isDemo: false,
         summary: nil,
@@ -95,9 +91,11 @@ extension Store where State == GameOverState, Action == GameOverAction {
           },
           metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
-      ),
-      reducer: gameOverReducer,
-      environment: .preview
-    )
+      )
+    ) {
+      GameOver()
+    } withDependencies: {
+      $0.context = .preview
+    }
   }
 }

@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.7
 
 import Foundation
 import PackageDescription
@@ -7,10 +7,10 @@ import PackageDescription
 var package = Package(
   name: "isowords",
   platforms: [
-    .iOS(.v15),
-    .macOS(.v12),
-    .tvOS(.v15),
-    .watchOS(.v8),
+    .iOS(.v16),
+    .macOS(.v13),
+    .tvOS(.v16),
+    .watchOS(.v9),
   ],
   products: [
     .library(name: "Build", targets: ["Build"]),
@@ -27,24 +27,23 @@ var package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "0.8.1"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.1.0"),
+    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
-    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "0.1.0"),
-    .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.9.2"),
+    .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.12.0"),
     .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
     .package(url: "https://github.com/pointfreeco/swift-url-routing", from: "0.2.0"),
-    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "0.2.0"),
-    .package(
-      name: "Overture", url: "https://github.com/pointfreeco/swift-overture", from: "0.5.0"),
-    .package(
-      name: "SnapshotTesting", url: "https://github.com/pointfreeco/swift-snapshot-testing",
-      from: "1.9.0"
-    ),
+    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-overture", from: "0.5.0"),
+    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.10.0"),
   ],
   targets: [
     .target(
       name: "Build",
       dependencies: [
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -60,6 +59,7 @@ var package = Package(
       name: "DictionaryClient",
       dependencies: [
         "SharedModels",
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -92,7 +92,7 @@ var package = Package(
         .product(name: "HttpPipeline", package: "swift-web"),
         .product(name: "HttpPipelineTestSupport", package: "swift-web"),
         .product(name: "Prelude", package: "swift-prelude"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -128,7 +128,7 @@ var package = Package(
         "ServerRouter",
         "TestHelpers",
         .product(name: "CustomDump", package: "swift-custom-dump"),
-        .product(name: "Overture", package: "Overture"),
+        .product(name: "Overture", package: "swift-overture"),
         .product(name: "Parsing", package: "swift-parsing"),
         .product(name: "URLRouting", package: "swift-url-routing"),
       ]
@@ -154,8 +154,8 @@ var package = Package(
         "FirstPartyMocks",
         "SharedModels",
         "TestHelpers",
-        .product(name: "Overture", package: "Overture"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "Overture", package: "swift-overture"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -172,9 +172,6 @@ var package = Package(
 
 // MARK: - client
 if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
-  package.dependencies.append(contentsOf: [
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.39.0")
-  ])
   package.products.append(contentsOf: [
     .library(name: "ActiveGamesFeature", targets: ["ActiveGamesFeature"]),
     .library(name: "AnyComparable", targets: ["AnyComparable"]),
@@ -203,7 +200,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "FeedbackGeneratorClient", targets: ["FeedbackGeneratorClient"]),
     .library(name: "FileClient", targets: ["FileClient"]),
     .library(name: "GameCore", targets: ["GameCore"]),
-    .library(name: "GameFeature", targets: ["GameFeature"]),
     .library(name: "GameOverFeature", targets: ["GameOverFeature"]),
     .library(name: "HapticsCore", targets: ["HapticsCore"]),
     .library(name: "HomeFeature", targets: ["HomeFeature"]),
@@ -226,6 +222,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "SwiftUIHelpers", targets: ["SwiftUIHelpers"]),
     .library(name: "TcaHelpers", targets: ["TcaHelpers"]),
     .library(name: "TrailerFeature", targets: ["TrailerFeature"]),
+    .library(name: "UserSettingsClient", targets: ["UserSettingsClient"]),
     .library(name: "UIApplicationClient", targets: ["UIApplicationClient"]),
     .library(name: "UpgradeInterstitialFeature", targets: ["UpgradeInterstitialFeature"]),
     .library(name: "UserDefaultsClient", targets: ["UserDefaultsClient"]),
@@ -253,7 +250,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "SharedModels",
         "XCTestDebugSupport",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "CasePaths", package: "swift-case-paths"),
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -264,9 +262,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ServerRouter",
         "SharedModels",
         "TcaHelpers",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
-        .product(name: "Tagged", package: "swift-tagged"),
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
       ],
       exclude: ["Secrets.swift.example"]
     ),
@@ -294,7 +290,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DictionarySqliteClient",
         "FeedbackGeneratorClient",
         "FileClient",
-        "GameFeature",
         "GameOverFeature",
         "HomeFeature",
         "LeaderboardFeature",
@@ -311,6 +306,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "StatsFeature",
         "TcaHelpers",
         "UIApplicationClient",
+        "UserSettingsClient",
         "VocabFeature",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Gen", package: "swift-gen"),
@@ -331,7 +327,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "AppFeature",
         "SharedSwiftUIEnvironment",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -373,7 +369,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
+        .product(name: "Overture", package: "swift-overture"),
       ]
     ),
     .testTarget(
@@ -396,8 +392,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FirstPartyMocks",
         "TestHelpers",
         .product(name: "CustomDump", package: "swift-custom-dump"),
-        .product(name: "Overture", package: "Overture"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "Overture", package: "swift-overture"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
         "__Snapshots__"
@@ -412,7 +408,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "CombineHelpers",
         "FirstPartyMocks",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
+        .product(name: "Overture", package: "swift-overture"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -453,6 +449,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "SelectionSoundsCore",
         "SharedModels",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -472,13 +469,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DailyChallengeHelpers",
         "DateHelpers",
         "LeaderboardFeature",
-        "Overture",
         "NotificationHelpers",
         "NotificationsAuthAlert",
         "RemoteNotificationsClient",
         "SharedModels",
         "Styleguide",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "Overture", package: "swift-overture"),
       ]
     ),
     .testTarget(
@@ -495,7 +492,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "DailyChallengeFeature",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -529,7 +526,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "DeviceId",
       dependencies: [
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay")
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .target(
@@ -587,11 +585,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "PuzzleGen",
         "RemoteNotificationsClient",
         "SelectionSoundsCore",
+        "SettingsFeature",
         "SharedSwiftUIEnvironment",
         "Styleguide",
         "TcaHelpers",
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ],
       resources: [.process("Resources/")]
@@ -601,44 +601,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "GameCore",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
-    ),
-    .target(
-      name: "GameFeature",
-      dependencies: [
-        "ActiveGamesFeature",
-        "ApiClient",
-        "AudioPlayerClient",
-        "BottomMenu",
-        "ClientModels",
-        "ComposableGameCenter",
-        "ComposableUserNotifications",
-        "CubeCore",
-        "DictionaryClient",
-        "GameCore",
-        "GameOverFeature",
-        "FeedbackGeneratorClient",
-        "FileClient",
-        "LowPowerModeClient",
-        "PuzzleGen",
-        "RemoteNotificationsClient",
-        "SettingsFeature",
-        "Styleguide",
-        "TcaHelpers",
-        "UIApplicationClient",
-        "UpgradeInterstitialFeature",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
-    ),
-    .testTarget(
-      name: "GameFeatureTests",
-      dependencies: [
-        "AppFeature",
-        "TestHelpers",
-        .product(name: "Gen", package: "swift-gen"),
-      ]
     ),
     .target(
       name: "GameOverFeature",
@@ -678,7 +643,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "SharedSwiftUIEnvironment",
         "TestHelpers",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"],
       resources: [.process("Resources/")]
@@ -728,14 +693,14 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UpgradeInterstitialFeature",
         "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
+        .product(name: "Overture", package: "swift-overture"),
       ]
     ),
     .testTarget(
       name: "HomeFeatureTests",
       dependencies: [
         "HomeFeature",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -757,8 +722,9 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
+        .product(name: "Overture", package: "swift-overture"),
       ]
     ),
     .testTarget(
@@ -776,7 +742,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Sqlite",
         "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "Overture", package: "Overture"),
+        .product(name: "Overture", package: "swift-overture"),
       ]
     ),
     .target(
@@ -883,6 +849,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UserDefaultsClient",
+        "UserSettingsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ],
@@ -893,7 +860,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "TestHelpers",
         "SettingsFeature",
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -963,6 +930,13 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
+      name: "UserSettingsClient",
+      dependencies: [
+        "Styleguide",
+        .product(name: "Dependencies", package: "swift-dependencies"),
+      ]
+    ),
+    .target(
       name: "UIApplicationClient",
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -985,8 +959,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "FirstPartyMocks",
         "UpgradeInterstitialFeature",
-        .product(name: "Overture", package: "Overture"),
-        .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+        .product(name: "Overture", package: "swift-overture"),
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
     ),
@@ -1015,10 +989,10 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
 // MARK: - server
 package.dependencies.append(contentsOf: [
   .package(url: "https://github.com/crspybits/SwiftAWSSignatureV4", from: "1.1.0"),
-  .package(url: "https://github.com/swift-server/swift-backtrace", .exact("1.2.0")),
-  .package(url: "https://github.com/vapor/postgres-kit", .exact("2.2.0")),
-  .package(url: "https://github.com/pointfreeco/swift-prelude", .revision("7ff9911")),
-  .package(url: "https://github.com/pointfreeco/swift-web", .revision("d6236a3")),
+  .package(url: "https://github.com/swift-server/swift-backtrace", exact: "1.2.0"),
+  .package(url: "https://github.com/vapor/postgres-kit", exact: "2.2.0"),
+  .package(url: "https://github.com/pointfreeco/swift-prelude", revision: "7ff9911"),
+  .package(url: "https://github.com/pointfreeco/swift-web", revision: "2ad82ec"),
 ])
 package.products.append(contentsOf: [
   .executable(name: "daily-challenge-reports", targets: ["daily-challenge-reports"]),
@@ -1058,7 +1032,7 @@ package.targets.append(contentsOf: [
       "AppSiteAssociationMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .executableTarget(
@@ -1086,7 +1060,7 @@ package.targets.append(contentsOf: [
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1119,7 +1093,7 @@ package.targets.append(contentsOf: [
     dependencies: [
       "DatabaseClient",
       .product(name: "CasePaths", package: "swift-case-paths"),
-      .product(name: "Overture", package: "Overture"),
+      .product(name: "Overture", package: "swift-overture"),
       .product(name: "Prelude", package: "swift-prelude"),
       .product(name: "PostgresKit", package: "postgres-kit"),
     ]
@@ -1149,7 +1123,7 @@ package.targets.append(contentsOf: [
       "DemoMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .target(
@@ -1177,7 +1151,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1221,9 +1195,9 @@ package.targets.append(contentsOf: [
       .product(name: "Either", package: "swift-prelude"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "Overture", package: "Overture"),
+      .product(name: "Overture", package: "swift-overture"),
       .product(name: "Prelude", package: "swift-prelude"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .executableTarget(
@@ -1311,7 +1285,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       "TestHelpers",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1334,7 +1308,7 @@ package.targets.append(contentsOf: [
       "SnsClient",
       "VerifyReceiptMiddleware",
       .product(name: "HttpPipeline", package: "swift-web"),
-      .product(name: "Overture", package: "Overture"),
+      .product(name: "Overture", package: "swift-overture"),
       .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ],
     resources: [.process("Resources/")]
@@ -1346,7 +1320,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       "TestHelpers",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
   ),
@@ -1363,7 +1337,7 @@ package.targets.append(contentsOf: [
     name: "SnsClientTests",
     dependencies: [
       "SnsClient",
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
   .target(
@@ -1382,7 +1356,7 @@ package.targets.append(contentsOf: [
       "ServerTestHelpers",
       "SharedModels",
       .product(name: "HttpPipeline", package: "swift-web"),
-      .product(name: "Overture", package: "Overture"),
+      .product(name: "Overture", package: "swift-overture"),
     ]
   ),
   .testTarget(
@@ -1392,7 +1366,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
-      .product(name: "SnapshotTesting", package: "SnapshotTesting"),
+      .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
 ])

@@ -4,9 +4,7 @@ import SwiftUI
 public struct CubeView: View {
   public let store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>
 
-  public init(
-    store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>
-  ) {
+  public init(store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>) {
     self.store = store
   }
 
@@ -18,7 +16,8 @@ public struct CubeView: View {
 }
 
 private struct CubeRepresentable: UIViewRepresentable {
-  @Environment(\.colorScheme) var colorScheme
+  @AppStorage(.enableCubeShadow) var enableCubeShadow
+  @AppStorage(.showSceneStatistics) var showSceneStatistics
 
   let size: CGSize
   let store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>
@@ -28,5 +27,7 @@ private struct CubeRepresentable: UIViewRepresentable {
   }
 
   func updateUIView(_ sceneView: CubeSceneView, context: Context) {
+    sceneView.enableCubeShadow = self.enableCubeShadow
+    sceneView.showSceneStatistics = self.showSceneStatistics
   }
 }

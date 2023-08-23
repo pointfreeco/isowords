@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Foundation
 import Overture
 import SharedModels
 import Sqlite
@@ -293,5 +294,12 @@ extension Sqlite {
         .text(type)
       )
     }
+  }
+}
+
+final class Box<Value> {
+  var wrappedValue: Value
+  init(wrappedValue: Value) {
+    self.wrappedValue = wrappedValue
   }
 }

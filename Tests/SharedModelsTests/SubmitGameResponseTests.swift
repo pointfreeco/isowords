@@ -18,7 +18,7 @@ class SubmitGameResponseTests: XCTestCase {
           "rank": 15,
           "score": 5432,
           "started": true
-        ]
+        ] as [String : Any]
       ]
     )
   }

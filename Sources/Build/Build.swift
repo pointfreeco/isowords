@@ -1,5 +1,7 @@
+import Dependencies
 import Foundation
 import Tagged
+import XCTestDynamicOverlay
 
 public struct Build {
   public var gitSha: () -> String
@@ -14,8 +16,26 @@ public struct Build {
     self.gitSha = gitSha
     self.number = number
   }
+}
 
-  public static let live = Self(
+extension DependencyValues {
+  public var build: Build {
+    get { self[Build.self] }
+    set { self[Build.self] = newValue }
+  }
+}
+
+extension Build: TestDependencyKey {
+  public static let previewValue = Self.noop
+
+  public static let testValue = Self(
+    gitSha: unimplemented("\(Self.self).gitSha", placeholder: "deadbeef"),
+    number: unimplemented("\(Self.self).number", placeholder: 0)
+  )
+}
+
+extension Build: DependencyKey {
+  public static let liveValue = Self(
     gitSha: { Bundle.main.infoDictionary?["GitSHA"] as? String ?? "" },
     number: {
       .init(
@@ -25,20 +45,11 @@ public struct Build {
       )
     }
   )
+}
 
+extension Build {
   public static let noop = Self(
     gitSha: { "deadbeef" },
     number: { 0 }
   )
 }
-
-#if DEBUG
-  import XCTestDynamicOverlay
-
-  extension Build {
-    public static let unimplemented = Self(
-      gitSha: XCTUnimplemented("\(Self.self).gitSha"),
-      number: XCTUnimplemented("\(Self.self).number")
-    )
-  }
-#endif

@@ -6,48 +6,43 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct SoloState: Equatable {
-  var inProgressGame: InProgressGame?
+public struct Solo: Reducer {
+  public struct State: Equatable {
+    var inProgressGame: InProgressGame?
 
-  public init(
-    inProgressGame: InProgressGame? = nil
-  ) {
-    self.inProgressGame = inProgressGame
+    public init(inProgressGame: InProgressGame? = nil) {
+      self.inProgressGame = inProgressGame
+    }
   }
-}
 
-public enum SoloAction: Equatable {
-  case gameButtonTapped(GameMode)
-  case savedGamesLoaded(TaskResult<SavedGamesState>)
-  case task
-}
-
-public struct SoloEnvironment {
-  var fileClient: FileClient
-
-  public init(
-    fileClient: FileClient
-  ) {
-    self.fileClient = fileClient
+  public enum Action: Equatable {
+    case gameButtonTapped(GameMode)
+    case savedGamesLoaded(TaskResult<SavedGamesState>)
+    case task
   }
-}
 
-public let soloReducer = Reducer<SoloState, SoloAction, SoloEnvironment> {
-  state, action, environment in
-  switch action {
-  case .gameButtonTapped:
-    return .none
+  @Dependency(\.fileClient) var fileClient
 
-  case .savedGamesLoaded(.failure):
-    return .none
+  public init() {}
 
-  case let .savedGamesLoaded(.success(savedGameState)):
-    state.inProgressGame = savedGameState.unlimited
-    return .none
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .gameButtonTapped:
+        return .none
 
-  case .task:
-    return .task {
-      await .savedGamesLoaded(TaskResult { try await environment.fileClient.loadSavedGames() })
+      case .savedGamesLoaded(.failure):
+        return .none
+
+      case let .savedGamesLoaded(.success(savedGameState)):
+        state.inProgressGame = savedGameState.unlimited
+        return .none
+
+      case .task:
+        return .run { send in
+          await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+        }
+      }
     }
   }
 }
@@ -55,22 +50,22 @@ public let soloReducer = Reducer<SoloState, SoloAction, SoloEnvironment> {
 public struct SoloView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<SoloState, SoloAction>
+  let store: StoreOf<Solo>
 
   struct ViewState: Equatable {
     let currentScore: Int?
 
-    init(state: SoloState) {
+    init(state: Solo.State) {
       self.currentScore = state.inProgressGame?.currentScore
     }
   }
 
-  public init(store: Store<SoloState, SoloAction>) {
+  public init(store: StoreOf<Solo>) {
     self.store = store
   }
 
   public var body: some View {
-    WithViewStore(self.store.scope(state: ViewState.init)) { viewStore in
+    WithViewStore(self.store, observe: ViewState.init) { viewStore in
       VStack {
         Spacer()
           .frame(maxHeight: .grid(16))
@@ -107,14 +102,14 @@ public struct SoloView: View {
             color: .solo,
             inactiveText: nil,
             isLoading: false,
-            resumeText: (viewStore.currentScore).flatMap {
+            resumeText: viewStore.currentScore.flatMap {
               $0 > 0 ? Text("\($0) points") : nil
             },
             action: { viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
           )
         }
       }
-      .adaptivePadding([.vertical])
+      .adaptivePadding(.vertical)
       .screenEdgePadding(.horizontal)
       .task { await viewStore.send(.task).finish() }
     }
@@ -139,9 +134,9 @@ public struct SoloView: View {
     }
   }
 
-  extension Store where State == SoloState, Action == SoloAction {
+  extension Store where State == Solo.State, Action == Solo.Action {
     static let solo = Store(
-      initialState: .init(
+      initialState: Solo.State(
         inProgressGame: .some(
           update(.mock) {
             $0.moves = [
@@ -167,11 +162,9 @@ public struct SoloView: View {
               )
             ]
           })
-      ),
-      reducer: soloReducer,
-      environment: .init(
-        fileClient: .noop
       )
-    )
+    ) {
+      Solo()
+    }
   }
 #endif

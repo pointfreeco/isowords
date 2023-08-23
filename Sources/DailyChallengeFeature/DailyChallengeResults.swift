@@ -1,124 +1,103 @@
 import ApiClient
 import ComposableArchitecture
-import CubePreview
 import LeaderboardFeature
-import Overture
 import SharedModels
-import Styleguide
 import SwiftUI
 
-public struct DailyChallengeResultsState: Equatable {
-  public var history: DailyChallengeHistoryResponse?
-  public var leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?>
+public struct DailyChallengeResults: Reducer {
+  public struct State: Equatable {
+    public var history: DailyChallengeHistoryResponse?
+    public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
 
-  public init(
-    history: DailyChallengeHistoryResponse? = nil,
-    leaderboardResults: LeaderboardResultsState<DailyChallenge.GameNumber?> = .init(timeScope: nil)
-  ) {
-    self.history = history
-    self.leaderboardResults = leaderboardResults
-  }
-}
-
-public enum DailyChallengeResultsAction: Equatable {
-  case leaderboardResults(LeaderboardResultsAction<DailyChallenge.GameNumber?>)
-  case loadHistory
-  case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
-}
-
-public struct DailyChallengeResultsEnvironment {
-  public var apiClient: ApiClient
-
-  public init(
-    apiClient: ApiClient
-  ) {
-    self.apiClient = apiClient
-  }
-}
-
-#if DEBUG
-  extension DailyChallengeResultsEnvironment {
-    public static let unimplemented = Self(
-      apiClient: .unimplemented
-    )
-  }
-#endif
-
-public let dailyChallengeResultsReducer = Reducer<
-  DailyChallengeResultsState, DailyChallengeResultsAction, DailyChallengeResultsEnvironment
->.combine(
-
-  Reducer.leaderboardResultsReducer()
-    .pullback(
-      state: \DailyChallengeResultsState.leaderboardResults,
-      action: /DailyChallengeResultsAction.leaderboardResults,
-      environment: { .init(loadResults: $0.apiClient.loadDailyChallengeResults) }
-    ),
-
-  .init { state, action, environment in
-    switch action {
-    case let .fetchHistoryResponse(.success(response)):
-      state.history = response
-      return .none
-
-    case .fetchHistoryResponse(.failure):
-      state.history = .init(results: [])
-      return .none
-
-    case .leaderboardResults(.gameModeButtonTapped):
-      if let indices = state.history?.results.indices {
-        for index in indices {
-          state.history?.results[index].rank = nil
-        }
-      }
-      return .none
-
-    case .leaderboardResults(.tappedTimeScopeLabel):
-      guard
-        state.leaderboardResults.isTimeScopeMenuVisible
-      else { return .none }
-      return .task { .loadHistory }
-
-    case .leaderboardResults:
-      return .none
-
-    case .loadHistory:
-      if state.history?.results.isEmpty == .some(true) {
-        state.history = nil
-      }
-
-      enum CancelID {}
-      return .task { [gameMode = state.leaderboardResults.gameMode] in
-        await .fetchHistoryResponse(
-          TaskResult {
-            try await environment.apiClient.apiRequest(
-              route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
-              as: DailyChallengeHistoryResponse.self
-            )
-          }
-        )
-      }
-      .cancellable(id: CancelID.self, cancelInFlight: true)
+    public init(
+      history: DailyChallengeHistoryResponse? = nil,
+      leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State =
+        .init(timeScope: nil)
+    ) {
+      self.history = history
+      self.leaderboardResults = leaderboardResults
     }
   }
-)
+
+  public enum Action: Equatable {
+    case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
+    case loadHistory
+    case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
+  }
+
+  @Dependency(\.apiClient) var apiClient
+
+  public init() {}
+
+  public var body: some ReducerOf<Self> {
+    Scope(state: \.leaderboardResults, action: /Action.leaderboardResults) {
+      LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
+    }
+
+    Reduce { state, action in
+      switch action {
+      case let .fetchHistoryResponse(.success(response)):
+        state.history = response
+        return .none
+
+      case .fetchHistoryResponse(.failure):
+        state.history = .init(results: [])
+        return .none
+
+      case .leaderboardResults(.gameModeButtonTapped):
+        if let indices = state.history?.results.indices {
+          for index in indices {
+            state.history?.results[index].rank = nil
+          }
+        }
+        return .none
+
+      case .leaderboardResults(.tappedTimeScopeLabel):
+        guard
+          state.leaderboardResults.isTimeScopeMenuVisible
+        else { return .none }
+        return .send(.loadHistory)
+
+      case .leaderboardResults:
+        return .none
+
+      case .loadHistory:
+        if state.history?.results.isEmpty == .some(true) {
+          state.history = nil
+        }
+
+        enum CancelID { case fetch }
+        return .run { [gameMode = state.leaderboardResults.gameMode] send in
+          await send(
+            .fetchHistoryResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
+                  as: DailyChallengeHistoryResponse.self
+                )
+              }
+            )
+          )
+        }
+        .cancellable(id: CancelID.fetch, cancelInFlight: true)
+      }
+    }
+  }
+}
 
 public struct DailyChallengeResultsView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>
-  @ObservedObject var viewStore: ViewStore<DailyChallengeResultsState, DailyChallengeResultsAction>
+  let store: StoreOf<DailyChallengeResults>
+  @ObservedObject var viewStore: ViewStoreOf<DailyChallengeResults>
 
-  public init(store: Store<DailyChallengeResultsState, DailyChallengeResultsAction>) {
+  public init(store: StoreOf<DailyChallengeResults>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
     LeaderboardResultsView(
-      store: self.store.scope(
-        state: \.leaderboardResults,
-        action: DailyChallengeResultsAction.leaderboardResults
-      ),
+      store: self.store.scope(state: \.leaderboardResults, action: { .leaderboardResults($0) }),
       title: Text("Daily Challenge"),
       subtitle: (self.viewStore.leaderboardResults.resultEnvelope?.outOf)
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },
