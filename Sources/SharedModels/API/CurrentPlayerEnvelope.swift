@@ -1,6 +1,6 @@
 public struct CurrentPlayerEnvelope: Codable, Equatable, Sendable {
   public let appleReceipt: AppleVerifyReceiptResponse?
-  public let player: Player
+  public var player: Player
 
   public init(
     appleReceipt: AppleVerifyReceiptResponse?,

@@ -10,6 +10,10 @@ import UserDefaultsClient
 extension DependencyValues {
   mutating func didFinishLaunching() {
     self.audioPlayer.load = { _ in }
+    self.audioPlayer.secondaryAudioShouldBeSilencedHint = { false }
+    self.audioPlayer.setGlobalVolumeForMusic = { _ in }
+    self.audioPlayer.setGlobalVolumeForSoundEffects = { _ in }
+    self.applicationClient.setUserInterfaceStyle = { _ in }
     self.database.migrate = {}
     self.dictionary.load = { _ in false }
     self.fileClient.load = { @Sendable _ in try await Task.never() }
@@ -21,7 +25,6 @@ extension DependencyValues {
     self.storeKit.observer = { .finished }
     self.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")
     self.userDefaults.override(double: 0, forKey: "installationTimeKey")
-    let defaults = self.userDefaults
     self.userDefaults.setDouble = { _, _ in }
     self.userNotifications.delegate = { .finished }
     self.userNotifications.getNotificationSettings = {

@@ -29,8 +29,8 @@ extension Build: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    gitSha: XCTUnimplemented("\(Self.self).gitSha", placeholder: "deadbeef"),
-    number: XCTUnimplemented("\(Self.self).number", placeholder: 0)
+    gitSha: unimplemented("\(Self.self).gitSha", placeholder: "deadbeef"),
+    number: unimplemented("\(Self.self).number", placeholder: 0)
   )
 }
 

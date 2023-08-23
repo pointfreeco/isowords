@@ -88,16 +88,16 @@ func `is`(_ lhs: Any, subsetOf rhs: Any) -> Bool {
 class BackwardsCompatibilityTestHelpersTests: XCTestCase {
   func testIsSubsetOf() {
     XCTAssertTrue(`is`([1], subsetOf: [1]))
-    XCTAssertTrue(`is`(["id": 1], subsetOf: ["id": 1, "name": "Blob"]))
+    XCTAssertTrue(`is`(["id": 1], subsetOf: ["id": 1, "name": "Blob"] as [String : Any]))
     XCTAssertTrue(
       `is`(
-        ["id": 1, "friends": [["id": 1]]],
-        subsetOf: ["id": 1, "friends": [["id": 1, "name": "Blob"]]]))
+        ["id": 1, "friends": [["id": 1]]] as [String : Any],
+        subsetOf: ["id": 1, "friends": [["id": 1, "name": "Blob"] as [String : Any]]] as [String : Any]))
 
     XCTAssertFalse(`is`([1], subsetOf: [1, 2]))
     XCTAssertFalse(`is`(["id": 1], subsetOf: ["name": "Blob"]))
     XCTAssertFalse(
-      `is`(["id": 1, "friends": [["id": 1]]], subsetOf: ["id": 1, "friends": [["name": "Blob"]]]))
+      `is`(["id": 1, "friends": [["id": 1]]] as [String : Any], subsetOf: ["id": 1, "friends": [["name": "Blob"]]] as [String : Any]))
   }
 }
 

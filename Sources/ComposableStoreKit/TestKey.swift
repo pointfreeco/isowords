@@ -12,16 +12,16 @@ extension StoreKitClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    addPayment: XCTUnimplemented("\(Self.self).addPayment"),
-    appStoreReceiptURL: XCTUnimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
-    isAuthorizedForPayments: XCTUnimplemented(
+    addPayment: unimplemented("\(Self.self).addPayment"),
+    appStoreReceiptURL: unimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
+    isAuthorizedForPayments: unimplemented(
       "\(Self.self).isAuthorizedForPayments", placeholder: false
     ),
-    fetchProducts: XCTUnimplemented("\(Self.self).fetchProducts"),
-    finishTransaction: XCTUnimplemented("\(Self.self).finishTransaction"),
-    observer: XCTUnimplemented("\(Self.self).observer", placeholder: .finished),
-    requestReview: XCTUnimplemented("\(Self.self).requestReview"),
-    restoreCompletedTransactions: XCTUnimplemented(
+    fetchProducts: unimplemented("\(Self.self).fetchProducts"),
+    finishTransaction: unimplemented("\(Self.self).finishTransaction"),
+    observer: unimplemented("\(Self.self).observer", placeholder: .finished),
+    requestReview: unimplemented("\(Self.self).requestReview"),
+    restoreCompletedTransactions: unimplemented(
       "\(Self.self).restoreCompletedTransactions"
     )
   )

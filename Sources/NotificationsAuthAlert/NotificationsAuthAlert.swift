@@ -7,67 +7,108 @@ import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
-public struct NotificationsAuthAlert: ReducerProtocol {
+public struct NotificationsAuthAlert: Reducer {
   public struct State: Equatable {
     public init() {}
   }
 
   public enum Action: Equatable {
-    case closeButtonTapped
-    case delegate(DelegateAction)
+    case delegate(Delegate)
     case turnOnNotificationsButtonTapped
+
+    public enum Delegate: Equatable {
+      case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
+    }
   }
 
-  public enum DelegateAction: Equatable {
-    case close
-    case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
-  }
-
+  @Dependency(\.dismiss) var dismiss
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
-    switch action {
-    case .closeButtonTapped:
-      return .task { .delegate(.close) }.animation()
+  public var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .delegate:
+        return .none
 
-    case .delegate:
-      return .none
-
-    case .turnOnNotificationsButtonTapped:
-      return .run { send in
-        if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
-          await registerForRemoteNotificationsAsync(
-            remoteNotifications: self.remoteNotifications,
-            userNotifications: self.userNotifications
+      case .turnOnNotificationsButtonTapped:
+        return .run { send in
+          if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
+            await registerForRemoteNotificationsAsync(
+              remoteNotifications: self.remoteNotifications,
+              userNotifications: self.userNotifications
+            )
+          }
+          await send(
+            .delegate(
+              .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
+            ),
+            animation: .default
           )
+          await self.dismiss()
         }
-        await send(
-          .delegate(
-            .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
-          ),
-          animation: .default
-        )
       }
     }
   }
 }
 
 extension View {
-  public func notificationsAlert(
-    store: Store<NotificationsAuthAlert.State?, NotificationsAuthAlert.Action>
+  public func notificationsAlert<DestinationState, DestinationAction>(
+    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
+    state toAlertState: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
+    action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
   ) -> some View {
-    ZStack {
-      self
-
-      IfLetStore(
-        store,
-        then: NotificationsAuthAlertView.init(store:)
+    self.modifier(
+      NotificationsAuthAlertViewModifier(
+        store: store, toAlertState: toAlertState, fromAlertAction: fromAlertAction
       )
-      // NB: This is necessary so that when the alert is animated away it stays above `self`.
-      .zIndex(1)
+    )
+  }
+}
+
+struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: ViewModifier {
+  let store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>
+  let toAlertState: (DestinationState) -> NotificationsAuthAlert.State?
+  let fromAlertAction: (NotificationsAuthAlert.Action) -> DestinationAction
+
+  func body(content: Content) -> some View {
+    WithViewStore(
+      self.store, observe: { $0.wrappedValue.flatMap(self.toAlertState) }
+    ) { viewStore in
+      content
+        .overlay {
+          if viewStore.state != nil {
+            Rectangle()
+              .fill(Color.dailyChallenge.opacity(0.8))
+              .ignoresSafeArea()
+              .transition(.opacity.animation(.default))
+          }
+        }
+        .overlay {
+          if let state = viewStore.state {
+            ZStack(alignment: .topTrailing) {
+              NotificationsAuthAlertView(
+                store: store.scope(
+                  state: { _ in state }, action: { .presented(fromAlertAction($0)) }
+                )
+              )
+
+              Button { viewStore.send(.dismiss) } label: {
+                Image(systemName: "xmark")
+                  .font(.system(size: 20))
+                  .foregroundColor(.dailyChallenge)
+                  .padding(.grid(5))
+              }
+            }
+            .transition(
+              .scale(scale: 0.8, anchor: .center)
+                .animation(.spring())
+                .combined(with: .opacity.animation(.default))
+            )
+          }
+        }
     }
   }
 }
@@ -76,43 +117,24 @@ struct NotificationsAuthAlertView: View {
   let store: StoreOf<NotificationsAuthAlert>
 
   var body: some View {
-    WithViewStore(self.store) { viewStore in
-      Rectangle()
-        .fill(Color.dailyChallenge.opacity(0.8))
-        .ignoresSafeArea()
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
+      VStack(spacing: .grid(8)) {
+        (Text("Want to get notified about ")
+          + Text("your ranks?").fontWeight(.medium))
+          .adaptiveFont(.matter, size: 28)
+          .foregroundColor(.dailyChallenge)
+          .lineLimit(.max)
+          .minimumScaleFactor(0.2)
+          .multilineTextAlignment(.center)
 
-      ZStack(alignment: .topTrailing) {
-        VStack(spacing: .grid(8)) {
-          (Text("Want to get notified about ")
-            + Text("your ranks?").fontWeight(.medium))
-            .adaptiveFont(.matter, size: 28)
-            .foregroundColor(.dailyChallenge)
-            .lineLimit(.max)
-            .minimumScaleFactor(0.2)
-            .multilineTextAlignment(.center)
-
-          Button(action: { viewStore.send(.turnOnNotificationsButtonTapped, animation: .default) })
-          {
-            Text("Turn on notifications")
-          }
-          .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
+        Button("Turn on notifications") {
+          viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)
         }
-        .padding(.top, .grid(4))
-        .padding(.grid(8))
-        .background(Color.black)
-
-        Button(action: { viewStore.send(.closeButtonTapped, animation: .default) }) {
-          Image(systemName: "xmark")
-            .font(.system(size: 20))
-            .foregroundColor(.dailyChallenge)
-            .padding(.grid(5))
-        }
+        .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
       }
-      .transition(
-        AnyTransition.scale(scale: 0.8, anchor: .center)
-          .animation(.spring())
-          .combined(with: .opacity)
-      )
+      .padding(.top, .grid(4))
+      .padding(.grid(8))
+      .background(Color.black)
     }
   }
 }
@@ -120,10 +142,9 @@ struct NotificationsAuthAlertView: View {
 struct NotificationMenu_Previews: PreviewProvider {
   static var previews: some View {
     NotificationsAuthAlertView(
-      store: Store(
-        initialState: NotificationsAuthAlert.State(),
-        reducer: NotificationsAuthAlert()
-      )
+      store: Store(initialState: NotificationsAuthAlert.State()) {
+        NotificationsAuthAlert()
+      }
     )
   }
 }

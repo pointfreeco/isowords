@@ -14,9 +14,9 @@ extension FileClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    delete: XCTUnimplemented("\(Self.self).deleteAsync"),
-    load: XCTUnimplemented("\(Self.self).loadAsync"),
-    save: XCTUnimplemented("\(Self.self).saveAsync")
+    delete: unimplemented("\(Self.self).deleteAsync"),
+    load: unimplemented("\(Self.self).loadAsync"),
+    save: unimplemented("\(Self.self).saveAsync")
   )
 }
 
@@ -29,7 +29,7 @@ extension FileClient {
 
   public mutating func override<A: Encodable>(load file: String, _ data: A) {
     let fulfill = expectation(description: "FileClient.load(\(file))")
-    self.load = { @Sendable[self] in
+    self.load = { @Sendable [self] in
       if $0 == file {
         fulfill()
         return try JSONEncoder().encode(data)

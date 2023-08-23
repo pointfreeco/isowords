@@ -88,7 +88,7 @@ struct NubViewPreviews: PreviewProvider {
           .frame(width: 100, height: 100)
       }
       VStack(spacing: 50) {
-        Button(action: {}) {}
+        Button {} label: {}
           .buttonStyle(NubStyle())
 
         UIViewRepresenting(NubUIView())

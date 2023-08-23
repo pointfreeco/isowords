@@ -2,7 +2,7 @@ import ClientModels
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
-import GameFeature
+import GameCore
 import Overture
 import UserNotifications
 import XCTest
@@ -12,25 +12,26 @@ import XCTest
 @MainActor
 class RemoteNotificationsTests: XCTestCase {
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
-    let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
-
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
 
-    store.dependencies.didFinishLaunching()
-    store.dependencies.build.number = { 80 }
-    store.dependencies.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
-    }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
-    }
-    store.dependencies.userNotifications.requestAuthorization = { options in
-      await requestedAuthorizationOptions.setValue(options)
-      return true
+    let store = TestStore(
+      initialState: AppReducer.State()
+    ) {
+      AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.build.number = { 80 }
+      $0.remoteNotifications.register = {
+        await didRegisterForRemoteNotifications.setValue(true)
+      }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .authorized)
+      }
+      $0.userNotifications.requestAuthorization = { options in
+        await requestedAuthorizationOptions.setValue(options)
+        return true
+      }
     }
 
     // Register remote notifications on .didFinishLaunching
@@ -71,21 +72,20 @@ class RemoteNotificationsTests: XCTestCase {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
 
-    let store = TestStore(
-      initialState: AppReducer.State(),
-      reducer: AppReducer()
-    )
-
-    store.dependencies.didFinishLaunching()
-    store.dependencies.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
-    }
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .notDetermined)
-    }
-    store.dependencies.userNotifications.requestAuthorization = { options in
-      await requestedAuthorizationOptions.setValue(options)
-      return true
+    let store = TestStore(initialState: AppReducer.State()) {
+      AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.remoteNotifications.register = {
+        await didRegisterForRemoteNotifications.setValue(true)
+      }
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .notDetermined)
+      }
+      $0.userNotifications.requestAuthorization = { options in
+        await requestedAuthorizationOptions.setValue(options)
+        return true
+      }
     }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
@@ -99,15 +99,16 @@ class RemoteNotificationsTests: XCTestCase {
 
     let store = TestStore(
       initialState: update(AppReducer.State()) {
-        $0.home.savedGames.dailyChallengeUnlimited = inProgressGame
-      },
-      reducer: AppReducer()
-    )
+        $0.home.savedGames.dailyChallengeUnlimited = .mock
+      }
+    ) {
+      AppReducer()
+    } withDependencies: {
+      $0.didFinishLaunching()
+      $0.fileClient.save = { @Sendable _, _ in }
+    }
 
-    store.dependencies.didFinishLaunching()
-    store.dependencies.fileClient.save = { @Sendable _, _ in }
-
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.streamWithContinuation()
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     store.dependencies.userNotifications.delegate = { delegate.stream }
 
     let notification = UserNotificationClient.Notification(
@@ -163,7 +164,7 @@ class RemoteNotificationsTests: XCTestCase {
         )
       )
     ) {
-      $0.game = Game.State(inProgressGame: inProgressGame)
+      $0.destination = .game(Game.State(inProgressGame: inProgressGame))
       $0.home.savedGames.unlimited = inProgressGame
     }
     XCTAssert(didReceiveResponseCompletionHandlerCalled)

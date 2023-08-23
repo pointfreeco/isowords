@@ -3,22 +3,33 @@ import CubePreview
 import LocalDatabaseClient
 import SwiftUI
 
-public struct Vocab: ReducerProtocol {
+public struct Vocab: Reducer {
+  public struct Destination: Reducer {
+    public enum State: Equatable {
+      case cubePreview(CubePreview.State)
+    }
+    public enum Action: Equatable {
+      case cubePreview(CubePreview.Action)
+    }
+    public var body: some ReducerOf<Self> {
+      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+        CubePreview()
+      }
+    }
+  }
+
   public struct State: Equatable {
-    var cubePreview: CubePreview.State?
+    @PresentationState var destination: Destination.State?
     var isAnimationReduced: Bool
-    var isHapticsEnabled: Bool
     var vocab: LocalDatabaseClient.Vocab?
 
     public init(
-      cubePreview: CubePreview.State? = nil,
+      destination: Destination.State? = nil,
       isAnimationReduced: Bool,
-      isHapticsEnabled: Bool,
       vocab: LocalDatabaseClient.Vocab? = nil
     ) {
-      self.cubePreview = cubePreview
+      self.destination = destination
       self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
       self.vocab = vocab
     }
 
@@ -29,9 +40,8 @@ public struct Vocab: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case dismissCubePreview
+    case destination(PresentationAction<Destination.Action>)
     case gamesResponse(TaskResult<State.GamesResponse>)
-    case preview(CubePreview.Action)
     case task
     case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
@@ -41,11 +51,10 @@ public struct Vocab: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .dismissCubePreview:
-        state.cubePreview = nil
+      case .destination:
         return .none
 
       case .gamesResponse(.failure):
@@ -66,22 +75,18 @@ public struct Vocab: ReducerProtocol {
         guard let moveIndex = possibleMoveIndex
         else { return .none }
 
-        state.cubePreview = CubePreview.State(
-          cubes: game.completedGame.cubes,
-          isAnimationReduced: state.isAnimationReduced,
-          isHapticsEnabled: state.isHapticsEnabled,
-          moveIndex: moveIndex,
-          moves: game.completedGame.moves,
-          settings: .init()
+        state.destination = .cubePreview(
+          CubePreview.State(
+            cubes: game.completedGame.cubes,
+            moveIndex: moveIndex,
+            moves: game.completedGame.moves
+          )
         )
         return .none
 
-      case .preview:
-        return .none
-
       case .task:
-        return .task {
-          await .vocabResponse(TaskResult { try await self.database.fetchVocab() })
+        return .run { send in
+          await send(.vocabResponse(TaskResult { try await self.database.fetchVocab() }))
         }
 
       case let .vocabResponse(.success(vocab)):
@@ -92,20 +97,22 @@ public struct Vocab: ReducerProtocol {
         return .none
 
       case let .wordTapped(word):
-        return .task {
-          await .gamesResponse(
-            TaskResult {
-              .init(
-                games: try await self.database.fetchGamesForWord(word.letters),
-                word: word.letters
-              )
-            }
+        return .run { send in
+          await send(
+            .gamesResponse(
+              TaskResult {
+                .init(
+                  games: try await self.database.fetchGamesForWord(word.letters),
+                  word: word.letters
+                )
+              }
+            )
           )
         }
       }
     }
-    .ifLet(\.cubePreview, action: /Action.preview) {
-      CubePreview()
+    .ifLet(\.$destination, action: /Action.destination) {
+      Destination()
     }
   }
 }
@@ -118,30 +125,28 @@ public struct VocabView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store) { viewStore in
-      VStack {
-        IfLetStore(self.store.scope(state: \.vocab)) { vocabStore in
-          WithViewStore(vocabStore) { vocabViewStore in
-            List {
-              ForEach(vocabViewStore.words, id: \.letters) { word in
-                Button {
-                  vocabViewStore.send(.wordTapped(word))
-                } label: {
-                  HStack {
-                    HStack(alignment: .top, spacing: 0) {
-                      Text(word.letters.capitalized)
-                        .adaptiveFont(.matterMedium, size: 20)
+    VStack {
+      IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
+        WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
+          List {
+            ForEach(vocabViewStore.words, id: \.letters) { word in
+              Button {
+                vocabViewStore.send(.wordTapped(word))
+              } label: {
+                HStack {
+                  HStack(alignment: .top, spacing: 0) {
+                    Text(word.letters.capitalized)
+                      .adaptiveFont(.matterMedium, size: 20)
 
-                      Text("\(word.score)")
-                        .padding(.top, -4)
-                        .adaptiveFont(.matterMedium, size: 14)
-                    }
+                    Text("\(word.score)")
+                      .padding(.top, -4)
+                      .adaptiveFont(.matterMedium, size: 14)
+                  }
 
-                    Spacer()
+                  Spacer()
 
-                    if word.playCount > 1 {
-                      Text("(\(word.playCount)x)")
-                    }
+                  if word.playCount > 1 {
+                    Text("(\(word.playCount)x)")
                   }
                 }
               }
@@ -149,18 +154,13 @@ public struct VocabView: View {
           }
         }
       }
-      .task { await viewStore.send(.task).finish() }
+      .task { await self.store.send(.task).finish() }
       .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.cubePreview != nil },
-          send: .dismissCubePreview
-        )
-      ) {
-        IfLetStore(
-          self.store.scope(state: \.cubePreview, action: Vocab.Action.preview),
-          then: CubePreviewView.init(store:)
-        )
-      }
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Vocab.Destination.State.cubePreview,
+        action: Vocab.Destination.Action.cubePreview,
+        content: CubePreviewView.init(store:)
+      )
     }
     .adaptiveFont(.matterMedium, size: 16)
     .navigationStyle(title: Text("Words Found"))
@@ -189,17 +189,17 @@ public struct VocabView: View {
   extension Store where State == Vocab.State, Action == Vocab.Action {
     static let vocab = Store(
       initialState: Vocab.State(
-        cubePreview: nil,
+        destination: nil,
         isAnimationReduced: false,
-        isHapticsEnabled: false,
         vocab: .init(
           words: [
             .init(letters: "STENOGRAPHER", playCount: 1, score: 1_230),
             .init(letters: "PUZZLE", playCount: 10, score: 560),
           ]
         )
-      ),
-      reducer: Vocab()
-    )
+      )
+    ) {
+      Vocab()
+    }
   }
 #endif

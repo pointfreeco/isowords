@@ -12,8 +12,8 @@ extension FeedbackGeneratorClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    prepare: XCTUnimplemented("\(Self.self).prepare"),
-    selectionChanged: XCTUnimplemented("\(Self.self).selectionChanged")
+    prepare: unimplemented("\(Self.self).prepare"),
+    selectionChanged: unimplemented("\(Self.self).selectionChanged")
   )
 }
 

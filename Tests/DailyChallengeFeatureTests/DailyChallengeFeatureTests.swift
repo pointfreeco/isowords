@@ -1,6 +1,7 @@
 import ApiClient
 import ClientModels
 import ComposableArchitecture
+import NotificationsAuthAlert
 import XCTest
 
 @testable import DailyChallengeFeature
@@ -12,23 +13,23 @@ class DailyChallengeFeatureTests: XCTestCase {
   let mainRunLoop = RunLoop.test
 
   func testOnAppear() async {
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
-
-    store.dependencies.apiClient.override(
-      route: .dailyChallenge(.today(language: .en)),
-      withResponse: { try await OK([FetchTodaysDailyChallengeResponse.played]) }
-    )
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
+    let store = TestStore(initialState: DailyChallengeReducer.State()) {
+      DailyChallengeReducer()
+    } withDependencies: {
+      $0.apiClient.override(
+        route: .dailyChallenge(.today(language: .en)),
+        withResponse: { try await OK([FetchTodaysDailyChallengeResponse.played]) }
+      )
+      $0.mainRunLoop = .immediate
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .authorized)
+      }
     }
 
     await store.send(.task)
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized))) {
+    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
+    {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
     await store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
@@ -41,17 +42,14 @@ class DailyChallengeFeatureTests: XCTestCase {
     dailyChallengeResponse.dailyChallenge.endsAt = Date().addingTimeInterval(60 * 60 * 2 + 1)
 
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(dailyChallenges: [dailyChallengeResponse]),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State(dailyChallenges: [dailyChallengeResponse])
+    ) {
+      DailyChallengeReducer()
+    }
 
     await store.send(.gameButtonTapped(.unlimited)) {
-      $0.alert = .init(
-        title: .init("Already played"),
-        message: .init(
-          "You already played today’s daily challenge. You can play the next one in in 2 hours."
-        ),
-        dismissButton: .default(.init("OK"), action: .send(.dismissAlert))
+      $0.destination = .alert(
+        .alreadyPlayed(nextStartsAt: Date().addingTimeInterval(60 * 60 * 2 + 1))
       )
     }
   }
@@ -62,32 +60,33 @@ class DailyChallengeFeatureTests: XCTestCase {
     inProgressGame.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
 
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted]),
-      reducer: DailyChallengeReducer()
-    )
-
-    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
-    store.dependencies.apiClient.override(
-      route: .dailyChallenge(.start(gameMode: .unlimited, language: .en)),
-      withResponse: {
-        try await OK(
-          StartDailyChallengeResponse(
-            dailyChallenge: .init(
-              createdAt: .mock,
-              endsAt: .mock,
-              gameMode: .unlimited,
-              gameNumber: 42,
-              id: .init(rawValue: .dailyChallengeId),
-              language: .en,
-              puzzle: .mock
-            ),
-            dailyChallengePlayId: .init(rawValue: .deadbeef)
+      initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted])
+    ) {
+      DailyChallengeReducer()
+    } withDependencies: {
+      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      $0.apiClient.override(
+        route: .dailyChallenge(.start(gameMode: .unlimited, language: .en)),
+        withResponse: {
+          try await OK(
+            StartDailyChallengeResponse(
+              dailyChallenge: .init(
+                createdAt: .mock,
+                endsAt: .mock,
+                gameMode: .unlimited,
+                gameNumber: 42,
+                id: .init(rawValue: .dailyChallengeId),
+                language: .en,
+                puzzle: .mock
+              ),
+              dailyChallengePlayId: .init(rawValue: .deadbeef)
+            )
           )
-        )
-      }
-    )
-    struct FileNotFound: Error {}
-    store.dependencies.fileClient.load = { @Sendable _ in throw FileNotFound() }
+        }
+      )
+      struct FileNotFound: Error {}
+      $0.fileClient.load = { @Sendable _ in throw FileNotFound() }
+    }
 
     await store.send(.gameButtonTapped(.unlimited)) {
       $0.gameModeIsLoading = .unlimited
@@ -112,14 +111,15 @@ class DailyChallengeFeatureTests: XCTestCase {
       initialState: DailyChallengeReducer.State(
         dailyChallenges: [.started],
         inProgressDailyChallengeUnlimited: inProgressGame
-      ),
-      reducer: DailyChallengeReducer()
-    )
-
-    store.dependencies.fileClient.load = { @Sendable [inProgressGame] _ in
-      try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
+      )
+    ) {
+      DailyChallengeReducer()
+    } withDependencies: {
+      $0.fileClient.load = { @Sendable [inProgressGame] _ in
+        try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
+      }
+      $0.mainRunLoop = .immediate
     }
-    store.dependencies.mainRunLoop = .immediate
 
     await store.send(.gameButtonTapped(.unlimited)) {
       $0.gameModeIsLoading = .unlimited
@@ -133,75 +133,89 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   func testNotifications_OpenThenClose() async {
     let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
+      initialState: DailyChallengeReducer.State()
+    ) {
+      DailyChallengeReducer()
+    }
 
     await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.closeButtonTapped))
-    await store.receive(.notificationsAuthAlert(.delegate(.close))) {
-      $0.notificationsAuthAlert = nil
+    await store.send(.destination(.dismiss)) {
+      $0.destination = nil
     }
   }
 
   func testNotifications_GrantAccess() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
-
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .authorized)
+    let store = TestStore(initialState: DailyChallengeReducer.State()) {
+      DailyChallengeReducer()
+    } withDependencies: {
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .authorized)
+      }
+      $0.userNotifications.requestAuthorization = { _ in true }
+      $0.remoteNotifications.register = {
+        await didRegisterForRemoteNotifications.setValue(true)
+      }
+      $0.mainRunLoop = .immediate
     }
-    store.dependencies.userNotifications.requestAuthorization = { _ in true }
-    store.dependencies.remoteNotifications.register = {
-      await didRegisterForRemoteNotifications.setValue(true)
-    }
-    store.dependencies.mainRunLoop = .immediate
 
     await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
+    await store.send(
+      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
+    )
     await store.receive(
-      .notificationsAuthAlert(
-        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
+      .destination(
+        .presented(
+          .notificationsAuthAlert(
+            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
+          )
+        )
       )
     ) {
-      $0.notificationsAuthAlert = nil
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
+    }
+    await store.receive(.destination(.dismiss)) {
+      $0.destination = nil
     }
 
     await didRegisterForRemoteNotifications.withValue { XCTAssertNoDifference($0, true) }
   }
 
   func testNotifications_DenyAccess() async {
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(),
-      reducer: DailyChallengeReducer()
-    )
-
-    store.dependencies.userNotifications.getNotificationSettings = {
-      .init(authorizationStatus: .denied)
+    let store = TestStore(initialState: DailyChallengeReducer.State()) {
+      DailyChallengeReducer()
+    } withDependencies: {
+      $0.userNotifications.getNotificationSettings = {
+        .init(authorizationStatus: .denied)
+      }
+      $0.userNotifications.requestAuthorization = { _ in false }
+      $0.mainRunLoop = .immediate
     }
-    store.dependencies.userNotifications.requestAuthorization = { _ in false }
-    store.dependencies.mainRunLoop = .immediate
 
     await store.send(.notificationButtonTapped) {
-      $0.notificationsAuthAlert = .init()
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
     }
-    await store.send(.notificationsAuthAlert(.turnOnNotificationsButtonTapped))
+    await store.send(
+      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
+    )
     await store.receive(
-      .notificationsAuthAlert(
-        .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
+      .destination(
+        .presented(
+          .notificationsAuthAlert(
+            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
+          )
+        )
       )
     ) {
-      $0.notificationsAuthAlert = nil
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
+    }
+    await store.receive(.destination(.dismiss)) {
+      $0.destination = nil
     }
   }
 }

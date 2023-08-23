@@ -4,7 +4,7 @@ import LeaderboardFeature
 import SharedModels
 import SwiftUI
 
-public struct DailyChallengeResults: ReducerProtocol {
+public struct DailyChallengeResults: Reducer {
   public struct State: Equatable {
     public var history: DailyChallengeHistoryResponse?
     public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
@@ -29,7 +29,7 @@ public struct DailyChallengeResults: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some ReducerOf<Self> {
     Scope(state: \.leaderboardResults, action: /Action.leaderboardResults) {
       LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
     }
@@ -56,7 +56,7 @@ public struct DailyChallengeResults: ReducerProtocol {
         guard
           state.leaderboardResults.isTimeScopeMenuVisible
         else { return .none }
-        return .task { .loadHistory }
+        return .send(.loadHistory)
 
       case .leaderboardResults:
         return .none
@@ -66,18 +66,20 @@ public struct DailyChallengeResults: ReducerProtocol {
           state.history = nil
         }
 
-        enum CancelID {}
-        return .task { [gameMode = state.leaderboardResults.gameMode] in
-          await .fetchHistoryResponse(
-            TaskResult {
-              try await self.apiClient.apiRequest(
-                route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
-                as: DailyChallengeHistoryResponse.self
-              )
-            }
+        enum CancelID { case fetch }
+        return .run { [gameMode = state.leaderboardResults.gameMode] send in
+          await send(
+            .fetchHistoryResponse(
+              TaskResult {
+                try await self.apiClient.apiRequest(
+                  route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
+                  as: DailyChallengeHistoryResponse.self
+                )
+              }
+            )
           )
         }
-        .cancellable(id: CancelID.self, cancelInFlight: true)
+        .cancellable(id: CancelID.fetch, cancelInFlight: true)
       }
     }
   }
@@ -90,15 +92,12 @@ public struct DailyChallengeResultsView: View {
 
   public init(store: StoreOf<DailyChallengeResults>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
     LeaderboardResultsView(
-      store: self.store.scope(
-        state: \.leaderboardResults,
-        action: DailyChallengeResults.Action.leaderboardResults
-      ),
+      store: self.store.scope(state: \.leaderboardResults, action: { .leaderboardResults($0) }),
       title: Text("Daily Challenge"),
       subtitle: (self.viewStore.leaderboardResults.resultEnvelope?.outOf)
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },

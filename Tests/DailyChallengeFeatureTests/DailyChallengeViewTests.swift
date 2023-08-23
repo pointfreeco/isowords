@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import DailyChallengeFeature
 import SharedModels
 import SnapshotTesting
@@ -20,11 +21,8 @@ class DailyChallengeViewTests: XCTestCase {
   func testDefault() {
     assertSnapshot(
       matching: DailyChallengeView(
-        store: .init(
-          initialState: .init(),
-          reducer: .empty,
-          environment: ()
-        )
+        store: .init(initialState: .init()) {
+        }
       )
       .environment(\.date) { .mock },
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -34,8 +32,8 @@ class DailyChallengeViewTests: XCTestCase {
   func testTimedGamePlayed_UnlimitedGameResumable() {
     assertSnapshot(
       matching: DailyChallengeView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: DailyChallengeReducer.State(
             dailyChallenges: [
               .init(
                 dailyChallenge: .init(
@@ -65,10 +63,9 @@ class DailyChallengeViewTests: XCTestCase {
               secondsPlayed: 0
             ),
             userNotificationSettings: .init(authorizationStatus: .notDetermined)
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .environment(\.date) { .mock },
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

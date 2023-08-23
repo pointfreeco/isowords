@@ -1,4 +1,5 @@
 import ClientModels
+import ComposableArchitecture
 import ComposableGameCenter
 import HomeFeature
 import Overture
@@ -22,8 +23,8 @@ class HomeFeatureTests: XCTestCase {
   func testBasics() {
     assertSnapshot(
       matching: HomeView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: Home.State(
             dailyChallenges: [
               .init(
                 dailyChallenge: .init(
@@ -42,10 +43,9 @@ class HomeFeatureTests: XCTestCase {
               ],
               word: .init(letters: "Jazziest", score: 1400)
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .environment(\.date, { .mock - 2*60*60 }),
       as: .image(
@@ -62,8 +62,8 @@ class HomeFeatureTests: XCTestCase {
   func testActiveGames_DailyChallenge_Solo() {
     assertSnapshot(
       matching: HomeView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: Home.State(
             dailyChallenges: [],
             savedGames: .init(
               dailyChallengeUnlimited: .mock,
@@ -71,10 +71,9 @@ class HomeFeatureTests: XCTestCase {
                 $0?.moves = [.mock]
               }
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .environment(\.date, { .mock - 2*60*60 }),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -84,8 +83,8 @@ class HomeFeatureTests: XCTestCase {
   func testActiveGames_Multiplayer() {
     assertSnapshot(
       matching: HomeView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: Home.State(
             dailyChallenges: [],
             turnBasedMatches: [
               .init(
@@ -119,10 +118,9 @@ class HomeFeatureTests: XCTestCase {
                 theirName: "Blob"
               ),
             ]
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .environment(\.date, { .mock - 2*60*60 }),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -132,8 +130,8 @@ class HomeFeatureTests: XCTestCase {
   func testActiveGames_StaleGame() {
     assertSnapshot(
       matching: HomeView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: Home.State(
             dailyChallenges: [],
             turnBasedMatches: [
               .init(
@@ -152,10 +150,9 @@ class HomeFeatureTests: XCTestCase {
                 theirName: "Blob"
               ),
             ]
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .environment(\.date, { .mock - 2*60*60 }),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

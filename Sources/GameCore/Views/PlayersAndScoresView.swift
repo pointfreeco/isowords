@@ -35,7 +35,7 @@ struct PlayersAndScoresView: View {
     store: StoreOf<Game>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -152,8 +152,8 @@ private struct PlayerView: View {
     static var previews: some View {
       Group {
         PlayersAndScoresView(
-          store: .init(
-            initialState: .init(
+          store: Store(
+            initialState: Game.State(
               gameCurrentTime: Date(),
               localPlayer: .authenticated,
               turnBasedMatch: update(.inProgress) {
@@ -166,16 +166,15 @@ private struct PlayerView: View {
                 metadata: .init(lastOpenedAt: nil, playerIndexToId: [:]),
                 moves: []
               )
-            ),
-            reducer: .empty,
-            environment: ()
-          )
+            )
+          ) {
+          }
         )
         .previewLayout(.fixed(width: 320, height: 100))
 
         PlayersAndScoresView(
-          store: .init(
-            initialState: .init(
+          store: Store(
+            initialState: Game.State(
               gameCurrentTime: Date(),
               localPlayer: update(.authenticated) {
                 $0.displayName = "Incredible Guide of Huge Abbey"
@@ -204,10 +203,9 @@ private struct PlayerView: View {
                   )
                 ]
               )
-            ),
-            reducer: .empty,
-            environment: ()
-          )
+            )
+          ) {
+          }
         )
         .previewLayout(.fixed(width: 320, height: 100))
       }

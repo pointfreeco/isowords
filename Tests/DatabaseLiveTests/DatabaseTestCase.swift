@@ -34,8 +34,8 @@ class DatabaseTestCase: XCTestCase {
 func createPuzzlesIterator() -> UnfoldFirstSequence<ArchivablePuzzle> {
   sequence(first: ArchivablePuzzle.mock) {
     var puzzle = $0
-    puzzle[.two][.two][.two].left.letter = String(
-      UnicodeScalar($0[.two][.two][.two].left.letter.first!.unicodeScalars.first!.value + 1)!
+    puzzle.2.2.2.left.letter = String(
+      UnicodeScalar($0.2.2.2.left.letter.first!.unicodeScalars.first!.value + 1)!
     )
     return puzzle
   }

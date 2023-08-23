@@ -4,7 +4,7 @@ import ComposableGameCenter
 import Styleguide
 import SwiftUI
 
-public struct PastGames: ReducerProtocol {
+public struct PastGames: Reducer {
   public struct State: Equatable {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
@@ -17,7 +17,7 @@ public struct PastGames: ReducerProtocol {
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case let .matchesResponse(.success(matches)):
@@ -31,19 +31,21 @@ public struct PastGames: ReducerProtocol {
         return .none
 
       case .task:
-        return .task {
-          await .matchesResponse(
-            TaskResult {
-              try await self.gameCenter.turnBasedMatch
-                .loadMatches()
-                .compactMap { match in
-                  PastGame.State(
-                    turnBasedMatch: match,
-                    localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
-                  )
-                }
-                .sorted { $0.endDate > $1.endDate }
-            }
+        return .run { send in
+          await send(
+            .matchesResponse(
+              TaskResult {
+                try await self.gameCenter.turnBasedMatch
+                  .loadMatches()
+                  .compactMap { match in
+                    PastGame.State(
+                      turnBasedMatch: match,
+                      localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
+                    )
+                  }
+                  .sorted { $0.endDate > $1.endDate }
+              }
+            )
           )
         }
       }
@@ -61,27 +63,21 @@ struct PastGamesView: View {
 
   init(store: StoreOf<PastGames>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
     ScrollView {
-      ForEachStore(
-        self.store.scope(
-          state: \.pastGames,
-          action: PastGames.Action.pastGame
-        ),
-        content: { store in
-          Group {
-            PastGameRow(store: store)
+      ForEachStore(self.store.scope(state: \.pastGames, action: { .pastGame($0, $1) })) { store in
+        Group {
+          PastGameRow(store: store)
 
-            Divider()
-              .frame(height: 2)
-              .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
-              .padding([.top, .bottom], .grid(8))
-          }
+          Divider()
+            .frame(height: 2)
+            .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
+            .padding(.vertical, .grid(8))
         }
-      )
+      }
       .padding()
     }
     .task { await viewStore.send(.task).finish() }
@@ -102,9 +98,10 @@ struct PastGamesView: View {
         NavigationView {
           PastGamesView(
             store: .init(
-              initialState: PastGames.State(pastGames: pastGames),
-              reducer: PastGames()
-            )
+              initialState: PastGames.State(pastGames: pastGames)
+            ) {
+              PastGames()
+            }
           )
         }
       }

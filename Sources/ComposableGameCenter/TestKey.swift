@@ -12,12 +12,12 @@ extension GameCenterClient: TestDependencyKey {
   public static let previewValue = Self.noop
 
   public static let testValue = Self(
-    gameCenterViewController: .unimplemented,
-    localPlayer: .unimplemented,
-    reportAchievements: XCTUnimplemented("\(Self.self).reportAchievements"),
-    showNotificationBanner: XCTUnimplemented("\(Self.self).showNotificationBanner"),
-    turnBasedMatch: .unimplemented,
-    turnBasedMatchmakerViewController: .unimplemented
+    gameCenterViewController: .testValue,
+    localPlayer: .testValue,
+    reportAchievements: unimplemented("\(Self.self).reportAchievements"),
+    showNotificationBanner: unimplemented("\(Self.self).showNotificationBanner"),
+    turnBasedMatch: .testValue,
+    turnBasedMatchmakerViewController: .testValue
   )
 }
 
@@ -38,9 +38,9 @@ extension GameCenterViewControllerClient {
     dismiss: {}
   )
 
-  public static let unimplemented = Self(
-    present: XCTUnimplemented("\(Self.self).present"),
-    dismiss: XCTUnimplemented("\(Self.self).dismiss")
+  public static let testValue = Self(
+    present: unimplemented("\(Self.self).present"),
+    dismiss: unimplemented("\(Self.self).dismiss")
   )
 }
 
@@ -60,11 +60,11 @@ extension LocalPlayerClient {
     presentAuthenticationViewController: {}
   )
 
-  public static let unimplemented = Self(
-    authenticate: XCTUnimplemented("\(Self.self).authenticate"),
-    listener: XCTUnimplemented("\(Self.self).listener", placeholder: .finished),
-    localPlayer: XCTUnimplemented("\(Self.self).localPlayer", placeholder: .notAuthenticated),
-    presentAuthenticationViewController: XCTUnimplemented(
+  public static let testValue = Self(
+    authenticate: unimplemented("\(Self.self).authenticate"),
+    listener: unimplemented("\(Self.self).listener", placeholder: .finished),
+    localPlayer: unimplemented("\(Self.self).localPlayer", placeholder: .notAuthenticated),
+    presentAuthenticationViewController: unimplemented(
       "\(Self.self).presentAuthenticationViewController"
     )
   )
@@ -84,17 +84,17 @@ extension TurnBasedMatchClient {
     sendReminder: { _ in }
   )
 
-  public static let unimplemented = Self(
-    endMatchInTurn: XCTUnimplemented("\(Self.self).endMatchInTurn"),
-    endTurn: XCTUnimplemented("\(Self.self).endTurn"),
-    load: XCTUnimplemented("\(Self.self).load"),
-    loadMatches: XCTUnimplemented("\(Self.self).loadMatches"),
-    participantQuitInTurn: XCTUnimplemented("\(Self.self).participantQuitInTurn"),
-    participantQuitOutOfTurn: XCTUnimplemented("\(Self.self).participantQuitOutOfTurn"),
-    rematch: XCTUnimplemented("\(Self.self).rematch"),
-    remove: XCTUnimplemented("\(Self.self).remove"),
-    saveCurrentTurn: XCTUnimplemented("\(Self.self).saveCurrentTurn"),
-    sendReminder: XCTUnimplemented("\(Self.self).sendReminder")
+  public static let testValue = Self(
+    endMatchInTurn: unimplemented("\(Self.self).endMatchInTurn"),
+    endTurn: unimplemented("\(Self.self).endTurn"),
+    load: unimplemented("\(Self.self).load"),
+    loadMatches: unimplemented("\(Self.self).loadMatches"),
+    participantQuitInTurn: unimplemented("\(Self.self).participantQuitInTurn"),
+    participantQuitOutOfTurn: unimplemented("\(Self.self).participantQuitOutOfTurn"),
+    rematch: unimplemented("\(Self.self).rematch"),
+    remove: unimplemented("\(Self.self).remove"),
+    saveCurrentTurn: unimplemented("\(Self.self).saveCurrentTurn"),
+    sendReminder: unimplemented("\(Self.self).sendReminder")
   )
 }
 
@@ -104,8 +104,8 @@ extension TurnBasedMatchmakerViewControllerClient {
     dismiss: {}
   )
 
-  public static let unimplemented = Self(
-    present: XCTUnimplemented("\(Self.self).present"),
-    dismiss: XCTUnimplemented("\(Self.self).dismiss")
+  public static let testValue = Self(
+    present: unimplemented("\(Self.self).present"),
+    dismiss: unimplemented("\(Self.self).dismiss")
   )
 }

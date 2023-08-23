@@ -26,7 +26,7 @@ class CubeCoreTests: XCTestCase {
             "z": 2,
           ]
         ],
-      ]
+      ] as [String : Any]
     )
 
     try assertBackwardsCompatibleCodable(
@@ -47,7 +47,7 @@ class CubeCoreTests: XCTestCase {
             "z": 2,
           ]
         ],
-      ]
+      ] as [String : Any]
     )
 
     try assertBackwardsCompatibleCodable(
@@ -68,11 +68,11 @@ class CubeCoreTests: XCTestCase {
         "type": [
           "playedWord": [
             ["index": ["x": 0, "y": 0, "z": 0], "side": 0],
-            ["index": ["x": 0, "y": 0, "z": 0], "side": 1],
+            ["index": ["x": 0, "y": 0, "z": 0], "side": 1] as [String : Any],
             ["index": ["x": 0, "y": 0, "z": 0], "side": 2],
           ]
         ],
-      ]
+      ] as [String : Any]
     )
   }
 
@@ -85,11 +85,11 @@ class CubeCoreTests: XCTestCase {
         wasRemoved: false
       ),
       json: [
-        "left": ["letter": "A", "side": 1, "useCount": 1],
-        "right": ["letter": "B", "side": 2, "useCount": 2],
-        "top": ["letter": "C", "side": 0, "useCount": 0],
+        "left": ["letter": "A", "side": 1, "useCount": 1] as [String : Any],
+        "right": ["letter": "B", "side": 2, "useCount": 2] as [String : Any],
+        "top": ["letter": "C", "side": 0, "useCount": 0] as [String : Any],
         "wasRemoved": false,
-      ]
+      ] as [String : Any]
     )
   }
 
@@ -101,7 +101,7 @@ class CubeCoreTests: XCTestCase {
         top: .init(letter: "C", side: .top)
       ),
       json: [
-        "left": ["letter": "A", "side": 1],
+        "left": ["letter": "A", "side": 1] as [String : Any],
         "right": ["letter": "B", "side": 2],
         "top": ["letter": "C", "side": 0],
       ]
@@ -135,21 +135,21 @@ class CubeCoreTests: XCTestCase {
       json: [
         "index": ["x": 0, "y": 1, "z": 2],
         "side": 0,
-      ]
+      ] as [String : Any]
     )
     try assertBackwardsCompatibleCodable(
       value: IndexedCubeFace(index: .init(x: .zero, y: .one, z: .two), side: .left),
       json: [
         "index": ["x": 0, "y": 1, "z": 2],
         "side": 1,
-      ]
+      ] as [String : Any]
     )
     try assertBackwardsCompatibleCodable(
       value: IndexedCubeFace(index: .init(x: .zero, y: .one, z: .two), side: .right),
       json: [
         "index": ["x": 0, "y": 1, "z": 2],
         "side": 2,
-      ]
+      ] as [String : Any]
     )
   }
 

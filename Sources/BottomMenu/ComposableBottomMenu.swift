@@ -5,20 +5,17 @@ public struct BottomMenuState<Action> {
   public var buttons: [Button]
   public var footerButton: Button?
   public var message: TextState?
-  public var onDismiss: MenuAction?
   public var title: TextState
 
   public init(
     title: TextState,
     message: TextState? = nil,
     buttons: [Button] = [],
-    footerButton: Button? = nil,
-    onDismiss: MenuAction? = nil
+    footerButton: Button? = nil
   ) {
     self.buttons = buttons
     self.footerButton = footerButton
     self.message = message
-    self.onDismiss = onDismiss
     self.title = title
   }
 
@@ -67,30 +64,43 @@ public struct BottomMenuState<Action> {
 extension BottomMenuState: Equatable where Action: Equatable {}
 extension BottomMenuState.Button: Equatable where Action: Equatable {}
 extension BottomMenuState.MenuAction: Equatable where Action: Equatable {}
+extension BottomMenuState: _EphemeralState {}
 
 extension View {
-  public func bottomMenu<Action>(
-    _ store: Store<BottomMenuState<Action>?, Action>
-  ) -> some View where Action: Equatable {
-    WithViewStore(store) { viewStore in
+  public func bottomMenu<MenuAction: Equatable>(
+    store: Store<PresentationState<BottomMenuState<MenuAction>>, PresentationAction<MenuAction>>
+  ) -> some View {
+    self.bottomMenu(store: store, state: { $0 }, action: { $0 })
+  }
+
+  public func bottomMenu<DestinationState, DestinationAction, MenuAction: Equatable>(
+    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
+    state toMenuState: @escaping (DestinationState) -> BottomMenuState<MenuAction>?,
+    action fromMenuAction: @escaping (MenuAction) -> DestinationAction
+  ) -> some View {
+    WithViewStore(
+      store,
+      observe: { $0 },
+      removeDuplicates: {
+        ($0.wrappedValue.flatMap(toMenuState) != nil)
+          == ($1.wrappedValue.flatMap(toMenuState) != nil)
+      }
+    ) { viewStore in
       self.bottomMenu(
         item: Binding(
           get: {
-            viewStore.state?.converted(
-              send: { viewStore.send($0) },
-              sendWithAnimation: { viewStore.send($0, animation: $1) }
+            viewStore.wrappedValue.flatMap(toMenuState)?.converted(
+              send: {
+                viewStore.send(.presented(fromMenuAction($0)))
+              },
+              sendWithAnimation: {
+                viewStore.send(.presented(fromMenuAction($0)), animation: $1)
+              }
             )
           },
-          set: { state, transaction in
-            withAnimation(transaction.disablesAnimations ? nil : transaction.animation) {
-              if state == nil, let onDismiss = viewStore.state?.onDismiss {
-                switch onDismiss.animation {
-                case .inherited:
-                  viewStore.send(onDismiss.action)
-                case let .explicit(animation):
-                  viewStore.send(onDismiss.action, animation: animation)
-                }
-              }
+          set: { state in
+            if state == nil {
+              viewStore.send(.dismiss, animation: .default)
             }
           }
         )
@@ -141,56 +151,58 @@ extension BottomMenuState.Button {
   import ComposableArchitecture
   import SwiftUIHelpers
 
-  private struct BottomMenuReducer: ReducerProtocol {
-    typealias State = BottomMenuState<Action>?
-
-    enum Action {
-      case show
-      case dismiss
+  private struct BottomMenuReducer: Reducer {
+    struct State: Equatable {
+      @PresentationState var bottomMenu: BottomMenuState<Action.BottomMenu>?
     }
 
-    func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
-      switch action {
-      case .show:
-        state = .init(
-          title: .init("vs mbrandonw"),
-          buttons: [
-            .init(
-              title: .init("Main menu"),
-              icon: Image(systemName: "flag")
-            ),
-            .init(
-              title: .init("End game"),
-              icon: Image(systemName: "flag")
-            ),
-          ],
-          footerButton: .init(
-            title: .init("Settings"),
-            icon: Image(systemName: "gear")
-          ),
-          onDismiss: .init(action: .dismiss, animation: .default)
-        )
-        return .none
-      case .dismiss:
-        state = nil
-        return .none
+    enum Action: Equatable {
+      case bottomMenu(PresentationAction<BottomMenu>)
+      case showMenuButtonTapped
+
+      enum BottomMenu: Equatable {}
+    }
+
+    var body: some ReducerOf<Self> {
+      Reduce { state, action in
+        switch action {
+        case .showMenuButtonTapped:
+          state.bottomMenu = .init(
+            title: .init("vs mbrandonw"),
+            buttons: [
+              .init(
+                title: .init("Main menu"),
+                icon: Image(systemName: "flag")
+              ),
+              .init(
+                title: .init("End game"),
+                icon: Image(systemName: "flag")
+              ),
+            ],
+            footerButton: .init(
+              title: .init("Settings"),
+              icon: Image(systemName: "gear")
+            )
+          )
+          return .none
+        case .bottomMenu:
+          return .none
+        }
       }
+      .ifLet(\.$bottomMenu, action: /Action.bottomMenu)
     }
   }
 
   struct BottomMenu_TCA_Previews: PreviewProvider {
     struct TestView: View {
-      private let store = Store(
-        initialState: nil,
-        reducer: BottomMenuReducer()
-      )
+      private let store = Store(initialState: BottomMenuReducer.State()) {
+        BottomMenuReducer()
+      }
 
       var body: some View {
-        WithViewStore(self.store.stateless) { viewStore in
-          Button("Present") { viewStore.send(.show, animation: .default) }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .bottomMenu(self.store)
-        }
+        Button("Present") { store.send(.showMenuButtonTapped, animation: .default) }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .bottomMenu(store: self.store.scope(state: \.$bottomMenu, action: { .bottomMenu($0) }))
       }
     }
 

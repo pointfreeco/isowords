@@ -17,24 +17,23 @@ class OnboardingFeatureTests: XCTestCase {
   func testBasics_FirstLaunch() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
     
-    let store = TestStore(
-      initialState: Onboarding.State(presentationStyle: .firstLaunch),
-      reducer: Onboarding()
-    )
-
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.dictionary.load = { _ in true }
-    store.dependencies.dictionary.contains = { word, _ in
-      ["GAME", "CUBES", "REMOVE", "WORD"].contains(word)
-    }
-    store.dependencies.feedbackGenerator = .noop
-    store.dependencies.mainRunLoop = .immediate
-    store.dependencies.date = .runLoop(store.dependencies.mainRunLoop)
-    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    store.dependencies.userDefaults.setBool = { value, key in
-      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-      XCTAssertNoDifference(value, true)
-      await isFirstLaunchOnboardingKeySet.setValue(true)
+    let store = TestStore(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
+      Onboarding()
+    } withDependencies: {
+      $0.audioPlayer = .noop
+      $0.dictionary.load = { _ in true }
+      $0.dictionary.contains = { word, _ in
+        ["GAME", "CUBES", "REMOVE", "WORD"].contains(word)
+      }
+      $0.feedbackGenerator = .noop
+      $0.mainRunLoop = .immediate
+      $0.date = .runLoop($0.mainRunLoop)
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
+      $0.userDefaults.setBool = { value, key in
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertNoDifference(value, true)
+        await isFirstLaunchOnboardingKeySet.setValue(true)
+      }
     }
 
     await store.send(.task)
@@ -312,22 +311,21 @@ class OnboardingFeatureTests: XCTestCase {
   func testSkip_HasSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
-    let store = TestStore(
-      initialState: Onboarding.State(presentationStyle: .help),
-      reducer: Onboarding()
-    )
-
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.dictionary.load = { _ in true }
-    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    store.dependencies.userDefaults.boolForKey = { key in
-      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-      return true
-    }
-    store.dependencies.userDefaults.setBool = { value, key in
-      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-      XCTAssertNoDifference(value, true)
-      await isFirstLaunchOnboardingKeySet.setValue(true)
+    let store = TestStore(initialState: Onboarding.State(presentationStyle: .help)) {
+      Onboarding()
+    } withDependencies: {
+      $0.audioPlayer = .noop
+      $0.dictionary.load = { _ in true }
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
+      $0.userDefaults.boolForKey = { key in
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        return true
+      }
+      $0.userDefaults.setBool = { value, key in
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertNoDifference(value, true)
+        await isFirstLaunchOnboardingKeySet.setValue(true)
+      }
     }
 
     await store.send(.task)
@@ -347,22 +345,21 @@ class OnboardingFeatureTests: XCTestCase {
   func testSkip_HasNotSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
-    let store = TestStore(
-      initialState: Onboarding.State(presentationStyle: .firstLaunch),
-      reducer: Onboarding()
-    )
-
-    store.dependencies.audioPlayer = .noop
-    store.dependencies.dictionary.load = { _ in true }
-    store.dependencies.mainQueue = self.mainQueue.eraseToAnyScheduler()
-    store.dependencies.userDefaults.boolForKey = { key in
-      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-      return false
-    }
-    store.dependencies.userDefaults.setBool = { value, key in
-      XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-      XCTAssertNoDifference(value, true)
-      await isFirstLaunchOnboardingKeySet.setValue(true)
+    let store = TestStore(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
+      Onboarding()
+    } withDependencies: {
+      $0.audioPlayer = .noop
+      $0.dictionary.load = { _ in true }
+      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
+      $0.userDefaults.boolForKey = { key in
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        return false
+      }
+      $0.userDefaults.setBool = { value, key in
+        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        XCTAssertNoDifference(value, true)
+        await isFirstLaunchOnboardingKeySet.setValue(true)
+      }
     }
 
     await store.send(.task)
@@ -373,22 +370,27 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.skipButtonTapped) {
-      $0.alert = .init(
-        title: .init("Skip tutorial?"),
-        message: .init("""
+      $0.alert = AlertState {
+        TextState("Skip tutorial?")
+      } actions: {
+        ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
+          TextState("Yes, skip")
+        }
+        ButtonState(role: .cancel) {
+          TextState("No, resume")
+        }
+      } message: {
+        TextState(
+          """
           Are you sure you want to skip the tutorial? It only takes about a minute to complete.
 
           You can always view it again later in settings.
-          """),
-        primaryButton: .default(
-          .init("Yes, skip"),
-          action: .send(.skipButtonTapped, animation: .default)
-        ),
-        secondaryButton: .default(.init("No, resume"), action: .send(.resumeButtonTapped))
-      )
+          """
+        )
+      }
     }
 
-    await store.send(.alert(.skipButtonTapped)) {
+    await store.send(.alert(.presented(.skipButtonTapped))) {
       $0.alert = nil
       $0.step = .step21_PlayAGameYourself
     }

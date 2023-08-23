@@ -4,6 +4,7 @@ import ComposableArchitecture
 import ComposableGameCenter
 import GameKit
 import SharedModels
+import Tagged
 import TcaHelpers
 
 public struct ActiveTurnBasedMatch: Equatable, Identifiable {
@@ -66,7 +67,7 @@ extension ActiveTurnBasedMatch {
       lastPlayedAt: context.lastPlayedAt,
       now: now,
       playedWord: matchData.moves
-        .last(where: { (/Move.MoveType.playedWord).isMatching($0.type) })
+        .last(where: { /Move.MoveType.playedWord ~= $0.type })
         .flatMap { move in
           guard
             let playerIndex = move.playerIndex,

@@ -13,7 +13,7 @@ extension Send {
       withDuration: duration,
       delay: delay,
       options: animationOptions,
-      animations: { self.send(action) }
+      animations: { self(action) }
     )
   }
 }

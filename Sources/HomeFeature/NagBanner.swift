@@ -2,109 +2,56 @@ import ComposableArchitecture
 import SwiftUI
 import UpgradeInterstitialFeature
 
-public struct NagBannerFeature: ReducerProtocol {
-  public typealias State = NagBanner.State?
-
-  public enum Action: Equatable {
-    case dismissUpgradeInterstitial
-    case nagBanner(NagBanner.Action)
-  }
-
-  public var body: some ReducerProtocol<State, Action> {
-    Reduce { state, action in
-      switch action {
-      case .dismissUpgradeInterstitial:
-        state?.upgradeInterstitial = nil
-        return .none
-
-      case .nagBanner(.upgradeInterstitial(.delegate(.fullGamePurchased))):
-        state = nil
-        return .none
-
-      case .nagBanner:
-        return .none
-      }
-    }
-    .ifLet(\.self, action: /Action.nagBanner) {
-      NagBanner()
-    }
-  }
-}
-
-public struct NagBanner: ReducerProtocol {
+public struct NagBanner: Reducer {
   public struct State: Equatable {
-    var upgradeInterstitial: UpgradeInterstitial.State? = nil
+    @PresentationState var upgradeInterstitial: UpgradeInterstitial.State? = nil
+
+    public init(upgradeInterstitial: UpgradeInterstitial.State? = nil) {
+      self.upgradeInterstitial = upgradeInterstitial
+    }
   }
 
   public enum Action: Equatable {
     case tapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
+    case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)
   }
 
-  public var body: some ReducerProtocol<State, Action> {
+  @Dependency(\.dismiss) var dismiss
+
+  public init() {}
+
+  public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
       case .tapped:
         state.upgradeInterstitial = .init(isDismissable: true)
         return .none
 
-      case .upgradeInterstitial(.delegate(.close)):
-        state.upgradeInterstitial = nil
-        return .none
-
-      case .upgradeInterstitial(.delegate(.fullGamePurchased)):
-        state.upgradeInterstitial = nil
-        return .none
+      case .upgradeInterstitial(.presented(.delegate(.fullGamePurchased))):
+        return .run { _ in
+          await self.dismiss()
+        }
 
       case .upgradeInterstitial:
         return .none
       }
     }
-    .ifLet(\.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .ifLet(\.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }
 }
 
-struct NagBannerFeatureView: View {
-  let store: StoreOf<NagBannerFeature>
-
-  var body: some View {
-    WithViewStore(self.store) { viewStore in
-      IfLetStore(
-        self.store.scope(state: { $0 }, action: NagBannerFeature.Action.nagBanner),
-        then: NagBannerView.init(store:)
-      )
-      .background(
-        // NB: If an .alert/.sheet modifier is used on a child view while the parent view is also
-        // using an .alert/.sheet modifier, then the child view’s alert/sheet will never appear:
-        // https://gist.github.com/mbrandonw/82ece7c62afb370a875fd1db2f9a236e
-        EmptyView()
-          .sheet(
-            isPresented: viewStore.binding(
-              get: { $0?.upgradeInterstitial != nil },
-              send: NagBannerFeature.Action.dismissUpgradeInterstitial
-            )
-          ) {
-            IfLetStore(
-              self.store.scope(
-                state: { $0?.upgradeInterstitial },
-                action: { .nagBanner(.upgradeInterstitial($0)) }
-              ),
-              then: UpgradeInterstitialView.init(store:)
-            )
-          }
-      )
-    }
-  }
-}
-
-private struct NagBannerView: View {
+public struct NagBannerView: View {
   let store: StoreOf<NagBanner>
 
-  var body: some View {
-    WithViewStore(self.store) { viewStore in
-      Button(action: { viewStore.send(.tapped) }) {
+  public init(store: StoreOf<NagBanner>) {
+    self.store = store
+  }
+
+  public var body: some View {
+    WithViewStore(self.store, observe: { $0 }) { viewStore in
+      Button { viewStore.send(.tapped) } label: {
         Marquee(duration: TimeInterval(messages.count) * 9) {
           ForEach(messages, id: \.self) { message in
             Text(message)
@@ -118,6 +65,10 @@ private struct NagBannerView: View {
       .frame(height: 56)
       .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
+    .sheet(
+      store: self.store.scope(state: \.$upgradeInterstitial, action: { .upgradeInterstitial($0) }),
+      content: UpgradeInterstitialView.init(store:)
+    )
   }
 }
 
@@ -134,10 +85,9 @@ let messages = [
       NavigationView {
         ZStack(alignment: .bottomLeading) {
           NagBannerView(
-            store: Store(
-              initialState: NagBanner.State(),
-              reducer: NagBanner()
-            )
+            store: Store(initialState: NagBanner.State()) {
+              NagBanner()
+            }
           )
         }
       }

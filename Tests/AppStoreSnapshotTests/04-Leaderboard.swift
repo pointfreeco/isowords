@@ -8,11 +8,8 @@ var leaderboardAppStoreView: AnyView {
   let view = LeaderboardView(
     store: Store(
       initialState: Leaderboard.State(
-        cubePreview: nil,
-        isAnimationReduced: false,
-        isHapticsEnabled: true,
+        destination: nil,
         scope: .vocab,
-        settings: .init(),
         solo: LeaderboardResults.State(
           gameMode: .unlimited,
           isLoading: false,
@@ -33,10 +30,9 @@ var leaderboardAppStoreView: AnyView {
           ),
           timeScope: .lastWeek
         )
-      ),
-      reducer: .empty,
-      environment: ()
-    )
+      )
+    ) {
+    }
   )
   return AnyView(view)
 }

@@ -31,7 +31,7 @@ public struct ServerRouter: ParserPrinter {
     self.sha256 = sha256
   }
 
-  var body: AnyParserPrinter<URLRequestData, ServerRoute> {
+  public var body: some Router<ServerRoute> {
     OneOf {
       Route(.case(ServerRoute.api)) {
         Path { "api" }
@@ -113,7 +113,7 @@ public struct ServerRouter: ParserPrinter {
     .eraseToAnyParserPrinter()
   }
 
-  @ParserBuilder
+  @ParserBuilder<URLRequestData>
   var apiRouter: AnyParserPrinter<URLRequestData, ServerRoute.Api.Route> {
     let dailyChallengeRouter = OneOf {
       Route(.case(ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:))) {
@@ -321,8 +321,8 @@ public struct ServerRouter: ParserPrinter {
       sha256: { $0 }
     )
 
-    public static let unimplemented = Self(
-      date: XCTUnimplemented("\(Self.self).date", placeholder: Date()),
+    public static let testValue = Self(
+      date: unimplemented("\(Self.self).date", placeholder: Date()),
       decoder: jsonDecoder,
       encoder: jsonEncoder,
       secrets: ["SECRET_DEADBEEF"],

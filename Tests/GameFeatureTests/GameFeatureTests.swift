@@ -40,14 +40,15 @@ class GameFeatureTests: XCTestCase {
           secondsPlayed: 0
         ),
         settings: Settings.State()
-      ),
-      reducer: GameFeature()
-    )
-
-    store.dependencies.audioPlayer.play = { _ in }
-    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
-    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
-    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      )
+    ) {
+      GameFeature()
+    } withDependencies: {
+      $0.audioPlayer.play = { _ in }
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    }
 
     await store.send(.game(.doubleTap(index: .zero)))
     await store.receive(.game(.confirmRemoveCube(.zero))) {
@@ -82,13 +83,14 @@ class GameFeatureTests: XCTestCase {
           ]
         ),
         settings: Settings.State()
-      ),
-      reducer: GameFeature()
-    )
-
-    store.dependencies.fileClient.load = { @Sendable _ in try await Task.never() }
-    store.dependencies.gameCenter.localPlayer.localPlayer = { .authenticated }
-    store.dependencies.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      )
+    ) {
+      GameFeature()
+    } withDependencies: {
+      $0.fileClient.load = { @Sendable _ in try await Task.never() }
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+    }
 
     await store.send(.game(.doubleTap(index: .zero)))
   }

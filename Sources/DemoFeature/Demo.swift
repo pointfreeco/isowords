@@ -8,7 +8,7 @@ import StoreKit
 import SwiftUI
 import TcaHelpers
 
-public struct Demo: ReducerProtocol {
+public struct Demo: Reducer {
   public struct State: Equatable {
     var appStoreOverlayIsPresented: Bool
     var step: Step
@@ -26,19 +26,10 @@ public struct Demo: ReducerProtocol {
       case onboarding(Onboarding.State)
     }
 
-    var game: Game.State? {
-      get {
-        guard case let .game(game) = self.step
-        else { return nil }
-        return game
-      }
-      set {
-        guard
-          let newValue = newValue,
-          case .game = self.step
-        else { return }
-        self.step = .game(newValue)
-      }
+    var isGameOver: Bool {
+      guard case let .game(game) = self.step, case .gameOver = game.destination
+      else { return false }
+      return true
     }
   }
 
@@ -59,33 +50,30 @@ public struct Demo: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some ReducerOf<Self> {
     Scope(state: \.step, action: .self) {
-      Scope(
-        state: /State.Step.onboarding,
-        action: /Action.onboarding
-      ) {
+      Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
         Onboarding()
       }
+      Scope(state: /State.Step.game, action: /Action.game) {
+        Game().transformDependency(\.self) {
+          $0.database = .noop
+          $0.fileClient = .noop
+          $0.gameCenter = .noop
+          $0.remoteNotifications = .noop
+          $0.serverConfig = .noop
+          $0.storeKit = .noop
+          $0.userDefaults = .noop
+          $0.userNotifications = .noop
+        }
+      }
     }
-
-    IntegratedGame(
-      state: OptionalPath(\.game),
-      action: /Action.game,
-      isHapticsEnabled: { _ in true }
-    )
-    .dependency(\.database, .noop)
-    .dependency(\.fileClient, .noop)
-    .dependency(\.gameCenter, .noop)
-    .dependency(\.remoteNotifications, .noop)
-    .dependency(\.serverConfig, .noop)
-    .dependency(\.storeKit, .noop)
-    .dependency(\.userDefaults, .noop)
-    .dependency(\.userNotifications, .noop)
-    .onChange(of: { $0.game?.gameOver != nil }) { _, _, _ in
-      .task {
-        try await self.mainQueue.sleep(for: .seconds(2))
-        return .gameOverDelay
+    .onChange(of: \.isGameOver) { _, _ in
+      Reduce { _, _ in
+        .run { send in
+          try await self.mainQueue.sleep(for: .seconds(2))
+          await send(.gameOverDelay)
+        }
       }
     }
 
@@ -96,11 +84,11 @@ public struct Demo: ReducerProtocol {
         return .none
 
       case .fullVersionButtonTapped:
-        return .fireAndForget {
+        return .run { _ in
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.gameOver(.submitGameResponse(.success))):
+      case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
         state.appStoreOverlayIsPresented = true
         return .none
 
@@ -112,7 +100,7 @@ public struct Demo: ReducerProtocol {
         return .none
 
       case .onAppear:
-        return .fireAndForget {
+        return .run { _ in
           await self.loadSounds(AudioPlayerClient.Sound.allCases)
         }
 
@@ -146,7 +134,7 @@ public struct DemoView: View {
 
     init(state: Demo.State) {
       self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = state.game?.gameOver != nil
+      self.isGameOver = state.isGameOver
     }
   }
 
@@ -154,33 +142,28 @@ public struct DemoView: View {
     store: StoreOf<Demo>
   ) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
-    SwitchStore(self.store.scope(state: \.step)) {
-      CaseLet(
-        state: /Demo.State.Step.onboarding,
-        action: Demo.Action.onboarding,
-        then: {
+    SwitchStore(self.store.scope(state: \.step, action: { $0 })) { step in
+      switch step {
+      case .onboarding:
+        CaseLet(/Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
           OnboardingView(store: $0)
             .onAppear { self.viewStore.send(.onAppear) }
         }
-      )
 
-      CaseLet(
-        state: /Demo.State.Step.game,
-        action: Demo.Action.game,
-        then: { store in
+      case .game:
+        CaseLet(/Demo.State.Step.game, action: Demo.Action.game) { store in
           GameWrapper(
             content: GameView(
               content: CubeView(
                 store: store.scope(
-                  state: { CubeSceneView.ViewState(game: $0, nub: nil, settings: .init()) },
+                  state: { CubeSceneView.ViewState(game: $0, nub: nil) },
                   action: { CubeSceneView.ViewAction.to(gameAction: $0) }
                 )
               ),
-              isAnimationReduced: false,
               store: store
             ),
             isGameOver: self.viewStore.isGameOver,
@@ -189,7 +172,7 @@ public struct DemoView: View {
             }
           )
         }
-      )
+      }
     }
     .appStoreOverlay(
       isPresented: self.viewStore.binding(
@@ -213,7 +196,7 @@ struct GameWrapper<Content: View>: View {
       self.content
 
       if !self.isGameOver {
-        Button(action: { self.bannerAction() }) {
+        Button { self.bannerAction() } label: {
           HStack {
             Text("Having fun?")
               .foregroundColor(.isowordsRed)
@@ -232,9 +215,9 @@ struct GameWrapper<Content: View>: View {
           }
           .adaptiveFont(.matterMedium, size: 18)
           .foregroundColor(.isowordsBlack)
-          .adaptivePadding([.top], .grid(2))
-          .adaptivePadding([.bottom], .grid(4))
-          .adaptivePadding([.horizontal], .grid(4))
+          .adaptivePadding(.top, .grid(2))
+          .adaptivePadding(.bottom, .grid(4))
+          .adaptivePadding(.horizontal, .grid(4))
         }
         .frame(maxWidth: .infinity)
         .background(

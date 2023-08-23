@@ -53,7 +53,7 @@ public struct ActiveGamesView: View {
   ) {
     self.showMenuItems = showMenuItems
     self.store = store
-    self.viewStore = ViewStore(self.store, removeDuplicates: ==)
+    self.viewStore = ViewStore(self.store, observe: { $0 }, removeDuplicates: ==)
   }
 
   public var body: some View {
@@ -113,13 +113,13 @@ public struct ActiveGamesView: View {
                 if match.status == .open, !match.isYourTurn,
                   let sendReminderAction = sendReminderAction
                 {
-                  Button(action: { self.viewStore.send(sendReminderAction) }) {
+                  Button { self.viewStore.send(sendReminderAction) } label: {
                     Label("Send Reminder", systemImage: "clock")
                   }
                 }
-                Button(action: {
+                Button {
                   self.viewStore.send(.turnBasedGameMenuItemTapped(.deleteMatch(match.id)))
-                }) {
+                } label: {
                   Label("Delete Match", systemImage: "trash")
                     .foregroundColor(.red)
                 }
@@ -344,9 +344,9 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
       Preview {
         ScrollView {
           ActiveGamesView(
-            store: .init(
-              initialState: .init(
-                savedGames: .init(
+            store: Store(
+              initialState: ActiveGamesState(
+                savedGames: SavedGamesState(
                   dailyChallengeUnlimited: update(.mock) {
                     $0?.moves = [.highScoringMove]
                     $0?.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
@@ -357,15 +357,14 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
                   }
                 ),
                 turnBasedMatches: []
-              ),
-              reducer: .empty,
-              environment: ()
-            ),
+              )
+            ) {
+            },
             showMenuItems: true
           )
           ActiveGamesView(
-            store: .init(
-              initialState: .init(
+            store: Store(
+              initialState: ActiveGamesState(
                 savedGames: .init(),
                 turnBasedMatches: [
                   .init(
@@ -409,10 +408,9 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
                     theirName: "Blob"
                   ),
                 ]
-              ),
-              reducer: .empty,
-              environment: ()
-            ),
+              )
+            ) {
+            },
             showMenuItems: true
           )
         }

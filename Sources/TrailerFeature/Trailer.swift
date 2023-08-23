@@ -7,11 +7,11 @@ import SharedModels
 import SwiftUI
 import UIApplicationClient
 
-public struct Trailer: ReducerProtocol {
+public struct Trailer: Reducer {
   public struct State: Equatable {
     var game: Game.State
-    @BindableState var nub: CubeSceneView.ViewState.NubState
-    @BindableState var opacity: Double
+    @BindingState var nub: CubeSceneView.ViewState.NubState
+    @BindingState var opacity: Double
 
     public init(
       game: Game.State,
@@ -48,25 +48,26 @@ public struct Trailer: ReducerProtocol {
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
-    IntegratedGame(state: \State.game, action: /Action.game, isHapticsEnabled: { _ in true })
-      .dependency(\.apiClient, .noop)
-      .dependency(\.applicationClient, .noop)
-      .dependency(
-        \.audioPlayer,
-        self.audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
-      )
-      .dependency(\.build, .noop)
-      .dependency(\.database, .noop)
-      .dependency(\.feedbackGenerator, .noop)
-      .dependency(\.fileClient, .noop)
-      .dependency(\.gameCenter, .noop)
-      .dependency(\.lowPowerMode, .false)
-      .dependency(\.remoteNotifications, .noop)
-      .dependency(\.serverConfig, .noop)
-      .dependency(\.storeKit, .noop)
-      .dependency(\.userDefaults, .noop)
-      .dependency(\.userNotifications, .noop)
+  public var body: some ReducerOf<Self> {
+    Scope(state: \.game, action: /Action.game) {
+      Game().transformDependency(\.self) {
+        $0.apiClient = .noop
+        $0.applicationClient = .noop
+        $0.audioPlayer = self.audioPlayer
+          .filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
+        $0.build = .noop
+        $0.database = .noop
+        $0.feedbackGenerator = .noop
+        $0.fileClient = .noop
+        $0.gameCenter = .noop
+        $0.lowPowerMode = .false
+        $0.remoteNotifications = .noop
+        $0.serverConfig = .noop
+        $0.storeKit = .noop
+        $0.userDefaults = .noop
+        $0.userNotifications = .noop
+      }
+    }
 
     BindingReducer()
 
@@ -79,7 +80,8 @@ public struct Trailer: ReducerProtocol {
         return .none
 
       case .task:
-        return .run { send in
+        return .run { [nub = state.nub] send in
+          var nub = nub
           await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
 
           // Play trailer music
@@ -90,14 +92,15 @@ public struct Trailer: ReducerProtocol {
           try await self.mainQueue.sleep(for: firstWordDelay)
 
           // Play each word
-          for (wordIndex, word) in replayableWords.enumerated() {
+          for word in replayableWords {
             // Play each character in the word
             for (characterIndex, character) in word.enumerated() {
               let face = IndexedCubeFace(index: character.index, side: character.side)
 
               // Move the nub to the face being played
+              nub.location = .face(face)
               await send(
-                .set(\.$nub.location, .face(face)),
+                .set(\.$nub, nub),
                 animateWithDuration: moveNubToFaceDuration,
                 options: .curveEaseInOut
               )
@@ -110,20 +113,24 @@ public struct Trailer: ReducerProtocol {
                   .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
               )
               // Press the nub on the first character
+              nub.isPressed = true
               if characterIndex == 0 {
-                await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
+                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
               }
               // Select the cube face
               await send(.game(.tap(.began, face)), animation: .default)
             }
 
             // Release the  nub when the last character is played
-            await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
+            nub.isPressed = false
+            await send(.set(\.$nub, nub), animateWithDuration: 0.3)
 
             // Move the nub to the submit button
             try await self.mainQueue.sleep(for: .seconds(0.3))
+
+            nub.location = .submitButton
             await send(
-              .set(\.$nub.location, .submitButton),
+              .set(\.$nub, nub),
               animateWithDuration: moveNubToSubmitButtonDuration,
               options: .curveEaseInOut
             )
@@ -142,22 +149,27 @@ public struct Trailer: ReducerProtocol {
             // Submit the word
             try await self.mainQueue.sleep(for: .seconds(0.1))
             await withThrowingTaskGroup(of: Void.self) { group in
-              group.addTask {
-                await send(.set(\.$nub.isPressed, true), animateWithDuration: 0.3)
+              group.addTask { [nub] in
+                var nub = nub
+                nub.isPressed = true
+                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
               }
-              group.addTask {
+              group.addTask { [nub] in
+                var nub = nub
                 try await self.mainQueue.sleep(for: .seconds(0.2))
                 await send(.game(.submitButtonTapped(reaction: nil)))
                 try await self.mainQueue.sleep(for: .seconds(0.3))
-                await send(.set(\.$nub.isPressed, false), animateWithDuration: 0.3)
+                nub.isPressed = false
+                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
               }
             }
           }
 
           // Move the nub off screen once all words have been played
           try await self.mainQueue.sleep(for: .seconds(0.3))
+          nub.location = .offScreenBottom
           await send(
-            .set(\.$nub.location, .offScreenBottom),
+            .set(\.$nub, nub),
             animateWithDuration: moveNubOffScreenDuration,
             options: .curveEaseInOut
           )
@@ -192,7 +204,7 @@ public struct TrailerView: View {
 
   public init(store: StoreOf<Trailer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -242,10 +254,7 @@ public struct TrailerView: View {
 
           WordListView(
             isLeftToRight: true,
-            store: self.store.scope(
-              state: \.game,
-              action: Trailer.Action.game
-            )
+            store: self.store.scope(state: \.game, action: { .game($0) })
           )
         }
         .adaptivePadding(.top, .grid(18))
@@ -253,7 +262,7 @@ public struct TrailerView: View {
 
         CubeView(
           store: self.store.scope(
-            state: { CubeSceneView.ViewState(game: $0.game, nub: $0.nub, settings: .init()) },
+            state: { CubeSceneView.ViewState(game: $0.game, nub: $0.nub) },
             action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
           )
         )
@@ -265,14 +274,15 @@ public struct TrailerView: View {
       .background(
         BloomBackground(
           size: proxy.size,
-          store: self.store.actionless
+          store: self.store
             .scope(
               state: {
                 BloomBackground.ViewState(
                   bloomCount: $0.game.selectedWord.count,
                   word: $0.game.selectedWordString
                 )
-              }
+              },
+              action: absurd
             )
         )
       )
@@ -309,3 +319,5 @@ private let fadeInDuration = 0.3
 private let fadeOutDuration = 0.3
 private let submitPressDuration = 0.05
 private let submitHestitationDuration = 0.15
+
+private func absurd<A>(_: Never) -> A {}
