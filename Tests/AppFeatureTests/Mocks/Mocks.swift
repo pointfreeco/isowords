@@ -1,20 +1,13 @@
 import ClientModels
 import ComposableArchitecture
 import Foundation
-import GameFeature
+import GameCore
 import Overture
 import SettingsFeature
 import SharedModels
 
 @testable import AppFeature
 @testable import ComposableGameCenter
-
-extension GameFeature.State {
-  static let mock = Self(
-    game: .mock,
-    settings: .everythingOff
-  )
-}
 
 extension Game.State {
   static let mock = Self(

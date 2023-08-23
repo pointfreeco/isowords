@@ -1,4 +1,5 @@
 import ComposableGameCenter
+import Dependencies
 import Foundation
 import SharedModels
 import Tagged
@@ -57,7 +58,15 @@ extension Data {
   }
 
   static let matchDecoder = JSONDecoder()
-  static let matchEncoder = JSONEncoder()
+  static let matchEncoder: JSONEncoder = {
+    let encoder = JSONEncoder()
+    // TODO: Would be better to move this JSON decode to its own @Dependency.
+    @Dependency(\.context) var context
+    if context == .test {
+      encoder.outputFormatting = .sortedKeys
+    }
+    return encoder
+  }()
 }
 
 extension TurnBasedMatchData.Metadata {

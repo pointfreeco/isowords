@@ -10,18 +10,16 @@ struct LeaderboardLinkView: View {
   @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
 
   struct ViewState: Equatable {
-    var tag: Home.Destinations.State.Tag?
     var weekInReview: FetchWeekInReviewResponse?
 
     init(state: Home.State) {
-      self.tag = state.destination?.tag
       self.weekInReview = state.weekInReview
     }
   }
 
   init(store: StoreOf<Home>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   var body: some View {
@@ -34,21 +32,15 @@ struct LeaderboardLinkView: View {
         Spacer()
 
         Button("View all") {
-          self.viewStore.send(.setNavigation(tag: self.tag))
+          self.viewStore.send(.leaderboardButtonTapped)
         }
         .adaptiveFont(.matterMedium, size: 12)
       }
       .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
 
-      NavigationLink(
-        destination: self.destination,
-        tag: self.tag,
-        selection: self.viewStore.binding(
-          get: \.tag,
-          send: Home.Action.setNavigation(tag:)
-        )
-        .animation()
-      ) {
+      Button {
+        self.viewStore.send(.leaderboardButtonTapped)
+      } label: {
         VStack(alignment: .leading, spacing: .grid(4)) {
           Text("Week in review")
 
@@ -66,20 +58,13 @@ struct LeaderboardLinkView: View {
           foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE26C5E)
         )
       )
+      .navigationDestination(
+        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        state: /Home.Destination.State.leaderboard,
+        action: Home.Destination.Action.leaderboard,
+        destination: LeaderboardView.init(store:)
+      )
     }
-  }
-
-  var tag: Home.Destinations.State.Tag { .leaderboard }
-
-  var destination: some View {
-    IfLetStore(
-      self.store.scope(
-        state: (\Home.State.destination).appending(path: /Home.Destinations.State.leaderboard)
-          .extract(from:),
-        action: { .destination(.leaderboard($0)) }
-      ),
-      then: LeaderboardView.init(store:)
-    )
   }
 
   func weekInReview(_ weekInReview: FetchWeekInReviewResponse?) -> some View {
@@ -162,11 +147,8 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
     static var previews: some View {
       Preview {
         LeaderboardLinkView(
-          store: Store(
-            initialState: .init(),
-            reducer: .empty,
-            environment: ()
-          )
+          store: Store(initialState: .init()) {
+          }
         )
       }
     }

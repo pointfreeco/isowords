@@ -4,28 +4,27 @@ import Styleguide
 import SwiftUI
 
 public struct GameFooterView: View {
-  let isAnimationReduced: Bool
   let isLeftToRight: Bool
   let store: StoreOf<Game>
   @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   struct ViewState: Equatable {
+    let isAnimationReduced: Bool
     let selectedWordString: String
 
     init(state: Game.State) {
+      self.isAnimationReduced = state.isAnimationReduced
       self.selectedWordString = state.selectedWordString
     }
   }
 
   public init(
-    isAnimationReduced: Bool,
     isLeftToRight: Bool = false,
     store: StoreOf<Game>
   ) {
-    self.isAnimationReduced = isAnimationReduced
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -35,7 +34,7 @@ public struct GameFooterView: View {
         store: self.store
       )
       .transition(
-        isAnimationReduced
+        viewStore.isAnimationReduced
           ? .opacity
           : AnyTransition.offset(y: 50)
             .combined(with: .opacity)
@@ -64,7 +63,7 @@ public struct WordListView: View {
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   struct SpacerId: Hashable {}
@@ -170,18 +169,15 @@ extension WordListView.ViewState {
     @ViewBuilder
     static var previews: some View {
       WordListView(
-        store: .init(
-          initialState: .init(inProgressGame: .mock),
-          reducer: .empty,
-          environment: ()
-        )
+        store: Store(initialState: .init(inProgressGame: .mock)) {
+        }
       )
       .previewLayout(.fixed(width: 500, height: 100))
       .previewDisplayName("New game")
 
       WordListView(
-        store: .init(
-          initialState: .init(
+        store: StoreOf<Game>(
+          initialState: Game.State(
             gameCurrentTime: Date(),
             localPlayer: .authenticated,
             turnBasedMatch: update(.mock) {
@@ -222,10 +218,9 @@ extension WordListView.ViewState {
                 ),
               ]
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .previewLayout(.fixed(width: 500, height: 100))
       .previewDisplayName("Multiplayer game")

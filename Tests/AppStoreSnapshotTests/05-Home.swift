@@ -45,7 +45,6 @@ var homeAppStoreView: AnyView {
           ),
         ],
         hasPastTurnBasedGames: true,
-        nagBanner: nil,
         savedGames: SavedGamesState(
           dailyChallengeUnlimited: InProgressGame(
             cubes: .mock,
@@ -58,7 +57,6 @@ var homeAppStoreView: AnyView {
           ),
           unlimited: nil
         ),
-        settings: .init(),
         turnBasedMatches: [
           ActiveTurnBasedMatch(
             id: "deadbeef",
@@ -86,9 +84,9 @@ var homeAppStoreView: AnyView {
             score: score("QUEENLY")
           )
         )
-      ),
-      reducer: EmptyReducer<Home.State, Home.Action>()
-    )
+      )
+    ) {
+    }
   )
   .environment(\.date) { runLoop.now.advanced(by: -60 * 60 * 2).date }
   return AnyView(view)

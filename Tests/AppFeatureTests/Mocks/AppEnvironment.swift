@@ -10,6 +10,10 @@ import UserDefaultsClient
 extension DependencyValues {
   mutating func didFinishLaunching() {
     self.audioPlayer.load = { _ in }
+    self.audioPlayer.secondaryAudioShouldBeSilencedHint = { false }
+    self.audioPlayer.setGlobalVolumeForMusic = { _ in }
+    self.audioPlayer.setGlobalVolumeForSoundEffects = { _ in }
+    self.applicationClient.setUserInterfaceStyle = { _ in }
     self.database.migrate = {}
     self.dictionary.load = { _ in false }
     self.fileClient.load = { @Sendable _ in try await Task.never() }

@@ -1,5 +1,6 @@
 import AppAudioLibrary
 import AppClipAudioLibrary
+import ComposableArchitecture
 import DictionarySqliteClient
 import OnboardingFeature
 import Styleguide
@@ -14,14 +15,12 @@ struct OnboardingPreviewApp: App {
   var body: some Scene {
     WindowGroup {
       OnboardingView(
-        store: .init(
-          initialState: Onboarding.State(presentationStyle: .firstLaunch),
-          reducer: Onboarding()
-            .dependency(
-              \.audioPlayer, .live(bundles: [AppClipAudioLibrary.bundle, AppAudioLibrary.bundle])
-            )
-            .dependency(\.userDefaults, .noop)
-        )
+        store: Store(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
+          Onboarding()
+        } withDependencies: {
+          $0.audioPlayer = .live(bundles: [AppClipAudioLibrary.bundle, AppAudioLibrary.bundle])
+          $0.userDefaults = .noop
+        }
       )
     }
   }

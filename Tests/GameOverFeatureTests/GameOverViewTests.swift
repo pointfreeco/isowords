@@ -1,4 +1,5 @@
 import ClientModels
+import ComposableArchitecture
 import ComposableGameCenter
 @testable import GameOverFeature
 import SharedModels
@@ -17,8 +18,8 @@ class GameOverViewTests: XCTestCase {
   func testSolo() {
     assertSnapshot(
       matching: GameOverView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: GameOver.State(
             completedGame: .init(
               cubes: .mock,
               gameContext: .solo,
@@ -34,10 +35,9 @@ class GameOverViewTests: XCTestCase {
               .lastWeek: .init(outOf: 6_000, rank: 100),
               .lastDay: .init(outOf: 3_000, rank: 20),
             ])
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -57,10 +57,9 @@ class GameOverViewTests: XCTestCase {
                 score: 4_000
               )
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
@@ -73,8 +72,8 @@ class GameOverViewTests: XCTestCase {
 
     assertSnapshot(
       matching: GameOverView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: GameOver.State(
             completedGame: completedGame,
             isDemo: false,
             turnBasedContext: .init(
@@ -82,10 +81,9 @@ class GameOverViewTests: XCTestCase {
               match: .mock,
               metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
             )
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+          )
+        ) {
+        }
       )
       .environment(\.yourImage, UIImage(named: "you", in: .module, with: nil))
       .environment(\.opponentImage, UIImage(named: "opponent", in: .module, with: nil)),

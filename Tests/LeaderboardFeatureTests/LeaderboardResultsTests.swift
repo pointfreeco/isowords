@@ -13,9 +13,10 @@ import XCTest
 class LeaderboardTests: XCTestCase {
   func testOnAppear() async {
     let store = TestStore(
-      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
-      reducer: LeaderboardResults.happyPath
-    )
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
+    ) {
+      LeaderboardResults<TimeScope>.happyPath
+    }
 
     await store.send(.task) {
       $0.isLoading = true
@@ -29,9 +30,10 @@ class LeaderboardTests: XCTestCase {
 
   func testChangeGameMode() async {
     let store = TestStore(
-      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
-      reducer: LeaderboardResults.happyPath
-    )
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
+    ) {
+      LeaderboardResults<TimeScope>.happyPath
+    }
 
     await store.send(.gameModeButtonTapped(.unlimited)) {
       $0.gameMode = .unlimited
@@ -45,9 +47,10 @@ class LeaderboardTests: XCTestCase {
 
   func testChangeTimeScope() async {
     let store = TestStore(
-      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
-      reducer: LeaderboardResults.happyPath
-    )
+      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
+    ) {
+      LeaderboardResults<TimeScope>.happyPath
+    }
 
     await store.send(.tappedTimeScopeLabel) {
       $0.isTimeScopeMenuVisible = true
@@ -67,9 +70,10 @@ class LeaderboardTests: XCTestCase {
     struct SomeError: Error {}
 
     let store = TestStore(
-      initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek),
-      reducer: LeaderboardResults(loadResults: { _, _ in throw SomeError() })
-    )
+      initialState: LeaderboardResults<TimeScope>.State(timeScope: TimeScope.lastWeek)
+    ) {
+      LeaderboardResults<TimeScope>(loadResults: { _, _ in throw SomeError() })
+    }
 
     await store.send(.task) {
       $0.isLoading = true

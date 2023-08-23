@@ -345,9 +345,9 @@ export POSTGRES_ERROR_INSTALL
 define POSTGRES_ERROR_RUNNING
   🛑 PostgreSQL isn't running! The isowords backend depends on this.
 
-     Make sure it's spawned by running, e.g., if installed via Homebrew::
+     Make sure it's spawned by running, e.g., if installed via Homebrew:
 
-       $$ \033[1mpg_ctl\033[0m \033[38;5;66m-D /usr/local/var/postgres start\033[0m
+       $$ \033[1mbrew\033[0m \033[38;5;66mservices start postgresql@15\033[0m
 
 endef
 export POSTGRES_ERROR_RUNNING

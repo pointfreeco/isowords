@@ -22,8 +22,8 @@ public struct ActionButtonStyle: ButtonStyle {
         self.foregroundColor
           .opacity(!configuration.isPressed ? 1 : 0.5)
       )
-      .padding([.leading, .trailing], .grid(5))
-      .padding([.top, .bottom], .grid(6))
+      .padding(.horizontal, .grid(5))
+      .padding(.vertical, .grid(6))
       .background(
         RoundedRectangle(cornerRadius: 13)
           .fill(

@@ -9,7 +9,7 @@ struct OnboardingStepView: View {
 
   init(store: StoreOf<Onboarding>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   struct ViewState: Equatable {
@@ -243,16 +243,14 @@ struct OnboardingStepView: View {
           Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .adaptivePadding([.leading, .trailing])
+        .adaptivePadding(.horizontal)
         .padding(.bottom, 80)
 
         Group {
           if self.viewStore.isNextButtonVisible {
-            Button(
-              action: {
-                self.viewStore.send(.nextButtonTapped, animation: .default)
-              }
-            ) {
+            Button {
+              self.viewStore.send(.nextButtonTapped, animation: .default)
+            } label: {
               Image(systemName: "arrow.right")
                 .frame(width: 80, height: 80)
                 .background(
@@ -332,10 +330,7 @@ struct OnboardingStepView: View {
       }
     }
     .task { await self.viewStore.send(.task).finish() }
-    .alert(
-      self.store.scope(state: \.alert, action: Onboarding.Action.alert),
-      dismiss: .dismiss
-    )
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
   }
 }
 
@@ -393,9 +388,10 @@ extension Onboarding.State.Step {
             initialState: Onboarding.State(
               presentationStyle: .firstLaunch,
               step: .step16_FindAnyWord
-            ),
-            reducer: Onboarding()
-          )
+            )
+          ) {
+            Onboarding()
+          }
         )
       }
     }

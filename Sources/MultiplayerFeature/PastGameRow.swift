@@ -1,10 +1,11 @@
 import ComposableArchitecture
 import ComposableGameCenter
 import SwiftUI
+import Tagged
 
-public struct PastGame: ReducerProtocol {
+public struct PastGame: Reducer {
   public struct State: Equatable, Identifiable {
-    public var alert: AlertState<Action>?
+    @PresentationState public var alert: AlertState<Action.Alert>?
     public var challengeeDisplayName: String
     public var challengerDisplayName: String
     public var challengeeScore: Int
@@ -34,60 +35,73 @@ public struct PastGame: ReducerProtocol {
   }
 
   public enum Action: Equatable {
-    case delegate(DelegateAction)
-    case dismissAlert
+    case alert(PresentationAction<Alert>)
+    case delegate(Delegate)
     case matchResponse(TaskResult<TurnBasedMatch>)
     case rematchButtonTapped
     case rematchResponse(TaskResult<TurnBasedMatch>)
     case tappedRow
-  }
 
-  public enum DelegateAction: Equatable {
-    case openMatch(TurnBasedMatch)
+    public enum Alert: Equatable {
+    }
+
+    public enum Delegate: Equatable {
+      case openMatch(TurnBasedMatch)
+    }
   }
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public func reduce(into state: inout State, action: Action) -> Effect<Action, Never> {
+  public var body: some ReducerOf<Self> {
+    Reduce(self.core)
+      .ifLet(\.$alert, action: /Action.alert)
+  }
+
+  public func core(into state: inout State, action: Action) -> EffectOf<Self> {
     switch action {
-    case .delegate:
+    case .alert:
       return .none
 
-    case .dismissAlert:
-      state.alert = nil
+    case .delegate:
       return .none
 
     case .matchResponse(.failure):
       return .none
 
     case let .matchResponse(.success(match)):
-      return .task { .delegate(.openMatch(match)) }.animation()
+      return .send(.delegate(.openMatch(match))).animation()
 
     case let .rematchResponse(.success(match)):
       state.isRematchRequestInFlight = false
-      return .task { .delegate(.openMatch(match)) }.animation()
+      return .send(.delegate(.openMatch(match))).animation()
 
     case .rematchResponse(.failure):
       state.isRematchRequestInFlight = false
-      state.alert = .init(
-        title: TextState("Error"),
-        message: TextState("We couldn’t start the rematch. Try again later."),
-        dismissButton: .default(TextState("Ok"), action: .send(.dismissAlert))
-      )
+      state.alert = AlertState {
+        TextState("Error")
+      } actions: {
+        ButtonState { TextState("Ok") }
+      } message: {
+        TextState("We couldn’t start the rematch. Try again later.")
+      }
       return .none
 
     case .rematchButtonTapped:
       state.isRematchRequestInFlight = true
-      return .task { [matchId = state.matchId] in
-        await .rematchResponse(
-          TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+      return .run { [matchId = state.matchId] send in
+        await send(
+          .rematchResponse(
+            TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+          )
         )
       }
 
     case .tappedRow:
-      return .task { [matchId = state.matchId] in
-        await .matchResponse(
-          TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+      return .run { [matchId = state.matchId] send in
+        await send(
+          .matchResponse(
+            TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+          )
         )
       }
     }
@@ -101,12 +115,14 @@ struct PastGameRow: View {
 
   init(store: StoreOf<PastGame>) {
     self.store = store
-    self.viewStore = ViewStore(self.store)
+    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   var body: some View {
     ZStack(alignment: .bottomLeading) {
-      Button(action: { self.viewStore.send(.tappedRow, animation: .default) }) {
+      Button {
+        self.viewStore.send(.tappedRow, animation: .default)
+      } label: {
         VStack(alignment: .leading, spacing: .grid(6)) {
           HStack(spacing: .grid(1)) {
             Text("\(self.viewStore.endDate, formatter: dateFormatter)")
@@ -151,11 +167,13 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(self.store.scope(state: \.alert), dismiss: .dismissAlert)
+    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
-    Button(action: { self.viewStore.send(.rematchButtonTapped, animation: .default) }) {
+    Button {
+      self.viewStore.send(.rematchButtonTapped, animation: .default)
+    } label: {
       HStack(spacing: .grid(1)) {
         if self.viewStore.isRematchRequestInFlight {
           ProgressView()
@@ -170,8 +188,8 @@ struct PastGameRow: View {
           .adaptiveFont(.matterMedium, size: 14)
           .foregroundColor(self.colorScheme == .light ? .multiplayer : .isowordsBlack)
       }
-      .padding([.horizontal])
-      .padding([.vertical], .grid(2))
+      .padding(.horizontal)
+      .padding(.vertical, .grid(2))
     }
     .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
     .continuousCornerRadius(999)

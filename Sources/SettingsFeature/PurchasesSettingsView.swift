@@ -8,7 +8,7 @@ struct PurchasesSettingsView: View {
 
   init(store: StoreOf<Settings>) {
     self.store = store
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   var body: some View {
@@ -34,9 +34,9 @@ struct PurchasesSettingsView: View {
           switch fullGameProduct {
           case let .success(product):
             SettingsRow {
-              Button(
-                action: { self.viewStore.send(.tappedProduct(product), animation: .default) }
-              ) {
+              Button {
+                self.viewStore.send(.tappedProduct(product), animation: .default)
+              } label: {
                 Text("Upgrade")
                   .foregroundColor(.isowordsOrange)
                   .adaptiveFont(.matterMedium, size: 20)
@@ -47,7 +47,8 @@ struct PurchasesSettingsView: View {
           }
         } else {
           SettingsRow {
-            Button(action: {}) {
+            Button {
+            } label: {
               ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .isowordsOrange))
             }
@@ -56,7 +57,9 @@ struct PurchasesSettingsView: View {
 
         if !self.viewStore.isRestoring {
           SettingsRow {
-            Button(action: { self.viewStore.send(.restoreButtonTapped, animation: .default) }) {
+            Button {
+              self.viewStore.send(.restoreButtonTapped, animation: .default)
+            } label: {
               Text("Restore purchases")
                 .foregroundColor(.isowordsOrange)
                 .adaptiveFont(.matterMedium, size: 20)
@@ -64,7 +67,8 @@ struct PurchasesSettingsView: View {
           }
         } else {
           SettingsRow {
-            Button(action: {}) {
+            Button {
+            } label: {
               ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .isowordsOrange))
             }
@@ -84,21 +88,17 @@ struct PurchasesSettingsView: View {
       Preview {
         NavigationView {
           PurchasesSettingsView(
-            store: Store(
-              initialState: Settings.State(
-                fullGamePurchasedAt: Date()
-              ),
-              reducer: Settings()
-            )
+            store: Store(initialState: Settings.State(fullGamePurchasedAt: Date())) {
+              Settings()
+            }
           )
         }
 
         NavigationView {
           PurchasesSettingsView(
-            store: Store(
-              initialState: Settings.State(),
-              reducer: Settings()
-            )
+            store: Store(initialState: Settings.State()) {
+              Settings()
+            }
           )
         }
       }

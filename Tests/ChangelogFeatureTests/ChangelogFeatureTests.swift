@@ -16,16 +16,15 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    let store = TestStore(
-      initialState: ChangelogReducer.State(),
-      reducer: ChangelogReducer()
-    )
-
-    store.dependencies.apiClient.override(
-      route: .changelog(build: 42),
-      withResponse: { try await OK(changelog) }
-    )
-    store.dependencies.build.number = { 42 }
+    let store = TestStore(initialState: ChangelogReducer.State()) {
+      ChangelogReducer()
+    } withDependencies: {
+      $0.apiClient.override(
+        route: .changelog(build: 42),
+        withResponse: { try await OK(changelog) }
+      )
+      $0.build.number = { 42 }
+    }
 
     await store.send(.task) {
       $0.currentBuild = 42
@@ -55,16 +54,15 @@ class ChangelogFeatureTests: XCTestCase {
       ]
     )
 
-    let store = TestStore(
-      initialState: ChangelogReducer.State(),
-      reducer: ChangelogReducer()
-    )
-
-    store.dependencies.apiClient.override(
-      route: .changelog(build: 40),
-      withResponse: { try await OK(changelog) }
-    )
-    store.dependencies.build.number = { 40 }
+    let store = TestStore(initialState: ChangelogReducer.State()) {
+      ChangelogReducer()
+    } withDependencies: {
+      $0.apiClient.override(
+        route: .changelog(build: 40),
+        withResponse: { try await OK(changelog) }
+      )
+      $0.build.number = { 40 }
+    }
 
     await store.send(.task) {
       $0.currentBuild = 40

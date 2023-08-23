@@ -3,44 +3,43 @@ import ComposableArchitecture
 import CubeCore
 import HapticsCore
 import LowPowerModeClient
+import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
+import UserSettingsClient
 
-public struct CubePreview: ReducerProtocol {
+public struct CubePreview: Reducer {
   public struct State: Equatable {
     var cubes: Puzzle
+    var enableGyroMotion: Bool
     var isAnimationReduced: Bool
-    var isHapticsEnabled: Bool
     var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
     @BindingState var nub: CubeSceneView.ViewState.NubState
     @BindingState var selectedCubeFaces: [IndexedCubeFace]
-    let settings: CubeSceneView.ViewState.Settings
 
     public init(
       cubes: ArchivablePuzzle,
-      isAnimationReduced: Bool,
-      isHapticsEnabled: Bool,
       isOnLowPowerMode: Bool = false,
       moveIndex: Int,
       moves: Moves,
       nub: CubeSceneView.ViewState.NubState = .init(),
-      selectedCubeFaces: [IndexedCubeFace] = [],
-      settings: CubeSceneView.ViewState.Settings
+      selectedCubeFaces: [IndexedCubeFace] = []
     ) {
+      @Dependency(\.userSettings) var userSettings
+
       self.cubes = .init(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &self.cubes)
 
-      self.isAnimationReduced = isAnimationReduced
-      self.isHapticsEnabled = isHapticsEnabled
+      self.enableGyroMotion = userSettings.enableGyroMotion
+      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
       self.nub = nub
       self.selectedCubeFaces = selectedCubeFaces
-      self.settings = settings
     }
 
     var finalWordString: String? {
@@ -63,13 +62,14 @@ public struct CubePreview: ReducerProtocol {
 
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
+  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
-  public var body: some ReducerProtocol<State, Action> {
+  public var body: some ReducerOf<Self> {
     BindingReducer()
     Reduce { state, action in
-      enum SelectionID {}
+      enum CancelID { case selection }
 
       switch action {
       case .binding:
@@ -90,10 +90,12 @@ public struct CubePreview: ReducerProtocol {
         case .removedCube:
           break
         }
-        return .cancel(id: SelectionID.self)
+        return .cancel(id: CancelID.selection)
 
       case .task:
-        return .run { [move = state.moves[state.moveIndex]] send in
+        return .run { [move = state.moves[state.moveIndex], nub = state.nub] send in
+          var nub = nub
+
           await send(
             .lowPowerModeResponse(
               await self.lowPowerMode.start().first(where: { _ in true }) ?? false
@@ -110,8 +112,9 @@ public struct CubePreview: ReducerProtocol {
               let moveDuration = Double.random(in: (0.6...0.8))
 
               // Move the nub to the face
+              nub.location = .face(face)
               await send(
-                .set(\.$nub.location, .face(face)),
+                .set(\.$nub, nub),
                 animateWithDuration: moveDuration,
                 delay: 0, options: .curveEaseInOut
               )
@@ -123,7 +126,8 @@ public struct CubePreview: ReducerProtocol {
 
               // Press the nub on the first character
               if faceIndex == 0 {
-                await send(.set(\.$nub.isPressed, true), animation: .default)
+                nub.isPressed = true
+                await send(.set(\.$nub, nub), animation: .default)
               }
 
               // Select the faces that have been tapped so far
@@ -131,11 +135,13 @@ public struct CubePreview: ReducerProtocol {
             }
 
             // Un-press the nub once finished selecting all faces
-            await send(.set(\.$nub.isPressed, false))
+            nub.isPressed = false
+            await send(.set(\.$nub, nub))
 
             // Move the nub off the screen
+            nub.location = .offScreenRight
             await send(
-              .set(\.$nub.location, .offScreenRight),
+              .set(\.$nub, nub),
               animateWithDuration: 1,
               delay: 0,
               options: .curveEaseInOut
@@ -145,11 +151,11 @@ public struct CubePreview: ReducerProtocol {
             break
           }
         }
-        .cancellable(id: SelectionID.self)
+        .cancellable(id: CancelID.selection)
       }
     }
     .haptics(
-      isEnabled: \.isHapticsEnabled,
+      isEnabled: { _ in self.userSettings.enableHaptics },
       triggerOnChangeOf: \.selectedCubeFaces
     )
     .selectionSounds(
@@ -185,7 +191,7 @@ public struct CubePreviewView: View {
 
   public init(store: StoreOf<CubePreview>) {
     self.store = store
-    self.viewStore = ViewStore(self.store.scope(state: ViewState.init(state:)))
+    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -219,7 +225,7 @@ public struct CubePreviewView: View {
         CubeView(
           store: self.store.scope(
             state: CubeSceneView.ViewState.init(preview:),
-            action: CubePreview.Action.cubeScene
+            action: { .cubeScene($0) }
           )
         )
         .task { await self.viewStore.send(.task).finish() }
@@ -229,14 +235,15 @@ public struct CubePreviewView: View {
           ? nil
           : BloomBackground(
             size: proxy.size,
-            store: self.store.actionless
+            store: self.store
               .scope(
                 state: { _ in
                   BloomBackground.ViewState(
                     bloomCount: self.viewStore.selectedWordString.count,
                     word: self.viewStore.selectedWordString
                   )
-                }
+                },
+                action: absurd
               )
           )
       )
@@ -294,13 +301,15 @@ extension CubeSceneView.ViewState {
           }
         }
       },
+      enableGyroMotion: state.enableGyroMotion,
       isOnLowPowerMode: state.isOnLowPowerMode,
       nub: state.nub,
       playedWords: [],
       selectedFaceCount: state.selectedCubeFaces.count,
       selectedWordIsValid: selectedWordString == state.finalWordString,
-      selectedWordString: selectedWordString,
-      settings: state.settings
+      selectedWordString: selectedWordString
     )
   }
 }
+
+private func absurd<A>(_: Never) -> A {}

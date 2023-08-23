@@ -37,7 +37,7 @@ public class CubeFaceNode: SCNNode {
     letterGeometry: SCNGeometry,
     store: Store<ViewState, Never>
   ) {
-    self.viewStore = ViewStore(store)
+    self.viewStore = ViewStore(store, observe: { $0 })
     self.side = self.viewStore.cubeFace.side
 
     super.init()

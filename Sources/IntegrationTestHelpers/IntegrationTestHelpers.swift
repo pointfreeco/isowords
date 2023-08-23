@@ -16,8 +16,7 @@ extension ApiClient {
     router: ServerRouter
   ) {
     // TODO: Fix sync interfaces or migrate fully to async
-    var currentPlayer: CurrentPlayerEnvelope?
-    var baseUrl = URL(string: "/")!
+    let baseUrl = URL(string: "/")!
 
     actor Session {
       nonisolated let baseUrl: Isolated<URL>

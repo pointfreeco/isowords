@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import CubeCore
 import SharedModels
 import SwiftUI
@@ -7,20 +8,19 @@ struct CubeCorePreviewApp: App {
   var body: some Scene {
     WindowGroup {
       CubeView(
-        store: .init(
-          initialState: .init(
+        store: Store(
+          initialState: CubeSceneView.ViewState(
             cubes: .mock,
+            enableGyroMotion: false,
             isOnLowPowerMode: false,
             nub: nil,
             playedWords: [],
             selectedFaceCount: 0,
             selectedWordIsValid: false,
-            selectedWordString: "",
-            settings: .init(showSceneStatistics: true)
-          ),
-          reducer: .empty,
-          environment: ()
-        )
+            selectedWordString: ""
+          )
+        ) {
+        }
       )
     }
   }
