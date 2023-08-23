@@ -51,7 +51,9 @@ public struct NagBannerView: View {
 
   public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
-      Button { viewStore.send(.tapped) } label: {
+      Button {
+        viewStore.send(.tapped)
+      } label: {
         Marquee(duration: TimeInterval(messages.count) * 9) {
           ForEach(messages, id: \.self) { message in
             Text(message)

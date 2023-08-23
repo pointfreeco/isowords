@@ -113,7 +113,9 @@ public struct ActiveGamesView: View {
                 if match.status == .open, !match.isYourTurn,
                   let sendReminderAction = sendReminderAction
                 {
-                  Button { self.viewStore.send(sendReminderAction) } label: {
+                  Button {
+                    self.viewStore.send(sendReminderAction)
+                  } label: {
                     Label("Send Reminder", systemImage: "clock")
                   }
                 }

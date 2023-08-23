@@ -160,7 +160,9 @@ where
 
         Spacer()
 
-        Button { self.viewStore.send(.tappedTimeScopeLabel, animation: .default) } label: {
+        Button {
+          self.viewStore.send(.tappedTimeScopeLabel, animation: .default)
+        } label: {
           HStack {
             self.timeScopeLabel
               .adaptiveFont(.matterMedium, size: 10)
@@ -182,7 +184,9 @@ where
         if self.isFilterable {
           HStack(spacing: .grid(4)) {
             ForEach(GameMode.allCases) { gameMode in
-              Button { self.viewStore.send(.gameModeButtonTapped(gameMode)) } label: {
+              Button {
+                self.viewStore.send(.gameModeButtonTapped(gameMode))
+              } label: {
                 Text(gameMode.title)
                   .adaptiveFont(.matterMedium, size: 12)
                   .opacity(self.viewStore.gameMode == gameMode ? 1 : 0.4)
@@ -210,7 +214,9 @@ where
             ForEach(
               self.viewStore.resultEnvelope?.contiguousResults ?? [], id: \.id
             ) { result in
-              Button { self.viewStore.send(.tappedRow(id: result.id)) } label: {
+              Button {
+                self.viewStore.send(.tappedRow(id: result.id))
+              } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
@@ -221,7 +227,9 @@ where
                 .adaptivePadding(.vertical, .grid(5))
                 .adaptiveFont(.matterMedium, size: 16)
 
-              Button { self.viewStore.send(.tappedRow(id: result.id)) } label: {
+              Button {
+                self.viewStore.send(.tappedRow(id: result.id))
+              } label: {
                 ResultRow(color: self.color, result: result)
               }
             }

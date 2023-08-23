@@ -114,7 +114,9 @@ struct CalendarView: View {
 
       if self.viewStore.months.isEmpty {
         HStack {
-          Button { self.viewStore.send(.loadHistory) } label: {
+          Button {
+            self.viewStore.send(.loadHistory)
+          } label: {
             Image(systemName: "arrow.clockwise")
           }
 

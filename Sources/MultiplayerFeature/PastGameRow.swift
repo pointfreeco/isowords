@@ -120,7 +120,9 @@ struct PastGameRow: View {
 
   var body: some View {
     ZStack(alignment: .bottomLeading) {
-      Button { self.viewStore.send(.tappedRow, animation: .default) } label: {
+      Button {
+        self.viewStore.send(.tappedRow, animation: .default)
+      } label: {
         VStack(alignment: .leading, spacing: .grid(6)) {
           HStack(spacing: .grid(1)) {
             Text("\(self.viewStore.endDate, formatter: dateFormatter)")
@@ -169,7 +171,9 @@ struct PastGameRow: View {
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
-    Button { self.viewStore.send(.rematchButtonTapped, animation: .default) } label: {
+    Button {
+      self.viewStore.send(.rematchButtonTapped, animation: .default)
+    } label: {
       HStack(spacing: .grid(1)) {
         if self.viewStore.isRematchRequestInFlight {
           ProgressView()

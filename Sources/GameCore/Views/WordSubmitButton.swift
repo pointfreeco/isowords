@@ -230,7 +230,9 @@ struct ReactionsView: View {
     ForEach(Array(self.viewStore.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
       let offset = self.offset(index: idx)
 
-      Button { self.viewStore.send(.reactionButtonTapped(reaction), animation: .default) } label: {
+      Button {
+        self.viewStore.send(.reactionButtonTapped(reaction), animation: .default)
+      } label: {
         Text(reaction.rawValue)
           .font(.system(size: 32))
           .padding()

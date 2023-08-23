@@ -73,7 +73,7 @@ struct StartNewGameView: View {
     static var previews: some View {
       Preview {
         StartNewGameView(
-          store: Store(initialState: .init() ) {
+          store: Store(initialState: .init()) {
           }
         )
       }

@@ -26,7 +26,9 @@ struct GameNavView: View {
 
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
-      Button { self.viewStore.send(.trayButtonTapped, animation: .default) } label: {
+      Button {
+        self.viewStore.send(.trayButtonTapped, animation: .default)
+      } label: {
         HStack {
           Text(self.viewStore.trayTitle)
             .lineLimit(1)
@@ -48,7 +50,9 @@ struct GameNavView: View {
       .cornerRadius(12)
       .disabled(!self.viewStore.isTrayAvailable)
 
-      Button { self.viewStore.send(.menuButtonTapped, animation: .default) } label: {
+      Button {
+        self.viewStore.send(.menuButtonTapped, animation: .default)
+      } label: {
         Image(systemName: "ellipsis")
           .foregroundColor(.adaptiveBlack)
           .adaptivePadding()

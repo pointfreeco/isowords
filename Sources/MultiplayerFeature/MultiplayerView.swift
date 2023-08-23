@@ -106,7 +106,9 @@ public struct MultiplayerView: View {
 
         Spacer()
 
-        Button { self.viewStore.send(.startButtonTapped) } label: {
+        Button {
+          self.viewStore.send(.startButtonTapped)
+        } label: {
           VStack(spacing: 20) {
             Image(systemName: "person.2.fill")
               .font(.system(size: self.adaptiveSize.pad(40)))

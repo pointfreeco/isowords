@@ -95,7 +95,9 @@ struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: 
                 )
               )
 
-              Button { viewStore.send(.dismiss) } label: {
+              Button {
+                viewStore.send(.dismiss)
+              } label: {
                 Image(systemName: "xmark")
                   .font(.system(size: 20))
                   .foregroundColor(.dailyChallenge)

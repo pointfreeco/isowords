@@ -213,7 +213,9 @@ public struct UpgradeInterstitialView: View {
         }
 
         VStack(spacing: 24) {
-          Button { viewStore.send(.upgradeButtonTapped, animation: .default) } label: {
+          Button {
+            viewStore.send(.upgradeButtonTapped, animation: .default)
+          } label: {
             HStack(spacing: .grid(2)) {
               if viewStore.isPurchasing {
                 ProgressView()
@@ -242,7 +244,9 @@ public struct UpgradeInterstitialView: View {
           if viewStore.isDismissable
             || viewStore.secondsPassedCount >= viewStore.upgradeInterstitialDuration
           {
-            Button { viewStore.send(.maybeLaterButtonTapped, animation: .default) } label: {
+            Button {
+              viewStore.send(.maybeLaterButtonTapped, animation: .default)
+            } label: {
               Text("Maybe later")
                 .foregroundColor(self.colorScheme == .dark ? .hex(0xE1665B) : .isowordsBlack)
             }

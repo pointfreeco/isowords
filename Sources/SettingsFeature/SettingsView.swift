@@ -64,7 +64,8 @@ public struct SettingsView: View {
                     EmptyView()
                   }
                 } else {
-                  Button {} label: {
+                  Button {
+                  } label: {
                     ProgressView()
                       .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveWhite))
                       .scaleEffect(1.5, anchor: .center)
@@ -79,7 +80,9 @@ public struct SettingsView: View {
               )
             }
 
-            Button { self.viewStore.send(.leaveUsAReviewButtonTapped) } label: {
+            Button {
+              self.viewStore.send(.leaveUsAReviewButtonTapped)
+            } label: {
               Image(systemName: "star")
                 .font(.system(size: 40))
             }
@@ -90,7 +93,9 @@ public struct SettingsView: View {
               )
             )
 
-            Button { self.isSharePresented.toggle() } label: {
+            Button {
+              self.isSharePresented.toggle()
+            } label: {
               Image(systemName: "person.2.fill")
                 .font(.system(size: 40))
             }
@@ -135,7 +140,9 @@ public struct SettingsView: View {
       )
       if self.viewStore.isFullGamePurchased {
         SettingsRow {
-          Button { self.viewStore.send(.leaveUsAReviewButtonTapped) } label: {
+          Button {
+            self.viewStore.send(.leaveUsAReviewButtonTapped)
+          } label: {
             HStack {
               Text("Leave us a review")
               Spacer()
@@ -156,7 +163,9 @@ public struct SettingsView: View {
         if let buildNumber = self.viewStore.buildNumber {
           Text("Build \(buildNumber.rawValue)")
         }
-        Button { self.viewStore.send(.reportABugButtonTapped) } label: {
+        Button {
+          self.viewStore.send(.reportABugButtonTapped)
+        } label: {
           Text("Report a bug")
             .underline()
         }

@@ -196,7 +196,9 @@ struct GameWrapper<Content: View>: View {
       self.content
 
       if !self.isGameOver {
-        Button { self.bannerAction() } label: {
+        Button {
+          self.bannerAction()
+        } label: {
           HStack {
             Text("Having fun?")
               .foregroundColor(.isowordsRed)

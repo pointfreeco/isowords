@@ -34,7 +34,9 @@ struct PurchasesSettingsView: View {
           switch fullGameProduct {
           case let .success(product):
             SettingsRow {
-              Button { self.viewStore.send(.tappedProduct(product), animation: .default) } label: {
+              Button {
+                self.viewStore.send(.tappedProduct(product), animation: .default)
+              } label: {
                 Text("Upgrade")
                   .foregroundColor(.isowordsOrange)
                   .adaptiveFont(.matterMedium, size: 20)
@@ -45,7 +47,8 @@ struct PurchasesSettingsView: View {
           }
         } else {
           SettingsRow {
-            Button {} label: {
+            Button {
+            } label: {
               ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .isowordsOrange))
             }
@@ -54,7 +57,9 @@ struct PurchasesSettingsView: View {
 
         if !self.viewStore.isRestoring {
           SettingsRow {
-            Button { self.viewStore.send(.restoreButtonTapped, animation: .default) } label: {
+            Button {
+              self.viewStore.send(.restoreButtonTapped, animation: .default)
+            } label: {
               Text("Restore purchases")
                 .foregroundColor(.isowordsOrange)
                 .adaptiveFont(.matterMedium, size: 20)
@@ -62,7 +67,8 @@ struct PurchasesSettingsView: View {
           }
         } else {
           SettingsRow {
-            Button {} label: {
+            Button {
+            } label: {
               ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .isowordsOrange))
             }

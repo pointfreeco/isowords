@@ -90,7 +90,9 @@ private struct BottomMenuModifier: ViewModifier {
                 menu.title
                   .adaptiveFont(.matterMedium, size: 18)
                 Spacer()
-                Button { self.item = nil } label: {
+                Button {
+                  self.item = nil
+                } label: {
                   Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 24))
                 }
