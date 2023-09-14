@@ -185,7 +185,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "BottomMenu", targets: ["BottomMenu"]),
     .library(name: "ChangelogFeature", targets: ["ChangelogFeature"]),
     .library(name: "ClientModels", targets: ["ClientModels"]),
-    .library(name: "CombineHelpers", targets: ["CombineHelpers"]),
     .library(name: "ComposableGameCenter", targets: ["ComposableGameCenter"]),
     .library(name: "ComposableStoreKit", targets: ["ComposableStoreKit"]),
     .library(name: "ComposableUserNotifications", targets: ["ComposableUserNotifications"]),
@@ -400,12 +399,8 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
-      name: "CombineHelpers"
-    ),
-    .target(
       name: "ComposableGameCenter",
       dependencies: [
-        "CombineHelpers",
         "FirstPartyMocks",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
@@ -557,7 +552,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "FileClient",
       dependencies: [
         "ClientModels",
-        "CombineHelpers",
         "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
@@ -611,7 +605,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "AudioPlayerClient",
         "ClientModels",
-        "CombineHelpers",
         "ComposableStoreKit",
         "DailyChallengeHelpers",
         "FileClient",
@@ -671,7 +664,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Build",
         "ChangelogFeature",
         "ClientModels",
-        "CombineHelpers",
         "ComposableStoreKit",
         "ComposableUserNotifications",
         "DailyChallengeFeature",
@@ -779,7 +771,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "NotificationsAuthAlert",
       dependencies: [
-        "CombineHelpers",
         "ComposableUserNotifications",
         "NotificationHelpers",
         "RemoteNotificationsClient",
@@ -946,7 +937,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "UpgradeInterstitialFeature",
       dependencies: [
-        "CombineHelpers",
         "ComposableStoreKit",
         "ServerConfigClient",
         "Styleguide",
