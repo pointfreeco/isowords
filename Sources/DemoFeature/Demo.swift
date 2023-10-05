@@ -21,6 +21,7 @@ public struct Demo: Reducer {
       self.step = step
     }
 
+    @CasePathable
     public enum Step: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
@@ -33,6 +34,7 @@ public struct Demo: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case appStoreOverlay(isPresented: Bool)
     case fullVersionButtonTapped
@@ -51,11 +53,11 @@ public struct Demo: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.step, action: .self) {
-      Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
+    Scope(state: \.step, action: \.self) {
+      Scope(state: \.onboarding, action: \.onboarding) {
         Onboarding()
       }
-      Scope(state: /State.Step.game, action: /Action.game) {
+      Scope(state: \.game, action: \.game) {
         Game().transformDependency(\.self) {
           $0.database = .noop
           $0.fileClient = .noop
@@ -149,13 +151,13 @@ public struct DemoView: View {
     SwitchStore(self.store.scope(state: \.step, action: { $0 })) { step in
       switch step {
       case .onboarding:
-        CaseLet(/Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
+        CaseLet(\Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
           OnboardingView(store: $0)
             .onAppear { self.viewStore.send(.onAppear) }
         }
 
       case .game:
-        CaseLet(/Demo.State.Step.game, action: Demo.Action.game) { store in
+        CaseLet(\Demo.State.Step.game, action: Demo.Action.game) { store in
           GameWrapper(
             content: GameView(
               content: CubeView(
