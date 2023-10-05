@@ -41,8 +41,7 @@ struct GameOverLogic: Reducer {
         }
 
       case let .turnBased(turnBasedMatch):
-        state.$destination[case: /Game.Destination.State.gameOver]?.turnBasedContext =
-          turnBasedMatch
+        state.$destination[case: \.gameOver]?.turnBasedContext = turnBasedMatch
         return .none
       }
     }
