@@ -395,7 +395,8 @@ public struct DailyChallengeView: View {
     .alert(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
       state: \.alert,
-      action: { .alert($0) }
+      // NB: '{ .alert($0) }' produces 'warning: Will never be executed'
+      action: DailyChallengeReducer.Destination.Action.alert
     )
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
