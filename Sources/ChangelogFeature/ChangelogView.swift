@@ -183,7 +183,7 @@ public struct ChangelogView: View {
             $0.apiClient = {
               var apiClient = ApiClient.noop
               apiClient.override(
-                routeCase: /ServerRoute.Api.Route.changelog(build:),
+                routeCase: \.changelog,
                 withResponse: { _ in
                   try await OK(
                     update(Changelog.current) {
