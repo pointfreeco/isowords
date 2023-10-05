@@ -28,6 +28,7 @@ public struct ChangelogReducer: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case change(id: Build.Number, action: Change.Action)
     case changelogResponse(TaskResult<Changelog>)
@@ -98,7 +99,7 @@ public struct ChangelogReducer: Reducer {
         }
       }
     }
-    .forEach(\.changelog, action: /Action.change(id:action:)) {
+    .forEach(\.changelog, action: \.change) {
       Change()
     }
   }
