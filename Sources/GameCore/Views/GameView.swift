@@ -176,18 +176,18 @@ public struct GameView<Content>: View where Content: View {
       )
       .bottomMenu(
         store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Game.Destination.State.bottomMenu,
-        action: Game.Destination.Action.bottomMenu
+        state: \.bottomMenu,
+        action: { .bottomMenu($0) }
       )
       .alert(
         store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Game.Destination.State.alert,
-        action: Game.Destination.Action.alert
+        state: \.alert,
+        action: { .alert($0) }
       )
       .sheet(
         store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Game.Destination.State.settings,
-        action: Game.Destination.Action.settings
+        state: \.settings,
+        action: { .settings($0) }
       ) { store in
         NavigationStack {
           SettingsView(store: store, navPresentationStyle: .modal)
