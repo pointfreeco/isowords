@@ -67,6 +67,7 @@ public struct Leaderboard: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case destination(PresentationAction<Destination.Action>)
     case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
@@ -140,14 +141,14 @@ public struct Leaderboard: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
 
-    Scope(state: \.solo, action: /Action.solo) {
+    Scope(state: \.solo, action: \.solo) {
       LeaderboardResults(loadResults: self.apiClient.loadSoloResults(gameMode:timeScope:))
     }
-    Scope(state: \.vocab, action: /Action.vocab) {
+    Scope(state: \.vocab, action: \.vocab) {
       LeaderboardResults(loadResults: self.apiClient.loadVocabResults(gameMode:timeScope:))
     }
   }
