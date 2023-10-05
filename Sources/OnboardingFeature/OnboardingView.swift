@@ -133,6 +133,7 @@ public struct Onboarding: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case alert(PresentationAction<Alert>)
     case delayedNextStep
@@ -298,7 +299,7 @@ public struct Onboarding: Reducer {
         .cancellable(id: CancelID.delayedNextStep)
       }
     }
-    .ifLet(\.$alert, action: /Action.alert)
+    .ifLet(\.$alert, action: \.alert)
     .onChange(of: \.game.selectedWordString) { _, selectedWord in
       Reduce { state, _ in
         switch state.step {
@@ -356,7 +357,7 @@ public struct Onboarding: Reducer {
   }
 
   var gameReducer: some ReducerOf<Self> {
-    Scope(state: \.game, action: /Action.game) {
+    Scope(state: \.game, action: \.game) {
       Game()
         .haptics(
           isEnabled: { _ in self.userSettings.enableHaptics },
