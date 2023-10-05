@@ -158,6 +158,7 @@ extension BottomMenuState.Button {
       @PresentationState var bottomMenu: BottomMenuState<Action.BottomMenu>?
     }
 
+    @CasePathable
     enum Action: Equatable {
       case bottomMenu(PresentationAction<BottomMenu>)
       case showMenuButtonTapped
@@ -191,7 +192,7 @@ extension BottomMenuState.Button {
           return .none
         }
       }
-      .ifLet(\.$bottomMenu, action: /Action.bottomMenu)
+      .ifLet(\.$bottomMenu, action: \.bottomMenu)
     }
   }
 

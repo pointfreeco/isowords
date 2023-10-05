@@ -67,7 +67,8 @@ extension ActiveTurnBasedMatch {
       lastPlayedAt: context.lastPlayedAt,
       now: now,
       playedWord: matchData.moves
-        .last(where: { /Move.MoveType.playedWord ~= $0.type })
+        // .last(where: { $0.type.playedWord != nil })
+        .last(where: \.type[is: \.playedWord])
         .flatMap { move in
           guard
             let playerIndex = move.playerIndex,
