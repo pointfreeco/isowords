@@ -27,8 +27,10 @@ var package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.0.0"),
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.1.0"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", branch: "case-key-paths"),
+    .package(
+      url: "https://github.com/pointfreeco/swift-composable-architecture", branch: "case-key-paths"
+    ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),

@@ -52,6 +52,7 @@ public struct CubePreview: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: BindableAction, Equatable {
     case binding(BindingAction<State>)
     case cubeScene(CubeSceneView.ViewAction)

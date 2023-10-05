@@ -64,7 +64,9 @@ public struct BottomMenuState<Action> {
 extension BottomMenuState: Equatable where Action: Equatable {}
 extension BottomMenuState.Button: Equatable where Action: Equatable {}
 extension BottomMenuState.MenuAction: Equatable where Action: Equatable {}
-extension BottomMenuState: _EphemeralState {}
+extension BottomMenuState: _EphemeralState {
+  public static var actionType: Any.Type { Action.self }
+}
 
 extension View {
   public func bottomMenu<MenuAction: Equatable>(

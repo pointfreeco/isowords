@@ -84,6 +84,7 @@ public struct Settings: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: BindableAction, Equatable {
     case alert(PresentationAction<Alert>)
     case binding(BindingAction<State>)
