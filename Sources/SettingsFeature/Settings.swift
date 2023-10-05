@@ -454,7 +454,7 @@ public struct Settings: Reducer {
         }
       }
     }
-    .ifLet(\.$alert, action: /Action.alert)
+    .ifLet(\.$alert, action: \.alert)
     .onChange(of: \.userSettings) { _, userSettings in
       Reduce { _, _ in
         enum CancelID { case saveDebounce }
@@ -464,7 +464,7 @@ public struct Settings: Reducer {
       }
     }
 
-    Scope(state: \.stats, action: /Action.stats) {
+    Scope(state: \.stats, action: \.stats) {
       Stats()
     }
   }
