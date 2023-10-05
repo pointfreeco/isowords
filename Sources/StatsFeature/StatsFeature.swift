@@ -228,8 +228,8 @@ public struct StatsView: View {
     .task { await self.viewStore.send(.task).finish() }
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Stats.Destination.State.vocab,
-      action: Stats.Destination.Action.vocab,
+      state: \.vocab,
+      action: { .vocab($0) },
       destination: VocabView.init(store:)
     )
     .navigationStyle(title: Text("Stats"))
