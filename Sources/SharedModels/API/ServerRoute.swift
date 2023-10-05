@@ -75,7 +75,7 @@ public enum ServerRoute: Equatable {
       public enum Games: Equatable, Sendable {
         case submit(SubmitRequest)
 
-        public struct SubmitRequest: /*Codable,*/ Equatable, Sendable {
+        public struct SubmitRequest: Codable, Equatable, Sendable {
           public let gameContext: GameContext
           public let moves: Moves
 
@@ -87,7 +87,7 @@ public enum ServerRoute: Equatable {
             self.moves = moves
           }
 
-          public enum GameContext: /*Codable,*/ Equatable, Sendable {
+          public enum GameContext: Codable, Equatable, Sendable {
             case dailyChallenge(SharedModels.DailyChallenge.Id)
             case shared(SharedModels.SharedGame.Code)
             case solo(Solo)
