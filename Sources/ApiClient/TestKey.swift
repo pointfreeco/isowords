@@ -55,6 +55,21 @@ extension ApiClient {
   }
 
   public mutating func override<Value>(
+    routeCase matchingRoute: CaseKeyPath<ServerRoute.Api.Route, Value>,
+    withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
+  ) {
+    let fulfill = expectation(description: "route")
+    self.apiRequest = { @Sendable [self] route in
+      if let value = route[keyPath: matchingRoute] {
+        fulfill()
+        return try await response(value)
+      } else {
+        return try await self.apiRequest(route)
+      }
+    }
+  }
+
+  public mutating func override<Value>(
     routeCase matchingRoute: AnyCasePath<ServerRoute.Api.Route, Value>,
     withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
   ) {
