@@ -20,6 +20,7 @@ import UserSettingsClient
 
 public struct Game: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
@@ -27,6 +28,8 @@ public struct Game: Reducer {
       case settings(Settings.State = Settings.State())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case alert(Alert)
       case bottomMenu(BottomMenu)
@@ -45,16 +48,18 @@ public struct Game: Reducer {
         case settingsButtonTapped
       }
     }
+
     let dismissGame: DismissEffect
+    
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.gameOver, action: /Action.gameOver) {
+      Scope(state: \.gameOver, action: \.gameOver) {
         GameOver()
           .dependency(\.dismiss, self.dismissGame)
       }
-      Scope(state: /State.settings, action: /Action.settings) {
+      Scope(state: \.settings, action: \.settings) {
         Settings()
       }
-      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      Scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial) {
         UpgradeInterstitial()
       }
     }
@@ -170,6 +175,7 @@ public struct Game: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case activeGames(ActiveGamesAction)
     case cancelButtonTapped
@@ -225,7 +231,7 @@ public struct Game: Reducer {
         }
       }
       .filterActionsForYourTurn()
-      .ifLet(\.$destination, action: /Action.destination) {
+      .ifLet(\.$destination, action: \.destination) {
         Destination(dismissGame: self.dismiss)
       }
       .sounds()
@@ -547,7 +553,7 @@ public struct Game: Reducer {
         return .none
       }
     }
-    Scope(state: \.wordSubmitButtonFeature, action: /Action.wordSubmitButton) {
+    Scope(state: \.wordSubmitButtonFeature, action: \.wordSubmitButton) {
       WordSubmitButtonFeature()
     }
     GameOverLogic()
@@ -579,7 +585,7 @@ extension Game.State {
   }
 
   public var isGameOver: Bool {
-    /Game.Destination.State.gameOver ~= self.destination
+    self.destination?.gameOver != nil
   }
 
   public var isResumable: Bool {
@@ -588,8 +594,7 @@ extension Game.State {
   }
 
   public var isSavable: Bool {
-    self.isResumable
-      && !(/GameContext.turnBased ~= self.gameContext)
+    self.isResumable && !self.gameContext.isTurnBased
   }
 
   public var playedWords: [PlayedWord] {
@@ -674,7 +679,7 @@ extension Game.State {
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard
-      !(/Move.MoveType.removedCube ~= lastMove.type),
+      !lastMove.type.isRemovedCube,
       lastMove.playerIndex != turnBasedMatch.localPlayerIndex
     else {
       return true

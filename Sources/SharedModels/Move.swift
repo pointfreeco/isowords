@@ -1,3 +1,4 @@
+import CasePaths
 import Foundation
 import Tagged
 
@@ -24,14 +25,12 @@ public struct Move: Codable, Equatable, Sendable {
     self.type = type
   }
 
+  @CasePathable
   public enum MoveType: Codable, Equatable, Sendable {
     case playedWord([IndexedCubeFace])
     case removedCube(LatticePoint)
 
-    public var isRemovedCube: Bool {
-      guard case .removedCube = self else { return false }
-      return true
-    }
+    public var isRemovedCube: Bool { self.removedCube != nil }
 
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)

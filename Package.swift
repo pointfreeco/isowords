@@ -146,6 +146,7 @@ var package = Package(
       dependencies: [
         "Build",
         "FirstPartyMocks",
+        .product(name: "CasePaths", package: "swift-case-paths"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Tagged", package: "swift-tagged"),
       ]
