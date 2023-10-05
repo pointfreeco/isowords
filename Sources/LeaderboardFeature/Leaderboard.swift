@@ -31,14 +31,18 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 public struct Leaderboard: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case cubePreview(CubePreview.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+      Scope(state: \.cubePreview, action: \.cubePreview) {
         CubePreview()
       }
     }
