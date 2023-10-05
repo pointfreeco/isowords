@@ -60,6 +60,7 @@ public struct Stats: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case backButtonTapped
     case destination(PresentationAction<Destination.Action>)
@@ -110,7 +111,7 @@ public struct Stats: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }

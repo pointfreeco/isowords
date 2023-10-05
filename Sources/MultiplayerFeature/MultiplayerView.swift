@@ -4,14 +4,18 @@ import TcaHelpers
 
 public struct Multiplayer: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case pastGames(PastGames.State)
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case pastGames(PastGames.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.pastGames, action: /Action.pastGames) {
+      Scope(state: \.pastGames, action: \.pastGames) {
         PastGames()
       }
     }
@@ -30,6 +34,7 @@ public struct Multiplayer: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case destination(PresentationAction<Destination.Action>)
     case pastGamesButtonTapped
@@ -60,7 +65,7 @@ public struct Multiplayer: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -146,8 +151,8 @@ public struct MultiplayerView: View {
       }
       .navigationDestination(
         store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Multiplayer.Destination.State.pastGames,
-        action: Multiplayer.Destination.Action.pastGames,
+        state: \.pastGames,
+        action: { .pastGames($0) },
         destination: PastGamesView.init(store:)
       )
       .navigationStyle(
