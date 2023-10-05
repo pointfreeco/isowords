@@ -5,14 +5,18 @@ import SwiftUI
 
 public struct Vocab: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case cubePreview(CubePreview.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+      Scope(state: \.cubePreview, action: \.cubePreview) {
         CubePreview()
       }
     }
@@ -39,6 +43,7 @@ public struct Vocab: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case destination(PresentationAction<Destination.Action>)
     case gamesResponse(TaskResult<State.GamesResponse>)
@@ -111,7 +116,7 @@ public struct Vocab: Reducer {
         }
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
