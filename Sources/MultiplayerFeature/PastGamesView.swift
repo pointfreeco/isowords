@@ -9,9 +9,10 @@ public struct PastGames: Reducer {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case matchesResponse(TaskResult<[PastGame.State]>)
-    case pastGame(TurnBasedMatch.Id, PastGame.Action)
+    case pastGame(id: TurnBasedMatch.Id, action: PastGame.Action)
     case task
   }
 
@@ -50,7 +51,7 @@ public struct PastGames: Reducer {
         }
       }
     }
-    .forEach(\.pastGames, action: /Action.pastGame) {
+    .forEach(\.pastGames, action: \.pastGame) {
       PastGame()
     }
   }
@@ -68,7 +69,9 @@ struct PastGamesView: View {
 
   var body: some View {
     ScrollView {
-      ForEachStore(self.store.scope(state: \.pastGames, action: { .pastGame($0, $1) })) { store in
+      ForEachStore(
+        self.store.scope(state: \.pastGames, action: { .pastGame(id: $0, action: $1) })
+      ) { store in
         Group {
           PastGameRow(store: store)
 

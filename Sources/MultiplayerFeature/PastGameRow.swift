@@ -34,6 +34,7 @@ public struct PastGame: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case alert(PresentationAction<Alert>)
     case delegate(Delegate)
@@ -54,7 +55,7 @@ public struct PastGame: Reducer {
 
   public var body: some ReducerOf<Self> {
     Reduce(self.core)
-      .ifLet(\.$alert, action: /Action.alert)
+      .ifLet(\.$alert, action: \.alert)
   }
 
   public func core(into state: inout State, action: Action) -> EffectOf<Self> {
