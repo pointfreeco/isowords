@@ -6,14 +6,18 @@ import VocabFeature
 
 public struct Stats: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case vocab(Vocab.State)
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case vocab(Vocab.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.vocab, action: /Action.vocab) {
+      Scope(state: \.vocab, action: \.vocab) {
         Vocab()
       }
     }
