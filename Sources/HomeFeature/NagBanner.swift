@@ -11,6 +11,7 @@ public struct NagBanner: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case tapped
     case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)
@@ -36,7 +37,7 @@ public struct NagBanner: Reducer {
         return .none
       }
     }
-    .ifLet(\.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .ifLet(\.$upgradeInterstitial, action: \.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }

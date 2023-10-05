@@ -22,6 +22,7 @@ public struct ActiveMatchResponse: Equatable {
 
 public struct Home: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())
@@ -30,6 +31,8 @@ public struct Home: Reducer {
       case settings(Settings.State = Settings.State())
       case solo(Solo.State = .init())
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case changelog(ChangelogReducer.Action)
       case dailyChallenge(DailyChallengeReducer.Action)
@@ -38,23 +41,24 @@ public struct Home: Reducer {
       case settings(Settings.Action)
       case solo(Solo.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.changelog, action: /Action.changelog) {
+      Scope(state: \.changelog, action: \.changelog) {
         ChangelogReducer()
       }
-      Scope(state: /State.dailyChallenge, action: /Action.dailyChallenge) {
+      Scope(state: \.dailyChallenge, action: \.dailyChallenge) {
         DailyChallengeReducer()
       }
-      Scope(state: /State.leaderboard, action: /Action.leaderboard) {
+      Scope(state: \.leaderboard, action: \.leaderboard) {
         Leaderboard()
       }
-      Scope(state: /State.multiplayer, action: /Action.multiplayer) {
+      Scope(state: \.multiplayer, action: \.multiplayer) {
         Multiplayer()
       }
-      Scope(state: /State.settings, action: /Action.settings) {
+      Scope(state: \.settings, action: \.settings) {
         Settings()
       }
-      Scope(state: /State.solo, action: /Action.solo) {
+      Scope(state: \.solo, action: \.solo) {
         Solo()
       }
     }
@@ -118,6 +122,7 @@ public struct Home: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
     case activeGames(ActiveGamesAction)
@@ -158,10 +163,10 @@ public struct Home: Reducer {
 
   public var body: some ReducerOf<Self> {
     Reduce(self.core)
-      .ifLet(\.$destination, action: /Action.destination) {
+      .ifLet(\.$destination, action: \.destination) {
         Destination()
       }
-      .ifLet(\.$nagBanner, action: /Action.nagBanner) {
+      .ifLet(\.$nagBanner, action: \.nagBanner) {
         NagBanner()
       }
   }
@@ -530,15 +535,15 @@ public struct HomeView: View {
     .navigationBarHidden(true)
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Home.Destination.State.settings,
-      action: Home.Destination.Action.settings
+      state: \.settings,
+      action: { .settings($0) }
     ) { store in
       SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Home.Destination.State.changelog,
-      action: Home.Destination.Action.changelog,
+      state: \.changelog,
+      action: { .changelog($0) },
       content: ChangelogView.init(store:)
     )
     .task { await self.viewStore.send(.task).finish() }

@@ -53,14 +53,14 @@ struct StartNewGameView: View {
     }
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Home.Destination.State.solo,
-      action: Home.Destination.Action.solo,
+      state: \.solo,
+      action: { .solo($0) },
       destination: SoloView.init(store:)
     )
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Home.Destination.State.multiplayer,
-      action: Home.Destination.Action.multiplayer,
+      state: \.multiplayer,
+      action: { .multiplayer($0) },
       destination: MultiplayerView.init(store:)
     )
   }
