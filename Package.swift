@@ -138,7 +138,8 @@ var package = Package(
     .target(
       name: "Sqlite",
       dependencies: [
-        .target(name: "Csqlite3")
+        .target(name: "Csqlite3"),
+        .product(name: "CasePaths", package: "swift-case-paths"),
       ]
     ),
     .target(
