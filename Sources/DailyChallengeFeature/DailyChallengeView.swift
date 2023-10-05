@@ -11,11 +11,14 @@ import SwiftUI
 
 public struct DailyChallengeReducer: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case notificationsAuthAlert(NotificationsAuthAlert.State)
       case results(DailyChallengeResults.State)
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case alert(Alert)
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
@@ -24,11 +27,12 @@ public struct DailyChallengeReducer: Reducer {
       public enum Alert: Equatable {
       }
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+      Scope(state: \.notificationsAuthAlert, action: \.notificationsAuthAlert) {
         NotificationsAuthAlert()
       }
-      Scope(state: /State.results, action: /Action.results) {
+      Scope(state: \.results, action: \.results) {
         DailyChallengeResults()
       }
     }
@@ -56,6 +60,7 @@ public struct DailyChallengeReducer: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
@@ -204,7 +209,7 @@ public struct DailyChallengeReducer: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -389,19 +394,19 @@ public struct DailyChallengeView: View {
     }
     .alert(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /DailyChallengeReducer.Destination.State.alert,
-      action: DailyChallengeReducer.Destination.Action.alert
+      state: \.alert,
+      action: { .alert($0) }
     )
     .navigationDestination(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /DailyChallengeReducer.Destination.State.results,
-      action: DailyChallengeReducer.Destination.Action.results,
+      state: \.results,
+      action: { .results($0) },
       destination: DailyChallengeResultsView.init(store:)
     )
     .notificationsAlert(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /DailyChallengeReducer.Destination.State.notificationsAuthAlert,
-      action: DailyChallengeReducer.Destination.Action.notificationsAuthAlert
+      state: \.notificationsAuthAlert,
+      action: { .notificationsAuthAlert($0) }
     )
   }
 }
