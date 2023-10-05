@@ -17,19 +17,23 @@ import UserDefaultsClient
 
 public struct GameOver: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
+
+    @CasePathable
     public enum Action: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+      Scope(state: \.notificationsAuthAlert, action: \.notificationsAuthAlert) {
         NotificationsAuthAlert()
       }
-      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      Scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial) {
         UpgradeInterstitial()
       }
     }
@@ -74,12 +78,14 @@ public struct GameOver: Reducer {
       self.userNotificationSettings = userNotificationSettings
     }
 
+    @CasePathable
     public enum RankSummary: Equatable {
       case dailyChallenge(DailyChallengeResult)
       case leaderboard([TimeScope: LeaderboardScoreResult.Rank])
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case closeButtonTapped
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
@@ -182,7 +188,7 @@ public struct GameOver: Reducer {
         }
 
       case .destination(.dismiss)
-      where /Destination.State.notificationsAuthAlert ~= state.destination:
+      where state.destination?.notificationsAuthAlert != nil:
         return .run { _ in
           try? await self.requestReviewAsync()
           await self.dismiss(animation: .default)
@@ -334,7 +340,7 @@ public struct GameOver: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -409,8 +415,7 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented =
-        /GameOver.Destination.State.upgradeInterstitial ~= state.destination
+      self.isUpgradeInterstitialPresented = state.destination?.upgradeInterstitial != nil
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
@@ -495,8 +500,8 @@ public struct GameOverView: View {
 
       IfLetStore(
         self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /GameOver.Destination.State.upgradeInterstitial,
-        action: GameOver.Destination.Action.upgradeInterstitial
+        state: \.upgradeInterstitial,
+        action: { .upgradeInterstitial($0) }
       ) { store in
         UpgradeInterstitialView(store: store)
           .transition(.opacity)
@@ -510,8 +515,8 @@ public struct GameOverView: View {
     .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /GameOver.Destination.State.notificationsAuthAlert,
-      action: GameOver.Destination.Action.notificationsAuthAlert
+      state: \.notificationsAuthAlert,
+      action: { .notificationsAuthAlert($0) }
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
@@ -522,8 +527,7 @@ public struct GameOverView: View {
 
   @ViewBuilder
   var dailyChallengeResults: some View {
-    let result = (/GameOver.State.RankSummary.dailyChallenge)
-      .extract(from: self.viewStore.summary)
+    let result = self.viewStore.summary?.dailyChallenge
 
     VStack(spacing: -8) {
       result.map {
@@ -645,8 +649,7 @@ public struct GameOverView: View {
             HStack {
               Text(timeScope.displayTitle)
               Spacer()
-              let rank = (/GameOver.State.RankSummary.leaderboard)
-                .extract(from: self.viewStore.summary)?[timeScope]
+              let rank = self.viewStore.summary?.leaderboard?[timeScope]
               Text(
                 """
                 \((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \
