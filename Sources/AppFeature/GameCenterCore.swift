@@ -176,7 +176,7 @@ public struct GameCenterLogic: Reducer {
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
       )
-      let game = (/AppReducer.Destination.State.game).extract(from: state.destination)
+      let game = state.destination?.game
       gameState.activeGames = game?.activeGames ?? .init()
       gameState.isGameLoaded = game != nil
       // TODO: Reuse game logic
@@ -212,8 +212,7 @@ public struct GameCenterLogic: Reducer {
       metadata: turnBasedMatchData.metadata
     )
     guard
-      (/AppReducer.Destination.State.game).extract(from: state.destination)?.turnBasedContext?
-        .match.matchId != match.matchId,
+      state.destination?.game?.turnBasedContext?.match.matchId != match.matchId,
       context.currentParticipantIsLocalPlayer,
       match.participants.allSatisfy({ $0.matchOutcome == .none }),
       let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),

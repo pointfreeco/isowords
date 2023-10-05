@@ -12,19 +12,21 @@ import SwiftUI
 
 public struct AppReducer: Reducer {
   public struct Destination: Reducer {
+    @CasePathable
     public enum State: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
     }
+    @CasePathable
     public enum Action: Equatable {
       case game(Game.Action)
       case onboarding(Onboarding.Action)
     }
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.game, action: /Action.game) {
+      Scope(state: \.game, action: \.game) {
         Game()
       }
-      Scope(state: /State.onboarding, action: /Action.onboarding) {
+      Scope(state: \.onboarding, action: \.onboarding) {
         Onboarding()
       }
     }
@@ -62,6 +64,7 @@ public struct AppReducer: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case appDelegate(AppDelegateReducer.Action)
     case destination(PresentationAction<Destination.Action>)
@@ -87,9 +90,7 @@ public struct AppReducer: Reducer {
 
   public var body: some ReducerOf<Self> {
     self.core
-      .onChange(
-        of: { (/Destination.State.game).extract(from: $0.destination)?.moves }
-      ) { _, moves in
+      .onChange(of: \.destination?.game?.moves) { _, moves in
         Reduce { state, _ in
           guard case let .game(game) = state.destination, game.isSavable
           else { return .none }
@@ -120,10 +121,10 @@ public struct AppReducer: Reducer {
 
   @ReducerBuilder<State, Action>
   var core: some ReducerOf<Self> {
-    Scope(state: \.appDelegate, action: /Action.appDelegate) {
+    Scope(state: \.appDelegate, action: \.appDelegate) {
       AppDelegateReducer()
     }
-    Scope(state: \.home, action: /Action.home) {
+    Scope(state: \.home, action: \.home) {
       Home()
     }
     Reduce { state, action in
@@ -231,8 +232,7 @@ public struct AppReducer: Reducer {
             gameCurrentTime: self.now,
             gameMode: .timed,
             gameStartTime: self.now,
-            isGameLoaded: (/Destination.State.game).extract(from: state.destination)?
-              .isGameLoaded == .some(true)
+            isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
           )
         )
         return .none
@@ -252,8 +252,7 @@ public struct AppReducer: Reducer {
               gameCurrentTime: self.now,
               gameMode: .unlimited,
               gameStartTime: self.now,
-              isGameLoaded: (/Destination.State.game).extract(from: state.destination)?
-                .isGameLoaded == .some(true)
+              isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
             )
         )
         return .none
@@ -322,7 +321,7 @@ public struct AppReducer: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -356,8 +355,8 @@ public struct AppView: View {
       } else {
         IfLetStore(
           self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /AppReducer.Destination.State.game,
-          action: AppReducer.Destination.Action.game
+          state: \.game,
+          action: { .game($0) }
         ) { store in
           GameView(
             content: CubeView(
@@ -374,8 +373,8 @@ public struct AppView: View {
 
         IfLetStore(
           self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /AppReducer.Destination.State.onboarding,
-          action: AppReducer.Destination.Action.onboarding,
+          state: \.onboarding,
+          action: { .onboarding($0) },
           then: OnboardingView.init(store:)
         )
         .zIndex(2)
