@@ -241,8 +241,8 @@ public struct LeaderboardView: View {
     )
     .sheet(
       store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Leaderboard.Destination.State.cubePreview,
-      action: Leaderboard.Destination.Action.cubePreview,
+      state: \.cubePreview,
+      action: { .cubePreview($0) },
       content: CubePreviewView.init(store:)
     )
   }
