@@ -129,8 +129,8 @@ public struct GameView<Content>: View where Content: View {
 
         IfLetStore(
           self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /Game.Destination.State.gameOver,
-          action: Game.Destination.Action.gameOver,
+          state: \.gameOver,
+          action: { .gameOver($0) },
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -144,8 +144,8 @@ public struct GameView<Content>: View where Content: View {
 
         IfLetStore(
           self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /Game.Destination.State.upgradeInterstitial,
-          action: Game.Destination.Action.upgradeInterstitial
+          state: \.upgradeInterstitial,
+          action: { .upgradeInterstitial($0) }
         ) { store in
           UpgradeInterstitialView(store: store)
             .transition(.opacity)
