@@ -19,6 +19,7 @@ public struct DailyChallengeResults: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: Equatable {
     case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
     case loadHistory
@@ -30,7 +31,7 @@ public struct DailyChallengeResults: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.leaderboardResults, action: /Action.leaderboardResults) {
+    Scope(state: \.leaderboardResults, action: \.leaderboardResults) {
       LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
     }
 
