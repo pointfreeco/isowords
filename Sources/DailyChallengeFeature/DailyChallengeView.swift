@@ -12,6 +12,7 @@ import SwiftUI
 public struct DailyChallengeReducer: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case notificationsAuthAlert(NotificationsAuthAlert.State)
@@ -383,9 +384,8 @@ public struct DailyChallengeView: View {
               self.viewStore.send(.notificationButtonTapped, animation: .default)
             }
             .transition(
-              AnyTransition
-                .scale(scale: 0)
-                .animation(Animation.easeOut.delay(1))
+              .scale(scale: 0)
+              .animation(.easeOut.delay(1))
             )
           }
         }
@@ -469,7 +469,7 @@ private struct ReminderBell: View {
         .font(.system(size: 20))
         .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
         .onAppear {
-          withAnimation(Animation.easeInOut(duration: 1).delay(2)) {
+          withAnimation(.easeInOut(duration: 1).delay(2)) {
             self.shake = true
           }
         }

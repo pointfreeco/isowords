@@ -21,6 +21,7 @@ import UserSettingsClient
 public struct Game: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
@@ -585,7 +586,7 @@ extension Game.State {
   }
 
   public var isGameOver: Bool {
-    self.destination?.gameOver != nil
+    self.destination?[is: \.gameOver] == true
   }
 
   public var isResumable: Bool {
@@ -679,7 +680,7 @@ extension Game.State {
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard
-      !lastMove.type.isRemovedCube,
+      !lastMove.type[is: \.removedCube],
       lastMove.playerIndex != turnBasedMatch.localPlayerIndex
     else {
       return true

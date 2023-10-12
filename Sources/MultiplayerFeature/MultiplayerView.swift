@@ -5,6 +5,7 @@ import TcaHelpers
 public struct Multiplayer: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case pastGames(PastGames.State)
     }

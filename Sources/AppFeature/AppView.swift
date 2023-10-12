@@ -13,6 +13,7 @@ import SwiftUI
 public struct AppReducer: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)

@@ -22,6 +22,7 @@ public struct Demo: Reducer {
     }
 
     @CasePathable
+    @dynamicMemberLookup
     public enum Step: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)

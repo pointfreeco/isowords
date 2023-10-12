@@ -88,6 +88,7 @@ public final class Sqlite {
   }
 
   @CasePathable
+  @dynamicMemberLookup
   public enum Datatype: Equatable {
     case blob([UInt8])
     case integer(Int32)

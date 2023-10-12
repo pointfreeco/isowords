@@ -7,6 +7,7 @@ import VocabFeature
 public struct Stats: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case vocab(Vocab.State)
     }

@@ -32,6 +32,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 public struct Leaderboard: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }

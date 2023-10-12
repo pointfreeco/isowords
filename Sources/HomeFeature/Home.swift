@@ -23,6 +23,7 @@ public struct ActiveMatchResponse: Equatable {
 public struct Home: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())

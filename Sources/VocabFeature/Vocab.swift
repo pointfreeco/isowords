@@ -6,6 +6,7 @@ import SwiftUI
 public struct Vocab: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }

@@ -30,8 +30,6 @@ public struct Move: Codable, Equatable, Sendable {
     case playedWord([IndexedCubeFace])
     case removedCube(LatticePoint)
 
-    public var isRemovedCube: Bool { self.removedCube != nil }
-
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       if container.contains(.playedWord) {

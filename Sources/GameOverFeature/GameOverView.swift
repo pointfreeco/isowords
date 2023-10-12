@@ -18,6 +18,7 @@ import UserDefaultsClient
 public struct GameOver: Reducer {
   public struct Destination: Reducer {
     @CasePathable
+    @dynamicMemberLookup
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
@@ -79,6 +80,7 @@ public struct GameOver: Reducer {
     }
 
     @CasePathable
+    @dynamicMemberLookup
     public enum RankSummary: Equatable {
       case dailyChallenge(DailyChallengeResult)
       case leaderboard([TimeScope: LeaderboardScoreResult.Rank])
@@ -188,7 +190,7 @@ public struct GameOver: Reducer {
         }
 
       case .destination(.dismiss)
-      where state.destination?.notificationsAuthAlert != nil:
+      where state.destination?[is: \.notificationsAuthAlert] == true:
         return .run { _ in
           try? await self.requestReviewAsync()
           await self.dismiss(animation: .default)
@@ -415,7 +417,7 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented = state.destination?.upgradeInterstitial != nil
+      self.isUpgradeInterstitialPresented = state.destination?[is: \.upgradeInterstitial] == true
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
