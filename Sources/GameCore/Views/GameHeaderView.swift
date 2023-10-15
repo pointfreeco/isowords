@@ -12,7 +12,7 @@ struct GameHeaderView: View {
     let selectedWordString: String
 
     init(state: Game.State) {
-      self.isTurnBasedGame = state.turnBasedContext != nil
+      self.isTurnBasedGame = state.gameContext.is(\.turnBased)
       self.selectedWordString = state.selectedWordString
     }
   }
@@ -73,7 +73,7 @@ struct ScoreView: View {
   var body: some View {
     HStack {
       if self.viewStore.selectedWordString.isEmpty {
-        if !self.viewStore.gameContext.isTurnBased {
+        if !self.viewStore.gameContext.is(\.turnBased) {
           Text("\(self.viewStore.currentScore)")
         }
       } else {
@@ -101,7 +101,7 @@ struct ScoreView: View {
 
       Spacer()
 
-      if !self.viewStore.gameContext.isTurnBased {
+      if !self.viewStore.gameContext.is(\.turnBased) {
         Text(
           displayTime(
             gameMode: self.viewStore.gameMode,

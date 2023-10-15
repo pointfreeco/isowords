@@ -137,11 +137,6 @@ public struct Game: Reducer {
       self.wordSubmitButton = wordSubmit
     }
 
-    public var dailyChallengeId: DailyChallenge.Id? {
-      guard case let .dailyChallenge(id) = self.gameContext else { return nil }
-      return id
-    }
-
     public var isNavVisible: Bool {
       !self.isDemo
     }
@@ -150,23 +145,12 @@ public struct Game: Reducer {
       self.gameMode != .timed && !self.activeGames.isEmpty
     }
 
-    public var turnBasedContext: TurnBasedContext? {
-      get {
-        guard case let .turnBased(context) = self.gameContext else { return nil }
-        return context
-      }
-      set {
-        guard let newValue = newValue else { return }
-        self.gameContext = .turnBased(newValue)
-      }
-    }
-
     public var wordSubmitButtonFeature: WordSubmitButtonFeature.State {
       get {
         .init(
           isSelectedWordValid: self.selectedWordIsValid,
-          isTurnBasedMatch: self.turnBasedContext != nil,
-          isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
+          isTurnBasedMatch: self.gameContext.is(\.turnBased),
+          isYourTurn: self.gameContext.turnBased?.currentParticipantIsLocalPlayer ?? true,
           wordSubmitButton: self.wordSubmitButton
         )
       }
@@ -258,7 +242,7 @@ public struct Game: Reducer {
         return .none
 
       case .destination(.presented(.alert(.forfeitButtonTapped))):
-        guard let match = state.turnBasedContext?.match
+        guard let match = state.gameContext.turnBased?.match
         else { return .none }
 
         return .run { _ in
@@ -364,7 +348,7 @@ public struct Game: Reducer {
               }
             }
 
-            if gameContext.isTurnBased {
+            if gameContext.is(\.turnBased) {
               group.addTask {
                 let playedGamesCount = await self.userDefaults
                   .incrementMultiplayerOpensCount()
@@ -441,8 +425,8 @@ public struct Game: Reducer {
 
         let move = Move(
           playedAt: self.mainRunLoop.now.date,
-          playerIndex: state.turnBasedContext?.localPlayerIndex,
-          reactions: zip(state.turnBasedContext?.localPlayerIndex, reaction)
+          playerIndex: state.gameContext.turnBased?.localPlayerIndex,
+          reactions: zip(state.gameContext.turnBased?.localPlayerIndex, reaction)
             .map { [$0: $1] },
           score: state.selectedWordScore,
           type: .playedWord(state.selectedWord)
@@ -581,30 +565,25 @@ extension Game.State {
     self.moves.reduce(into: 0) { $0 += $1.score }
   }
 
-  public var isDailyChallenge: Bool {
-    self.dailyChallengeId != nil
-  }
-
   public var isGameOver: Bool {
-    self.destination?[is: \.gameOver] == true
+    self.destination.is(\.some.gameOver)
   }
 
   public var isResumable: Bool {
-    self.gameMode == .unlimited
-      && !self.isGameOver
+    self.gameMode == .unlimited && !self.isGameOver
   }
 
   public var isSavable: Bool {
-    self.isResumable && !self.gameContext.isTurnBased
+    self.isResumable && !self.gameContext.is(\.turnBased)
   }
 
   public var playedWords: [PlayedWord] {
     self.moves
       .reduce(into: [PlayedWord]()) {
-        guard case let .playedWord(word) = $1.type else { return }
+        guard let word = $1.type.playedWord else { return }
         $0.append(
           .init(
-            isYourWord: $1.playerIndex == self.turnBasedContext?.localPlayerIndex,
+            isYourWord: $1.playerIndex == self.gameContext.turnBased?.localPlayerIndex,
             reactions: $1.reactions,
             score: $1.score,
             word: self.cubes.string(from: word)
@@ -622,10 +601,9 @@ extension Game.State {
   }
 
   public var selectedWordHasAlreadyBeenPlayed: Bool {
-    self.moves.contains(where: {
-      guard case let .playedWord(word) = $0.type else { return false }
-      return cubes.string(from: word) == self.selectedWordString
-    })
+    self.moves.contains {
+      $0.type.playedWord.map { self.cubes.string(from: $0) } == self.selectedWordString
+    }
   }
 
   mutating func tryToRemoveCube(at index: LatticePoint) -> EffectOf<Game> {
@@ -636,7 +614,7 @@ extension Game.State {
     else { return .send(.confirmRemoveCube(index)) }
 
     let isTurnEndingRemoval: Bool
-    if let turnBasedMatch = self.turnBasedContext,
+    if let turnBasedMatch = self.gameContext.turnBased,
       let move = self.moves.last,
       case .removedCube = move.type,
       move.playerIndex == turnBasedMatch.localPlayerIndex
@@ -655,7 +633,7 @@ extension Game.State {
   mutating func removeCube(at index: LatticePoint, playedAt: Date) {
     let move = Move(
       playedAt: playedAt,
-      playerIndex: self.turnBasedContext?.localPlayerIndex,
+      playerIndex: self.gameContext.turnBased?.localPlayerIndex,
       reactions: nil,
       score: 0,
       type: .removedCube(index)
@@ -676,11 +654,11 @@ extension Game.State {
   }
 
   var canRemoveCube: Bool {
-    guard let turnBasedMatch = self.turnBasedContext else { return true }
+    guard let turnBasedMatch = self.gameContext.turnBased else { return true }
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard
-      !lastMove.type[is: \.removedCube],
+      !lastMove.type.is(\.removedCube),
       lastMove.playerIndex != turnBasedMatch.localPlayerIndex
     else {
       return true
@@ -689,12 +667,12 @@ extension Game.State {
   }
 
   public var isYourTurn: Bool {
-    guard let turnBasedMatch = self.turnBasedContext else { return true }
+    guard let turnBasedMatch = self.gameContext.turnBased else { return true }
     guard turnBasedMatch.match.status == .open else { return false }
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
     guard let lastMove = self.moves.last else { return true }
     guard lastMove.playerIndex == turnBasedMatch.localPlayerIndex else { return true }
-    guard case .playedWord = lastMove.type else { return true }
+    guard lastMove.type.is(\.playedWord) else { return true }
     return false
   }
 
@@ -785,7 +763,7 @@ extension BottomMenuState where Action == Game.Destination.Action.BottomMenu {
       )
     }
 
-    if state.turnBasedContext != nil {
+    if state.gameContext.turnBased != nil {
       menu.buttons.append(
         .init(
           title: .init("Forfeit"),
@@ -853,7 +831,7 @@ extension CompletedGame {
       gameMode: gameState.gameMode,
       gameStartTime: gameState.gameStartTime,
       language: gameState.language,
-      localPlayerIndex: gameState.turnBasedContext?.localPlayerIndex,
+      localPlayerIndex: gameState.gameContext.turnBased?.localPlayerIndex,
       moves: gameState.moves,
       secondsPlayed: gameState.secondsPlayed
     )

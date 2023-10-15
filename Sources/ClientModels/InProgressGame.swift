@@ -47,11 +47,6 @@ public struct InProgressGame: Codable, Equatable {
     self.moves.reduce(into: 0) { $0 += $1.score }
   }
 
-  public var dailyChallengeId: DailyChallenge.Id? {
-    guard case let .dailyChallenge(id) = self.gameContext else { return nil }
-    return id
-  }
-
   public func score(forPlayerIndex index: Move.PlayerIndex) -> Int {
     self.moves.reduce(into: 0) {
       $0 += $1.playerIndex == index ? $1.score : 0

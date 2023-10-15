@@ -29,9 +29,7 @@ public struct Demo: Reducer {
     }
 
     var isGameOver: Bool {
-      guard case let .game(game) = self.step, case .gameOver = game.destination
-      else { return false }
-      return true
+      self.step.game?.destination.is(\.some.gameOver) == true
     }
   }
 

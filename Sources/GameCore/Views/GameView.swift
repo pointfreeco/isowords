@@ -29,7 +29,7 @@ public struct GameView<Content>: View where Content: View {
 
     init(state: Game.State) {
       self.isAnimationReduced = state.isAnimationReduced
-      self.isDailyChallenge = state.dailyChallengeId != nil
+      self.isDailyChallenge = state.gameContext.is(\.dailyChallenge)
       self.isGameLoaded = state.isGameLoaded
       self.isNavVisible = state.isNavVisible
       self.isTrayVisible = state.isTrayVisible

@@ -193,16 +193,16 @@ public struct ActiveGamesView: View {
 extension InProgressGame {
   fileprivate var lastPlayedWord: PlayedWord? {
     self.moves
-      .last(where: \.type[is: \.playedWord])
-      .flatMap { move -> PlayedWord? in
-        guard case let .playedWord(indices) = move.type
-        else { return nil }
-
-        return PlayedWord(
-          isYourWord: false,
-          reactions: move.reactions,
-          score: move.score,
-          word: self.cubes.string(from: indices))
+      .last(where: { $0.type.is(\.playedWord) })
+      .flatMap { move in
+        move.type.playedWord.map {
+          PlayedWord(
+            isYourWord: false,
+            reactions: move.reactions,
+            score: move.score,
+            word: self.cubes.string(from: $0)
+          )
+        }
       }
   }
 }

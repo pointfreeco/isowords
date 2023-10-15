@@ -13,7 +13,7 @@ struct TurnBasedLogic: Reducer {
 
   var body: some ReducerOf<Game> {
     Reduce { state, action in
-      guard let turnBasedContext = state.turnBasedContext
+      guard let turnBasedContext = state.gameContext.turnBased
       else { return .none }
 
       switch action {
@@ -42,7 +42,7 @@ struct TurnBasedLogic: Reducer {
             GameOver.State(
               completedGame: CompletedGame(gameState: state),
               isDemo: state.isDemo,
-              turnBasedContext: state.turnBasedContext
+              turnBasedContext: state.gameContext.turnBased
             )
           )
           return .run { _ in

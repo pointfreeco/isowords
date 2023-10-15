@@ -73,7 +73,7 @@ public struct Home: Reducer {
     @PresentationState public var nagBanner: NagBanner.State?
     public var savedGames: SavedGamesState {
       didSet {
-        guard case var .dailyChallenge(dailyChallengeState) = self.destination
+        guard var dailyChallengeState = self.destination?.dailyChallenge
         else { return }
         dailyChallengeState.inProgressDailyChallengeUnlimited =
           self.savedGames.dailyChallengeUnlimited

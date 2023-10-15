@@ -26,6 +26,7 @@ public struct Move: Codable, Equatable, Sendable {
   }
 
   @CasePathable
+  @dynamicMemberLookup
   public enum MoveType: Codable, Equatable, Sendable {
     case playedWord([IndexedCubeFace])
     case removedCube(LatticePoint)

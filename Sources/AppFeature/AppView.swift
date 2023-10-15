@@ -93,7 +93,7 @@ public struct AppReducer: Reducer {
     self.core
       .onChange(of: \.destination?.game?.moves) { _, moves in
         Reduce { state, _ in
-          guard case let .game(game) = state.destination, game.isSavable
+          guard let game = state.destination?.game, game.isSavable
           else { return .none }
 
           switch (game.gameContext, game.gameMode) {
@@ -181,7 +181,7 @@ public struct AppReducer: Reducer {
       ),
         .destination(.presented(.game(.destination(.presented(.gameOver(.task)))))):
 
-        guard case let .game(game) = state.destination else { return .none }
+        guard let game = state.destination?.game else { return .none }
         switch (game.gameContext, game.gameMode) {
         case (.dailyChallenge, .unlimited):
           state.home.savedGames.dailyChallengeUnlimited = nil
@@ -276,7 +276,7 @@ public struct AppReducer: Reducer {
 
       case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
         if dailyChallenges.unlimited?.dailyChallenge.id
-          != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
+            != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
           return .run { [savedGames = state.home.savedGames] _ in

@@ -34,7 +34,7 @@ public struct GameCenterLogic: Reducer {
       ):
         guard
           case let .game(game) = state.destination,
-          let turnBasedMatch = game.turnBasedContext
+          let turnBasedMatch = game.gameContext.turnBased
         else { return .none }
 
         state.destination = nil
@@ -56,7 +56,7 @@ public struct GameCenterLogic: Reducer {
       case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
         guard
           case let .game(game) = state.destination,
-          game.turnBasedContext?.match.matchId == match.matchId,
+          game.gameContext.turnBased?.match.matchId == match.matchId,
           let turnBasedMatchData = match.matchData?.turnBasedMatchData
         else { return .none }
 
@@ -188,7 +188,7 @@ public struct GameCenterLogic: Reducer {
           GameOver.State(
             completedGame: CompletedGame(gameState: gameState),
             isDemo: gameState.isDemo,
-            turnBasedContext: gameState.turnBasedContext
+            turnBasedContext: gameState.gameContext.turnBased
           )
         )
       }
@@ -212,7 +212,7 @@ public struct GameCenterLogic: Reducer {
       metadata: turnBasedMatchData.metadata
     )
     guard
-      state.destination?.game?.turnBasedContext?.match.matchId != match.matchId,
+      state.destination?.game?.gameContext.turnBased?.match.matchId != match.matchId,
       context.currentParticipantIsLocalPlayer,
       match.participants.allSatisfy({ $0.matchOutcome == .none }),
       let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),

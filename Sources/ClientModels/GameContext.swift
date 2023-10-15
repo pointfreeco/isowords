@@ -1,5 +1,8 @@
+import CasePaths
 import SharedModels
 
+@CasePathable
+@dynamicMemberLookup
 public enum GameContext: Codable, Equatable {
   case dailyChallenge(DailyChallenge.Id)
   case shared(SharedGame.Code)
@@ -70,11 +73,6 @@ public enum GameContext: Codable, Equatable {
         )
       )
     }
-  }
-
-  public var isTurnBased: Bool {
-    guard case .turnBased = self else { return false }
-    return true
   }
 
   private enum CodingKeys: CaseIterable, CodingKey {

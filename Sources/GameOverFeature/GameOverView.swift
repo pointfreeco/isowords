@@ -190,7 +190,7 @@ public struct GameOver: Reducer {
         }
 
       case .destination(.dismiss)
-      where state.destination?[is: \.notificationsAuthAlert] == true:
+        where state.destination.is(\.some.notificationsAuthAlert):
         return .run { _ in
           try? await self.requestReviewAsync()
           await self.dismiss(animation: .default)
@@ -417,21 +417,22 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented = state.destination?[is: \.upgradeInterstitial] == true
+      self.isUpgradeInterstitialPresented = state.destination.is(\.some.upgradeInterstitial)
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
       self.unplayedDaily =
         state.dailyChallenges
         .first(where: { $0.yourResult.rank == nil })?.dailyChallenge.gameMode
-      self.words = state.completedGame.moves.compactMap { move -> PlayedWord? in
-        guard case let .playedWord(faces) = move.type else { return nil }
-        return PlayedWord(
-          isYourWord: move.playerIndex == state.completedGame.localPlayerIndex,
-          reactions: move.reactions,
-          score: move.score,
-          word: state.completedGame.cubes.string(from: faces)
-        )
+      self.words = state.completedGame.moves.compactMap { move in
+        move.type.playedWord.map {
+          PlayedWord(
+            isYourWord: move.playerIndex == state.completedGame.localPlayerIndex,
+            reactions: move.reactions,
+            score: move.score,
+            word: state.completedGame.cubes.string(from: $0)
+          )
+        }
       }
       self.you = state.turnBasedContext?.localPlayer.player
       self.yourOpponent = state.turnBasedContext?.otherPlayer

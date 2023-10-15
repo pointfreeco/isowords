@@ -154,7 +154,7 @@ public struct WordListView: View {
 
 extension WordListView.ViewState {
   init(state: Game.State) {
-    self.isTurnBasedGame = state.turnBasedContext != nil
+    self.isTurnBasedGame = state.gameContext.is(\.turnBased)
     self.isYourTurn = state.isYourTurn
     self.words = state.playedWords
   }

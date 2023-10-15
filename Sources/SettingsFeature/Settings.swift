@@ -80,7 +80,7 @@ public struct Settings: Reducer {
     }
 
     public var isFullGamePurchased: Bool {
-      return self.fullGamePurchasedAt != nil
+      self.fullGamePurchasedAt != nil
     }
   }
 
