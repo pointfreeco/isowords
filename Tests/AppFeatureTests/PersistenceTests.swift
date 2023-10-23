@@ -57,34 +57,33 @@ class PersistenceTests: XCTestCase {
           gameStartTime: RunLoop.immediate.now.date
         )
       )
-      $0.home.savedGames.unlimited = $0.$destination[case: /AppReducer.Destination.State.game]
-        .map(InProgressGame.init)
+      $0.home.savedGames.unlimited = $0.$destination[case: \.game].map(InProgressGame.init)
     }
     await store.send(.destination(.presented(.game(.tap(.began, C))))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = C
-      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C]
+      $0.$destination[case: \.game]?.optimisticallySelectedFace = C
+      $0.$destination[case: \.game]?.selectedWord = [C]
     }
     await store.send(.destination(.presented(.game(.tap(.ended, C))))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
+      $0.$destination[case: \.game]?.optimisticallySelectedFace = nil
     }
     await store.send(.destination(.presented(.game(.tap(.began, A))))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = A
-      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C, A]
+      $0.$destination[case: \.game]?.optimisticallySelectedFace = A
+      $0.$destination[case: \.game]?.selectedWord = [C, A]
     }
     await store.send(.destination(.presented(.game(.tap(.ended, A))))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
+      $0.$destination[case: \.game]?.optimisticallySelectedFace = nil
     }
     await store.send(.destination(.presented(.game(.tap(.began, B))))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = B
-      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C, A, B]
-      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWordIsValid = true
+      $0.$destination[case: \.game]?.optimisticallySelectedFace = B
+      $0.$destination[case: \.game]?.selectedWord = [C, A, B]
+      $0.$destination[case: \.game]?.selectedWordIsValid = true
     }
     await store.send(.destination(.presented(.game(.tap(.ended, B))))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
+      $0.$destination[case: \.game]?.optimisticallySelectedFace = nil
     }
     await store.send(.destination(.presented(.game(.submitButtonTapped(reaction: nil))))) {
-      let game = try XCTUnwrap($0.$destination[case: /AppReducer.Destination.State.game])
-      $0.$destination[case: /AppReducer.Destination.State.game]?.moves = [
+      let game = try XCTUnwrap($0.$destination[case: \.game])
+      $0.$destination[case: \.game]?.moves = [
         .init(
           playedAt: RunLoop.immediate.now.date,
           playerIndex: nil,
@@ -93,16 +92,15 @@ class PersistenceTests: XCTestCase {
           type: .playedWord(game.selectedWord)
         )
       ]
-      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = []
-      $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWordIsValid = false
-      $0.$destination[case: /AppReducer.Destination.State.game]?.cubes[index].left.useCount = 1
-      $0.$destination[case: /AppReducer.Destination.State.game]?.cubes[index].right.useCount = 1
-      $0.$destination[case: /AppReducer.Destination.State.game]?.cubes[index].top.useCount = 1
-      $0.home.savedGames.unlimited = $0.$destination[case: /AppReducer.Destination.State.game]
-        .map(InProgressGame.init)
+      $0.$destination[case: \.game]?.selectedWord = []
+      $0.$destination[case: \.game]?.selectedWordIsValid = false
+      $0.$destination[case: \.game]?.cubes[index].left.useCount = 1
+      $0.$destination[case: \.game]?.cubes[index].right.useCount = 1
+      $0.$destination[case: \.game]?.cubes[index].top.useCount = 1
+      $0.home.savedGames.unlimited = $0.$destination[case: \.game].map(InProgressGame.init)
     }
     await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+      $0.$destination[case: \.game]?.destination = .bottomMenu(
         .init(
           title: .init("Solo"),
           message: nil,
@@ -129,8 +127,8 @@ class PersistenceTests: XCTestCase {
     await store.send(
       .destination(.presented(.game(.destination(.presented(.bottomMenu(.exitButtonTapped))))))
     ) {
-      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = nil
+      let game = try XCTUnwrap($0.destination?.game)
+      $0.$destination[case: \.game]?.destination = nil
       $0.home.savedGames.unlimited = InProgressGame(gameState: game)
     }
     await store.receive(.destination(.dismiss)) {
@@ -165,7 +163,7 @@ class PersistenceTests: XCTestCase {
     }
 
     await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+      $0.$destination[case: \.game]?.destination = .bottomMenu(
         .init(
           title: .init("Solo"),
           message: nil,
@@ -192,8 +190,8 @@ class PersistenceTests: XCTestCase {
     await store.send(
       .destination(.presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))))
     ) {
-      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .gameOver(
+      let game = try XCTUnwrap($0.destination?.game)
+      $0.$destination[case: \.game]?.destination = .gameOver(
         GameOver.State(
           completedGame: .init(gameState: game),
           isDemo: false
@@ -222,7 +220,7 @@ class PersistenceTests: XCTestCase {
     }
 
     await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+      $0.$destination[case: \.game]?.destination = .bottomMenu(
         .init(
           title: .init("Solo"),
           message: nil,
@@ -244,8 +242,8 @@ class PersistenceTests: XCTestCase {
     await store.send(
       .destination(.presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))))
     ) {
-      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .gameOver(
+      let game = try XCTUnwrap($0.destination?.game)
+      $0.$destination[case: \.game]?.destination = .gameOver(
         GameOver.State(
           completedGame: .init(gameState: game),
           isDemo: false
@@ -312,21 +310,21 @@ class PersistenceTests: XCTestCase {
     }
 
     await store.send(.destination(.presented(.game(.menuButtonTapped)))) {
-      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+      let game = try XCTUnwrap($0.destination?.game)
+      $0.$destination[case: \.game]?.destination = .bottomMenu(
         .gameMenu(state: game)
       )
     }
     await store.send(
       .destination(.presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped))))))
     ) {
-      let game = try XCTUnwrap($0.destination, case: /AppReducer.Destination.State.game)
+      let game = try XCTUnwrap($0.destination?.game)
       var gameOver = GameOver.State(
         completedGame: .init(gameState: game),
         isDemo: false
       )
-      gameOver.turnBasedContext = game.turnBasedContext
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .gameOver(gameOver)
+      gameOver.turnBasedContext = game.gameContext.turnBased
+      $0.$destination[case: \.game]?.destination = .gameOver(gameOver)
     }
   }
 }

@@ -60,7 +60,7 @@ extension ApiClient {
   ) {
     let fulfill = expectation(description: "route")
     self.apiRequest = { @Sendable [self] route in
-      if let value = route[keyPath: matchingRoute] {
+      if let value = route[case: matchingRoute] {
         fulfill()
         return try await response(value)
       } else {

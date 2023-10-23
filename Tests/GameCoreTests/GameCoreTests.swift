@@ -58,7 +58,7 @@ class GameCoreTests: XCTestCase {
         GameOver.State(
           completedGame: .init(gameState: gameState),
           isDemo: false,
-          turnBasedContext: gameState.turnBasedContext
+          turnBasedContext: gameState.gameContext.turnBased
         )
       )
     }

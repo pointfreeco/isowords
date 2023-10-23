@@ -37,6 +37,7 @@ public struct Trailer: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action: BindableAction, Equatable {
     case binding(BindingAction<State>)
     case game(Game.Action)
@@ -49,7 +50,7 @@ public struct Trailer: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.game, action: /Action.game) {
+    Scope(state: \.game, action: \.game) {
       Game().transformDependency(\.self) {
         $0.apiClient = .noop
         $0.applicationClient = .noop

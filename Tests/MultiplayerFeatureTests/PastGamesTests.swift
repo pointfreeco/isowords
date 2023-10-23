@@ -31,9 +31,9 @@ class PastGamesTests: XCTestCase {
       $0.gameCenter.turnBasedMatch.load = { _ in match }
     }
 
-    await store.send(.pastGame("id", .tappedRow))
-    await store.receive(.pastGame("id", .matchResponse(.success(match))))
-    await store.receive(.pastGame("id", .delegate(.openMatch(match))))
+    await store.send(.pastGame(id: "id", action: .tappedRow))
+    await store.receive(.pastGame(id: "id", action: .matchResponse(.success(match))))
+    await store.receive(.pastGame(id: "id", action: .delegate(.openMatch(match))))
   }
 
   func testRematch() async {
@@ -43,19 +43,19 @@ class PastGamesTests: XCTestCase {
       $0.gameCenter.turnBasedMatch.rematch = { _ in match }
     }
 
-    await store.send(.pastGame("id", .rematchButtonTapped)) {
+    await store.send(.pastGame(id: "id", action: .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = true
       }
     }
 
-    await store.receive(.pastGame("id", .rematchResponse(.success(match)))) {
+    await store.receive(.pastGame(id: "id", action: .rematchResponse(.success(match)))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
       }
     }
 
-    await store.receive(.pastGame("id", .delegate(.openMatch(match))))
+    await store.receive(.pastGame(id: "id", action: .delegate(.openMatch(match))))
   }
 
   func testRematch_Failure() async {
@@ -67,13 +67,13 @@ class PastGamesTests: XCTestCase {
       $0.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
     }
 
-    await store.send(.pastGame("id", .rematchButtonTapped)) {
+    await store.send(.pastGame(id: "id", action: .rematchButtonTapped)) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = true
       }
     }
 
-    await store.receive(.pastGame("id", .rematchResponse(.failure(RematchFailure())))) {
+    await store.receive(.pastGame(id: "id", action: .rematchResponse(.failure(RematchFailure())))) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
         $0.alert = .init {

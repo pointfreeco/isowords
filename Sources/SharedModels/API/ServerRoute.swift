@@ -72,6 +72,7 @@ public enum ServerRoute: Equatable {
         }
       }
 
+      @CasePathable
       public enum Games: Equatable, Sendable {
         case submit(SubmitRequest)
 

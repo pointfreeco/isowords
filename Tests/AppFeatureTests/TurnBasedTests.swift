@@ -151,8 +151,9 @@ class TurnBasedTests: XCTestCase {
         .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true))))
       ) {
         $0.destination = .game(initialGameState)
-        $0.$destination[case: /AppReducer.Destination.State.game]?.turnBasedContext?.metadata
-          .lastOpenedAt = store.dependencies.mainRunLoop.now.date
+        $0.$destination[case: \.game]?.gameContext.modify(\.turnBased) {
+          $0.metadata.lastOpenedAt = store.dependencies.mainRunLoop.now.date
+        }
       }
       store.dependencies.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
       store.dependencies.userDefaults.setInteger = { int, key in
@@ -166,7 +167,7 @@ class TurnBasedTests: XCTestCase {
 
       await store.receive(.destination(.presented(.game(.matchesLoaded(.success([]))))))
       await store.receive(.destination(.presented(.game(.gameLoaded)))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.isGameLoaded = true
+        $0.$destination[case: \.game]?.isGameLoaded = true
       }
 
       await self.mainRunLoop.advance()
@@ -179,29 +180,29 @@ class TurnBasedTests: XCTestCase {
       let B = IndexedCubeFace(index: index, side: .right)
 
       await store.send(.destination(.presented(.game(.tap(.began, C))))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = C
-        $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C]
+        $0.$destination[case: \.game]?.optimisticallySelectedFace = C
+        $0.$destination[case: \.game]?.selectedWord = [C]
       }
       await store.send(.destination(.presented(.game(.tap(.ended, C))))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
+        $0.$destination[case: \.game]?.optimisticallySelectedFace = nil
       }
       await store.send(.destination(.presented(.game(.tap(.began, A))))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = A
-        $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C, A]
+        $0.$destination[case: \.game]?.optimisticallySelectedFace = A
+        $0.$destination[case: \.game]?.selectedWord = [C, A]
       }
       await store.send(.destination(.presented(.game(.tap(.ended, A))))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
+        $0.$destination[case: \.game]?.optimisticallySelectedFace = nil
       }
       await store.send(.destination(.presented(.game(.tap(.began, B))))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = B
-        $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWord = [C, A, B]
-        $0.$destination[case: /AppReducer.Destination.State.game]?.selectedWordIsValid = true
+        $0.$destination[case: \.game]?.optimisticallySelectedFace = B
+        $0.$destination[case: \.game]?.selectedWord = [C, A, B]
+        $0.$destination[case: \.game]?.selectedWordIsValid = true
       }
       await store.send(.destination(.presented(.game(.tap(.ended, B))))) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.optimisticallySelectedFace = nil
+        $0.$destination[case: \.game]?.optimisticallySelectedFace = nil
       }
 
-      let updatedGameState = try update(initialGameState) {
+      let updatedGameState = update(initialGameState) {
         $0.isGameLoaded = true
         $0.moves = [
           .init(
@@ -217,7 +218,7 @@ class TurnBasedTests: XCTestCase {
         $0.cubes[index].left.useCount = 1
         $0.cubes[index].right.useCount = 1
         $0.cubes[index].top.useCount = 1
-        try XCTUnwrap(&$0.turnBasedContext) {
+        $0.gameContext.modify(\.turnBased) {
           $0.metadata.lastOpenedAt = store.dependencies.mainRunLoop.now.date
         }
       }
@@ -244,16 +245,14 @@ class TurnBasedTests: XCTestCase {
         $0.destination = .game(updatedGameState)
       }
       try await didEndTurnWithRequest.withValue {
-        let game = try XCTUnwrap(
-          (/AppReducer.Destination.State.game).extract(from: store.state.destination)
-        )
+        let game = try XCTUnwrap(store.state.destination?.game)
         XCTAssertNoDifference(
           $0,
           .init(
             for: newMatch.matchId,
             matchData: Data(
               turnBasedMatchData: TurnBasedMatchData(
-                context: try XCTUnwrap(game.turnBasedContext),
+                context: try XCTUnwrap(game.gameContext.turnBased),
                 gameState: game,
                 playerId: currentPlayer.player.id
               )
@@ -268,12 +267,14 @@ class TurnBasedTests: XCTestCase {
           .presented(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
         )
       ) {
-        $0.$destination[case: /AppReducer.Destination.State.game]?.turnBasedContext = .init(
-          localPlayer: .mock,
-          match: updatedMatch,
-          metadata: .init(
-            lastOpenedAt: store.dependencies.mainRunLoop.now.date,
-            playerIndexToId: [0: currentPlayer.player.id]
+        $0.$destination[case: \.game]?.gameContext = .turnBased(
+          .init(
+            localPlayer: .mock,
+            match: updatedMatch,
+            metadata: .init(
+              lastOpenedAt: store.dependencies.mainRunLoop.now.date,
+              playerIndexToId: [0: currentPlayer.player.id]
+            )
           )
         )
       }
@@ -560,8 +561,8 @@ class TurnBasedTests: XCTestCase {
     }
 
     await store.send(.destination(.presented(.game(.doubleTap(index: .zero))))) {
-      let game = try XCTUnwrap($0.$destination[case: /AppReducer.Destination.State.game])
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+      let game = try XCTUnwrap($0.$destination[case: \.game])
+      $0.$destination[case: \.game]?.destination = .bottomMenu(
         .removeCube(index: .zero, state: game, isTurnEndingRemoval: false)
       )
     }
@@ -604,14 +605,15 @@ class TurnBasedTests: XCTestCase {
     await store.receive(
       .destination(.presented(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch))))))
     ) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.turnBasedContext?.match =
-        updatedMatch
+      $0.$destination[case: \.game]?.gameContext.modify(\.turnBased) {
+        $0.match = updatedMatch
+      }
     }
     await store.send(
       .destination(.presented(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one)))))
     ) {
-      let game = try XCTUnwrap($0.$destination[case: /AppReducer.Destination.State.game])
-      $0.$destination[case: /AppReducer.Destination.State.game]?.destination = .bottomMenu(
+      let game = try XCTUnwrap($0.$destination[case: \.game])
+      $0.$destination[case: \.game]?.destination = .bottomMenu(
         .removeCube(
           index: .init(x: .zero, y: .zero, z: .one),
           state: game,
@@ -630,7 +632,7 @@ class TurnBasedTests: XCTestCase {
           type: .removedCube(.init(x: .zero, y: .zero, z: .one))
         )
       )
-      $0.turnBasedContext?.match = updatedMatch
+      $0.gameContext.modify(\.turnBased) { $0.match = updatedMatch }
       $0.cubes.0.0.1.wasRemoved = true
       $0.destination = nil
     }
@@ -666,22 +668,23 @@ class TurnBasedTests: XCTestCase {
     await store.receive(
       .destination(.presented(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch))))))
     ) {
-      $0.$destination[case: /AppReducer.Destination.State.game]?.turnBasedContext?.match =
-        updatedMatch
+      $0.$destination[case: \.game]?.gameContext.modify(\.turnBased) {
+        $0.match = updatedMatch
+      }
     }
     await store.send(
       .destination(.presented(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
     )
 
     try await didEndTurnWithRequest.withValue {
-      let game = try XCTUnwrap(store.state.destination, case: /AppReducer.Destination.State.game)
+      let game = try XCTUnwrap(store.state.destination?.game)
       XCTAssertNoDifference(
         $0,
         .init(
           for: match.matchId,
           matchData: Data(
             turnBasedMatchData: TurnBasedMatchData(
-              context: try XCTUnwrap(game.turnBasedContext),
+              context: try XCTUnwrap(game.gameContext.turnBased),
               gameState: game,
               playerId: nil
             )
