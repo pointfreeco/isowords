@@ -162,7 +162,7 @@ public struct VocabView: View {
       }
       .task { await self.store.send(.task).finish() }
       .sheet(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        store: self.store.scope(state: \.$destination, action: \.destination),
         state: \.cubePreview,
         action: { .cubePreview($0) },
         content: CubePreviewView.init(store:)

@@ -350,12 +350,12 @@ public struct AppView: View {
     Group {
       if self.viewStore.isHomeActive {
         NavigationStack {
-          HomeView(store: self.store.scope(state: \.home, action: { .home($0) }))
+          HomeView(store: self.store.scope(state: \.home, action: \.home))
         }
         .zIndex(0)
       } else {
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          self.store.scope(state: \.$destination, action: \.destination),
           state: \.game,
           action: { .game($0) }
         ) { store in
@@ -373,7 +373,7 @@ public struct AppView: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          self.store.scope(state: \.$destination, action: \.destination),
           state: \.onboarding,
           action: { .onboarding($0) },
           then: OnboardingView.init(store:)

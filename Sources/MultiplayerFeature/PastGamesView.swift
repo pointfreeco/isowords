@@ -70,7 +70,7 @@ struct PastGamesView: View {
   var body: some View {
     ScrollView {
       ForEachStore(
-        self.store.scope(state: \.pastGames, action: { .pastGame(id: $0, action: $1) })
+        self.store.scope(state: \.pastGames, action: \.pastGame)
       ) { store in
         Group {
           PastGameRow(store: store)

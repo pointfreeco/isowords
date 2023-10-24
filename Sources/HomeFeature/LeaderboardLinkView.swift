@@ -59,7 +59,7 @@ struct LeaderboardLinkView: View {
         )
       )
       .navigationDestination(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        store: self.store.scope(state: \.$destination, action: \.destination),
         state: \.leaderboard,
         action: { .leaderboard($0) },
         destination: LeaderboardView.init(store:)

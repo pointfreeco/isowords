@@ -228,7 +228,7 @@ public struct StatsView: View {
     }
     .task { await self.viewStore.send(.task).finish() }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.vocab,
       action: { .vocab($0) },
       destination: VocabView.init(store:)

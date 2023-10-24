@@ -529,20 +529,20 @@ public struct HomeView: View {
       )
 
       IfLetStore(
-        self.store.scope(state: \.$nagBanner, action: { .nagBanner($0) }),
+        self.store.scope(state: \.$nagBanner, action: \.nagBanner),
         then: NagBannerView.init(store:)
       )
     }
     .navigationBarHidden(true)
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.settings,
       action: { .settings($0) }
     ) { store in
       SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.changelog,
       action: { .changelog($0) },
       content: ChangelogView.init(store:)

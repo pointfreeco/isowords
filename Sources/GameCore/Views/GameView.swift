@@ -89,7 +89,7 @@ public struct GameView<Content>: View where Content: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.wordSubmitButtonFeature,
-                action: { .wordSubmitButton($0) }
+                action: \.wordSubmitButton
               )
             )
             .ignoresSafeArea()
@@ -103,7 +103,7 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: { .activeGames($0) }),
+            store: self.store.scope(state: \.activeGames, action: \.activeGames),
             showMenuItems: false
           )
           .adaptivePadding(.vertical, 8)
@@ -128,7 +128,7 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          self.store.scope(state: \.$destination, action: \.destination),
           state: \.gameOver,
           action: { .gameOver($0) },
           then: GameOverView.init(store:)
@@ -143,7 +143,7 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
+          self.store.scope(state: \.$destination, action: \.destination),
           state: \.upgradeInterstitial,
           action: { .upgradeInterstitial($0) }
         ) { store in
@@ -175,17 +175,17 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        store: self.store.scope(state: \.$destination, action: \.destination),
         state: \.bottomMenu,
         action: { .bottomMenu($0) }
       )
       .alert(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        store: self.store.scope(state: \.$destination, action: \.destination),
         state: \.alert,
         action: { .alert($0) }
       )
       .sheet(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+        store: self.store.scope(state: \.$destination, action: \.destination),
         state: \.settings,
         action: { .settings($0) }
       ) { store in

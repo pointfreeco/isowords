@@ -205,7 +205,7 @@ extension BottomMenuState.Button {
       var body: some View {
         Button("Present") { store.send(.showMenuButtonTapped, animation: .default) }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .bottomMenu(store: self.store.scope(state: \.$bottomMenu, action: { .bottomMenu($0) }))
+          .bottomMenu(store: self.store.scope(state: \.$bottomMenu, action: \.bottomMenu))
       }
     }
 

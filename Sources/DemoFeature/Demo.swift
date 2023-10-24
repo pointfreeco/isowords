@@ -147,7 +147,7 @@ public struct DemoView: View {
   }
 
   public var body: some View {
-    SwitchStore(self.store.scope(state: \.step, action: { $0 })) { step in
+    SwitchStore(self.store.scope(state: \.step, action: \.self)) { step in
       switch step {
       case .onboarding:
         CaseLet(\Demo.State.Step.onboarding, action: Demo.Action.onboarding) {

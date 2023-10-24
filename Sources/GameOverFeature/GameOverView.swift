@@ -502,7 +502,7 @@ public struct GameOverView: View {
       }
 
       IfLetStore(
-        self.store.scope(state: \.$destination, action: { .destination($0) }),
+        self.store.scope(state: \.$destination, action: \.destination),
         state: \.upgradeInterstitial,
         action: { .upgradeInterstitial($0) }
       ) { store in
@@ -517,7 +517,7 @@ public struct GameOverView: View {
     )
     .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.notificationsAuthAlert,
       action: { .notificationsAuthAlert($0) }
     )

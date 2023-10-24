@@ -115,7 +115,7 @@ struct DailyChallengeHeaderView: View {
       }
     }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.dailyChallenge,
       action: { .dailyChallenge($0) },
       destination: DailyChallengeView.init(store:)

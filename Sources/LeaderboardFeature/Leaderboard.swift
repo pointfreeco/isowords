@@ -186,7 +186,7 @@ public struct LeaderboardView: View {
         switch self.viewStore.state.scope {
         case .games:
           LeaderboardResultsView(
-            store: self.store.scope(state: \.solo, action: { .solo($0) }),
+            store: self.store.scope(state: \.solo, action: \.solo),
             title: Text("Solo"),
             subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
@@ -206,7 +206,7 @@ public struct LeaderboardView: View {
 
         case .vocab:
           LeaderboardResultsView(
-            store: self.store.scope(state: \.vocab, action: { .vocab($0) }),
+            store: self.store.scope(state: \.vocab, action: \.vocab),
             title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },
@@ -241,7 +241,7 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
+      store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.cubePreview,
       action: { .cubePreview($0) },
       content: CubePreviewView.init(store:)

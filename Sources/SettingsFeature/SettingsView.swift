@@ -131,7 +131,7 @@ public struct SettingsView: View {
         title: "Accessibility"
       )
       SettingsNavigationLink(
-        destination: StatsView(store: self.store.scope(state: \.stats, action: { .stats($0) })),
+        destination: StatsView(store: self.store.scope(state: \.stats, action: \.stats)),
         title: "Stats"
       )
       SettingsNavigationLink(
@@ -182,7 +182,7 @@ public struct SettingsView: View {
       onDismiss: { self.viewStore.send(.onDismiss) }
     )
     .task { await self.viewStore.send(.task).finish() }
-    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
+    .alert(store: self.store.scope(state: \.$alert, action: \.alert))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()

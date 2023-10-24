@@ -69,7 +69,7 @@ public struct NagBannerView: View {
       .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
     .sheet(
-      store: self.store.scope(state: \.$upgradeInterstitial, action: { .upgradeInterstitial($0) }),
+      store: self.store.scope(state: \.$upgradeInterstitial, action: \.upgradeInterstitial),
       content: UpgradeInterstitialView.init(store:)
     )
   }
