@@ -3,15 +3,14 @@ import CubePreview
 import LocalDatabaseClient
 import SwiftUI
 
+@Reducer
 public struct Vocab: Reducer {
+  @Reducer
   public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case cubePreview(CubePreview.Action)
     }
@@ -44,7 +43,6 @@ public struct Vocab: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case destination(PresentationAction<Destination.Action>)
     case gamesResponse(TaskResult<State.GamesResponse>)

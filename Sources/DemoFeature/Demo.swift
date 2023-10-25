@@ -8,7 +8,8 @@ import StoreKit
 import SwiftUI
 import TcaHelpers
 
-public struct Demo: Reducer {
+@Reducer
+public struct Demo {
   public struct State: Equatable {
     var appStoreOverlayIsPresented: Bool
     var step: Step
@@ -33,7 +34,6 @@ public struct Demo: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case appStoreOverlay(isPresented: Bool)
     case fullVersionButtonTapped

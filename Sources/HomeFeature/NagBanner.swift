@@ -2,7 +2,8 @@ import ComposableArchitecture
 import SwiftUI
 import UpgradeInterstitialFeature
 
-public struct NagBanner: Reducer {
+@Reducer
+public struct NagBanner {
   public struct State: Equatable {
     @PresentationState var upgradeInterstitial: UpgradeInterstitial.State? = nil
 
@@ -11,7 +12,6 @@ public struct NagBanner: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case tapped
     case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)

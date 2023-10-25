@@ -4,12 +4,12 @@ import ComposableGameCenter
 import Styleguide
 import SwiftUI
 
-public struct PastGames: Reducer {
+@Reducer
+public struct PastGames {
   public struct State: Equatable {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case matchesResponse(TaskResult<[PastGame.State]>)
     case pastGame(id: TurnBasedMatch.Id, action: PastGame.Action)

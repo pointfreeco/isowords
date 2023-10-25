@@ -8,7 +8,8 @@ extension Reducer<Game.State, Game.Action> {
   }
 }
 
-private struct GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
+@Reducer
+private struct GameSounds<Base: ReducerOf<Game>> {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
   @Dependency(\.dictionary.contains) var dictionaryContains

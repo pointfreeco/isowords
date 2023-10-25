@@ -4,7 +4,8 @@ import ComposableUserNotifications
 import Foundation
 import SettingsFeature
 
-public struct AppDelegateReducer: Reducer {
+@Reducer
+public struct AppDelegateReducer {
   public struct State: Equatable {
     public init() {}
   }

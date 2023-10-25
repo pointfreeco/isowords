@@ -40,7 +40,8 @@ public struct DeveloperSettings: Equatable {
   }
 }
 
-public struct Settings: Reducer {
+@Reducer
+public struct Settings {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var buildNumber: Build.Number?
@@ -84,7 +85,6 @@ public struct Settings: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: BindableAction, Equatable {
     case alert(PresentationAction<Alert>)
     case binding(BindingAction<State>)

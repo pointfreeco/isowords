@@ -9,17 +9,16 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct DailyChallengeReducer: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct DailyChallengeReducer {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case notificationsAuthAlert(NotificationsAuthAlert.State)
       case results(DailyChallengeResults.State)
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case alert(Alert)
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
@@ -61,7 +60,6 @@ public struct DailyChallengeReducer: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)

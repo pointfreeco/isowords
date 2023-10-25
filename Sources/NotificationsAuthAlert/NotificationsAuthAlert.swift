@@ -6,7 +6,8 @@ import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
-public struct NotificationsAuthAlert: Reducer {
+@Reducer
+public struct NotificationsAuthAlert {
   public struct State: Equatable {
     public init() {}
   }

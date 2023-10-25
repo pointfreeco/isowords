@@ -7,7 +7,8 @@ import SharedModels
 import SwiftUI
 import UIApplicationClient
 
-public struct Trailer: Reducer {
+@Reducer
+public struct Trailer {
   public struct State: Equatable {
     var game: Game.State
     @BindingState var nub: CubeSceneView.ViewState.NubState
@@ -37,7 +38,6 @@ public struct Trailer: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: BindableAction, Equatable {
     case binding(BindingAction<State>)
     case game(Game.Action)

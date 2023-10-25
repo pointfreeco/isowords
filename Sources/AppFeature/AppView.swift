@@ -10,15 +10,14 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct AppReducer: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct AppReducer {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
     }
-    @CasePathable
     public enum Action: Equatable {
       case game(Game.Action)
       case onboarding(Onboarding.Action)
@@ -65,7 +64,6 @@ public struct AppReducer: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case appDelegate(AppDelegateReducer.Action)
     case destination(PresentationAction<Destination.Action>)

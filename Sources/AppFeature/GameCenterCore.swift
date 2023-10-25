@@ -11,7 +11,8 @@ public enum GameCenterAction: Equatable {
   case rematchResponse(TaskResult<TurnBasedMatch>)
 }
 
-public struct GameCenterLogic: Reducer {
+@Reducer
+public struct GameCenterLogic {
   @Dependency(\.apiClient.currentPlayer) var currentPlayer
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
