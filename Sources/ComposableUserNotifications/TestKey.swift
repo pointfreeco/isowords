@@ -10,20 +10,7 @@ extension DependencyValues {
 
 extension UserNotificationClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    add: unimplemented("\(Self.self).add"),
-    delegate: unimplemented("\(Self.self).delegate", placeholder: .finished),
-    getNotificationSettings: unimplemented(
-      "\(Self.self).getNotificationSettings",
-      placeholder: Notification.Settings(authorizationStatus: .notDetermined)
-    ),
-    removeDeliveredNotificationsWithIdentifiers: unimplemented(
-      "\(Self.self).removeDeliveredNotificationsWithIdentifiers"),
-    removePendingNotificationRequestsWithIdentifiers: unimplemented(
-      "\(Self.self).removePendingNotificationRequestsWithIdentifiers"),
-    requestAuthorization: unimplemented("\(Self.self).requestAuthorization")
-  )
+  public static let testValue = Self()
 }
 
 extension UserNotificationClient {

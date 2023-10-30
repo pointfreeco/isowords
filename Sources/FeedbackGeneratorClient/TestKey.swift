@@ -10,11 +10,7 @@ extension DependencyValues {
 
 extension FeedbackGeneratorClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    prepare: unimplemented("\(Self.self).prepare"),
-    selectionChanged: unimplemented("\(Self.self).selectionChanged")
-  )
+  public static let testValue = Self()
 }
 
 extension FeedbackGeneratorClient {

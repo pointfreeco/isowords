@@ -10,12 +10,7 @@ extension DependencyValues {
 
 extension RemoteNotificationsClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    isRegistered: unimplemented("\(Self.self).isRegistered", placeholder: false),
-    register: unimplemented("\(Self.self).register"),
-    unregister: unimplemented("\(Self.self).unregister")
-  )
+  public static let testValue = Self()
 }
 
 extension RemoteNotificationsClient {

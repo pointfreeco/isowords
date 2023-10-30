@@ -1,37 +1,18 @@
+import DependenciesMacros
 import Foundation
 import SharedModels
 
+@DependencyClient
 public struct ApiClient {
   public var apiRequest: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope
-  public var baseUrl: @Sendable () -> URL
+  public var baseUrl: @Sendable () -> URL = { URL(string: "/")! }
   public var currentPlayer: @Sendable () -> CurrentPlayerEnvelope?
   public var logout: @Sendable () async -> Void
   public var refreshCurrentPlayer: @Sendable () async throws -> CurrentPlayerEnvelope
   public var request: @Sendable (ServerRoute) async throws -> (Data, URLResponse)
   public var setBaseUrl: @Sendable (URL) async -> Void
-
-  public init(
-    apiRequest: @escaping @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse),
-    authenticate: @escaping @Sendable (ServerRoute.AuthenticateRequest) async throws ->
-      CurrentPlayerEnvelope,
-    baseUrl: @escaping @Sendable () -> URL,
-    currentPlayer: @escaping @Sendable () -> CurrentPlayerEnvelope?,
-    logout: @escaping @Sendable () async -> Void,
-    refreshCurrentPlayer: @escaping @Sendable () async throws -> CurrentPlayerEnvelope,
-    request: @escaping @Sendable (ServerRoute) async throws -> (Data, URLResponse),
-    setBaseUrl: @escaping @Sendable (URL) async -> Void
-  ) {
-    self.apiRequest = apiRequest
-    self.authenticate = authenticate
-    self.baseUrl = baseUrl
-    self.currentPlayer = currentPlayer
-    self.logout = logout
-    self.refreshCurrentPlayer = refreshCurrentPlayer
-    self.request = request
-    self.setBaseUrl = setBaseUrl
-  }
 
   public func apiRequest(
     route: ServerRoute.Api.Route,

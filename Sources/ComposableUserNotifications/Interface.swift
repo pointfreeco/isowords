@@ -1,11 +1,15 @@
 import Combine
 import ComposableArchitecture
+import DependenciesMacros
 import UserNotifications
 
+@DependencyClient
 public struct UserNotificationClient {
   public var add: @Sendable (UNNotificationRequest) async throws -> Void
-  public var delegate: @Sendable () -> AsyncStream<DelegateEvent>
-  public var getNotificationSettings: @Sendable () async -> Notification.Settings
+  public var delegate: @Sendable () -> AsyncStream<DelegateEvent> = { .finished }
+  public var getNotificationSettings: @Sendable () async -> Notification.Settings = {
+    .init(authorizationStatus: .notDetermined)
+  }
   public var removeDeliveredNotificationsWithIdentifiers: @Sendable ([String]) async -> Void
   public var removePendingNotificationRequestsWithIdentifiers: @Sendable ([String]) async -> Void
   public var requestAuthorization: @Sendable (UNAuthorizationOptions) async throws -> Bool

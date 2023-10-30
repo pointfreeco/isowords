@@ -12,12 +12,7 @@ extension DependencyValues {
 
 extension FileClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    delete: unimplemented("\(Self.self).deleteAsync"),
-    load: unimplemented("\(Self.self).loadAsync"),
-    save: unimplemented("\(Self.self).saveAsync")
-  )
+  public static let testValue = Self()
 }
 
 extension FileClient {

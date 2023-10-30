@@ -1,8 +1,10 @@
 import Combine
 import ComposableArchitecture
+import DependenciesMacros
 import GameKit
 import Tagged
 
+@DependencyClient
 public struct GameCenterClient {
   public var gameCenterViewController: GameCenterViewControllerClient
   public var localPlayer: LocalPlayerClient
@@ -22,15 +24,17 @@ public struct GameCenterClient {
   }
 }
 
+@DependencyClient
 public struct GameCenterViewControllerClient {
   public var present: @Sendable () async -> Void
   public var dismiss: @Sendable () async -> Void
 }
 
+@DependencyClient
 public struct LocalPlayerClient {
   public var authenticate: @Sendable () async throws -> Void
-  public var listener: @Sendable () -> AsyncStream<ListenerEvent>
-  public var localPlayer: @Sendable () -> LocalPlayer
+  public var listener: @Sendable () -> AsyncStream<ListenerEvent> = { .finished }
+  public var localPlayer: @Sendable () -> LocalPlayer = { .notAuthenticated }
   public var presentAuthenticationViewController: @Sendable () async -> Void
 
   public enum ListenerEvent: Equatable {
@@ -68,6 +72,7 @@ public struct LocalPlayerClient {
   }
 }
 
+@DependencyClient
 public struct TurnBasedMatchClient {
   public var endMatchInTurn: @Sendable (EndMatchInTurnRequest) async throws -> Void
   public var endTurn: @Sendable (EndTurnRequest) async throws -> Void
@@ -138,11 +143,12 @@ public struct TurnBasedMatchClient {
   }
 }
 
+@DependencyClient
 public struct TurnBasedMatchmakerViewControllerClient {
   public var present: @Sendable (_ showExistingMatches: Bool) async throws -> Void
   public var dismiss: @Sendable () async -> Void
 
-  public func present(showExistingMatches: Bool = true) async throws {
-    try await self.present(showExistingMatches)
+  public func present() async throws {
+    try await self.present(showExistingMatches: true)
   }
 }

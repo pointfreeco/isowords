@@ -10,21 +10,7 @@ extension DependencyValues {
 
 extension StoreKitClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    addPayment: unimplemented("\(Self.self).addPayment"),
-    appStoreReceiptURL: unimplemented("\(Self.self).appStoreReceiptURL", placeholder: nil),
-    isAuthorizedForPayments: unimplemented(
-      "\(Self.self).isAuthorizedForPayments", placeholder: false
-    ),
-    fetchProducts: unimplemented("\(Self.self).fetchProducts"),
-    finishTransaction: unimplemented("\(Self.self).finishTransaction"),
-    observer: unimplemented("\(Self.self).observer", placeholder: .finished),
-    requestReview: unimplemented("\(Self.self).requestReview"),
-    restoreCompletedTransactions: unimplemented(
-      "\(Self.self).restoreCompletedTransactions"
-    )
-  )
+  public static let testValue = Self()
 }
 
 extension StoreKitClient {

@@ -1,7 +1,9 @@
 import ComposableArchitecture
+import DependenciesMacros
 import Foundation
 import SharedModels
 
+@DependencyClient
 public struct LocalDatabaseClient {
   public var fetchGamesForWord: @Sendable (String) async throws -> [LocalDatabaseClient.Game]
   public var fetchStats: @Sendable () async throws -> Stats

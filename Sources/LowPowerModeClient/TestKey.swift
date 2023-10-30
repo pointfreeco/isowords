@@ -11,10 +11,7 @@ extension DependencyValues {
 
 extension LowPowerModeClient: TestDependencyKey {
   public static let previewValue = Self.true
-
-  public static let testValue = Self(
-    start: unimplemented("\(Self.self).start")
-  )
+  public static let testValue = Self()
 }
 
 extension LowPowerModeClient {

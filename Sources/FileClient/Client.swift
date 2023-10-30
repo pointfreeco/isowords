@@ -1,5 +1,7 @@
+import DependenciesMacros
 import Foundation
 
+@DependencyClient
 public struct FileClient {
   public var delete: @Sendable (String) async throws -> Void
   public var load: @Sendable (String) async throws -> Data

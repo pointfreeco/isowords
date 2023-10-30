@@ -1,21 +1,15 @@
 import Dependencies
+import DependenciesMacros
 import Foundation
 import Tagged
 import XCTestDynamicOverlay
 
+@DependencyClient
 public struct Build {
-  public var gitSha: () -> String
-  public var number: () -> Number
+  public var gitSha: () -> String = { "deadbeef" }
+  public var number: () -> Number = { 0 }
 
   public typealias Number = Tagged<((), number: ()), Int>
-
-  public init(
-    gitSha: @escaping () -> String,
-    number: @escaping () -> Number
-  ) {
-    self.gitSha = gitSha
-    self.number = number
-  }
 }
 
 extension DependencyValues {
@@ -27,11 +21,7 @@ extension DependencyValues {
 
 extension Build: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    gitSha: unimplemented("\(Self.self).gitSha", placeholder: "deadbeef"),
-    number: unimplemented("\(Self.self).number", placeholder: 0)
-  )
+  public static let testValue = Self()
 }
 
 extension Build: DependencyKey {
