@@ -12,21 +12,6 @@ public struct SettingsView: View {
   let navPresentationStyle: NavPresentationStyle
   @State var isSharePresented = false
   let store: StoreOf<Settings>
-  @ObservedObject var viewStore: ViewStore<ViewState, Settings.Action>
-
-  struct ViewState: Equatable {
-    let buildNumber: Build.Number?
-    let fullGameProduct: Result<StoreKitClient.Product, Settings.State.ProductError>?
-    let isFullGamePurchased: Bool
-    let isPurchasing: Bool
-
-    init(state: Settings.State) {
-      self.buildNumber = state.buildNumber
-      self.fullGameProduct = state.fullGameProduct
-      self.isFullGamePurchased = state.isFullGamePurchased
-      self.isPurchasing = state.isPurchasing
-    }
-  }
 
   public init(
     store: StoreOf<Settings>,
@@ -34,7 +19,6 @@ public struct SettingsView: View {
   ) {
     self.navPresentationStyle = navPresentationStyle
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -42,15 +26,15 @@ public struct SettingsView: View {
       SettingsSection(title: "Support the game", padContents: false) {
         ScrollView(.horizontal, showsIndicators: false) {
           HStack(spacing: 16) {
-            if !self.viewStore.isFullGamePurchased {
+            if !self.store.isFullGamePurchased {
               Group {
-                if !self.viewStore.isPurchasing,
-                  let fullGameProduct = self.viewStore.fullGameProduct
+                if !self.store.isPurchasing,
+                  let fullGameProduct = self.store.fullGameProduct
                 {
                   switch fullGameProduct {
                   case let .success(product):
                     Button {
-                      self.viewStore.send(.tappedProduct(product), animation: .default)
+                      self.store.send(.tappedProduct(product), animation: .default)
                     } label: {
                       HStack(alignment: .top, spacing: 0) {
                         Text(product.priceLocale.currencySymbol ?? "$")
@@ -81,7 +65,7 @@ public struct SettingsView: View {
             }
 
             Button {
-              self.viewStore.send(.leaveUsAReviewButtonTapped)
+              self.store.send(.leaveUsAReviewButtonTapped)
             } label: {
               Image(systemName: "star")
                 .font(.system(size: 40))
@@ -138,10 +122,10 @@ public struct SettingsView: View {
         destination: PurchasesSettingsView(store: self.store),
         title: "Purchases"
       )
-      if self.viewStore.isFullGamePurchased {
+      if self.store.isFullGamePurchased {
         SettingsRow {
           Button {
-            self.viewStore.send(.leaveUsAReviewButtonTapped)
+            self.store.send(.leaveUsAReviewButtonTapped)
           } label: {
             HStack {
               Text("Leave us a review")
@@ -160,11 +144,11 @@ public struct SettingsView: View {
       #endif
 
       VStack(spacing: 6) {
-        if let buildNumber = self.viewStore.buildNumber {
+        if let buildNumber = self.store.buildNumber {
           Text("Build \(buildNumber.rawValue)")
         }
         Button {
-          self.viewStore.send(.reportABugButtonTapped)
+          self.store.send(.reportABugButtonTapped)
         } label: {
           Text("Report a bug")
             .underline()
@@ -179,9 +163,9 @@ public struct SettingsView: View {
       foregroundColor: .hex(self.colorScheme == .dark ? 0x7d7d7d : 0x393939),
       title: Text("Settings"),
       navPresentationStyle: self.navPresentationStyle,
-      onDismiss: { self.viewStore.send(.onDismiss) }
+      onDismiss: { self.store.send(.onDismiss) }
     )
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await self.store.send(.task).finish() }
     .alert(store: self.store.scope(state: \.$alert, action: \.alert))
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
