@@ -6,10 +6,10 @@ import SwiftUI
 
 struct StartNewGameView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Home>
+  @State var store: StoreOf<Home>
 
   init(store: StoreOf<Home>) {
-    self.store = store
+    self._store = State(wrappedValue: store)
   }
 
   var body: some View {
@@ -52,17 +52,15 @@ struct StartNewGameView: View {
       )
     }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.solo,
-      action: { .solo($0) },
-      destination: SoloView.init(store:)
-    )
+      item: self.$store.scope(state: \.destination?.solo, action: \.destination.solo)
+    ) { store in
+      SoloView(store: store)
+    }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.multiplayer,
-      action: { .multiplayer($0) },
-      destination: MultiplayerView.init(store:)
-    )
+      item: self.$store.scope(state: \.destination?.multiplayer, action: \.destination.multiplayer)
+    ) { store in
+      MultiplayerView(store: store)
+    }
   }
 }
 
