@@ -6,6 +6,7 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
+@ObservableState
 public struct ActiveGamesState: Equatable {
   public var savedGames: SavedGamesState
   public var turnBasedMatches: [ActiveTurnBasedMatch]
@@ -45,7 +46,6 @@ public struct ActiveGamesView: View {
   @Environment(\.date) var date
   let showMenuItems: Bool
   let store: Store<ActiveGamesState, ActiveGamesAction>
-  @ObservedObject var viewStore: ViewStore<ActiveGamesState, ActiveGamesAction>
 
   public init(
     store: Store<ActiveGamesState, ActiveGamesAction>,
@@ -53,13 +53,12 @@ public struct ActiveGamesView: View {
   ) {
     self.showMenuItems = showMenuItems
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 }, removeDuplicates: ==)
   }
 
   public var body: some View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 20) {
-        if self.viewStore.savedGames.dailyChallengeUnlimited != nil {
+        if self.store.savedGames.dailyChallengeUnlimited != nil {
           ActiveGameCard(
             button: .init(
               icon: .init(systemName: "arrow.right"),
@@ -70,12 +69,12 @@ public struct ActiveGamesView: View {
               .fontWeight(.medium)
               + Text("\nleft to play!")
               .foregroundColor(self.color.opacity(0.4)),
-            tapAction: { self.viewStore.send(.dailyChallengeTapped, animation: .default) },
+            tapAction: { self.store.send(.dailyChallengeTapped, animation: .default) },
             title: Text("Daily challenge")
           )
         }
 
-        if let inProgressGame = self.viewStore.savedGames.unlimited {
+        if let inProgressGame = self.store.savedGames.unlimited {
           ActiveGameCard(
             button: .init(
               icon: .init(systemName: "arrow.right"),
@@ -83,12 +82,12 @@ public struct ActiveGamesView: View {
               title: Text("Resume")
             ),
             message: soloMessage(inProgressGame: inProgressGame),
-            tapAction: { self.viewStore.send(.soloTapped, animation: .default) },
+            tapAction: { self.store.send(.soloTapped, animation: .default) },
             title: Text("Solo")
           )
         }
 
-        ForEach(self.viewStore.turnBasedMatches) { match in
+        ForEach(self.store.turnBasedMatches) { match in
           let sendReminderAction =
             !match.isYourTurn && match.isStale
             ? match.theirIndex.map { otherPlayerIndex in
@@ -101,9 +100,9 @@ public struct ActiveGamesView: View {
           ActiveGameCard(
             button: turnBasedButton(match: match),
             message: turnBasedMessage(match: match),
-            tapAction: { self.viewStore.send(.turnBasedGameTapped(match.id), animation: .default) },
+            tapAction: { self.store.send(.turnBasedGameTapped(match.id), animation: .default) },
             buttonAction: self.showMenuItems
-              ? sendReminderAction.map { action in { self.viewStore.send(action) } }
+              ? sendReminderAction.map { action in { self.store.send(action) } }
               : nil,
             title: Text("vs \(match.theirName ?? "your opponent")")
           )
@@ -114,13 +113,13 @@ public struct ActiveGamesView: View {
                   let sendReminderAction = sendReminderAction
                 {
                   Button {
-                    self.viewStore.send(sendReminderAction)
+                    self.store.send(sendReminderAction)
                   } label: {
                     Label("Send Reminder", systemImage: "clock")
                   }
                 }
                 Button {
-                  self.viewStore.send(.turnBasedGameMenuItemTapped(.deleteMatch(match.id)))
+                  self.store.send(.turnBasedGameMenuItemTapped(.deleteMatch(match.id)))
                 } label: {
                   Label("Delete Match", systemImage: "trash")
                     .foregroundColor(.red)
