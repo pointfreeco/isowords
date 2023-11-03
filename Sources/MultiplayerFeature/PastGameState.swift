@@ -30,13 +30,15 @@ extension PastGame.State {
       let opponentPlayer = match.participants[opponentIndex].player
     else { return nil }
 
-    self.challengeeDisplayName = challengeePlayer.displayName
-    self.challengeeScore = matchData.score(forPlayerIndex: 1)
-    self.challengerDisplayName = challengerPlayer.displayName
-    self.challengerScore = matchData.score(forPlayerIndex: 0)
-    self.endDate = endDate
-    self.matchId = match.matchId
-    self.opponentDisplayName = opponentPlayer.displayName
+    self.init(
+      challengeeDisplayName: challengeePlayer.displayName,
+      challengerDisplayName: challengerPlayer.displayName,
+      challengeeScore: matchData.score(forPlayerIndex: 1),
+      challengerScore: matchData.score(forPlayerIndex: 0),
+      endDate: endDate,
+      matchId: match.matchId,
+      opponentDisplayName: opponentPlayer.displayName
+    )
   }
 }
 
