@@ -15,42 +15,22 @@ public struct GameView<Content>: View where Content: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
   let content: Content
-  let store: StoreOf<Game>
+  @State var store: StoreOf<Game>
   var trayHeight: CGFloat { ActiveGamesView.height + (16 + self.adaptiveSize.padding) * 2 }
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
-
-  struct ViewState: Equatable {
-    let isAnimationReduced: Bool
-    let isDailyChallenge: Bool
-    let isGameLoaded: Bool
-    let isNavVisible: Bool
-    let isTrayVisible: Bool
-    let selectedWordString: String
-
-    init(state: Game.State) {
-      self.isAnimationReduced = state.isAnimationReduced
-      self.isDailyChallenge = state.gameContext.is(\.dailyChallenge)
-      self.isGameLoaded = state.isGameLoaded
-      self.isNavVisible = state.isNavVisible
-      self.isTrayVisible = state.isTrayVisible
-      self.selectedWordString = state.selectedWordString
-    }
-  }
 
   public init(
     content: Content,
     store: StoreOf<Game>
   ) {
     self.content = content
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
+    self._store = State(wrappedValue: store)
   }
 
   public var body: some View {
     GeometryReader { proxy in
       ZStack {
         ZStack(alignment: .top) {
-          if self.viewStore.isGameLoaded {
+          if self.store.isGameLoaded {
             self.content
               .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
               .ignoresSafeArea()
@@ -70,7 +50,7 @@ public struct GameView<Content>: View where Content: View {
 
           VStack {
             Group {
-              if self.viewStore.isNavVisible {
+              if self.store.isNavVisible {
                 GameNavView(store: self.store)
               } else {
                 GameNavView(store: self.store)
@@ -85,7 +65,7 @@ public struct GameView<Content>: View where Content: View {
           }
           .ignoresSafeArea(.keyboard)
 
-          if !self.viewStore.selectedWordString.isEmpty {
+          if !self.store.selectedWordString.isEmpty {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.wordSubmitButtonFeature,
@@ -94,10 +74,9 @@ public struct GameView<Content>: View where Content: View {
             )
             .ignoresSafeArea()
             .transition(
-              viewStore.isAnimationReduced
+              self.store.isAnimationReduced
                 ? .opacity
-                : AnyTransition
-                  .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
+                : .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
                   .combined(with: .opacity)
             )
           }
@@ -121,40 +100,38 @@ public struct GameView<Content>: View where Content: View {
             )
           )
           .fixedSize(horizontal: false, vertical: true)
-          .opacity(self.viewStore.isTrayVisible ? 1 : 0)
+          .opacity(self.store.isTrayVisible ? 1 : 0)
           .offset(y: -self.trayHeight)
         }
-        .offset(y: self.viewStore.isTrayVisible ? self.trayHeight : 0)
+        .offset(y: self.store.isTrayVisible ? self.trayHeight : 0)
         .zIndex(0)
 
-        IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.gameOver,
-          action: { .gameOver($0) },
-          then: GameOverView.init(store:)
-        )
-        .background(Color.adaptiveWhite.ignoresSafeArea())
-        .transition(
-          .asymmetric(
-            insertion: AnyTransition.opacity.animation(.linear(duration: 1)),
-            removal: .game
-          )
-        )
-        .zIndex(1)
+        if let store = self.store.scope(
+          state: \.destination?.gameOver, action: \.destination.gameOver.presented
+        ) {
+          GameOverView(store: store)
+            .background(Color.adaptiveWhite.ignoresSafeArea())
+            .transition(
+              .asymmetric(
+                insertion: AnyTransition.opacity.animation(.linear(duration: 1)),
+                removal: .game
+              )
+            )
+            .zIndex(1)
+        }
 
-        IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.upgradeInterstitial,
-          action: { .upgradeInterstitial($0) }
-        ) { store in
+        if let store = self.store.scope(
+          state: \.destination?.upgradeInterstitial,
+          action: \.destination.upgradeInterstitial.presented
+        ) {
           UpgradeInterstitialView(store: store)
             .transition(.opacity)
+            .zIndex(2)
         }
-        .zIndex(2)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(
-        viewStore.isAnimationReduced
+        store.isAnimationReduced
           ? nil
           : BloomBackground(
             size: proxy.size,
@@ -180,21 +157,17 @@ public struct GameView<Content>: View where Content: View {
         action: { .bottomMenu($0) }
       )
       .alert(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.alert,
-        action: { .alert($0) }
+        store: self.store.scope(state: \.$destination.alert, action: \.destination.alert)
       )
       .sheet(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.settings,
-        action: { .settings($0) }
+        item: self.$store.scope(state: \.destination?.settings, action: \.destination.settings)
       ) { store in
         NavigationStack {
           SettingsView(store: store, navPresentationStyle: .modal)
         }
       }
     }
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await self.store.send(.task).finish() }
   }
 }
 

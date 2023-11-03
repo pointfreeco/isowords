@@ -22,6 +22,7 @@ import UserSettingsClient
 public struct Game {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
@@ -65,6 +66,7 @@ public struct Game {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
     public var cubes: Puzzle
@@ -430,12 +432,14 @@ public struct Game {
           type: .playedWord(state.selectedWord)
         )
 
+        var cubes = state.cubes
         let result = verify(
           move: move,
-          on: &state.cubes,
+          on: &cubes,
           isValidWord: { self.dictionaryContains($0, state.language) },
           previousMoves: state.moves
         )
+        state.cubes = cubes
 
         defer { state.selectedWord = [] }
 
