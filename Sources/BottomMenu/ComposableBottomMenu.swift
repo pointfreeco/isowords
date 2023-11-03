@@ -70,44 +70,27 @@ extension BottomMenuState: _EphemeralState {
 
 extension View {
   public func bottomMenu<MenuAction: Equatable>(
-    store: Store<PresentationState<BottomMenuState<MenuAction>>, PresentationAction<MenuAction>>
+    store: Binding<Store<BottomMenuState<MenuAction>, MenuAction>?>
   ) -> some View {
-    self.bottomMenu(store: store, state: { $0 }, action: { $0 })
-  }
-
-  public func bottomMenu<DestinationState, DestinationAction, MenuAction: Equatable>(
-    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
-    state toMenuState: @escaping (DestinationState) -> BottomMenuState<MenuAction>?,
-    action fromMenuAction: @escaping (MenuAction) -> DestinationAction
-  ) -> some View {
-    WithViewStore(
-      store,
-      observe: { $0 },
-      removeDuplicates: {
-        ($0.wrappedValue.flatMap(toMenuState) != nil)
-          == ($1.wrappedValue.flatMap(toMenuState) != nil)
-      }
-    ) { viewStore in
-      self.bottomMenu(
-        item: Binding(
-          get: {
-            viewStore.wrappedValue.flatMap(toMenuState)?.converted(
-              send: {
-                viewStore.send(.presented(fromMenuAction($0)))
-              },
-              sendWithAnimation: {
-                viewStore.send(.presented(fromMenuAction($0)), animation: $1)
-              }
-            )
-          },
-          set: { state in
-            if state == nil {
-              viewStore.send(.dismiss, animation: .default)
+    self.bottomMenu(
+      item: Binding(
+        get: {
+          store.wrappedValue?.withState { $0 }.converted(
+            send: {
+              store.wrappedValue?.send($0)
+            },
+            sendWithAnimation: {
+              store.wrappedValue?.send($0, animation: $1)
             }
+          )
+        },
+        set: { state in
+          if state == nil {
+            store.wrappedValue = nil
           }
-        )
+        }
       )
-    }
+    )
   }
 }
 
@@ -196,23 +179,23 @@ extension BottomMenuState.Button {
     }
   }
 
-  struct BottomMenu_TCA_Previews: PreviewProvider {
-    struct TestView: View {
-      private let store = Store(initialState: BottomMenuReducer.State()) {
-        BottomMenuReducer()
-      }
-
-      var body: some View {
-        Button("Present") { store.send(.showMenuButtonTapped, animation: .default) }
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .bottomMenu(store: self.store.scope(state: \.$bottomMenu, action: \.bottomMenu))
-      }
-    }
-
-    static var previews: some View {
-      Preview {
-        TestView()
-      }
-    }
-  }
+//  struct BottomMenu_TCA_Previews: PreviewProvider {
+//    struct TestView: View {
+//      @State fileprivate var store = Store(initialState: BottomMenuReducer.State()) {
+//        BottomMenuReducer()
+//      }
+//
+//      var body: some View {
+//        Button("Present") { store.send(.showMenuButtonTapped, animation: .default) }
+//          .frame(maxWidth: .infinity, maxHeight: .infinity)
+//          .bottomMenu(store: self.$store.scope(state: \.bottomMenu, action: \.bottomMenu))
+//      }
+//    }
+//
+//    static var previews: some View {
+//      Preview {
+//        TestView()
+//      }
+//    }
+//  }
 #endif

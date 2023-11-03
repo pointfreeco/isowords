@@ -152,9 +152,7 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.bottomMenu,
-        action: { .bottomMenu($0) }
+        store: self.$store.scope(state: \.destination?.bottomMenu, action: \.destination.bottomMenu)
       )
       .alert(
         store: self.store.scope(state: \.$destination.alert, action: \.destination.alert)
