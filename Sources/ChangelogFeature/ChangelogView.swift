@@ -10,6 +10,7 @@ import UIApplicationClient
 
 @Reducer
 public struct ChangelogReducer {
+  @ObservableState
   public struct State: Equatable {
     public var changelog: IdentifiedArrayOf<Change.State>
     public var currentBuild: Build.Number
@@ -26,6 +27,14 @@ public struct ChangelogReducer {
       self.currentBuild = currentBuild
       self.isRequestInFlight = isRequestInFlight
       self.isUpdateButtonVisible = isUpdateButtonVisible
+    }
+
+    public var whatsNew: IdentifiedArrayOf<Change.State> {
+      self.changelog.filter { $0.change.build >= self.currentBuild }
+    }
+
+    public var pastUpdates: IdentifiedArrayOf<Change.State> {
+      self.changelog.filter { $0.change.build < self.currentBuild }
     }
   }
 
@@ -108,64 +117,40 @@ public struct ChangelogReducer {
 public struct ChangelogView: View {
   let store: StoreOf<ChangelogReducer>
 
-  struct ViewState: Equatable {
-    let currentBuild: Build.Number
-    let isUpdateButtonVisible: Bool
-
-    init(state: ChangelogReducer.State) {
-      self.currentBuild = state.currentBuild
-      self.isUpdateButtonVisible = state.isUpdateButtonVisible
-    }
-  }
-
-  public init(
-    store: StoreOf<ChangelogReducer>
-  ) {
+  public init(store: StoreOf<ChangelogReducer>) {
     self.store = store
   }
 
   public var body: some View {
-    WithViewStore(self.store, observe: ViewState.init) { viewStore in
-      ScrollView {
-        VStack(alignment: .leading) {
-          if viewStore.isUpdateButtonVisible {
-            HStack {
-              Spacer()
-              Button("Update") {
-                viewStore.send(.updateButtonTapped)
-              }
-              .buttonStyle(ActionButtonStyle())
+    ScrollView {
+      VStack(alignment: .leading) {
+        if self.store.isUpdateButtonVisible {
+          HStack {
+            Spacer()
+            Button("Update") {
+              self.store.send(.updateButtonTapped)
             }
-          }
-
-          Text("What's new?")
-            .font(.largeTitle)
-
-          ForEachStore(
-            self.store.scope(
-              state: { $0.changelog.filter { $0.change.build >= viewStore.currentBuild } },
-              action: { .change(id: $0, action: $1) }
-            )
-          ) {
-            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
-          }
-
-          Text("Past updates")
-            .font(.largeTitle)
-
-          ForEachStore(
-            self.store.scope(
-              state: { $0.changelog.filter { $0.change.build < viewStore.currentBuild } },
-              action: { .change(id: $0, action: $1) }
-            )
-          ) {
-            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+            .buttonStyle(ActionButtonStyle())
           }
         }
-        .padding()
+
+        Text("What's new?")
+          .font(.largeTitle)
+
+        ForEach(self.store.scope(state: \.whatsNew, action: \.change)) {
+          ChangeView(currentBuild: self.store.currentBuild, store: $0)
+        }
+
+        Text("Past updates")
+          .font(.largeTitle)
+
+        ForEach(self.store.scope(state: \.pastUpdates, action: \.change)) {
+          ChangeView(currentBuild: self.store.currentBuild, store: $0)
+        }
       }
-      .task { await viewStore.send(.task).finish() }
+      .padding()
     }
+    .task { await self.store.send(.task).finish() }
   }
 }
 
