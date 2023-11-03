@@ -19,6 +19,7 @@ import UserDefaultsClient
 public struct GameOver {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
@@ -39,6 +40,7 @@ public struct GameOver {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var completedGame: CompletedGame
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
@@ -83,6 +85,38 @@ public struct GameOver {
     public enum RankSummary: Equatable {
       case dailyChallenge(DailyChallengeResult)
       case leaderboard([TimeScope: LeaderboardScoreResult.Rank])
+    }
+
+    var completedMatch: CompletedMatch? {
+      self.turnBasedContext.flatMap {
+        CompletedMatch(completedGame: self.completedGame, turnBasedContext: $0)
+      }
+    }
+
+    var unplayedDaily: GameMode? {
+      self.dailyChallenges
+        .first(where: { $0.yourResult.rank == nil })?.dailyChallenge.gameMode
+    }
+
+    var words: [PlayedWord] {
+      self.completedGame.moves.compactMap { move in
+        move.type.playedWord.map {
+          PlayedWord(
+            isYourWord: move.playerIndex == self.completedGame.localPlayerIndex,
+            reactions: move.reactions,
+            score: move.score,
+            word: self.completedGame.cubes.string(from: $0)
+          )
+        }
+      }
+    }
+
+    var you: ComposableGameCenter.Player? {
+      self.turnBasedContext?.localPlayer.player
+    }
+
+    var yourOpponent: ComposableGameCenter.Player? {
+      self.turnBasedContext?.otherPlayer
     }
   }
 
@@ -371,76 +405,13 @@ public struct GameOverView: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.opponentImage) var defaultOpponentImage
   @Environment(\.yourImage) var defaultYourImage
-  let store: StoreOf<GameOver>
-  @ObservedObject var viewStore: ViewStore<ViewState, GameOver.Action>
+  @State var store: StoreOf<GameOver>
   @State var yourImage: UIImage?
   @State var yourOpponentImage: UIImage?
   @State var isSharePresented = false
 
-  struct ViewState: Equatable {
-    let completedMatch: CompletedMatch?
-    let gameContext: CompletedGame.GameContext
-    let gameMode: GameMode
-    let gameModeIsLoading: GameMode?
-    let isDemo: Bool
-    let isUpgradeInterstitialPresented: Bool
-    let isViewEnabled: Bool
-    let showConfetti: Bool
-    let summary: GameOver.State.RankSummary?
-    let unplayedDaily: GameMode?
-    let words: [PlayedWord]
-    let you: ComposableGameCenter.Player?
-    let yourOpponent: ComposableGameCenter.Player?
-    let yourScore: Int
-    var theirWords: [PlayedWord] { self.words.filter { !$0.isYourWord } }
-    var yourWords: [PlayedWord] { self.words.filter { $0.isYourWord } }
-
-    init(state: GameOver.State) {
-      self.gameContext = state.completedGame.gameContext
-      self.gameMode = state.completedGame.gameMode
-      let yourWords = state.completedGame.words(
-        forPlayerIndex: state.completedGame.localPlayerIndex)
-      self.gameModeIsLoading = state.gameModeIsLoading
-      let yourScore = yourWords.reduce(into: 0) { $0 += $1.score }
-      switch state.completedGame.gameContext {
-      case .dailyChallenge:
-        self.completedMatch = nil
-      case .shared:
-        self.completedMatch = nil
-      case .solo:
-        self.completedMatch = nil
-      case .turnBased:
-        self.completedMatch = state.turnBasedContext.flatMap {
-          CompletedMatch(completedGame: state.completedGame, turnBasedContext: $0)
-        }
-      }
-      self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented = state.destination.is(\.some.upgradeInterstitial)
-      self.isViewEnabled = state.isViewEnabled
-      self.showConfetti = state.showConfetti
-      self.summary = state.summary
-      self.unplayedDaily =
-        state.dailyChallenges
-        .first(where: { $0.yourResult.rank == nil })?.dailyChallenge.gameMode
-      self.words = state.completedGame.moves.compactMap { move in
-        move.type.playedWord.map {
-          PlayedWord(
-            isYourWord: move.playerIndex == state.completedGame.localPlayerIndex,
-            reactions: move.reactions,
-            score: move.score,
-            word: state.completedGame.cubes.string(from: $0)
-          )
-        }
-      }
-      self.you = state.turnBasedContext?.localPlayer.player
-      self.yourOpponent = state.turnBasedContext?.otherPlayer
-      self.yourScore = yourScore
-    }
-  }
-
   public init(store: StoreOf<GameOver>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
+    self._store = State(wrappedValue: store)
   }
 
   public var body: some View {
@@ -450,10 +421,10 @@ public struct GameOverView: View {
           HStack {
             Image(systemName: "cube.fill")
 
-            if !self.viewStore.isDemo {
+            if !self.store.isDemo {
               Spacer()
               Button {
-                self.viewStore.send(.closeButtonTapped, animation: .default)
+                self.store.send(.closeButtonTapped, animation: .default)
               } label: {
                 Image(systemName: "xmark")
               }
@@ -462,7 +433,7 @@ public struct GameOverView: View {
           .font(.system(size: 24))
           .adaptivePadding()
 
-          switch self.viewStore.gameContext {
+          switch self.store.completedGame.gameContext {
           case .dailyChallenge:
             self.dailyChallengeResults
           case .shared:
@@ -474,7 +445,7 @@ public struct GameOverView: View {
           }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .opacity(self.viewStore.isUpgradeInterstitialPresented ? 0 : 1)
+        .opacity(self.store.destination?.is(\.upgradeInterstitial) == true ? 0 : 1)
 
         VStack(spacing: .grid(8)) {
           Divider()
@@ -494,16 +465,15 @@ public struct GameOverView: View {
               foregroundColor: self.colorScheme == .dark ? .isowordsBlack : self.color
             )
           )
-          .padding(.bottom, .grid(self.viewStore.isDemo ? 30 : 0))
+          .padding(.bottom, .grid(self.store.isDemo ? 30 : 0))
         }
         .padding(.vertical, .grid(12))
       }
 
-      IfLetStore(
-        self.store.scope(state: \.$destination, action: \.destination),
-        state: \.upgradeInterstitial,
-        action: { .upgradeInterstitial($0) }
-      ) { store in
+      if let store = self.store.scope(
+        state: \.destination?.upgradeInterstitial,
+        action: \.destination.upgradeInterstitial.presented
+      ) {
         UpgradeInterstitialView(store: store)
           .transition(.opacity)
       }
@@ -513,7 +483,7 @@ public struct GameOverView: View {
       (self.colorScheme == .dark ? .isowordsBlack : self.color)
         .ignoresSafeArea()
     )
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await self.store.send(.task).finish() }
     .notificationsAlert(
       store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.notificationsAuthAlert,
@@ -523,12 +493,12 @@ public struct GameOverView: View {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()
     }
-    .disabled(!self.viewStore.isViewEnabled)
+    .disabled(!self.store.isViewEnabled)
   }
 
   @ViewBuilder
   var dailyChallengeResults: some View {
-    let result = self.viewStore.summary?.dailyChallenge
+    let result = self.store.summary?.dailyChallenge
 
     VStack(spacing: -8) {
       result.map {
@@ -547,7 +517,7 @@ public struct GameOverView: View {
     .multilineTextAlignment(.center)
     .redacted(reason: result == nil ? .placeholder : [])
     .overlay(
-      self.viewStore.showConfetti
+      self.store.showConfetti
         ? Confetti(
           foregroundColor: self.colorScheme == .dark ? self.color : .isowordsBlack
         )
@@ -574,12 +544,12 @@ public struct GameOverView: View {
         HStack {
           Text("Score")
           Spacer()
-          Text("\(self.viewStore.yourScore)")
+          Text("\(self.store.completedGame.yourScore)")
         }
         HStack {
           Text("Words found")
           Spacer()
-          Text("\(self.viewStore.yourWords.count)")
+          Text("\(self.store.completedGame.yourWords.count)")
         }
       }
       .adaptivePadding(.horizontal)
@@ -587,7 +557,7 @@ public struct GameOverView: View {
 
       self.wordList
 
-      if let unplayedDaily = self.viewStore.unplayedDaily {
+      if let unplayedDaily = self.store.unplayedDaily {
         VStack(spacing: self.adaptiveSize.pad(8)) {
           LazyVGrid(
             columns: [
@@ -600,22 +570,22 @@ public struct GameOverView: View {
               icon: Image(systemName: "clock.fill"),
               color: self.color,
               inactiveText: unplayedDaily == .unlimited ? Text("Played") : nil,
-              isLoading: self.viewStore.gameModeIsLoading == .timed,
+              isLoading: self.store.gameModeIsLoading == .timed,
               resumeText: nil,
-              action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
+              action: { self.store.send(.gameButtonTapped(.timed), animation: .default) }
             )
-            .disabled(self.viewStore.gameModeIsLoading != nil)
+            .disabled(self.store.gameModeIsLoading != nil)
 
             GameButton(
               title: Text("Unlimited"),
               icon: Image(systemName: "infinity"),
               color: self.color,
               inactiveText: unplayedDaily == .timed ? Text("Played") : nil,
-              isLoading: self.viewStore.gameModeIsLoading == .unlimited,
+              isLoading: self.store.gameModeIsLoading == .unlimited,
               resumeText: nil,
-              action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
+              action: { self.store.send(.gameButtonTapped(.unlimited), animation: .default) }
             )
-            .disabled(self.viewStore.gameModeIsLoading != nil)
+            .disabled(self.store.gameModeIsLoading != nil)
           }
         }
         .adaptivePadding(.horizontal)
@@ -627,9 +597,11 @@ public struct GameOverView: View {
   @ViewBuilder
   var soloResults: some View {
     VStack(spacing: -8) {
-      Text("\(self.viewStore.yourScore).").fontWeight(.medium)
+      Text("\(self.store.completedGame.yourScore).").fontWeight(.medium)
         + Text("\n")
-        + Text(praise(mode: self.viewStore.gameMode, score: self.viewStore.yourScore))
+        + Text(
+          praise(mode: self.store.completedGame.gameMode, score: self.store.completedGame.yourScore)
+        )
     }
     .adaptiveFont(.matter, size: 52)
     .adaptivePadding(.horizontal)
@@ -650,7 +622,7 @@ public struct GameOverView: View {
             HStack {
               Text(timeScope.displayTitle)
               Spacer()
-              let rank = self.viewStore.summary?.leaderboard?[timeScope]
+              let rank = self.store.summary?.leaderboard?[timeScope]
               Text(
                 """
                 \((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \
@@ -662,22 +634,21 @@ public struct GameOverView: View {
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(.default, value: self.viewStore.summary)
+        .animation(.default, value: self.store.summary)
       }
       .adaptiveFont(.matterMedium, size: 16)
       .adaptivePadding(.horizontal)
-      .overlay(
-        self.viewStore.showConfetti
-          ? Confetti(
+      .overlay(alignment: .top) {
+        if self.store.showConfetti {
+          Confetti(
             foregroundColor: self.colorScheme == .dark ? self.color : .isowordsBlack
           )
-          : nil,
-        alignment: .top
-      )
+        }
+      }
 
       self.wordList
 
-      if !self.viewStore.isDemo {
+      if !self.store.isDemo {
         VStack(spacing: self.adaptiveSize.pad(8)) {
           Text("Play again")
             .adaptiveFont(.matterMedium, size: 16)
@@ -697,7 +668,7 @@ public struct GameOverView: View {
               inactiveText: nil,
               isLoading: false,
               resumeText: nil,
-              action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
+              action: { self.store.send(.gameButtonTapped(.timed), animation: .default) }
             )
 
             GameButton(
@@ -707,7 +678,7 @@ public struct GameOverView: View {
               inactiveText: nil,
               isLoading: false,
               resumeText: nil,
-              action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
+              action: { self.store.send(.gameButtonTapped(.unlimited), animation: .default) }
             )
           }
           .adaptivePadding(.horizontal)
@@ -724,23 +695,22 @@ public struct GameOverView: View {
 
   @ViewBuilder
   var turnBasedResults: some View {
-    if let completedMatch = self.viewStore.completedMatch {
+    if let completedMatch = self.store.completedMatch {
       VStack(spacing: -8) {
         Text(completedMatch.description).fontWeight(.medium)
         Text(completedMatch.detailDescription)
       }
       .adaptiveFont(.matter, size: 52)
-      .overlay(
-        self.viewStore.showConfetti
-          ? Confetti(
+      .overlay(alignment: .bottom) {
+        if self.store.showConfetti {
+          Confetti(
             foregroundColor: self.colorScheme == .dark ? self.color : .isowordsBlack
           )
-          : nil,
-        alignment: .bottom
-      )
+        }
+      }
 
       if completedMatch.isTurnBased {
-        Button("Rematch?") { self.viewStore.send(.rematchButtonTapped, animation: .default) }
+        Button("Rematch?") { self.store.send(.rematchButtonTapped, animation: .default) }
           .adaptiveFont(.matter, size: 14)
           .buttonStyle(
             ActionButtonStyle(
@@ -759,7 +729,7 @@ public struct GameOverView: View {
                   .adaptiveFont(.matterMedium, size: 14)
                   .frame(maxWidth: .infinity, alignment: .trailing)
                   .lineLimit(1)
-                Text("\(self.viewStore.yourScore)")
+                Text("\(self.store.completedGame.yourScore)")
                   .adaptiveFont(.matterMedium, size: 20)
                   .frame(maxWidth: .infinity, alignment: .trailing)
               }
@@ -784,7 +754,7 @@ public struct GameOverView: View {
               .background((self.colorScheme == .dark ? self.color : .isowordsBlack).opacity(0.2))
 
             VStack(alignment: .trailing) {
-              ForEach(self.viewStore.yourWords, id: \.word) { word in
+              ForEach(self.store.completedGame.yourWords, id: \.word) { word in
                 WordView(
                   backgroundColor: self.colorScheme == .dark ? self.color : .isowordsBlack,
                   foregroundColor: self.colorScheme == .dark ? .isowordsBlack : self.color,
@@ -792,7 +762,7 @@ public struct GameOverView: View {
                 )
               }
             }
-            .padding(.top, self.viewStore.words.first?.isYourWord == .some(true) ? 0 : .grid(6))
+            .padding(.top, self.store.words.first?.isYourWord == .some(true) ? 0 : .grid(6))
             .padding(.grid(2))
           }
           .padding(.vertical)
@@ -841,7 +811,7 @@ public struct GameOverView: View {
               )
 
             VStack(alignment: .leading) {
-              ForEach(self.viewStore.theirWords, id: \.word) { word in
+              ForEach(completedMatch.theirWords, id: \.word) { word in
                 WordView(
                   backgroundColor: self.colorScheme == .dark ? self.color : .isowordsBlack,
                   foregroundColor: self.colorScheme == .dark ? .isowordsBlack : self.color,
@@ -849,7 +819,7 @@ public struct GameOverView: View {
                 )
               }
             }
-            .padding(.top, self.viewStore.words.first?.isYourWord == .some(true) ? .grid(6) : 0)
+            .padding(.top, self.store.words.first?.isYourWord == .some(true) ? .grid(6) : 0)
             .padding(.grid(2))
           }
           .padding(.vertical)
@@ -873,10 +843,10 @@ public struct GameOverView: View {
         }
       )
       .onAppear {
-        self.viewStore.you?.rawValue?.loadPhoto(for: .small) { image, _ in
+        self.store.you?.rawValue?.loadPhoto(for: .small) { image, _ in
           self.yourImage = image
         }
-        self.viewStore.yourOpponent?.rawValue?.loadPhoto(for: .small) { image, _ in
+        self.store.yourOpponent?.rawValue?.loadPhoto(for: .small) { image, _ in
           self.yourOpponentImage = image
         }
       }
@@ -884,7 +854,7 @@ public struct GameOverView: View {
   }
 
   var color: Color {
-    switch self.viewStore.gameContext {
+    switch self.store.completedGame.gameContext {
     case .dailyChallenge:
       return .dailyChallenge
     case .shared, .solo:
@@ -903,7 +873,7 @@ public struct GameOverView: View {
 
       ScrollView(.horizontal, showsIndicators: false) {
         HStack {
-          ForEach(self.viewStore.yourWords, id: \.word) { word in
+          ForEach(self.store.completedGame.yourWords, id: \.word) { word in
             WordView(
               backgroundColor: self.colorScheme == .dark ? self.color : .isowordsBlack,
               foregroundColor: self.colorScheme == .dark ? .isowordsBlack : self.color,
@@ -966,6 +936,16 @@ private let ordinalFormatter: NumberFormatter = {
   formatter.numberStyle = .ordinal
   return formatter
 }()
+
+extension CompletedGame {
+  fileprivate var yourWords: [PlayedWord] {
+    self.words(forPlayerIndex: self.localPlayerIndex)
+  }
+
+  fileprivate var yourScore: Int {
+    self.yourWords.reduce(into: 0) { $0 += $1.score }
+  }
+}
 
 extension CompletedMatch {
   fileprivate var description: String {
