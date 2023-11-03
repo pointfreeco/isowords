@@ -24,6 +24,7 @@ public struct ActiveMatchResponse: Equatable {
 public struct Home {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())
@@ -64,6 +65,7 @@ public struct Home {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
     @PresentationState public var destination: Destination.State?
@@ -410,28 +412,11 @@ extension GameCenterClient {
 }
 
 public struct HomeView: View {
-  struct ViewState: Equatable {
-    let hasActiveGames: Bool
-    let hasChangelog: Bool
-    let isNagBannerVisible: Bool
-
-    init(state: Home.State) {
-      self.hasActiveGames =
-        state.savedGames.dailyChallengeUnlimited != nil
-        || state.savedGames.unlimited != nil
-        || !state.turnBasedMatches.isEmpty
-      self.hasChangelog = state.hasChangelog
-      self.isNagBannerVisible = state.nagBanner != nil
-    }
-  }
-
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Home>
-  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
+  @State var store: StoreOf<Home>
 
   public init(store: StoreOf<Home>) {
-    self.store = store
-    self.viewStore = ViewStore(store, observe: ViewState.init)
+    self._store = State(wrappedValue: store)
   }
 
   public var body: some View {
@@ -440,20 +425,20 @@ public struct HomeView: View {
         VStack(spacing: .grid(12)) {
           VStack(spacing: .grid(6)) {
             HStack {
-              CubeIconView(shake: self.viewStore.hasChangelog) {
-                self.viewStore.send(.cubeButtonTapped)
+              CubeIconView(shake: self.store.hasChangelog) {
+                self.store.send(.cubeButtonTapped)
               }
 
               Spacer()
 
               Button {
-                self.viewStore.send(.howToPlayButtonTapped, animation: .default)
+                self.store.send(.howToPlayButtonTapped, animation: .default)
               } label: {
                 Image(systemName: "questionmark.circle")
               }
 
               Button {
-                self.viewStore.send(.settingsButtonTapped)
+                self.store.send(.settingsButtonTapped)
               } label: {
                 Image(systemName: "gear")
               }
@@ -466,7 +451,7 @@ public struct HomeView: View {
               .screenEdgePadding(.horizontal)
           }
 
-          if self.viewStore.hasActiveGames {
+          if self.store.hasActiveGames {
             VStack(alignment: .leading) {
               Text("Active games")
                 .adaptiveFont(.matterMedium, size: 16)
@@ -474,10 +459,7 @@ public struct HomeView: View {
                 .screenEdgePadding(.horizontal)
 
               ActiveGamesView(
-                store: self.store.scope(
-                  state: \.activeGames,
-                  action: Home.Action.activeGames
-                ),
+                store: self.store.scope(state: \.activeGames, action: \.activeGames),
                 showMenuItems: true
               )
               .foregroundColor(self.colorScheme == .dark ? .hex(0xE9A27C) : .isowordsBlack)
@@ -490,19 +472,19 @@ public struct HomeView: View {
             .screenEdgePadding(.horizontal)
         }
         .adaptivePadding(.vertical, .grid(4))
-        .background(
-          self.colorScheme == .dark
-            ? AnyView(Color.isowordsBlack)
-            : AnyView(
-              LinearGradient(
-                gradient: Gradient(colors: [.hex(0xF3EBA4), .hex(0xE1665B)]),
-                startPoint: .top,
-                endPoint: .bottom
-              )
+        .background {
+          if self.colorScheme == .dark {
+            Color.isowordsBlack
+          } else {
+            LinearGradient(
+              gradient: Gradient(colors: [.hex(0xF3EBA4), .hex(0xE1665B)]),
+              startPoint: .top,
+              endPoint: .bottom
             )
-        )
+          }
+        }
 
-        if self.viewStore.isNagBannerVisible {
+        if self.store.nagBanner != nil {
           Spacer().frame(height: 80)
         }
       }
@@ -526,26 +508,22 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      IfLetStore(
-        self.store.scope(state: \.$nagBanner, action: \.nagBanner),
-        then: NagBannerView.init(store:)
-      )
+      if let store = self.store.scope(state: \.nagBanner, action: \.nagBanner.presented) {
+        NagBannerView(store: store)
+      }
     }
     .navigationBarHidden(true)
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.settings,
-      action: { .settings($0) }
+      item: self.$store.scope(state: \.destination?.settings, action: \.destination.settings)
     ) { store in
       SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.changelog,
-      action: { .changelog($0) },
-      content: ChangelogView.init(store:)
-    )
-    .task { await self.viewStore.send(.task).finish() }
+      item: self.$store.scope(state: \.destination?.changelog, action: \.destination.changelog)
+    ) { store in
+      ChangelogView(store: store)
+    }
+    .task { await self.store.send(.task).finish() }
   }
 }
 
