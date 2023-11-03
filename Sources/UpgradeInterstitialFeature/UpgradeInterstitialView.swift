@@ -15,6 +15,7 @@ public enum GameContext: String, Codable {
 
 @Reducer
 public struct UpgradeInterstitial {
+  @ObservableState
   public struct State: Equatable {
     public var fullGameProduct: StoreKitClient.Product?
     public var isDismissable: Bool
@@ -163,118 +164,116 @@ public struct UpgradeInterstitialView: View {
   }
 
   public var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
+    VStack {
       VStack {
-        VStack {
-          if !viewStore.isDismissable
-            && viewStore.secondsPassedCount < viewStore.upgradeInterstitialDuration
-          {
-            Text("\(viewStore.upgradeInterstitialDuration - viewStore.secondsPassedCount)s")
-              .animation(nil)
-              .multilineTextAlignment(.center)
-              .adaptiveFont(.matterMedium, size: 16) { $0.monospacedDigit() }
-              .adaptivePadding(.bottom)
-              .transition(.opacity)
-          }
-
-          VStack(spacing: 32) {
-            (Text("A personal\nappeal from\nthe creators\nof ")
-              + Text("isowords").fontWeight(.medium))
-              .multilineTextAlignment(.center)
-              .adaptiveFont(.matter, size: 35)
-              .fixedSize()
-
-            Text(
-              """
-              Hello! We could put an ad here, but we chose not to because ads suck. But also, keeping \
-              this game running costs money. So if you can, please purchase the full version and help \
-              support the development of new features and remove these annoying prompts!
-              """
-            )
-            .minimumScaleFactor(0.2)
+        if !self.store.isDismissable
+          && self.store.secondsPassedCount < self.store.upgradeInterstitialDuration
+        {
+          Text("\(self.store.upgradeInterstitialDuration - self.store.secondsPassedCount)s")
+            .animation(nil)
             .multilineTextAlignment(.center)
-            .adaptiveFont(.matter, size: 16)
-          }
-          .adaptivePadding()
-
-          Spacer()
-        }
-        .applying {
-          if self.colorScheme == .dark {
-            $0.foreground(
-              LinearGradient(
-                gradient: Gradient(colors: [.hex(0xF3EBA4), .hex(0xE1665B)]),
-                startPoint: .top,
-                endPoint: .bottom
-              )
-            )
-          } else {
-            $0
-          }
-        }
-
-        VStack(spacing: 24) {
-          Button {
-            viewStore.send(.upgradeButtonTapped, animation: .default)
-          } label: {
-            HStack(spacing: .grid(2)) {
-              if viewStore.isPurchasing {
-                ProgressView()
-                  .progressViewStyle(
-                    CircularProgressViewStyle(
-                      tint: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE1665B)
-                    )
-                  )
-              }
-              if let fullGameProduct = viewStore.fullGameProduct {
-                Text("Upgrade for \(cost(product: fullGameProduct))")
-              } else {
-                Text("Upgrade")
-              }
-            }
-            .frame(maxWidth: .infinity)
-          }
-          .buttonStyle(
-            ActionButtonStyle(
-              backgroundColor: self.colorScheme == .dark ? .hex(0xE1665B) : .isowordsBlack,
-              foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE1665B)
-            )
-          )
-          .disabled(viewStore.isPurchasing)
-
-          if viewStore.isDismissable
-            || viewStore.secondsPassedCount >= viewStore.upgradeInterstitialDuration
-          {
-            Button {
-              viewStore.send(.maybeLaterButtonTapped, animation: .default)
-            } label: {
-              Text("Maybe later")
-                .foregroundColor(self.colorScheme == .dark ? .hex(0xE1665B) : .isowordsBlack)
-            }
-            .foregroundColor(.isowordsBlack)
-            .adaptiveFont(.matterMedium, size: 14)
+            .adaptiveFont(.matterMedium, size: 16) { $0.monospacedDigit() }
+            .adaptivePadding(.bottom)
             .transition(.opacity)
-          }
         }
+
+        VStack(spacing: 32) {
+          (Text("A personal\nappeal from\nthe creators\nof ")
+            + Text("isowords").fontWeight(.medium))
+            .multilineTextAlignment(.center)
+            .adaptiveFont(.matter, size: 35)
+            .fixedSize()
+
+          Text(
+            """
+            Hello! We could put an ad here, but we chose not to because ads suck. But also, keeping \
+            this game running costs money. So if you can, please purchase the full version and help \
+            support the development of new features and remove these annoying prompts!
+            """
+          )
+          .minimumScaleFactor(0.2)
+          .multilineTextAlignment(.center)
+          .adaptiveFont(.matter, size: 16)
+        }
+        .adaptivePadding()
+
+        Spacer()
       }
-      .adaptivePadding()
-      .task { await viewStore.send(.task).finish() }
       .applying {
         if self.colorScheme == .dark {
-          $0.background(
-            Color.isowordsBlack
-              .ignoresSafeArea()
-          )
-        } else {
-          $0.background(
+          $0.foreground(
             LinearGradient(
               gradient: Gradient(colors: [.hex(0xF3EBA4), .hex(0xE1665B)]),
               startPoint: .top,
               endPoint: .bottom
             )
-            .ignoresSafeArea()
           )
+        } else {
+          $0
         }
+      }
+
+      VStack(spacing: 24) {
+        Button {
+          self.store.send(.upgradeButtonTapped, animation: .default)
+        } label: {
+          HStack(spacing: .grid(2)) {
+            if self.store.isPurchasing {
+              ProgressView()
+                .progressViewStyle(
+                  CircularProgressViewStyle(
+                    tint: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE1665B)
+                  )
+                )
+            }
+            if let fullGameProduct = self.store.fullGameProduct {
+              Text("Upgrade for \(cost(product: fullGameProduct))")
+            } else {
+              Text("Upgrade")
+            }
+          }
+          .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(
+          ActionButtonStyle(
+            backgroundColor: self.colorScheme == .dark ? .hex(0xE1665B) : .isowordsBlack,
+            foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE1665B)
+          )
+        )
+        .disabled(self.store.isPurchasing)
+
+        if self.store.isDismissable
+          || self.store.secondsPassedCount >= self.store.upgradeInterstitialDuration
+        {
+          Button {
+            self.store.send(.maybeLaterButtonTapped, animation: .default)
+          } label: {
+            Text("Maybe later")
+              .foregroundColor(self.colorScheme == .dark ? .hex(0xE1665B) : .isowordsBlack)
+          }
+          .foregroundColor(.isowordsBlack)
+          .adaptiveFont(.matterMedium, size: 14)
+          .transition(.opacity)
+        }
+      }
+    }
+    .adaptivePadding()
+    .task { await self.store.send(.task).finish() }
+    .applying {
+      if self.colorScheme == .dark {
+        $0.background(
+          Color.isowordsBlack
+            .ignoresSafeArea()
+        )
+      } else {
+        $0.background(
+          LinearGradient(
+            gradient: Gradient(colors: [.hex(0xF3EBA4), .hex(0xE1665B)]),
+            startPoint: .top,
+            endPoint: .bottom
+          )
+          .ignoresSafeArea()
+        )
       }
     }
   }
