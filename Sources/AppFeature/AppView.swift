@@ -14,6 +14,7 @@ import SwiftUI
 public struct AppReducer {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
@@ -32,6 +33,7 @@ public struct AppReducer {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @PresentationState public var destination: Destination.State?
@@ -328,35 +330,19 @@ public struct AppReducer {
 
 public struct AppView: View {
   let store: StoreOf<AppReducer>
-  @ObservedObject var viewStore: ViewStore<ViewState, AppReducer.Action>
   @Environment(\.deviceState) var deviceState
-
-  struct ViewState: Equatable {
-    let isHomeActive: Bool
-
-    init(state: AppReducer.State) {
-      self.isHomeActive = state.destination == nil
-    }
-  }
 
   public init(store: StoreOf<AppReducer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
     Group {
-      if self.viewStore.isHomeActive {
-        NavigationStack {
-          HomeView(store: self.store.scope(state: \.home, action: \.home))
-        }
-        .zIndex(0)
-      } else {
-        IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.game,
-          action: { .game($0) }
-        ) { store in
+      switch self.store.destination {
+      case .game:
+        if let store = self.store.scope(
+          state: \.destination?.game, action: \.destination.game.presented
+        ) {
           GameView(
             content: CubeView(
               store: store.scope(
@@ -366,17 +352,23 @@ public struct AppView: View {
             ),
             store: store
           )
+          .transition(.game)
+          .zIndex(1)
         }
-        .transition(.game)
-        .zIndex(1)
 
-        IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.onboarding,
-          action: { .onboarding($0) },
-          then: OnboardingView.init(store:)
-        )
-        .zIndex(2)
+      case .onboarding:
+        if let store = self.store.scope(
+          state: \.destination?.onboarding, action: \.destination.onboarding.presented
+        ) {
+          OnboardingView(store: store)
+            .zIndex(2)
+        }
+
+      case nil:
+        NavigationStack {
+          HomeView(store: self.store.scope(state: \.home, action: \.home))
+        }
+        .zIndex(0)
       }
     }
     .modifier(DeviceStateModifier())
