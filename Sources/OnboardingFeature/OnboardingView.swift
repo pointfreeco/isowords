@@ -15,6 +15,7 @@ import UserDefaultsClient
 
 @Reducer
 public struct Onboarding {
+  @ObservableState
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var game: Game.State
@@ -131,6 +132,10 @@ public struct Onboarding {
       public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.rawValue < rhs.rawValue
       }
+    }
+
+    public var isSkipButtonVisible: Bool {
+      self.step != Onboarding.State.Step.allCases.last
     }
   }
 
@@ -373,21 +378,9 @@ public struct Onboarding {
 public struct OnboardingView: View {
   @Environment(\.colorScheme) var colorScheme
   let store: StoreOf<Onboarding>
-  @ObservedObject var viewStore: ViewStore<ViewState, Onboarding.Action>
-
-  struct ViewState: Equatable {
-    let isSkipButtonVisible: Bool
-    let step: Onboarding.State.Step
-
-    init(state: Onboarding.State) {
-      self.isSkipButtonVisible = state.step != Onboarding.State.Step.allCases.last
-      self.step = state.step
-    }
-  }
 
   public init(store: StoreOf<Onboarding>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -398,24 +391,24 @@ public struct OnboardingView: View {
           action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
         )
       )
-      .opacity(viewStore.step.isFullscreen ? 0 : 1)
+      .opacity(self.store.step.isFullscreen ? 0 : 1)
 
       OnboardingStepView(store: self.store)
 
-      if viewStore.isSkipButtonVisible {
-        Button("Skip") { viewStore.send(.skipButtonTapped, animation: .default) }
+      if self.store.isSkipButtonVisible {
+        Button("Skip") { self.store.send(.skipButtonTapped, animation: .default) }
           .adaptiveFont(.matterMedium, size: 18)
           .buttonStyle(PlainButtonStyle())
           .padding(.horizontal)
           .foregroundColor(
             self.colorScheme == .dark
-              ? viewStore.step.color
+            ? self.store.step.color
               : Color.isowordsBlack
           )
       }
     }
     .background(
-      (self.colorScheme == .dark ? Color.isowordsBlack : viewStore.step.color)
+      (self.colorScheme == .dark ? Color.isowordsBlack : self.store.step.color)
         .ignoresSafeArea()
     )
   }
