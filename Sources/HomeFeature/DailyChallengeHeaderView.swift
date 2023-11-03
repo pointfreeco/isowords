@@ -8,24 +8,14 @@ import SwiftUI
 struct DailyChallengeHeaderView: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.date) var date
-  let store: StoreOf<Home>
-  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
-
-  struct ViewState: Equatable {
-    let dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-
-    init(homeState: Home.State) {
-      self.dailyChallenges = homeState.dailyChallenges
-    }
-  }
+  @State var store: StoreOf<Home>
 
   init(store: StoreOf<Home>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
+    self._store = State(wrappedValue: store)
   }
 
   var body: some View {
-    let numberOfPlayers = self.viewStore.dailyChallenges?.reduce(into: 0) {
+    let numberOfPlayers = self.store.dailyChallenges?.reduce(into: 0) {
       $0 += $1.yourResult.outOf
     }
 
@@ -60,7 +50,7 @@ struct DailyChallengeHeaderView: View {
 
       VStack {
         Button {
-          self.viewStore.send(.dailyChallengeButtonTapped)
+          self.store.send(.dailyChallengeButtonTapped)
         } label: {
           HStack {
             Group {
@@ -115,15 +105,16 @@ struct DailyChallengeHeaderView: View {
       }
     }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.dailyChallenge,
-      action: { .dailyChallenge($0) },
-      destination: DailyChallengeView.init(store:)
-    )
+      item: self.$store.scope(
+        state: \.destination?.dailyChallenge, action: \.destination.dailyChallenge
+      )
+    ) { store in
+      DailyChallengeView(store: store)
+    }
   }
 
   var hasPlayedAllDailyChallenges: Bool {
-    self.viewStore.dailyChallenges
+    self.store.dailyChallenges
       .map { $0.allSatisfy { $0.yourResult.rank != nil } }
       ?? false
   }
