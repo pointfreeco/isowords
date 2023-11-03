@@ -67,13 +67,6 @@ public struct CubePreview {
         return nil
       }
     }
-
-    var bloom: BloomBackground.ViewState {
-      BloomBackground.ViewState(
-        bloomCount: self.selectedWordString.count,
-        word: self.selectedWordString
-      )
-    }
   }
 
   public enum Action: BindableAction, Equatable {
@@ -239,7 +232,7 @@ public struct CubePreviewView: View {
         if !self.store.isAnimationReduced {
           BloomBackground(
             size: proxy.size,
-            store: self.store.scope(state: \.bloom, action: \.never)
+            word: self.store.selectedWordString
           )
         }
       }

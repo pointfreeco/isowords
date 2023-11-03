@@ -130,23 +130,14 @@ public struct GameView<Content>: View where Content: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .background(
-        store.isAnimationReduced
-          ? nil
-          : BloomBackground(
+      .background {
+        if !self.store.isAnimationReduced {
+          BloomBackground(
             size: proxy.size,
-            store: self.store
-              .scope(
-                state: {
-                  BloomBackground.ViewState(
-                    bloomCount: $0.selectedWord.count,
-                    word: $0.selectedWordString
-                  )
-                },
-                action: absurd
-              )
+            word: self.store.selectedWordString
           )
-      )
+        }
+      }
       .background(
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
