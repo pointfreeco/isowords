@@ -20,7 +20,8 @@ extension Reducer {
   }
 }
 
-public struct SelectionSounds<Base: Reducer>: Reducer {
+@Reducer
+public struct SelectionSounds<Base: Reducer> {
   let base: Base
   let contains: (Base.State, String) -> Bool
   let hasBeenPlayed: (Base.State, String) -> Bool
@@ -29,7 +30,7 @@ public struct SelectionSounds<Base: Reducer>: Reducer {
 
   @Dependency(\.audioPlayer.play) var playSound
 
-  public var body: some Reducer<Base.State, Base.Action> {
+  public var body: some ReducerOf<Base> {
     self.base.onChange(of: self.selectedWord) { previousSelection, selection in
       Reduce { state, action in
         .run { [state] _ in

@@ -4,7 +4,8 @@ import LeaderboardFeature
 import SharedModels
 import SwiftUI
 
-public struct DailyChallengeResults: Reducer {
+@Reducer
+public struct DailyChallengeResults {
   public struct State: Equatable {
     public var history: DailyChallengeHistoryResponse?
     public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
@@ -19,7 +20,6 @@ public struct DailyChallengeResults: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
     case loadHistory

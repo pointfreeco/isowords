@@ -29,15 +29,14 @@ public enum LeaderboardScope: CaseIterable, Equatable {
   }
 }
 
-public struct Leaderboard: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct Leaderboard {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case cubePreview(CubePreview.Action)
     }
@@ -68,7 +67,6 @@ public struct Leaderboard: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case destination(PresentationAction<Destination.Action>)
     case fetchWordResponse(TaskResult<FetchVocabWordResponse>)

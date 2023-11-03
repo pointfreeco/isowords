@@ -2,7 +2,8 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-public struct WordSubmitButtonFeature: Reducer {
+@Reducer
+public struct WordSubmitButtonFeature {
   public struct State: Equatable {
     public var isSelectedWordValid: Bool
     public let isTurnBasedMatch: Bool

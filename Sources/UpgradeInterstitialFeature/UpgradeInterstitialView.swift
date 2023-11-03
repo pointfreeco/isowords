@@ -13,7 +13,8 @@ public enum GameContext: String, Codable {
   case turnBased
 }
 
-public struct UpgradeInterstitial: Reducer {
+@Reducer
+public struct UpgradeInterstitial {
   public struct State: Equatable {
     public var fullGameProduct: StoreKitClient.Product?
     public var isDismissable: Bool

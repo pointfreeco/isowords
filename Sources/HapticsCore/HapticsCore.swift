@@ -11,14 +11,15 @@ extension Reducer {
   }
 }
 
-private struct Haptics<Base: Reducer, Trigger: Equatable>: Reducer {
+@Reducer
+private struct Haptics<Base: Reducer, Trigger: Equatable> {
   let base: Base
   let isEnabled: (Base.State) -> Bool
   let trigger: (Base.State) -> Trigger
 
   @Dependency(\.feedbackGenerator) var feedbackGenerator
 
-  var body: some Reducer<Base.State, Base.Action> {
+  var body: some ReducerOf<Base> {
     self.base.onChange(of: self.trigger) { _, _ in
       Reduce { state, _ in
         guard self.isEnabled(state) else { return .none }

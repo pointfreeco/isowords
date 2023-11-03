@@ -4,7 +4,8 @@ import Foundation
 import GameOverFeature
 import SharedModels
 
-struct TurnBasedLogic: Reducer {
+@Reducer
+struct TurnBasedLogic {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.gameCenter) var gameCenter

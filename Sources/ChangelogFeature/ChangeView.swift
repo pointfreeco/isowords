@@ -4,7 +4,8 @@ import ServerConfigClient
 import SwiftUI
 import Tagged
 
-public struct Change: Reducer {
+@Reducer
+public struct Change {
   public struct State: Equatable, Identifiable {
     public var change: Changelog.Change
     public var isExpanded = false

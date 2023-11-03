@@ -153,12 +153,12 @@ extension BottomMenuState.Button {
   import ComposableArchitecture
   import SwiftUIHelpers
 
-  private struct BottomMenuReducer: Reducer {
+  @Reducer
+  private struct BottomMenuReducer {
     struct State: Equatable {
       @PresentationState var bottomMenu: BottomMenuState<Action.BottomMenu>?
     }
 
-    @CasePathable
     enum Action: Equatable {
       case bottomMenu(PresentationAction<BottomMenu>)
       case showMenuButtonTapped

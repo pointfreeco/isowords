@@ -2,15 +2,14 @@ import ComposableArchitecture
 import SwiftUI
 import TcaHelpers
 
-public struct Multiplayer: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct Multiplayer {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case pastGames(PastGames.State)
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case pastGames(PastGames.Action)
     }
@@ -35,7 +34,6 @@ public struct Multiplayer: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case destination(PresentationAction<Destination.Action>)
     case pastGamesButtonTapped

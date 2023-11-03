@@ -15,16 +15,15 @@ import SwiftUIHelpers
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-public struct GameOver: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct GameOver {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
@@ -87,7 +86,6 @@ public struct GameOver: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case closeButtonTapped
     case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
