@@ -9,8 +9,9 @@ extension Reducer {
   }
 }
 
+@Reducer
 @usableFromInline
-struct FilterReducer<Base: Reducer>: Reducer {
+struct FilterReducer<Base: Reducer> {
   @usableFromInline
   let base: Base
 

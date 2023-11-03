@@ -8,7 +8,8 @@ import SwiftUI
 import Tagged
 import UIApplicationClient
 
-public struct ChangelogReducer: Reducer {
+@Reducer
+public struct ChangelogReducer {
   public struct State: Equatable {
     public var changelog: IdentifiedArrayOf<Change.State>
     public var currentBuild: Build.Number
@@ -28,7 +29,6 @@ public struct ChangelogReducer: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case change(id: Build.Number, action: Change.Action)
     case changelogResponse(TaskResult<Changelog>)

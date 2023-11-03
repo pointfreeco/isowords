@@ -2,6 +2,7 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
+// NB: `@Reducer` prevents us from synthesizing conditional conformances in this file.
 public struct LeaderboardResults<TimeScope>: Reducer {
   public struct State {
     public var gameMode: GameMode

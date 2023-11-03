@@ -13,7 +13,8 @@ import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
 
-public struct Onboarding: Reducer {
+@Reducer
+public struct Onboarding {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var game: Game.State
@@ -133,7 +134,6 @@ public struct Onboarding: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case alert(PresentationAction<Alert>)
     case delayedNextStep

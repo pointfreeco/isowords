@@ -1,7 +1,8 @@
 import ActiveGamesFeature
 import ComposableArchitecture
 
-struct ActiveGamesTray: Reducer {
+@Reducer
+struct ActiveGamesTray {
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now

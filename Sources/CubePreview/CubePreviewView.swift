@@ -9,7 +9,8 @@ import SharedModels
 import SwiftUI
 import UserSettingsClient
 
-public struct CubePreview: Reducer {
+@Reducer
+public struct CubePreview {
   public struct State: Equatable {
     var cubes: Puzzle
     var enableGyroMotion: Bool
@@ -52,7 +53,6 @@ public struct CubePreview: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: BindableAction, Equatable {
     case binding(BindingAction<State>)
     case cubeScene(CubeSceneView.ViewAction)

@@ -4,15 +4,14 @@ import Styleguide
 import SwiftUI
 import VocabFeature
 
-public struct Stats: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct Stats {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case vocab(Vocab.State)
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case vocab(Vocab.Action)
     }
@@ -61,7 +60,6 @@ public struct Stats: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case backButtonTapped
     case destination(PresentationAction<Destination.Action>)

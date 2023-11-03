@@ -2,7 +2,8 @@ import ComposableArchitecture
 import GameOverFeature
 import SharedModels
 
-struct GameOverLogic: Reducer {
+@Reducer
+struct GameOverLogic {
   @Dependency(\.database.saveGame) var saveGame
 
   var body: some ReducerOf<Game> {

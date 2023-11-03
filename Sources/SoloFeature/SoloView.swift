@@ -6,7 +6,8 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct Solo: Reducer {
+@Reducer
+public struct Solo {
   public struct State: Equatable {
     var inProgressGame: InProgressGame?
 

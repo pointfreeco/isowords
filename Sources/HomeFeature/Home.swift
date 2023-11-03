@@ -20,10 +20,10 @@ public struct ActiveMatchResponse: Equatable {
   public let hasPastTurnBasedGames: Bool
 }
 
-public struct Home: Reducer {
-  public struct Destination: Reducer {
-    @CasePathable
-    @dynamicMemberLookup
+@Reducer
+public struct Home {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())
@@ -33,7 +33,6 @@ public struct Home: Reducer {
       case solo(Solo.State = .init())
     }
 
-    @CasePathable
     public enum Action: Equatable {
       case changelog(ChangelogReducer.Action)
       case dailyChallenge(DailyChallengeReducer.Action)
@@ -123,7 +122,6 @@ public struct Home: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action: Equatable {
     case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
     case activeGames(ActiveGamesAction)
