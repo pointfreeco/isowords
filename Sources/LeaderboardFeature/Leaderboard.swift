@@ -33,6 +33,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 public struct Leaderboard {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
@@ -48,6 +49,7 @@ public struct Leaderboard {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     @PresentationState public var destination: Destination.State?
     public var scope: LeaderboardScope = .games
@@ -155,12 +157,10 @@ public struct Leaderboard {
 
 public struct LeaderboardView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Leaderboard>
-  @ObservedObject var viewStore: ViewStoreOf<Leaderboard>
+  @State var store: StoreOf<Leaderboard>
 
   public init(store: StoreOf<Leaderboard>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
+    self._store = State(wrappedValue: store)
   }
 
   public var body: some View {
@@ -168,11 +168,11 @@ public struct LeaderboardView: View {
       HStack {
         ForEach(LeaderboardScope.allCases, id: \.self) { scope in
           Button {
-            self.viewStore.send(.scopeTapped(scope), animation: .default)
+            self.store.send(.scopeTapped(scope), animation: .default)
           } label: {
             Text(scope.title)
-              .foregroundColor(self.viewStore.state.scope == scope ? scope.color : nil)
-              .opacity(self.viewStore.state.scope == scope ? 1 : 0.3)
+              .foregroundColor(self.store.state.scope == scope ? scope.color : nil)
+              .opacity(self.store.state.scope == scope ? 1 : 0.3)
           }
         }
       }
@@ -181,22 +181,22 @@ public struct LeaderboardView: View {
       .screenEdgePadding(.horizontal)
 
       Group {
-        switch self.viewStore.state.scope {
+        switch self.store.state.scope {
         case .games:
           LeaderboardResultsView(
             store: self.store.scope(state: \.solo, action: \.solo),
             title: Text("Solo"),
-            subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
+            subtitle: Text("\(self.store.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
             color: .isowordsOrange,
-            timeScopeLabel: Text(self.viewStore.solo.timeScope.displayTitle),
+            timeScopeLabel: Text(self.store.solo.timeScope.displayTitle),
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  self.viewStore.send(.solo(.timeScopeChanged(scope)), animation: .default)
+                  self.store.send(.solo(.timeScopeChanged(scope)), animation: .default)
                 }
-                .disabled(self.viewStore.solo.timeScope == scope)
-                .opacity(self.viewStore.solo.timeScope == scope ? 0.3 : 1)
+                .disabled(self.store.solo.timeScope == scope)
+                .opacity(self.store.solo.timeScope == scope ? 0.3 : 1)
               }
               .padding(.leading, .grid(12))
             }
@@ -205,20 +205,20 @@ public struct LeaderboardView: View {
         case .vocab:
           LeaderboardResultsView(
             store: self.store.scope(state: \.vocab, action: \.vocab),
-            title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
+            title: (self.store.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },
             subtitle: nil,
             isFilterable: false,
             color: .isowordsRed,
-            timeScopeLabel: Text(self.viewStore.vocab.timeScope.displayTitle),
+            timeScopeLabel: Text(self.store.vocab.timeScope.displayTitle),
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime, .interesting], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  self.viewStore.send(.vocab(.timeScopeChanged(scope)), animation: .default)
+                  self.store.send(.vocab(.timeScopeChanged(scope)), animation: .default)
                 }
-                .disabled(self.viewStore.vocab.timeScope == scope)
-                .opacity(self.viewStore.vocab.timeScope == scope ? 0.3 : 1)
+                .disabled(self.store.vocab.timeScope == scope)
+                .opacity(self.store.vocab.timeScope == scope ? 0.3 : 1)
               }
               .padding(.leading, .grid(12))
             }
@@ -233,17 +233,16 @@ public struct LeaderboardView: View {
     .navigationStyle(
       foregroundColor: self.colorScheme == .light
         ? .hex(0x393939)
-        : self.viewStore.state.scope == .games
+        : self.store.state.scope == .games
           ? .isowordsOrange
           : .isowordsRed,
       title: Text("Leaderboards")
     )
     .sheet(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.cubePreview,
-      action: { .cubePreview($0) },
-      content: CubePreviewView.init(store:)
-    )
+      item: self.$store.scope(state: \.destination?.cubePreview, action: \.destination.cubePreview)
+    ) { store in
+      CubePreviewView(store: store)
+    }
   }
 }
 
