@@ -10,6 +10,7 @@ import TcaHelpers
 
 @Reducer
 public struct Demo {
+  @ObservableState
   public struct State: Equatable {
     var appStoreOverlayIsPresented: Bool
     var step: Step
@@ -34,8 +35,8 @@ public struct Demo {
     }
   }
 
-  public enum Action: Equatable {
-    case appStoreOverlay(isPresented: Bool)
+  public enum Action: BindableAction, Equatable {
+    case binding(BindingAction<State>)
     case fullVersionButtonTapped
     case game(Game.Action)
     case gameOverDelay
@@ -52,6 +53,8 @@ public struct Demo {
   public init() {}
 
   public var body: some ReducerOf<Self> {
+    BindingReducer()
+
     Scope(state: \.step, action: \.self) {
       Scope(state: \.onboarding, action: \.onboarding) {
         Onboarding()
@@ -80,8 +83,7 @@ public struct Demo {
 
     Reduce { state, action in
       switch action {
-      case let .appStoreOverlay(isPresented: isPresented):
-        state.appStoreOverlayIsPresented = isPresented
+      case .binding:
         return .none
 
       case .fullVersionButtonTapped:
@@ -126,37 +128,22 @@ public struct Demo {
 }
 
 public struct DemoView: View {
-  let store: StoreOf<Demo>
-  @ObservedObject var viewStore: ViewStore<ViewState, Demo.Action>
+  @State var store: StoreOf<Demo>
 
-  struct ViewState: Equatable {
-    let appStoreOverlayIsPresented: Bool
-    let isGameOver: Bool
-
-    init(state: Demo.State) {
-      self.appStoreOverlayIsPresented = state.appStoreOverlayIsPresented
-      self.isGameOver = state.isGameOver
-    }
-  }
-
-  public init(
-    store: StoreOf<Demo>
-  ) {
+  public init(store: StoreOf<Demo>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
-    SwitchStore(self.store.scope(state: \.step, action: \.self)) { step in
-      switch step {
+    Group {
+      switch self.store.step {
       case .onboarding:
-        CaseLet(\Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
-          OnboardingView(store: $0)
-            .onAppear { self.viewStore.send(.onAppear) }
+        if let store = self.store.scope(state: \.step.onboarding, action: \.onboarding) {
+          OnboardingView(store: store)
+            .onAppear { self.store.send(.onAppear) }
         }
-
       case .game:
-        CaseLet(\Demo.State.Step.game, action: Demo.Action.game) { store in
+        if let store = self.store.scope(state: \.step.game, action: \.game) {
           GameWrapper(
             content: GameView(
               content: CubeView(
@@ -167,20 +154,15 @@ public struct DemoView: View {
               ),
               store: store
             ),
-            isGameOver: self.viewStore.isGameOver,
+            isGameOver: self.store.isGameOver,
             bannerAction: {
-              self.viewStore.send(.fullVersionButtonTapped)
+              self.store.send(.fullVersionButtonTapped)
             }
           )
         }
       }
     }
-    .appStoreOverlay(
-      isPresented: self.viewStore.binding(
-        get: \.appStoreOverlayIsPresented,
-        send: Demo.Action.appStoreOverlay(isPresented:)
-      )
-    ) {
+    .appStoreOverlay(isPresented: self.$store.appStoreOverlayIsPresented) {
       SKOverlay.AppClipConfiguration(position: .bottom)
     }
   }
