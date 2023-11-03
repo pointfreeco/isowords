@@ -6,6 +6,7 @@ import Tagged
 
 @Reducer
 public struct Change {
+  @ObservableState
   public struct State: Equatable, Identifiable {
     public var change: Changelog.Change
     public var isExpanded = false
@@ -37,34 +38,31 @@ struct ChangeView: View {
   let store: StoreOf<Change>
 
   var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      VStack(alignment: .leading, spacing: .grid(2)) {
-        HStack {
-          Text(viewStore.change.version)
-            .font(.title)
+    VStack(alignment: .leading, spacing: .grid(2)) {
+      HStack {
+        Text(self.store.change.version)
+          .font(.title)
 
-          if viewStore.change.build == self.currentBuild {
-            Text("Installed")
-              .font(.footnote)
-              .padding(.grid(1))
-              .foregroundColor(.white)
-              .background(Color.gray)
-          }
-
-          Spacer()
-
-          if !viewStore.isExpanded {
-            Button("Show") {
-              viewStore.send(.showButtonTapped, animation: .default)
-            }
-          }
+        if self.store.change.build == self.currentBuild {
+          Text("Installed")
+            .font(.footnote)
+            .padding(.grid(1))
+            .foregroundColor(.white)
+            .background(Color.gray)
         }
 
-        if viewStore.isExpanded {
-          Text(viewStore.change.log)
+        Spacer()
+
+        if !self.store.isExpanded {
+          Button("Show") {
+            self.store.send(.showButtonTapped, animation: .default)
+          }
         }
       }
-      .adaptivePadding(.vertical)
+
+      if self.store.isExpanded {
+        Text(self.store.change.log)
+      }
     }
     .buttonStyle(PlainButtonStyle())
   }
