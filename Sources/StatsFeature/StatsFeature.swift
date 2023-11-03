@@ -8,6 +8,7 @@ import VocabFeature
 public struct Stats {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case vocab(Vocab.State)
     }
@@ -23,6 +24,7 @@ public struct Stats {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var averageWordLength: Double?
     @PresentationState public var destination: Destination.State?
@@ -117,12 +119,10 @@ public struct Stats {
 }
 
 public struct StatsView: View {
-  let store: StoreOf<Stats>
-  @ObservedObject var viewStore: ViewStoreOf<Stats>
+  @State var store: StoreOf<Stats>
 
   public init(store: StoreOf<Stats>) {
     self.store = store
-    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   public var body: some View {
@@ -131,7 +131,7 @@ public struct StatsView: View {
         HStack {
           Text("Games played")
           Spacer()
-          Text("\(self.viewStore.gamesPlayed)")
+          Text("\(self.store.gamesPlayed)")
             .foregroundColor(.isowordsOrange)
         }
         .adaptiveFont(.matterMedium, size: 16)
@@ -147,7 +147,7 @@ public struct StatsView: View {
               Text("Timed")
               Spacer()
               Group {
-                if let highScoreTimed = self.viewStore.highScoreTimed {
+                if let highScoreTimed = self.store.highScoreTimed {
                   Text("\(highScoreTimed)")
                 } else {
                   Text("none")
@@ -160,7 +160,7 @@ public struct StatsView: View {
               Text("Unlimited")
               Spacer()
               Group {
-                if let highScoreUnlimited = self.viewStore.highScoreUnlimited {
+                if let highScoreUnlimited = self.store.highScoreUnlimited {
                   Text("\(highScoreUnlimited)")
                 } else {
                   Text("none")
@@ -176,13 +176,13 @@ public struct StatsView: View {
 
       SettingsRow {
         Button {
-          self.viewStore.send(.vocabButtonTapped)
+          self.store.send(.vocabButtonTapped)
         } label: {
           HStack {
             Text("Words found")
             Spacer()
             Group {
-              Text("\(self.viewStore.wordsFound)")
+              Text("\(self.store.wordsFound)")
               Image(systemName: "arrow.right")
             }
             .foregroundColor(.isowordsOrange)
@@ -193,7 +193,7 @@ public struct StatsView: View {
         .buttonStyle(PlainButtonStyle())
       }
 
-      if let highestScoringWord = self.viewStore.highestScoringWord {
+      if let highestScoringWord = self.store.highestScoringWord {
         SettingsRow {
           VStack(alignment: .trailing, spacing: 12) {
             HStack {
@@ -218,19 +218,18 @@ public struct StatsView: View {
         HStack {
           Text("Time played")
           Spacer()
-          Text(timePlayed(seconds: self.viewStore.secondsPlayed))
+          Text(timePlayed(seconds: self.store.secondsPlayed))
             .foregroundColor(.isowordsOrange)
         }
         .adaptiveFont(.matterMedium, size: 16)
       }
     }
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await self.store.send(.task).finish() }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.vocab,
-      action: { .vocab($0) },
-      destination: VocabView.init(store:)
-    )
+      item: self.$store.scope(state: \.destination?.vocab, action: \.destination.vocab)
+    ) { store in
+      VocabView(store: store)
+    }
     .navigationStyle(title: Text("Stats"))
   }
 }
