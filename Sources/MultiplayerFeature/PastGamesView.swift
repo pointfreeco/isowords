@@ -6,6 +6,7 @@ import SwiftUI
 
 @Reducer
 public struct PastGames {
+  @ObservableState
   public struct State: Equatable {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
@@ -69,9 +70,7 @@ struct PastGamesView: View {
 
   var body: some View {
     ScrollView {
-      ForEachStore(
-        self.store.scope(state: \.pastGames, action: \.pastGame)
-      ) { store in
+      ForEach(self.store.scope(state: \.pastGames, action: \.pastGame)) { store in
         Group {
           PastGameRow(store: store)
 
