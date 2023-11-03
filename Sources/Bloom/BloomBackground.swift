@@ -66,6 +66,7 @@ public struct Blooms: View {
 }
 
 public struct BloomBackground: View {
+  @ObservableState
   public struct ViewState: Equatable {
     let bloomCount: Int
     let word: String
@@ -100,29 +101,27 @@ public struct BloomBackground: View {
       return vertices[index % vertices.count]
     }
   }()
-  @ObservedObject var viewStore: ViewStore<ViewState, Never>
 
   public init(size: CGSize, store: Store<ViewState, Never>) {
     self.size = size
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
     Blooms(blooms: self.blooms)
-      .onChange(of: self.viewStore.bloomCount) { count in
+      .onChange(of: self.store.bloomCount) { _, count in
         withAnimation(.easeOut(duration: 1)) {
           self.renderBlooms(count: count)
         }
       }
-      .onAppear { self.renderBlooms(count: self.viewStore.bloomCount) }
+      .onAppear { self.renderBlooms(count: self.store.bloomCount) }
   }
 
   func renderBlooms(count: Int) {
     if count > self.blooms.count {
       let colors =
         Styleguide.letterColors.first { key, _ in
-          key.contains(self.viewStore.word)
+          key.contains(self.store.word)
         }?
         .value ?? []
       guard colors.count > 0
