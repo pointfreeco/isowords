@@ -61,12 +61,6 @@ public struct PastGames {
 struct PastGamesView: View {
   @Environment(\.colorScheme) var colorScheme
   let store: StoreOf<PastGames>
-  @ObservedObject var viewStore: ViewStoreOf<PastGames>
-
-  init(store: StoreOf<PastGames>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
-  }
 
   var body: some View {
     ScrollView {
@@ -82,7 +76,7 @@ struct PastGamesView: View {
       }
       .padding()
     }
-    .task { await viewStore.send(.task).finish() }
+    .task { await self.store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
       foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,
