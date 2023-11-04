@@ -3,41 +3,21 @@ import SwiftUI
 
 struct GameNavView: View {
   let store: StoreOf<Game>
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
-
-  struct ViewState: Equatable {
-    let isTrayAvailable: Bool
-    let isTrayVisible: Bool
-    let trayTitle: String
-
-    init(state: Game.State) {
-      self.isTrayAvailable = state.isTrayAvailable
-      self.isTrayVisible = state.isTrayVisible
-      self.trayTitle = state.displayTitle
-    }
-  }
-
-  public init(
-    store: StoreOf<Game>
-  ) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
-  }
 
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
       Button {
-        self.viewStore.send(.trayButtonTapped, animation: .default)
+        self.store.send(.trayButtonTapped, animation: .default)
       } label: {
         HStack {
-          Text(self.viewStore.trayTitle)
+          Text(self.store.displayTitle)
             .lineLimit(1)
 
           Spacer()
 
           Image(systemName: "chevron.down")
-            .rotationEffect(.degrees(self.viewStore.isTrayVisible ? 180 : 0))
-            .opacity(self.viewStore.isTrayAvailable ? 1 : 0)
+            .rotationEffect(.degrees(self.store.isTrayVisible ? 180 : 0))
+            .opacity(self.store.isTrayAvailable ? 1 : 0)
         }
         .adaptiveFont(.matterMedium, size: 14)
         .foregroundColor(.adaptiveBlack)
@@ -48,10 +28,10 @@ struct GameNavView: View {
           .opacity(0.05)
       )
       .cornerRadius(12)
-      .disabled(!self.viewStore.isTrayAvailable)
+      .disabled(!self.store.isTrayAvailable)
 
       Button {
-        self.viewStore.send(.menuButtonTapped, animation: .default)
+        self.store.send(.menuButtonTapped, animation: .default)
       } label: {
         Image(systemName: "ellipsis")
           .foregroundColor(.adaptiveBlack)
