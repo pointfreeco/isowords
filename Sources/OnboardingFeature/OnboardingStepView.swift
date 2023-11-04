@@ -4,45 +4,7 @@ import SwiftUI
 
 struct OnboardingStepView: View {
   let store: StoreOf<Onboarding>
-  @ObservedObject var viewStore: ViewStore<ViewState, Onboarding.Action>
   @Environment(\.colorScheme) var colorScheme
-
-  init(store: StoreOf<Onboarding>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
-  }
-
-  struct ViewState: Equatable {
-    let isGetStartedButtonVisible: Bool
-    let isNextButtonVisible: Bool
-    let isSubmitButtonVisible: Bool
-    let presentationStyle: Onboarding.State.PresentationStyle
-    let step: Onboarding.State.Step
-
-    init(onboardingState state: Onboarding.State) {
-      self.isGetStartedButtonVisible = state.step == Onboarding.State.Step.allCases.last
-      self.isNextButtonVisible =
-        state.step != Onboarding.State.Step.allCases.first
-        && state.step.isFullscreen
-        && state.step != Onboarding.State.Step.allCases.last
-
-      switch state.step {
-      case .step5_SubmitGame:
-        self.isSubmitButtonVisible = state.game.selectedWordString == "GAME"
-      case .step8_FindCubes:
-        self.isSubmitButtonVisible = state.game.selectedWordString == "CUBES"
-      case .step12_CubeIsShaking:
-        self.isSubmitButtonVisible = state.game.selectedWordString.isRemove
-      case .step16_FindAnyWord:
-        self.isSubmitButtonVisible = !state.game.selectedWordString.isEmpty
-      default:
-        self.isSubmitButtonVisible = false
-      }
-
-      self.presentationStyle = state.presentationStyle
-      self.step = state.step
-    }
-  }
 
   var body: some View {
     GeometryReader { proxy in
@@ -50,182 +12,157 @@ struct OnboardingStepView: View {
 
       ZStack(alignment: .bottom) {
         VStack {
-          if self.viewStore.step.isFullscreen {
+          if self.store.step.isFullscreen {
             Spacer()
           }
 
           Group {
-            Group {
-              if self.viewStore.step == .step1_Welcome {
+            switch self.store.step {
+            case .step1_Welcome:
+              FullscreenStepView(
+                Text("Hello!\nWelcome to ")
+                  + Text("isowords").fontWeight(.medium)
+                  + Text(", a word game.")
+              )
+            case .step2_FindWordsOnCube:
+              FullscreenStepView(
+                Text("The point of the game is to find words on a ")
+                  + Text("cube").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step3_ConnectLettersTouching:
+              FullscreenStepView(
+                Text("Words are formed by connecting letters that are ")
+                  + Text("touching").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step4_FindGame:
+              InlineStepView(
+                height: height,
+                Text("Let’s try!\nConnect letters to form ")
+                  + Text("GAME").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step5_SubmitGame:
+              InlineStepView(
+                height: height,
+                Text("Now submit the word by tapping the ")
+                  + Text("thumbs up").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step6_Congrats:
+              InlineStepView(
+                height: height,
+                Text("Well done!")
+              )
+            case .step7_BiggerCube:
+              FullscreenStepView(
+                Text("Let’s find another word, but this time with more ")
+                  + Text("letters revealed").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step8_FindCubes:
+              InlineStepView(
+                height: height,
+                Text("Find and submit the word ")
+                  + Text("CUBES").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step9_Congrats:
+              InlineStepView(
+                height: height,
+                Text("You got it!")
+              )
+            case .step10_CubeDisappear:
+              FullscreenStepView(
+                Text("You can use each letter three times before the cube ")
+                  + Text("disappears").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step11_FindRemove:
+              InlineStepView(
+                height: height,
+                Text("Let’s try it!\nFind the word ")
+                  + Text("REMOVE").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step12_CubeIsShaking:
+              InlineStepView(
+                height: height,
+                Text("The shaking cube means it will ")
+                  + Text("disappear").fontWeight(.medium)
+                  + Text(". Now submit the word.")
+              )
+            case .step13_Congrats:
+              InlineStepView(
+                height: height,
+                Text("Ohhhhhhh,\n").italic()
+                  + Text("interesting!")
+              )
+            case .step14_LettersRevealed:
+              FullscreenStepView(
+                Text(
+                  "As cubes are removed the letters inside are revealed, helping you find more "
+                )
+                  + Text("words").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step15_FullCube:
+              FullscreenStepView(
+                Text("Good job so far, but the real game is played with all letters ")
+                  + Text("revealed").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step16_FindAnyWord:
+              InlineStepView(
+                height: height,
+                Text("Find ")
+                  + Text("any").fontWeight(.medium)
+                  + Text(" word on the full cube.")
+              )
+            case .step17_Congrats:
+              InlineStepView(
+                height: height,
+                Text("That’s a great one!")
+              )
+            case .step18_OneLastThing:
+              FullscreenStepView(
+                Text("One last thing.\nYou can remove a cube by double-tapping it. ")
+                  + Text("This can be handy for exposing ")
+                  + Text("more letters").fontWeight(.medium)
+                  + Text(".")
+              )
+            case .step19_DoubleTapToRemove:
+              InlineStepView(
+                height: height,
+                Text("Let’s try it.\nDouble tap any cube to ")
+                  + Text("remove").fontWeight(.medium)
+                  + Text(" it.")
+              )
+            case .step20_Congrats:
+              InlineStepView(
+                height: height,
+                Text("Perfect!")
+              )
+            case .step21_PlayAGameYourself:
+              switch self.store.presentationStyle {
+              case .demo:
                 FullscreenStepView(
-                  Text("Hello!\nWelcome to ")
-                    + Text("isowords").fontWeight(.medium)
-                    + Text(", a word game.")
+                  Text("Ok, ready?\n Let’s try a 3 minute timed game!")
                 )
-              }
-              if self.viewStore.step == .step2_FindWordsOnCube {
-                FullscreenStepView(
-                  Text("The point of the game is to find words on a ")
-                    + Text("cube").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step3_ConnectLettersTouching {
-                FullscreenStepView(
-                  Text("Words are formed by connecting letters that are ")
-                    + Text("touching").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step4_FindGame {
-                InlineStepView(
-                  height: height,
-                  Text("Let’s try!\nConnect letters to form ")
-                    + Text("GAME").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step5_SubmitGame {
-                InlineStepView(
-                  height: height,
-                  Text("Now submit the word by tapping the ")
-                    + Text("thumbs up").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step6_Congrats {
-                InlineStepView(
-                  height: height,
-                  Text("Well done!")
-                )
-              }
-              if self.viewStore.step == .step7_BiggerCube {
-                FullscreenStepView(
-                  Text("Let’s find another word, but this time with more ")
-                    + Text("letters revealed").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step8_FindCubes {
-                InlineStepView(
-                  height: height,
-                  Text("Find and submit the word ")
-                    + Text("CUBES").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step9_Congrats {
-                InlineStepView(
-                  height: height,
-                  Text("You got it!")
-                )
-              }
-              if self.viewStore.step == .step10_CubeDisappear {
-                FullscreenStepView(
-                  Text("You can use each letter three times before the cube ")
-                    + Text("disappears").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-            }
-            Group {
-              if self.viewStore.step == .step11_FindRemove {
-                InlineStepView(
-                  height: height,
-                  Text("Let’s try it!\nFind the word ")
-                    + Text("REMOVE").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step12_CubeIsShaking {
-                InlineStepView(
-                  height: height,
-                  Text("The shaking cube means it will ")
-                    + Text("disappear").fontWeight(.medium)
-                    + Text(". Now submit the word.")
-                )
-              }
-              if self.viewStore.step == .step13_Congrats {
-                InlineStepView(
-                  height: height,
-                  Text("Ohhhhhhh,\n").italic()
-                    + Text("interesting!")
-                )
-              }
-              if self.viewStore.step == .step14_LettersRevealed {
-                FullscreenStepView(
-                  Text(
-                    "As cubes are removed the letters inside are revealed, helping you find more "
-                  )
-                    + Text("words").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step15_FullCube {
-                FullscreenStepView(
-                  Text("Good job so far, but the real game is played with all letters ")
-                    + Text("revealed").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step16_FindAnyWord {
-                InlineStepView(
-                  height: height,
-                  Text("Find ")
-                    + Text("any").fontWeight(.medium)
-                    + Text(" word on the full cube.")
-                )
-              }
-              if self.viewStore.step == .step17_Congrats {
-                InlineStepView(
-                  height: height,
-                  Text("That’s a great one!")
-                )
-              }
-              if self.viewStore.step == .step18_OneLastThing {
-                FullscreenStepView(
-                  Text("One last thing.\nYou can remove a cube by double-tapping it. ")
-                    + Text("This can be handy for exposing ")
-                    + Text("more letters").fontWeight(.medium)
-                    + Text(".")
-                )
-              }
-              if self.viewStore.step == .step19_DoubleTapToRemove {
-                InlineStepView(
-                  height: height,
-                  Text("Let’s try it.\nDouble tap any cube to ")
-                    + Text("remove").fontWeight(.medium)
-                    + Text(" it.")
-                )
-              }
-            }
-            Group {
-              if self.viewStore.step == .step20_Congrats {
-                InlineStepView(
-                  height: height,
-                  Text("Perfect!")
-                )
-              }
-              if self.viewStore.step == .step21_PlayAGameYourself {
-                switch self.viewStore.presentationStyle {
-                case .demo:
-                  FullscreenStepView(
-                    Text("Ok, ready?\n Let’s try a 3 minute timed game!")
-                  )
 
-                case .firstLaunch, .help:
-                  FullscreenStepView(
-                    Text("Ok, there’s more strategy to the game, but the only way to learn is to ")
-                      + Text("play a game yourself").fontWeight(.medium)
-                      + Text("!")
-                  )
-                }
+              case .firstLaunch, .help:
+                FullscreenStepView(
+                  Text("Ok, there’s more strategy to the game, but the only way to learn is to ")
+                    + Text("play a game yourself").fontWeight(.medium)
+                    + Text("!")
+                )
               }
             }
           }
           .foregroundColor(
             self.colorScheme == .dark
-              ? self.viewStore.step.color
+              ? self.store.step.color
               : Color.isowordsBlack
           )
           .transition(
@@ -247,30 +184,30 @@ struct OnboardingStepView: View {
         .padding(.bottom, 80)
 
         Group {
-          if self.viewStore.isNextButtonVisible {
+          if self.store.isNextButtonVisible {
             Button {
-              self.viewStore.send(.nextButtonTapped, animation: .default)
+              self.store.send(.nextButtonTapped, animation: .default)
             } label: {
               Image(systemName: "arrow.right")
                 .frame(width: 80, height: 80)
                 .background(
                   self.colorScheme == .dark
-                    ? self.viewStore.step.color
+                    ? self.store.step.color
                     : Color.isowordsBlack
                 )
                 .foregroundColor(
                   self.colorScheme == .dark
                     ? Color.isowordsBlack
-                    : self.viewStore.step.color
+                    : self.store.step.color
                 )
                 .font(.system(size: 30))
                 .clipShape(Circle())
             }
-          } else if !self.viewStore.step.isFullscreen {
-            if self.viewStore.isSubmitButtonVisible {
+          } else if !self.store.step.isFullscreen {
+            if self.store.isSubmitButtonVisible {
               Button(
                 action: {
-                  self.viewStore.send(
+                  self.store.send(
                     .game(.submitButtonTapped(reaction: nil)), animation: .default)
                 }
               ) {
@@ -278,26 +215,26 @@ struct OnboardingStepView: View {
                   .frame(width: 80, height: 80)
                   .background(
                     self.colorScheme == .dark
-                      ? self.viewStore.step.color
+                      ? self.store.step.color
                       : Color.isowordsBlack
                   )
                   .foregroundColor(
                     self.colorScheme == .dark
                       ? Color.isowordsBlack
-                      : self.viewStore.step.color
+                      : self.store.step.color
                   )
                   .font(.system(size: 30))
                   .clipShape(Circle())
               }
             }
-          } else if self.viewStore.isGetStartedButtonVisible {
+          } else if self.store.isGetStartedButtonVisible {
             Button(
               action: {
-                self.viewStore.send(.getStartedButtonTapped, animation: .default)
+                self.store.send(.getStartedButtonTapped, animation: .default)
               }
             ) {
               HStack {
-                switch self.viewStore.presentationStyle {
+                switch self.store.presentationStyle {
                 case .demo:
                   Text("Let’s play!")
                 case .firstLaunch, .help:
@@ -310,11 +247,11 @@ struct OnboardingStepView: View {
             .buttonStyle(
               ActionButtonStyle(
                 backgroundColor: self.colorScheme == .dark
-                  ? self.viewStore.step.color
+                  ? self.store.step.color
                   : .isowordsBlack,
                 foregroundColor: self.colorScheme == .dark
                   ? .isowordsBlack
-                  : self.viewStore.step.color
+                  : self.store.step.color
               )
             )
           }
@@ -329,7 +266,7 @@ struct OnboardingStepView: View {
         )
       }
     }
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await self.store.send(.task).finish() }
     .alert(store: self.store.scope(state: \.$alert, action: \.alert))
   }
 }
@@ -362,6 +299,33 @@ private struct InlineStepView: View {
       .adaptiveFont(.matter, size: 28)
       .minimumScaleFactor(0.2)
       .frame(height: self.height)
+  }
+}
+
+extension Onboarding.State {
+  fileprivate var isGetStartedButtonVisible: Bool {
+    self.step == Onboarding.State.Step.allCases.last
+  }
+
+  fileprivate var isNextButtonVisible: Bool {
+    self.step != Onboarding.State.Step.allCases.first
+      && self.step.isFullscreen
+      && self.step != Onboarding.State.Step.allCases.last
+  }
+
+  fileprivate var isSubmitButtonVisible: Bool {
+    switch self.step {
+    case .step5_SubmitGame:
+      return self.game.selectedWordString == "GAME"
+    case .step8_FindCubes:
+      return self.game.selectedWordString == "CUBES"
+    case .step12_CubeIsShaking:
+      return self.game.selectedWordString.isRemove
+    case .step16_FindAnyWord:
+      return !self.game.selectedWordString.isEmpty
+    default:
+      return false
+    }
   }
 }
 
