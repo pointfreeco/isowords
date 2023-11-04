@@ -6,17 +6,6 @@ import SwiftUI
 public struct GameFooterView: View {
   let isLeftToRight: Bool
   let store: StoreOf<Game>
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
-
-  struct ViewState: Equatable {
-    let isAnimationReduced: Bool
-    let selectedWordString: String
-
-    init(state: Game.State) {
-      self.isAnimationReduced = state.isAnimationReduced
-      self.selectedWordString = state.selectedWordString
-    }
-  }
 
   public init(
     isLeftToRight: Bool = false,
@@ -24,19 +13,18 @@ public struct GameFooterView: View {
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
-    if self.viewStore.selectedWordString.isEmpty {
+    if self.store.selectedWordString.isEmpty {
       WordListView(
         isLeftToRight: self.isLeftToRight,
         store: self.store
       )
       .transition(
-        viewStore.isAnimationReduced
+        self.store.isAnimationReduced
           ? .opacity
-          : AnyTransition.offset(y: 50)
+          : .offset(y: 50)
             .combined(with: .opacity)
       )
     }
@@ -47,15 +35,8 @@ public struct WordListView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.deviceState) var deviceState
 
-  struct ViewState: Equatable {
-    let isTurnBasedGame: Bool
-    let isYourTurn: Bool
-    let words: [PlayedWord]
-  }
-
   let isLeftToRight: Bool
   let store: StoreOf<Game>
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
 
   public init(
     isLeftToRight: Bool = false,
@@ -63,14 +44,13 @@ public struct WordListView: View {
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   struct SpacerId: Hashable {}
 
   public var body: some View {
     Group {
-      if self.viewStore.words.isEmpty {
+      if self.store.playedWords.isEmpty {
         Text("Tap the cube to play")
           .adaptiveFont(.matterMedium, size: 14)
       } else {
@@ -78,7 +58,9 @@ public struct WordListView: View {
           ScrollViewReader { reader in
             HStack(spacing: 10) {
               ForEach(
-                self.isLeftToRight ? self.viewStore.words : self.viewStore.words.reversed(),
+                self.isLeftToRight
+                  ? self.store.playedWords
+                  : self.store.playedWords.reversed(),
                 id: \.word
               ) { word in
                 ZStack(alignment: .topTrailing) {
@@ -116,7 +98,7 @@ public struct WordListView: View {
               guard self.isLeftToRight else { return }
               reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)
             }
-            .onChange(of: self.viewStore.words) { _ in
+            .onChange(of: self.store.playedWords) {
               guard self.isLeftToRight else { return }
               withAnimation {
                 reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)
@@ -140,7 +122,7 @@ public struct WordListView: View {
 
   @ViewBuilder
   func colors(for playedWord: PlayedWord) -> some View {
-    if self.viewStore.isTurnBasedGame && playedWord.isYourWord {
+    if self.store.gameContext.is(\.turnBased) && playedWord.isYourWord {
       LinearGradient(
         gradient: Gradient(colors: Styleguide.colors(for: playedWord.word)),
         startPoint: .bottomLeading,
@@ -149,14 +131,6 @@ public struct WordListView: View {
     } else {
       Color.adaptiveBlack.opacity(0.9)
     }
-  }
-}
-
-extension WordListView.ViewState {
-  init(state: Game.State) {
-    self.isTurnBasedGame = state.gameContext.is(\.turnBased)
-    self.isYourTurn = state.isYourTurn
-    self.words = state.playedWords
   }
 }
 
