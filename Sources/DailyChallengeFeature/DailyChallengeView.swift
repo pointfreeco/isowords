@@ -13,6 +13,7 @@ import SwiftUI
 public struct DailyChallengeReducer {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case notificationsAuthAlert(NotificationsAuthAlert.State)
@@ -38,6 +39,7 @@ public struct DailyChallengeReducer {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     @PresentationState public var destination: Destination.State?
@@ -57,6 +59,11 @@ public struct DailyChallengeReducer {
       self.gameModeIsLoading = gameModeIsLoading
       self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
       self.userNotificationSettings = userNotificationSettings
+    }
+
+    fileprivate var isNotificationStatusDetermined: Bool {
+      ![.notDetermined, .provisional]
+        .contains(self.userNotificationSettings?.authorizationStatus)
     }
   }
 
@@ -254,8 +261,14 @@ public struct DailyChallengeView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.date) var date
-  let store: StoreOf<DailyChallengeReducer>
-  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeReducer.Action>
+  @State var store: StoreOf<DailyChallengeReducer>
+
+  enum ButtonState: Equatable {
+    case played(rank: Int, outOf: Int)
+    case playable
+    case resume(currentScore: Int)
+    case unplayable
+  }
 
   struct ViewState: Equatable {
     let gameModeIsLoading: GameMode?
@@ -263,13 +276,6 @@ public struct DailyChallengeView: View {
     let numberOfPlayers: Int
     let timedState: ButtonState
     let unlimitedState: ButtonState
-
-    enum ButtonState: Equatable {
-      case played(rank: Int, outOf: Int)
-      case playable
-      case resume(currentScore: Int)
-      case unplayable
-    }
 
     init(state: DailyChallengeReducer.State) {
       self.gameModeIsLoading = state.gameModeIsLoading
@@ -288,8 +294,7 @@ public struct DailyChallengeView: View {
   }
 
   public init(store: StoreOf<DailyChallengeReducer>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
+    self._store = State(wrappedValue: store)
   }
 
   public var body: some View {
@@ -300,12 +305,12 @@ public struct DailyChallengeView: View {
 
         VStack(spacing: .grid(8)) {
           Group {
-            if self.viewStore.numberOfPlayers <= 1 {
+            if self.store.dailyChallenges.numberOfPlayers <= 1 {
               (Text("Play")
                 + Text("\nagainst the")
                 + Text("\ncommunity"))
             } else {
-              (Text("\(self.viewStore.numberOfPlayers)")
+              (Text("\(self.store.dailyChallenges.numberOfPlayers)")
                 + Text("\npeople have")
                 + Text("\nplayed!"))
             }
@@ -328,33 +333,41 @@ public struct DailyChallengeView: View {
             GridItem(.flexible()),
           ]
         ) {
+          let timedState = ButtonState(
+            fetchedResponse: self.store.dailyChallenges.timed,
+            inProgressGame: nil
+          )
           GameButton(
             title: Text("Timed"),
             icon: Image(systemName: "clock.fill"),
             color: .dailyChallenge,
-            inactiveText: self.viewStore.timedState.inactiveText,
-            isLoading: self.viewStore.gameModeIsLoading == .timed,
-            resumeText: self.viewStore.timedState.resumeText,
-            action: { self.viewStore.send(.gameButtonTapped(.timed), animation: .default) }
+            inactiveText: timedState.inactiveText,
+            isLoading: self.store.gameModeIsLoading == .timed,
+            resumeText: timedState.resumeText,
+            action: { self.store.send(.gameButtonTapped(.timed), animation: .default) }
           )
-          .disabled(self.viewStore.gameModeIsLoading != nil)
+          .disabled(self.store.gameModeIsLoading != nil)
 
+          let unlimitedState = ButtonState(
+            fetchedResponse: self.store.dailyChallenges.unlimited,
+            inProgressGame: self.store.inProgressDailyChallengeUnlimited
+          )
           GameButton(
             title: Text("Unlimited"),
             icon: Image(systemName: "infinity"),
             color: .dailyChallenge,
-            inactiveText: self.viewStore.unlimitedState.inactiveText,
-            isLoading: self.viewStore.gameModeIsLoading == .unlimited,
-            resumeText: self.viewStore.unlimitedState.resumeText,
-            action: { self.viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
+            inactiveText: unlimitedState.inactiveText,
+            isLoading: self.store.gameModeIsLoading == .unlimited,
+            resumeText: unlimitedState.resumeText,
+            action: { self.store.send(.gameButtonTapped(.unlimited), animation: .default) }
           )
-          .disabled(self.viewStore.gameModeIsLoading != nil)
+          .disabled(self.store.gameModeIsLoading != nil)
         }
         .adaptivePadding(.vertical)
         .screenEdgePadding(.horizontal)
 
         Button {
-          self.viewStore.send(.resultsButtonTapped)
+          self.store.send(.resultsButtonTapped)
         } label: {
           HStack {
             Text("View all results")
@@ -371,15 +384,15 @@ public struct DailyChallengeView: View {
         .foregroundColor(self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge)
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
-      .task { await self.viewStore.send(.task).finish() }
+      .task { await self.store.send(.task).finish() }
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
         title: Text("Daily Challenge"),
         trailing: Group {
-          if !self.viewStore.isNotificationStatusDetermined {
+          if !self.store.isNotificationStatusDetermined {
             ReminderBell {
-              self.viewStore.send(.notificationButtonTapped, animation: .default)
+              self.store.send(.notificationButtonTapped, animation: .default)
             }
             .transition(
               .scale(scale: 0)
@@ -390,18 +403,12 @@ public struct DailyChallengeView: View {
       )
       .edgesIgnoringSafeArea(.bottom)
     }
-    .alert(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.alert,
-      // NB: '{ .alert($0) }' produces 'warning: Will never be executed'
-      action: DailyChallengeReducer.Destination.Action.alert
-    )
+    .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.results,
-      action: { .results($0) },
-      destination: DailyChallengeResultsView.init(store:)
-    )
+      item: self.$store.scope(state: \.destination?.results, action: \.destination.results)
+    ) { store in
+      DailyChallengeResultsView(store: store)
+    }
     .notificationsAlert(
       store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.notificationsAuthAlert,
@@ -410,7 +417,7 @@ public struct DailyChallengeView: View {
   }
 }
 
-extension DailyChallengeView.ViewState.ButtonState {
+extension DailyChallengeView.ButtonState {
   init(
     fetchedResponse: FetchTodaysDailyChallengeResponse?,
     inProgressGame: InProgressGame?
