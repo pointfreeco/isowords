@@ -65,8 +65,8 @@ struct IsowordsApp: App {
     WindowGroup {
       AppView(store: self.appDelegate.store)
     }
-    .onChange(of: self.scenePhase) {
-      self.appDelegate.store.send(.didChangeScenePhase($0))
+    .onChange(of: self.scenePhase) { _, newPhase in
+      self.appDelegate.store.send(.didChangeScenePhase(newPhase))
     }
   }
 }
