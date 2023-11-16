@@ -2,10 +2,10 @@ import ComposableArchitecture
 import GameOverFeature
 import SharedModels
 
-struct GameOverLogic: Reducer {
+public struct GameOverLogic: Reducer {
   @Dependency(\.database.saveGame) var saveGame
 
-  var body: some ReducerOf<Game> {
+  public var body: some ReducerOf<Game> {
     Reduce { state, action in
       var allCubesRemoved: Bool {
         state.cubes.allSatisfy {

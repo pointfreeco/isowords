@@ -4,11 +4,11 @@ import SelectionSoundsCore
 
 extension Reducer<Game.State, Game.Action> {
   func sounds() -> some Reducer<Game.State, Game.Action> {
-    GameSounds(base: self)
+    _GameSounds(base: self)
   }
 }
 
-private struct GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
+public struct _GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
   @Dependency(\.dictionary.contains) var dictionaryContains
@@ -18,7 +18,7 @@ private struct GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
 
   enum CancelID { case cubeShaking }
 
-  var body: some Reducer<Game.State, Game.Action> {
+  public var body: some Reducer<Game.State, Game.Action> {
     self.core
       .onChange(of: { /Game.Destination.State.gameOver ~= $0.destination }) { _, _ in
         Reduce { _, _ in

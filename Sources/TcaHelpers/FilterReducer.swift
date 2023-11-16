@@ -5,12 +5,11 @@ extension Reducer {
   public func filter(
     _ predicate: @escaping (State, Action) -> Bool
   ) -> some ReducerOf<Self> {
-    FilterReducer(base: self, predicate: predicate)
+    _FilterReducer(base: self, predicate: predicate)
   }
 }
 
-@usableFromInline
-struct FilterReducer<Base: Reducer>: Reducer {
+public struct _FilterReducer<Base: Reducer>: Reducer {
   @usableFromInline
   let base: Base
 
