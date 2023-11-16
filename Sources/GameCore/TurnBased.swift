@@ -5,14 +5,14 @@ import GameOverFeature
 import SharedModels
 
 @Reducer
-struct TurnBasedLogic {
+public struct TurnBasedLogic {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.database.saveGame) var saveGame
 
-  var body: some ReducerOf<Game> {
+  public var body: some ReducerOf<Game> {
     Reduce { state, action in
       guard let turnBasedContext = state.gameContext.turnBased
       else { return .none }

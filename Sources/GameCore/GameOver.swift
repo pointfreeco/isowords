@@ -3,10 +3,10 @@ import GameOverFeature
 import SharedModels
 
 @Reducer
-struct GameOverLogic {
+public struct GameOverLogic {
   @Dependency(\.database.saveGame) var saveGame
 
-  var body: some ReducerOf<Game> {
+  public var body: some ReducerOf<Game> {
     Reduce { state, action in
       var allCubesRemoved: Bool {
         state.cubes.allSatisfy {

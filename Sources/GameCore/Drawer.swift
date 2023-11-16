@@ -2,12 +2,12 @@ import ActiveGamesFeature
 import ComposableArchitecture
 
 @Reducer
-struct ActiveGamesTray {
+public struct ActiveGamesTray {
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
 
-  var body: some ReducerOf<Game> {
+  public var body: some ReducerOf<Game> {
     Reduce { state, action in
       switch action {
       case .cancelButtonTapped,
