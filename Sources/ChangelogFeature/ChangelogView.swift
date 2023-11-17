@@ -30,7 +30,7 @@ public struct ChangelogReducer {
   }
 
   public enum Action: Equatable {
-    case change(id: Build.Number, action: Change.Action)
+    case changelog(IdentifiedActionOf<Change>)
     case changelogResponse(TaskResult<Changelog>)
     case task
     case updateButtonTapped
@@ -46,7 +46,7 @@ public struct ChangelogReducer {
   public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .change:
+      case .changelog:
         return .none
 
       case let .changelogResponse(.success(changelog)):
@@ -99,7 +99,7 @@ public struct ChangelogReducer {
         }
       }
     }
-    .forEach(\.changelog, action: \.change) {
+    .forEach(\.changelog, action: \.changelog) {
       Change()
     }
   }
@@ -144,7 +144,7 @@ public struct ChangelogView: View {
           ForEachStore(
             self.store.scope(
               state: { $0.changelog.filter { $0.change.build >= viewStore.currentBuild } },
-              action: { .change(id: $0, action: $1) }
+              action: { .changelog(.element(id: $0, action: $1)) }
             )
           ) {
             ChangeView(currentBuild: viewStore.currentBuild, store: $0)
@@ -156,7 +156,7 @@ public struct ChangelogView: View {
           ForEachStore(
             self.store.scope(
               state: { $0.changelog.filter { $0.change.build < viewStore.currentBuild } },
-              action: { .change(id: $0, action: $1) }
+              action: { .changelog(.element(id: $0, action: $1)) }
             )
           ) {
             ChangeView(currentBuild: viewStore.currentBuild, store: $0)
