@@ -37,7 +37,7 @@ public struct UpgradeInterstitial {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case delegate(Delegate)
     case fullGameProductResponse(StoreKitClient.Product)
     case maybeLaterButtonTapped
@@ -46,6 +46,7 @@ public struct UpgradeInterstitial {
     case timerTick
     case upgradeButtonTapped
 
+    @CasePathable
     public enum Delegate {
       case fullGamePurchased
     }

@@ -12,7 +12,7 @@ public struct Stats {
       case vocab(Vocab.State)
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case vocab(Vocab.Action)
     }
 
@@ -60,10 +60,10 @@ public struct Stats {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case backButtonTapped
     case destination(PresentationAction<Destination.Action>)
-    case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
+    case statsResponse(Result<LocalDatabaseClient.Stats, Error>)
     case task
     case vocabButtonTapped
   }
@@ -98,7 +98,7 @@ public struct Stats {
 
       case .task:
         return .run { send in
-          await send(.statsResponse(TaskResult { try await self.database.fetchStats() }))
+          await send(.statsResponse(Result { try await self.database.fetchStats() }))
         }
 
       case .vocabButtonTapped:

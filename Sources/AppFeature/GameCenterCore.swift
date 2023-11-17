@@ -6,9 +6,10 @@ import GameCore
 import GameOverFeature
 import SharedModels
 
-public enum GameCenterAction: Equatable {
+@CasePathable
+public enum GameCenterAction {
   case listener(LocalPlayerClient.ListenerEvent)
-  case rematchResponse(TaskResult<TurnBasedMatch>)
+  case rematchResponse(Result<TurnBasedMatch, Error>)
 }
 
 @Reducer
@@ -44,7 +45,7 @@ public struct GameCenterLogic {
           await send(
             .gameCenter(
               .rematchResponse(
-                TaskResult {
+                Result {
                   try await self.gameCenter.turnBasedMatch.rematch(
                     turnBasedMatch.match.matchId
                   )
@@ -124,7 +125,7 @@ public struct GameCenterLogic {
           await send(
             .gameCenter(
               .rematchResponse(
-                TaskResult {
+                Result {
                   try await self.gameCenter.turnBasedMatch.rematch(matchId)
                 }
               )

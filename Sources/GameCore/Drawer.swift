@@ -68,7 +68,7 @@ public struct ActiveGamesTray {
         group.addTask {
           await send(
             .matchesLoaded(
-              TaskResult { try await self.gameCenter.turnBasedMatch.loadMatches() }
+              Result { try await self.gameCenter.turnBasedMatch.loadMatches() }
             ),
             animation: .default
           )
@@ -77,7 +77,7 @@ public struct ActiveGamesTray {
         group.addTask {
           await send(
             .savedGamesLoaded(
-              TaskResult { try await self.fileClient.loadSavedGames() }
+              Result { try await self.fileClient.loadSavedGames() }
             ),
             animation: .default
           )

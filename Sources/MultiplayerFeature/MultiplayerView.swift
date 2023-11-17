@@ -10,7 +10,7 @@ public struct Multiplayer {
       case pastGames(PastGames.State)
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case pastGames(PastGames.Action)
     }
 
@@ -34,7 +34,7 @@ public struct Multiplayer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case destination(PresentationAction<Destination.Action>)
     case pastGamesButtonTapped
     case startButtonTapped

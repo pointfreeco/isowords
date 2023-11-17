@@ -1,3 +1,4 @@
+import CasePaths
 import StoreKit
 
 public struct StoreKitClient {
@@ -10,9 +11,10 @@ public struct StoreKitClient {
   public var requestReview: @Sendable () async -> Void
   public var restoreCompletedTransactions: @Sendable () async -> Void
 
-  public enum PaymentTransactionObserverEvent: Equatable {
+  @CasePathable
+  public enum PaymentTransactionObserverEvent {
     case removedTransactions([PaymentTransaction])
-    case restoreCompletedTransactionsFailed(NSError)
+    case restoreCompletedTransactionsFailed(Error)
     case restoreCompletedTransactionsFinished(transactions: [PaymentTransaction])
     case updatedTransactions([PaymentTransaction])
   }

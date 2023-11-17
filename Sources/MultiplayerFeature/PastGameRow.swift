@@ -35,18 +35,19 @@ public struct PastGame {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case alert(PresentationAction<Alert>)
     case delegate(Delegate)
-    case matchResponse(TaskResult<TurnBasedMatch>)
+    case matchResponse(Result<TurnBasedMatch, Error>)
     case rematchButtonTapped
-    case rematchResponse(TaskResult<TurnBasedMatch>)
+    case rematchResponse(Result<TurnBasedMatch, Error>)
     case tappedRow
 
     public enum Alert: Equatable {
     }
 
-    public enum Delegate: Equatable {
+    @CasePathable
+    public enum Delegate {
       case openMatch(TurnBasedMatch)
     }
   }
@@ -92,7 +93,7 @@ public struct PastGame {
       return .run { [matchId = state.matchId] send in
         await send(
           .rematchResponse(
-            TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+            Result { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
           )
         )
       }
@@ -101,7 +102,7 @@ public struct PastGame {
       return .run { [matchId = state.matchId] send in
         await send(
           .matchResponse(
-            TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+            Result { try await self.gameCenter.turnBasedMatch.load(matchId) }
           )
         )
       }

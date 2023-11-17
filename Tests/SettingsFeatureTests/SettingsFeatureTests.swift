@@ -91,9 +91,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(
-      .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
-    ) {
+    await store.receive(\.userNotificationSettingsResponse) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
@@ -103,7 +101,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.enableNotifications = true
     }
 
-    await store.receive(.userNotificationAuthorizationResponse(.success(true)))
+    await store.receive(\.userNotificationAuthorizationResponse.success)
 
     await didRegisterForRemoteNotifications.withValue { XCTAssert($0) }
 
@@ -134,9 +132,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(
-      .userNotificationSettingsResponse(.init(authorizationStatus: .notDetermined))
-    ) {
+    await store.receive(\.userNotificationSettingsResponse) {
       $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
@@ -146,7 +142,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.enableNotifications = true
     }
 
-    await store.receive(.userNotificationAuthorizationResponse(.success(false))) {
+    await store.receive(\.userNotificationAuthorizationResponse.success) {
       $0.userSettings.enableNotifications = false
     }
 
@@ -176,8 +172,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
-    {
+    await store.receive(\.userNotificationSettingsResponse) {
       $0.userSettings.enableNotifications = true
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
@@ -222,7 +217,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.fullGamePurchasedAt = .mock
     }
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .denied))) {
+    await store.receive(\.userNotificationSettingsResponse) {
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
 
@@ -287,9 +282,7 @@ class SettingsFeatureTests: XCTestCase {
         $0.userSettings.sendDailyChallengeReminder = true
       }
 
-      await store.receive(
-        .userNotificationSettingsResponse(.init(authorizationStatus: .authorized))
-      ) {
+      await store.receive(\.userNotificationSettingsResponse) {
         $0.userNotificationSettings = .init(authorizationStatus: .authorized)
         $0.userSettings.enableNotifications = true
       }
@@ -299,7 +292,7 @@ class SettingsFeatureTests: XCTestCase {
         $0.userSettings.enableNotifications = false
         $0.userSettings.sendDailyChallengeReminder = false
       }
-      await store.receive(.currentPlayerRefreshed(.success(updatedBlobWithPurchase)))
+      await store.receive(\.currentPlayerRefreshed.success)
 
       await task.cancel()
     }

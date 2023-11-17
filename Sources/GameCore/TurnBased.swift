@@ -101,7 +101,7 @@ public struct TurnBasedLogic {
           await send(
             .gameCenter(
               .turnBasedMatchResponse(
-                TaskResult {
+                Result {
                   if state.isGameOver {
                     let completedGame = CompletedGame(gameState: state)
                     if let completedMatch = CompletedMatch(

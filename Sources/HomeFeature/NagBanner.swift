@@ -12,7 +12,7 @@ public struct NagBanner {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case tapped
     case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)
   }

@@ -52,7 +52,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
         $0.solo.isLoading = true
         $0.solo.resultEnvelope = .placeholder
       }
-      await store.receive(.solo(.resultsResponse(.success(results)))) {
+      await store.receive(\.solo.resultsResponse.success) {
         $0.solo.isLoading = false
         $0.solo.resultEnvelope = results
       }
@@ -108,7 +108,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }
-    await store.receive(.vocab(.resultsResponse(.success(results)))) {
+    await store.receive(\.vocab.resultsResponse.success) {
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = results
     }

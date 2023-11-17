@@ -22,8 +22,8 @@ public struct GameOverLogic {
 
       guard
         !state.isGameOver
-          && action == .destination(.presented(.alert(.forfeitButtonTapped)))
-          || action == .destination(.presented(.bottomMenu(.endGameButtonTapped)))
+          && action.is(\.destination.alert.forfeitButtonTapped)
+          || action.is(\.destination.bottomMenu.endGameButtonTapped)
           || timesUp
           || allCubesRemoved
       else { return .none }

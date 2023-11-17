@@ -15,7 +15,7 @@ public struct Change {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case showButtonTapped
   }
 

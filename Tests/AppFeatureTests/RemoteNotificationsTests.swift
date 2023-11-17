@@ -139,31 +139,13 @@ class RemoteNotificationsTests: XCTestCase {
         completionHandler: { willPresentNotificationCompletionHandler($0) }
       )
     )
-    await store.receive(
-      .appDelegate(
-        .userNotifications(
-          .willPresentNotification(
-            notification,
-            completionHandler: { willPresentNotificationCompletionHandler($0) }
-          )
-        )
-      )
-    )
+    await store.receive(\.appDelegate.userNotifications.willPresentNotification)
     XCTAssertNoDifference(notificationPresentationOptions, .banner)
 
     delegate.continuation.yield(
       .didReceiveResponse(response, completionHandler: { didReceiveResponseCompletionHandler() })
     )
-    await store.receive(
-      .appDelegate(
-        .userNotifications(
-          .didReceiveResponse(
-            response,
-            completionHandler: { didReceiveResponseCompletionHandler() }
-          )
-        )
-      )
-    ) {
+    await store.receive(\.appDelegate.userNotifications.didReceiveResponse) {
       $0.destination = .game(Game.State(inProgressGame: inProgressGame))
       $0.home.savedGames.unlimited = inProgressGame
     }

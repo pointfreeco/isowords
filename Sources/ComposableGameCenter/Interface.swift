@@ -33,12 +33,14 @@ public struct LocalPlayerClient {
   public var localPlayer: @Sendable () -> LocalPlayer
   public var presentAuthenticationViewController: @Sendable () async -> Void
 
+  @CasePathable
   public enum ListenerEvent: Equatable {
     case challenge(ChallengeEvent)
     case invite(InviteEvent)
     case savedGame(SavedGameEvent)
     case turnBased(TurnBasedEvent)
 
+    @CasePathable
     public enum ChallengeEvent: Equatable {
       case didComplete(GKChallenge, issuedByFriend: GKPlayer)
       case didReceive(GKChallenge)
@@ -46,16 +48,19 @@ public struct LocalPlayerClient {
       case wantsToPlay(GKChallenge)
     }
 
+    @CasePathable
     public enum InviteEvent: Equatable {
       case didAccept(GKInvite)
       case didRequestMatchWithRecipients([GKPlayer])
     }
 
+    @CasePathable
     public enum SavedGameEvent: Equatable {
       case didModifySavedGame(GKSavedGame)
       case hasConflictingSavedGames([GKSavedGame])
     }
 
+    @CasePathable
     public enum TurnBasedEvent: Equatable {
       case didRequestMatchWithOtherPlayers([GKPlayer])
       case matchEnded(TurnBasedMatch)

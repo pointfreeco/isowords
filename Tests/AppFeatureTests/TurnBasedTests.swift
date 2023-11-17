@@ -109,21 +109,19 @@ class TurnBasedTests: XCTestCase {
       let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
       let homeTask = await store.send(.home(.task))
 
-      await store.receive(.home(.authenticationResponse(.mock)))
-      await store.receive(.home(.serverConfigResponse(.init()))) {
+      await store.receive(\.home.authenticationResponse)
+      await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
-      await store.receive(.home(.dailyChallengeResponse(.success(dailyChallenges)))) {
+      await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
-      await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
+      await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
 
       await self.mainRunLoop.advance()
-      await store.receive(
-        .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
-      )
+      await store.receive(\.home.activeMatchesResponse.success)
 
       await store.send(.home(.destination(.presented(.multiplayer(.startButtonTapped)))))
 
@@ -147,9 +145,7 @@ class TurnBasedTests: XCTestCase {
           secondsPlayed: 0
         )
       )
-      await store.receive(
-        .gameCenter(.listener(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true))))
-      ) {
+      await store.receive(\.gameCenter.listener.turnBased.receivedTurnEventForMatch) {
         $0.destination = .game(initialGameState)
         $0.$destination[case: \.game]?.gameContext.modify(\.turnBased) {
           $0.metadata.lastOpenedAt = store.dependencies.mainRunLoop.now.date
@@ -160,13 +156,12 @@ class TurnBasedTests: XCTestCase {
         XCTAssertNoDifference(int, 1)
         XCTAssertNoDifference(key, "multiplayerOpensCount")
       }
-      await store.receive(
-        .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
-      )
+      await store.receive(\.home.activeMatchesResponse.success)
+
       let gameTask = await store.send(.destination(.presented(.game(.task))))
 
-      await store.receive(.destination(.presented(.game(.matchesLoaded(.success([]))))))
-      await store.receive(.destination(.presented(.game(.gameLoaded)))) {
+      await store.receive(\.destination.game.matchesLoaded.success)
+      await store.receive(\.destination.game.gameLoaded) {
         $0.$destination[case: \.game]?.isGameLoaded = true
       }
 
@@ -262,11 +257,7 @@ class TurnBasedTests: XCTestCase {
         )
       }
 
-      await store.receive(
-        .destination(
-          .presented(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch)))))
-        )
-      ) {
+      await store.receive(\.destination.game.gameCenter.turnBasedMatchResponse.success) {
         $0.$destination[case: \.game]?.gameContext = .turnBased(
           .init(
             localPlayer: .mock,
@@ -345,33 +336,23 @@ class TurnBasedTests: XCTestCase {
       let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
       let homeTask = await store.send(.home(.task))
 
-      await store.receive(.home(.authenticationResponse(.mock)))
-      await store.receive(.home(.serverConfigResponse(.init()))) {
+      await store.receive(\.home.authenticationResponse)
+      await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
-      await store.receive(.home(.dailyChallengeResponse(.success(dailyChallenges)))) {
+      await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
-      await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
+      await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
 
-      await store.receive(
-        .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
-      )
+      await store.receive(\.home.activeMatchesResponse.success)
 
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(.inProgress, didBecomeActive: true)))
 
-      await store.receive(
-        .gameCenter(
-          .listener(
-            .turnBased(
-              .receivedTurnEventForMatch(.inProgress, didBecomeActive: true)
-            )
-          )
-        )
-      ) {
+      await store.receive(\.gameCenter.listener.turnBased.receivedTurnEventForMatch) {
         $0.destination = .game(
           update(
             Game.State(
@@ -393,10 +374,7 @@ class TurnBasedTests: XCTestCase {
           ) { $0.gameCurrentTime = self.mainRunLoop.now.date }
         )
       }
-      await store.receive(
-        .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
-      )
-
+      await store.receive(\.home.activeMatchesResponse.success)
 
       await homeTask.cancel()
       await didFinishLaunchingTask.cancel()
@@ -459,33 +437,23 @@ class TurnBasedTests: XCTestCase {
       
       let didFinishLaunchingTask = await store.send(.appDelegate(.didFinishLaunching))
       let homeTask = await store.send(.home(.task))
-      await store.receive(.home(.authenticationResponse(.mock)))
-      
-      await store.receive(.home(.serverConfigResponse(.init()))) {
+      await store.receive(\.home.authenticationResponse)
+
+      await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
-      await store.receive(.home(.dailyChallengeResponse(.success(dailyChallenges)))) {
+      await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
-      await store.receive(.home(.weekInReviewResponse(.success(weekInReview)))) {
+      await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
-      await store.receive(
-        .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
-      )
+      await store.receive(\.home.activeMatchesResponse.success)
       
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(.forfeited, didBecomeActive: true)))
       
-      await store.receive(
-        .gameCenter(
-          .listener(
-            .turnBased(
-              .receivedTurnEventForMatch(.forfeited, didBecomeActive: true)
-            )
-          )
-        )
-      ) {
+      await store.receive(\.gameCenter.listener.turnBased.receivedTurnEventForMatch) {
         var gameState = Game.State(
           inProgressGame: InProgressGame(
             cubes: .mock,
@@ -516,10 +484,7 @@ class TurnBasedTests: XCTestCase {
         )
         $0.destination = .game(gameState)
       }
-      await store.receive(
-        .home(.activeMatchesResponse(.success(.init(matches: [], hasPastTurnBasedGames: false))))
-      )
-      
+      await store.receive(\.home.activeMatchesResponse.success)
       
       await homeTask.cancel()
       await didFinishLaunchingTask.cancel()
@@ -602,9 +567,7 @@ class TurnBasedTests: XCTestCase {
     ) {
       $0.destination = .game(updatedGameState)
     }
-    await store.receive(
-      .destination(.presented(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch))))))
-    ) {
+    await store.receive(\.destination.game.gameCenter.turnBasedMatchResponse.success) {
       $0.$destination[case: \.game]?.gameContext.modify(\.turnBased) {
         $0.match = updatedMatch
       }
@@ -665,9 +628,7 @@ class TurnBasedTests: XCTestCase {
     ) {
       $0.destination = .game(updatedGameState)
     }
-    await store.receive(
-      .destination(.presented(.game(.gameCenter(.turnBasedMatchResponse(.success(updatedMatch))))))
-    ) {
+    await store.receive(\.destination.game.gameCenter.turnBasedMatchResponse.success) {
       $0.$destination[case: \.game]?.gameContext.modify(\.turnBased) {
         $0.match = updatedMatch
       }
@@ -760,7 +721,7 @@ class TurnBasedTests: XCTestCase {
     await didRematchWithId.withValue { XCTAssertNoDifference($0, match.matchId) }
     await self.mainQueue.advance()
 
-    await store.receive(.gameCenter(.rematchResponse(.success(newMatch)))) {
+    await store.receive(\.gameCenter.rematchResponse.success) {
       $0.destination = .game(
         Game.State(
           cubes: .mock,

@@ -19,7 +19,7 @@ class PastGamesTests: XCTestCase {
     }
 
     await store.send(.task)
-    await store.receive(.matchesResponse(.success([pastGameState]))) {
+    await store.receive(\.matchesResponse.success) {
       $0.pastGames = [pastGameState]
     }
   }
@@ -32,8 +32,8 @@ class PastGamesTests: XCTestCase {
     }
 
     await store.send(.pastGames(.element(id: "id", action: .tappedRow)))
-    await store.receive(.pastGames(.element(id: "id", action: .matchResponse(.success(match)))))
-    await store.receive(.pastGames(.element(id: "id", action: .delegate(.openMatch(match)))))
+    await store.receive(\.pastGames[id: "id"].matchResponse.success)
+    await store.receive(\.pastGames[id: "id"].delegate.openMatch)
   }
 
   func testRematch() async {
@@ -49,13 +49,13 @@ class PastGamesTests: XCTestCase {
       }
     }
 
-    await store.receive(.pastGames(.element(id: "id", action: .rematchResponse(.success(match))))) {
+    await store.receive(\.pastGames[id: "id"].rematchResponse.success) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
       }
     }
 
-    await store.receive(.pastGames(.element(id: "id", action: .delegate(.openMatch(match)))))
+    await store.receive(\.pastGames[id: "id"].delegate.openMatch)
   }
 
   func testRematch_Failure() async {
@@ -73,7 +73,7 @@ class PastGamesTests: XCTestCase {
       }
     }
 
-    await store.receive(.pastGames(.element(id: "id", action: .rematchResponse(.failure(RematchFailure()))))) {
+    await store.receive(\.pastGames[id: "id"].rematchResponse.failure) {
       try XCTUnwrap(&$0.pastGames[id: "id"]) {
         $0.isRematchRequestInFlight = false
         $0.alert = .init {

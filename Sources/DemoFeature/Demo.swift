@@ -34,7 +34,7 @@ public struct Demo {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case appStoreOverlay(isPresented: Bool)
     case fullVersionButtonTapped
     case game(Game.Action)

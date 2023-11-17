@@ -20,10 +20,10 @@ public struct DailyChallengeResults {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
     case loadHistory
-    case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
+    case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, Error>)
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -71,7 +71,7 @@ public struct DailyChallengeResults {
         return .run { [gameMode = state.leaderboardResults.gameMode] send in
           await send(
             .fetchHistoryResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
                   as: DailyChallengeHistoryResponse.self

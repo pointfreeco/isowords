@@ -33,7 +33,7 @@ public struct Home {
       case solo(Solo.State = .init())
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case changelog(ChangelogReducer.Action)
       case dailyChallenge(DailyChallengeReducer.Action)
       case leaderboard(Leaderboard.Action)
@@ -122,13 +122,13 @@ public struct Home {
     }
   }
 
-  public enum Action: Equatable {
-    case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
+  public enum Action {
+    case activeMatchesResponse(Result<ActiveMatchResponse, Error>)
     case activeGames(ActiveGamesAction)
     case authenticationResponse(CurrentPlayerEnvelope)
     case cubeButtonTapped
     case dailyChallengeButtonTapped
-    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
     case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameButtonAction)
     case howToPlayButtonTapped
@@ -139,7 +139,7 @@ public struct Home {
     case settingsButtonTapped
     case soloButtonTapped
     case task
-    case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
+    case weekInReviewResponse(Result<FetchWeekInReviewResponse, Error>)
   }
 
   public enum GameButtonAction: Equatable {
@@ -208,7 +208,7 @@ public struct Home {
 
         await send(
           .activeMatchesResponse(
-            TaskResult {
+            Result {
               try await self.gameCenter.loadActiveMatches(now: self.now)
             }
           ),
@@ -344,7 +344,7 @@ public struct Home {
 
       async let dailyChallengeResponse: Void = send(
         .dailyChallengeResponse(
-          TaskResult {
+          Result {
             try await self.apiClient.apiRequest(
               route: .dailyChallenge(.today(language: .en)),
               as: [FetchTodaysDailyChallengeResponse].self
@@ -354,7 +354,7 @@ public struct Home {
       )
       async let weekInReviewResponse: Void = send(
         .weekInReviewResponse(
-          TaskResult {
+          Result {
             try await self.apiClient.apiRequest(
               route: .leaderboard(.weekInReview(language: .en)),
               as: FetchWeekInReviewResponse.self
@@ -364,7 +364,7 @@ public struct Home {
       )
       async let activeMatchesResponse: Void = send(
         .activeMatchesResponse(
-          TaskResult {
+          Result {
             try await self.gameCenter
               .loadActiveMatches(now: self.now)
           }
@@ -383,7 +383,7 @@ public struct Home {
         .turnBased(.receivedTurnEventForMatch):
         await send(
           .activeMatchesResponse(
-            TaskResult {
+            Result {
               try await self.gameCenter
                 .loadActiveMatches(now: self.now)
             }

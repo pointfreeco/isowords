@@ -41,9 +41,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
         )
       ]
 
-      let store = TestStore(
-        initialState: UpgradeInterstitial.State()
-      ) {
+      let store = TestStore(initialState: UpgradeInterstitial.State()) {
         UpgradeInterstitial()
       } withDependencies: {
         $0.dismiss = .init { dismissed.setValue(true) }
@@ -61,11 +59,11 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
       let task = await store.send(.task)
 
-      await store.receive(.fullGameProductResponse(fullGameProduct)) {
+      await store.receive(\.fullGameProductResponse) {
         $0.fullGameProduct = fullGameProduct
       }
 
-      await store.receive(.timerTick) {
+      await store.receive(\.timerTick) {
         $0.secondsPassedCount = 1
       }
       await store.send(.upgradeButtonTapped) {
@@ -77,8 +75,8 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
         XCTAssertNoDifference($0, "co.pointfree.isowords_testing.full_game")
       }
 
-      await store.receive(.paymentTransaction(.updatedTransactions(transactions)))
-      await store.receive(.delegate(.fullGamePurchased))
+      await store.receive(\.paymentTransaction.updatedTransactions)
+      await store.receive(\.delegate.fullGamePurchased)
 
       await task.cancel()
 
@@ -105,18 +103,18 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     await store.send(.task)
 
     await self.scheduler.advance(by: .seconds(1))
-    await store.receive(.timerTick) { $0.secondsPassedCount = 1 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 1 }
 
     await self.scheduler.advance(by: .seconds(15))
-    await store.receive(.timerTick) { $0.secondsPassedCount = 2 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 3 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 4 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 5 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 6 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 7 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 8 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 9 }
-    await store.receive(.timerTick) { $0.secondsPassedCount = 10 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 2 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 3 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 4 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 5 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 6 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 7 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 8 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 9 }
+    await store.receive(\.timerTick) { $0.secondsPassedCount = 10 }
 
     await self.scheduler.run()
 

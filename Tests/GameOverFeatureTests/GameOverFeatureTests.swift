@@ -65,22 +65,10 @@ class GameOverFeatureTests: XCTestCase {
       }
 
       let task = await store.send(.task)
-      await store.receive(.delayedOnAppear) {
+      await store.receive(\.delayedOnAppear) {
         $0.isViewEnabled = true
       }
-      await store.receive(
-        .submitGameResponse(
-          .success(
-            .solo(
-              .init(ranks: [
-                .lastDay: .init(outOf: 100, rank: 1),
-                .lastWeek: .init(outOf: 1000, rank: 10),
-                .allTime: .init(outOf: 10000, rank: 100),
-              ])
-            )
-          )
-        )
-      ) {
+      await store.receive(\.submitGameResponse.success) {
         $0.summary = .leaderboard([
           .lastDay: .init(outOf: 100, rank: 1),
           .lastWeek: .init(outOf: 1000, rank: 10),
@@ -185,15 +173,11 @@ class GameOverFeatureTests: XCTestCase {
       }
 
       let task = await store.send(.task)
-      await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
-      await store.receive(
-        .submitGameResponse(
-          .success(.dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true)))
-        )
-      ) {
+      await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
+      await store.receive(\.submitGameResponse.success) {
         $0.summary = .dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true))
       }
-      await store.receive(.dailyChallengeResponse(.success(dailyChallengeResponses))) {
+      await store.receive(\.dailyChallengeResponse.success) {
         $0.dailyChallenges = dailyChallengeResponses
       }
       await task.cancel()
@@ -248,8 +232,8 @@ class GameOverFeatureTests: XCTestCase {
       }
 
       let task = await store.send(.task)
-      await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
-      await store.receive(.submitGameResponse(.success(.turnBased)))
+      await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
+      await store.receive(\.submitGameResponse.success.turnBased)
       await task.cancel()
     }
   }
@@ -382,11 +366,11 @@ class GameOverFeatureTests: XCTestCase {
 
     let task = await store.send(.task)
     await self.mainRunLoop.advance(by: .seconds(1))
-    await store.receive(.delayedShowUpgradeInterstitial) {
+    await store.receive(\.delayedShowUpgradeInterstitial) {
       $0.destination = .upgradeInterstitial()
     }
     await self.mainRunLoop.advance(by: .seconds(1))
-    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
   }
 
@@ -419,7 +403,7 @@ class GameOverFeatureTests: XCTestCase {
     }
 
     let task = await store.send(.task)
-    await store.receive(.delayedOnAppear) { $0.isViewEnabled = true }
+    await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
   }
 }

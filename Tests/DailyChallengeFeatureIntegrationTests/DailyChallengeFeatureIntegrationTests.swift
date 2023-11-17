@@ -87,12 +87,12 @@ class DailyChallengeFeatureTests: XCTestCase {
         $0.leaderboardResults.isLoading = true
         $0.leaderboardResults.resultEnvelope = .placeholder
       }
-      await store.receive(.leaderboardResults(.resultsResponse(.success(timedResultEnvelope)))) {
+      await store.receive(\.leaderboardResults.resultsResponse.success) {
         $0.leaderboardResults.isLoading = false
         $0.leaderboardResults.resultEnvelope = timedResultEnvelope
       }
       await store.send(.loadHistory)
-      await store.receive(.fetchHistoryResponse(.success(.init(results: [historyResult])))) {
+      await store.receive(\.fetchHistoryResponse.success) {
         $0.history = .init(results: [historyResult])
       }
     }

@@ -30,7 +30,7 @@ class ChangelogFeatureTests: XCTestCase {
       $0.currentBuild = 42
       $0.isRequestInFlight = true
     }
-    await store.receive(.changelogResponse(.success(changelog))) {
+    await store.receive(\.changelogResponse.success) {
       $0.changelog = [
         .init(
           change: .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),
@@ -68,7 +68,7 @@ class ChangelogFeatureTests: XCTestCase {
       $0.currentBuild = 40
       $0.isRequestInFlight = true
     }
-    await store.receive(.changelogResponse(.success(changelog))) {
+    await store.receive(\.changelogResponse.success) {
       $0.changelog = [
         .init(
           change: .init(version: "1.2", build: 42, log: "Bug fixes and improvements"),

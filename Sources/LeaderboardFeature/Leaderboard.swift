@@ -37,7 +37,7 @@ public struct Leaderboard {
       case cubePreview(CubePreview.State)
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case cubePreview(CubePreview.Action)
     }
 
@@ -67,9 +67,9 @@ public struct Leaderboard {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case destination(PresentationAction<Destination.Action>)
-    case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
+    case fetchWordResponse(Result<FetchVocabWordResponse, Error>)
     case scopeTapped(LeaderboardScope)
     case solo(LeaderboardResults<TimeScope>.Action)
     case vocab(LeaderboardResults<TimeScope>.Action)
@@ -125,7 +125,7 @@ public struct Leaderboard {
         return .run { send in
           await send(
             .fetchWordResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
                   as: FetchVocabWordResponse.self

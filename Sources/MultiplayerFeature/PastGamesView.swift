@@ -10,8 +10,8 @@ public struct PastGames {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
 
-  public enum Action: Equatable {
-    case matchesResponse(TaskResult<[PastGame.State]>)
+  public enum Action {
+    case matchesResponse(Result<[PastGame.State], Error>)
     case pastGames(IdentifiedActionOf<PastGame>)
     case task
   }
@@ -35,7 +35,7 @@ public struct PastGames {
         return .run { send in
           await send(
             .matchesResponse(
-              TaskResult {
+              Result {
                 try await self.gameCenter.turnBasedMatch
                   .loadMatches()
                   .compactMap { match in

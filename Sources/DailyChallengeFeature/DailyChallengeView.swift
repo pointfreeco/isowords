@@ -19,7 +19,7 @@ public struct DailyChallengeReducer {
       case results(DailyChallengeResults.State)
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case alert(Alert)
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case results(DailyChallengeResults.Action)
@@ -60,24 +60,21 @@ public struct DailyChallengeReducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
-    case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
     case resultsButtonTapped
-    case startDailyChallengeResponse(TaskResult<InProgressGame>)
+    case startDailyChallengeResponse(Result<InProgressGame, Error>)
     case task
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
+    @CasePathable
     public enum Delegate: Equatable {
       case startGame(InProgressGame)
     }
-  }
-
-  public enum DestinationAction: Equatable {
-    case dailyChallengeResults(DailyChallengeResults.Action)
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -137,7 +134,7 @@ public struct DailyChallengeReducer {
         return .run { send in
           await send(
             .startDailyChallengeResponse(
-              TaskResult {
+              Result {
                 try await startDailyChallengeAsync(
                   challenge,
                   apiClient: self.apiClient,
@@ -190,7 +187,7 @@ public struct DailyChallengeReducer {
             group.addTask {
               await send(
                 .fetchTodaysDailyChallengeResponse(
-                  TaskResult {
+                  Result {
                     try await self.apiClient.apiRequest(
                       route: .dailyChallenge(.today(language: .en)),
                       as: [FetchTodaysDailyChallengeResponse].self

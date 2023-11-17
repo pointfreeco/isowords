@@ -34,7 +34,7 @@ public struct StoreKitLogic<State> {
           {
             await send(
               .verifyReceiptResponse(
-                TaskResult {
+                Result {
                   try await ReceiptFinalizationEnvelope(
                     transactions: transactions,
                     verifyEnvelope: self.apiClient.apiRequest(

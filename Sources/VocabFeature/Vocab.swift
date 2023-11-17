@@ -11,7 +11,7 @@ public struct Vocab: Reducer {
       case cubePreview(CubePreview.State)
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case cubePreview(CubePreview.Action)
     }
 
@@ -43,11 +43,11 @@ public struct Vocab: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case destination(PresentationAction<Destination.Action>)
-    case gamesResponse(TaskResult<State.GamesResponse>)
+    case gamesResponse(Result<State.GamesResponse, Error>)
     case task
-    case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
+    case vocabResponse(Result<LocalDatabaseClient.Vocab, Error>)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
   }
 
@@ -90,7 +90,7 @@ public struct Vocab: Reducer {
 
       case .task:
         return .run { send in
-          await send(.vocabResponse(TaskResult { try await self.database.fetchVocab() }))
+          await send(.vocabResponse(Result { try await self.database.fetchVocab() }))
         }
 
       case let .vocabResponse(.success(vocab)):
@@ -104,7 +104,7 @@ public struct Vocab: Reducer {
         return .run { send in
           await send(
             .gamesResponse(
-              TaskResult {
+              Result {
                 .init(
                   games: try await self.database.fetchGamesForWord(word.letters),
                   word: word.letters

@@ -131,7 +131,7 @@ class PersistenceTests: XCTestCase {
       $0.$destination[case: \.game]?.destination = nil
       $0.home.savedGames.unlimited = InProgressGame(gameState: game)
     }
-    await store.receive(.destination(.dismiss)) {
+    await store.receive(\.destination.dismiss) {
       $0.destination = nil
     }
     try await saves.withValue {
@@ -270,7 +270,7 @@ class PersistenceTests: XCTestCase {
     }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
-    await store.receive(.savedGamesLoaded(.success(savedGames))) {
+    await store.receive(\.savedGamesLoaded.success) {
       $0.home.savedGames = savedGames
     }
     await store.send(.home(.soloButtonTapped)) {

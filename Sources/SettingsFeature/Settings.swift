@@ -85,21 +85,21 @@ public struct Settings {
     }
   }
 
-  public enum Action: BindableAction, Equatable {
+  public enum Action: BindableAction {
     case alert(PresentationAction<Alert>)
     case binding(BindingAction<State>)
-    case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
+    case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, Error>)
     case didBecomeActive
     case leaveUsAReviewButtonTapped
     case onDismiss
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case productsResponse(TaskResult<StoreKitClient.ProductsResponse>)
+    case productsResponse(Result<StoreKitClient.ProductsResponse, Error>)
     case reportABugButtonTapped
     case restoreButtonTapped
     case stats(Stats.Action)
     case tappedProduct(StoreKitClient.Product)
     case task
-    case userNotificationAuthorizationResponse(TaskResult<Bool>)
+    case userNotificationAuthorizationResponse(Result<Bool, Error>)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
     public enum Alert: Equatable {
@@ -152,7 +152,7 @@ public struct Settings {
               return .run { send in
                 await send(
                   .userNotificationAuthorizationResponse(
-                    TaskResult {
+                    Result {
                       try await self.userNotifications.requestAuthorization([.alert, .sound])
                     }
                   ),
@@ -193,7 +193,7 @@ public struct Settings {
               )
               await send(
                 .currentPlayerRefreshed(
-                  TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                  Result { try await self.apiClient.refreshCurrentPlayer() }
                 )
               )
             }
@@ -214,7 +214,7 @@ public struct Settings {
               )
               await send(
                 .currentPlayerRefreshed(
-                  TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                  Result { try await self.apiClient.refreshCurrentPlayer() }
                 )
               )
             }
@@ -299,7 +299,7 @@ public struct Settings {
           return .run { send in
             await send(
               .currentPlayerRefreshed(
-                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                Result { try await self.apiClient.refreshCurrentPlayer() }
               ),
               animation: .default
             )
@@ -411,7 +411,7 @@ public struct Settings {
                 shouldFetchProducts
                 ? send(
                   .productsResponse(
-                    TaskResult {
+                    Result {
                       try await self.storeKit.fetchProducts([
                         self.serverConfig().productIdentifiers.fullGame
                       ])

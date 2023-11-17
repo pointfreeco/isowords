@@ -31,10 +31,11 @@ public struct LeaderboardResults<TimeScope>: Reducer {
     }
   }
 
+  @CasePathable
   public enum Action {
     case dismissTimeScopeMenu
     case gameModeButtonTapped(GameMode)
-    case resultsResponse(TaskResult<ResultEnvelope>)
+    case resultsResponse(Result<ResultEnvelope, Error>)
     case tappedRow(id: UUID)
     case tappedTimeScopeLabel
     case task
@@ -61,7 +62,7 @@ public struct LeaderboardResults<TimeScope>: Reducer {
         state.isLoading = true
         return .run { [timeScope = state.timeScope] send in
           await send(
-            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            .resultsResponse(Result { try await self.loadResults(gameMode, timeScope) }),
             animation: .default
           )
         }
@@ -90,7 +91,7 @@ public struct LeaderboardResults<TimeScope>: Reducer {
 
         return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
           await send(
-            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            .resultsResponse(Result { try await self.loadResults(gameMode, timeScope) }),
             animation: .default
           )
         }
@@ -102,7 +103,7 @@ public struct LeaderboardResults<TimeScope>: Reducer {
 
         return .run { [gameMode = state.gameMode] send in
           await send(
-            .resultsResponse(TaskResult { try await self.loadResults(gameMode, timeScope) }),
+            .resultsResponse(Result { try await self.loadResults(gameMode, timeScope) }),
             animation: .default
           )
         }
@@ -112,7 +113,6 @@ public struct LeaderboardResults<TimeScope>: Reducer {
 }
 
 extension LeaderboardResults.State: Equatable where TimeScope: Equatable {}
-extension LeaderboardResults.Action: Equatable where TimeScope: Equatable {}
 
 public struct LeaderboardResultsView<TimeScope, TimeScopeMenu>: View
 where

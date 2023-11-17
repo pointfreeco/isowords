@@ -28,11 +28,10 @@ class DailyChallengeFeatureTests: XCTestCase {
 
     await store.send(.task)
 
-    await store.receive(.userNotificationSettingsResponse(.init(authorizationStatus: .authorized)))
-    {
+    await store.receive(\.userNotificationSettingsResponse) {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
-    await store.receive(.fetchTodaysDailyChallengeResponse(.success([.played]))) {
+    await store.receive(\.fetchTodaysDailyChallengeResponse.success) {
       $0.dailyChallenges = [.played]
     }
   }
@@ -93,10 +92,10 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
 
     await self.mainRunLoop.advance()
-    await store.receive(.startDailyChallengeResponse(.success(inProgressGame))) {
+    await store.receive(\.startDailyChallengeResponse.success) {
       $0.gameModeIsLoading = nil
     }
-    await store.receive(.delegate(.startGame(inProgressGame)))
+    await store.receive(\.delegate.startGame)
   }
 
   func testTapGameThatWasStarted_NotPlayed_HasLocalGame() async {
@@ -125,10 +124,10 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.gameModeIsLoading = .unlimited
     }
 
-    await store.receive(.startDailyChallengeResponse(.success(inProgressGame))) {
+    await store.receive(\.startDailyChallengeResponse.success) {
       $0.gameModeIsLoading = nil
     }
-    await store.receive(.delegate(.startGame(inProgressGame)))
+    await store.receive(\.delegate.startGame)
   }
 
   func testNotifications_OpenThenClose() async {
@@ -169,17 +168,11 @@ class DailyChallengeFeatureTests: XCTestCase {
       .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
     )
     await store.receive(
-      .destination(
-        .presented(
-          .notificationsAuthAlert(
-            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .authorized)))
-          )
-        )
-      )
+      \.destination.notificationsAuthAlert.delegate.didChooseNotificationSettings
     ) {
       $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
-    await store.receive(.destination(.dismiss)) {
+    await store.receive(\.destination.dismiss) {
       $0.destination = nil
     }
 
@@ -204,17 +197,11 @@ class DailyChallengeFeatureTests: XCTestCase {
       .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
     )
     await store.receive(
-      .destination(
-        .presented(
-          .notificationsAuthAlert(
-            .delegate(.didChooseNotificationSettings(.init(authorizationStatus: .denied)))
-          )
-        )
-      )
+      \.destination.notificationsAuthAlert.delegate.didChooseNotificationSettings
     ) {
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
-    await store.receive(.destination(.dismiss)) {
+    await store.receive(\.destination.dismiss) {
       $0.destination = nil
     }
   }

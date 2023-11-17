@@ -29,9 +29,9 @@ public struct ChangelogReducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case changelog(IdentifiedActionOf<Change>)
-    case changelogResponse(TaskResult<Changelog>)
+    case changelogResponse(Result<Changelog, Error>)
     case task
     case updateButtonTapped
   }
@@ -80,7 +80,7 @@ public struct ChangelogReducer {
         return .run { send in
           await send(
             .changelogResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .changelog(build: self.buildNumber()),
                   as: Changelog.self

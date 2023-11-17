@@ -18,7 +18,7 @@ public struct AppReducer {
       case game(Game.State)
       case onboarding(Onboarding.State)
     }
-    public enum Action: Equatable {
+    public enum Action {
       case game(Game.Action)
       case onboarding(Onboarding.Action)
     }
@@ -64,15 +64,15 @@ public struct AppReducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case appDelegate(AppDelegateReducer.Action)
     case destination(PresentationAction<Destination.Action>)
     case didChangeScenePhase(ScenePhase)
     case gameCenter(GameCenterAction)
     case home(Home.Action)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case savedGamesLoaded(TaskResult<SavedGamesState>)
-    case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
+    case savedGamesLoaded(Result<SavedGamesState, Error>)
+    case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, Error>)
   }
 
   @Dependency(\.fileClient) var fileClient
@@ -142,7 +142,7 @@ public struct AppReducer {
           }
           await send(
             .savedGamesLoaded(
-              TaskResult { try await self.fileClient.loadSavedGames() }
+              Result { try await self.fileClient.loadSavedGames() }
             )
           )
           _ = try await migrate

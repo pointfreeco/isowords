@@ -30,16 +30,18 @@ public struct Game {
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case alert(Alert)
       case bottomMenu(BottomMenu)
       case gameOver(GameOver.Action)
       case settings(Settings.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
 
-      public enum Alert: Equatable {
+      @CasePathable
+      public enum Alert {
         case forfeitButtonTapped
       }
+      @CasePathable
       public enum BottomMenu: Equatable {
         case confirmRemoveCube(LatticePoint)
         case endGameButtonTapped
@@ -159,7 +161,7 @@ public struct Game {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case activeGames(ActiveGamesAction)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
@@ -169,11 +171,11 @@ public struct Game {
     case gameCenter(GameCenterAction)
     case gameLoaded
     case lowPowerModeChanged(Bool)
-    case matchesLoaded(TaskResult<[TurnBasedMatch]>)
+    case matchesLoaded(Result<[TurnBasedMatch], Error>)
     case menuButtonTapped
     case task
     case pan(UIGestureRecognizer.State, PanData?)
-    case savedGamesLoaded(TaskResult<SavedGamesState>)
+    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
@@ -182,9 +184,10 @@ public struct Game {
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
-  public enum GameCenterAction: Equatable {
+  @CasePathable
+  public enum GameCenterAction {
     case listener(LocalPlayerClient.ListenerEvent)
-    case turnBasedMatchResponse(TaskResult<TurnBasedMatch>)
+    case turnBasedMatchResponse(Result<TurnBasedMatch, Error>)
   }
 
   @Dependency(\.audioPlayer) var audioPlayer

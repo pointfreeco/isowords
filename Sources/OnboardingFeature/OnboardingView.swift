@@ -134,7 +134,7 @@ public struct Onboarding {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case alert(PresentationAction<Alert>)
     case delayedNextStep
     case delegate(Delegate)
@@ -144,10 +144,12 @@ public struct Onboarding {
     case skipButtonTapped
     case task
 
-    public enum Alert: Equatable {
+    @CasePathable
+    public enum Alert {
       case skipButtonTapped
     }
 
+    @CasePathable
     public enum Delegate {
       case getStarted
     }

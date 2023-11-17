@@ -24,7 +24,7 @@ public struct GameOver {
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
 
-    public enum Action: Equatable {
+    public enum Action {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
     }
@@ -86,9 +86,9 @@ public struct GameOver {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case closeButtonTapped
-    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
     case delayedOnAppear
     case delayedShowUpgradeInterstitial
     case delegate(Delegate)
@@ -96,9 +96,9 @@ public struct GameOver {
     case gameButtonTapped(GameMode)
     case rematchButtonTapped
     case showConfetti
-    case startDailyChallengeResponse(TaskResult<InProgressGame>)
+    case startDailyChallengeResponse(Result<InProgressGame, Error>)
     case task
-    case submitGameResponse(TaskResult<SubmitGameResponse>)
+    case submitGameResponse(Result<SubmitGameResponse, Error>)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
     public enum Delegate: Equatable {
@@ -167,7 +167,7 @@ public struct GameOver {
           return .run { send in
             await send(
               .startDailyChallengeResponse(
-                TaskResult {
+                Result {
                   try await startDailyChallengeAsync(
                     challenge,
                     apiClient: self.apiClient,
@@ -224,7 +224,7 @@ public struct GameOver {
         return .run { send in
           await send(
             .dailyChallengeResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .dailyChallenge(.today(language: .en)),
                   as: [FetchTodaysDailyChallengeResponse].self
@@ -275,7 +275,7 @@ public struct GameOver {
                 )
                 await send(
                   .submitGameResponse(
-                    TaskResult {
+                    Result {
                       try await .solo(
                         self.apiClient.request(
                           route: .demo(.submitGame(request)),
@@ -291,7 +291,7 @@ public struct GameOver {
               ) {
                 await send(
                   .submitGameResponse(
-                    TaskResult {
+                    Result {
                       try await self.apiClient.apiRequest(
                         route: .games(.submit(request)),
                         as: SubmitGameResponse.self

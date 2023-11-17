@@ -42,7 +42,7 @@ public struct WordSubmitButtonFeature {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case backgroundTapped
     case delayedSubmitButtonPressed
     case delegate(Delegate)
@@ -51,7 +51,7 @@ public struct WordSubmitButtonFeature {
     case submitButtonReleased
     case submitButtonTapped
 
-    public enum Delegate: Equatable {
+    public enum Delegate {
       case confirmSubmit(reaction: Move.Reaction?)
     }
   }

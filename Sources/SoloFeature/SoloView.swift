@@ -16,9 +16,9 @@ public struct Solo {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case gameButtonTapped(GameMode)
-    case savedGamesLoaded(TaskResult<SavedGamesState>)
+    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case task
   }
 
@@ -41,7 +41,7 @@ public struct Solo {
 
       case .task:
         return .run { send in
-          await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+          await send(.savedGamesLoaded(Result { try await self.fileClient.loadSavedGames() }))
         }
       }
     }
