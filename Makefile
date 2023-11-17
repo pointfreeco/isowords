@@ -26,7 +26,7 @@ else
 	@git lfs pull
 endif
 
-PLATFORM_IOS = iOS Simulator,name=iPhone 14 Pro,OS=16.4
+PLATFORM_IOS = iOS Simulator,id=$(call udid_for,iOS 17,iPhone \d\+ Pro [^M])
 test-client:
 	@xcodebuild test \
 		-project App/isowords.xcodeproj \
@@ -361,3 +361,7 @@ define POSTGRES_WARNING
 
 endef
 export POSTGRES_WARNING
+
+define udid_for
+$(shell xcrun simctl list devices available '$(1)' | grep '$(2)' | sort -r | head -1 | awk -F '[()]' '{ print $$(NF-3) }')
+endef
