@@ -12,7 +12,7 @@ public struct PastGames {
 
   public enum Action: Equatable {
     case matchesResponse(TaskResult<[PastGame.State]>)
-    case pastGame(id: TurnBasedMatch.Id, action: PastGame.Action)
+    case pastGames(IdentifiedActionOf<PastGame>)
     case task
   }
 
@@ -28,7 +28,7 @@ public struct PastGames {
       case .matchesResponse(.failure):
         return .none
 
-      case .pastGame:
+      case .pastGames:
         return .none
 
       case .task:
@@ -51,7 +51,7 @@ public struct PastGames {
         }
       }
     }
-    .forEach(\.pastGames, action: \.pastGame) {
+    .forEach(\.pastGames, action: \.pastGames) {
       PastGame()
     }
   }
@@ -70,7 +70,7 @@ struct PastGamesView: View {
   var body: some View {
     ScrollView {
       ForEachStore(
-        self.store.scope(state: \.pastGames, action: \.pastGame)
+        self.store.scope(state: \.pastGames, action: \.pastGames)
       ) { store in
         Group {
           PastGameRow(store: store)

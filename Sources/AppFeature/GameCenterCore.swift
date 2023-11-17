@@ -102,7 +102,16 @@ public struct GameCenterLogic {
             .presented(
               .multiplayer(
                 .destination(
-                  .presented(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+                  .presented(
+                    .pastGames(
+                      .pastGames(
+                        .element(
+                          id: _,
+                          action: .delegate(.openMatch(turnBasedMatch))
+                        )
+                      )
+                    )
+                  )
                 )
               )
             )
