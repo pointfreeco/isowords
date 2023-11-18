@@ -72,8 +72,6 @@
         dismiss: { await presenter.dismiss() }
       )
     }
-
-    private static var viewController: GKGameCenterViewController?
   }
 
   @available(iOSApplicationExtension, unavailable)
