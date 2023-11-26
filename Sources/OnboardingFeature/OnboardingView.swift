@@ -33,6 +33,21 @@ public struct Onboarding {
       self.step = step
     }
 
+    fileprivate var cubeScene: CubeSceneView.ViewState {
+      var viewState = CubeSceneView.ViewState(game: self.game, nub: nil)
+
+      LatticePoint.cubeIndices.forEach { index in
+        CubeFace.Side.allCases.forEach { side in
+          if !isVisible(step: self.step, index: index, side: side) {
+            viewState.cubes[index][side].letterIsHidden = true
+            viewState.cubes[index][side].status = .deselected
+          }
+        }
+      }
+
+      return viewState
+    }
+
     public enum PresentationStyle {
       case demo
       case firstLaunch
@@ -394,13 +409,8 @@ public struct OnboardingView: View {
 
   public var body: some View {
     ZStack(alignment: .topTrailing) {
-      CubeView(
-        store: self.store.scope(
-          state: cubeSceneViewState(onboardingState:),
-          action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
-        )
-      )
-      .opacity(viewStore.step.isFullscreen ? 0 : 1)
+      CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
+        .opacity(viewStore.step.isFullscreen ? 0 : 1)
 
       OnboardingStepView(store: self.store)
 
@@ -421,21 +431,6 @@ public struct OnboardingView: View {
         .ignoresSafeArea()
     )
   }
-}
-
-private func cubeSceneViewState(onboardingState: Onboarding.State) -> CubeSceneView.ViewState {
-  var viewState = CubeSceneView.ViewState(game: onboardingState.game, nub: nil)
-
-  LatticePoint.cubeIndices.forEach { index in
-    CubeFace.Side.allCases.forEach { side in
-      if !isVisible(step: onboardingState.step, index: index, side: side) {
-        viewState.cubes[index][side].letterIsHidden = true
-        viewState.cubes[index][side].status = .deselected
-      }
-    }
-  }
-
-  return viewState
 }
 
 private func isVisible(

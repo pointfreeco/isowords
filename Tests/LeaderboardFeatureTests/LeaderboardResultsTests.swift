@@ -67,12 +67,13 @@ class LeaderboardTests: XCTestCase {
   }
 
   func tetsUnhappyPath() async {
-    struct SomeError: Error {}
-
     let store = TestStore(
-      initialState: LeaderboardResults<TimeScope>.State(timeScope: TimeScope.lastWeek)
+      initialState: LeaderboardResults<TimeScope>.State(timeScope: .lastWeek)
     ) {
-      LeaderboardResults<TimeScope>(loadResults: { _, _ in throw SomeError() })
+      LeaderboardResults<TimeScope>(loadResults: { _, _ in
+        struct SomeError: Error {}
+        throw SomeError()
+      })
     }
 
     await store.send(.task) {

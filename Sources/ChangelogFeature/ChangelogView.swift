@@ -27,6 +27,14 @@ public struct ChangelogReducer {
       self.isRequestInFlight = isRequestInFlight
       self.isUpdateButtonVisible = isUpdateButtonVisible
     }
+
+    public var whatsNew: IdentifiedArrayOf<Change.State> {
+      self.changelog.filter { $0.change.build >= self.currentBuild }
+    }
+
+    public var pastUpdates: IdentifiedArrayOf<Change.State> {
+      self.changelog.filter { $0.change.build < self.currentBuild }
+    }
   }
 
   public enum Action {
@@ -141,25 +149,15 @@ public struct ChangelogView: View {
           Text("What's new?")
             .font(.largeTitle)
 
-          ForEachStore(
-            self.store.scope(
-              state: { $0.changelog.filter { $0.change.build >= viewStore.currentBuild } },
-              action: { .changelog(.element(id: $0, action: $1)) }
-            )
-          ) {
-            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+          ForEachStore(self.store.scope(state: \.whatsNew, action: \.changelog)) { store in
+            ChangeView(currentBuild: viewStore.currentBuild, store: store)
           }
 
           Text("Past updates")
             .font(.largeTitle)
 
-          ForEachStore(
-            self.store.scope(
-              state: { $0.changelog.filter { $0.change.build < viewStore.currentBuild } },
-              action: { .changelog(.element(id: $0, action: $1)) }
-            )
-          ) {
-            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+          ForEachStore(self.store.scope(state: \.pastUpdates, action: \.changelog)) { store in
+            ChangeView(currentBuild: viewStore.currentBuild, store: store)
           }
         }
         .padding()

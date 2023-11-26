@@ -1,5 +1,32 @@
+import CasePaths
 import CubeCore
 import SharedModels
+
+extension Game.State {
+  public var cubeScene: CubeSceneView.ViewState {
+    .init(game: self)
+  }
+}
+
+extension Game.Action.AllCasePaths {
+  public var cubeScene: AnyCasePath<Game.Action, CubeSceneView.ViewAction> {
+    AnyCasePath(
+      embed: CubeSceneView.ViewAction.to(gameAction:),
+      extract: { gameAction in
+        switch gameAction {
+        case let .doubleTap(index: index):
+          return .doubleTap(index: index)
+        case let .pan(state, data):
+          return .pan(state, data)
+        case let .tap(state, indexedCubeFace):
+          return .tap(state, indexedCubeFace)
+        default:
+          return nil
+        }
+      }
+    )
+  }
+}
 
 extension CubeSceneView.ViewState {
   public init(

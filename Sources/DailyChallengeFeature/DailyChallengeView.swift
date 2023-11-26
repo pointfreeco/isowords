@@ -387,16 +387,9 @@ public struct DailyChallengeView: View {
       )
       .edgesIgnoringSafeArea(.bottom)
     }
-    .alert(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.alert,
-      // NB: '{ .alert($0) }' produces 'warning: Will never be executed'
-      action: DailyChallengeReducer.Destination.Action.alert
-    )
+    .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.results,
-      action: { .results($0) },
+      store: self.store.scope(state: \.$destination.results, action: \.destination.results),
       destination: DailyChallengeResultsView.init(store:)
     )
     .notificationsAlert(

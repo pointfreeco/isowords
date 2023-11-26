@@ -149,9 +149,7 @@ public struct MultiplayerView: View {
         }
       }
       .navigationDestination(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.pastGames,
-        action: { .pastGames($0) },
+        store: self.store.scope(state: \.$destination.pastGames, action: \.destination.pastGames),
         destination: PastGamesView.init(store:)
       )
       .navigationStyle(

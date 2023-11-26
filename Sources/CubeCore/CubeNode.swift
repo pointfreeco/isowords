@@ -71,7 +71,6 @@ public class CubeNode: SCNNode {
     letterGeometry: SCNGeometry,
     store: Store<ViewState, Never>
   ) {
-    func absurd<A>(_: Never) -> A {}
     self.viewStore = ViewStore(store, observe: { $0 })
 
     self.index = self.viewStore.index

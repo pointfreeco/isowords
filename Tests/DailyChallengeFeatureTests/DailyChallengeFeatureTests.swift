@@ -83,8 +83,10 @@ class DailyChallengeFeatureTests: XCTestCase {
           )
         }
       )
-      struct FileNotFound: Error {}
-      $0.fileClient.load = { @Sendable _ in throw FileNotFound() }
+      $0.fileClient.load = { @Sendable _ in
+        struct FileNotFound: Error {}
+        throw FileNotFound()
+      }
     }
 
     await store.send(.gameButtonTapped(.unlimited)) {

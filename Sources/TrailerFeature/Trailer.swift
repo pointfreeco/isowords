@@ -36,9 +36,13 @@ public struct Trailer {
         )
       )
     }
+
+    fileprivate var cubeScene: CubeSceneView.ViewState {
+      .init(game: self.game, nub: self.nub)
+    }
   }
 
-  public enum Action: BindableAction, Equatable {
+  public enum Action: BindableAction {
     case binding(BindingAction<State>)
     case game(Game.Action)
     case task
@@ -242,7 +246,7 @@ public struct TrailerView: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.game.wordSubmitButtonFeature,
-                action: { .game(.wordSubmitButton($0)) }
+                action: \.game.wordSubmitButton
               )
             )
             .transition(
@@ -261,16 +265,11 @@ public struct TrailerView: View {
         .adaptivePadding(.top, .grid(18))
         .adaptivePadding(.bottom, .grid(2))
 
-        CubeView(
-          store: self.store.scope(
-            state: { CubeSceneView.ViewState(game: $0.game, nub: $0.nub) },
-            action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
+        CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
+          .adaptivePadding(
+            self.deviceState.idiom == .pad ? .horizontal : [],
+            .grid(30)
           )
-        )
-        .adaptivePadding(
-          self.deviceState.idiom == .pad ? .horizontal : [],
-          .grid(30)
-        )
       }
       .background(
         BloomBackground(

@@ -353,17 +353,10 @@ public struct AppView: View {
         .zIndex(0)
       } else {
         IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.game,
-          action: { .game($0) }
+          self.store.scope(state: \.destination?.game, action: \.destination.game)
         ) { store in
           GameView(
-            content: CubeView(
-              store: store.scope(
-                state: { CubeSceneView.ViewState(game: $0) },
-                action: { CubeSceneView.ViewAction.to(gameAction: $0) }
-              )
-            ),
+            content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
             store: store
           )
         }
@@ -371,9 +364,7 @@ public struct AppView: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.onboarding,
-          action: { .onboarding($0) },
+          self.store.scope(state: \.destination?.onboarding, action: \.destination.onboarding),
           then: OnboardingView.init(store:)
         )
         .zIndex(2)

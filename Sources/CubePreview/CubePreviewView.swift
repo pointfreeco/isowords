@@ -43,6 +43,54 @@ public struct CubePreview {
       self.selectedCubeFaces = selectedCubeFaces
     }
 
+    var cubeScenePreview: CubeSceneView.ViewState {
+      let selectedWordString = self.cubes.string(from: self.selectedCubeFaces)
+
+      return CubeSceneView.ViewState(
+        cubes: self.cubes.enumerated().map { x, cubes in
+          cubes.enumerated().map { y, cubes in
+            cubes.enumerated().map { z, cube in
+              let index = LatticePoint(x: x, y: y, z: z)
+              return CubeNode.ViewState(
+                cubeShakeStartedAt: nil,
+                index: .init(x: x, y: y, z: z),
+                isCriticallySelected: false,
+                isInPlay: cube.isInPlay,
+                left: .init(
+                  cubeFace: .init(
+                    letter: cube.left.letter,
+                    side: .left
+                  ),
+                  status: self.selectedCubeFaces.contains(.init(index: index, side: .left))
+                    ? .selected
+                    : .deselected
+                ),
+                right: .init(
+                  cubeFace: .init(letter: cube.right.letter, side: .right),
+                  status: self.selectedCubeFaces.contains(.init(index: index, side: .right))
+                    ? .selected
+                    : .deselected
+                ),
+                top: .init(
+                  cubeFace: .init(letter: cube.top.letter, side: .top),
+                  status: self.selectedCubeFaces.contains(.init(index: index, side: .top))
+                    ? .selected
+                    : .deselected
+                )
+              )
+            }
+          }
+        },
+        enableGyroMotion: self.enableGyroMotion,
+        isOnLowPowerMode: self.isOnLowPowerMode,
+        nub: self.nub,
+        playedWords: [],
+        selectedFaceCount: self.selectedCubeFaces.count,
+        selectedWordIsValid: selectedWordString == self.finalWordString,
+        selectedWordString: selectedWordString
+      )
+    }
+
     var finalWordString: String? {
       switch self.moves[self.moveIndex].type {
       case let .playedWord(faces):
@@ -223,13 +271,8 @@ public struct CubePreviewView: View {
             .adaptivePadding(.top, .grid(16))
         }
 
-        CubeView(
-          store: self.store.scope(
-            state: CubeSceneView.ViewState.init(preview:),
-            action: { .cubeScene($0) }
-          )
-        )
-        .task { await self.viewStore.send(.task).finish() }
+        CubeView(store: self.store.scope(state: \.cubeScenePreview, action: \.cubeScene))
+          .task { await self.viewStore.send(.task).finish() }
       }
       .background(
         self.viewStore.isAnimationReduced
@@ -260,56 +303,6 @@ public struct CubePreviewView: View {
     self.viewStore.selectedWordScore.map {
       Text(" \($0)")
     } ?? Text("")
-  }
-}
-
-extension CubeSceneView.ViewState {
-  public init(preview state: CubePreview.State) {
-    let selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
-
-    self.init(
-      cubes: state.cubes.enumerated().map { x, cubes in
-        cubes.enumerated().map { y, cubes in
-          cubes.enumerated().map { z, cube in
-            let index = LatticePoint.init(x: x, y: y, z: z)
-            return CubeNode.ViewState(
-              cubeShakeStartedAt: nil,
-              index: .init(x: x, y: y, z: z),
-              isCriticallySelected: false,
-              isInPlay: cube.isInPlay,
-              left: .init(
-                cubeFace: .init(
-                  letter: cube.left.letter,
-                  side: .left
-                ),
-                status: state.selectedCubeFaces.contains(.init(index: index, side: .left))
-                  ? .selected
-                  : .deselected
-              ),
-              right: .init(
-                cubeFace: .init(letter: cube.right.letter, side: .right),
-                status: state.selectedCubeFaces.contains(.init(index: index, side: .right))
-                  ? .selected
-                  : .deselected
-              ),
-              top: .init(
-                cubeFace: .init(letter: cube.top.letter, side: .top),
-                status: state.selectedCubeFaces.contains(.init(index: index, side: .top))
-                  ? .selected
-                  : .deselected
-              )
-            )
-          }
-        }
-      },
-      enableGyroMotion: state.enableGyroMotion,
-      isOnLowPowerMode: state.isOnLowPowerMode,
-      nub: state.nub,
-      playedWords: [],
-      selectedFaceCount: state.selectedCubeFaces.count,
-      selectedWordIsValid: selectedWordString == state.finalWordString,
-      selectedWordString: selectedWordString
-    )
   }
 }
 

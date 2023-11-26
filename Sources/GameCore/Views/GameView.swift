@@ -128,9 +128,9 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.gameOver,
-          action: { .gameOver($0) },
+          self.store.scope(
+            state: \.destination?.gameOver, action: \.destination.gameOver.presented
+          ),
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -143,9 +143,10 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: \.destination),
-          state: \.upgradeInterstitial,
-          action: { .upgradeInterstitial($0) }
+          self.store.scope(
+            state: \.destination?.upgradeInterstitial,
+            action: \.destination.upgradeInterstitial.presented
+          )
         ) { store in
           UpgradeInterstitialView(store: store)
             .transition(.opacity)
@@ -179,15 +180,9 @@ public struct GameView<Content>: View where Content: View {
         state: \.bottomMenu,
         action: { .bottomMenu($0) }
       )
-      .alert(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.alert,
-        action: { .alert($0) }
-      )
+      .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
       .sheet(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.settings,
-        action: { .settings($0) }
+        store: self.store.scope(state: \.$destination.settings, action: \.destination.settings)
       ) { store in
         NavigationStack {
           SettingsView(store: store, navPresentationStyle: .modal)

@@ -239,9 +239,7 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.cubePreview,
-      action: { .cubePreview($0) },
+      store: self.store.scope(state: \.$destination.cubePreview, action: \.destination.cubePreview),
       content: CubePreviewView.init(store:)
     )
   }

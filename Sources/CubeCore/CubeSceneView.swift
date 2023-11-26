@@ -137,12 +137,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         LatticePoint.cubeIndices.forEach { index in
           let cube = CubeNode(
             letterGeometry: letterGeometry,
-            store:
-              store
-              .scope(
-                state: \.cubes[index],
-                action: absurd
-              )
+            store: store.scope(state: \.cubes[index], action: \.never)
           )
           cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
           self.gameCubeNode.addChildNode(cube)
@@ -452,5 +447,3 @@ extension SCNVector3 {
     sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
   }
 }
-
-private func absurd<A>(_: Never) -> A {}

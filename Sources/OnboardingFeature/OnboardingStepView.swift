@@ -268,12 +268,11 @@ struct OnboardingStepView: View {
             }
           } else if !self.viewStore.step.isFullscreen {
             if self.viewStore.isSubmitButtonVisible {
-              Button(
-                action: {
-                  self.viewStore.send(
-                    .game(.submitButtonTapped(reaction: nil)), animation: .default)
-                }
-              ) {
+              Button {
+                self.viewStore.send(
+                  .game(.submitButtonTapped(reaction: nil)), animation: .default
+                )
+              } label: {
                 Image(systemName: "hand.thumbsup")
                   .frame(width: 80, height: 80)
                   .background(
@@ -291,11 +290,9 @@ struct OnboardingStepView: View {
               }
             }
           } else if self.viewStore.isGetStartedButtonVisible {
-            Button(
-              action: {
-                self.viewStore.send(.getStartedButtonTapped, animation: .default)
-              }
-            ) {
+            Button {
+              self.viewStore.send(.getStartedButtonTapped, animation: .default)
+            } label: {
               HStack {
                 switch self.viewStore.presentationStyle {
                 case .demo:

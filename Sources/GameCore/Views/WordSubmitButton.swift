@@ -164,7 +164,7 @@ public struct WordSubmitButton: View {
         Spacer()
 
         ZStack {
-          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: { $0 }))
+          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: \.self))
 
           Button {
             self.viewStore.send(.submitButtonTapped, animation: .default)

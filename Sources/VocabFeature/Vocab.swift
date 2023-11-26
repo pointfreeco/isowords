@@ -130,7 +130,7 @@ public struct VocabView: View {
 
   public var body: some View {
     VStack {
-      IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
+      IfLetStore(self.store.scope(state: \.vocab, action: \.self)) { vocabStore in
         WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
           List {
             ForEach(vocabViewStore.words, id: \.letters) { word in
@@ -160,9 +160,10 @@ public struct VocabView: View {
       }
       .task { await self.store.send(.task).finish() }
       .sheet(
-        store: self.store.scope(state: \.$destination, action: \.destination),
-        state: \.cubePreview,
-        action: { .cubePreview($0) },
+        store: self.store.scope(
+          state: \.$destination.cubePreview,
+          action: \.destination.cubePreview
+        ),
         content: CubePreviewView.init(store:)
       )
     }

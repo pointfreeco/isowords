@@ -500,9 +500,10 @@ public struct GameOverView: View {
       }
 
       IfLetStore(
-        self.store.scope(state: \.$destination, action: \.destination),
-        state: \.upgradeInterstitial,
-        action: { .upgradeInterstitial($0) }
+        self.store.scope(
+          state: \.destination?.upgradeInterstitial,
+          action: \.destination.upgradeInterstitial.presented
+        )
       ) { store in
         UpgradeInterstitialView(store: store)
           .transition(.opacity)
