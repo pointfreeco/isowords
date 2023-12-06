@@ -380,7 +380,7 @@ public struct DailyChallengeView: View {
             }
             .transition(
               .scale(scale: 0)
-              .animation(.easeOut.delay(1))
+                .animation(.easeOut.delay(1))
             )
           }
         }

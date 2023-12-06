@@ -188,7 +188,7 @@ public struct GameOver {
         }
 
       case .destination(.dismiss)
-        where state.destination.is(\.some.notificationsAuthAlert):
+      where state.destination.is(\.some.notificationsAuthAlert):
         return .run { _ in
           try? await self.requestReviewAsync()
           await self.dismiss(animation: .default)

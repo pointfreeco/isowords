@@ -39,4 +39,3 @@ extension PastGame.State {
     self.opponentDisplayName = opponentPlayer.displayName
   }
 }
-

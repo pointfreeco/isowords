@@ -274,7 +274,7 @@ public struct AppReducer {
 
       case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
         if dailyChallenges.unlimited?.dailyChallenge.id
-            != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
+          != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
           return .run { [savedGames = state.home.savedGames] _ in

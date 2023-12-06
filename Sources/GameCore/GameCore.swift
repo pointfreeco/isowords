@@ -52,7 +52,7 @@ public struct Game {
     }
 
     let dismissGame: DismissEffect
-    
+
     public var body: some ReducerOf<Self> {
       Scope(state: \.gameOver, action: \.gameOver) {
         GameOver()
