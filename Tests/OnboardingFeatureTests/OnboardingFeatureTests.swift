@@ -39,7 +39,7 @@ class OnboardingFeatureTests: XCTestCase {
     await store.send(.task)
 
     await self.mainQueue.advance(by: .seconds(4))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step2_FindWordsOnCube
     }
 
@@ -71,10 +71,10 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
-      $0.game.cubes[.one][.two][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
+      $0.game.cubes.1.2.2.left.useCount += 1
+      $0.game.cubes.2.2.2.left.useCount += 1
+      $0.game.cubes.2.2.2.right.useCount += 1
+      $0.game.cubes.2.2.1.right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -96,7 +96,7 @@ class OnboardingFeatureTests: XCTestCase {
 
     // Wait a moment to automatically go to the next step
     await self.mainQueue.advance(by: .seconds(2))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step7_BiggerCube
     }
 
@@ -127,11 +127,11 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
-      $0.game.cubes[.one][.two][.two].top.useCount += 1
-      $0.game.cubes[.one][.two][.one].top.useCount += 1
-      $0.game.cubes[.two][.two][.two].top.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].top.useCount += 1
+      $0.game.cubes.1.2.2.top.useCount += 1
+      $0.game.cubes.1.2.1.top.useCount += 1
+      $0.game.cubes.2.2.2.top.useCount += 1
+      $0.game.cubes.2.2.1.right.useCount += 1
+      $0.game.cubes.2.2.1.top.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -154,7 +154,7 @@ class OnboardingFeatureTests: XCTestCase {
 
     // Wait a moment to automatically go to the next step
     await self.mainQueue.advance(by: .seconds(2))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step10_CubeDisappear
     }
 
@@ -192,12 +192,12 @@ class OnboardingFeatureTests: XCTestCase {
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
       $0.game.cubeStartedShakingAt = nil
-      $0.game.cubes[.one][.one][.two].left.useCount += 1
-      $0.game.cubes[.two][.one][.two].left.useCount += 1
-      $0.game.cubes[.two][.two][.two].right.useCount += 1
-      $0.game.cubes[.two][.one][.two].right.useCount += 1
-      $0.game.cubes[.two][.one][.one].right.useCount += 1
-      $0.game.cubes[.two][.two][.one].right.useCount += 1
+      $0.game.cubes.1.1.2.left.useCount += 1
+      $0.game.cubes.2.1.2.left.useCount += 1
+      $0.game.cubes.2.2.2.right.useCount += 1
+      $0.game.cubes.2.1.2.right.useCount += 1
+      $0.game.cubes.2.1.1.right.useCount += 1
+      $0.game.cubes.2.2.1.right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -220,7 +220,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await self.mainQueue.advance(by: .seconds(3))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step14_LettersRevealed
     }
 
@@ -250,10 +250,10 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = true
     }
     await store.send(.game(.submitButtonTapped(reaction: nil))) {
-      $0.game.cubes[.zero][.zero][.two].left.useCount += 1
-      $0.game.cubes[.one][.zero][.two].left.useCount += 1
-      $0.game.cubes[.two][.zero][.two].left.useCount += 1
-      $0.game.cubes[.two][.zero][.two].right.useCount += 1
+      $0.game.cubes.0.0.2.left.useCount += 1
+      $0.game.cubes.1.0.2.left.useCount += 1
+      $0.game.cubes.2.0.2.left.useCount += 1
+      $0.game.cubes.2.0.2.right.useCount += 1
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -274,7 +274,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await self.mainQueue.advance(by: .seconds(2))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step18_OneLastThing
     }
 
@@ -283,8 +283,8 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.game(.doubleTap(index: .init(x: .two, y: .two, z: .two))))
-    await store.receive(.game(.confirmRemoveCube(.init(x: .two, y: .two, z: .two)))) {
-      $0.game.cubes[.two][.two][.two].wasRemoved = true
+    await store.receive(\.game.confirmRemoveCube) {
+      $0.game.cubes.2.2.2.wasRemoved = true
       $0.game.moves.append(
         .init(
           playedAt: store.dependencies.mainRunLoop.now.date,
@@ -298,12 +298,12 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await self.mainQueue.advance(by: .seconds(2))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step21_PlayAGameYourself
     }
 
     await store.send(.getStartedButtonTapped)
-    await store.receive(.delegate(.getStarted))
+    await store.receive(\.delegate.getStarted)
 
     await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
@@ -331,13 +331,13 @@ class OnboardingFeatureTests: XCTestCase {
     await store.send(.task)
 
     await self.mainQueue.advance(by: .seconds(4))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step2_FindWordsOnCube
     }
 
     await store.send(.skipButtonTapped)
 
-    await store.receive(.delegate(.getStarted))
+    await store.receive(\.delegate.getStarted)
 
     await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
@@ -365,7 +365,7 @@ class OnboardingFeatureTests: XCTestCase {
     await store.send(.task)
 
     await self.mainQueue.advance(by: .seconds(4))
-    await store.receive(.delayedNextStep) {
+    await store.receive(\.delayedNextStep) {
       $0.step = .step2_FindWordsOnCube
     }
 
@@ -396,7 +396,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     await store.send(.getStartedButtonTapped)
-    await store.receive(.delegate(.getStarted))
+    await store.receive(\.delegate.getStarted)
 
     await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }

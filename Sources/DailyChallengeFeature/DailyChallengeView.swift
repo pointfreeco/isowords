@@ -9,14 +9,17 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct DailyChallengeReducer: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct DailyChallengeReducer {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case notificationsAuthAlert(NotificationsAuthAlert.State)
       case results(DailyChallengeResults.State)
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case alert(Alert)
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case results(DailyChallengeResults.Action)
@@ -24,11 +27,12 @@ public struct DailyChallengeReducer: Reducer {
       public enum Alert: Equatable {
       }
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+      Scope(state: \.notificationsAuthAlert, action: \.notificationsAuthAlert) {
         NotificationsAuthAlert()
       }
-      Scope(state: /State.results, action: /Action.results) {
+      Scope(state: \.results, action: \.results) {
         DailyChallengeResults()
       }
     }
@@ -56,24 +60,21 @@ public struct DailyChallengeReducer: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case delegate(Delegate)
     case destination(PresentationAction<Destination.Action>)
-    case fetchTodaysDailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
     case resultsButtonTapped
-    case startDailyChallengeResponse(TaskResult<InProgressGame>)
+    case startDailyChallengeResponse(Result<InProgressGame, Error>)
     case task
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
+    @CasePathable
     public enum Delegate: Equatable {
       case startGame(InProgressGame)
     }
-  }
-
-  public enum DestinationAction: Equatable {
-    case dailyChallengeResults(DailyChallengeResults.Action)
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -133,7 +134,7 @@ public struct DailyChallengeReducer: Reducer {
         return .run { send in
           await send(
             .startDailyChallengeResponse(
-              TaskResult {
+              Result {
                 try await startDailyChallengeAsync(
                   challenge,
                   apiClient: self.apiClient,
@@ -186,7 +187,7 @@ public struct DailyChallengeReducer: Reducer {
             group.addTask {
               await send(
                 .fetchTodaysDailyChallengeResponse(
-                  TaskResult {
+                  Result {
                     try await self.apiClient.apiRequest(
                       route: .dailyChallenge(.today(language: .en)),
                       as: [FetchTodaysDailyChallengeResponse].self
@@ -204,7 +205,7 @@ public struct DailyChallengeReducer: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -378,30 +379,23 @@ public struct DailyChallengeView: View {
               self.viewStore.send(.notificationButtonTapped, animation: .default)
             }
             .transition(
-              AnyTransition
-                .scale(scale: 0)
-                .animation(Animation.easeOut.delay(1))
+              .scale(scale: 0)
+              .animation(.easeOut.delay(1))
             )
           }
         }
       )
       .edgesIgnoringSafeArea(.bottom)
     }
-    .alert(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /DailyChallengeReducer.Destination.State.alert,
-      action: DailyChallengeReducer.Destination.Action.alert
-    )
+    .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /DailyChallengeReducer.Destination.State.results,
-      action: DailyChallengeReducer.Destination.Action.results,
+      store: self.store.scope(state: \.$destination.results, action: \.destination.results),
       destination: DailyChallengeResultsView.init(store:)
     )
     .notificationsAlert(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /DailyChallengeReducer.Destination.State.notificationsAuthAlert,
-      action: DailyChallengeReducer.Destination.Action.notificationsAuthAlert
+      store: self.store.scope(state: \.$destination, action: \.destination),
+      state: \.notificationsAuthAlert,
+      action: { .notificationsAuthAlert($0) }
     )
   }
 }
@@ -463,7 +457,7 @@ private struct ReminderBell: View {
         .font(.system(size: 20))
         .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
         .onAppear {
-          withAnimation(Animation.easeInOut(duration: 1).delay(2)) {
+          withAnimation(.easeInOut(duration: 1).delay(2)) {
             self.shake = true
           }
         }

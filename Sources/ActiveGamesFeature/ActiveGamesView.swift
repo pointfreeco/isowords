@@ -25,13 +25,13 @@ public struct ActiveGamesState: Equatable {
   }
 }
 
-public enum ActiveGamesAction: Equatable {
+public enum ActiveGamesAction {
   case dailyChallengeTapped
   case soloTapped
   case turnBasedGameMenuItemTapped(TurnBasedMenuAction)
   case turnBasedGameTapped(ComposableGameCenter.TurnBasedMatch.Id)
 
-  public enum TurnBasedMenuAction: Equatable {
+  public enum TurnBasedMenuAction {
     case deleteMatch(ComposableGameCenter.TurnBasedMatch.Id)
     case rematch(ComposableGameCenter.TurnBasedMatch.Id)
     case sendReminder(ComposableGameCenter.TurnBasedMatch.Id, otherPlayerIndex: Move.PlayerIndex)
@@ -193,16 +193,16 @@ public struct ActiveGamesView: View {
 extension InProgressGame {
   fileprivate var lastPlayedWord: PlayedWord? {
     self.moves
-      .last(where: { /Move.MoveType.playedWord ~= $0.type })
-      .flatMap { move -> PlayedWord? in
-        guard case let .playedWord(indices) = move.type
-        else { return nil }
-
-        return PlayedWord(
-          isYourWord: false,
-          reactions: move.reactions,
-          score: move.score,
-          word: self.cubes.string(from: indices))
+      .last(where: { $0.type.is(\.playedWord) })
+      .flatMap { move in
+        move.type.playedWord.map {
+          PlayedWord(
+            isYourWord: false,
+            reactions: move.reactions,
+            score: move.score,
+            word: self.cubes.string(from: $0)
+          )
+        }
       }
   }
 }

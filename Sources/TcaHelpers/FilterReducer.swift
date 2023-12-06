@@ -9,7 +9,8 @@ extension Reducer {
   }
 }
 
-public struct _FilterReducer<Base: Reducer>: Reducer {
+@Reducer
+public struct _FilterReducer<Base: Reducer> {
   @usableFromInline
   let base: Base
 

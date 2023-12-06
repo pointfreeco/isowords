@@ -49,8 +49,7 @@ public func verify(
     let isValidMove =
       foundWord.count >= 3
       && previousMoves.allSatisfy {
-        guard case let .playedWord(faces) = $0.type else { return true }
-        return puzzle.string(from: faces) != foundWord
+        $0.type.playedWord.map(puzzle.string(from:)) != foundWord
       }
       && isValidWord(foundWord)
       && score(foundWord) == move.score

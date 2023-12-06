@@ -3,16 +3,20 @@ import CubePreview
 import LocalDatabaseClient
 import SwiftUI
 
+@Reducer
 public struct Vocab: Reducer {
+  @Reducer
   public struct Destination: Reducer {
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case cubePreview(CubePreview.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+      Scope(state: \.cubePreview, action: \.cubePreview) {
         CubePreview()
       }
     }
@@ -39,11 +43,11 @@ public struct Vocab: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case destination(PresentationAction<Destination.Action>)
-    case gamesResponse(TaskResult<State.GamesResponse>)
+    case gamesResponse(Result<State.GamesResponse, Error>)
     case task
-    case vocabResponse(TaskResult<LocalDatabaseClient.Vocab>)
+    case vocabResponse(Result<LocalDatabaseClient.Vocab, Error>)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
   }
 
@@ -86,7 +90,7 @@ public struct Vocab: Reducer {
 
       case .task:
         return .run { send in
-          await send(.vocabResponse(TaskResult { try await self.database.fetchVocab() }))
+          await send(.vocabResponse(Result { try await self.database.fetchVocab() }))
         }
 
       case let .vocabResponse(.success(vocab)):
@@ -100,7 +104,7 @@ public struct Vocab: Reducer {
         return .run { send in
           await send(
             .gamesResponse(
-              TaskResult {
+              Result {
                 .init(
                   games: try await self.database.fetchGamesForWord(word.letters),
                   word: word.letters
@@ -111,7 +115,7 @@ public struct Vocab: Reducer {
         }
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -126,7 +130,7 @@ public struct VocabView: View {
 
   public var body: some View {
     VStack {
-      IfLetStore(self.store.scope(state: \.vocab, action: { $0 })) { vocabStore in
+      IfLetStore(self.store.scope(state: \.vocab, action: \.self)) { vocabStore in
         WithViewStore(vocabStore, observe: { $0 }) { vocabViewStore in
           List {
             ForEach(vocabViewStore.words, id: \.letters) { word in
@@ -156,9 +160,10 @@ public struct VocabView: View {
       }
       .task { await self.store.send(.task).finish() }
       .sheet(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Vocab.Destination.State.cubePreview,
-        action: Vocab.Destination.Action.cubePreview,
+        store: self.store.scope(
+          state: \.$destination.cubePreview,
+          action: \.destination.cubePreview
+        ),
         content: CubePreviewView.init(store:)
       )
     }

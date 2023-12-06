@@ -7,7 +7,8 @@ import SharedModels
 import SwiftUI
 import UIApplicationClient
 
-public struct Trailer: Reducer {
+@Reducer
+public struct Trailer {
   public struct State: Equatable {
     var game: Game.State
     @BindingState var nub: CubeSceneView.ViewState.NubState
@@ -35,9 +36,13 @@ public struct Trailer: Reducer {
         )
       )
     }
+
+    fileprivate var cubeScene: CubeSceneView.ViewState {
+      .init(game: self.game, nub: self.nub)
+    }
   }
 
-  public enum Action: BindableAction, Equatable {
+  public enum Action: BindableAction {
     case binding(BindingAction<State>)
     case game(Game.Action)
     case task
@@ -49,7 +54,7 @@ public struct Trailer: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.game, action: /Action.game) {
+    Scope(state: \.game, action: \.game) {
       Game().transformDependency(\.self) {
         $0.apiClient = .noop
         $0.applicationClient = .noop
@@ -241,7 +246,7 @@ public struct TrailerView: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.game.wordSubmitButtonFeature,
-                action: { .game(.wordSubmitButton($0)) }
+                action: \.game.wordSubmitButton
               )
             )
             .transition(
@@ -254,22 +259,17 @@ public struct TrailerView: View {
 
           WordListView(
             isLeftToRight: true,
-            store: self.store.scope(state: \.game, action: { .game($0) })
+            store: self.store.scope(state: \.game, action: \.game)
           )
         }
         .adaptivePadding(.top, .grid(18))
         .adaptivePadding(.bottom, .grid(2))
 
-        CubeView(
-          store: self.store.scope(
-            state: { CubeSceneView.ViewState(game: $0.game, nub: $0.nub) },
-            action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
+        CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
+          .adaptivePadding(
+            self.deviceState.idiom == .pad ? .horizontal : [],
+            .grid(30)
           )
-        )
-        .adaptivePadding(
-          self.deviceState.idiom == .pad ? .horizontal : [],
-          .grid(30)
-        )
       }
       .background(
         BloomBackground(

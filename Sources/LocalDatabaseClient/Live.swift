@@ -54,12 +54,11 @@ extension Sqlite {
     )
     .compactMap { row -> LocalDatabaseClient.Game? in
       try zip(
-        (/Sqlite.Datatype.integer).extract(from: row[0]).map(Int.init),
-        (/Sqlite.Datatype.text).extract(from: row[1])
-          .map { try jsonDecoder.decode(CompletedGame.self, from: Data($0.utf8)) },
-        (/Sqlite.Datatype.text).extract(from: row[2]).flatMap(GameMode.init(rawValue:)),
-        (/Sqlite.Datatype.integer).extract(from: row[3]).map(Int.init),
-        (/Sqlite.Datatype.real).extract(from: row[4]).map(Date.init(timeIntervalSince1970:))
+        row[0].integer.map(Int.init),
+        row[1].text.map { try jsonDecoder.decode(CompletedGame.self, from: Data($0.utf8)) },
+        row[2].text.flatMap(GameMode.init(rawValue:)),
+        row[3].integer.map(Int.init),
+        row[4].real.map(Date.init(timeIntervalSince1970:))
       )
       .map(LocalDatabaseClient.Game.init(id:completedGame:gameMode:secondsPlayed:startedAt:))
     }
@@ -73,19 +72,14 @@ extension Sqlite {
       WHERE "type" = 'playedWord'
       """
     )
-    let averageWordLength = (/Sqlite.Datatype.real)
-      .extract(from: averageWordLengthRows[0][0])
+    let averageWordLength = averageWordLengthRows[0][0].real
 
     let gamesPlayedRows = try self.run(
       """
       SELECT COUNT(*) FROM "games"
       """
     )
-    let gamesPlayed =
-      (/Sqlite.Datatype.integer)
-      .extract(from: gamesPlayedRows[0][0])
-      .map(Int.init)
-      ?? 0
+    let gamesPlayed = gamesPlayedRows[0][0].integer.map(Int.init) ?? 0
 
     let highestScoringWordRows = try self.run(
       """
@@ -95,8 +89,8 @@ extension Sqlite {
       """
     )
     let highestScoringWord = zip(
-      (/Sqlite.Datatype.text).extract(from: highestScoringWordRows[0][0]),
-      (/Sqlite.Datatype.integer).extract(from: highestScoringWordRows[0][1]).map(Int.init)
+      highestScoringWordRows[0][0].text,
+      highestScoringWordRows[0][1].integer.map(Int.init)
     )
     .map(LocalDatabaseClient.Stats.Word.init(letters:score:))
 
@@ -115,10 +109,7 @@ extension Sqlite {
       return rows
         .first?
         .first
-        .flatMap {
-          (/Sqlite.Datatype.integer).extract(from: $0)
-            .map(Int.init)
-        }
+        .flatMap { $0.integer.map(Int.init) }
     }
 
     let highScoreTimed = try highScore(gameMode: .timed)
@@ -136,19 +127,14 @@ extension Sqlite {
     let longestWord =
       longestWordRows.isEmpty
       ? nil
-      : (/Sqlite.Datatype.text)
-        .extract(from: longestWordRows[0][0])
+      : longestWordRows[0][0].text
 
     let secondsPlayedRows = try self.run(
       """
       SELECT SUM("secondsPlayed") FROM "games"
       """
     )
-    let secondsPlayed =
-      (/Sqlite.Datatype.integer)
-      .extract(from: secondsPlayedRows[0][0])
-      .map(Int.init)
-      ?? 0
+    let secondsPlayed = secondsPlayedRows[0][0].integer.map(Int.init) ?? 0
 
     let wordsFoundRows = try self.run(
       """
@@ -157,11 +143,7 @@ extension Sqlite {
       WHERE "type" = 'playedWord'
       """
     )
-    let wordsFound =
-      (/Sqlite.Datatype.integer)
-      .extract(from: wordsFoundRows[0][0])
-      .map(Int.init)
-      ?? 0
+    let wordsFound = wordsFoundRows[0][0].integer.map(Int.init) ?? 0
 
     return LocalDatabaseClient.Stats(
       averageWordLength: averageWordLength,
@@ -190,9 +172,9 @@ extension Sqlite {
         vocabRows
         .compactMap { row in
           zip(
-            (/Sqlite.Datatype.text).extract(from: row[0]),
-            (/Sqlite.Datatype.integer).extract(from: row[1]).map(Int.init),
-            (/Sqlite.Datatype.integer).extract(from: row[2]).map(Int.init)
+            row[0].text,
+            row[1].integer.map(Int.init),
+            row[2].integer.map(Int.init)
           )
           .map(LocalDatabaseClient.Vocab.Word.init(letters:playCount:score:))
         }
@@ -239,7 +221,7 @@ extension Sqlite {
     guard
       let firstRow = rows.first,
       let firstColumn = firstRow.first,
-      let count = (/Sqlite.Datatype.integer).extract(from: firstColumn)
+      let count = firstColumn.integer
     else {
       throw PlayedGamesCountError()
     }

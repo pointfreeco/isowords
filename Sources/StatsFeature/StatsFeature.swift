@@ -4,16 +4,20 @@ import Styleguide
 import SwiftUI
 import VocabFeature
 
-public struct Stats: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct Stats {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case vocab(Vocab.State)
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case vocab(Vocab.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.vocab, action: /Action.vocab) {
+      Scope(state: \.vocab, action: \.vocab) {
         Vocab()
       }
     }
@@ -56,10 +60,10 @@ public struct Stats: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case backButtonTapped
     case destination(PresentationAction<Destination.Action>)
-    case statsResponse(TaskResult<LocalDatabaseClient.Stats>)
+    case statsResponse(Result<LocalDatabaseClient.Stats, Error>)
     case task
     case vocabButtonTapped
   }
@@ -94,7 +98,7 @@ public struct Stats: Reducer {
 
       case .task:
         return .run { send in
-          await send(.statsResponse(TaskResult { try await self.database.fetchStats() }))
+          await send(.statsResponse(Result { try await self.database.fetchStats() }))
         }
 
       case .vocabButtonTapped:
@@ -106,7 +110,7 @@ public struct Stats: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -222,9 +226,7 @@ public struct StatsView: View {
     }
     .task { await self.viewStore.send(.task).finish() }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Stats.Destination.State.vocab,
-      action: Stats.Destination.Action.vocab,
+      store: self.store.scope(state: \.$destination.vocab, action: \.destination.vocab),
       destination: VocabView.init(store:)
     )
     .navigationStyle(title: Text("Stats"))

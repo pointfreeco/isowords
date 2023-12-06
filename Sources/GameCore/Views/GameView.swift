@@ -29,7 +29,7 @@ public struct GameView<Content>: View where Content: View {
 
     init(state: Game.State) {
       self.isAnimationReduced = state.isAnimationReduced
-      self.isDailyChallenge = state.dailyChallengeId != nil
+      self.isDailyChallenge = state.gameContext.is(\.dailyChallenge)
       self.isGameLoaded = state.isGameLoaded
       self.isNavVisible = state.isNavVisible
       self.isTrayVisible = state.isTrayVisible
@@ -89,7 +89,7 @@ public struct GameView<Content>: View where Content: View {
             WordSubmitButton(
               store: self.store.scope(
                 state: \.wordSubmitButtonFeature,
-                action: { .wordSubmitButton($0) }
+                action: \.wordSubmitButton
               )
             )
             .ignoresSafeArea()
@@ -103,7 +103,7 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: { .activeGames($0) }),
+            store: self.store.scope(state: \.activeGames, action: \.activeGames),
             showMenuItems: false
           )
           .adaptivePadding(.vertical, 8)
@@ -128,9 +128,9 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(0)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /Game.Destination.State.gameOver,
-          action: Game.Destination.Action.gameOver,
+          self.store.scope(
+            state: \.destination?.gameOver, action: \.destination.gameOver.presented
+          ),
           then: GameOverView.init(store:)
         )
         .background(Color.adaptiveWhite.ignoresSafeArea())
@@ -143,9 +143,10 @@ public struct GameView<Content>: View where Content: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /Game.Destination.State.upgradeInterstitial,
-          action: Game.Destination.Action.upgradeInterstitial
+          self.store.scope(
+            state: \.destination?.upgradeInterstitial,
+            action: \.destination.upgradeInterstitial.presented
+          )
         ) { store in
           UpgradeInterstitialView(store: store)
             .transition(.opacity)
@@ -175,19 +176,13 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Game.Destination.State.bottomMenu,
-        action: Game.Destination.Action.bottomMenu
+        store: self.store.scope(state: \.$destination, action: \.destination),
+        state: \.bottomMenu,
+        action: { .bottomMenu($0) }
       )
-      .alert(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Game.Destination.State.alert,
-        action: Game.Destination.Action.alert
-      )
+      .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
       .sheet(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Game.Destination.State.settings,
-        action: Game.Destination.Action.settings
+        store: self.store.scope(state: \.$destination.settings, action: \.destination.settings)
       ) { store in
         NavigationStack {
           SettingsView(store: store, navPresentationStyle: .modal)

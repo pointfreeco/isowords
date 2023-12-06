@@ -2,7 +2,8 @@ import ComposableArchitecture
 import GameOverFeature
 import SharedModels
 
-public struct GameOverLogic: Reducer {
+@Reducer
+public struct GameOverLogic {
   @Dependency(\.database.saveGame) var saveGame
 
   public var body: some ReducerOf<Game> {
@@ -21,8 +22,8 @@ public struct GameOverLogic: Reducer {
 
       guard
         !state.isGameOver
-          && action == .destination(.presented(.alert(.forfeitButtonTapped)))
-          || action == .destination(.presented(.bottomMenu(.endGameButtonTapped)))
+          && action.is(\.destination.alert.forfeitButtonTapped)
+          || action.is(\.destination.bottomMenu.endGameButtonTapped)
           || timesUp
           || allCubesRemoved
       else { return .none }
@@ -41,8 +42,7 @@ public struct GameOverLogic: Reducer {
         }
 
       case let .turnBased(turnBasedMatch):
-        state.$destination[case: /Game.Destination.State.gameOver]?.turnBasedContext =
-          turnBasedMatch
+        state.$destination[case: \.gameOver]?.turnBasedContext = turnBasedMatch
         return .none
       }
     }

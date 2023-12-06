@@ -8,7 +8,8 @@ import SwiftUI
 import Tagged
 import UIApplicationClient
 
-public struct ChangelogReducer: Reducer {
+@Reducer
+public struct ChangelogReducer {
   public struct State: Equatable {
     public var changelog: IdentifiedArrayOf<Change.State>
     public var currentBuild: Build.Number
@@ -26,11 +27,19 @@ public struct ChangelogReducer: Reducer {
       self.isRequestInFlight = isRequestInFlight
       self.isUpdateButtonVisible = isUpdateButtonVisible
     }
+
+    public var whatsNew: IdentifiedArrayOf<Change.State> {
+      self.changelog.filter { $0.change.build >= self.currentBuild }
+    }
+
+    public var pastUpdates: IdentifiedArrayOf<Change.State> {
+      self.changelog.filter { $0.change.build < self.currentBuild }
+    }
   }
 
-  public enum Action: Equatable {
-    case change(id: Build.Number, action: Change.Action)
-    case changelogResponse(TaskResult<Changelog>)
+  public enum Action {
+    case changelog(IdentifiedActionOf<Change>)
+    case changelogResponse(Result<Changelog, Error>)
     case task
     case updateButtonTapped
   }
@@ -45,7 +54,7 @@ public struct ChangelogReducer: Reducer {
   public var body: some ReducerOf<Self> {
     Reduce { state, action in
       switch action {
-      case .change:
+      case .changelog:
         return .none
 
       case let .changelogResponse(.success(changelog)):
@@ -79,7 +88,7 @@ public struct ChangelogReducer: Reducer {
         return .run { send in
           await send(
             .changelogResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .changelog(build: self.buildNumber()),
                   as: Changelog.self
@@ -98,7 +107,7 @@ public struct ChangelogReducer: Reducer {
         }
       }
     }
-    .forEach(\.changelog, action: /Action.change(id:action:)) {
+    .forEach(\.changelog, action: \.changelog) {
       Change()
     }
   }
@@ -140,25 +149,15 @@ public struct ChangelogView: View {
           Text("What's new?")
             .font(.largeTitle)
 
-          ForEachStore(
-            self.store.scope(
-              state: { $0.changelog.filter { $0.change.build >= viewStore.currentBuild } },
-              action: { .change(id: $0, action: $1) }
-            )
-          ) {
-            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+          ForEachStore(self.store.scope(state: \.whatsNew, action: \.changelog)) { store in
+            ChangeView(currentBuild: viewStore.currentBuild, store: store)
           }
 
           Text("Past updates")
             .font(.largeTitle)
 
-          ForEachStore(
-            self.store.scope(
-              state: { $0.changelog.filter { $0.change.build < viewStore.currentBuild } },
-              action: { .change(id: $0, action: $1) }
-            )
-          ) {
-            ChangeView(currentBuild: viewStore.currentBuild, store: $0)
+          ForEachStore(self.store.scope(state: \.pastUpdates, action: \.changelog)) { store in
+            ChangeView(currentBuild: viewStore.currentBuild, store: store)
           }
         }
         .padding()
@@ -182,7 +181,7 @@ public struct ChangelogView: View {
             $0.apiClient = {
               var apiClient = ApiClient.noop
               apiClient.override(
-                routeCase: /ServerRoute.Api.Route.changelog(build:),
+                routeCase: \.changelog,
                 withResponse: { _ in
                   try await OK(
                     update(Changelog.current) {

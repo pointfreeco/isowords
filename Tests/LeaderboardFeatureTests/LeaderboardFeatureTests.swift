@@ -109,12 +109,12 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.vocab.isLoading = true
       $0.vocab.resultEnvelope = .placeholder
     }
-    await store.receive(.vocab(.resultsResponse(.success(resultsEnvelope)))) {
+    await store.receive(\.vocab.resultsResponse.success) {
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = resultsEnvelope
     }
     await store.send(.vocab(.tappedRow(id: wordId.rawValue)))
-    await store.receive(.fetchWordResponse(.success(fetchWordResponse))) {
+    await store.receive(\.fetchWordResponse.success) {
       $0.destination = .cubePreview(
         .init(
           cubes: .mock,

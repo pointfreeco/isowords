@@ -29,16 +29,20 @@ public enum LeaderboardScope: CaseIterable, Equatable {
   }
 }
 
-public struct Leaderboard: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct Leaderboard {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case cubePreview(CubePreview.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.cubePreview, action: /Action.cubePreview) {
+      Scope(state: \.cubePreview, action: \.cubePreview) {
         CubePreview()
       }
     }
@@ -63,9 +67,9 @@ public struct Leaderboard: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case destination(PresentationAction<Destination.Action>)
-    case fetchWordResponse(TaskResult<FetchVocabWordResponse>)
+    case fetchWordResponse(Result<FetchVocabWordResponse, Error>)
     case scopeTapped(LeaderboardScope)
     case solo(LeaderboardResults<TimeScope>.Action)
     case vocab(LeaderboardResults<TimeScope>.Action)
@@ -121,7 +125,7 @@ public struct Leaderboard: Reducer {
         return .run { send in
           await send(
             .fetchWordResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
                   as: FetchVocabWordResponse.self
@@ -136,14 +140,14 @@ public struct Leaderboard: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
 
-    Scope(state: \.solo, action: /Action.solo) {
+    Scope(state: \.solo, action: \.solo) {
       LeaderboardResults(loadResults: self.apiClient.loadSoloResults(gameMode:timeScope:))
     }
-    Scope(state: \.vocab, action: /Action.vocab) {
+    Scope(state: \.vocab, action: \.vocab) {
       LeaderboardResults(loadResults: self.apiClient.loadVocabResults(gameMode:timeScope:))
     }
   }
@@ -180,7 +184,7 @@ public struct LeaderboardView: View {
         switch self.viewStore.state.scope {
         case .games:
           LeaderboardResultsView(
-            store: self.store.scope(state: \.solo, action: { .solo($0) }),
+            store: self.store.scope(state: \.solo, action: \.solo),
             title: Text("Solo"),
             subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
@@ -200,7 +204,7 @@ public struct LeaderboardView: View {
 
         case .vocab:
           LeaderboardResultsView(
-            store: self.store.scope(state: \.vocab, action: { .vocab($0) }),
+            store: self.store.scope(state: \.vocab, action: \.vocab),
             title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },
@@ -235,9 +239,7 @@ public struct LeaderboardView: View {
       title: Text("Leaderboards")
     )
     .sheet(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Leaderboard.Destination.State.cubePreview,
-      action: Leaderboard.Destination.Action.cubePreview,
+      store: self.store.scope(state: \.$destination.cubePreview, action: \.destination.cubePreview),
       content: CubePreviewView.init(store:)
     )
   }

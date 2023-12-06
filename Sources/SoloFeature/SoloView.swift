@@ -6,7 +6,8 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct Solo: Reducer {
+@Reducer
+public struct Solo {
   public struct State: Equatable {
     var inProgressGame: InProgressGame?
 
@@ -15,9 +16,9 @@ public struct Solo: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case gameButtonTapped(GameMode)
-    case savedGamesLoaded(TaskResult<SavedGamesState>)
+    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case task
   }
 
@@ -40,7 +41,7 @@ public struct Solo: Reducer {
 
       case .task:
         return .run { send in
-          await send(.savedGamesLoaded(TaskResult { try await self.fileClient.loadSavedGames() }))
+          await send(.savedGamesLoaded(Result { try await self.fileClient.loadSavedGames() }))
         }
       }
     }

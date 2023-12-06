@@ -40,7 +40,8 @@ public struct DeveloperSettings: Equatable {
   }
 }
 
-public struct Settings: Reducer {
+@Reducer
+public struct Settings {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var buildNumber: Build.Number?
@@ -80,25 +81,25 @@ public struct Settings: Reducer {
     }
 
     public var isFullGamePurchased: Bool {
-      return self.fullGamePurchasedAt != nil
+      self.fullGamePurchasedAt != nil
     }
   }
 
-  public enum Action: BindableAction, Equatable {
+  public enum Action: BindableAction {
     case alert(PresentationAction<Alert>)
     case binding(BindingAction<State>)
-    case currentPlayerRefreshed(TaskResult<CurrentPlayerEnvelope>)
+    case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, Error>)
     case didBecomeActive
     case leaveUsAReviewButtonTapped
     case onDismiss
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case productsResponse(TaskResult<StoreKitClient.ProductsResponse>)
+    case productsResponse(Result<StoreKitClient.ProductsResponse, Error>)
     case reportABugButtonTapped
     case restoreButtonTapped
     case stats(Stats.Action)
     case tappedProduct(StoreKitClient.Product)
     case task
-    case userNotificationAuthorizationResponse(TaskResult<Bool>)
+    case userNotificationAuthorizationResponse(Result<Bool, Error>)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
     public enum Alert: Equatable {
@@ -151,7 +152,7 @@ public struct Settings: Reducer {
               return .run { send in
                 await send(
                   .userNotificationAuthorizationResponse(
-                    TaskResult {
+                    Result {
                       try await self.userNotifications.requestAuthorization([.alert, .sound])
                     }
                   ),
@@ -192,7 +193,7 @@ public struct Settings: Reducer {
               )
               await send(
                 .currentPlayerRefreshed(
-                  TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                  Result { try await self.apiClient.refreshCurrentPlayer() }
                 )
               )
             }
@@ -213,7 +214,7 @@ public struct Settings: Reducer {
               )
               await send(
                 .currentPlayerRefreshed(
-                  TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                  Result { try await self.apiClient.refreshCurrentPlayer() }
                 )
               )
             }
@@ -298,7 +299,7 @@ public struct Settings: Reducer {
           return .run { send in
             await send(
               .currentPlayerRefreshed(
-                TaskResult { try await self.apiClient.refreshCurrentPlayer() }
+                Result { try await self.apiClient.refreshCurrentPlayer() }
               ),
               animation: .default
             )
@@ -410,7 +411,7 @@ public struct Settings: Reducer {
                 shouldFetchProducts
                 ? send(
                   .productsResponse(
-                    TaskResult {
+                    Result {
                       try await self.storeKit.fetchProducts([
                         self.serverConfig().productIdentifiers.fullGame
                       ])
@@ -453,7 +454,7 @@ public struct Settings: Reducer {
         }
       }
     }
-    .ifLet(\.$alert, action: /Action.alert)
+    .ifLet(\.$alert, action: \.alert)
     .onChange(of: \.userSettings) { _, userSettings in
       Reduce { _, _ in
         enum CancelID { case saveDebounce }
@@ -463,7 +464,7 @@ public struct Settings: Reducer {
       }
     }
 
-    Scope(state: \.stats, action: /Action.stats) {
+    Scope(state: \.stats, action: \.stats) {
       Stats()
     }
   }

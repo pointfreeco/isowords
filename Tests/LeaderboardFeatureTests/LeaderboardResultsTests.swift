@@ -22,7 +22,7 @@ class LeaderboardTests: XCTestCase {
       $0.isLoading = true
       $0.resultEnvelope = .placeholder
     }
-    await store.receive(.resultsResponse(.success(timedResults))) {
+    await store.receive(\.resultsResponse.success) {
       $0.isLoading = false
       $0.resultEnvelope = timedResults
     }
@@ -39,7 +39,7 @@ class LeaderboardTests: XCTestCase {
       $0.gameMode = .unlimited
       $0.isLoading = true
     }
-    await store.receive(.resultsResponse(.success(untimedResults))) {
+    await store.receive(\.resultsResponse.success) {
       $0.isLoading = false
       $0.resultEnvelope = untimedResults
     }
@@ -60,25 +60,26 @@ class LeaderboardTests: XCTestCase {
       $0.isTimeScopeMenuVisible = false
       $0.timeScope = .lastDay
     }
-    await store.receive(.resultsResponse(.success(timedResults))) {
+    await store.receive(\.resultsResponse.success) {
       $0.isLoading = false
       $0.resultEnvelope = timedResults
     }
   }
 
   func tetsUnhappyPath() async {
-    struct SomeError: Error {}
-
     let store = TestStore(
-      initialState: LeaderboardResults<TimeScope>.State(timeScope: TimeScope.lastWeek)
+      initialState: LeaderboardResults<TimeScope>.State(timeScope: .lastWeek)
     ) {
-      LeaderboardResults<TimeScope>(loadResults: { _, _ in throw SomeError() })
+      LeaderboardResults<TimeScope>(loadResults: { _, _ in
+        struct SomeError: Error {}
+        throw SomeError()
+      })
     }
 
     await store.send(.task) {
       $0.isLoading = true
     }
-    await store.receive(.resultsResponse(.failure(ApiError(error: SomeError())))) {
+    await store.receive(\.resultsResponse.failure) {
       $0.isLoading = false
       $0.resultEnvelope = nil
     }

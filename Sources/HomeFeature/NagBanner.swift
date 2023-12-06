@@ -2,7 +2,8 @@ import ComposableArchitecture
 import SwiftUI
 import UpgradeInterstitialFeature
 
-public struct NagBanner: Reducer {
+@Reducer
+public struct NagBanner {
   public struct State: Equatable {
     @PresentationState var upgradeInterstitial: UpgradeInterstitial.State? = nil
 
@@ -11,7 +12,7 @@ public struct NagBanner: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case tapped
     case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)
   }
@@ -36,7 +37,7 @@ public struct NagBanner: Reducer {
         return .none
       }
     }
-    .ifLet(\.$upgradeInterstitial, action: /Action.upgradeInterstitial) {
+    .ifLet(\.$upgradeInterstitial, action: \.upgradeInterstitial) {
       UpgradeInterstitial()
     }
   }
@@ -68,7 +69,7 @@ public struct NagBannerView: View {
       .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
     .sheet(
-      store: self.store.scope(state: \.$upgradeInterstitial, action: { .upgradeInterstitial($0) }),
+      store: self.store.scope(state: \.$upgradeInterstitial, action: \.upgradeInterstitial),
       content: UpgradeInterstitialView.init(store:)
     )
   }

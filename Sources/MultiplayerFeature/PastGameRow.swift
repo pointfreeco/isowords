@@ -3,7 +3,8 @@ import ComposableGameCenter
 import SwiftUI
 import Tagged
 
-public struct PastGame: Reducer {
+@Reducer
+public struct PastGame {
   public struct State: Equatable, Identifiable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var challengeeDisplayName: String
@@ -34,18 +35,19 @@ public struct PastGame: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case alert(PresentationAction<Alert>)
     case delegate(Delegate)
-    case matchResponse(TaskResult<TurnBasedMatch>)
+    case matchResponse(Result<TurnBasedMatch, Error>)
     case rematchButtonTapped
-    case rematchResponse(TaskResult<TurnBasedMatch>)
+    case rematchResponse(Result<TurnBasedMatch, Error>)
     case tappedRow
 
     public enum Alert: Equatable {
     }
 
-    public enum Delegate: Equatable {
+    @CasePathable
+    public enum Delegate {
       case openMatch(TurnBasedMatch)
     }
   }
@@ -54,7 +56,7 @@ public struct PastGame: Reducer {
 
   public var body: some ReducerOf<Self> {
     Reduce(self.core)
-      .ifLet(\.$alert, action: /Action.alert)
+      .ifLet(\.$alert, action: \.alert)
   }
 
   public func core(into state: inout State, action: Action) -> EffectOf<Self> {
@@ -91,7 +93,7 @@ public struct PastGame: Reducer {
       return .run { [matchId = state.matchId] send in
         await send(
           .rematchResponse(
-            TaskResult { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
+            Result { try await self.gameCenter.turnBasedMatch.rematch(matchId) }
           )
         )
       }
@@ -100,7 +102,7 @@ public struct PastGame: Reducer {
       return .run { [matchId = state.matchId] send in
         await send(
           .matchResponse(
-            TaskResult { try await self.gameCenter.turnBasedMatch.load(matchId) }
+            Result { try await self.gameCenter.turnBasedMatch.load(matchId) }
           )
         )
       }
@@ -167,7 +169,7 @@ struct PastGameRow: View {
 
       self.rematchButton(matchId: self.viewStore.matchId)
     }
-    .alert(store: self.store.scope(state: \.$alert, action: { .alert($0) }))
+    .alert(store: self.store.scope(state: \.$alert, action: \.alert))
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
@@ -193,46 +195,6 @@ struct PastGameRow: View {
     }
     .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
     .continuousCornerRadius(999)
-  }
-}
-
-extension PastGame.State {
-  init?(
-    turnBasedMatch match: TurnBasedMatch,
-    localPlayerId: Player.Id?
-  ) {
-    guard match.status == .ended
-    else { return nil }
-
-    guard let matchData = match.matchData?.turnBasedMatchData
-    else { return nil }
-
-    guard let endDate = matchData.moves.last?.playedAt
-    else { return nil }
-
-    guard
-      match.participants.count == 2,
-      let firstIndex = matchData.moves.first?.playerIndex?.rawValue,
-      let challengerPlayer = match.participants[firstIndex].player,
-      let challengeePlayer = match.participants[firstIndex == 0 ? 1 : 0].player
-    else { return nil }
-
-    guard
-      let opponentIndex = match.participants
-        .firstIndex(where: { $0.player?.gamePlayerId != localPlayerId })
-    else { return nil }
-
-    guard
-      let opponentPlayer = match.participants[opponentIndex].player
-    else { return nil }
-
-    self.challengeeDisplayName = challengeePlayer.displayName
-    self.challengeeScore = matchData.score(forPlayerIndex: 1)
-    self.challengerDisplayName = challengerPlayer.displayName
-    self.challengerScore = matchData.score(forPlayerIndex: 0)
-    self.endDate = endDate
-    self.matchId = match.matchId
-    self.opponentDisplayName = opponentPlayer.displayName
   }
 }
 

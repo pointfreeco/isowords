@@ -1,7 +1,8 @@
 import ActiveGamesFeature
 import ComposableArchitecture
 
-public struct ActiveGamesTray: Reducer {
+@Reducer
+public struct ActiveGamesTray {
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
@@ -67,7 +68,7 @@ public struct ActiveGamesTray: Reducer {
         group.addTask {
           await send(
             .matchesLoaded(
-              TaskResult { try await self.gameCenter.turnBasedMatch.loadMatches() }
+              Result { try await self.gameCenter.turnBasedMatch.loadMatches() }
             ),
             animation: .default
           )
@@ -76,7 +77,7 @@ public struct ActiveGamesTray: Reducer {
         group.addTask {
           await send(
             .savedGamesLoaded(
-              TaskResult { try await self.fileClient.loadSavedGames() }
+              Result { try await self.fileClient.loadSavedGames() }
             ),
             animation: .default
           )

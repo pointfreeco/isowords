@@ -1,3 +1,6 @@
+import CasePaths
+
+@CasePathable
 public enum SubmitGameResponse: Codable, Equatable {
   case dailyChallenge(DailyChallengeResult)
   case shared(SharedGameResponse)

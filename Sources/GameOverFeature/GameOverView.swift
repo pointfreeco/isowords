@@ -15,21 +15,25 @@ import SwiftUIHelpers
 import UpgradeInterstitialFeature
 import UserDefaultsClient
 
-public struct GameOver: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct GameOver {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case notificationsAuthAlert(NotificationsAuthAlert.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.notificationsAuthAlert, action: /Action.notificationsAuthAlert) {
+      Scope(state: \.notificationsAuthAlert, action: \.notificationsAuthAlert) {
         NotificationsAuthAlert()
       }
-      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      Scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial) {
         UpgradeInterstitial()
       }
     }
@@ -74,15 +78,17 @@ public struct GameOver: Reducer {
       self.userNotificationSettings = userNotificationSettings
     }
 
+    @CasePathable
+    @dynamicMemberLookup
     public enum RankSummary: Equatable {
       case dailyChallenge(DailyChallengeResult)
       case leaderboard([TimeScope: LeaderboardScoreResult.Rank])
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case closeButtonTapped
-    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
     case delayedOnAppear
     case delayedShowUpgradeInterstitial
     case delegate(Delegate)
@@ -90,9 +96,9 @@ public struct GameOver: Reducer {
     case gameButtonTapped(GameMode)
     case rematchButtonTapped
     case showConfetti
-    case startDailyChallengeResponse(TaskResult<InProgressGame>)
+    case startDailyChallengeResponse(Result<InProgressGame, Error>)
     case task
-    case submitGameResponse(TaskResult<SubmitGameResponse>)
+    case submitGameResponse(Result<SubmitGameResponse, Error>)
     case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
 
     public enum Delegate: Equatable {
@@ -161,7 +167,7 @@ public struct GameOver: Reducer {
           return .run { send in
             await send(
               .startDailyChallengeResponse(
-                TaskResult {
+                Result {
                   try await startDailyChallengeAsync(
                     challenge,
                     apiClient: self.apiClient,
@@ -182,7 +188,7 @@ public struct GameOver: Reducer {
         }
 
       case .destination(.dismiss)
-      where /Destination.State.notificationsAuthAlert ~= state.destination:
+        where state.destination.is(\.some.notificationsAuthAlert):
         return .run { _ in
           try? await self.requestReviewAsync()
           await self.dismiss(animation: .default)
@@ -218,7 +224,7 @@ public struct GameOver: Reducer {
         return .run { send in
           await send(
             .dailyChallengeResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .dailyChallenge(.today(language: .en)),
                   as: [FetchTodaysDailyChallengeResponse].self
@@ -269,7 +275,7 @@ public struct GameOver: Reducer {
                 )
                 await send(
                   .submitGameResponse(
-                    TaskResult {
+                    Result {
                       try await .solo(
                         self.apiClient.request(
                           route: .demo(.submitGame(request)),
@@ -285,7 +291,7 @@ public struct GameOver: Reducer {
               ) {
                 await send(
                   .submitGameResponse(
-                    TaskResult {
+                    Result {
                       try await self.apiClient.apiRequest(
                         route: .games(.submit(request)),
                         as: SubmitGameResponse.self
@@ -334,7 +340,7 @@ public struct GameOver: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -409,22 +415,22 @@ public struct GameOverView: View {
         }
       }
       self.isDemo = state.isDemo
-      self.isUpgradeInterstitialPresented =
-        /GameOver.Destination.State.upgradeInterstitial ~= state.destination
+      self.isUpgradeInterstitialPresented = state.destination.is(\.some.upgradeInterstitial)
       self.isViewEnabled = state.isViewEnabled
       self.showConfetti = state.showConfetti
       self.summary = state.summary
       self.unplayedDaily =
         state.dailyChallenges
         .first(where: { $0.yourResult.rank == nil })?.dailyChallenge.gameMode
-      self.words = state.completedGame.moves.compactMap { move -> PlayedWord? in
-        guard case let .playedWord(faces) = move.type else { return nil }
-        return PlayedWord(
-          isYourWord: move.playerIndex == state.completedGame.localPlayerIndex,
-          reactions: move.reactions,
-          score: move.score,
-          word: state.completedGame.cubes.string(from: faces)
-        )
+      self.words = state.completedGame.moves.compactMap { move in
+        move.type.playedWord.map {
+          PlayedWord(
+            isYourWord: move.playerIndex == state.completedGame.localPlayerIndex,
+            reactions: move.reactions,
+            score: move.score,
+            word: state.completedGame.cubes.string(from: $0)
+          )
+        }
       }
       self.you = state.turnBasedContext?.localPlayer.player
       self.yourOpponent = state.turnBasedContext?.otherPlayer
@@ -494,9 +500,10 @@ public struct GameOverView: View {
       }
 
       IfLetStore(
-        self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /GameOver.Destination.State.upgradeInterstitial,
-        action: GameOver.Destination.Action.upgradeInterstitial
+        self.store.scope(
+          state: \.destination?.upgradeInterstitial,
+          action: \.destination.upgradeInterstitial.presented
+        )
       ) { store in
         UpgradeInterstitialView(store: store)
           .transition(.opacity)
@@ -509,9 +516,9 @@ public struct GameOverView: View {
     )
     .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /GameOver.Destination.State.notificationsAuthAlert,
-      action: GameOver.Destination.Action.notificationsAuthAlert
+      store: self.store.scope(state: \.$destination, action: \.destination),
+      state: \.notificationsAuthAlert,
+      action: { .notificationsAuthAlert($0) }
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
@@ -522,8 +529,7 @@ public struct GameOverView: View {
 
   @ViewBuilder
   var dailyChallengeResults: some View {
-    let result = (/GameOver.State.RankSummary.dailyChallenge)
-      .extract(from: self.viewStore.summary)
+    let result = self.viewStore.summary?.dailyChallenge
 
     VStack(spacing: -8) {
       result.map {
@@ -645,8 +651,7 @@ public struct GameOverView: View {
             HStack {
               Text(timeScope.displayTitle)
               Spacer()
-              let rank = (/GameOver.State.RankSummary.leaderboard)
-                .extract(from: self.viewStore.summary)?[timeScope]
+              let rank = self.viewStore.summary?.leaderboard?[timeScope]
               Text(
                 """
                 \((rank?.rank ?? 0) as NSNumber, formatter: ordinalFormatter) of \

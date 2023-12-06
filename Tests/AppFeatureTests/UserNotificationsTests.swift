@@ -37,13 +37,7 @@ class UserNotificationsTests: XCTestCase {
       .didReceiveResponse(response, completionHandler: { completionHandler() })
     )
 
-    await store.receive(
-      .appDelegate(
-        .userNotifications(
-          .didReceiveResponse(response, completionHandler: { completionHandler() })
-        )
-      )
-    )
+    await store.receive(\.appDelegate.userNotifications.didReceiveResponse)
     XCTAssertTrue(didCallback)
 
     await task.cancel()
@@ -75,14 +69,8 @@ class UserNotificationsTests: XCTestCase {
       .willPresentNotification(notification, completionHandler: { completionHandler($0) })
     )
 
-    await store.receive(
-      .appDelegate(
-        .userNotifications(
-          .willPresentNotification(notification, completionHandler: { completionHandler($0) })
-        )
-      )
-    )
-
+    await store.receive(\.appDelegate.userNotifications.willPresentNotification)
+    
     XCTAssertNoDifference(didCallbackWithOptions, .banner)
 
     await task.cancel()

@@ -1,3 +1,5 @@
+import CasePaths
+
 #if os(Linux)
   import Csqlite3
 #else
@@ -85,6 +87,8 @@ public final class Sqlite {
     return code
   }
 
+  @CasePathable
+  @dynamicMemberLookup
   public enum Datatype: Equatable {
     case blob([UInt8])
     case integer(Int32)

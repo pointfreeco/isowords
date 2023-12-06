@@ -53,9 +53,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
-    await store.receive(
-      .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
-    ) {
+    await store.receive(\.productsResponse.success) {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.tappedProduct(.fullGame)) {
@@ -68,12 +66,12 @@ class SettingsPurchaseTests: XCTestCase {
     storeKitObserver.continuation.yield(.updatedTransactions([.purchased]))
     storeKitObserver.continuation.yield(.removedTransactions([.purchased]))
 
-    await store.receive(.paymentTransaction(.updatedTransactions([.purchasing])))
-    await store.receive(.paymentTransaction(.updatedTransactions([.purchased])))
-    await store.receive(.paymentTransaction(.removedTransactions([.purchased]))) {
+    await store.receive(\.paymentTransaction.updatedTransactions)
+    await store.receive(\.paymentTransaction.updatedTransactions)
+    await store.receive(\.paymentTransaction.removedTransactions) {
       $0.isPurchasing = false
     }
-    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase))) {
+    await store.receive(\.currentPlayerRefreshed.success) {
       $0.fullGamePurchasedAt = .mock
     }
     await task.cancel()
@@ -107,9 +105,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
-    await store.receive(
-      .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
-    ) {
+    await store.receive(\.productsResponse.success) {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.restoreButtonTapped) {
@@ -122,14 +118,12 @@ class SettingsPurchaseTests: XCTestCase {
     storeKitObserver.continuation.yield(
       .restoreCompletedTransactionsFinished(transactions: [.restored]))
 
-    await store.receive(.paymentTransaction(.updatedTransactions([.restored])))
-    await store.receive(.paymentTransaction(.removedTransactions([.restored])))
-    await store.receive(
-      .paymentTransaction(.restoreCompletedTransactionsFinished(transactions: [.restored]))
-    ) {
+    await store.receive(\.paymentTransaction.updatedTransactions)
+    await store.receive(\.paymentTransaction.removedTransactions)
+    await store.receive(\.paymentTransaction.restoreCompletedTransactionsFinished) {
       $0.isRestoring = false
     }
-    await store.receive(.currentPlayerRefreshed(.success(.blobWithPurchase))) {
+    await store.receive(\.currentPlayerRefreshed.success) {
       $0.fullGamePurchasedAt = .mock
     }
     await task.cancel()
@@ -162,9 +156,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
-    await store.receive(
-      .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
-    ) {
+    await store.receive(\.productsResponse.success) {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.restoreButtonTapped) {
@@ -174,9 +166,7 @@ class SettingsPurchaseTests: XCTestCase {
     await didRestoreCompletedTransactions.withValue { XCTAssertNoDifference($0, true) }
     storeKitObserver.continuation.yield(.restoreCompletedTransactionsFinished(transactions: []))
 
-    await store.receive(
-      .paymentTransaction(.restoreCompletedTransactionsFinished(transactions: []))
-    ) {
+    await store.receive(\.paymentTransaction.restoreCompletedTransactionsFinished) {
       $0.isRestoring = false
       $0.alert = .noRestoredPurchases
     }
@@ -211,9 +201,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.buildNumber = 42
       $0.developer.currentBaseUrl = .localhost
     }
-    await store.receive(
-      .productsResponse(.success(.init(invalidProductIdentifiers: [], products: [.fullGame])))
-    ) {
+    await store.receive(\.productsResponse.success) {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.restoreButtonTapped) {
@@ -226,9 +214,7 @@ class SettingsPurchaseTests: XCTestCase {
     storeKitObserver.continuation
       .yield(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
 
-    await store.receive(
-      .paymentTransaction(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
-    ) {
+    await store.receive(\.paymentTransaction.restoreCompletedTransactionsFailed) {
       $0.isRestoring = false
       $0.alert = .restoredPurchasesFailed
     }

@@ -18,8 +18,10 @@ import TcaHelpers
 import UpgradeInterstitialFeature
 import UserSettingsClient
 
-public struct Game: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct Game {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case bottomMenu(BottomMenuState<Action.BottomMenu>)
@@ -27,16 +29,19 @@ public struct Game: Reducer {
       case settings(Settings.State = Settings.State())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case alert(Alert)
       case bottomMenu(BottomMenu)
       case gameOver(GameOver.Action)
       case settings(Settings.Action)
       case upgradeInterstitial(UpgradeInterstitial.Action)
 
-      public enum Alert: Equatable {
+      @CasePathable
+      public enum Alert {
         case forfeitButtonTapped
       }
+      @CasePathable
       public enum BottomMenu: Equatable {
         case confirmRemoveCube(LatticePoint)
         case endGameButtonTapped
@@ -45,16 +50,18 @@ public struct Game: Reducer {
         case settingsButtonTapped
       }
     }
+
     let dismissGame: DismissEffect
+    
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.gameOver, action: /Action.gameOver) {
+      Scope(state: \.gameOver, action: \.gameOver) {
         GameOver()
           .dependency(\.dismiss, self.dismissGame)
       }
-      Scope(state: /State.settings, action: /Action.settings) {
+      Scope(state: \.settings, action: \.settings) {
         Settings()
       }
-      Scope(state: /State.upgradeInterstitial, action: /Action.upgradeInterstitial) {
+      Scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial) {
         UpgradeInterstitial()
       }
     }
@@ -131,11 +138,6 @@ public struct Game: Reducer {
       self.wordSubmitButton = wordSubmit
     }
 
-    public var dailyChallengeId: DailyChallenge.Id? {
-      guard case let .dailyChallenge(id) = self.gameContext else { return nil }
-      return id
-    }
-
     public var isNavVisible: Bool {
       !self.isDemo
     }
@@ -144,23 +146,12 @@ public struct Game: Reducer {
       self.gameMode != .timed && !self.activeGames.isEmpty
     }
 
-    public var turnBasedContext: TurnBasedContext? {
-      get {
-        guard case let .turnBased(context) = self.gameContext else { return nil }
-        return context
-      }
-      set {
-        guard let newValue = newValue else { return }
-        self.gameContext = .turnBased(newValue)
-      }
-    }
-
     public var wordSubmitButtonFeature: WordSubmitButtonFeature.State {
       get {
         .init(
           isSelectedWordValid: self.selectedWordIsValid,
-          isTurnBasedMatch: self.turnBasedContext != nil,
-          isYourTurn: self.turnBasedContext?.currentParticipantIsLocalPlayer ?? true,
+          isTurnBasedMatch: self.gameContext.is(\.turnBased),
+          isYourTurn: self.gameContext.turnBased?.currentParticipantIsLocalPlayer ?? true,
           wordSubmitButton: self.wordSubmitButton
         )
       }
@@ -170,7 +161,7 @@ public struct Game: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case activeGames(ActiveGamesAction)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
@@ -180,11 +171,11 @@ public struct Game: Reducer {
     case gameCenter(GameCenterAction)
     case gameLoaded
     case lowPowerModeChanged(Bool)
-    case matchesLoaded(TaskResult<[TurnBasedMatch]>)
+    case matchesLoaded(Result<[TurnBasedMatch], Error>)
     case menuButtonTapped
     case task
     case pan(UIGestureRecognizer.State, PanData?)
-    case savedGamesLoaded(TaskResult<SavedGamesState>)
+    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
@@ -193,9 +184,10 @@ public struct Game: Reducer {
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
-  public enum GameCenterAction: Equatable {
+  @CasePathable
+  public enum GameCenterAction {
     case listener(LocalPlayerClient.ListenerEvent)
-    case turnBasedMatchResponse(TaskResult<TurnBasedMatch>)
+    case turnBasedMatchResponse(Result<TurnBasedMatch, Error>)
   }
 
   @Dependency(\.audioPlayer) var audioPlayer
@@ -225,7 +217,7 @@ public struct Game: Reducer {
         }
       }
       .filterActionsForYourTurn()
-      .ifLet(\.$destination, action: /Action.destination) {
+      .ifLet(\.$destination, action: \.destination) {
         Destination(dismissGame: self.dismiss)
       }
       .sounds()
@@ -251,7 +243,7 @@ public struct Game: Reducer {
         return .none
 
       case .destination(.presented(.alert(.forfeitButtonTapped))):
-        guard let match = state.turnBasedContext?.match
+        guard let match = state.gameContext.turnBased?.match
         else { return .none }
 
         return .run { _ in
@@ -357,7 +349,7 @@ public struct Game: Reducer {
               }
             }
 
-            if gameContext.isTurnBased {
+            if gameContext.is(\.turnBased) {
               group.addTask {
                 let playedGamesCount = await self.userDefaults
                   .incrementMultiplayerOpensCount()
@@ -434,8 +426,8 @@ public struct Game: Reducer {
 
         let move = Move(
           playedAt: self.mainRunLoop.now.date,
-          playerIndex: state.turnBasedContext?.localPlayerIndex,
-          reactions: zip(state.turnBasedContext?.localPlayerIndex, reaction)
+          playerIndex: state.gameContext.turnBased?.localPlayerIndex,
+          reactions: zip(state.gameContext.turnBased?.localPlayerIndex, reaction)
             .map { [$0: $1] },
           score: state.selectedWordScore,
           type: .playedWord(state.selectedWord)
@@ -547,181 +539,12 @@ public struct Game: Reducer {
         return .none
       }
     }
-    Scope(state: \.wordSubmitButtonFeature, action: /Action.wordSubmitButton) {
+    Scope(state: \.wordSubmitButtonFeature, action: \.wordSubmitButton) {
       WordSubmitButtonFeature()
     }
     GameOverLogic()
     TurnBasedLogic()
     ActiveGamesTray()
-  }
-}
-
-extension Game.State {
-  public var displayTitle: String {
-    switch self.gameContext {
-    case .dailyChallenge:
-      return "Daily challenge"
-    case .shared, .solo:
-      return "Solo"
-    case let .turnBased(context):
-      return context.otherPlayer
-        .flatMap { $0.displayName.isEmpty ? nil : "vs \($0.displayName)" }
-        ?? "Multiplayer"
-    }
-  }
-
-  public var currentScore: Int {
-    self.moves.reduce(into: 0) { $0 += $1.score }
-  }
-
-  public var isDailyChallenge: Bool {
-    self.dailyChallengeId != nil
-  }
-
-  public var isGameOver: Bool {
-    /Game.Destination.State.gameOver ~= self.destination
-  }
-
-  public var isResumable: Bool {
-    self.gameMode == .unlimited
-      && !self.isGameOver
-  }
-
-  public var isSavable: Bool {
-    self.isResumable
-      && !(/GameContext.turnBased ~= self.gameContext)
-  }
-
-  public var playedWords: [PlayedWord] {
-    self.moves
-      .reduce(into: [PlayedWord]()) {
-        guard case let .playedWord(word) = $1.type else { return }
-        $0.append(
-          .init(
-            isYourWord: $1.playerIndex == self.turnBasedContext?.localPlayerIndex,
-            reactions: $1.reactions,
-            score: $1.score,
-            word: self.cubes.string(from: word)
-          )
-        )
-      }
-  }
-
-  public var selectedWordScore: Int {
-    score(self.selectedWordString)
-  }
-
-  public var selectedWordString: String {
-    self.cubes.string(from: self.selectedWord)
-  }
-
-  public var selectedWordHasAlreadyBeenPlayed: Bool {
-    self.moves.contains(where: {
-      guard case let .playedWord(word) = $0.type else { return false }
-      return cubes.string(from: word) == self.selectedWordString
-    })
-  }
-
-  mutating func tryToRemoveCube(at index: LatticePoint) -> EffectOf<Game> {
-    guard self.canRemoveCube else { return .none }
-
-    // Don't show menu for timed games.
-    guard self.gameMode != .timed
-    else { return .send(.confirmRemoveCube(index)) }
-
-    let isTurnEndingRemoval: Bool
-    if let turnBasedMatch = self.turnBasedContext,
-      let move = self.moves.last,
-      case .removedCube = move.type,
-      move.playerIndex == turnBasedMatch.localPlayerIndex
-    {
-      isTurnEndingRemoval = true
-    } else {
-      isTurnEndingRemoval = false
-    }
-
-    self.destination = .bottomMenu(
-      .removeCube(index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
-    )
-    return .none
-  }
-
-  mutating func removeCube(at index: LatticePoint, playedAt: Date) {
-    let move = Move(
-      playedAt: playedAt,
-      playerIndex: self.turnBasedContext?.localPlayerIndex,
-      reactions: nil,
-      score: 0,
-      type: .removedCube(index)
-    )
-
-    let result = verify(
-      move: move,
-      on: &self.cubes,
-      isValidWord: { _ in false },
-      previousMoves: self.moves
-    )
-
-    guard result != nil
-    else { return }
-
-    self.moves.append(move)
-    self.selectedWord = []
-  }
-
-  var canRemoveCube: Bool {
-    guard let turnBasedMatch = self.turnBasedContext else { return true }
-    guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
-    guard let lastMove = self.moves.last else { return true }
-    guard
-      !(/Move.MoveType.removedCube ~= lastMove.type),
-      lastMove.playerIndex != turnBasedMatch.localPlayerIndex
-    else {
-      return true
-    }
-    return lastMove.playerIndex != turnBasedMatch.localPlayerIndex
-  }
-
-  public var isYourTurn: Bool {
-    guard let turnBasedMatch = self.turnBasedContext else { return true }
-    guard turnBasedMatch.match.status == .open else { return false }
-    guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
-    guard let lastMove = self.moves.last else { return true }
-    guard lastMove.playerIndex == turnBasedMatch.localPlayerIndex else { return true }
-    guard case .playedWord = lastMove.type else { return true }
-    return false
-  }
-
-  public var turnBasedScores: [Move.PlayerIndex: Int] {
-    Dictionary(
-      grouping: self.moves
-        .compactMap { move in move.playerIndex.map { (playerIndex: $0, score: move.score) } },
-      by: \.playerIndex
-    )
-    .mapValues { $0.reduce(into: 0) { $0 += $1.score } }
-  }
-
-  public init(
-    gameCurrentTime: Date,
-    localPlayer: LocalPlayer,
-    turnBasedMatch: TurnBasedMatch,
-    turnBasedMatchData: TurnBasedMatchData
-  ) {
-    self.init(
-      cubes: Puzzle(archivableCubes: turnBasedMatchData.cubes, moves: turnBasedMatchData.moves),
-      gameContext: .turnBased(
-        .init(
-          localPlayer: localPlayer,
-          match: turnBasedMatch,
-          metadata: turnBasedMatchData.metadata
-        )
-      ),
-      gameCurrentTime: gameCurrentTime,
-      gameMode: turnBasedMatchData.gameMode,
-      gameStartTime: turnBasedMatch.creationDate,
-      language: turnBasedMatchData.language,
-      moves: turnBasedMatchData.moves
-    )
   }
 }
 
@@ -779,7 +602,7 @@ extension BottomMenuState where Action == Game.Destination.Action.BottomMenu {
       )
     }
 
-    if state.turnBasedContext != nil {
+    if state.gameContext.turnBased != nil {
       menu.buttons.append(
         .init(
           title: .init("Forfeit"),
@@ -847,7 +670,7 @@ extension CompletedGame {
       gameMode: gameState.gameMode,
       gameStartTime: gameState.gameStartTime,
       language: gameState.language,
-      localPlayerIndex: gameState.turnBasedContext?.localPlayerIndex,
+      localPlayerIndex: gameState.gameContext.turnBased?.localPlayerIndex,
       moves: gameState.moves,
       secondsPlayed: gameState.secondsPlayed
     )

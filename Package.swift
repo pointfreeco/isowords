@@ -27,8 +27,10 @@ var package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
-    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.0.0"),
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.1.0"),
+    .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.1.0"),
+    .package(
+      url: "https://github.com/pointfreeco/swift-composable-architecture", branch: "main"
+    ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
@@ -136,7 +138,8 @@ var package = Package(
     .target(
       name: "Sqlite",
       dependencies: [
-        .target(name: "Csqlite3")
+        .target(name: "Csqlite3"),
+        .product(name: "CasePaths", package: "swift-case-paths"),
       ]
     ),
     .target(
@@ -144,6 +147,7 @@ var package = Package(
       dependencies: [
         "Build",
         "FirstPartyMocks",
+        .product(name: "CasePaths", package: "swift-case-paths"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
         .product(name: "Tagged", package: "swift-tagged"),
       ]

@@ -8,7 +8,8 @@ extension Reducer<Game.State, Game.Action> {
   }
 }
 
-public struct _GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
+@Reducer
+public struct _GameSounds<Base: Reducer<Game.State, Game.Action>> {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.date) var date
   @Dependency(\.dictionary.contains) var dictionaryContains
@@ -20,7 +21,7 @@ public struct _GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
 
   public var body: some Reducer<Game.State, Game.Action> {
     self.core
-      .onChange(of: { /Game.Destination.State.gameOver ~= $0.destination }) { _, _ in
+      .onChange(of: { $0.destination.is(\.some.gameOver) }) { _, _ in
         Reduce { _, _ in
           .run { _ in
             Task.cancel(id: CancelID.cubeShaking)
@@ -161,8 +162,7 @@ public struct _GameSounds<Base: Reducer<Game.State, Game.Action>>: Reducer {
 extension Game.State {
   func hasBeenPlayed(word: String) -> Bool {
     self.moves.contains {
-      guard case let .playedWord(faces) = $0.type else { return false }
-      return self.cubes.string(from: faces) == word
+      $0.type.playedWord.map { self.cubes.string(from: $0) } == word
     }
   }
 }

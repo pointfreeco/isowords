@@ -2,16 +2,20 @@ import ComposableArchitecture
 import SwiftUI
 import TcaHelpers
 
-public struct Multiplayer: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct Multiplayer {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case pastGames(PastGames.State)
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case pastGames(PastGames.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.pastGames, action: /Action.pastGames) {
+      Scope(state: \.pastGames, action: \.pastGames) {
         PastGames()
       }
     }
@@ -30,7 +34,7 @@ public struct Multiplayer: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case destination(PresentationAction<Destination.Action>)
     case pastGamesButtonTapped
     case startButtonTapped
@@ -60,7 +64,7 @@ public struct Multiplayer: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -145,9 +149,7 @@ public struct MultiplayerView: View {
         }
       }
       .navigationDestination(
-        store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-        state: /Multiplayer.Destination.State.pastGames,
-        action: Multiplayer.Destination.Action.pastGames,
+        store: self.store.scope(state: \.$destination.pastGames, action: \.destination.pastGames),
         destination: PastGamesView.init(store:)
       )
       .navigationStyle(

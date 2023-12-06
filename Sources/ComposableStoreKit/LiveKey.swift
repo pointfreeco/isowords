@@ -108,7 +108,6 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   func paymentQueue(
     _ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error
   ) {
-    // TODO: Should this use TaskResult<Never> instead? TaskFailure?
-    self.continuation.yield(.restoreCompletedTransactionsFailed(error as NSError))
+    self.continuation.yield(.restoreCompletedTransactionsFailed(error))
   }
 }

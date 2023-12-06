@@ -19,14 +19,14 @@ struct PlayersAndScoresView: View {
 
     init(state: Game.State) {
       self.isYourTurn = state.isYourTurn
-      self.opponent = state.turnBasedContext?.otherParticipant?.player
-      self.you = state.turnBasedContext?.localPlayer.player
+      self.opponent = state.gameContext.turnBased?.otherParticipant?.player
+      self.you = state.gameContext.turnBased?.localPlayer.player
       self.yourScore =
-        state.turnBasedContext?.localPlayerIndex
+        state.gameContext.turnBased?.localPlayerIndex
         .flatMap { state.turnBasedScores[$0] }
-        ?? (state.turnBasedContext == nil ? state.currentScore : 0)
+        ?? (state.gameContext.is(\.turnBased) ? 0 : state.currentScore)
       self.opponentScore =
-        state.turnBasedContext?.otherPlayerIndex
+        state.gameContext.turnBased?.otherPlayerIndex
         .flatMap { state.turnBasedScores[$0] } ?? 0
     }
   }

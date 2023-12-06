@@ -4,7 +4,8 @@ import LeaderboardFeature
 import SharedModels
 import SwiftUI
 
-public struct DailyChallengeResults: Reducer {
+@Reducer
+public struct DailyChallengeResults {
   public struct State: Equatable {
     public var history: DailyChallengeHistoryResponse?
     public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
@@ -19,10 +20,10 @@ public struct DailyChallengeResults: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
     case loadHistory
-    case fetchHistoryResponse(TaskResult<DailyChallengeHistoryResponse>)
+    case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, Error>)
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -30,7 +31,7 @@ public struct DailyChallengeResults: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.leaderboardResults, action: /Action.leaderboardResults) {
+    Scope(state: \.leaderboardResults, action: \.leaderboardResults) {
       LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
     }
 
@@ -70,7 +71,7 @@ public struct DailyChallengeResults: Reducer {
         return .run { [gameMode = state.leaderboardResults.gameMode] send in
           await send(
             .fetchHistoryResponse(
-              TaskResult {
+              Result {
                 try await self.apiClient.apiRequest(
                   route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
                   as: DailyChallengeHistoryResponse.self
@@ -97,7 +98,7 @@ public struct DailyChallengeResultsView: View {
 
   public var body: some View {
     LeaderboardResultsView(
-      store: self.store.scope(state: \.leaderboardResults, action: { .leaderboardResults($0) }),
+      store: self.store.scope(state: \.leaderboardResults, action: \.leaderboardResults),
       title: Text("Daily Challenge"),
       subtitle: (self.viewStore.leaderboardResults.resultEnvelope?.outOf)
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },

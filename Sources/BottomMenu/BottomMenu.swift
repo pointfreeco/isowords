@@ -112,11 +112,9 @@ private struct BottomMenuModifier: ViewModifier {
             }
 
             if let footerButton = menu.footerButton {
-              Button(
-                action: {
-                  footerButton.action()
-                }
-              ) {
+              Button {
+                footerButton.action()
+              } label: {
                 HStack {
                   footerButton.title
                     .adaptiveFont(.matterMedium, size: 18)

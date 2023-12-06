@@ -6,12 +6,14 @@ import GameCore
 import GameOverFeature
 import SharedModels
 
-public enum GameCenterAction: Equatable {
+@CasePathable
+public enum GameCenterAction {
   case listener(LocalPlayerClient.ListenerEvent)
-  case rematchResponse(TaskResult<TurnBasedMatch>)
+  case rematchResponse(Result<TurnBasedMatch, Error>)
 }
 
-public struct GameCenterLogic: Reducer {
+@Reducer
+public struct GameCenterLogic {
   @Dependency(\.apiClient.currentPlayer) var currentPlayer
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
@@ -34,7 +36,7 @@ public struct GameCenterLogic: Reducer {
       ):
         guard
           case let .game(game) = state.destination,
-          let turnBasedMatch = game.turnBasedContext
+          let turnBasedMatch = game.gameContext.turnBased
         else { return .none }
 
         state.destination = nil
@@ -43,7 +45,7 @@ public struct GameCenterLogic: Reducer {
           await send(
             .gameCenter(
               .rematchResponse(
-                TaskResult {
+                Result {
                   try await self.gameCenter.turnBasedMatch.rematch(
                     turnBasedMatch.match.matchId
                   )
@@ -56,7 +58,7 @@ public struct GameCenterLogic: Reducer {
       case let .gameCenter(.listener(.turnBased(.matchEnded(match)))):
         guard
           case let .game(game) = state.destination,
-          game.turnBasedContext?.match.matchId == match.matchId,
+          game.gameContext.turnBased?.match.matchId == match.matchId,
           let turnBasedMatchData = match.matchData?.turnBasedMatchData
         else { return .none }
 
@@ -101,7 +103,16 @@ public struct GameCenterLogic: Reducer {
             .presented(
               .multiplayer(
                 .destination(
-                  .presented(.pastGames(.pastGame(_, .delegate(.openMatch(turnBasedMatch)))))
+                  .presented(
+                    .pastGames(
+                      .pastGames(
+                        .element(
+                          id: _,
+                          action: .delegate(.openMatch(turnBasedMatch))
+                        )
+                      )
+                    )
+                  )
                 )
               )
             )
@@ -114,7 +125,7 @@ public struct GameCenterLogic: Reducer {
           await send(
             .gameCenter(
               .rematchResponse(
-                TaskResult {
+                Result {
                   try await self.gameCenter.turnBasedMatch.rematch(matchId)
                 }
               )
@@ -176,7 +187,7 @@ public struct GameCenterLogic: Reducer {
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
       )
-      let game = (/AppReducer.Destination.State.game).extract(from: state.destination)
+      let game = state.destination?.game
       gameState.activeGames = game?.activeGames ?? .init()
       gameState.isGameLoaded = game != nil
       // TODO: Reuse game logic
@@ -188,7 +199,7 @@ public struct GameCenterLogic: Reducer {
           GameOver.State(
             completedGame: CompletedGame(gameState: gameState),
             isDemo: gameState.isDemo,
-            turnBasedContext: gameState.turnBasedContext
+            turnBasedContext: gameState.gameContext.turnBased
           )
         )
       }
@@ -212,8 +223,7 @@ public struct GameCenterLogic: Reducer {
       metadata: turnBasedMatchData.metadata
     )
     guard
-      (/AppReducer.Destination.State.game).extract(from: state.destination)?.turnBasedContext?
-        .match.matchId != match.matchId,
+      state.destination?.game?.gameContext.turnBased?.match.matchId != match.matchId,
       context.currentParticipantIsLocalPlayer,
       match.participants.allSatisfy({ $0.matchOutcome == .none }),
       let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),

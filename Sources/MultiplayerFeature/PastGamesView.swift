@@ -4,14 +4,15 @@ import ComposableGameCenter
 import Styleguide
 import SwiftUI
 
-public struct PastGames: Reducer {
+@Reducer
+public struct PastGames {
   public struct State: Equatable {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
 
-  public enum Action: Equatable {
-    case matchesResponse(TaskResult<[PastGame.State]>)
-    case pastGame(TurnBasedMatch.Id, PastGame.Action)
+  public enum Action {
+    case matchesResponse(Result<[PastGame.State], Error>)
+    case pastGames(IdentifiedActionOf<PastGame>)
     case task
   }
 
@@ -27,14 +28,14 @@ public struct PastGames: Reducer {
       case .matchesResponse(.failure):
         return .none
 
-      case .pastGame:
+      case .pastGames:
         return .none
 
       case .task:
         return .run { send in
           await send(
             .matchesResponse(
-              TaskResult {
+              Result {
                 try await self.gameCenter.turnBasedMatch
                   .loadMatches()
                   .compactMap { match in
@@ -50,7 +51,7 @@ public struct PastGames: Reducer {
         }
       }
     }
-    .forEach(\.pastGames, action: /Action.pastGame) {
+    .forEach(\.pastGames, action: \.pastGames) {
       PastGame()
     }
   }
@@ -68,7 +69,9 @@ struct PastGamesView: View {
 
   var body: some View {
     ScrollView {
-      ForEachStore(self.store.scope(state: \.pastGames, action: { .pastGame($0, $1) })) { store in
+      ForEachStore(
+        self.store.scope(state: \.pastGames, action: \.pastGames)
+      ) { store in
         Group {
           PastGameRow(store: store)
 

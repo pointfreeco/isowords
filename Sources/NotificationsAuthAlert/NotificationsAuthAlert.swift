@@ -6,16 +6,18 @@ import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
-public struct NotificationsAuthAlert: Reducer {
+@Reducer
+public struct NotificationsAuthAlert {
   public struct State: Equatable {
     public init() {}
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case delegate(Delegate)
     case turnOnNotificationsButtonTapped
 
-    public enum Delegate: Equatable {
+    @CasePathable
+    public enum Delegate {
       case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
     }
   }

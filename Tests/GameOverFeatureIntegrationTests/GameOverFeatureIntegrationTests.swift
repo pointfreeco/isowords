@@ -64,10 +64,10 @@ class GameOverFeatureIntegrationTests: XCTestCase {
 
       let task = await store.send(.task)
       
-      await store.receive(.submitGameResponse(.success(.solo(.init(ranks: ranks))))) {
+      await store.receive(\.submitGameResponse.success) {
         $0.summary = .leaderboard(ranks)
       }
-      await store.receive(.delayedOnAppear) {
+      await store.receive(\.delayedOnAppear) {
         $0.isViewEnabled = true
       }
       await task.cancel()

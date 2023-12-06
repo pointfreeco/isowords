@@ -42,8 +42,7 @@ extension StoreOf<GameOver> {
     } withDependencies: {
       $0.apiClient = update(.noop) {
         $0.override(
-          routeCase: (/ServerRoute.Api.Route.games)
-            .appending(path: /ServerRoute.Api.Route.Games.submit),
+          routeCase: \.games.submit,
           withResponse: { _ in
             try await OK(
               SubmitGameResponse.solo(

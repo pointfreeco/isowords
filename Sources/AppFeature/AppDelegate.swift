@@ -4,14 +4,15 @@ import ComposableUserNotifications
 import Foundation
 import SettingsFeature
 
-public struct AppDelegateReducer: Reducer {
+@Reducer
+public struct AppDelegateReducer {
   public struct State: Equatable {
     public init() {}
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case didFinishLaunching
-    case didRegisterForRemoteNotifications(TaskResult<Data>)
+    case didRegisterForRemoteNotifications(Result<Data, Error>)
     case userNotifications(UserNotificationClient.DelegateEvent)
   }
 

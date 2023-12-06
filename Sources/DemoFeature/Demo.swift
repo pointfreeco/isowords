@@ -8,7 +8,8 @@ import StoreKit
 import SwiftUI
 import TcaHelpers
 
-public struct Demo: Reducer {
+@Reducer
+public struct Demo {
   public struct State: Equatable {
     var appStoreOverlayIsPresented: Bool
     var step: Step
@@ -21,19 +22,19 @@ public struct Demo: Reducer {
       self.step = step
     }
 
+    @CasePathable
+    @dynamicMemberLookup
     public enum Step: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
     }
 
     var isGameOver: Bool {
-      guard case let .game(game) = self.step, case .gameOver = game.destination
-      else { return false }
-      return true
+      self.step.game?.destination.is(\.some.gameOver) == true
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case appStoreOverlay(isPresented: Bool)
     case fullVersionButtonTapped
     case game(Game.Action)
@@ -51,11 +52,11 @@ public struct Demo: Reducer {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.step, action: .self) {
-      Scope(state: /State.Step.onboarding, action: /Action.onboarding) {
+    Scope(state: \.step, action: \.self) {
+      Scope(state: \.onboarding, action: \.onboarding) {
         Onboarding()
       }
-      Scope(state: /State.Step.game, action: /Action.game) {
+      Scope(state: \.game, action: \.game) {
         Game().transformDependency(\.self) {
           $0.database = .noop
           $0.fileClient = .noop
@@ -146,24 +147,19 @@ public struct DemoView: View {
   }
 
   public var body: some View {
-    SwitchStore(self.store.scope(state: \.step, action: { $0 })) { step in
+    SwitchStore(self.store.scope(state: \.step, action: \.self)) { step in
       switch step {
       case .onboarding:
-        CaseLet(/Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
+        CaseLet(\Demo.State.Step.onboarding, action: Demo.Action.onboarding) {
           OnboardingView(store: $0)
             .onAppear { self.viewStore.send(.onAppear) }
         }
 
       case .game:
-        CaseLet(/Demo.State.Step.game, action: Demo.Action.game) { store in
+        CaseLet(\Demo.State.Step.game, action: Demo.Action.game) { store in
           GameWrapper(
             content: GameView(
-              content: CubeView(
-                store: store.scope(
-                  state: { CubeSceneView.ViewState(game: $0, nub: nil) },
-                  action: { CubeSceneView.ViewAction.to(gameAction: $0) }
-                )
-              ),
+              content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
               store: store
             ),
             isGameOver: self.viewStore.isGameOver,

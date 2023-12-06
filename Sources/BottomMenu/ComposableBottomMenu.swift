@@ -64,7 +64,9 @@ public struct BottomMenuState<Action> {
 extension BottomMenuState: Equatable where Action: Equatable {}
 extension BottomMenuState.Button: Equatable where Action: Equatable {}
 extension BottomMenuState.MenuAction: Equatable where Action: Equatable {}
-extension BottomMenuState: _EphemeralState {}
+extension BottomMenuState: _EphemeralState {
+  public static var actionType: Any.Type { Action.self }
+}
 
 extension View {
   public func bottomMenu<MenuAction: Equatable>(
@@ -151,7 +153,8 @@ extension BottomMenuState.Button {
   import ComposableArchitecture
   import SwiftUIHelpers
 
-  private struct BottomMenuReducer: Reducer {
+  @Reducer
+  private struct BottomMenuReducer {
     struct State: Equatable {
       @PresentationState var bottomMenu: BottomMenuState<Action.BottomMenu>?
     }
@@ -189,7 +192,7 @@ extension BottomMenuState.Button {
           return .none
         }
       }
-      .ifLet(\.$bottomMenu, action: /Action.bottomMenu)
+      .ifLet(\.$bottomMenu, action: \.bottomMenu)
     }
   }
 
@@ -202,7 +205,7 @@ extension BottomMenuState.Button {
       var body: some View {
         Button("Present") { store.send(.showMenuButtonTapped, animation: .default) }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .bottomMenu(store: self.store.scope(state: \.$bottomMenu, action: { .bottomMenu($0) }))
+          .bottomMenu(store: self.store.scope(state: \.$bottomMenu, action: \.bottomMenu))
       }
     }
 

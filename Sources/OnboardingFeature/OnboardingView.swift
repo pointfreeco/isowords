@@ -13,7 +13,8 @@ import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
 
-public struct Onboarding: Reducer {
+@Reducer
+public struct Onboarding {
   public struct State: Equatable {
     @PresentationState public var alert: AlertState<Action.Alert>?
     public var game: Game.State
@@ -30,6 +31,21 @@ public struct Onboarding: Reducer {
       self.game = game
       self.presentationStyle = presentationStyle
       self.step = step
+    }
+
+    fileprivate var cubeScene: CubeSceneView.ViewState {
+      var viewState = CubeSceneView.ViewState(game: self.game, nub: nil)
+
+      LatticePoint.cubeIndices.forEach { index in
+        CubeFace.Side.allCases.forEach { side in
+          if !isVisible(step: self.step, index: index, side: side) {
+            viewState.cubes[index][side].letterIsHidden = true
+            viewState.cubes[index][side].status = .deselected
+          }
+        }
+      }
+
+      return viewState
     }
 
     public enum PresentationStyle {
@@ -133,7 +149,7 @@ public struct Onboarding: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case alert(PresentationAction<Alert>)
     case delayedNextStep
     case delegate(Delegate)
@@ -143,10 +159,12 @@ public struct Onboarding: Reducer {
     case skipButtonTapped
     case task
 
-    public enum Alert: Equatable {
+    @CasePathable
+    public enum Alert {
       case skipButtonTapped
     }
 
+    @CasePathable
     public enum Delegate {
       case getStarted
     }
@@ -298,7 +316,7 @@ public struct Onboarding: Reducer {
         .cancellable(id: CancelID.delayedNextStep)
       }
     }
-    .ifLet(\.$alert, action: /Action.alert)
+    .ifLet(\.$alert, action: \.alert)
     .onChange(of: \.game.selectedWordString) { _, selectedWord in
       Reduce { state, _ in
         switch state.step {
@@ -356,7 +374,7 @@ public struct Onboarding: Reducer {
   }
 
   var gameReducer: some ReducerOf<Self> {
-    Scope(state: \.game, action: /Action.game) {
+    Scope(state: \.game, action: \.game) {
       Game()
         .haptics(
           isEnabled: { _ in self.userSettings.enableHaptics },
@@ -391,13 +409,8 @@ public struct OnboardingView: View {
 
   public var body: some View {
     ZStack(alignment: .topTrailing) {
-      CubeView(
-        store: self.store.scope(
-          state: cubeSceneViewState(onboardingState:),
-          action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
-        )
-      )
-      .opacity(viewStore.step.isFullscreen ? 0 : 1)
+      CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
+        .opacity(viewStore.step.isFullscreen ? 0 : 1)
 
       OnboardingStepView(store: self.store)
 
@@ -418,21 +431,6 @@ public struct OnboardingView: View {
         .ignoresSafeArea()
     )
   }
-}
-
-private func cubeSceneViewState(onboardingState: Onboarding.State) -> CubeSceneView.ViewState {
-  var viewState = CubeSceneView.ViewState(game: onboardingState.game, nub: nil)
-
-  LatticePoint.cubeIndices.forEach { index in
-    CubeFace.Side.allCases.forEach { side in
-      if !isVisible(step: onboardingState.step, index: index, side: side) {
-        viewState.cubes[index][side].letterIsHidden = true
-        viewState.cubes[index][side].status = .deselected
-      }
-    }
-  }
-
-  return viewState
 }
 
 private func isVisible(

@@ -2,7 +2,8 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-public struct WordSubmitButtonFeature: Reducer {
+@Reducer
+public struct WordSubmitButtonFeature {
   public struct State: Equatable {
     public var isSelectedWordValid: Bool
     public let isTurnBasedMatch: Bool
@@ -41,7 +42,7 @@ public struct WordSubmitButtonFeature: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case backgroundTapped
     case delayedSubmitButtonPressed
     case delegate(Delegate)
@@ -50,7 +51,7 @@ public struct WordSubmitButtonFeature: Reducer {
     case submitButtonReleased
     case submitButtonTapped
 
-    public enum Delegate: Equatable {
+    public enum Delegate {
       case confirmSubmit(reaction: Move.Reaction?)
     }
   }
@@ -163,7 +164,7 @@ public struct WordSubmitButton: View {
         Spacer()
 
         ZStack {
-          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: { $0 }))
+          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: \.self))
 
           Button {
             self.viewStore.send(.submitButtonTapped, animation: .default)

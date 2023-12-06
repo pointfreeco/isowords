@@ -13,7 +13,8 @@ public enum GameContext: String, Codable {
   case turnBased
 }
 
-public struct UpgradeInterstitial: Reducer {
+@Reducer
+public struct UpgradeInterstitial {
   public struct State: Equatable {
     public var fullGameProduct: StoreKitClient.Product?
     public var isDismissable: Bool
@@ -36,7 +37,7 @@ public struct UpgradeInterstitial: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case delegate(Delegate)
     case fullGameProductResponse(StoreKitClient.Product)
     case maybeLaterButtonTapped
@@ -45,6 +46,7 @@ public struct UpgradeInterstitial: Reducer {
     case timerTick
     case upgradeButtonTapped
 
+    @CasePathable
     public enum Delegate {
       case fullGamePurchased
     }

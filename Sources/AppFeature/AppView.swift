@@ -10,21 +10,23 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-public struct AppReducer: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct AppReducer {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
     }
-    public enum Action: Equatable {
+    public enum Action {
       case game(Game.Action)
       case onboarding(Onboarding.Action)
     }
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.game, action: /Action.game) {
+      Scope(state: \.game, action: \.game) {
         Game()
       }
-      Scope(state: /State.onboarding, action: /Action.onboarding) {
+      Scope(state: \.onboarding, action: \.onboarding) {
         Onboarding()
       }
     }
@@ -62,15 +64,15 @@ public struct AppReducer: Reducer {
     }
   }
 
-  public enum Action: Equatable {
+  public enum Action {
     case appDelegate(AppDelegateReducer.Action)
     case destination(PresentationAction<Destination.Action>)
     case didChangeScenePhase(ScenePhase)
     case gameCenter(GameCenterAction)
     case home(Home.Action)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case savedGamesLoaded(TaskResult<SavedGamesState>)
-    case verifyReceiptResponse(TaskResult<ReceiptFinalizationEnvelope>)
+    case savedGamesLoaded(Result<SavedGamesState, Error>)
+    case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, Error>)
   }
 
   @Dependency(\.fileClient) var fileClient
@@ -87,11 +89,9 @@ public struct AppReducer: Reducer {
 
   public var body: some ReducerOf<Self> {
     self.core
-      .onChange(
-        of: { (/Destination.State.game).extract(from: $0.destination)?.moves }
-      ) { _, moves in
+      .onChange(of: \.destination?.game?.moves) { _, moves in
         Reduce { state, _ in
-          guard case let .game(game) = state.destination, game.isSavable
+          guard let game = state.destination?.game, game.isSavable
           else { return .none }
 
           switch (game.gameContext, game.gameMode) {
@@ -120,10 +120,10 @@ public struct AppReducer: Reducer {
 
   @ReducerBuilder<State, Action>
   var core: some ReducerOf<Self> {
-    Scope(state: \.appDelegate, action: /Action.appDelegate) {
+    Scope(state: \.appDelegate, action: \.appDelegate) {
       AppDelegateReducer()
     }
-    Scope(state: \.home, action: /Action.home) {
+    Scope(state: \.home, action: \.home) {
       Home()
     }
     Reduce { state, action in
@@ -142,7 +142,7 @@ public struct AppReducer: Reducer {
           }
           await send(
             .savedGamesLoaded(
-              TaskResult { try await self.fileClient.loadSavedGames() }
+              Result { try await self.fileClient.loadSavedGames() }
             )
           )
           _ = try await migrate
@@ -179,7 +179,7 @@ public struct AppReducer: Reducer {
       ),
         .destination(.presented(.game(.destination(.presented(.gameOver(.task)))))):
 
-        guard case let .game(game) = state.destination else { return .none }
+        guard let game = state.destination?.game else { return .none }
         switch (game.gameContext, game.gameMode) {
         case (.dailyChallenge, .unlimited):
           state.home.savedGames.dailyChallengeUnlimited = nil
@@ -231,8 +231,7 @@ public struct AppReducer: Reducer {
             gameCurrentTime: self.now,
             gameMode: .timed,
             gameStartTime: self.now,
-            isGameLoaded: (/Destination.State.game).extract(from: state.destination)?
-              .isGameLoaded == .some(true)
+            isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
           )
         )
         return .none
@@ -252,8 +251,7 @@ public struct AppReducer: Reducer {
               gameCurrentTime: self.now,
               gameMode: .unlimited,
               gameStartTime: self.now,
-              isGameLoaded: (/Destination.State.game).extract(from: state.destination)?
-                .isGameLoaded == .some(true)
+              isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
             )
         )
         return .none
@@ -276,7 +274,7 @@ public struct AppReducer: Reducer {
 
       case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
         if dailyChallenges.unlimited?.dailyChallenge.id
-          != state.home.savedGames.dailyChallengeUnlimited?.dailyChallengeId
+            != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
           return .run { [savedGames = state.home.savedGames] _ in
@@ -322,7 +320,7 @@ public struct AppReducer: Reducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: /Action.destination) {
+    .ifLet(\.$destination, action: \.destination) {
       Destination()
     }
   }
@@ -350,22 +348,15 @@ public struct AppView: View {
     Group {
       if self.viewStore.isHomeActive {
         NavigationStack {
-          HomeView(store: self.store.scope(state: \.home, action: { .home($0) }))
+          HomeView(store: self.store.scope(state: \.home, action: \.home))
         }
         .zIndex(0)
       } else {
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /AppReducer.Destination.State.game,
-          action: AppReducer.Destination.Action.game
+          self.store.scope(state: \.destination?.game, action: \.destination.game)
         ) { store in
           GameView(
-            content: CubeView(
-              store: store.scope(
-                state: { CubeSceneView.ViewState(game: $0) },
-                action: { CubeSceneView.ViewAction.to(gameAction: $0) }
-              )
-            ),
+            content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
             store: store
           )
         }
@@ -373,9 +364,7 @@ public struct AppView: View {
         .zIndex(1)
 
         IfLetStore(
-          self.store.scope(state: \.$destination, action: { .destination($0) }),
-          state: /AppReducer.Destination.State.onboarding,
-          action: AppReducer.Destination.Action.onboarding,
+          self.store.scope(state: \.destination?.onboarding, action: \.destination.onboarding),
           then: OnboardingView.init(store:)
         )
         .zIndex(2)

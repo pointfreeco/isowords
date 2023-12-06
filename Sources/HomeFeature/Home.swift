@@ -20,8 +20,10 @@ public struct ActiveMatchResponse: Equatable {
   public let hasPastTurnBasedGames: Bool
 }
 
-public struct Home: Reducer {
-  public struct Destination: Reducer {
+@Reducer
+public struct Home {
+  @Reducer
+  public struct Destination {
     public enum State: Equatable {
       case changelog(ChangelogReducer.State = .init())
       case dailyChallenge(DailyChallengeReducer.State = .init())
@@ -30,7 +32,8 @@ public struct Home: Reducer {
       case settings(Settings.State = Settings.State())
       case solo(Solo.State = .init())
     }
-    public enum Action: Equatable {
+
+    public enum Action {
       case changelog(ChangelogReducer.Action)
       case dailyChallenge(DailyChallengeReducer.Action)
       case leaderboard(Leaderboard.Action)
@@ -38,23 +41,24 @@ public struct Home: Reducer {
       case settings(Settings.Action)
       case solo(Solo.Action)
     }
+
     public var body: some ReducerOf<Self> {
-      Scope(state: /State.changelog, action: /Action.changelog) {
+      Scope(state: \.changelog, action: \.changelog) {
         ChangelogReducer()
       }
-      Scope(state: /State.dailyChallenge, action: /Action.dailyChallenge) {
+      Scope(state: \.dailyChallenge, action: \.dailyChallenge) {
         DailyChallengeReducer()
       }
-      Scope(state: /State.leaderboard, action: /Action.leaderboard) {
+      Scope(state: \.leaderboard, action: \.leaderboard) {
         Leaderboard()
       }
-      Scope(state: /State.multiplayer, action: /Action.multiplayer) {
+      Scope(state: \.multiplayer, action: \.multiplayer) {
         Multiplayer()
       }
-      Scope(state: /State.settings, action: /Action.settings) {
+      Scope(state: \.settings, action: \.settings) {
         Settings()
       }
-      Scope(state: /State.solo, action: /Action.solo) {
+      Scope(state: \.solo, action: \.solo) {
         Solo()
       }
     }
@@ -68,7 +72,7 @@ public struct Home: Reducer {
     @PresentationState public var nagBanner: NagBanner.State?
     public var savedGames: SavedGamesState {
       didSet {
-        guard case var .dailyChallenge(dailyChallengeState) = self.destination
+        guard var dailyChallengeState = self.destination?.dailyChallenge
         else { return }
         dailyChallengeState.inProgressDailyChallengeUnlimited =
           self.savedGames.dailyChallengeUnlimited
@@ -118,13 +122,13 @@ public struct Home: Reducer {
     }
   }
 
-  public enum Action: Equatable {
-    case activeMatchesResponse(TaskResult<ActiveMatchResponse>)
+  public enum Action {
+    case activeMatchesResponse(Result<ActiveMatchResponse, Error>)
     case activeGames(ActiveGamesAction)
     case authenticationResponse(CurrentPlayerEnvelope)
     case cubeButtonTapped
     case dailyChallengeButtonTapped
-    case dailyChallengeResponse(TaskResult<[FetchTodaysDailyChallengeResponse]>)
+    case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
     case destination(PresentationAction<Destination.Action>)
     case gameButtonTapped(GameButtonAction)
     case howToPlayButtonTapped
@@ -135,7 +139,7 @@ public struct Home: Reducer {
     case settingsButtonTapped
     case soloButtonTapped
     case task
-    case weekInReviewResponse(TaskResult<FetchWeekInReviewResponse>)
+    case weekInReviewResponse(Result<FetchWeekInReviewResponse, Error>)
   }
 
   public enum GameButtonAction: Equatable {
@@ -158,10 +162,10 @@ public struct Home: Reducer {
 
   public var body: some ReducerOf<Self> {
     Reduce(self.core)
-      .ifLet(\.$destination, action: /Action.destination) {
+      .ifLet(\.$destination, action: \.destination) {
         Destination()
       }
-      .ifLet(\.$nagBanner, action: /Action.nagBanner) {
+      .ifLet(\.$nagBanner, action: \.nagBanner) {
         NagBanner()
       }
   }
@@ -204,7 +208,7 @@ public struct Home: Reducer {
 
         await send(
           .activeMatchesResponse(
-            TaskResult {
+            Result {
               try await self.gameCenter.loadActiveMatches(now: self.now)
             }
           ),
@@ -340,7 +344,7 @@ public struct Home: Reducer {
 
       async let dailyChallengeResponse: Void = send(
         .dailyChallengeResponse(
-          TaskResult {
+          Result {
             try await self.apiClient.apiRequest(
               route: .dailyChallenge(.today(language: .en)),
               as: [FetchTodaysDailyChallengeResponse].self
@@ -350,7 +354,7 @@ public struct Home: Reducer {
       )
       async let weekInReviewResponse: Void = send(
         .weekInReviewResponse(
-          TaskResult {
+          Result {
             try await self.apiClient.apiRequest(
               route: .leaderboard(.weekInReview(language: .en)),
               as: FetchWeekInReviewResponse.self
@@ -360,7 +364,7 @@ public struct Home: Reducer {
       )
       async let activeMatchesResponse: Void = send(
         .activeMatchesResponse(
-          TaskResult {
+          Result {
             try await self.gameCenter
               .loadActiveMatches(now: self.now)
           }
@@ -379,7 +383,7 @@ public struct Home: Reducer {
         .turnBased(.receivedTurnEventForMatch):
         await send(
           .activeMatchesResponse(
-            TaskResult {
+            Result {
               try await self.gameCenter
                 .loadActiveMatches(now: self.now)
             }
@@ -523,22 +527,18 @@ public struct HomeView: View {
       )
 
       IfLetStore(
-        self.store.scope(state: \.$nagBanner, action: { .nagBanner($0) }),
+        self.store.scope(state: \.nagBanner, action: \.nagBanner.presented),
         then: NagBannerView.init(store:)
       )
     }
     .navigationBarHidden(true)
     .navigationDestination(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Home.Destination.State.settings,
-      action: Home.Destination.Action.settings
+      store: self.store.scope(state: \.$destination.settings, action: \.destination.settings)
     ) { store in
       SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
-      store: self.store.scope(state: \.$destination, action: { .destination($0) }),
-      state: /Home.Destination.State.changelog,
-      action: Home.Destination.Action.changelog,
+      store: self.store.scope(state: \.$destination.changelog, action: \.destination.changelog),
       content: ChangelogView.init(store:)
     )
     .task { await self.viewStore.send(.task).finish() }

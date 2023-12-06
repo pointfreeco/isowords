@@ -4,7 +4,8 @@ import Foundation
 import GameOverFeature
 import SharedModels
 
-public struct TurnBasedLogic: Reducer {
+@Reducer
+public struct TurnBasedLogic {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.gameCenter) var gameCenter
@@ -13,7 +14,7 @@ public struct TurnBasedLogic: Reducer {
 
   public var body: some ReducerOf<Game> {
     Reduce { state, action in
-      guard let turnBasedContext = state.turnBasedContext
+      guard let turnBasedContext = state.gameContext.turnBased
       else { return .none }
 
       switch action {
@@ -42,7 +43,7 @@ public struct TurnBasedLogic: Reducer {
             GameOver.State(
               completedGame: CompletedGame(gameState: state),
               isDemo: state.isDemo,
-              turnBasedContext: state.turnBasedContext
+              turnBasedContext: state.gameContext.turnBased
             )
           )
           return .run { _ in
@@ -100,7 +101,7 @@ public struct TurnBasedLogic: Reducer {
           await send(
             .gameCenter(
               .turnBasedMatchResponse(
-                TaskResult {
+                Result {
                   if state.isGameOver {
                     let completedGame = CompletedGame(gameState: state)
                     if let completedMatch = CompletedMatch(

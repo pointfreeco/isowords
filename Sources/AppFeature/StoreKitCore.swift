@@ -8,7 +8,8 @@ public struct ReceiptFinalizationEnvelope: Equatable {
   let verifyEnvelope: VerifyReceiptEnvelope
 }
 
-public struct StoreKitLogic<State>: Reducer {
+@Reducer
+public struct StoreKitLogic<State> {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.storeKit) var storeKit
 
@@ -33,7 +34,7 @@ public struct StoreKitLogic<State>: Reducer {
           {
             await send(
               .verifyReceiptResponse(
-                TaskResult {
+                Result {
                   try await ReceiptFinalizationEnvelope(
                     transactions: transactions,
                     verifyEnvelope: self.apiClient.apiRequest(
