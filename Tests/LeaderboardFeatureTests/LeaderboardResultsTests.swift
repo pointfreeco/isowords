@@ -66,7 +66,7 @@ class LeaderboardTests: XCTestCase {
     }
   }
 
-  func tetsUnhappyPath() async {
+  func testUnhappyPath() async {
     let store = TestStore(
       initialState: LeaderboardResults<TimeScope>.State(timeScope: .lastWeek)
     ) {
