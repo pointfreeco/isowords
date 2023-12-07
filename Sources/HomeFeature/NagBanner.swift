@@ -4,8 +4,9 @@ import UpgradeInterstitialFeature
 
 @Reducer
 public struct NagBanner {
+  @ObservableState
   public struct State: Equatable {
-    @PresentationState var upgradeInterstitial: UpgradeInterstitial.State? = nil
+    @Presents var upgradeInterstitial: UpgradeInterstitial.State? = nil
 
     public init(upgradeInterstitial: UpgradeInterstitial.State? = nil) {
       self.upgradeInterstitial = upgradeInterstitial
@@ -44,34 +45,33 @@ public struct NagBanner {
 }
 
 public struct NagBannerView: View {
-  let store: StoreOf<NagBanner>
+  @Bindable var store: StoreOf<NagBanner>
 
   public init(store: StoreOf<NagBanner>) {
     self.store = store
   }
 
   public var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      Button {
-        viewStore.send(.tapped)
-      } label: {
-        Marquee(duration: TimeInterval(messages.count) * 9) {
-          ForEach(messages, id: \.self) { message in
-            Text(message)
-              .adaptiveFont(.matterMedium, size: 14)
-              .foregroundColor(.isowordsRed)
-          }
+    Button {
+      store.send(.tapped)
+    } label: {
+      Marquee(duration: TimeInterval(messages.count) * 9) {
+        ForEach(messages, id: \.self) { message in
+          Text(message)
+            .adaptiveFont(.matterMedium, size: 14)
+            .foregroundColor(.isowordsRed)
         }
       }
-      .buttonStyle(PlainButtonStyle())
-      .frame(maxWidth: .infinity, alignment: .center)
-      .frame(height: 56)
-      .background(Color.white.edgesIgnoringSafeArea(.bottom))
     }
+    .buttonStyle(PlainButtonStyle())
+    .frame(maxWidth: .infinity, alignment: .center)
+    .frame(height: 56)
+    .background(Color.white.edgesIgnoringSafeArea(.bottom))
     .sheet(
-      store: self.store.scope(state: \.$upgradeInterstitial, action: \.upgradeInterstitial),
-      content: UpgradeInterstitialView.init(store:)
-    )
+      item: $store.scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial)
+    ) { store in
+      UpgradeInterstitialView(store: store)
+    }
   }
 }
 

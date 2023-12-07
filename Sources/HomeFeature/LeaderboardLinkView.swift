@@ -6,21 +6,7 @@ import SwiftUI
 
 struct LeaderboardLinkView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Home>
-  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
-
-  struct ViewState: Equatable {
-    var weekInReview: FetchWeekInReviewResponse?
-
-    init(state: Home.State) {
-      self.weekInReview = state.weekInReview
-    }
-  }
-
-  init(store: StoreOf<Home>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
-  }
+  @Bindable var store: StoreOf<Home>
 
   var body: some View {
     VStack(alignment: .leading) {
@@ -32,14 +18,14 @@ struct LeaderboardLinkView: View {
         Spacer()
 
         Button("View all") {
-          self.viewStore.send(.leaderboardButtonTapped)
+          store.send(.leaderboardButtonTapped)
         }
         .adaptiveFont(.matterMedium, size: 12)
       }
       .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
 
       Button {
-        self.viewStore.send(.leaderboardButtonTapped)
+        store.send(.leaderboardButtonTapped)
       } label: {
         VStack(alignment: .leading, spacing: .grid(4)) {
           Text("Week in review")
@@ -48,7 +34,7 @@ struct LeaderboardLinkView: View {
             .frame(height: 2)
             .background(self.colorScheme == .dark ? Color.isowordsBlack : .hex(0xE26C5E))
 
-          self.weekInReview(self.viewStore.weekInReview)
+          self.weekInReview(store.weekInReview)
             .adaptiveFont(.matterMedium, size: 14)
         }
       }
@@ -59,11 +45,10 @@ struct LeaderboardLinkView: View {
         )
       )
       .navigationDestination(
-        store: self.store.scope(
-          state: \.$destination.leaderboard, action: \.destination.leaderboard
-        ),
-        destination: LeaderboardView.init(store:)
-      )
+        item: $store.scope(state: \.destination?.leaderboard, action: \.destination.leaderboard)
+      ) { store in
+        LeaderboardView(store: store)
+      }
     }
   }
 
