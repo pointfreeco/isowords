@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 
 import Foundation
 import PackageDescription
@@ -7,10 +7,10 @@ import PackageDescription
 var package = Package(
   name: "isowords",
   platforms: [
-    .iOS(.v16),
-    .macOS(.v13),
-    .tvOS(.v16),
-    .watchOS(.v9),
+    .iOS(.v17),
+    .macOS(.v14),
+    .tvOS(.v17),
+    .watchOS(.v10),
   ],
   products: [
     .library(name: "Build", targets: ["Build"]),
@@ -29,7 +29,8 @@ var package = Package(
     .package(url: "https://github.com/apple/swift-crypto", from: "1.1.6"),
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.1.0"),
     .package(
-      url: "https://github.com/pointfreeco/swift-composable-architecture", branch: "main"
+      url: "https://github.com/pointfreeco/swift-composable-architecture",
+      branch: "observation-beta"
     ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
@@ -45,7 +46,7 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
-        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -61,7 +62,7 @@ var package = Package(
       name: "DictionaryClient",
       dependencies: [
         "SharedModels",
-        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -254,7 +255,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SharedModels",
         "XCTestDebugSupport",
         .product(name: "CasePaths", package: "swift-case-paths"),
-        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -265,7 +266,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ServerRouter",
         "SharedModels",
         "TcaHelpers",
-        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
       ],
       exclude: ["Secrets.swift.example"]
     ),
@@ -525,7 +526,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "DeviceId",
       dependencies: [
-        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
