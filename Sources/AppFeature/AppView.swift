@@ -14,6 +14,7 @@ import SwiftUI
 public struct AppReducer {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case game(Game.State)
       case onboarding(Onboarding.State)
@@ -32,15 +33,16 @@ public struct AppReducer {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var home: Home.State
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
       destination: Destination.State? = nil,
-      home: Home.State = .init()
+      home: Home.State = Home.State()
     ) {
       self.appDelegate = appDelegate
       self.destination = destination
@@ -328,60 +330,48 @@ public struct AppReducer {
 
 public struct AppView: View {
   let store: StoreOf<AppReducer>
-  @ObservedObject var viewStore: ViewStore<ViewState, AppReducer.Action>
   @Environment(\.deviceState) var deviceState
-
-  struct ViewState: Equatable {
-    let isHomeActive: Bool
-
-    init(state: AppReducer.State) {
-      self.isHomeActive = state.destination == nil
-    }
-  }
 
   public init(store: StoreOf<AppReducer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
     Group {
-      if self.viewStore.isHomeActive {
+      switch store.destination {
+      case .none:
         NavigationStack {
-          HomeView(store: self.store.scope(state: \.home, action: \.home))
+          HomeView(store: store.scope(state: \.home, action: \.home))
         }
         .zIndex(0)
-      } else {
-        IfLetStore(
-          self.store.scope(state: \.destination?.game, action: \.destination.game)
-        ) { store in
+
+      case .some(.game):
+        if let store = store.scope(state: \.destination?.game, action: \.destination.game) {
           GameView(
             content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
             store: store
           )
+          .transition(.game)
+          .zIndex(1)
         }
-        .transition(.game)
-        .zIndex(1)
 
-        IfLetStore(
-          self.store.scope(state: \.destination?.onboarding, action: \.destination.onboarding),
-          then: OnboardingView.init(store:)
-        )
-        .zIndex(2)
+      case .some(.onboarding):
+        if let store = store.scope(
+          state: \.destination?.onboarding, action: \.destination.onboarding
+        ) {
+          OnboardingView(store: store)
+            .zIndex(2)
+        }
       }
     }
     .modifier(DeviceStateModifier())
   }
 }
 
-#if DEBUG
-  struct AppView_Previews: PreviewProvider {
-    static var previews: some View {
-      AppView(
-        store: Store(initialState: AppReducer.State()) {
-          AppReducer()
-        }
-      )
+#Preview {
+  AppView(
+    store: Store(initialState: AppReducer.State()) {
+      AppReducer()
     }
-  }
-#endif
+  )
+}
