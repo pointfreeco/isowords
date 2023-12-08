@@ -937,7 +937,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "UIApplicationClient",
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .target(
