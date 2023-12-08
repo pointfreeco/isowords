@@ -4,6 +4,7 @@ import SwiftUI
 
 // NB: `@Reducer` prevents us from synthesizing conditional conformances in this file.
 public struct LeaderboardResults<TimeScope>: Reducer {
+  @ObservableState
   public struct State {
     public var gameMode: GameMode
     public var isLoading: Bool
@@ -128,7 +129,6 @@ where
   let title: Text?
 
   let store: StoreOf<LeaderboardResults<TimeScope>>
-  @ObservedObject var viewStore: ViewStoreOf<LeaderboardResults<TimeScope>>
 
   public init(
     store: StoreOf<LeaderboardResults<TimeScope>>,
@@ -143,7 +143,6 @@ where
     self.isFilterable = isFilterable
     self.subtitle = subtitle
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
     self.timeScopeLabel = timeScopeLabel
     self.timeScopeMenu = timeScopeMenu
     self.title = title
@@ -157,12 +156,12 @@ where
           .adaptiveFont(.matterMedium, size: 16)
           .frame(maxWidth: .infinity, alignment: .leading)
           .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
-          .redacted(reason: self.viewStore.isLoading ? .placeholder : [])
+          .redacted(reason: store.isLoading ? .placeholder : [])
 
         Spacer()
 
         Button {
-          self.viewStore.send(.tappedTimeScopeLabel, animation: .default)
+          store.send(.tappedTimeScopeLabel, animation: .default)
         } label: {
           HStack {
             self.timeScopeLabel
@@ -170,7 +169,7 @@ where
             Image(systemName: "chevron.down")
               .font(.system(size: 10))
               .rotationEffect(
-                .degrees(self.viewStore.isTimeScopeMenuVisible ? -180 : 0)
+                .degrees(store.isTimeScopeMenuVisible ? -180 : 0)
               )
           }
           .padding(.vertical, 8)
@@ -186,11 +185,11 @@ where
           HStack(spacing: .grid(4)) {
             ForEach(GameMode.allCases) { gameMode in
               Button {
-                self.viewStore.send(.gameModeButtonTapped(gameMode))
+                store.send(.gameModeButtonTapped(gameMode))
               } label: {
                 Text(gameMode.title)
                   .adaptiveFont(.matterMedium, size: 12)
-                  .opacity(self.viewStore.gameMode == gameMode ? 1 : 0.4)
+                  .opacity(store.gameMode == gameMode ? 1 : 0.4)
               }
               .buttonStyle(PlainButtonStyle())
             }
@@ -213,33 +212,33 @@ where
 
           Group {
             ForEach(
-              self.viewStore.resultEnvelope?.contiguousResults ?? [], id: \.id
+              store.resultEnvelope?.contiguousResults ?? [], id: \.id
             ) { result in
               Button {
-                self.viewStore.send(.tappedRow(id: result.id))
+                store.send(.tappedRow(id: result.id))
               } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
 
-            if let result = self.viewStore.resultEnvelope?.nonContiguousResult {
+            if let result = store.resultEnvelope?.nonContiguousResult {
               Image(systemName: "ellipsis")
                 .opacity(0.4)
                 .adaptivePadding(.vertical, .grid(5))
                 .adaptiveFont(.matterMedium, size: 16)
 
               Button {
-                self.viewStore.send(.tappedRow(id: result.id))
+                store.send(.tappedRow(id: result.id))
               } label: {
                 ResultRow(color: self.color, result: result)
               }
             }
 
-            if self.viewStore.nonDisplayedResultsCount > 0 {
+            if store.nonDisplayedResultsCount > 0 {
               VStack(spacing: .grid(5)) {
                 Image(systemName: "ellipsis")
                   .opacity(0.4)
-                Text("and \(self.viewStore.nonDisplayedResultsCount) more!")
+                Text("and \(store.nonDisplayedResultsCount) more!")
               }
               .adaptivePadding(.top, .grid(5))
               .adaptiveFont(.matterMedium, size: 16)
@@ -248,13 +247,13 @@ where
 
           Spacer().frame(height: .grid(5))
         }
-        .disabled(self.viewStore.isLoading)
-        .redacted(reason: self.viewStore.isLoading ? .placeholder : [])
+        .disabled(store.isLoading)
+        .redacted(reason: store.isLoading ? .placeholder : [])
       }
       .background(self.color)
       .foregroundColor(.isowordsBlack)
       .overlay(
-        self.viewStore.isLoading
+        store.isLoading
           ? ZStack {
             Color.black
               .opacity(0.4)
@@ -264,17 +263,17 @@ where
           : nil
       )
       .overlay(
-        self.viewStore.isTimeScopeMenuVisible
+        store.isTimeScopeMenuVisible
           ? Color.black.opacity(0.4)
             .onTapGesture {
-              self.viewStore.send(.dismissTimeScopeMenu, animation: .default)
+              store.send(.dismissTimeScopeMenu, animation: .default)
             }
           : nil
       )
       .continuousCornerRadius(.grid(3))
     }
     .overlay(
-      self.viewStore.isTimeScopeMenuVisible
+      store.isTimeScopeMenuVisible
         ? VStack {
           self.timeScopeMenu
             .adaptiveFont(.matterMedium, size: 12)
@@ -296,7 +295,7 @@ where
       alignment: .topTrailing
 
     )
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await store.send(.task).finish() }
   }
 }
 
