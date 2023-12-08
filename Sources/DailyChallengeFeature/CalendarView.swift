@@ -65,9 +65,7 @@ struct CalendarView: View {
   let store: StoreOf<DailyChallengeResults>
   @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeResults.Action>
 
-  init(
-    store: StoreOf<DailyChallengeResults>
-  ) {
+  init(store: StoreOf<DailyChallengeResults>) {
     self.store = store
     self.viewStore = ViewStore(store, observe: ViewState.init)
   }
