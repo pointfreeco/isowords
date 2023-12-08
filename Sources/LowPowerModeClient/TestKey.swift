@@ -1,6 +1,5 @@
 import ComposableArchitecture
 import Foundation
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var lowPowerMode: LowPowerModeClient {

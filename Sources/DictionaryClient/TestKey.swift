@@ -1,6 +1,5 @@
 import Dependencies
 import SharedModels
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var dictionary: DictionaryClient {

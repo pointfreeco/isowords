@@ -1,7 +1,6 @@
 import Dependencies
 import Foundation
 import XCTestDebugSupport
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var fileClient: FileClient {

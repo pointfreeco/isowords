@@ -1,7 +1,6 @@
 import Dependencies
 import DependenciesMacros
 import Foundation
-import XCTestDynamicOverlay
 
 @DependencyClient
 public struct DeviceIdentifier {

@@ -1,5 +1,4 @@
 import Dependencies
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var feedbackGenerator: FeedbackGeneratorClient {

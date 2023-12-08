@@ -1,6 +1,5 @@
 import ComposableArchitecture
 import SharedModels
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var database: LocalDatabaseClient {

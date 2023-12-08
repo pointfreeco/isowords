@@ -2,7 +2,6 @@ import Dependencies
 import DependenciesMacros
 import Foundation
 import Tagged
-import XCTestDynamicOverlay
 
 @DependencyClient
 public struct Build {

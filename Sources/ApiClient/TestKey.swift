@@ -3,7 +3,6 @@ import Dependencies
 import Foundation
 import SharedModels
 import XCTestDebugSupport
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var apiClient: ApiClient {
