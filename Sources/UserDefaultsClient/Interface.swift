@@ -1,4 +1,5 @@
 import Dependencies
+import DependenciesMacros
 import Foundation
 
 extension DependencyValues {
@@ -8,11 +9,12 @@ extension DependencyValues {
   }
 }
 
+@DependencyClient
 public struct UserDefaultsClient {
-  public var boolForKey: @Sendable (String) -> Bool
+  public var boolForKey: @Sendable (String) -> Bool = { _ in false }
   public var dataForKey: @Sendable (String) -> Data?
-  public var doubleForKey: @Sendable (String) -> Double
-  public var integerForKey: @Sendable (String) -> Int
+  public var doubleForKey: @Sendable (String) -> Double = { _ in 0 }
+  public var integerForKey: @Sendable (String) -> Int = { _ in 0 }
   public var remove: @Sendable (String) async -> Void
   public var setBool: @Sendable (Bool, String) async -> Void
   public var setData: @Sendable (Data?, String) async -> Void

@@ -1,13 +1,15 @@
 import CasePaths
+import DependenciesMacros
 import StoreKit
 
+@DependencyClient
 public struct StoreKitClient {
   public var addPayment: @Sendable (SKPayment) async -> Void
   public var appStoreReceiptURL: @Sendable () -> URL?
-  public var isAuthorizedForPayments: @Sendable () -> Bool
+  public var isAuthorizedForPayments: @Sendable () -> Bool = { false }
   public var fetchProducts: @Sendable (Set<String>) async throws -> ProductsResponse
   public var finishTransaction: @Sendable (PaymentTransaction) async -> Void
-  public var observer: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent>
+  public var observer: @Sendable () -> AsyncStream<PaymentTransactionObserverEvent> = { .finished }
   public var requestReview: @Sendable () async -> Void
   public var restoreCompletedTransactions: @Sendable () async -> Void
 
@@ -122,53 +124,5 @@ public struct StoreKitClient {
       self.requestData = requestData
       self.simulatesAskToBuyInSandbox = simulatesAskToBuyInSandbox
     }
-  }
-}
-
-extension SKPaymentTransactionState {
-  public var canBeVerified: Bool {
-    switch self {
-    case .purchasing, .failed, .deferred:
-      return false
-    case .purchased, .restored:
-      return true
-    @unknown default:
-      return false
-    }
-  }
-}
-
-extension StoreKitClient.PaymentTransaction {
-  init(rawValue: SKPaymentTransaction) {
-    self.error = rawValue.error as NSError?
-    self._original = { rawValue.original.map(Self.init(rawValue:)) }
-    self.payment = .init(rawValue: rawValue.payment)
-    self.rawValue = rawValue
-    self.transactionDate = rawValue.transactionDate
-    self.transactionIdentifier = rawValue.transactionIdentifier
-    self.transactionState = rawValue.transactionState
-  }
-}
-
-extension StoreKitClient.Payment {
-  init(rawValue: SKPayment) {
-    self.applicationUsername = rawValue.applicationUsername
-    self.productIdentifier = rawValue.productIdentifier
-    self.quantity = rawValue.quantity
-    self.requestData = rawValue.requestData
-    self.simulatesAskToBuyInSandbox = rawValue.simulatesAskToBuyInSandbox
-  }
-}
-
-extension StoreKitClient.Product {
-  init(rawValue: SKProduct) {
-    self.downloadContentLengths = rawValue.downloadContentLengths
-    self.downloadContentVersion = rawValue.downloadContentVersion
-    self.isDownloadable = rawValue.isDownloadable
-    self.localizedDescription = rawValue.localizedDescription
-    self.localizedTitle = rawValue.localizedTitle
-    self.price = rawValue.price
-    self.priceLocale = rawValue.priceLocale
-    self.productIdentifier = rawValue.productIdentifier
   }
 }

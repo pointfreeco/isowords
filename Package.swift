@@ -33,7 +33,7 @@ var package = Package(
       branch: "observation-beta"
     ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
-    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.1.0"),
     .package(url: "https://github.com/pointfreeco/swift-gen", from: "0.3.0"),
     .package(url: "https://github.com/pointfreeco/swift-parsing", from: "0.12.0"),
     .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.6.0"),
@@ -47,6 +47,7 @@ var package = Package(
       name: "Build",
       dependencies: [
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -63,6 +64,7 @@ var package = Package(
       dependencies: [
         "SharedModels",
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -256,6 +258,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "XCTestDebugSupport",
         .product(name: "CasePaths", package: "swift-case-paths"),
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -527,6 +530,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "DeviceId",
       dependencies: [
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
@@ -935,8 +939,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "UIApplicationClient",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture")
       ]
     ),
     .target(
@@ -1302,9 +1305,9 @@ package.targets.append(contentsOf: [
       "ShareGameMiddleware",
       "SnsClient",
       "VerifyReceiptMiddleware",
+      .product(name: "DependenciesMacros", package: "swift-dependencies"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "Overture", package: "swift-overture"),
-      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ],
     resources: [.process("Resources/")]
   ),
