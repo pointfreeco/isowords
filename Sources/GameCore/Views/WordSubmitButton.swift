@@ -24,6 +24,7 @@ public struct WordSubmitButtonFeature {
     }
   }
 
+  @ObservableState
   public struct ButtonState: Equatable {
     public var areReactionsOpen: Bool
     public var favoriteReactions: [Move.Reaction]
@@ -216,20 +217,13 @@ public struct WordSubmitButton: View {
 
 struct ReactionsView: View {
   let store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
-  @ObservedObject var viewStore:
-    ViewStore<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
-
-  public init(store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
-  }
 
   var body: some View {
-    ForEach(Array(self.viewStore.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
+    ForEach(Array(store.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
       let offset = self.offset(index: idx)
 
       Button {
-        self.viewStore.send(.reactionButtonTapped(reaction), animation: .default)
+        store.send(.reactionButtonTapped(reaction), animation: .default)
       } label: {
         Text(reaction.rawValue)
           .font(.system(size: 32))
@@ -237,23 +231,23 @@ struct ReactionsView: View {
       }
       .background(Color.white.opacity(0.5))
       .clipShape(Circle())
-      .rotationEffect(.degrees(self.viewStore.areReactionsOpen ? -360 : 0))
-      .opacity(self.viewStore.areReactionsOpen ? 1 : 0)
+      .rotationEffect(.degrees(store.areReactionsOpen ? -360 : 0))
+      .opacity(store.areReactionsOpen ? 1 : 0)
       .offset(x: offset.x, y: offset.y)
       .animation(
-        .default.delay(Double(idx) / Double(self.viewStore.favoriteReactions.count * 10)),
-        value: self.viewStore.areReactionsOpen
+        .default.delay(Double(idx) / Double(store.favoriteReactions.count * 10)),
+        value: store.areReactionsOpen
       )
     }
   }
 
   func offset(index: Int) -> CGPoint {
     let angle: CGFloat =
-      CGFloat.pi / CGFloat(self.viewStore.favoriteReactions.count - 1) * CGFloat(index) + .pi
+      CGFloat.pi / CGFloat(store.favoriteReactions.count - 1) * CGFloat(index) + .pi
 
     return .init(
-      x: self.viewStore.areReactionsOpen ? cos(angle) * 130 : 0,
-      y: self.viewStore.areReactionsOpen ? sin(angle) * 130 : 0
+      x: store.areReactionsOpen ? cos(angle) * 130 : 0,
+      y: store.areReactionsOpen ? sin(angle) * 130 : 0
     )
   }
 }
