@@ -13,6 +13,7 @@ import SwiftUI
 public struct DailyChallengeReducer {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case alert(AlertState<Action.Alert>)
       case notificationsAuthAlert(NotificationsAuthAlert.State)
@@ -38,9 +39,10 @@ public struct DailyChallengeReducer {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
     public var inProgressDailyChallengeUnlimited: InProgressGame?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
