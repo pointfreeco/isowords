@@ -113,15 +113,13 @@ class TurnBasedTests: XCTestCase {
       await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
+      await store.receive(\.home.activeMatchesResponse.success)
       await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
       await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
-
-      await self.mainRunLoop.advance()
-      await store.receive(\.home.activeMatchesResponse.success)
 
       await store.send(.home(.destination(.presented(.multiplayer(.startButtonTapped)))))
 
@@ -340,14 +338,13 @@ class TurnBasedTests: XCTestCase {
       await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
+      await store.receive(\.home.activeMatchesResponse.success)
       await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
       await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
-
-      await store.receive(\.home.activeMatchesResponse.success)
 
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(.inProgress, didBecomeActive: true)))
@@ -442,13 +439,13 @@ class TurnBasedTests: XCTestCase {
       await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
+      await store.receive(\.home.activeMatchesResponse.success)
       await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
       await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
-      await store.receive(\.home.activeMatchesResponse.success)
       
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(.forfeited, didBecomeActive: true)))
