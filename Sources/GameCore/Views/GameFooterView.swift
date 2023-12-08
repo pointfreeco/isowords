@@ -6,17 +6,6 @@ import SwiftUI
 public struct GameFooterView: View {
   let isLeftToRight: Bool
   let store: StoreOf<Game>
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
-
-  struct ViewState: Equatable {
-    let isAnimationReduced: Bool
-    let selectedWordString: String
-
-    init(state: Game.State) {
-      self.isAnimationReduced = state.isAnimationReduced
-      self.selectedWordString = state.selectedWordString
-    }
-  }
 
   public init(
     isLeftToRight: Bool = false,
@@ -24,17 +13,16 @@ public struct GameFooterView: View {
   ) {
     self.isLeftToRight = isLeftToRight
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
-    if self.viewStore.selectedWordString.isEmpty {
+    if store.selectedWordString.isEmpty {
       WordListView(
         isLeftToRight: self.isLeftToRight,
-        store: self.store
+        store: store
       )
       .transition(
-        viewStore.isAnimationReduced
+        store.isAnimationReduced
           ? .opacity
           : AnyTransition.offset(y: 50)
             .combined(with: .opacity)
