@@ -274,23 +274,14 @@ public struct CubePreviewView: View {
         CubeView(store: self.store.scope(state: \.cubeScenePreview, action: \.cubeScene))
           .task { await self.viewStore.send(.task).finish() }
       }
-      .background(
-        self.viewStore.isAnimationReduced
-          ? nil
-          : BloomBackground(
+      .background {
+        if !self.viewStore.isAnimationReduced {
+          BloomBackground(
             size: proxy.size,
-            store: self.store
-              .scope(
-                state: { _ in
-                  BloomBackground.ViewState(
-                    bloomCount: self.viewStore.selectedWordString.count,
-                    word: self.viewStore.selectedWordString
-                  )
-                },
-                action: absurd
-              )
+            word: self.viewStore.selectedWordString
           )
-      )
+        }
+      }
     }
     .onTapGesture {
       UIView.setAnimationsEnabled(false)

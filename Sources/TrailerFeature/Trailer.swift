@@ -254,20 +254,12 @@ public struct TrailerView: View {
             .grid(30)
           )
       }
-      .background(
+      .background {
         BloomBackground(
           size: proxy.size,
-          store: store.scope(
-            state: {
-              BloomBackground.ViewState(
-                bloomCount: $0.game.selectedWord.count,
-                word: $0.game.selectedWordString
-              )
-            },
-            action: absurd
-          )
+          word: store.game.selectedWordString
         )
-      )
+      }
     }
     .padding(
       self.deviceState.idiom == .pad ? .vertical : [],
