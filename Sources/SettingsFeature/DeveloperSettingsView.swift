@@ -3,25 +3,19 @@ import Styleguide
 import SwiftUI
 
 struct DeveloperSettingsView: View {
-  let store: StoreOf<Settings>
-  @ObservedObject var viewStore: ViewStoreOf<Settings>
+  @Bindable var store: StoreOf<Settings>
   @AppStorage(.enableCubeShadow) var enableCubeShadow
   @AppStorage(.showSceneStatistics) var showSceneStatistics
-
-  init(store: StoreOf<Settings>) {
-    self.store = store
-    self.viewStore = ViewStore(store, observe: { $0 })
-  }
 
   var body: some View {
     SettingsForm {
       SettingsRow {
         VStack(alignment: .leading) {
           Text("API")
-          Text(self.viewStore.developer.currentBaseUrl.rawValue)
+          Text(store.developer.currentBaseUrl.rawValue)
             .adaptiveFont(.matter, size: 14)
 
-          Picker("Base URL", selection: self.viewStore.$developer.currentBaseUrl) {
+          Picker("Base URL", selection: $store.developer.currentBaseUrl) {
             ForEach(DeveloperSettings.BaseUrl.allCases, id: \.self) {
               Text($0.description)
             }

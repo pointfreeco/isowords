@@ -11,22 +11,7 @@ public struct SettingsView: View {
   @Environment(\.colorScheme) var colorScheme
   let navPresentationStyle: NavPresentationStyle
   @State var isSharePresented = false
-  let store: StoreOf<Settings>
-  @ObservedObject var viewStore: ViewStore<ViewState, Settings.Action>
-
-  struct ViewState: Equatable {
-    let buildNumber: Build.Number?
-    let fullGameProduct: Result<StoreKitClient.Product, Settings.State.ProductError>?
-    let isFullGamePurchased: Bool
-    let isPurchasing: Bool
-
-    init(state: Settings.State) {
-      self.buildNumber = state.buildNumber
-      self.fullGameProduct = state.fullGameProduct
-      self.isFullGamePurchased = state.isFullGamePurchased
-      self.isPurchasing = state.isPurchasing
-    }
-  }
+  @Bindable var store: StoreOf<Settings>
 
   public init(
     store: StoreOf<Settings>,
@@ -34,7 +19,6 @@ public struct SettingsView: View {
   ) {
     self.navPresentationStyle = navPresentationStyle
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -42,15 +26,15 @@ public struct SettingsView: View {
       SettingsSection(title: "Support the game", padContents: false) {
         ScrollView(.horizontal, showsIndicators: false) {
           HStack(spacing: 16) {
-            if !self.viewStore.isFullGamePurchased {
+            if !store.isFullGamePurchased {
               Group {
-                if !self.viewStore.isPurchasing,
-                  let fullGameProduct = self.viewStore.fullGameProduct
+                if !store.isPurchasing,
+                  let fullGameProduct = store.fullGameProduct
                 {
                   switch fullGameProduct {
                   case let .success(product):
                     Button {
-                      self.viewStore.send(.tappedProduct(product), animation: .default)
+                      store.send(.tappedProduct(product), animation: .default)
                     } label: {
                       HStack(alignment: .top, spacing: 0) {
                         Text(product.priceLocale.currencySymbol ?? "$")
@@ -81,7 +65,7 @@ public struct SettingsView: View {
             }
 
             Button {
-              self.viewStore.send(.leaveUsAReviewButtonTapped)
+              store.send(.leaveUsAReviewButtonTapped)
             } label: {
               Image(systemName: "star")
                 .font(.system(size: 40))
@@ -115,33 +99,33 @@ public struct SettingsView: View {
       }
 
       SettingsNavigationLink(
-        destination: NotificationsSettingsView(store: self.store),
+        destination: NotificationsSettingsView(store: store),
         title: "Notifications"
       )
       SettingsNavigationLink(
-        destination: SoundsSettingsView(store: self.store),
+        destination: SoundsSettingsView(store: store),
         title: "Sounds"
       )
       SettingsNavigationLink(
-        destination: AppearanceSettingsView(store: self.store),
+        destination: AppearanceSettingsView(store: store),
         title: "Appearance"
       )
       SettingsNavigationLink(
-        destination: AccessibilitySettingsView(store: self.store),
+        destination: AccessibilitySettingsView(store: store),
         title: "Accessibility"
       )
       SettingsNavigationLink(
-        destination: StatsView(store: self.store.scope(state: \.stats, action: \.stats)),
+        destination: StatsView(store: store.scope(state: \.stats, action: \.stats)),
         title: "Stats"
       )
       SettingsNavigationLink(
-        destination: PurchasesSettingsView(store: self.store),
+        destination: PurchasesSettingsView(store: store),
         title: "Purchases"
       )
-      if self.viewStore.isFullGamePurchased {
+      if store.isFullGamePurchased {
         SettingsRow {
           Button {
-            self.viewStore.send(.leaveUsAReviewButtonTapped)
+            store.send(.leaveUsAReviewButtonTapped)
           } label: {
             HStack {
               Text("Leave us a review")
@@ -154,17 +138,17 @@ public struct SettingsView: View {
       }
       #if DEBUG
         SettingsNavigationLink(
-          destination: DeveloperSettingsView(store: self.store),
+          destination: DeveloperSettingsView(store: store),
           title: "\(Image(systemName: "hammer.fill")) Developer"
         )
       #endif
 
       VStack(spacing: 6) {
-        if let buildNumber = self.viewStore.buildNumber {
+        if let buildNumber = store.buildNumber {
           Text("Build \(buildNumber.rawValue)")
         }
         Button {
-          self.viewStore.send(.reportABugButtonTapped)
+          store.send(.reportABugButtonTapped)
         } label: {
           Text("Report a bug")
             .underline()
@@ -179,11 +163,11 @@ public struct SettingsView: View {
       foregroundColor: .hex(self.colorScheme == .dark ? 0x7d7d7d : 0x393939),
       title: Text("Settings"),
       navPresentationStyle: self.navPresentationStyle,
-      onDismiss: { self.viewStore.send(.onDismiss) }
+      onDismiss: { store.send(.onDismiss) }
     )
-    .task { await self.viewStore.send(.task).finish() }
-    .alert(store: self.store.scope(state: \.$alert, action: \.alert))
-    .sheet(isPresented: self.$isSharePresented) {
+    .task { await store.send(.task).finish() }
+    .alert($store.scope(state: \.alert, action: \.alert))
+    .sheet(isPresented: $isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()
     }
