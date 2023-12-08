@@ -3,12 +3,8 @@ import Styleguide
 import SwiftUI
 
 struct OnboardingStepView: View {
-  let store: StoreOf<Onboarding>
+  @Bindable var store: StoreOf<Onboarding>
   @Environment(\.colorScheme) var colorScheme
-
-  init(store: StoreOf<Onboarding>) {
-    self.store = store
-  }
 
   var body: some View {
     GeometryReader { proxy in
@@ -259,7 +255,7 @@ struct OnboardingStepView: View {
         }
         .padding()
         .transition(
-          AnyTransition.asymmetric(
+          .asymmetric(
             insertion: .offset(x: 0, y: 50),
             removal: .offset(x: 0, y: 50)
           )
@@ -268,7 +264,7 @@ struct OnboardingStepView: View {
       }
     }
     .task { await store.send(.task).finish() }
-    .alert(store: self.store.scope(state: \.$alert, action: \.alert))
+    .alert($store.scope(state: \.alert, action: \.alert))
   }
 }
 

@@ -19,6 +19,7 @@ import UserDefaultsClient
 public struct GameOver {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
       case upgradeInterstitial(UpgradeInterstitial.State = .init())
@@ -39,10 +40,11 @@ public struct GameOver {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var completedGame: CompletedGame
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
     public var isDemo: Bool
     public var isNotificationMenuPresented: Bool
