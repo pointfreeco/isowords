@@ -499,12 +499,10 @@ public struct GameOverView: View {
         .padding(.vertical, .grid(12))
       }
 
-      IfLetStore(
-        self.store.scope(
-          state: \.destination?.upgradeInterstitial,
-          action: \.destination.upgradeInterstitial.presented
-        )
-      ) { store in
+      if let store = store.scope(
+        state: \.destination?.upgradeInterstitial,
+        action: \.destination.upgradeInterstitial.presented
+      ) {
         UpgradeInterstitialView(store: store)
           .transition(.opacity)
       }
