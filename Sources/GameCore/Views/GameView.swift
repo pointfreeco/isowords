@@ -15,27 +15,8 @@ public struct GameView<Content>: View where Content: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.deviceState) var deviceState
   let content: Content
-  let store: StoreOf<Game>
+  @Bindable var store: StoreOf<Game>
   var trayHeight: CGFloat { ActiveGamesView.height + (16 + self.adaptiveSize.padding) * 2 }
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
-
-  struct ViewState: Equatable {
-    let isAnimationReduced: Bool
-    let isDailyChallenge: Bool
-    let isGameLoaded: Bool
-    let isNavVisible: Bool
-    let isTrayVisible: Bool
-    let selectedWordString: String
-
-    init(state: Game.State) {
-      self.isAnimationReduced = state.isAnimationReduced
-      self.isDailyChallenge = state.gameContext.is(\.dailyChallenge)
-      self.isGameLoaded = state.isGameLoaded
-      self.isNavVisible = state.isNavVisible
-      self.isTrayVisible = state.isTrayVisible
-      self.selectedWordString = state.selectedWordString
-    }
-  }
 
   public init(
     content: Content,
@@ -43,14 +24,13 @@ public struct GameView<Content>: View where Content: View {
   ) {
     self.content = content
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
     GeometryReader { proxy in
       ZStack {
         ZStack(alignment: .top) {
-          if self.viewStore.isGameLoaded {
+          if store.isGameLoaded {
             self.content
               .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
               .ignoresSafeArea()
@@ -70,31 +50,28 @@ public struct GameView<Content>: View where Content: View {
 
           VStack {
             Group {
-              if self.viewStore.isNavVisible {
-                GameNavView(store: self.store)
+              if store.isNavVisible {
+                GameNavView(store: store)
               } else {
-                GameNavView(store: self.store)
+                GameNavView(store: store)
                   .hidden()
               }
-              GameHeaderView(store: self.store)
+              GameHeaderView(store: store)
             }
             .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
             Spacer()
-            GameFooterView(store: self.store)
+            GameFooterView(store: store)
               .padding(.bottom)
           }
           .ignoresSafeArea(.keyboard)
 
-          if !self.viewStore.selectedWordString.isEmpty {
+          if !store.selectedWordString.isEmpty {
             WordSubmitButton(
-              store: self.store.scope(
-                state: \.wordSubmitButtonFeature,
-                action: \.wordSubmitButton
-              )
+              store: store.scope(state: \.wordSubmitButtonFeature, action: \.wordSubmitButton)
             )
             .ignoresSafeArea()
             .transition(
-              viewStore.isAnimationReduced
+              store.isAnimationReduced
                 ? .opacity
                 : AnyTransition
                   .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
@@ -103,7 +80,7 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: self.store.scope(state: \.activeGames, action: \.activeGames),
+            store: store.scope(state: \.activeGames, action: \.activeGames),
             showMenuItems: false
           )
           .adaptivePadding(.vertical, 8)
@@ -121,54 +98,48 @@ public struct GameView<Content>: View where Content: View {
             )
           )
           .fixedSize(horizontal: false, vertical: true)
-          .opacity(self.viewStore.isTrayVisible ? 1 : 0)
+          .opacity(store.isTrayVisible ? 1 : 0)
           .offset(y: -self.trayHeight)
         }
-        .offset(y: self.viewStore.isTrayVisible ? self.trayHeight : 0)
+        .offset(y: store.isTrayVisible ? self.trayHeight : 0)
         .zIndex(0)
 
-        IfLetStore(
-          self.store.scope(
-            state: \.destination?.gameOver, action: \.destination.gameOver.presented
-          ),
-          then: GameOverView.init(store:)
-        )
-        .background(Color.adaptiveWhite.ignoresSafeArea())
-        .transition(
-          .asymmetric(
-            insertion: AnyTransition.opacity.animation(.linear(duration: 1)),
-            removal: .game
-          )
-        )
-        .zIndex(1)
-
-        IfLetStore(
-          self.store.scope(
-            state: \.destination?.upgradeInterstitial,
-            action: \.destination.upgradeInterstitial.presented
-          )
-        ) { store in
+        if let store = store.scope(
+          state: \.destination?.gameOver, action: \.destination.gameOver.presented
+        ) {
+          GameOverView(store: store)
+            .background(Color.adaptiveWhite.ignoresSafeArea())
+            .transition(
+              .asymmetric(
+                insertion: AnyTransition.opacity.animation(.linear(duration: 1)),
+                removal: .game
+              )
+            )
+            .zIndex(1)
+        } else if let store = store.scope(
+          state: \.destination?.upgradeInterstitial,
+          action: \.destination.upgradeInterstitial.presented
+        ) {
           UpgradeInterstitialView(store: store)
             .transition(.opacity)
+            .zIndex(2)
         }
-        .zIndex(2)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(
-        viewStore.isAnimationReduced
+        store.isAnimationReduced
           ? nil
           : BloomBackground(
             size: proxy.size,
-            store: self.store
-              .scope(
-                state: {
-                  BloomBackground.ViewState(
-                    bloomCount: $0.selectedWord.count,
-                    word: $0.selectedWordString
-                  )
-                },
-                action: absurd
-              )
+            store: store.scope(
+              state: {
+                BloomBackground.ViewState(
+                  bloomCount: $0.selectedWord.count,
+                  word: $0.selectedWordString
+                )
+              },
+              action: absurd
+            )
           )
       )
       .background(
@@ -176,20 +147,20 @@ public struct GameView<Content>: View where Content: View {
           .ignoresSafeArea()
       )
       .bottomMenu(
-        store: self.store.scope(state: \.$destination, action: \.destination),
+        store: store.scope(state: \.$destination, action: \.destination),
         state: \.bottomMenu,
         action: { .bottomMenu($0) }
       )
-      .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
+      .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
       .sheet(
-        store: self.store.scope(state: \.$destination.settings, action: \.destination.settings)
+        item: $store.scope(state: \.destination?.settings, action: \.destination.settings)
       ) { store in
         NavigationStack {
           SettingsView(store: store, navPresentationStyle: .modal)
         }
       }
     }
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await store.send(.task).finish() }
   }
 }
 
