@@ -4,6 +4,7 @@ import SwiftUI
 
 @Reducer
 public struct WordSubmitButtonFeature {
+  @ObservableState
   public struct State: Equatable {
     public var isSelectedWordValid: Bool
     public let isTurnBasedMatch: Bool
@@ -138,19 +139,15 @@ public struct WordSubmitButtonFeature {
 public struct WordSubmitButton: View {
   @Environment(\.deviceState) var deviceState
   let store: StoreOf<WordSubmitButtonFeature>
-  @ObservedObject var viewStore: ViewStoreOf<WordSubmitButtonFeature>
   @State var isTouchDown = false
 
-  public init(
-    store: StoreOf<WordSubmitButtonFeature>
-  ) {
+  public init(store: StoreOf<WordSubmitButtonFeature>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
     ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
-      if self.viewStore.wordSubmitButton.areReactionsOpen {
+      if store.wordSubmitButton.areReactionsOpen {
         RadialGradient(
           gradient: Gradient(colors: [.white, Color.white.opacity(0)]),
           center: .bottom,
@@ -164,13 +161,13 @@ public struct WordSubmitButton: View {
         Spacer()
 
         ZStack {
-          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: \.self))
+          ReactionsView(store: store.scope(state: \.wordSubmitButton, action: \.self))
 
           Button {
-            self.viewStore.send(.submitButtonTapped, animation: .default)
+            store.send(.submitButtonTapped, animation: .default)
           } label: {
             Group {
-              if !self.viewStore.wordSubmitButton.areReactionsOpen {
+              if !store.wordSubmitButton.areReactionsOpen {
                 Image(systemName: "hand.thumbsup")
               } else {
                 Image(systemName: "xmark")
@@ -182,7 +179,7 @@ public struct WordSubmitButton: View {
             )
             .background(Circle().fill(Color.adaptiveBlack))
             .foregroundColor(.adaptiveWhite)
-            .opacity(self.viewStore.isSelectedWordValid ? 1 : 0.5)
+            .opacity(store.isSelectedWordValid ? 1 : 0.5)
             .font(.system(size: self.deviceState.isPad ? 40 : 30))
             .adaptivePadding([.all], .grid(4))
             // NB: Expand the tappable radius of the button.
@@ -192,12 +189,12 @@ public struct WordSubmitButton: View {
             DragGesture(minimumDistance: 0)
               .onChanged { touch in
                 if !self.isTouchDown {
-                  self.viewStore.send(.submitButtonPressed, animation: .default)
+                  store.send(.submitButtonPressed, animation: .default)
                 }
                 self.isTouchDown = true
               }
               .onEnded { _ in
-                self.viewStore.send(.submitButtonReleased, animation: .default)
+                store.send(.submitButtonReleased, animation: .default)
                 self.isTouchDown = false
               }
           )
@@ -207,13 +204,13 @@ public struct WordSubmitButton: View {
 
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(
-      self.viewStore.wordSubmitButton.areReactionsOpen
-        ? Color.isowordsBlack.opacity(0.4)
-        : nil
-    )
-    .animation(.default, value: self.viewStore.wordSubmitButton.areReactionsOpen)
-    .onTapGesture { self.viewStore.send(.backgroundTapped, animation: .default) }
+    .background {
+      if store.wordSubmitButton.areReactionsOpen {
+        Color.isowordsBlack.opacity(0.4)
+      }
+    }
+    .animation(.default, value: store.wordSubmitButton.areReactionsOpen)
+    .onTapGesture { store.send(.backgroundTapped, animation: .default) }
   }
 }
 
