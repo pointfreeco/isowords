@@ -116,7 +116,7 @@ public struct WordListView: View {
               guard self.isLeftToRight else { return }
               reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)
             }
-            .onChange(of: self.viewStore.words) { _ in
+            .onChange(of: self.viewStore.words) {
               guard self.isLeftToRight else { return }
               withAnimation {
                 reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)

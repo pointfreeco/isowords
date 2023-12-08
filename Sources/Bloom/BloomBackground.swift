@@ -110,7 +110,7 @@ public struct BloomBackground: View {
 
   public var body: some View {
     Blooms(blooms: self.blooms)
-      .onChange(of: self.viewStore.bloomCount) { count in
+      .onChange(of: self.viewStore.bloomCount) { _, count in
         withAnimation(.easeOut(duration: 1)) {
           self.renderBlooms(count: count)
         }

@@ -1,6 +1,5 @@
 import ComposableArchitecture
 import SharedModels
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var database: LocalDatabaseClient {
@@ -11,15 +10,7 @@ extension DependencyValues {
 
 extension LocalDatabaseClient: TestDependencyKey {
   public static let previewValue = Self.mock
-
-  public static let testValue = Self(
-    fetchGamesForWord: unimplemented("\(Self.self).fetchGamesForWord"),
-    fetchStats: unimplemented("\(Self.self).fetchStats"),
-    fetchVocab: unimplemented("\(Self.self).fetchVocab"),
-    migrate: unimplemented("\(Self.self).migrate"),
-    playedGamesCount: unimplemented("\(Self.self).playedGamesCount"),
-    saveGame: unimplemented("\(Self.self).saveGame")
-  )
+  public static let testValue = Self()
 }
 
 extension LocalDatabaseClient {

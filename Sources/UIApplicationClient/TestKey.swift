@@ -1,5 +1,4 @@
 import Dependencies
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var applicationClient: UIApplicationClient {
@@ -10,21 +9,7 @@ extension DependencyValues {
 
 extension UIApplicationClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    alternateIconName: unimplemented("\(Self.self).alternateIconName"),
-    alternateIconNameAsync: unimplemented("\(Self.self).alternateIconNameAsync"),
-    open: unimplemented("\(Self.self).open", placeholder: false),
-    openSettingsURLString: unimplemented("\(Self.self).openSettingsURLString"),
-    setAlternateIconName: unimplemented("\(Self.self).setAlternateIconName"),
-    setUserInterfaceStyle: unimplemented("\(Self.self).setUserInterfaceStyle"),
-    supportsAlternateIcons: unimplemented(
-      "\(Self.self).supportsAlternateIcons", placeholder: false
-    ),
-    supportsAlternateIconsAsync: unimplemented(
-      "\(Self.self).setAlternateIconNameAsync", placeholder: false
-    )
-  )
+  public static let testValue = Self()
 }
 
 extension UIApplicationClient {

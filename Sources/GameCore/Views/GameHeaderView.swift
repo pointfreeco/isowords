@@ -111,7 +111,7 @@ struct ScoreView: View {
         .foregroundColor(.white)
         .colorMultiply(self.isTimeAccented ? .red : .adaptiveBlack)
         .scaleEffect(self.isTimeAccented ? 1.5 : 1)
-        .onChange(of: self.viewStore.secondsRemaining) { secondsRemaining in
+        .onChange(of: self.viewStore.secondsRemaining) { _, secondsRemaining in
           guard secondsRemaining == 10 || (secondsRemaining <= 5 && secondsRemaining > 0)
           else { return }
 

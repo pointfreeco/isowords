@@ -65,12 +65,12 @@ struct PlayersAndScoresView: View {
         self.yourImage = image
       }
     }
-    .onChange(of: self.viewStore.opponent) { player in
+    .onChange(of: self.viewStore.opponent) { _, player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.opponentImage = image
       }
     }
-    .onChange(of: self.viewStore.you) { player in
+    .onChange(of: self.viewStore.you) { _, player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.yourImage = image
       }

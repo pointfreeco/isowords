@@ -1,5 +1,4 @@
 import Dependencies
-import XCTestDynamicOverlay
 
 extension DependencyValues {
   public var audioPlayer: AudioPlayerClient {
@@ -10,21 +9,7 @@ extension DependencyValues {
 
 extension AudioPlayerClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    load: unimplemented("\(Self.self).load"),
-    loop: unimplemented("\(Self.self).loop"),
-    play: unimplemented("\(Self.self).play"),
-    secondaryAudioShouldBeSilencedHint: unimplemented(
-      "\(Self.self).secondaryAudioShouldBeSilencedHint", placeholder: false
-    ),
-    setGlobalVolumeForMusic: unimplemented("\(Self.self).setGlobalVolumeForMusic"),
-    setGlobalVolumeForSoundEffects: unimplemented(
-      "\(Self.self).setGlobalVolumeForSoundEffects"
-    ),
-    setVolume: unimplemented("\(Self.self).setVolume"),
-    stop: unimplemented("\(Self.self).stop")
-  )
+  public static let testValue = Self()
 }
 
 extension AudioPlayerClient {
