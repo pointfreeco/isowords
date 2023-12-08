@@ -1303,9 +1303,9 @@ package.targets.append(contentsOf: [
       "ShareGameMiddleware",
       "SnsClient",
       "VerifyReceiptMiddleware",
+      .product(name: "DependenciesMacros", package: "swift-dependencies"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "Overture", package: "swift-overture"),
-      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ],
     resources: [.process("Resources/")]
   ),
