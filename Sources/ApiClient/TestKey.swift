@@ -14,17 +14,7 @@ extension DependencyValues {
 
 extension ApiClient: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    apiRequest: unimplemented("\(Self.self).apiRequest"),
-    authenticate: unimplemented("\(Self.self).authenticate"),
-    baseUrl: unimplemented("\(Self.self).baseUrl", placeholder: URL(string: "/")!),
-    currentPlayer: unimplemented("\(Self.self).currentPlayer"),
-    logout: unimplemented("\(Self.self).logout"),
-    refreshCurrentPlayer: unimplemented("\(Self.self).refreshCurrentPlayer"),
-    request: unimplemented("\(Self.self).request"),
-    setBaseUrl: unimplemented("\(Self.self).setBaseUrl")
-  )
+  public static let testValue = Self()
 }
 
 extension ApiClient {

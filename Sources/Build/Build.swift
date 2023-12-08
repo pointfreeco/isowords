@@ -21,7 +21,6 @@ extension DependencyValues {
 
 extension Build: TestDependencyKey {
   public static let previewValue = Self.noop
-
   public static let testValue = Self()
 }
 

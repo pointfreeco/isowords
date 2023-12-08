@@ -254,6 +254,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "XCTestDebugSupport",
         .product(name: "CasePaths", package: "swift-case-paths"),
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
