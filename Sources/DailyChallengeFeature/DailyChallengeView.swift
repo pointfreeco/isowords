@@ -253,7 +253,7 @@ public struct DailyChallengeView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.date) var date
-  let store: StoreOf<DailyChallengeReducer>
+  @Bindable var store: StoreOf<DailyChallengeReducer>
   @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeReducer.Action>
 
   struct ViewState: Equatable {
@@ -288,7 +288,7 @@ public struct DailyChallengeView: View {
 
   public init(store: StoreOf<DailyChallengeReducer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
+    self.viewStore = ViewStore(store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -389,11 +389,12 @@ public struct DailyChallengeView: View {
       )
       .edgesIgnoringSafeArea(.bottom)
     }
-    .alert(store: self.store.scope(state: \.$destination.alert, action: \.destination.alert))
+    .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
     .navigationDestination(
-      store: self.store.scope(state: \.$destination.results, action: \.destination.results),
-      destination: DailyChallengeResultsView.init(store:)
-    )
+      item: $store.scope(state: \.destination?.results, action: \.destination.results)
+    ) { store in
+      DailyChallengeResultsView(store: store)
+    }
     .notificationsAlert(
       store: self.store.scope(state: \.$destination, action: \.destination),
       state: \.notificationsAuthAlert,
