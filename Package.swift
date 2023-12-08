@@ -526,6 +526,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "DeviceId",
       dependencies: [
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),

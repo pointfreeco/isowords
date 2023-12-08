@@ -1,9 +1,11 @@
 import Dependencies
+import DependenciesMacros
 import Foundation
 import XCTestDynamicOverlay
 
+@DependencyClient
 public struct DeviceIdentifier {
-  public var id: () -> UUID
+  public var id: () -> UUID = { UUID() }
 }
 
 extension DependencyValues {
@@ -15,10 +17,7 @@ extension DependencyValues {
 
 extension DeviceIdentifier: TestDependencyKey {
   public static let previewValue = Self.noop
-
-  public static let testValue = Self(
-    id: unimplemented("\(Self.self).id", placeholder: UUID())
-  )
+  public static let testValue = Self()
 }
 
 extension DeviceIdentifier: DependencyKey {
