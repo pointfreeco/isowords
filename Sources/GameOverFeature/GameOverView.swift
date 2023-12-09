@@ -516,9 +516,12 @@ public struct GameOverView: View {
     )
     .task { await self.viewStore.send(.task).finish() }
     .notificationsAlert(
-      store: self.store.scope(state: \.$destination, action: \.destination),
-      state: \.notificationsAuthAlert,
-      action: { .notificationsAuthAlert($0) }
+      store: self.store.scope(
+        state: \.$destination.notificationsAuthAlert,
+        action: \.destination.notificationsAuthAlert
+      ),
+      state: { $0 },
+      action: { $0 }
     )
     .sheet(isPresented: self.$isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
