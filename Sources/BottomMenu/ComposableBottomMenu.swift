@@ -72,32 +72,17 @@ extension View {
   public func bottomMenu<MenuAction: Equatable>(
     store: Store<PresentationState<BottomMenuState<MenuAction>>, PresentationAction<MenuAction>>
   ) -> some View {
-    self.bottomMenu(store: store, state: { $0 }, action: { $0 })
-  }
-
-  public func bottomMenu<DestinationState, DestinationAction, MenuAction: Equatable>(
-    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
-    state toMenuState: @escaping (DestinationState) -> BottomMenuState<MenuAction>?,
-    action fromMenuAction: @escaping (MenuAction) -> DestinationAction
-  ) -> some View {
     WithViewStore(
       store,
       observe: { $0 },
-      removeDuplicates: {
-        ($0.wrappedValue.flatMap(toMenuState) != nil)
-          == ($1.wrappedValue.flatMap(toMenuState) != nil)
-      }
+      removeDuplicates: { ($0.wrappedValue != nil) == ($1.wrappedValue != nil) }
     ) { viewStore in
       self.bottomMenu(
         item: Binding(
           get: {
-            viewStore.wrappedValue.flatMap(toMenuState)?.converted(
-              send: {
-                viewStore.send(.presented(fromMenuAction($0)))
-              },
-              sendWithAnimation: {
-                viewStore.send(.presented(fromMenuAction($0)), animation: $1)
-              }
+            viewStore.wrappedValue?.converted(
+              send: { viewStore.send(.presented($0)) },
+              sendWithAnimation: { viewStore.send(.presented($0), animation: $1) }
             )
           },
           set: { state in
