@@ -56,27 +56,25 @@ public struct NotificationsAuthAlert {
 }
 
 extension View {
-  public func notificationsAlert<DestinationState, DestinationAction>(
-    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
-    state toAlertState: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
-    action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
+  public func notificationsAlert(
+    store: Store<
+      PresentationState<NotificationsAuthAlert.State>,
+      PresentationAction<NotificationsAuthAlert.Action>
+    >
   ) -> some View {
-    self.modifier(
-      NotificationsAuthAlertViewModifier(
-        store: store, toAlertState: toAlertState, fromAlertAction: fromAlertAction
-      )
-    )
+    self.modifier(NotificationsAuthAlertViewModifier(store: store))
   }
 }
 
-struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: ViewModifier {
-  let store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>
-  let toAlertState: (DestinationState) -> NotificationsAuthAlert.State?
-  let fromAlertAction: (NotificationsAuthAlert.Action) -> DestinationAction
+struct NotificationsAuthAlertViewModifier: ViewModifier {
+  let store: Store<
+    PresentationState<NotificationsAuthAlert.State>,
+    PresentationAction<NotificationsAuthAlert.Action>
+  >
 
   func body(content: Content) -> some View {
     WithViewStore(
-      self.store, observe: { $0.wrappedValue.flatMap(self.toAlertState) }
+      self.store, observe: { $0.wrappedValue }
     ) { viewStore in
       content
         .overlay {
@@ -92,7 +90,7 @@ struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: 
             ZStack(alignment: .topTrailing) {
               NotificationsAuthAlertView(
                 store: store.scope(
-                  state: { _ in state }, action: { .presented(fromAlertAction($0)) }
+                  state: { _ in state }, action: { .presented($0) }
                 )
               )
 
