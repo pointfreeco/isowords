@@ -405,7 +405,7 @@ public struct GameOverView: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.opponentImage) var defaultOpponentImage
   @Environment(\.yourImage) var defaultYourImage
-  let store: StoreOf<GameOver>
+  @Bindable var store: StoreOf<GameOver>
   @State var yourImage: UIImage?
   @State var yourOpponentImage: UIImage?
   @State var isSharePresented = false
@@ -485,8 +485,8 @@ public struct GameOverView: View {
     )
     .task { await store.send(.task).finish() }
     .notificationsAlert(
-      store: store.scope(
-        state: \.$destination.notificationsAuthAlert,
+      $store.scope(
+        state: \.destination?.notificationsAuthAlert,
         action: \.destination.notificationsAuthAlert
       )
     )

@@ -390,8 +390,8 @@ public struct DailyChallengeView: View {
       DailyChallengeResultsView(store: store)
     }
     .notificationsAlert(
-      store: store.scope(
-        state: \.$destination.notificationsAuthAlert,
+      $store.scope(
+        state: \.destination?.notificationsAuthAlert,
         action: \.destination.notificationsAuthAlert
       )
     )
