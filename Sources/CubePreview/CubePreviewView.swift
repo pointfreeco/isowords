@@ -283,5 +283,3 @@ public struct CubePreviewView: View {
     } ?? Text("")
   }
 }
-
-private func absurd<A>(_: Never) -> A {}

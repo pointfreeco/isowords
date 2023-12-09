@@ -150,5 +150,3 @@ public struct GameView<Content>: View where Content: View {
     .task { await store.send(.task).finish() }
   }
 }
-
-private func absurd<A>(_: Never) -> A {}
