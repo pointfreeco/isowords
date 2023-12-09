@@ -65,15 +65,15 @@ public class CubeNode: SCNNode {
   private lazy var shakeAnimationActionKey = "shake animation: \(ObjectIdentifier(self))"
   private lazy var removeAnimationActionKey = "remove animation: \(ObjectIdentifier(self))"
   private var cancellables: Set<AnyCancellable> = []
-  private let viewStore: ViewStore<ViewState, Never>
+  private let store: Store<ViewState, Never>
 
   public init(
     letterGeometry: SCNGeometry,
     store: Store<ViewState, Never>
   ) {
-    self.viewStore = ViewStore(store, observe: { $0 })
+    self.store = store
 
-    self.index = self.viewStore.index
+    self.index = self.store.withState(\.index)
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
       store: store.scope(state: \.left, action: \.never)
@@ -89,9 +89,9 @@ public class CubeNode: SCNNode {
 
     super.init()
 
-    self.isHidden = !self.viewStore.isInPlay
+    self.isHidden = !self.store.withState(\.isInPlay)
     self.name =
-      "xIndex: \(self.viewStore.index.x), yIndex: \(self.viewStore.index.y), zIndex: \(self.viewStore.index.z)"
+      "xIndex: \(self.index.x), yIndex: \(self.index.y), zIndex: \(self.index.z)"
 
     for side in CubeFace.Side.allCases {
       switch side {
@@ -104,7 +104,7 @@ public class CubeNode: SCNNode {
       }
     }
 
-    self.viewStore.publisher
+    self.store.publisher
       .prefix(while: \.isInPlay)
       .map { ($0.isCriticallySelected, $0.index, $0.cubeShakeStartedAt) }
       .removeDuplicates(by: ==)
@@ -117,7 +117,7 @@ public class CubeNode: SCNNode {
       }
       .store(in: &self.cancellables)
 
-    self.viewStore.publisher.isInPlay
+    self.store.publisher.isInPlay
       .dropFirst()
       .sink { [weak self] isInPlay in
         guard let self = self else { return }
