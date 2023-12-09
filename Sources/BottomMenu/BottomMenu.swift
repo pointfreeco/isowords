@@ -77,7 +77,11 @@ private struct BottomMenuModifier: ViewModifier {
           Rectangle()
             .fill(Color.isowordsBlack.opacity(0.4))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onTapGesture { self.item = nil }
+            .onTapGesture {
+              withAnimation {
+                self.item = nil
+              }
+            }
             .transition(.opacity.animation(.default))
             .ignoresSafeArea()
         }
@@ -91,7 +95,9 @@ private struct BottomMenuModifier: ViewModifier {
                   .adaptiveFont(.matterMedium, size: 18)
                 Spacer()
                 Button {
-                  self.item = nil
+                  withAnimation {
+                    self.item = nil
+                  }
                 } label: {
                   Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 24))

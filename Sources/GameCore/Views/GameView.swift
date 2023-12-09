@@ -73,8 +73,7 @@ public struct GameView<Content>: View where Content: View {
             .transition(
               store.isAnimationReduced
                 ? .opacity
-                : AnyTransition
-                  .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
+                : .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
                   .combined(with: .opacity)
             )
           }
@@ -138,9 +137,7 @@ public struct GameView<Content>: View where Content: View {
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
       )
-      .bottomMenu(
-        store: store.scope(state: \.$destination.bottomMenu, action: \.destination.bottomMenu)
-      )
+      .bottomMenu($store.scope(state: \.destination?.bottomMenu, action: \.destination.bottomMenu))
       .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
       .sheet(
         item: $store.scope(state: \.destination?.settings, action: \.destination.settings)
