@@ -36,6 +36,7 @@ extension Game.State {
   }
 
   public var playedWords: [PlayedWord] {
+    //return []
     self.moves
       .reduce(into: [PlayedWord]()) {
         guard let word = $1.type.playedWord else { return }

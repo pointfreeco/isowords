@@ -78,7 +78,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let light = SCNLight()
   private var motionManager: CMMotionManager?
   private var startingAttitude: Attitude?
-  private let store: Store<ViewState, ViewAction>
   private let viewStore: ViewStore<ViewState, ViewAction>
   private var worldScale: Float = 1.0
 
@@ -91,10 +90,9 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
   public init(
     size: CGSize,
-    store: Store<ViewState, ViewAction>
+    viewStore: ViewStore<ViewState, ViewAction>
   ) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
+    self.viewStore = viewStore
 
     super.init(frame: .zero, options: nil)
 
@@ -134,10 +132,12 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
         self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
 
+
         LatticePoint.cubeIndices.forEach { index in
           let cube = CubeNode(
             letterGeometry: letterGeometry,
-            store: store.scope(state: \.cubes[index], action: \.never)
+            initialState: self.viewStore.cubes[index],
+            cube: self.viewStore.publisher.cubes[index]
           )
           cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
           self.gameCubeNode.addChildNode(cube)
@@ -148,14 +148,19 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         [CubeFaceNode.ViewState.Status.selected, .selectable].forEach { status in
           let warmer = CubeFaceNode(
             letterGeometry: letterGeometry,
-            store: Store(
+            initialState: .init(
+              cubeFace: .init(letter: "A", side: .top),
+              letterIsHidden: true,
+              status: status
+            ),
+            face: Store<CubeFaceNode.ViewState, Never>(
               initialState: .init(
                 cubeFace: .init(letter: "A", side: .top),
                 letterIsHidden: true,
                 status: status
               )
             ) {
-            }
+            }.publisher
           )
           warmer.position = .init(-1, -1, -1)
           warmer.scale = .init(0.001, 0.001, 0.001)

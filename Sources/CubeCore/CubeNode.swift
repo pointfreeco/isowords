@@ -65,33 +65,34 @@ public class CubeNode: SCNNode {
   private lazy var shakeAnimationActionKey = "shake animation: \(ObjectIdentifier(self))"
   private lazy var removeAnimationActionKey = "remove animation: \(ObjectIdentifier(self))"
   private var cancellables: Set<AnyCancellable> = []
-  private let viewStore: ViewStore<ViewState, Never>
 
   public init(
     letterGeometry: SCNGeometry,
-    store: Store<ViewState, Never>
+    initialState: ViewState,
+    cube: StorePublisher<ViewState>
   ) {
-    self.viewStore = ViewStore(store, observe: { $0 })
-
-    self.index = self.viewStore.index
+    self.index = initialState.index
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.left, action: \.never)
+      initialState: initialState.left,
+      face: cube.left
     )
     self.rightPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.right, action: \.never)
+      initialState: initialState.right,
+      face: cube.right
     )
     self.topPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.top, action: \.never)
+      initialState: initialState.top,
+      face: cube.top
     )
 
     super.init()
 
-    self.isHidden = !self.viewStore.isInPlay
+    self.isHidden = !initialState.isInPlay
     self.name =
-      "xIndex: \(self.viewStore.index.x), yIndex: \(self.viewStore.index.y), zIndex: \(self.viewStore.index.z)"
+      "xIndex: \(initialState.index.x), yIndex: \(initialState.index.y), zIndex: \(initialState.index.z)"
 
     for side in CubeFace.Side.allCases {
       switch side {
@@ -104,7 +105,7 @@ public class CubeNode: SCNNode {
       }
     }
 
-    self.viewStore.publisher
+    cube
       .prefix(while: \.isInPlay)
       .map { ($0.isCriticallySelected, $0.index, $0.cubeShakeStartedAt) }
       .removeDuplicates(by: ==)
@@ -117,7 +118,7 @@ public class CubeNode: SCNNode {
       }
       .store(in: &self.cancellables)
 
-    self.viewStore.publisher.isInPlay
+    cube.isInPlay
       .dropFirst()
       .sink { [weak self] isInPlay in
         guard let self = self else { return }

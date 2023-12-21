@@ -356,7 +356,9 @@ public struct AppView: View {
           self.store.scope(state: \.destination?.game, action: \.destination.game)
         ) { store in
           GameView(
-            content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
+            content: CubeView(
+              viewStore: ViewStore(store.scope(state: \.cubeScene, action: \.cubeScene), observe: { $0 })
+            ),
             store: store
           )
         }
