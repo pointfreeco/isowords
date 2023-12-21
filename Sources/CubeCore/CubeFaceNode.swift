@@ -34,10 +34,10 @@ public class CubeFaceNode: SCNNode {
 
   public init(
     letterGeometry: SCNGeometry,
-    initialState: ViewState,
-    face: StorePublisher<ViewState>
+    viewState viewStatePublisher: StorePublisher<ViewState>
   ) {
-    self.side = initialState.cubeFace.side
+    let viewState = viewStatePublisher.currentValue
+    self.side = viewState.cubeFace.side
     super.init()
 
     let letterNode = SCNNode(geometry: letterGeometry)
@@ -47,9 +47,9 @@ public class CubeFaceNode: SCNNode {
     self.addChildNode(letterNode)
 
     self.category = [.cubeFace, .shadowSurface]
-    self.name = "Face: \(initialState.cubeFace.side)"
+    self.name = "Face: \(viewState.cubeFace.side)"
 
-    switch initialState.cubeFace.side {
+    switch viewState.cubeFace.side {
     case .top:
       self.eulerAngles = SCNVector3(-CGFloat.pi / 2, 0, 0)
       self.position = SCNVector3(0, 0.5, 0)
@@ -60,7 +60,7 @@ public class CubeFaceNode: SCNNode {
       self.position = SCNVector3(0.5, 0, 0)
     }
 
-    face
+    viewStatePublisher
       .sink { [weak self] state in
         guard let self = self else { return }
         guard state.cubeFace.useCount <= 2 else { return }

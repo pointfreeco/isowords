@@ -136,8 +136,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         LatticePoint.cubeIndices.forEach { index in
           let cube = CubeNode(
             letterGeometry: letterGeometry,
-            initialState: self.viewStore.cubes[index],
-            cube: self.viewStore.publisher.cubes[index]
+            viewStatePublisher: self.viewStore.publisher.cubes[index]
           )
           cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
           self.gameCubeNode.addChildNode(cube)
@@ -148,12 +147,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
         [CubeFaceNode.ViewState.Status.selected, .selectable].forEach { status in
           let warmer = CubeFaceNode(
             letterGeometry: letterGeometry,
-            initialState: .init(
-              cubeFace: .init(letter: "A", side: .top),
-              letterIsHidden: true,
-              status: status
-            ),
-            face: Store<CubeFaceNode.ViewState, Never>(
+            viewState: Store<CubeFaceNode.ViewState, Never>(
               initialState: .init(
                 cubeFace: .init(letter: "A", side: .top),
                 letterIsHidden: true,

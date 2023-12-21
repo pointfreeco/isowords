@@ -68,31 +68,29 @@ public class CubeNode: SCNNode {
 
   public init(
     letterGeometry: SCNGeometry,
-    initialState: ViewState,
-    cube: StorePublisher<ViewState>
+    viewStatePublisher: StorePublisher<ViewState>
   ) {
-    self.index = initialState.index
+    let viewState = viewStatePublisher.currentValue
+
+    self.index = viewState.index
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      initialState: initialState.left,
-      face: cube.left
+      viewState: viewStatePublisher.left
     )
     self.rightPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      initialState: initialState.right,
-      face: cube.right
+      viewState: viewStatePublisher.right
     )
     self.topPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      initialState: initialState.top,
-      face: cube.top
+      viewState: viewStatePublisher.top
     )
 
     super.init()
 
-    self.isHidden = !initialState.isInPlay
+    self.isHidden = !viewState.isInPlay
     self.name =
-      "xIndex: \(initialState.index.x), yIndex: \(initialState.index.y), zIndex: \(initialState.index.z)"
+      "xIndex: \(viewState.index.x), yIndex: \(viewState.index.y), zIndex: \(viewState.index.z)"
 
     for side in CubeFace.Side.allCases {
       switch side {
@@ -105,7 +103,7 @@ public class CubeNode: SCNNode {
       }
     }
 
-    cube
+    viewStatePublisher
       .prefix(while: \.isInPlay)
       .map { ($0.isCriticallySelected, $0.index, $0.cubeShakeStartedAt) }
       .removeDuplicates(by: ==)
@@ -118,7 +116,7 @@ public class CubeNode: SCNNode {
       }
       .store(in: &self.cancellables)
 
-    cube.isInPlay
+    viewStatePublisher.isInPlay
       .dropFirst()
       .sink { [weak self] isInPlay in
         guard let self = self else { return }
