@@ -409,13 +409,8 @@ public struct OnboardingView: View {
 
   public var body: some View {
     ZStack(alignment: .topTrailing) {
-      CubeView(
-        viewStore: ViewStore(
-          self.store.scope(state: \.cubeScene, action: \.game.cubeScene),
-          observe: { $0 }
-        )
-      )
-      .opacity(viewStore.step.isFullscreen ? 0 : 1)
+      CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
+        .opacity(viewStore.step.isFullscreen ? 0 : 1)
 
       OnboardingStepView(store: self.store)
 

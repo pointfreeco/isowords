@@ -265,12 +265,7 @@ public struct TrailerView: View {
         .adaptivePadding(.top, .grid(18))
         .adaptivePadding(.bottom, .grid(2))
 
-        CubeView(
-          viewStore: ViewStore(
-            self.store.scope(state: \.cubeScene, action: \.game.cubeScene),
-            observe: { $0 }
-          )
-        )
+        CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
           .adaptivePadding(
             self.deviceState.idiom == .pad ? .horizontal : [],
             .grid(30)

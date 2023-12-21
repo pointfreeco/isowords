@@ -159,12 +159,7 @@ public struct DemoView: View {
         CaseLet(\Demo.State.Step.game, action: Demo.Action.game) { store in
           GameWrapper(
             content: GameView(
-              content: CubeView(
-                viewStore: ViewStore(
-                  store.scope(state: \.cubeScene, action: \.cubeScene),
-                  observe: { $0 }
-                )
-              ),
+              content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
               store: store
             ),
             isGameOver: self.viewStore.isGameOver,

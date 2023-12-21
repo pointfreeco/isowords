@@ -271,12 +271,7 @@ public struct CubePreviewView: View {
             .adaptivePadding(.top, .grid(16))
         }
 
-        CubeView(
-          viewStore: ViewStore(
-            self.store.scope(state: \.cubeScenePreview, action: \.cubeScene),
-            observe: { $0 }
-          )
-        )
+        CubeView(store: self.store.scope(state: \.cubeScenePreview, action: \.cubeScene))
           .task { await self.viewStore.send(.task).finish() }
       }
       .background(
