@@ -157,16 +157,21 @@ public struct DemoView: View {
 
       case .game:
         CaseLet(\Demo.State.Step.game, action: Demo.Action.game) { store in
-//          GameWrapper(
-//            content: GameView(
-//              content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
-//              store: store
-//            ),
-//            isGameOver: self.viewStore.isGameOver,
-//            bannerAction: {
-//              self.viewStore.send(.fullVersionButtonTapped)
-//            }
-//          )
+          GameWrapper(
+            content: GameView(
+              content: CubeView(
+                viewStore: ViewStore(
+                  store.scope(state: \.cubeScene, action: \.cubeScene),
+                  observe: { $0 }
+                )
+              ),
+              store: store
+            ),
+            isGameOver: self.viewStore.isGameOver,
+            bannerAction: {
+              self.viewStore.send(.fullVersionButtonTapped)
+            }
+          )
         }
       }
     }
