@@ -28,38 +28,11 @@ extension Game.Action.AllCasePaths {
   }
 }
 
-import Foundation
-extension CubeSceneView.ViewState.ViewPuzzle {
-  static let mock = Puzzle.mock.enumerated().map {
-    x,
-    cubes in
-    cubes.enumerated().map {
-      y,
-      cubes in
-      cubes.enumerated().map {
-        z,
-        _ in
-        CubeNode.ViewState(
-          viewState: .init(
-            cubes: .mock,
-            gameContext: .solo,
-            gameCurrentTime: Date(),
-            gameMode: .unlimited,
-            gameStartTime: Date()
-          ),
-          index: .init(x: x, y: y, z: z)
-        )
-      }
-    }
-  }
-}
-
 extension CubeSceneView.ViewState {
   public init(
     game: Game.State,
     nub: CubeSceneView.ViewState.NubState? = nil
   ) {
-    print("CubeSceneView.ViewState")
     self.init(
       cubes: game.cubes.enumerated().map { x, cubes in
         cubes.enumerated().map { y, cubes in
@@ -81,35 +54,6 @@ extension CubeSceneView.ViewState {
     )
   }
 }
-
-//extension CubeSceneView.ViewState {
-//  public init(
-//    game: Game.State,
-//    nub: CubeSceneView.ViewState.NubState? = nil
-//  ) {
-////  cubes: game.cubes.enumerated().map { x, cubes in
-////    cubes.enumerated().map { y, cubes in
-////      cubes.enumerated().map { z, _ in
-////        CubeNode.ViewState(
-////          viewState: game,
-////          index: .init(x: x, y: y, z: z)
-////        )
-////      }
-////    }
-////  },
-//
-//    self.init(
-//      cubes: .mock,
-//      enableGyroMotion: game.enableGyroMotion,
-//      isOnLowPowerMode: game.isOnLowPowerMode,
-//      nub: nub,
-//      playedWords: game.playedWords,
-//      selectedFaceCount: game.selectedWord.count,
-//      selectedWordIsValid: game.selectedWordIsValid,
-//      selectedWordString: game.selectedWordString
-//    )
-//  }
-//}
 
 extension CubeSceneView.ViewAction {
   public static func to(gameAction action: Self) -> Game.Action {
