@@ -12,6 +12,7 @@ import Styleguide
 import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
+import UserSettingsClient
 
 @Reducer
 public struct Onboarding {
@@ -184,7 +185,7 @@ public struct Onboarding {
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userSettings) var userSettings
+  @SharedDependency var userSettings: UserSettings
 
   public init() {}
 

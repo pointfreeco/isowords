@@ -53,7 +53,7 @@ public struct Settings {
     public var isRestoring: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    public var userSettings: UserSettings
+    @SharedDependency public var userSettings: UserSettings
 
     public struct ProductError: Error, Equatable {}
 
@@ -68,7 +68,6 @@ public struct Settings {
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
-      @Dependency(\.userSettings) var userSettings
       self.alert = alert
       self.buildNumber = buildNumber
       self.developer = developer
@@ -78,7 +77,6 @@ public struct Settings {
       self.isRestoring = isRestoring
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
-      self.userSettings = userSettings.get()
     }
 
     public var isFullGamePurchased: Bool {

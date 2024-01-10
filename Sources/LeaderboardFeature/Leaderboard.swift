@@ -4,7 +4,6 @@ import CubeCore
 import CubePreview
 import SharedModels
 import SwiftUI
-import UserSettingsClient
 
 public enum LeaderboardScope: CaseIterable, Equatable {
   case games

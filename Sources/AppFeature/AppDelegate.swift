@@ -3,6 +3,7 @@ import ComposableArchitecture
 import ComposableUserNotifications
 import Foundation
 import SettingsFeature
+import UserSettingsClient
 
 @Reducer
 public struct AppDelegateReducer {
@@ -23,7 +24,6 @@ public struct AppDelegateReducer {
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
   @Dependency(\.userNotifications) var userNotifications
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -65,6 +65,10 @@ public struct AppDelegateReducer {
             }
 
             group.addTask {
+              @SharedDependency var userSettings: UserSettings
+              @Dependency(\.userSettings) var userSettingsClient
+              userSettings = userSettingsClient.get()
+
               await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
               await self.audioPlayer.setGlobalVolumeForMusic(
                 self.audioPlayer.secondaryAudioShouldBeSilencedHint()
