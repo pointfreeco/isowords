@@ -115,14 +115,14 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
     self.scene?.rootNode.addChildNode(self.gameCubeNode)
 
-    self.store.publisher.cubes
+    self.viewStore.publisher.cubes
       .sink { cubes in
         SCNTransaction.begin()
         SCNTransaction.commit()
       }
       .store(in: &self.cancellables)
 
-    self.store.publisher.cubes
+    self.viewStore.publisher.cubes
       .removeDuplicates(by: { $0.letters == $1.letters })
       .sink { [weak self] cubes in
         guard let self = self else { return }
@@ -190,7 +190,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     ambientLightNode.light = ambientLight
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
-    self.store.publisher
+    self.viewStore.publisher
       .map { ($0.enableGyroMotion, $0.isOnLowPowerMode) }
       .removeDuplicates(by: ==)
       .sink { [weak self] enableGyroMotion, isOnLowPowerMode in
@@ -207,7 +207,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       }
       .store(in: &self.cancellables)
 
-    self.store.publisher.playedWords
+    self.viewStore.publisher.playedWords
       .sink { [weak self] _ in self?.startingAttitude = nil }
       .store(in: &self.cancellables)
 
@@ -234,13 +234,13 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     nub.isHidden = true
     self.addSubview(nub)
 
-    self.store.publisher.nub
+    self.viewStore.publisher.nub
       .compactMap { $0?.isPressed }
       .removeDuplicates()
       .assign(to: \.isPressed, on: nub)
       .store(in: &self.cancellables)
 
-    self.store.publisher.nub
+    self.viewStore.publisher.nub
       .compactMap { $0?.location }
       .removeDuplicates()
       .sink { [weak self] location in
@@ -290,7 +290,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   // TODO: rename
   private func update() {
     self.showsStatistics = self.showSceneStatistics
-    self.light.castsShadow = self.enableCubeShadow && !self.store.withState(\.isOnLowPowerMode)
+    self.light.castsShadow = self.enableCubeShadow && !self.viewStore.isOnLowPowerMode
   }
 
   deinit {
@@ -318,7 +318,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     guard let (_, _, cubeNode) = self.nodes(location: location)
     else { return }
 
-    self.store.send(.doubleTap(index: cubeNode.index), animation: .default)
+    self.viewStore.send(.doubleTap(index: cubeNode.index), animation: .default)
   }
 
   @objc private func tap(recognizer: UIGestureRecognizer) {
@@ -327,7 +327,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
     let location = recognizer.location(in: self)
 
-    self.store.send(
+    self.viewStore.send(
       .tap(
         recognizer.state,
         self.nodes(location: location)
@@ -356,7 +356,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       )
     }
 
-    self.store.send(.pan(recognizer.state, panData), animation: .default)
+    self.viewStore.send(.pan(recognizer.state, panData), animation: .default)
   }
 
   required init?(coder: NSCoder) {
