@@ -1,4 +1,4 @@
-FROM swift:5.3 as build
+FROM swift:5.9.2 as build
 
 RUN apt-get --fix-missing update
 RUN apt-get install -y cmake libpq-dev libssl-dev libz-dev openssl python
@@ -27,7 +27,7 @@ RUN swift build \
   --product server \
   -Xswiftc -g
 
-FROM swift:5.3-slim
+FROM swift:5.9.2-slim
 
 RUN apt-get --fix-missing update
 RUN apt-get install -y libpq-dev libsqlite3-dev libssl-dev libz-dev openssl python

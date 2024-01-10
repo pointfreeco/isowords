@@ -75,6 +75,7 @@ class LeaderboardTests: XCTestCase {
         throw SomeError()
       })
     }
+    store.exhaustivity = .off
 
     await store.send(.task) {
       $0.isLoading = true
