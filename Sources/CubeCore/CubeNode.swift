@@ -65,33 +65,32 @@ public class CubeNode: SCNNode {
   private lazy var shakeAnimationActionKey = "shake animation: \(ObjectIdentifier(self))"
   private lazy var removeAnimationActionKey = "remove animation: \(ObjectIdentifier(self))"
   private var cancellables: Set<AnyCancellable> = []
-  private let viewStore: ViewStore<ViewState, Never>
 
   public init(
     letterGeometry: SCNGeometry,
-    store: Store<ViewState, Never>
+    viewStatePublisher: StorePublisher<ViewState>
   ) {
-    self.viewStore = ViewStore(store, observe: { $0 })
+    let viewState = viewStatePublisher.currentValue
 
-    self.index = self.viewStore.index
+    self.index = viewState.index
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.left, action: \.never)
+      viewState: viewStatePublisher.left
     )
     self.rightPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.right, action: \.never)
+      viewState: viewStatePublisher.right
     )
     self.topPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      store: store.scope(state: \.top, action: \.never)
+      viewState: viewStatePublisher.top
     )
 
     super.init()
 
-    self.isHidden = !self.viewStore.isInPlay
+    self.isHidden = !viewState.isInPlay
     self.name =
-      "xIndex: \(self.viewStore.index.x), yIndex: \(self.viewStore.index.y), zIndex: \(self.viewStore.index.z)"
+      "xIndex: \(viewState.index.x), yIndex: \(viewState.index.y), zIndex: \(viewState.index.z)"
 
     for side in CubeFace.Side.allCases {
       switch side {
@@ -104,7 +103,7 @@ public class CubeNode: SCNNode {
       }
     }
 
-    self.viewStore.publisher
+    viewStatePublisher
       .prefix(while: \.isInPlay)
       .map { ($0.isCriticallySelected, $0.index, $0.cubeShakeStartedAt) }
       .removeDuplicates(by: ==)
@@ -117,7 +116,7 @@ public class CubeNode: SCNNode {
       }
       .store(in: &self.cancellables)
 
-    self.viewStore.publisher.isInPlay
+    viewStatePublisher.isInPlay
       .dropFirst()
       .sink { [weak self] isInPlay in
         guard let self = self else { return }
