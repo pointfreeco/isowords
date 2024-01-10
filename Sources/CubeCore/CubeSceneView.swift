@@ -132,7 +132,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
         self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
 
-
         LatticePoint.cubeIndices.forEach { index in
           let cube = CubeNode(
             letterGeometry: letterGeometry,
