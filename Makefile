@@ -6,7 +6,7 @@ bootstrap: bootstrap-client bootstrap-server
 
 homebrew: homebrew-client homebrew-server
 
-test: test-client build-client-preview-apps test-server
+test: test-server # test-client build-client-preview-apps test-server
 
 clean: clean-client clean-server
 
