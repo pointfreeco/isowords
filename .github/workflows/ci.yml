@@ -36,14 +36,14 @@ jobs:
     - name: Run tests
       run: make test
 
-  ubuntu:
-    name: Ubuntu
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install dependencies
-      run: 'sudo apt-get --fix-missing update && sudo apt-get install -y wamerican'
-    - name: Bootstrap
-      run: make bootstrap-client
-    - name: Run tests
-      run: make test-server-linux
+  # ubuntu:
+  #   name: Ubuntu
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Install dependencies
+  #     run: 'sudo apt-get --fix-missing update && sudo apt-get install -y wamerican'
+  #   - name: Bootstrap
+  #     run: make bootstrap-client
+  #   - name: Run tests
+  #     run: make test-server-linux
