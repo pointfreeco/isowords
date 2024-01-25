@@ -1,19 +1,19 @@
 import CustomDump
 import Either
-import Foundation
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
 import EnvVars
 import Foundation
 import HttpPipeline
 import HttpPipelineTestSupport
+import InlineSnapshotTesting
 import Overture
 import SharedModels
-import SnapshotTesting
 import XCTest
 
 @testable import SiteMiddleware
+
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 
 class VerifyReceiptMiddlewareTests: XCTestCase {
   let encoder = update(JSONEncoder()) {
@@ -22,9 +22,9 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-//    isRecording=true
+    // isRecording=true
   }
-  
+
   func testHappyPath() {
     var updatedPlayerId: Player.Id?
     var updatedAppleResponse: AppleVerifyReceiptResponse?
@@ -57,9 +57,10 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     request.httpBody = try? self.encoder.encode(AppleVerifyReceiptResponse.mock)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/verify-receipt?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
-      
+
       {
         "environment" : "Production",
         "is-retryable" : true,
@@ -83,7 +84,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
         },
         "status" : 0
       }
-      
+
       200 OK
       Content-Length: 63
       Content-Type: application/json
@@ -93,14 +94,15 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "verifiedProductIds" : [
           "co.pointfree.full_game"
         ]
       }
+
       """
-    )
+    }
 
     XCTAssertNoDifference(
       updatedPlayerId,
@@ -143,9 +145,10 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     request.httpBody = try? self.encoder.encode(AppleVerifyReceiptResponse.mock)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/verify-receipt?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
-      
+
       {
         "environment" : "Production",
         "is-retryable" : true,
@@ -169,7 +172,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
         },
         "status" : 0
       }
-      
+
       200 OK
       Content-Length: 63
       Content-Type: application/json
@@ -179,14 +182,15 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "verifiedProductIds" : [
           "co.pointfree.full_game"
         ]
       }
+
       """
-    )
+    }
 
     XCTAssertNoDifference(
       updatedPlayerId,
@@ -227,9 +231,10 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
     request.httpBody = try? self.encoder.encode(AppleVerifyReceiptResponse.mock)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/verify-receipt?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
-      
+
       {
         "environment" : "Production",
         "is-retryable" : true,
@@ -253,7 +258,7 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
         },
         "status" : 0
       }
-      
+
       200 OK
       Content-Length: 63
       Content-Type: application/json
@@ -263,14 +268,15 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "verifiedProductIds" : [
           "co.pointfree.full_game"
         ]
       }
+
       """
-    )
+    }
 
     XCTAssertNoDifference(
       updatedPlayerId,
