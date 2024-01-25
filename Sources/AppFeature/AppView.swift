@@ -48,22 +48,6 @@ public struct AppReducer {
       self.destination = destination
       self.home = home
     }
-
-    var firstLaunchOnboarding: Onboarding.State? {
-      switch self.destination {
-      case .game, .none:
-        return nil
-
-      case let .onboarding(onboarding):
-        switch onboarding.presentationStyle {
-        case .demo, .help:
-          return nil
-
-        case .firstLaunch:
-          return onboarding
-        }
-      }
-    }
   }
 
   public enum Action {
