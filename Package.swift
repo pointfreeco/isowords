@@ -96,6 +96,7 @@ var package = Package(
         "SiteMiddleware",
         .product(name: "HttpPipeline", package: "swift-web"),
         .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+        .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "Prelude", package: "swift-prelude"),
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
@@ -161,6 +162,7 @@ var package = Package(
         "FirstPartyMocks",
         "SharedModels",
         "TestHelpers",
+        .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "Overture", package: "swift-overture"),
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
@@ -399,6 +401,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FirstPartyMocks",
         "TestHelpers",
         .product(name: "CustomDump", package: "swift-custom-dump"),
+        .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "Overture", package: "swift-overture"),
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
@@ -1030,6 +1033,7 @@ package.targets.append(contentsOf: [
       "AppSiteAssociationMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
@@ -1058,6 +1062,7 @@ package.targets.append(contentsOf: [
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
@@ -1121,6 +1126,7 @@ package.targets.append(contentsOf: [
       "DemoMiddleware",
       "SiteMiddleware",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
@@ -1149,6 +1155,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
@@ -1193,6 +1200,7 @@ package.targets.append(contentsOf: [
       .product(name: "Either", package: "swift-prelude"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "Overture", package: "swift-overture"),
       .product(name: "Prelude", package: "swift-prelude"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
@@ -1247,13 +1255,6 @@ package.targets.append(contentsOf: [
       .product(name: "HttpPipeline", package: "swift-web"),
     ]
   ),
-  .target(
-    name: "ServerTestHelpers",
-    dependencies: [
-      .product(name: "Either", package: "swift-prelude"),
-      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-    ]
-  ),
   .testTarget(
     name: "ServerConfigMiddlewareTests",
     dependencies: [
@@ -1262,7 +1263,15 @@ package.targets.append(contentsOf: [
       .product(name: "Either", package: "swift-prelude"),
       .product(name: "HttpPipeline", package: "swift-web"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "Prelude", package: "swift-prelude"),
+    ]
+  ),
+  .target(
+    name: "ServerTestHelpers",
+    dependencies: [
+      .product(name: "Either", package: "swift-prelude"),
+      .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
     ]
   ),
   .target(
@@ -1283,6 +1292,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       "TestHelpers",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
@@ -1318,6 +1328,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       "TestHelpers",
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ],
     exclude: ["__Snapshots__"]
@@ -1335,6 +1346,7 @@ package.targets.append(contentsOf: [
     name: "SnsClientTests",
     dependencies: [
       "SnsClient",
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),
@@ -1364,6 +1376,7 @@ package.targets.append(contentsOf: [
       "SiteMiddleware",
       .product(name: "CustomDump", package: "swift-custom-dump"),
       .product(name: "HttpPipelineTestSupport", package: "swift-web"),
+      .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
     ]
   ),

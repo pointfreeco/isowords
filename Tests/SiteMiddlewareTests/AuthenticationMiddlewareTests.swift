@@ -7,10 +7,10 @@ import Foundation
 #endif
 import HttpPipeline
 import HttpPipelineTestSupport
+import InlineSnapshotTesting
 import Overture
 import ServerRouter
 import SharedModels
-import SnapshotTesting
 import XCTest
 
 @testable import SiteMiddleware
@@ -56,7 +56,8 @@ class AuthenticationMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: #"""
+    assertInlineSnapshot(of: result, as: .conn) {
+      #"""
       POST /api/authenticate
 
       {
@@ -111,8 +112,9 @@ class AuthenticationMiddlewareTests: XCTestCase {
           "timeZone" : "America\/New_York"
         }
       }
+
       """#
-    )
+    }
   }
 
   func testRegister_WithInvalidGameCenterId() throws {
@@ -150,15 +152,16 @@ class AuthenticationMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: #"""
+    assertInlineSnapshot(of: result, as: .conn) {
+      #"""
       POST /api/authenticate
-      
+
       {
         "deviceId": "de71ce00-dead-beef-dead-beefdeadbeef",
         "displayName": "Blob",
         "gameCenterLocalPlayerId": "Unavailable Player Identification"
       }
-      
+
       200 OK
       Content-Length: 1055
       Content-Type: application/json
@@ -168,7 +171,7 @@ class AuthenticationMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "appleReceipt" : {
           "environment" : "Production",
@@ -204,7 +207,8 @@ class AuthenticationMiddlewareTests: XCTestCase {
           "timeZone" : "America\/New_York"
         }
       }
+
       """#
-    )
+    }
   }
 }
