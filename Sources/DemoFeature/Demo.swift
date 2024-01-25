@@ -10,24 +10,23 @@ import TcaHelpers
 
 @Reducer
 public struct Demo {
+  @Reducer(state: .equatable)
+  public enum Step {
+    case game(Game)
+    case onboarding(Onboarding)
+  }
+
   @ObservableState
   public struct State: Equatable {
     var appStoreOverlayIsPresented: Bool
-    var step: Step
+    var step: Step.State
 
     public init(
       appStoreOverlayIsPresented: Bool = false,
-      step: Step = .onboarding(.init(presentationStyle: .demo))
+      step: Step.State = .onboarding(.init(presentationStyle: .demo))
     ) {
       self.appStoreOverlayIsPresented = appStoreOverlayIsPresented
       self.step = step
-    }
-
-    @CasePathable
-    @dynamicMemberLookup
-    public enum Step: Equatable {
-      case game(Game.State)
-      case onboarding(Onboarding.State)
     }
 
     var isGameOver: Bool {
@@ -38,10 +37,9 @@ public struct Demo {
   public enum Action {
     case appStoreOverlay(isPresented: Bool)
     case fullVersionButtonTapped
-    case game(Game.Action)
     case gameOverDelay
     case onAppear
-    case onboarding(Onboarding.Action)
+    case step(Step.Action)
   }
 
   @Dependency(\.audioPlayer.load) var loadSounds
@@ -53,7 +51,7 @@ public struct Demo {
   public init() {}
 
   public var body: some ReducerOf<Self> {
-    Scope(state: \.step, action: \.self) {
+    Scope(state: \.step, action: \.step) {
       Scope(state: \.onboarding, action: \.onboarding) {
         Onboarding()
       }
@@ -90,13 +88,6 @@ public struct Demo {
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
-        state.appStoreOverlayIsPresented = true
-        return .none
-
-      case .game:
-        return .none
-
       case .gameOverDelay:
         state.appStoreOverlayIsPresented = true
         return .none
@@ -106,7 +97,14 @@ public struct Demo {
           await self.loadSounds(AudioPlayerClient.Sound.allCases)
         }
 
-      case .onboarding(.delegate(.getStarted)):
+      case .step(.game(.destination(.presented(.gameOver(.submitGameResponse(.success)))))):
+        state.appStoreOverlayIsPresented = true
+        return .none
+
+      case .step(.game):
+        return .none
+
+      case .step(.onboarding(.delegate(.getStarted))):
         state.step = .game(
           .init(
             cubes: self.randomCubes(.en),
@@ -119,7 +117,7 @@ public struct Demo {
         )
         return .none
 
-      case .onboarding:
+      case .step(.onboarding):
         return .none
       }
     }
@@ -135,26 +133,22 @@ public struct DemoView: View {
 
   public var body: some View {
     Group {
-      switch store.step {
-      case .onboarding:
-        if let store = store.scope(state: \.step.onboarding, action: \.onboarding) {
-          OnboardingView(store: store)
-            .onAppear { self.store.send(.onAppear) }
-        }
+      switch store.scope(state: \.step, action: \.step).case {
+      case let .onboarding(store):
+        OnboardingView(store: store)
+          .onAppear { self.store.send(.onAppear) }
 
-      case .game:
-        if let store = store.scope(state: \.step.game, action: \.game) {
-          GameWrapper(
-            content: GameView(
-              content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
-              store: store
-            ),
-            isGameOver: self.store.isGameOver,
-            bannerAction: {
-              self.store.send(.fullVersionButtonTapped)
-            }
-          )
-        }
+      case let .game(store):
+        GameWrapper(
+          content: GameView(
+            content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
+            store: store
+          ),
+          isGameOver: self.store.isGameOver,
+          bannerAction: {
+            self.store.send(.fullVersionButtonTapped)
+          }
+        )
       }
     }
     .appStoreOverlay(
