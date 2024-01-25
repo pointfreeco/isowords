@@ -321,30 +321,24 @@ public struct AppView: View {
 
   public var body: some View {
     Group {
-      switch store.destination {
+      switch store.scope(state: \.destination, action: \.destination.presented)?.case {
       case .none:
         NavigationStack {
           HomeView(store: store.scope(state: \.home, action: \.home))
         }
         .zIndex(0)
 
-      case .some(.game):
-        if let store = store.scope(state: \.destination?.game, action: \.destination.game) {
-          GameView(
-            content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
-            store: store
-          )
-          .transition(.game)
-          .zIndex(1)
-        }
+      case let .some(.game(store)):
+        GameView(
+          content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
+          store: store
+        )
+        .transition(.game)
+        .zIndex(1)
 
-      case .some(.onboarding):
-        if let store = store.scope(
-          state: \.destination?.onboarding, action: \.destination.onboarding
-        ) {
-          OnboardingView(store: store)
-            .zIndex(2)
-        }
+      case let .some(.onboarding(store)):
+        OnboardingView(store: store)
+          .zIndex(2)
       }
     }
     .modifier(DeviceStateModifier())
