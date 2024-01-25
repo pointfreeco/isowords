@@ -1,15 +1,16 @@
 import Either
 import Foundation
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
 import HttpPipeline
 import HttpPipelineTestSupport
-import SnapshotTesting
+import InlineSnapshotTesting
 import XCTest
 
 @testable import SharedModels
 @testable import SiteMiddleware
+
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 
 class ServerConfigMiddlewareTests: XCTestCase {
   override func setUp() {
@@ -35,9 +36,10 @@ class ServerConfigMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       GET /api/config?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&build=42
-      
+
       200 OK
       Content-Length: 513
       Content-Type: application/json
@@ -47,7 +49,7 @@ class ServerConfigMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "appId" : "1528246952",
         "forceUpgradeVersion" : 0,
@@ -66,8 +68,9 @@ class ServerConfigMiddlewareTests: XCTestCase {
           "soloGameTriggerEvery" : 3
         }
       }
+
       """
-    )
+    }
   }
 
   func testServerConfig_IsBehind() {
@@ -89,7 +92,8 @@ class ServerConfigMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       GET /api/config?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&build=40
 
       200 OK
@@ -120,7 +124,8 @@ class ServerConfigMiddlewareTests: XCTestCase {
           "soloGameTriggerEvery" : 3
         }
       }
+
       """
-    )
+    }
   }
 }

@@ -1,20 +1,21 @@
 import CustomDump
 import DatabaseClient
 import Either
-import Foundation
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
 import FirstPartyMocks
+import Foundation
 import HttpPipeline
 import HttpPipelineTestSupport
+import InlineSnapshotTesting
 import MailgunClient
 import Overture
 import SharedModels
-import SnapshotTesting
 import XCTest
 
 @testable import SiteMiddleware
+
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 
 class DailyChallengeMiddlewareTests: XCTestCase {
   let encoder = update(JSONEncoder()) {
@@ -24,7 +25,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
 
   override func setUp() {
     super.setUp()
-//    SnapshotTesting.isRecording=true
+    // SnapshotTesting.isRecording=true
   }
 
   func testToday_NotYetPlayed() {
@@ -178,10 +179,8 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       )
     )
     request.allHTTPHeaderFields = [
-      "X-Signature": (
-        request.httpBody! + Data("----SECRET_DEADBEEF----1234567890".utf8)
-      )
-      .base64EncodedString()
+      "X-Signature": (request.httpBody! + Data("----SECRET_DEADBEEF----1234567890".utf8))
+        .base64EncodedString()
     ]
 
     var environment = ServerEnvironment.testValue
@@ -237,7 +236,8 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
       X-Signature: ewogICJnYW1lQ29udGV4dCIgOiB7CiAgICAiZGFpbHlDaGFsbGVuZ2VJZCIgOiAiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIgogIH0sCiAgIm1vdmVzIiA6IFsKICAgIHsKICAgICAgInBsYXllZEF0IiA6IDEyMzQ1Njc4OTAuNSwKICAgICAgInNjb3JlIiA6IDI3LAogICAgICAidHlwZSIgOiB7CiAgICAgICAgInBsYXllZFdvcmQiIDogWwogICAgICAgICAgewogICAgICAgICAgICAiaW5kZXgiIDogewogICAgICAgICAgICAgICJ4IiA6IDIsCiAgICAgICAgICAgICAgInkiIDogMiwKICAgICAgICAgICAgICAieiIgOiAyCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJzaWRlIiA6IDAKICAgICAgICAgIH0sCiAgICAgICAgICB7CiAgICAgICAgICAgICJpbmRleCIgOiB7CiAgICAgICAgICAgICAgIngiIDogMiwKICAgICAgICAgICAgICAieSIgOiAyLAogICAgICAgICAgICAgICJ6IiA6IDIKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInNpZGUiIDogMQogICAgICAgICAgfSwKICAgICAgICAgIHsKICAgICAgICAgICAgImluZGV4IiA6IHsKICAgICAgICAgICAgICAieCIgOiAyLAogICAgICAgICAgICAgICJ5IiA6IDIsCiAgICAgICAgICAgICAgInoiIDogMgogICAgICAgICAgICB9LAogICAgICAgICAgICAic2lkZSIgOiAyCiAgICAgICAgICB9CiAgICAgICAgXQogICAgICB9CiAgICB9CiAgXQp9LS0tLVNFQ1JFVF9ERUFEQkVFRi0tLS0xMjM0NTY3ODkw
 
@@ -280,7 +280,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
           }
         ]
       }
-      
+
       200 OK
       Content-Length: 107
       Content-Type: application/json
@@ -290,7 +290,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "dailyChallenge" : {
           "outOf" : 100,
@@ -299,8 +299,9 @@ class DailyChallengeMiddlewareTests: XCTestCase {
           "started" : false
         }
       }
+
       """
-    )
+    }
 
     XCTAssertNoDifference(
       submittedScore,
@@ -352,10 +353,8 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       )
     )
     request.allHTTPHeaderFields = [
-      "X-Signature": (
-         request.httpBody! + Data("----SECRET_DEADBEEF----1234567890".utf8)
-       )
-       .base64EncodedString()
+      "X-Signature": (request.httpBody! + Data("----SECRET_DEADBEEF----1234567890".utf8))
+        .base64EncodedString()
     ]
 
     var environment = ServerEnvironment.testValue
@@ -382,10 +381,11 @@ class DailyChallengeMiddlewareTests: XCTestCase {
 
     // NB: Linux's localized message is different
     #if !os(Linux)
-      _assertInlineSnapshot(matching: result, as: .conn, with: #"""
+      assertInlineSnapshot(of: result, as: .conn) {
+        #"""
         POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
         X-Signature: ewogICJnYW1lQ29udGV4dCIgOiB7CiAgICAiZGFpbHlDaGFsbGVuZ2VJZCIgOiAiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIgogIH0sCiAgIm1vdmVzIiA6IFsKICAgIHsKICAgICAgInBsYXllZEF0IiA6IDEyMzQ1Njc4OTAsCiAgICAgICJzY29yZSIgOiAxMDAwLAogICAgICAidHlwZSIgOiB7CiAgICAgICAgInBsYXllZFdvcmQiIDogWwogICAgICAgICAgewogICAgICAgICAgICAiaW5kZXgiIDogewogICAgICAgICAgICAgICJ4IiA6IDAsCiAgICAgICAgICAgICAgInkiIDogMCwKICAgICAgICAgICAgICAieiIgOiAwCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJzaWRlIiA6IDEKICAgICAgICAgIH0sCiAgICAgICAgICB7CiAgICAgICAgICAgICJpbmRleCIgOiB7CiAgICAgICAgICAgICAgIngiIDogMCwKICAgICAgICAgICAgICAieSIgOiAwLAogICAgICAgICAgICAgICJ6IiA6IDAKICAgICAgICAgICAgfSwKICAgICAgICAgICAgInNpZGUiIDogMgogICAgICAgICAgfSwKICAgICAgICAgIHsKICAgICAgICAgICAgImluZGV4IiA6IHsKICAgICAgICAgICAgICAieCIgOiAxLAogICAgICAgICAgICAgICJ5IiA6IDAsCiAgICAgICAgICAgICAgInoiIDogMAogICAgICAgICAgICB9LAogICAgICAgICAgICAic2lkZSIgOiAyCiAgICAgICAgICB9CiAgICAgICAgXQogICAgICB9CiAgICB9CiAgXQp9LS0tLVNFQ1JFVF9ERUFEQkVFRi0tLS0xMjM0NTY3ODkw
-        
+
         {
           "gameContext" : {
             "dailyChallengeId" : "DEADBEEF-DEAD-BEEF-DEAD-DA117C4A1132"
@@ -425,7 +425,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
             }
           ]
         }
-        
+
         400 Bad Request
         Content-Length: 492
         Content-Type: application/json
@@ -435,15 +435,16 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         X-Frame-Options: SAMEORIGIN
         X-Permitted-Cross-Domain-Policies: none
         X-XSS-Protection: 1; mode=block
-        
+
         {
           "errorDump" : "▿ SharedModels.ApiError\n  - errorDump: \"- LeaderboardMiddleware.VerificationFailed\\n\"\n  - file: \"LeaderboardMiddleware\/SubmitGameMiddleware.swift\"\n  - line: 109\n  - message: \"The operation couldn’t be completed. (LeaderboardMiddleware.VerificationFailed error 1.)\"\n",
           "file" : "LeaderboardMiddleware\/SubmitGameMiddleware.swift",
           "line" : 202,
           "message" : "The operation couldn’t be completed. (LeaderboardMiddleware.VerificationFailed error 1.)"
         }
+
         """#
-      )
+      }
     #endif
   }
 
@@ -488,9 +489,10 @@ class DailyChallengeMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       GET /api/daily-challenges/results?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&gameMode=unlimited&language=en
-      
+
       200 OK
       Content-Length: 471
       Content-Type: application/json
@@ -500,7 +502,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-      
+
       {
         "results" : [
           {
@@ -523,7 +525,8 @@ class DailyChallengeMiddlewareTests: XCTestCase {
           }
         ]
       }
+
       """
-    )
+    }
   }
 }
