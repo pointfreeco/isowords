@@ -21,6 +21,8 @@ jobs:
     - uses: actions/checkout@v4
       # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v2
+    - name: Select Xcode 15.2
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app
     - name: LFS pull
       run: git lfs pull
     - name: Install Postgres
@@ -29,8 +31,6 @@ jobs:
       run: brew link postgresql@15
     - name: Start Postgres
       run: brew services start postgresql@15
-    - name: Select Xcode 15.2
-      run: sudo xcode-select -s /Applications/Xcode_15.2.app
     - name: Bootstrap
       run: make bootstrap
     - name: Run tests
