@@ -2,21 +2,22 @@ import CustomDump
 import DatabaseClient
 import Either
 import Foundation
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
 import HttpPipeline
 import HttpPipelineTestSupport
+import InlineSnapshotTesting
 import Overture
 import Prelude
 import PushMiddleware
 import ServerRouter
 import SharedModels
 import SiteMiddleware
-import SnapshotTesting
 import XCTest
 
 @testable import SnsClient
+
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 
 class PushMiddlewareTests: XCTestCase {
   func testRegisterToken() throws {
@@ -61,7 +62,8 @@ class PushMiddlewareTests: XCTestCase {
       )
     )
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/push-tokens?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
 
       {"token":"deadbeef"}
@@ -79,8 +81,9 @@ class PushMiddlewareTests: XCTestCase {
       {
 
       }
+
       """
-    )
+    }
   }
 
   func testRegisterToken_WithBuild() throws {
@@ -125,7 +128,8 @@ class PushMiddlewareTests: XCTestCase {
       )
     )
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/push-tokens?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
 
       {"build":42,"token":"deadbeef"}
@@ -143,8 +147,9 @@ class PushMiddlewareTests: XCTestCase {
       {
 
       }
+
       """
-    )
+    }
   }
 
   func testRegisterToken_WithBuildAndAuthorizationStatus() throws {
@@ -189,7 +194,8 @@ class PushMiddlewareTests: XCTestCase {
       )
     )
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/push-tokens?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
 
       {"authorizationStatus":2,"build":42,"token":"deadbeef"}
@@ -207,8 +213,9 @@ class PushMiddlewareTests: XCTestCase {
       {
 
       }
+
       """
-    )
+    }
   }
 
   func testRegisterSandboxToken() throws {
@@ -254,7 +261,8 @@ class PushMiddlewareTests: XCTestCase {
       )
     )
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/push-tokens?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
       X-Debug: true
 
@@ -273,8 +281,9 @@ class PushMiddlewareTests: XCTestCase {
       {
 
       }
+
       """
-    )
+    }
   }
 
   func testUpdateSetting() throws {
@@ -305,7 +314,8 @@ class PushMiddlewareTests: XCTestCase {
     XCTAssertNoDifference(notificationType, .dailyChallengeEndsSoon)
     XCTAssertNoDifference(sendNotifications, false)
 
-    _assertInlineSnapshot(matching: result, as: .conn, with: """
+    assertInlineSnapshot(of: result, as: .conn) {
+      """
       POST /api/push-settings?accessToken=deadbeef-dead-beef-dead-beefdeadbeef
 
       {"notificationType":"dailyChallengeEndsSoon","sendNotifications":false}
@@ -323,8 +333,9 @@ class PushMiddlewareTests: XCTestCase {
       {
 
       }
+
       """
-    )
+    }
   }
 
 }
