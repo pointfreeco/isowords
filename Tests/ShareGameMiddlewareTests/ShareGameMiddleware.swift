@@ -6,9 +6,9 @@ import Foundation
 import FirstPartyMocks
 import HttpPipeline
 import HttpPipelineTestSupport
-import InlineSnapshotTesting
 import Overture
 import SharedModels
+import SnapshotTesting
 import TestHelpers
 import XCTest
 
@@ -64,8 +64,7 @@ class ShareGameMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      """
+    _assertInlineSnapshot(matching: result, as: .conn, with: """
       GET /sharedGames/deadbeef
 
       302 Found
@@ -77,7 +76,7 @@ class ShareGameMiddlewareTests: XCTestCase {
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
       """
-    }
+    )
   }
 
   func testFetchSharedGame() throws {

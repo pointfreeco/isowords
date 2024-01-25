@@ -1,4 +1,4 @@
-import InlineSnapshotTesting
+import SnapshotTesting
 import SnsClient
 import XCTest
 
@@ -18,8 +18,7 @@ class SnsClientTests: XCTestCase {
         contentAvailable: true
       )
     )
-    assertInlineSnapshot(of: apsPayload_NoContent, as: .json) {
-      """
+    _assertInlineSnapshot(matching: apsPayload_NoContent, as: .json, with: """
       {
         "aps" : {
           "alert" : {
@@ -37,7 +36,7 @@ class SnsClientTests: XCTestCase {
         }
       }
       """
-    }
+    )
 
     struct Content: Encodable {
       let route: Route
@@ -56,8 +55,7 @@ class SnsClientTests: XCTestCase {
       ),
       content: Content(route: .init(dailyChallengeId: "deadbeef", localPlayerIndex: 1))
     )
-    assertInlineSnapshot(of: apsPayload_WithContent, as: .json) {
-      """
+    _assertInlineSnapshot(matching: apsPayload_WithContent, as: .json, with: """
       {
         "aps" : {
           "alert" : {
@@ -71,6 +69,6 @@ class SnsClientTests: XCTestCase {
         }
       }
       """
-    }
+    )
   }
 }

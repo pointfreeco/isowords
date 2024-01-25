@@ -1,17 +1,16 @@
 import AppSiteAssociationMiddleware
 import Foundation
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 import HttpPipeline
 import HttpPipelineTestSupport
-import InlineSnapshotTesting
 import Prelude
 import ServerRouter
 import SharedModels
 import SiteMiddleware
+import SnapshotTesting
 import XCTest
-
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
 
 class AppSiteAssociationMiddlewareTests: XCTestCase {
   func testBasics() throws {
@@ -19,8 +18,7 @@ class AppSiteAssociationMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: .testValue)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      #"""
+    _assertInlineSnapshot(matching: result, as: .conn, with: #"""
       GET /.well-known/apple-app-site-association
 
       200 OK
@@ -56,8 +54,6 @@ class AppSiteAssociationMiddlewareTests: XCTestCase {
           ]
         }
       }
-
-      """#
-    }
+      """#)
   }
 }

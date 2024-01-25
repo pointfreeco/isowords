@@ -3,20 +3,19 @@ import DatabaseClient
 import Either
 import EnvVars
 import Foundation
+#if canImport(FoundationNetworking)
+  import FoundationNetworking
+#endif
 import HttpPipeline
 import HttpPipelineTestSupport
-import InlineSnapshotTesting
 import Overture
 import Prelude
 import ServerRouter
 import SharedModels
+import SnapshotTesting
 import XCTest
 
 @testable import SiteMiddleware
-
-#if canImport(FoundationNetworking)
-  import FoundationNetworking
-#endif
 
 class LeaderboardMiddlewareTests: XCTestCase {
   func testSubmitLeaderboardScore() {
@@ -106,8 +105,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      """
+    _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
       X-Signature: eyJnYW1lQ29udGV4dCI6eyJzb2xvIjp7ImdhbWVNb2RlIjoidGltZWQiLCJsYW5ndWFnZSI6ImVuIiwicHV6emxlIjpbW1t7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fV0sW3sibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19XSxbeyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX1dXSxbW3sibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19XSxbeyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX1dLFt7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fV1dLFtbeyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX1dLFt7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fV0sW3sibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19XV1dfX0sIm1vdmVzIjpbeyJwbGF5ZWRBdCI6MTIzNDU2Nzg5MC41LCJzY29yZSI6MjcsInR5cGUiOnsicGxheWVkV29yZCI6W3siaW5kZXgiOnsieCI6MiwieSI6MiwieiI6Mn0sInNpZGUiOjB9LHsiaW5kZXgiOnsieCI6MiwieSI6MiwieiI6Mn0sInNpZGUiOjF9LHsiaW5kZXgiOnsieCI6MiwieSI6MiwieiI6Mn0sInNpZGUiOjJ9XX19XX0tLS0tU0VDUkVUX0RFQURCRUVGLS0tLTEyMzQ1Njc4OTA=
 
@@ -122,7 +120,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-
+      
       {
         "solo" : {
           "ranks" : {
@@ -141,9 +139,8 @@ class LeaderboardMiddlewareTests: XCTestCase {
           }
         }
       }
-
       """
-    }
+    )
   }
 
   func testSubmitLeaderboardScore_DailyChallenge() {
@@ -248,8 +245,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      """
+    _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
       X-Signature: eyJnYW1lQ29udGV4dCI6eyJkYWlseUNoYWxsZW5nZUlkIjoiREVBREJFRUYtREVBRC1CRUVGLURFQUQtREExMTdDNEExMTMyIn0sIm1vdmVzIjpbeyJwbGF5ZWRBdCI6MTIzNDU2Nzg5MC41LCJzY29yZSI6MjcsInR5cGUiOnsicGxheWVkV29yZCI6W3siaW5kZXgiOnsieCI6MiwieSI6MiwieiI6Mn0sInNpZGUiOjB9LHsiaW5kZXgiOnsieCI6MiwieSI6MiwieiI6Mn0sInNpZGUiOjF9LHsiaW5kZXgiOnsieCI6MiwieSI6MiwieiI6Mn0sInNpZGUiOjJ9XX19XX0tLS0tU0VDUkVUX0RFQURCRUVGLS0tLTEyMzQ1Njc4OTA=
 
@@ -264,7 +260,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-
+      
       {
         "dailyChallenge" : {
           "outOf" : 100,
@@ -272,9 +268,8 @@ class LeaderboardMiddlewareTests: XCTestCase {
           "started" : false
         }
       }
-
       """
-    }
+    )
   }
 
   func testSubmitLeaderboardScore_Shared() {
@@ -334,8 +329,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      """
+    _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
       X-Signature: eyJnYW1lQ29udGV4dCI6eyJzaGFyZWRHYW1lQ29kZSI6ImRlYWRiZWVmIn0sIm1vdmVzIjpbeyJwbGF5ZWRBdCI6MTIzNDU2Nzg5MC41LCJzY29yZSI6MTAwLCJ0eXBlIjp7InBsYXllZFdvcmQiOlt7ImluZGV4Ijp7IngiOjIsInkiOjIsInoiOjJ9LCJzaWRlIjoxfSx7ImluZGV4Ijp7IngiOjIsInkiOjIsInoiOjJ9LCJzaWRlIjoyfSx7ImluZGV4Ijp7IngiOjIsInkiOjIsInoiOjJ9LCJzaWRlIjowfV19fV19LS0tLVNFQ1JFVF9ERUFEQkVFRi0tLS0xMjM0NTY3ODkw
 
@@ -766,9 +760,8 @@ class LeaderboardMiddlewareTests: XCTestCase {
           ]
         }
       }
-
       """
-    }
+    )
   }
 
   func testSubmitLeaderboardScore_TurnBased() {
@@ -857,13 +850,12 @@ class LeaderboardMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      """
+    _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /api/games?accessToken=deadbeef-dead-beef-dead-beefdeadbeef&timestamp=1234567890
       X-Signature: eyJnYW1lQ29udGV4dCI6eyJ0dXJuQmFzZWQiOnsiZ2FtZU1vZGUiOiJ1bmxpbWl0ZWQiLCJsYW5ndWFnZSI6ImVuIiwicGxheWVySW5kZXhUb0lkIjp7IjAiOiJCMTBCQjEwQi1ERUFELUJFRUYtREVBRC1CRUVGREVBREJFRUYiLCIxIjoiQjEwQjIwMDAtREVBRC1CRUVGLURFQUQtQkVFRkRFQURCRUVGIn0sInB1enpsZSI6W1tbeyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX1dLFt7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fV0sW3sibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19XV0sW1t7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fV0sW3sibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19XSxbeyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX1dXSxbW3sibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19XSxbeyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fSx7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX1dLFt7ImxlZnQiOnsibGV0dGVyIjoiQSIsInNpZGUiOjF9LCJyaWdodCI6eyJsZXR0ZXIiOiJCIiwic2lkZSI6Mn0sInRvcCI6eyJsZXR0ZXIiOiJDIiwic2lkZSI6MH19LHsibGVmdCI6eyJsZXR0ZXIiOiJBIiwic2lkZSI6MX0sInJpZ2h0Ijp7ImxldHRlciI6IkIiLCJzaWRlIjoyfSwidG9wIjp7ImxldHRlciI6IkMiLCJzaWRlIjowfX0seyJsZWZ0Ijp7ImxldHRlciI6IkEiLCJzaWRlIjoxfSwicmlnaHQiOnsibGV0dGVyIjoiQiIsInNpZGUiOjJ9LCJ0b3AiOnsibGV0dGVyIjoiQyIsInNpZGUiOjB9fV1dXX19LCJtb3ZlcyI6W3sicGxheWVkQXQiOjEyMzQ1Njc4OTAuNSwicGxheWVySW5kZXgiOjEsInNjb3JlIjoyNywidHlwZSI6eyJwbGF5ZWRXb3JkIjpbeyJpbmRleCI6eyJ4IjoyLCJ5IjoyLCJ6IjoyfSwic2lkZSI6MX0seyJpbmRleCI6eyJ4IjoyLCJ5IjoyLCJ6IjoyfSwic2lkZSI6Mn0seyJpbmRleCI6eyJ4IjoyLCJ5IjoyLCJ6IjoyfSwic2lkZSI6MH1dfX0seyJwbGF5ZWRBdCI6MTIzNDU2Nzg5MC41LCJwbGF5ZXJJbmRleCI6MCwic2NvcmUiOjI3LCJ0eXBlIjp7InBsYXllZFdvcmQiOlt7ImluZGV4Ijp7IngiOjIsInkiOjIsInoiOjJ9LCJzaWRlIjowfSx7ImluZGV4Ijp7IngiOjIsInkiOjIsInoiOjJ9LCJzaWRlIjoxfSx7ImluZGV4Ijp7IngiOjIsInkiOjIsInoiOjJ9LCJzaWRlIjoyfV19fV19LS0tLVNFQ1JFVF9ERUFEQkVFRi0tLS0xMjM0NTY3ODkw
 
       {"gameContext":{"turnBased":{"gameMode":"unlimited","language":"en","playerIndexToId":{"0":"B10BB10B-DEAD-BEEF-DEAD-BEEFDEADBEEF","1":"B10B2000-DEAD-BEEF-DEAD-BEEFDEADBEEF"},"puzzle":[[[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}],[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}],[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}]],[[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}],[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}],[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}]],[[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}],[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}],[{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}},{"left":{"letter":"A","side":1},"right":{"letter":"B","side":2},"top":{"letter":"C","side":0}}]]]}},"moves":[{"playedAt":1234567890.5,"playerIndex":1,"score":27,"type":{"playedWord":[{"index":{"x":2,"y":2,"z":2},"side":1},{"index":{"x":2,"y":2,"z":2},"side":2},{"index":{"x":2,"y":2,"z":2},"side":0}]}},{"playedAt":1234567890.5,"playerIndex":0,"score":27,"type":{"playedWord":[{"index":{"x":2,"y":2,"z":2},"side":0},{"index":{"x":2,"y":2,"z":2},"side":1},{"index":{"x":2,"y":2,"z":2},"side":2}]}}]}
-
+      
       200 OK
       Content-Length: 24
       Content-Type: application/json
@@ -873,13 +865,12 @@ class LeaderboardMiddlewareTests: XCTestCase {
       X-Frame-Options: SAMEORIGIN
       X-Permitted-Cross-Domain-Policies: none
       X-XSS-Protection: 1; mode=block
-
+      
       {
         "turnBased" : true
       }
-
       """
-    }
+    )
 
     XCTAssertNoDifference(
       scores.sorted(by: { $0.playerId == player.id && $1.playerId != player.id }),

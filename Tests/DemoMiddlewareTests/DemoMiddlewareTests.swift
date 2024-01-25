@@ -7,12 +7,12 @@ import Foundation
 #endif
 import HttpPipeline
 import HttpPipelineTestSupport
-import InlineSnapshotTesting
 import Overture
 import Prelude
 import ServerRouter
 import SharedModels
 import SiteMiddleware
+import SnapshotTesting
 import XCTest
 
 class DemoMiddlewareTests: XCTestCase {
@@ -41,8 +41,7 @@ class DemoMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    assertInlineSnapshot(of: result, as: .conn) {
-      """
+    _assertInlineSnapshot(matching: result, as: .conn, with: """
       POST /demo/games
 
       {"gameMode": "timed", "score": 1000}
@@ -73,8 +72,7 @@ class DemoMiddlewareTests: XCTestCase {
           }
         }
       }
-
       """
-    }
+    )
   }
 }
