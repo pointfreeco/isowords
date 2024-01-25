@@ -12,25 +12,10 @@ import SwiftUI
 
 @Reducer
 public struct AppReducer {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case game(Game.State)
-      case onboarding(Onboarding.State)
-    }
-    public enum Action {
-      case game(Game.Action)
-      case onboarding(Onboarding.Action)
-    }
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.game, action: \.game) {
-        Game()
-      }
-      Scope(state: \.onboarding, action: \.onboarding) {
-        Onboarding()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case game(Game)
+    case onboarding(Onboarding)
   }
 
   @ObservableState
@@ -322,9 +307,7 @@ public struct AppReducer {
         return .none
       }
     }
-    .ifLet(\.$destination, action: \.destination) {
-      Destination()
-    }
+    .ifLet(\.$destination, action: \.destination)
   }
 }
 
