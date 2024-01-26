@@ -6,6 +6,7 @@ import SwiftUI
 
 @Reducer
 public struct DailyChallengeResults {
+  @ObservableState
   public struct State: Equatable {
     public var history: DailyChallengeHistoryResponse?
     public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
@@ -89,24 +90,22 @@ public struct DailyChallengeResults {
 public struct DailyChallengeResultsView: View {
   @Environment(\.colorScheme) var colorScheme
   let store: StoreOf<DailyChallengeResults>
-  @ObservedObject var viewStore: ViewStoreOf<DailyChallengeResults>
 
   public init(store: StoreOf<DailyChallengeResults>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
     LeaderboardResultsView(
-      store: self.store.scope(state: \.leaderboardResults, action: \.leaderboardResults),
+      store: store.scope(state: \.leaderboardResults, action: \.leaderboardResults),
       title: Text("Daily Challenge"),
-      subtitle: (self.viewStore.leaderboardResults.resultEnvelope?.outOf)
+      subtitle: (store.leaderboardResults.resultEnvelope?.outOf)
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },
       isFilterable: true,
       color: .dailyChallenge,
       timeScopeLabel: Text(self.timeScopeLabelText),
       timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
-        CalendarView(store: self.store)
+        CalendarView(store: store)
       }
     )
     .padding(.top, .grid(4))
@@ -122,8 +121,8 @@ public struct DailyChallengeResultsView: View {
 
   var timeScopeLabelText: LocalizedStringKey {
     guard
-      let history = self.viewStore.history,
-      let timeScope = self.viewStore.leaderboardResults.timeScope
+      let history = store.history,
+      let timeScope = store.leaderboardResults.timeScope
     else { return "Today (so far)" }
 
     guard

@@ -9,10 +9,11 @@ import UIApplicationClient
 
 @Reducer
 public struct Trailer {
+  @ObservableState
   public struct State: Equatable {
     var game: Game.State
-    @BindingState var nub: CubeSceneView.ViewState.NubState
-    @BindingState var opacity: Double
+    var nub: CubeSceneView.ViewState.NubState
+    var opacity: Double
 
     public init(
       game: Game.State,
@@ -25,7 +26,7 @@ public struct Trailer {
     }
 
     public init() {
-      self = .init(
+      self.init(
         game: .init(
           cubes: .trailer,
           gameContext: .solo,
@@ -93,7 +94,7 @@ public struct Trailer {
           await self.audioPlayer.play(.onboardingBgMusic)
 
           // Fade the cube in after a second
-          await send(.set(\.$opacity, 1), animation: .easeInOut(duration: fadeInDuration))
+          await send(.set(\.opacity, 1), animation: .easeInOut(duration: fadeInDuration))
           try await self.mainQueue.sleep(for: firstWordDelay)
 
           // Play each word
@@ -105,7 +106,7 @@ public struct Trailer {
               // Move the nub to the face being played
               nub.location = .face(face)
               await send(
-                .set(\.$nub, nub),
+                .set(\.nub, nub),
                 animateWithDuration: moveNubToFaceDuration,
                 options: .curveEaseInOut
               )
@@ -120,7 +121,7 @@ public struct Trailer {
               // Press the nub on the first character
               nub.isPressed = true
               if characterIndex == 0 {
-                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
+                await send(.set(\.nub, nub), animateWithDuration: 0.3)
               }
               // Select the cube face
               await send(.game(.tap(.began, face)), animation: .default)
@@ -128,14 +129,14 @@ public struct Trailer {
 
             // Release the  nub when the last character is played
             nub.isPressed = false
-            await send(.set(\.$nub, nub), animateWithDuration: 0.3)
+            await send(.set(\.nub, nub), animateWithDuration: 0.3)
 
             // Move the nub to the submit button
             try await self.mainQueue.sleep(for: .seconds(0.3))
 
             nub.location = .submitButton
             await send(
-              .set(\.$nub, nub),
+              .set(\.nub, nub),
               animateWithDuration: moveNubToSubmitButtonDuration,
               options: .curveEaseInOut
             )
@@ -157,7 +158,7 @@ public struct Trailer {
               group.addTask { [nub] in
                 var nub = nub
                 nub.isPressed = true
-                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
+                await send(.set(\.nub, nub), animateWithDuration: 0.3)
               }
               group.addTask { [nub] in
                 var nub = nub
@@ -165,7 +166,7 @@ public struct Trailer {
                 await send(.game(.submitButtonTapped(reaction: nil)))
                 try await self.mainQueue.sleep(for: .seconds(0.3))
                 nub.isPressed = false
-                await send(.set(\.$nub, nub), animateWithDuration: 0.3)
+                await send(.set(\.nub, nub), animateWithDuration: 0.3)
               }
             }
           }
@@ -174,12 +175,12 @@ public struct Trailer {
           try await self.mainQueue.sleep(for: .seconds(0.3))
           nub.location = .offScreenBottom
           await send(
-            .set(\.$nub, nub),
+            .set(\.nub, nub),
             animateWithDuration: moveNubOffScreenDuration,
             options: .curveEaseInOut
           )
 
-          await send(.set(\.$opacity, 0), animation: .linear(duration: moveNubOffScreenDuration))
+          await send(.set(\.opacity, 0), animation: .linear(duration: moveNubOffScreenDuration))
         }
       }
     }
@@ -188,36 +189,18 @@ public struct Trailer {
 
 public struct TrailerView: View {
   let store: StoreOf<Trailer>
-  @ObservedObject var viewStore: ViewStore<ViewState, Trailer.Action>
   @Environment(\.deviceState) var deviceState
-
-  struct ViewState: Equatable {
-    let opacity: Double
-    let selectedWordHasAlreadyBeenPlayed: Bool
-    let selectedWordIsValid: Bool
-    let selectedWordScore: Int?
-    let selectedWordString: String
-
-    init(state: Trailer.State) {
-      self.opacity = state.opacity
-      self.selectedWordHasAlreadyBeenPlayed = state.game.selectedWordHasAlreadyBeenPlayed
-      self.selectedWordIsValid = state.game.selectedWordIsValid
-      self.selectedWordScore = self.selectedWordIsValid ? state.game.selectedWordScore : nil
-      self.selectedWordString = state.game.selectedWordString
-    }
-  }
 
   public init(store: StoreOf<Trailer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
     GeometryReader { proxy in
       ZStack {
         VStack {
-          if !self.viewStore.selectedWordString.isEmpty {
-            (Text(self.viewStore.selectedWordString)
+          if !store.game.selectedWordString.isEmpty {
+            (Text(store.game.selectedWordString)
               + self.scoreText
               .baselineOffset(
                 (self.deviceState.idiom == .pad ? 2 : 1) * 16
@@ -232,19 +215,19 @@ public struct TrailerView: View {
                 .matterSemiBold,
                 size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
               )
-              .opacity(self.viewStore.selectedWordIsValid ? 1 : 0.5)
+              .opacity(store.game.selectedWordIsValid ? 1 : 0.5)
               .allowsTightening(true)
               .minimumScaleFactor(0.2)
               .lineLimit(1)
               .transition(.opacity)
-              .animation(nil, value: self.viewStore.selectedWordString)
+              .animation(nil, value: store.game.selectedWordString)
           }
 
           Spacer()
 
-          if !self.viewStore.selectedWordString.isEmpty {
+          if !store.game.selectedWordString.isEmpty {
             WordSubmitButton(
-              store: self.store.scope(
+              store: store.scope(
                 state: \.game.wordSubmitButtonFeature,
                 action: \.game.wordSubmitButton
               )
@@ -259,46 +242,39 @@ public struct TrailerView: View {
 
           WordListView(
             isLeftToRight: true,
-            store: self.store.scope(state: \.game, action: \.game)
+            store: store.scope(state: \.game, action: \.game)
           )
         }
         .adaptivePadding(.top, .grid(18))
         .adaptivePadding(.bottom, .grid(2))
 
-        CubeView(store: self.store.scope(state: \.cubeScene, action: \.game.cubeScene))
+        CubeView(store: store.scope(state: \.cubeScene, action: \.game.cubeScene))
           .adaptivePadding(
             self.deviceState.idiom == .pad ? .horizontal : [],
             .grid(30)
           )
       }
-      .background(
+      .background {
         BloomBackground(
           size: proxy.size,
-          store: self.store
-            .scope(
-              state: {
-                BloomBackground.ViewState(
-                  bloomCount: $0.game.selectedWord.count,
-                  word: $0.game.selectedWordString
-                )
-              },
-              action: absurd
-            )
+          word: store.game.selectedWordString
         )
-      )
+      }
     }
     .padding(
       self.deviceState.idiom == .pad ? .vertical : [],
       .grid(15)
     )
-    .opacity(self.viewStore.opacity)
-    .task { await self.viewStore.send(.task).finish() }
+    .opacity(store.opacity)
+    .task { await store.send(.task).finish() }
   }
 
   var scoreText: Text {
-    self.viewStore.selectedWordScore.map {
-      Text(" \($0)")
-    } ?? Text("")
+    if store.game.selectedWordIsValid {
+      return Text(" \(store.game.selectedWordScore)")
+    } else {
+      return Text(verbatim: "")
+    }
   }
 }
 
@@ -319,5 +295,3 @@ private let fadeInDuration = 0.3
 private let fadeOutDuration = 0.3
 private let submitPressDuration = 0.05
 private let submitHestitationDuration = 0.15
-
-private func absurd<A>(_: Never) -> A {}

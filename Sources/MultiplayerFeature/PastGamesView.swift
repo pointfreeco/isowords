@@ -6,6 +6,7 @@ import SwiftUI
 
 @Reducer
 public struct PastGames {
+  @ObservableState
   public struct State: Equatable {
     public var pastGames: IdentifiedArrayOf<PastGame.State> = []
   }
@@ -60,18 +61,10 @@ public struct PastGames {
 struct PastGamesView: View {
   @Environment(\.colorScheme) var colorScheme
   let store: StoreOf<PastGames>
-  @ObservedObject var viewStore: ViewStoreOf<PastGames>
-
-  init(store: StoreOf<PastGames>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
-  }
 
   var body: some View {
     ScrollView {
-      ForEachStore(
-        self.store.scope(state: \.pastGames, action: \.pastGames)
-      ) { store in
+      ForEach(store.scope(state: \.pastGames, action: \.pastGames)) { store in
         Group {
           PastGameRow(store: store)
 
@@ -83,7 +76,7 @@ struct PastGamesView: View {
       }
       .padding()
     }
-    .task { await viewStore.send(.task).finish() }
+    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
       foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,

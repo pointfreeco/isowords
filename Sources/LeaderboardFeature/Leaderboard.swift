@@ -33,6 +33,7 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 public struct Leaderboard {
   @Reducer
   public struct Destination {
+    @ObservableState
     public enum State: Equatable {
       case cubePreview(CubePreview.State)
     }
@@ -48,8 +49,9 @@ public struct Leaderboard {
     }
   }
 
+  @ObservableState
   public struct State: Equatable {
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var scope: LeaderboardScope = .games
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
@@ -155,12 +157,10 @@ public struct Leaderboard {
 
 public struct LeaderboardView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Leaderboard>
-  @ObservedObject var viewStore: ViewStoreOf<Leaderboard>
+  @Bindable var store: StoreOf<Leaderboard>
 
   public init(store: StoreOf<Leaderboard>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
@@ -168,11 +168,11 @@ public struct LeaderboardView: View {
       HStack {
         ForEach(LeaderboardScope.allCases, id: \.self) { scope in
           Button {
-            self.viewStore.send(.scopeTapped(scope), animation: .default)
+            store.send(.scopeTapped(scope), animation: .default)
           } label: {
             Text(scope.title)
-              .foregroundColor(self.viewStore.state.scope == scope ? scope.color : nil)
-              .opacity(self.viewStore.state.scope == scope ? 1 : 0.3)
+              .foregroundColor(store.state.scope == scope ? scope.color : nil)
+              .opacity(store.state.scope == scope ? 1 : 0.3)
           }
         }
       }
@@ -181,22 +181,22 @@ public struct LeaderboardView: View {
       .screenEdgePadding(.horizontal)
 
       Group {
-        switch self.viewStore.state.scope {
+        switch store.state.scope {
         case .games:
           LeaderboardResultsView(
-            store: self.store.scope(state: \.solo, action: \.solo),
+            store: store.scope(state: \.solo, action: \.solo),
             title: Text("Solo"),
-            subtitle: Text("\(self.viewStore.solo.resultEnvelope?.outOf ?? 0) players"),
+            subtitle: Text("\(store.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
             color: .isowordsOrange,
-            timeScopeLabel: Text(self.viewStore.solo.timeScope.displayTitle),
+            timeScopeLabel: Text(store.solo.timeScope.displayTitle),
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  self.viewStore.send(.solo(.timeScopeChanged(scope)), animation: .default)
+                  store.send(.solo(.timeScopeChanged(scope)), animation: .default)
                 }
-                .disabled(self.viewStore.solo.timeScope == scope)
-                .opacity(self.viewStore.solo.timeScope == scope ? 0.3 : 1)
+                .disabled(store.solo.timeScope == scope)
+                .opacity(store.solo.timeScope == scope ? 0.3 : 1)
               }
               .padding(.leading, .grid(12))
             }
@@ -204,21 +204,21 @@ public struct LeaderboardView: View {
 
         case .vocab:
           LeaderboardResultsView(
-            store: self.store.scope(state: \.vocab, action: \.vocab),
-            title: (self.viewStore.vocab.resultEnvelope?.outOf).flatMap {
+            store: store.scope(state: \.vocab, action: \.vocab),
+            title: (store.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },
             subtitle: nil,
             isFilterable: false,
             color: .isowordsRed,
-            timeScopeLabel: Text(self.viewStore.vocab.timeScope.displayTitle),
+            timeScopeLabel: Text(store.vocab.timeScope.displayTitle),
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime, .interesting], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  self.viewStore.send(.vocab(.timeScopeChanged(scope)), animation: .default)
+                  store.send(.vocab(.timeScopeChanged(scope)), animation: .default)
                 }
-                .disabled(self.viewStore.vocab.timeScope == scope)
-                .opacity(self.viewStore.vocab.timeScope == scope ? 0.3 : 1)
+                .disabled(store.vocab.timeScope == scope)
+                .opacity(store.vocab.timeScope == scope ? 0.3 : 1)
               }
               .padding(.leading, .grid(12))
             }
@@ -233,15 +233,16 @@ public struct LeaderboardView: View {
     .navigationStyle(
       foregroundColor: self.colorScheme == .light
         ? .hex(0x393939)
-        : self.viewStore.state.scope == .games
+        : store.state.scope == .games
           ? .isowordsOrange
           : .isowordsRed,
       title: Text("Leaderboards")
     )
     .sheet(
-      store: self.store.scope(state: \.$destination.cubePreview, action: \.destination.cubePreview),
-      content: CubePreviewView.init(store:)
-    )
+      item: $store.scope(state: \.destination?.cubePreview, action: \.destination.cubePreview)
+    ) { store in
+      CubePreviewView(store: store)
+    }
   }
 }
 

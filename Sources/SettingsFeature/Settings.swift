@@ -42,17 +42,18 @@ public struct DeveloperSettings: Equatable {
 
 @Reducer
 public struct Settings {
+  @ObservableState
   public struct State: Equatable {
-    @PresentationState public var alert: AlertState<Action.Alert>?
+    @Presents public var alert: AlertState<Action.Alert>?
     public var buildNumber: Build.Number?
-    @BindingState public var developer: DeveloperSettings
+    public var developer: DeveloperSettings
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
     public var isRestoring: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    @BindingState public var userSettings: UserSettings
+    public var userSettings: UserSettings
 
     public struct ProductError: Error, Equatable {}
 

@@ -4,16 +4,10 @@ import SwiftUI
 
 struct PurchasesSettingsView: View {
   let store: StoreOf<Settings>
-  @ObservedObject var viewStore: ViewStoreOf<Settings>
-
-  init(store: StoreOf<Settings>) {
-    self.store = store
-    self.viewStore = ViewStore(store, observe: { $0 })
-  }
 
   var body: some View {
     SettingsForm {
-      if let fullGamePurchasedAt = self.viewStore.fullGamePurchasedAt {
+      if let fullGamePurchasedAt = store.fullGamePurchasedAt {
         VStack(alignment: .leading, spacing: 16) {
           Text("🎉")
             .font(.system(size: 40))
@@ -28,14 +22,14 @@ struct PurchasesSettingsView: View {
         .continuousCornerRadius(12)
         .padding()
       } else {
-        if !self.viewStore.isPurchasing,
-          let fullGameProduct = self.viewStore.fullGameProduct
+        if !store.isPurchasing,
+          let fullGameProduct = store.fullGameProduct
         {
           switch fullGameProduct {
           case let .success(product):
             SettingsRow {
               Button {
-                self.viewStore.send(.tappedProduct(product), animation: .default)
+                store.send(.tappedProduct(product), animation: .default)
               } label: {
                 Text("Upgrade")
                   .foregroundColor(.isowordsOrange)
@@ -55,10 +49,10 @@ struct PurchasesSettingsView: View {
           }
         }
 
-        if !self.viewStore.isRestoring {
+        if !store.isRestoring {
           SettingsRow {
             Button {
-              self.viewStore.send(.restoreButtonTapped, animation: .default)
+              store.send(.restoreButtonTapped, animation: .default)
             } label: {
               Text("Restore purchases")
                 .foregroundColor(.isowordsOrange)

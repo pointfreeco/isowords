@@ -5,8 +5,9 @@ import Tagged
 
 @Reducer
 public struct PastGame {
+  @ObservableState
   public struct State: Equatable, Identifiable {
-    @PresentationState public var alert: AlertState<Action.Alert>?
+    @Presents public var alert: AlertState<Action.Alert>?
     public var challengeeDisplayName: String
     public var challengerDisplayName: String
     public var challengeeScore: Int
@@ -32,6 +33,28 @@ public struct PastGame {
         : self.challengeeScore > self.challengerScore
           ? .challengee
           : .tied
+    }
+
+    init(
+      alert: AlertState<Action.Alert>? = nil,
+      challengeeDisplayName: String,
+      challengerDisplayName: String,
+      challengeeScore: Int,
+      challengerScore: Int,
+      endDate: Date,
+      isRematchRequestInFlight: Bool = false,
+      matchId: TurnBasedMatch.Id,
+      opponentDisplayName: String
+    ) {
+      self.alert = alert
+      self.challengeeDisplayName = challengeeDisplayName
+      self.challengerDisplayName = challengerDisplayName
+      self.challengeeScore = challengeeScore
+      self.challengerScore = challengerScore
+      self.endDate = endDate
+      self.isRematchRequestInFlight = isRematchRequestInFlight
+      self.matchId = matchId
+      self.opponentDisplayName = opponentDisplayName
     }
   }
 
@@ -112,24 +135,18 @@ public struct PastGame {
 
 struct PastGameRow: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<PastGame>
-  @ObservedObject var viewStore: ViewStoreOf<PastGame>
-
-  init(store: StoreOf<PastGame>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
-  }
+  @Bindable var store: StoreOf<PastGame>
 
   var body: some View {
     ZStack(alignment: .bottomLeading) {
       Button {
-        self.viewStore.send(.tappedRow, animation: .default)
+        store.send(.tappedRow, animation: .default)
       } label: {
         VStack(alignment: .leading, spacing: .grid(6)) {
           HStack(spacing: .grid(1)) {
-            Text("\(self.viewStore.endDate, formatter: dateFormatter)")
+            Text("\(store.endDate, formatter: dateFormatter)")
 
-            Text("vs \(self.viewStore.opponentDisplayName)")
+            Text("vs \(store.opponentDisplayName)")
               .opacity(0.5)
               .lineLimit(1)
               .truncationMode(.tail)
@@ -138,46 +155,46 @@ struct PastGameRow: View {
 
           VStack(alignment: .leading, spacing: .grid(1)) {
             HStack {
-              Text(self.viewStore.challengerDisplayName)
+              Text(store.challengerDisplayName)
                 .adaptiveFont(.matterMedium, size: 16)
-              if self.viewStore.outcome != .challengee {
+              if store.outcome != .challengee {
                 Image(systemName: "checkmark.circle.fill")
                   .font(.system(size: 18))
               }
               Spacer()
-              Text("\(self.viewStore.challengerScore)")
+              Text("\(store.challengerScore)")
                 .adaptiveFont(.matterMedium, size: 16) { $0.monospacedDigit() }
             }
             HStack(spacing: .grid(1)) {
-              Text(self.viewStore.challengeeDisplayName)
+              Text(store.challengeeDisplayName)
                 .adaptiveFont(.matterMedium, size: 16)
-              if self.viewStore.outcome != .challenger {
+              if store.outcome != .challenger {
                 Image(systemName: "checkmark.circle.fill")
                   .font(.system(size: 18))
               }
               Spacer()
-              Text("\(self.viewStore.challengeeScore)")
+              Text("\(store.challengeeScore)")
                 .adaptiveFont(.matterMedium, size: 16) { $0.monospacedDigit() }
             }
           }
 
-          self.rematchButton(matchId: self.viewStore.matchId)
+          self.rematchButton(matchId: store.matchId)
             .hidden()
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
 
-      self.rematchButton(matchId: self.viewStore.matchId)
+      self.rematchButton(matchId: store.matchId)
     }
-    .alert(store: self.store.scope(state: \.$alert, action: \.alert))
+    .alert($store.scope(state: \.alert, action: \.alert))
   }
 
   func rematchButton(matchId: TurnBasedMatch.Id) -> some View {
     Button {
-      self.viewStore.send(.rematchButtonTapped, animation: .default)
+      store.send(.rematchButtonTapped, animation: .default)
     } label: {
       HStack(spacing: .grid(1)) {
-        if self.viewStore.isRematchRequestInFlight {
+        if store.isRematchRequestInFlight {
           ProgressView()
             .progressViewStyle(
               CircularProgressViewStyle(

@@ -10,6 +10,7 @@ import UIApplicationClient
 
 @Reducer
 public struct ChangelogReducer {
+  @ObservableState
   public struct State: Equatable {
     public var changelog: IdentifiedArrayOf<Change.State>
     public var currentBuild: Build.Number
@@ -116,54 +117,40 @@ public struct ChangelogReducer {
 public struct ChangelogView: View {
   let store: StoreOf<ChangelogReducer>
 
-  struct ViewState: Equatable {
-    let currentBuild: Build.Number
-    let isUpdateButtonVisible: Bool
-
-    init(state: ChangelogReducer.State) {
-      self.currentBuild = state.currentBuild
-      self.isUpdateButtonVisible = state.isUpdateButtonVisible
-    }
-  }
-
-  public init(
-    store: StoreOf<ChangelogReducer>
-  ) {
+  public init(store: StoreOf<ChangelogReducer>) {
     self.store = store
   }
 
   public var body: some View {
-    WithViewStore(self.store, observe: ViewState.init) { viewStore in
-      ScrollView {
-        VStack(alignment: .leading) {
-          if viewStore.isUpdateButtonVisible {
-            HStack {
-              Spacer()
-              Button("Update") {
-                viewStore.send(.updateButtonTapped)
-              }
-              .buttonStyle(ActionButtonStyle())
+    ScrollView {
+      VStack(alignment: .leading) {
+        if store.isUpdateButtonVisible {
+          HStack {
+            Spacer()
+            Button("Update") {
+              store.send(.updateButtonTapped)
             }
-          }
-
-          Text("What's new?")
-            .font(.largeTitle)
-
-          ForEachStore(self.store.scope(state: \.whatsNew, action: \.changelog)) { store in
-            ChangeView(currentBuild: viewStore.currentBuild, store: store)
-          }
-
-          Text("Past updates")
-            .font(.largeTitle)
-
-          ForEachStore(self.store.scope(state: \.pastUpdates, action: \.changelog)) { store in
-            ChangeView(currentBuild: viewStore.currentBuild, store: store)
+            .buttonStyle(ActionButtonStyle())
           }
         }
-        .padding()
+
+        Text("What's new?")
+          .font(.largeTitle)
+
+        ForEach(store.scope(state: \.whatsNew, action: \.changelog)) { store in
+          ChangeView(currentBuild: self.store.currentBuild, store: store)
+        }
+
+        Text("Past updates")
+          .font(.largeTitle)
+
+        ForEach(store.scope(state: \.pastUpdates, action: \.changelog)) { store in
+          ChangeView(currentBuild: self.store.currentBuild, store: store)
+        }
       }
-      .task { await viewStore.send(.task).finish() }
+      .padding()
     }
+    .task { await store.send(.task).finish() }
   }
 }
 

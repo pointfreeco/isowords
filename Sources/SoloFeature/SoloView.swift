@@ -8,6 +8,7 @@ import SwiftUI
 
 @Reducer
 public struct Solo {
+  @ObservableState
   public struct State: Equatable {
     var inProgressGame: InProgressGame?
 
@@ -53,67 +54,57 @@ public struct SoloView: View {
   @Environment(\.colorScheme) var colorScheme
   let store: StoreOf<Solo>
 
-  struct ViewState: Equatable {
-    let currentScore: Int?
-
-    init(state: Solo.State) {
-      self.currentScore = state.inProgressGame?.currentScore
-    }
-  }
-
   public init(store: StoreOf<Solo>) {
     self.store = store
   }
 
   public var body: some View {
-    WithViewStore(self.store, observe: ViewState.init) { viewStore in
-      VStack {
-        Spacer()
-          .frame(maxHeight: .grid(16))
+    VStack {
+      Spacer()
+        .frame(maxHeight: .grid(16))
 
-        VStack(spacing: -8) {
-          Text("Kill time")
-          Text("and refine")
-          Text("your skills")
-        }
-        .font(.custom(.matter, size: self.adaptiveSize.pad(48, by: 2)))
-        .multilineTextAlignment(.center)
-
-        Spacer()
-
-        LazyVGrid(
-          columns: [
-            GridItem(.flexible(), spacing: .grid(4)),
-            GridItem(.flexible()),
-          ]
-        ) {
-          GameButton(
-            title: Text("Timed"),
-            icon: Image(systemName: "clock.fill"),
-            color: .solo,
-            inactiveText: nil,
-            isLoading: false,
-            resumeText: nil,
-            action: { viewStore.send(.gameButtonTapped(.timed), animation: .default) }
-          )
-
-          GameButton(
-            title: Text("Unlimited"),
-            icon: Image(systemName: "infinity"),
-            color: .solo,
-            inactiveText: nil,
-            isLoading: false,
-            resumeText: viewStore.currentScore.flatMap {
-              $0 > 0 ? Text("\($0) points") : nil
-            },
-            action: { viewStore.send(.gameButtonTapped(.unlimited), animation: .default) }
-          )
-        }
+      VStack(spacing: -8) {
+        Text("Kill time")
+        Text("and refine")
+        Text("your skills")
       }
-      .adaptivePadding(.vertical)
-      .screenEdgePadding(.horizontal)
-      .task { await viewStore.send(.task).finish() }
+      .font(.custom(.matter, size: self.adaptiveSize.pad(48, by: 2)))
+      .multilineTextAlignment(.center)
+
+      Spacer()
+
+      LazyVGrid(
+        columns: [
+          GridItem(.flexible(), spacing: .grid(4)),
+          GridItem(.flexible()),
+        ]
+      ) {
+        GameButton(
+          title: Text("Timed"),
+          icon: Image(systemName: "clock.fill"),
+          color: .solo,
+          inactiveText: nil,
+          isLoading: false,
+          resumeText: nil,
+          action: { store.send(.gameButtonTapped(.timed), animation: .default) }
+        )
+
+        GameButton(
+          title: Text("Unlimited"),
+          icon: Image(systemName: "infinity"),
+          color: .solo,
+          inactiveText: nil,
+          isLoading: false,
+          resumeText: (store.inProgressGame?.currentScore).flatMap {
+            $0 > 0 ? Text("\($0) points") : nil
+          },
+          action: { store.send(.gameButtonTapped(.unlimited), animation: .default) }
+        )
+      }
     }
+    .adaptivePadding(.vertical)
+    .screenEdgePadding(.horizontal)
+    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
       foregroundColor: self.colorScheme == .dark ? .solo : .isowordsBlack,

@@ -4,6 +4,7 @@ import SwiftUI
 
 @Reducer
 public struct WordSubmitButtonFeature {
+  @ObservableState
   public struct State: Equatable {
     public var isSelectedWordValid: Bool
     public let isTurnBasedMatch: Bool
@@ -23,6 +24,7 @@ public struct WordSubmitButtonFeature {
     }
   }
 
+  @ObservableState
   public struct ButtonState: Equatable {
     public var areReactionsOpen: Bool
     public var favoriteReactions: [Move.Reaction]
@@ -138,19 +140,15 @@ public struct WordSubmitButtonFeature {
 public struct WordSubmitButton: View {
   @Environment(\.deviceState) var deviceState
   let store: StoreOf<WordSubmitButtonFeature>
-  @ObservedObject var viewStore: ViewStoreOf<WordSubmitButtonFeature>
   @State var isTouchDown = false
 
-  public init(
-    store: StoreOf<WordSubmitButtonFeature>
-  ) {
+  public init(store: StoreOf<WordSubmitButtonFeature>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
   }
 
   public var body: some View {
     ZStack(alignment: Alignment(horizontal: .center, vertical: .bottom)) {
-      if self.viewStore.wordSubmitButton.areReactionsOpen {
+      if store.wordSubmitButton.areReactionsOpen {
         RadialGradient(
           gradient: Gradient(colors: [.white, Color.white.opacity(0)]),
           center: .bottom,
@@ -164,13 +162,13 @@ public struct WordSubmitButton: View {
         Spacer()
 
         ZStack {
-          ReactionsView(store: self.store.scope(state: \.wordSubmitButton, action: \.self))
+          ReactionsView(store: store.scope(state: \.wordSubmitButton, action: \.self))
 
           Button {
-            self.viewStore.send(.submitButtonTapped, animation: .default)
+            store.send(.submitButtonTapped, animation: .default)
           } label: {
             Group {
-              if !self.viewStore.wordSubmitButton.areReactionsOpen {
+              if !store.wordSubmitButton.areReactionsOpen {
                 Image(systemName: "hand.thumbsup")
               } else {
                 Image(systemName: "xmark")
@@ -182,7 +180,7 @@ public struct WordSubmitButton: View {
             )
             .background(Circle().fill(Color.adaptiveBlack))
             .foregroundColor(.adaptiveWhite)
-            .opacity(self.viewStore.isSelectedWordValid ? 1 : 0.5)
+            .opacity(store.isSelectedWordValid ? 1 : 0.5)
             .font(.system(size: self.deviceState.isPad ? 40 : 30))
             .adaptivePadding([.all], .grid(4))
             // NB: Expand the tappable radius of the button.
@@ -192,12 +190,12 @@ public struct WordSubmitButton: View {
             DragGesture(minimumDistance: 0)
               .onChanged { touch in
                 if !self.isTouchDown {
-                  self.viewStore.send(.submitButtonPressed, animation: .default)
+                  store.send(.submitButtonPressed, animation: .default)
                 }
                 self.isTouchDown = true
               }
               .onEnded { _ in
-                self.viewStore.send(.submitButtonReleased, animation: .default)
+                store.send(.submitButtonReleased, animation: .default)
                 self.isTouchDown = false
               }
           )
@@ -207,32 +205,25 @@ public struct WordSubmitButton: View {
 
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(
-      self.viewStore.wordSubmitButton.areReactionsOpen
-        ? Color.isowordsBlack.opacity(0.4)
-        : nil
-    )
-    .animation(.default, value: self.viewStore.wordSubmitButton.areReactionsOpen)
-    .onTapGesture { self.viewStore.send(.backgroundTapped, animation: .default) }
+    .background {
+      if store.wordSubmitButton.areReactionsOpen {
+        Color.isowordsBlack.opacity(0.4)
+      }
+    }
+    .animation(.default, value: store.wordSubmitButton.areReactionsOpen)
+    .onTapGesture { store.send(.backgroundTapped, animation: .default) }
   }
 }
 
 struct ReactionsView: View {
   let store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
-  @ObservedObject var viewStore:
-    ViewStore<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
-
-  public init(store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
-  }
 
   var body: some View {
-    ForEach(Array(self.viewStore.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
+    ForEach(Array(store.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
       let offset = self.offset(index: idx)
 
       Button {
-        self.viewStore.send(.reactionButtonTapped(reaction), animation: .default)
+        store.send(.reactionButtonTapped(reaction), animation: .default)
       } label: {
         Text(reaction.rawValue)
           .font(.system(size: 32))
@@ -240,23 +231,23 @@ struct ReactionsView: View {
       }
       .background(Color.white.opacity(0.5))
       .clipShape(Circle())
-      .rotationEffect(.degrees(self.viewStore.areReactionsOpen ? -360 : 0))
-      .opacity(self.viewStore.areReactionsOpen ? 1 : 0)
+      .rotationEffect(.degrees(store.areReactionsOpen ? -360 : 0))
+      .opacity(store.areReactionsOpen ? 1 : 0)
       .offset(x: offset.x, y: offset.y)
       .animation(
-        .default.delay(Double(idx) / Double(self.viewStore.favoriteReactions.count * 10)),
-        value: self.viewStore.areReactionsOpen
+        .default.delay(Double(idx) / Double(store.favoriteReactions.count * 10)),
+        value: store.areReactionsOpen
       )
     }
   }
 
   func offset(index: Int) -> CGPoint {
     let angle: CGFloat =
-      CGFloat.pi / CGFloat(self.viewStore.favoriteReactions.count - 1) * CGFloat(index) + .pi
+      CGFloat.pi / CGFloat(store.favoriteReactions.count - 1) * CGFloat(index) + .pi
 
     return .init(
-      x: self.viewStore.areReactionsOpen ? cos(angle) * 130 : 0,
-      y: self.viewStore.areReactionsOpen ? sin(angle) * 130 : 0
+      x: store.areReactionsOpen ? cos(angle) * 130 : 0,
+      y: store.areReactionsOpen ? sin(angle) * 130 : 0
     )
   }
 }

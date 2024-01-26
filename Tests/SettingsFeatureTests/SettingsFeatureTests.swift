@@ -97,7 +97,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableNotifications = true
     }
 
@@ -138,7 +138,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableNotifications = true
     }
 
@@ -179,7 +179,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = false
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableNotifications = false
     }
 
@@ -223,7 +223,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
@@ -288,7 +288,7 @@ class SettingsFeatureTests: XCTestCase {
       }
 
       userSettings.sendDailyChallengeReminder = false
-      await store.send(.set(\.$userSettings, userSettings)) {
+      await store.send(.set(\.userSettings, userSettings)) {
         $0.userSettings.enableNotifications = false
         $0.userSettings.sendDailyChallengeReminder = false
       }
@@ -313,7 +313,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.musicVolume = 0.5
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.musicVolume = 0.5
     }
 
@@ -335,7 +335,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.soundEffectsVolume = 0.5
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
@@ -359,13 +359,13 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.colorScheme = .light
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.colorScheme = .light
     }
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .light) }
 
     userSettings.colorScheme = .system
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.colorScheme = .system
     }
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .unspecified) }
@@ -386,7 +386,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.appIcon = .icon2
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.appIcon = .icon2
     }
     await overriddenIconName.withValue { XCTAssertNoDifference($0, "icon-2") }
@@ -421,7 +421,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.appIcon = nil
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.appIcon = nil
     }
     await overriddenIconName.withValue { XCTAssertNil($0) }
@@ -446,7 +446,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var developer = store.state.developer
     developer.currentBaseUrl = .localhost
-    await store.send(.set(\.$developer, developer)) {
+    await store.send(.set(\.developer, developer)) {
       $0.developer.currentBaseUrl = .localhost
     }
     await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
@@ -465,11 +465,11 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableGyroMotion = false
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableGyroMotion = false
     }
     userSettings.enableGyroMotion = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableGyroMotion = true
     }
   }
@@ -487,11 +487,11 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableHaptics = false
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableHaptics = false
     }
     userSettings.enableHaptics = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableHaptics = true
     }
   }
