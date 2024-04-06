@@ -7,20 +7,19 @@ import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
-import UserSettingsClient
+import UserSettings
 
 @Reducer
 public struct CubePreview {
   @ObservableState
   public struct State: Equatable {
     var cubes: Puzzle
-    var enableGyroMotion: Bool
-    var isAnimationReduced: Bool
     var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
     var nub: CubeSceneView.ViewState.NubState
     var selectedCubeFaces: [IndexedCubeFace]
+    @Shared(.userSettings) var userSettings = UserSettings()
 
     public init(
       cubes: ArchivablePuzzle,
@@ -30,14 +29,9 @@ public struct CubePreview {
       nub: CubeSceneView.ViewState.NubState = .init(),
       selectedCubeFaces: [IndexedCubeFace] = []
     ) {
-      @Dependency(\.userSettings) var userSettings
-
       var cubes = Puzzle(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &cubes)
       self.cubes = cubes
-
-      self.enableGyroMotion = userSettings.enableGyroMotion
-      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
@@ -83,7 +77,7 @@ public struct CubePreview {
             }
           }
         },
-        enableGyroMotion: self.enableGyroMotion,
+        enableGyroMotion: self.userSettings.enableGyroMotion,
         isOnLowPowerMode: self.isOnLowPowerMode,
         nub: self.nub,
         playedWords: [],
@@ -117,7 +111,6 @@ public struct CubePreview {
 
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -210,7 +203,7 @@ public struct CubePreview {
       }
     }
     .haptics(
-      isEnabled: { _ in self.userSettings.enableHaptics },
+      isEnabled: \.userSettings.enableHaptics,
       triggerOnChangeOf: \.selectedCubeFaces
     )
     .selectionSounds(
@@ -262,7 +255,7 @@ public struct CubePreviewView: View {
           .task { await store.send(.task).finish() }
       }
       .background {
-        if !store.isAnimationReduced {
+        if !store.userSettings.enableReducedAnimation {
           BloomBackground(
             size: proxy.size,
             word: store.selectedWordString

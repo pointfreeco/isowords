@@ -1,4 +1,4 @@
-import Styleguide
+import ComposableArchitecture
 import UIKit
 
 public struct UserSettings: Codable, Equatable {
@@ -70,5 +70,17 @@ public struct UserSettings: Codable, Equatable {
       (try? container.decode(Bool.self, forKey: .sendDailyChallengeReminder)) ?? true
     self.sendDailyChallengeSummary =
       (try? container.decode(Bool.self, forKey: .sendDailyChallengeSummary)) ?? true
+  }
+}
+
+extension PersistenceKey where Self == FileStorageKey<UserSettings> {
+  public static var userSettings: Self {
+    fileStorage(
+      FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("user-settings")
+        .appendingPathExtension("json")
+    )
   }
 }

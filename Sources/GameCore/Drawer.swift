@@ -35,8 +35,7 @@ public struct ActiveGamesTray {
         .lowPowerModeChanged,
         .matchesLoaded(.failure),
         .savedGamesLoaded(.failure),
-        .timerTick,
-        .userSettingsUpdated:
+        .timerTick:
 
         return .none
 

@@ -30,7 +30,7 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.1.0"),
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "observation-beta"
+      branch: "shared-state-beta"
     ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.1.0"),
@@ -230,7 +230,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "SwiftUIHelpers", targets: ["SwiftUIHelpers"]),
     .library(name: "TcaHelpers", targets: ["TcaHelpers"]),
     .library(name: "TrailerFeature", targets: ["TrailerFeature"]),
-    .library(name: "UserSettingsClient", targets: ["UserSettingsClient"]),
+    .library(name: "UserSettings", targets: ["UserSettings"]),
     .library(name: "UIApplicationClient", targets: ["UIApplicationClient"]),
     .library(name: "UpgradeInterstitialFeature", targets: ["UpgradeInterstitialFeature"]),
     .library(name: "UserDefaultsClient", targets: ["UserDefaultsClient"]),
@@ -315,7 +315,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "StatsFeature",
         "TcaHelpers",
         "UIApplicationClient",
-        "UserSettingsClient",
+        "UserSettings",
         "VocabFeature",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Gen", package: "swift-gen"),
@@ -455,7 +455,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "SelectionSoundsCore",
         "SharedModels",
-        "UserSettingsClient",
+        "UserSettings",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -597,7 +597,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
-        "UserSettingsClient",
+        "UserSettings",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ],
       resources: [.process("Resources/")]
@@ -726,7 +726,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
-        "UserSettingsClient",
+        "UserSettings",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
       ]
@@ -852,7 +852,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UserDefaultsClient",
-        "UserSettingsClient",
+        "UserSettings",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ],
@@ -933,10 +933,10 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
-      name: "UserSettingsClient",
+      name: "UserSettings",
       dependencies: [
         "Styleguide",
-        .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(

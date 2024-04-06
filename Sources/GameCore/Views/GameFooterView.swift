@@ -22,7 +22,7 @@ public struct GameFooterView: View {
         store: store
       )
       .transition(
-        store.isAnimationReduced
+        store.userSettings.enableReducedAnimation
           ? .opacity
           : AnyTransition.offset(y: 50)
             .combined(with: .opacity)

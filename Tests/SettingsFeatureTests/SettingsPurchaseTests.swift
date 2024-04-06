@@ -18,7 +18,6 @@ fileprivate extension DependencyValues {
     self.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }
-    self.userSettings = .mock()
   }
 }
 

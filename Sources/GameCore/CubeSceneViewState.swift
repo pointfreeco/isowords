@@ -44,7 +44,7 @@ extension CubeSceneView.ViewState {
           }
         }
       },
-      enableGyroMotion: game.enableGyroMotion,
+      enableGyroMotion: game.userSettings.enableGyroMotion,
       isOnLowPowerMode: game.isOnLowPowerMode,
       nub: nub,
       playedWords: game.playedWords,

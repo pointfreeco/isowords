@@ -12,6 +12,7 @@ import Styleguide
 import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
+import UserSettings
 
 @Reducer
 public struct Onboarding {
@@ -21,6 +22,7 @@ public struct Onboarding {
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
+    @Shared(.userSettings) public var userSettings = UserSettings()
 
     public init(
       alert: AlertState<Action.Alert>? = nil,
@@ -184,7 +186,7 @@ public struct Onboarding {
   @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userSettings) var userSettings
+  //@Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -382,7 +384,7 @@ public struct Onboarding {
     Scope(state: \.game, action: \.game) {
       Game()
         .haptics(
-          isEnabled: { _ in self.userSettings.enableHaptics },
+          isEnabled: \.userSettings.enableHaptics,
           triggerOnChangeOf: \.selectedWord
         )
     }

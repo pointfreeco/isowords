@@ -8,7 +8,7 @@ import SharedModels
 import StatsFeature
 import StoreKit
 import UIApplicationClient
-import UserSettingsClient
+import UserSettings
 
 public struct DeveloperSettings: Equatable {
   public var currentBaseUrl: BaseUrl
@@ -53,7 +53,7 @@ public struct Settings {
     public var isRestoring: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    public var userSettings: UserSettings
+    @Shared public var userSettings: UserSettings
 
     public struct ProductError: Error, Equatable {}
 
@@ -66,9 +66,9 @@ public struct Settings {
       isPurchasing: Bool = false,
       isRestoring: Bool = false,
       stats: Stats.State = .init(),
-      userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
+      userNotificationSettings: UserNotificationClient.Notification.Settings? = nil,
+      userSettings: UserSettings = UserSettings()
     ) {
-      @Dependency(\.userSettings) var userSettings
       self.alert = alert
       self.buildNumber = buildNumber
       self.developer = developer
@@ -78,7 +78,7 @@ public struct Settings {
       self.isRestoring = isRestoring
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
-      self.userSettings = userSettings.get()
+      self._userSettings = Shared(wrappedValue: userSettings, .userSettings)
     }
 
     public var isFullGamePurchased: Bool {
@@ -117,7 +117,6 @@ public struct Settings {
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
   @Dependency(\.userNotifications) var userNotifications
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -456,14 +455,14 @@ public struct Settings {
       }
     }
     .ifLet(\.$alert, action: \.alert)
-    .onChange(of: \.userSettings) { _, userSettings in
-      Reduce { _, _ in
-        enum CancelID { case saveDebounce }
-
-        return .run { _ in await self.userSettings.set(userSettings) }
-          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
-      }
-    }
+//    .onChange(of: \.userSettings) { _, userSettings in
+//      Reduce { _, _ in
+//        enum CancelID { case saveDebounce }
+//
+//        return .run { _ in await self.userSettings.set(userSettings) }
+//          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
+//      }
+//    }
 
     Scope(state: \.stats, action: \.stats) {
       Stats()
