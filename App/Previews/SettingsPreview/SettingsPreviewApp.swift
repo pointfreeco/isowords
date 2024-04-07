@@ -2,7 +2,6 @@ import ApiClient
 import AudioPlayerClient
 import ComposableStoreKit
 import ComposableUserNotifications
-import FileClient
 import RemoteNotificationsClient
 import ServerConfigClient
 import SettingsFeature

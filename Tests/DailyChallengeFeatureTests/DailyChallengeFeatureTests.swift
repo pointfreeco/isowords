@@ -83,10 +83,6 @@ class DailyChallengeFeatureTests: XCTestCase {
           )
         }
       )
-      $0.fileClient.load = { @Sendable _ in
-        struct FileNotFound: Error {}
-        throw FileNotFound()
-      }
     }
 
     await store.send(.gameButtonTapped(.unlimited)) {
@@ -116,9 +112,6 @@ class DailyChallengeFeatureTests: XCTestCase {
     ) {
       DailyChallengeReducer()
     } withDependencies: {
-      $0.fileClient.load = { @Sendable [inProgressGame] _ in
-        try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
-      }
       $0.mainRunLoop = .immediate
     }
 

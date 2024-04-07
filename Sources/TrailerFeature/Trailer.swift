@@ -64,7 +64,6 @@ public struct Trailer {
         $0.build = .noop
         $0.database = .noop
         $0.feedbackGenerator = .noop
-        $0.fileClient = .noop
         $0.gameCenter = .noop
         $0.lowPowerMode = .false
         $0.remoteNotifications = .noop

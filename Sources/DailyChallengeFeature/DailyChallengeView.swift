@@ -25,20 +25,20 @@ public struct DailyChallengeReducer {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     @Presents public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
-    public var inProgressDailyChallengeUnlimited: InProgressGame?
+    @Shared public var inProgressDailyChallengeUnlimited: InProgressGame?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
       destination: Destination.State? = nil,
       gameModeIsLoading: GameMode? = nil,
-      inProgressDailyChallengeUnlimited: InProgressGame? = nil,
+      inProgressDailyChallengeUnlimited: Shared<InProgressGame?>,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
-      self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
+      self._inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
       self.userNotificationSettings = userNotificationSettings
     }
 
@@ -66,7 +66,6 @@ public struct DailyChallengeReducer {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
@@ -126,8 +125,7 @@ public struct DailyChallengeReducer {
                 try await startDailyChallengeAsync(
                   challenge,
                   apiClient: self.apiClient,
-                  date: { self.now },
-                  fileClient: self.fileClient
+                  date: { self.now }
                 )
               }
             )
@@ -464,9 +462,11 @@ private struct RingEffect: GeometryEffect {
           DailyChallengeView(
             store: .init(
               initialState: DailyChallengeReducer.State(
-                inProgressDailyChallengeUnlimited: update(.mock) {
-                  $0?.moves = [.highScoringMove]
-                }
+                inProgressDailyChallengeUnlimited: Shared(
+                  update(.mock) {
+                    $0?.moves = [.highScoringMove]
+                  }
+                )
               )
             ) {
               DailyChallengeReducer()

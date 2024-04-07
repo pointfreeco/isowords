@@ -2,6 +2,7 @@ import ClientModels
 import ComposableArchitecture
 import ComposableStoreKit
 import CubeCore
+import DailyChallengeFeature
 import GameCore
 import HomeFeature
 import NotificationHelpers
@@ -23,6 +24,7 @@ public struct AppReducer {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
     public var home: Home.State
+    @Shared(.savedGames) var savedGames = SavedGamesState()
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
@@ -42,11 +44,9 @@ public struct AppReducer {
     case gameCenter(GameCenterAction)
     case home(Home.Action)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, Error>)
   }
 
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter.turnBasedMatch.load) var loadTurnBasedMatch
   @Dependency(\.database.migrate) var migrate
   @Dependency(\.mainRunLoop.now.date) var now
@@ -76,14 +76,6 @@ public struct AppReducer {
           return .none
         }
       }
-      .onChange(of: \.home.savedGames) { _, savedGames in
-        Reduce { _, action in
-          if case .savedGamesLoaded(.success) = action { return .none }
-          return .run { _ in
-            try await self.fileClient.save(games: savedGames)
-          }
-        }
-      }
 
     GameCenterLogic()
     StoreKitLogic()
@@ -105,18 +97,12 @@ public struct AppReducer {
         }
 
         return .run { send in
-          async let migrate: Void = self.migrate()
           if self.userDefaults.installationTime <= 0 {
             await self.userDefaults.setInstallationTime(
               self.now.timeIntervalSinceReferenceDate
             )
           }
-          await send(
-            .savedGamesLoaded(
-              Result { try await self.fileClient.loadSavedGames() }
-            )
-          )
-          _ = try await migrate
+          try await self.migrate()
         }
 
       case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
@@ -136,7 +122,12 @@ public struct AppReducer {
 
           case .dailyChallengeReport:
             state.destination = nil
-            state.home.destination = .dailyChallenge(.init())
+            state.$savedGames
+//            state.home.destination = .dailyChallenge(
+//              DailyChallengeReducer.State(
+//                inProgressDailyChallengeUnlimited: state.$savedGames.inProgressDailyChallengeUnlimited
+//              )
+//            )
           }
         }
 
@@ -248,9 +239,7 @@ public struct AppReducer {
           != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
-          return .run { [savedGames = state.home.savedGames] _ in
-            try await self.fileClient.save(games: savedGames)
-          }
+          return .none
         }
         return .none
 
@@ -278,13 +267,6 @@ public struct AppReducer {
         return .none
 
       case .paymentTransaction:
-        return .none
-
-      case .savedGamesLoaded(.failure):
-        return .none
-
-      case let .savedGamesLoaded(.success(savedGames)):
-        state.home.savedGames = savedGames
         return .none
 
       case .verifyReceiptResponse:

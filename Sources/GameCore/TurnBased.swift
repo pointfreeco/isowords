@@ -193,7 +193,6 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .matchesLoaded,
         .menuButtonTapped,
         .task,
-        .savedGamesLoaded,
         .timerTick,
         .trayButtonTapped,
         .wordSubmitButton:

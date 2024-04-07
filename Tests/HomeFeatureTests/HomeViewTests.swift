@@ -64,13 +64,7 @@ class HomeFeatureTests: XCTestCase {
       matching: HomeView(
         store: Store(
           initialState: Home.State(
-            dailyChallenges: [],
-            savedGames: .init(
-              dailyChallengeUnlimited: .mock,
-              unlimited: update(.mock) {
-                $0?.moves = [.mock]
-              }
-            )
+            dailyChallenges: []
           )
         ) {
         }

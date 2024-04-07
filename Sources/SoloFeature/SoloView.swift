@@ -1,6 +1,5 @@
 import ClientModels
 import ComposableArchitecture
-import FileClient
 import Overture
 import SharedModels
 import Styleguide
@@ -19,11 +18,7 @@ public struct Solo {
 
   public enum Action {
     case gameButtonTapped(GameMode)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
-    case task
   }
-
-  @Dependency(\.fileClient) var fileClient
 
   public init() {}
 
@@ -32,18 +27,6 @@ public struct Solo {
       switch action {
       case .gameButtonTapped:
         return .none
-
-      case .savedGamesLoaded(.failure):
-        return .none
-
-      case let .savedGamesLoaded(.success(savedGameState)):
-        state.inProgressGame = savedGameState.unlimited
-        return .none
-
-      case .task:
-        return .run { send in
-          await send(.savedGamesLoaded(Result { try await self.fileClient.loadSavedGames() }))
-        }
       }
     }
   }
@@ -104,7 +87,7 @@ public struct SoloView: View {
     }
     .adaptivePadding(.vertical)
     .screenEdgePadding(.horizontal)
-    .task { await store.send(.task).finish() }
+//    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
       foregroundColor: self.colorScheme == .dark ? .solo : .isowordsBlack,

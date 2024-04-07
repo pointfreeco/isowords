@@ -39,27 +39,17 @@ public struct Home {
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
     @Presents public var nagBanner: NagBanner.State?
-    public var savedGames: SavedGamesState {
-      didSet {
-        guard var dailyChallengeState = self.destination?.dailyChallenge
-        else { return }
-        dailyChallengeState.inProgressDailyChallengeUnlimited =
-          self.savedGames.dailyChallengeUnlimited
-        self.destination = .dailyChallenge(dailyChallengeState)
-      }
-    }
+    @Shared(.savedGames) public var savedGames = SavedGamesState()
     public var turnBasedMatches: [ActiveTurnBasedMatch]
     public var weekInReview: FetchWeekInReviewResponse?
 
     public var activeGames: ActiveGamesState {
       get {
-        .init(
-          savedGames: self.savedGames,
+        ActiveGamesState(
           turnBasedMatches: self.turnBasedMatches
         )
       }
       set {
-        self.savedGames = newValue.savedGames
         self.turnBasedMatches = newValue.turnBasedMatches
       }
     }
@@ -70,7 +60,6 @@ public struct Home {
       hasPastTurnBasedGames: Bool = false,
       nagBanner: NagBanner.State? = nil,
       destination: Destination.State? = nil,
-      savedGames: SavedGamesState = SavedGamesState(),
       turnBasedMatches: [ActiveTurnBasedMatch] = [],
       weekInReview: FetchWeekInReviewResponse? = nil
     ) {
@@ -79,7 +68,6 @@ public struct Home {
       self.hasChangelog = hasChangelog
       self.hasPastTurnBasedGames = hasPastTurnBasedGames
       self.nagBanner = nagBanner
-      self.savedGames = savedGames
       self.turnBasedMatches = turnBasedMatches
       self.weekInReview = weekInReview
     }
@@ -226,9 +214,9 @@ public struct Home {
 
     case .dailyChallengeButtonTapped:
       state.destination = .dailyChallenge(
-        .init(
+        DailyChallengeReducer.State(
           dailyChallenges: state.dailyChallenges ?? [],
-          inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
+          inProgressDailyChallengeUnlimited: state.$savedGames.dailyChallengeUnlimited
         )
       )
       return .none

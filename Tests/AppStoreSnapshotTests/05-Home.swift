@@ -45,18 +45,6 @@ var homeAppStoreView: AnyView {
           ),
         ],
         hasPastTurnBasedGames: true,
-        savedGames: SavedGamesState(
-          dailyChallengeUnlimited: InProgressGame(
-            cubes: .mock,
-            gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
-            gameMode: .unlimited,
-            gameStartTime: runLoop.now.date,
-            language: .en,
-            moves: Moves(),
-            secondsPlayed: 0
-          ),
-          unlimited: nil
-        ),
         turnBasedMatches: [
           ActiveTurnBasedMatch(
             id: "deadbeef",

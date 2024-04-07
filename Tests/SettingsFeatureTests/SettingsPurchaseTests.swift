@@ -1,7 +1,6 @@
 import Combine
 import ComposableArchitecture
 import ComposableStoreKit
-import FileClient
 import SharedModels
 import XCTest
 
@@ -14,7 +13,6 @@ fileprivate extension DependencyValues {
     self.applicationClient.alternateIconName = { nil }
     self.build.number = { 42 }
     self.mainQueue = .immediate
-    self.fileClient.save = { @Sendable _, _ in }
     self.userNotifications.getNotificationSettings = {
       (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
     }

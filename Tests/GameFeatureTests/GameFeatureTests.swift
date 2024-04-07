@@ -45,7 +45,6 @@ class GameFeatureTests: XCTestCase {
       GameFeature()
     } withDependencies: {
       $0.audioPlayer.play = { _ in }
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }
@@ -87,7 +86,6 @@ class GameFeatureTests: XCTestCase {
     ) {
       GameFeature()
     } withDependencies: {
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     }

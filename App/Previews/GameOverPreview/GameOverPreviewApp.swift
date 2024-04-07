@@ -66,7 +66,6 @@ extension StoreOf<GameOver> {
           .appendingPathComponent("co.pointfree.Isowords")
           .appendingPathComponent("Isowords.sqlite3")
       )
-      $0.fileClient = .noop
       $0.remoteNotifications = .noop
       $0.serverConfig = .noop
       $0.userDefaults.boolForKey = { _ in false }
