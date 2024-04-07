@@ -9,7 +9,6 @@ import LeaderboardFeature
 import MultiplayerFeature
 import Overture
 import ServerConfigClient
-import SettingsFeature
 import SharedModels
 import SoloFeature
 import SwiftUI
@@ -28,7 +27,6 @@ public struct Home {
     case dailyChallenge(DailyChallengeReducer)
     case leaderboard(Leaderboard)
     case multiplayer(Multiplayer)
-    case settings(Settings)
     case solo(Solo)
   }
 
@@ -266,7 +264,6 @@ public struct Home {
       return .none
 
     case .settingsButtonTapped:
-      state.destination = .settings(Settings.State())
       return .none
 
     case .soloButtonTapped:
@@ -480,11 +477,6 @@ public struct HomeView: View {
       }
     }
     .navigationBarHidden(true)
-    .navigationDestination(
-      item: $store.scope(state: \.destination?.settings, action: \.destination.settings)
-    ) { store in
-      SettingsView(store: store, navPresentationStyle: .navigation)
-    }
     .sheet(
       item: $store.scope(state: \.destination?.changelog, action: \.destination.changelog)
     ) { store in

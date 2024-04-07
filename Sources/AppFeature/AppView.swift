@@ -2,10 +2,12 @@ import ClientModels
 import ComposableArchitecture
 import ComposableStoreKit
 import CubeCore
+import DailyChallengeFeature
 import GameCore
 import HomeFeature
 import NotificationHelpers
 import OnboardingFeature
+import SettingsFeature
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -17,21 +19,29 @@ public struct AppReducer {
     case game(Game)
     case onboarding(Onboarding)
   }
+  @Reducer(state: .equatable)
+  public enum Path {
+    case dailyChallenge(DailyChallengeReducer)
+    case settings(Settings)
+  }
 
   @ObservableState
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
     public var home: Home.State
+    public var path = StackState<Path.State>()
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
       destination: Destination.State? = nil,
-      home: Home.State = Home.State()
+      home: Home.State = Home.State(),
+      path: StackState<Path.State> = StackState<Path.State>()
     ) {
       self.appDelegate = appDelegate
       self.destination = destination
       self.home = home
+      self.path = path
     }
   }
 
@@ -41,6 +51,7 @@ public struct AppReducer {
     case didChangeScenePhase(ScenePhase)
     case gameCenter(GameCenterAction)
     case home(Home.Action)
+    case path(StackAction<Path.State, Path.Action>)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
     case savedGamesLoaded(Result<SavedGamesState, Error>)
     case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, Error>)
@@ -274,7 +285,18 @@ public struct AppReducer {
       case .gameCenter:
         return .none
 
+      case .home(.settingsButtonTapped):
+        state.path.append(.settings(Settings.State()))
+        return .none
+
+      case .home(.dailyChallengeButtonTapped):
+        //state.path.append(.dailyChallenge(DailyChallengeReducer.State()))
+        return .none
+
       case .home:
+        return .none
+
+      case .path:
         return .none
 
       case .paymentTransaction:
@@ -294,11 +316,14 @@ public struct AppReducer {
     .ifLet(\.$destination, action: \.destination) {
       Destination.body
     }
+    .forEach(\.path, action: \.path) {
+      Path.body
+    }
   }
 }
 
 public struct AppView: View {
-  let store: StoreOf<AppReducer>
+  @Bindable var store: StoreOf<AppReducer>
   @Environment(\.deviceState) var deviceState
 
   public init(store: StoreOf<AppReducer>) {
@@ -307,30 +332,33 @@ public struct AppView: View {
 
   public var body: some View {
     Group {
-      switch store.destination {
-      case .none:
-        NavigationStack {
-          HomeView(store: store.scope(state: \.home, action: \.home))
-        }
-        .zIndex(0)
-
-      case .some(.game):
-        if let store = store.scope(state: \.destination?.game, action: \.destination.game) {
+      if let store = store.scope(state: \.destination, action: \.destination.presented) {
+        switch store.case {
+        case let .game(store):
           GameView(
-            content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
+            content: CubeView(
+              store: store.scope(state: \.cubeScene, action: \.cubeScene)
+            ),
             store: store
           )
           .transition(.game)
           .zIndex(1)
-        }
-
-      case .some(.onboarding):
-        if let store = store.scope(
-          state: \.destination?.onboarding, action: \.destination.onboarding
-        ) {
+        case let .onboarding(store):
           OnboardingView(store: store)
             .zIndex(2)
         }
+      } else {
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+          HomeView(store: store.scope(state: \.home, action: \.home))
+        } destination: { store in
+          switch store.case {
+          case let .dailyChallenge(store):
+            DailyChallengeView(store: store)
+          case let .settings(store):
+            SettingsView(store: store, navPresentationStyle: .navigation)
+          }
+        }
+        .zIndex(0)
       }
     }
     .modifier(DeviceStateModifier())
