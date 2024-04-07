@@ -67,8 +67,6 @@ public struct Settings {
       isRestoring: Bool = false,
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
-//      ,
-//      userSettings: UserSettings = UserSettings()
     ) {
       self.alert = alert
       self.buildNumber = buildNumber
@@ -79,7 +77,6 @@ public struct Settings {
       self.isRestoring = isRestoring
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
-      //self._userSettings = Shared(wrappedValue: userSettings, .userSettings)
     }
 
     public var isFullGamePurchased: Bool {
@@ -456,14 +453,6 @@ public struct Settings {
       }
     }
     .ifLet(\.$alert, action: \.alert)
-//    .onChange(of: \.userSettings) { _, userSettings in
-//      Reduce { _, _ in
-//        enum CancelID { case saveDebounce }
-//
-//        return .run { _ in await self.userSettings.set(userSettings) }
-//          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
-//      }
-//    }
 
     Scope(state: \.stats, action: \.stats) {
       Stats()
