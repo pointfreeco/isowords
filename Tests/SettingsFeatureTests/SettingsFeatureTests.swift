@@ -450,47 +450,4 @@ class SettingsFeatureTests: XCTestCase {
     await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
     await didLogout.withValue { XCTAssert($0) }
   }
-
-//  func testToggleEnableGyroMotion() async {
-//    let store = TestStore(
-//      initialState: Settings.State()
-//    ) {
-//      Settings()
-//    } withDependencies: {
-//      $0.setUpDefaults()
-//      $0.userSettings = .mock(initialUserSettings: UserSettings(enableGyroMotion: true))
-//    }
-//
-//    var userSettings = store.state.userSettings
-//    userSettings.enableGyroMotion = false
-//    await store.send(.set(\.userSettings, userSettings)) {
-//      $0.userSettings.enableGyroMotion = false
-//    }
-//    userSettings.enableGyroMotion = true
-//    await store.send(.set(\.userSettings, userSettings)) {
-//      $0.userSettings.enableGyroMotion = true
-//    }
-//  }
-//
-//  func testToggleEnableHaptics() async {
-//    let store = TestStore(
-//      initialState: Settings.State()
-//    ) {
-//      Settings()
-//    } withDependencies: {
-//      $0.setUpDefaults()
-//      $0.userSettings = .mock(initialUserSettings: UserSettings(enableHaptics: true))
-//    }
-//
-//
-//    var userSettings = store.state.userSettings
-//    userSettings.enableHaptics = false
-//    await store.send(.set(\.userSettings, userSettings)) {
-//      $0.userSettings.enableHaptics = false
-//    }
-//    userSettings.enableHaptics = true
-//    await store.send(.set(\.userSettings, userSettings)) {
-//      $0.userSettings.enableHaptics = true
-//    }
-//  }
 }

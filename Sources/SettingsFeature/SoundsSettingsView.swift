@@ -53,17 +53,13 @@ struct SoundsSettingsView: View {
 
   struct SoundsSettingsView_Previews: PreviewProvider {
     static var previews: some View {
-      Preview {
+      @Shared(.userSettings) var userSettings = UserSettings()
+      userSettings = UserSettings(musicVolume: 0.5, soundEffectsVolume: 0.75)
+
+      return Preview {
         NavigationView {
           SoundsSettingsView(
-            store: Store(
-              initialState: Settings.State(
-                userSettings: UserSettings(
-                  musicVolume: 0.5,
-                  soundEffectsVolume: 0.5
-                )
-              )
-            ) {
+            store: Store(initialState: Settings.State()) {
               Settings()
             }
           )

@@ -53,7 +53,7 @@ public struct Settings {
     public var isRestoring: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    @Shared public var userSettings: UserSettings
+    @Shared(.userSettings) public var userSettings: UserSettings = UserSettings()
 
     public struct ProductError: Error, Equatable {}
 
@@ -66,8 +66,9 @@ public struct Settings {
       isPurchasing: Bool = false,
       isRestoring: Bool = false,
       stats: Stats.State = .init(),
-      userNotificationSettings: UserNotificationClient.Notification.Settings? = nil,
-      userSettings: UserSettings = UserSettings()
+      userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
+//      ,
+//      userSettings: UserSettings = UserSettings()
     ) {
       self.alert = alert
       self.buildNumber = buildNumber
@@ -78,7 +79,7 @@ public struct Settings {
       self.isRestoring = isRestoring
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
-      self._userSettings = Shared(wrappedValue: userSettings, .userSettings)
+      //self._userSettings = Shared(wrappedValue: userSettings, .userSettings)
     }
 
     public var isFullGamePurchased: Bool {

@@ -78,8 +78,6 @@ public struct Game {
     public var gameCurrentTime: Date
     public var gameMode: GameMode
     public var gameStartTime: Date
-//    public var enableGyroMotion: Bool
-//    public var isAnimationReduced: Bool
     public var isDemo: Bool
     public var isGameLoaded: Bool
     public var isOnLowPowerMode: Bool
@@ -180,7 +178,6 @@ public struct Game {
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    //case userSettingsUpdated(UserSettings)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
@@ -370,12 +367,6 @@ public struct Game {
               try await self.mainQueue.sleep(for: 0.5)
               await send(.gameLoaded)
             }
-
-//            group.addTask {
-//              for await userSettings in $userSettings.stream() {
-//                await send(.userSettingsUpdated(userSettings))
-//              }
-//            }
           }
           for music in AudioPlayerClient.Sound.allMusic {
             await self.audioPlayer.stop(music)
@@ -530,11 +521,6 @@ public struct Game {
 
       case .trayButtonTapped:
         return .none
-
-//      case let .userSettingsUpdated(userSettings):
-//        state.enableGyroMotion = userSettings.enableGyroMotion
-//        state.isAnimationReduced = userSettings.enableReducedAnimation
-//        return .none
 
       case .wordSubmitButton:
         return .none
