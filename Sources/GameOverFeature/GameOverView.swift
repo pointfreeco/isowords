@@ -17,27 +17,10 @@ import UserDefaultsClient
 
 @Reducer
 public struct GameOver {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case notificationsAuthAlert(NotificationsAuthAlert.State = .init())
-      case upgradeInterstitial(UpgradeInterstitial.State = .init())
-    }
-
-    public enum Action {
-      case notificationsAuthAlert(NotificationsAuthAlert.Action)
-      case upgradeInterstitial(UpgradeInterstitial.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.notificationsAuthAlert, action: \.notificationsAuthAlert) {
-        NotificationsAuthAlert()
-      }
-      Scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial) {
-        UpgradeInterstitial()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case notificationsAuthAlert(NotificationsAuthAlert)
+    case upgradeInterstitial(UpgradeInterstitial)
   }
 
   @ObservableState
@@ -184,7 +167,7 @@ public struct GameOver {
         return .none
 
       case .delayedShowUpgradeInterstitial:
-        state.destination = .upgradeInterstitial()
+        state.destination = .upgradeInterstitial(UpgradeInterstitial.State())
         return .none
 
       case .delegate:
@@ -375,7 +358,7 @@ public struct GameOver {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 

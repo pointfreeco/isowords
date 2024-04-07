@@ -20,7 +20,6 @@ extension UIApplicationClient {
     openSettingsURLString: { "settings://isowords/settings" },
     setAlternateIconName: { _ in },
     setUserInterfaceStyle: { _ in },
-    supportsAlternateIcons: { true },
     supportsAlternateIconsAsync: { true }
   )
 }

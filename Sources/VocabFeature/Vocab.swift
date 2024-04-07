@@ -5,22 +5,9 @@ import SwiftUI
 
 @Reducer
 public struct Vocab: Reducer {
-  @Reducer
-  public struct Destination: Reducer {
-    @ObservableState
-    public enum State: Equatable {
-      case cubePreview(CubePreview.State)
-    }
-
-    public enum Action {
-      case cubePreview(CubePreview.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.cubePreview, action: \.cubePreview) {
-        CubePreview()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case cubePreview(CubePreview)
   }
 
   @ObservableState
@@ -118,7 +105,7 @@ public struct Vocab: Reducer {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 }

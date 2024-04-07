@@ -31,22 +31,9 @@ public enum LeaderboardScope: CaseIterable, Equatable {
 
 @Reducer
 public struct Leaderboard {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case cubePreview(CubePreview.State)
-    }
-
-    public enum Action {
-      case cubePreview(CubePreview.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.cubePreview, action: \.cubePreview) {
-        CubePreview()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case cubePreview(CubePreview)
   }
 
   @ObservableState
@@ -143,7 +130,7 @@ public struct Leaderboard {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
 
     Scope(state: \.solo, action: \.solo) {
