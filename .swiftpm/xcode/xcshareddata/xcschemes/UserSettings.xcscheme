@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "UserSettingsClient"
-               BuildableName = "UserSettingsClient"
-               BlueprintName = "UserSettingsClient"
+               BlueprintIdentifier = "UserSettings"
+               BuildableName = "UserSettings"
+               BlueprintName = "UserSettings"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -50,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "UserSettingsClient"
-            BuildableName = "UserSettingsClient"
-            BlueprintName = "UserSettingsClient"
+            BlueprintIdentifier = "UserSettings"
+            BuildableName = "UserSettings"
+            BlueprintName = "UserSettings"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>
