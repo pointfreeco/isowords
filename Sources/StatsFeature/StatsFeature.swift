@@ -6,22 +6,9 @@ import VocabFeature
 
 @Reducer
 public struct Stats {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case vocab(Vocab.State)
-    }
-
-    public enum Action {
-      case vocab(Vocab.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.vocab, action: \.vocab) {
-        Vocab()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case vocab(Vocab)
   }
 
   @ObservableState
@@ -113,7 +100,7 @@ public struct Stats {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 }

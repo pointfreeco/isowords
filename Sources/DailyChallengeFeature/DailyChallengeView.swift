@@ -11,32 +11,13 @@ import SwiftUI
 
 @Reducer
 public struct DailyChallengeReducer {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case alert(AlertState<Action.Alert>)
-      case notificationsAuthAlert(NotificationsAuthAlert.State)
-      case results(DailyChallengeResults.State)
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case alert(AlertState<Alert>)
+    case notificationsAuthAlert(NotificationsAuthAlert)
+    case results(DailyChallengeResults)
 
-    public enum Action {
-      case alert(Alert)
-      case notificationsAuthAlert(NotificationsAuthAlert.Action)
-      case results(DailyChallengeResults.Action)
-
-      public enum Alert: Equatable {
-      }
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.notificationsAuthAlert, action: \.notificationsAuthAlert) {
-        NotificationsAuthAlert()
-      }
-      Scope(state: \.results, action: \.results) {
-        DailyChallengeResults()
-      }
-    }
+    public enum Alert: Equatable {}
   }
 
   @ObservableState
@@ -213,12 +194,12 @@ public struct DailyChallengeReducer {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 }
 
-extension AlertState where Action == DailyChallengeReducer.Destination.Action.Alert {
+extension AlertState where Action == DailyChallengeReducer.Destination.Alert {
   static func alreadyPlayed(nextStartsAt: Date) -> Self {
     Self {
       TextState("Already played")

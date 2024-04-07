@@ -30,7 +30,7 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.1.0"),
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "observation-beta"
+      from: "1.9.2"
     ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.1.0"),

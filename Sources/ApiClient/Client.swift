@@ -3,7 +3,7 @@ import Foundation
 import SharedModels
 
 @DependencyClient
-public struct ApiClient {
+public struct ApiClient: Sendable {
   public var apiRequest: @Sendable (ServerRoute.Api.Route) async throws -> (Data, URLResponse)
   public var authenticate:
     @Sendable (ServerRoute.AuthenticateRequest) async throws -> CurrentPlayerEnvelope

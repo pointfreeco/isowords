@@ -22,47 +22,14 @@ public struct ActiveMatchResponse: Equatable {
 
 @Reducer
 public struct Home {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case changelog(ChangelogReducer.State = .init())
-      case dailyChallenge(DailyChallengeReducer.State = .init())
-      case leaderboard(Leaderboard.State = .init())
-      case multiplayer(Multiplayer.State)
-      case settings(Settings.State = Settings.State())
-      case solo(Solo.State = .init())
-    }
-
-    public enum Action {
-      case changelog(ChangelogReducer.Action)
-      case dailyChallenge(DailyChallengeReducer.Action)
-      case leaderboard(Leaderboard.Action)
-      case multiplayer(Multiplayer.Action)
-      case settings(Settings.Action)
-      case solo(Solo.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.changelog, action: \.changelog) {
-        ChangelogReducer()
-      }
-      Scope(state: \.dailyChallenge, action: \.dailyChallenge) {
-        DailyChallengeReducer()
-      }
-      Scope(state: \.leaderboard, action: \.leaderboard) {
-        Leaderboard()
-      }
-      Scope(state: \.multiplayer, action: \.multiplayer) {
-        Multiplayer()
-      }
-      Scope(state: \.settings, action: \.settings) {
-        Settings()
-      }
-      Scope(state: \.solo, action: \.solo) {
-        Solo()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case changelog(ChangelogReducer)
+    case dailyChallenge(DailyChallengeReducer)
+    case leaderboard(Leaderboard)
+    case multiplayer(Multiplayer)
+    case settings(Settings)
+    case solo(Solo)
   }
 
   @ObservableState
@@ -165,7 +132,7 @@ public struct Home {
   public var body: some ReducerOf<Self> {
     Reduce(self.core)
       .ifLet(\.$destination, action: \.destination) {
-        Destination()
+        Destination.body
       }
       .ifLet(\.$nagBanner, action: \.nagBanner) {
         NagBanner()
@@ -288,7 +255,7 @@ public struct Home {
       return .none
 
     case .leaderboardButtonTapped:
-      state.destination = .leaderboard()
+      state.destination = .leaderboard(Leaderboard.State())
       return .none
 
     case .multiplayerButtonTapped:
@@ -299,7 +266,7 @@ public struct Home {
       return .none
 
     case .settingsButtonTapped:
-      state.destination = .settings()
+      state.destination = .settings(Settings.State())
       return .none
 
     case .soloButtonTapped:

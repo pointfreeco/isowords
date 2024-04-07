@@ -4,22 +4,9 @@ import TcaHelpers
 
 @Reducer
 public struct Multiplayer {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case pastGames(PastGames.State)
-    }
-
-    public enum Action {
-      case pastGames(PastGames.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.pastGames, action: \.pastGames) {
-        PastGames()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case pastGames(PastGames)
   }
 
   @ObservableState
@@ -67,7 +54,7 @@ public struct Multiplayer {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 }
