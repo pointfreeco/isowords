@@ -504,6 +504,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "DailyChallengeHelpers",
       dependencies: [
         "ApiClient",
+        "ClientModels",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

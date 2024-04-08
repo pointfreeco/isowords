@@ -214,15 +214,17 @@ public struct Home {
 
     case .dailyChallengeButtonTapped:
       state.destination = .dailyChallenge(
-        DailyChallengeReducer.State(
-          dailyChallenges: state.dailyChallenges ?? [],
-          inProgressDailyChallengeUnlimited: state.$savedGames.dailyChallengeUnlimited
-        )
+        DailyChallengeReducer.State(dailyChallenges: state.dailyChallenges ?? [])
       )
       return .none
 
     case let .dailyChallengeResponse(.success(dailyChallenges)):
       state.dailyChallenges = dailyChallenges
+      if dailyChallenges.unlimited?.dailyChallenge.id
+          != state.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
+      {
+        state.savedGames.dailyChallengeUnlimited = nil
+      }
       return .none
 
     case .dailyChallengeResponse(.failure):

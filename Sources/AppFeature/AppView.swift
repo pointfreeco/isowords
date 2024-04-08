@@ -122,11 +122,7 @@ public struct AppReducer {
 
           case .dailyChallengeReport:
             state.destination = nil
-            state.home.destination = .dailyChallenge(
-              DailyChallengeReducer.State(
-                inProgressDailyChallengeUnlimited: state.$savedGames.dailyChallengeUnlimited
-              )
-            )
+            state.home.destination = .dailyChallenge(DailyChallengeReducer.State())
           }
         }
 
@@ -231,15 +227,6 @@ public struct AppReducer {
         .destination(.presented(.dailyChallenge(.delegate(.startGame(inProgressGame)))))
       ):
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
-        return .none
-
-      case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
-        if dailyChallenges.unlimited?.dailyChallenge.id
-          != state.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
-        {
-          state.savedGames.dailyChallengeUnlimited = nil
-          return .none
-        }
         return .none
 
       case .home(.howToPlayButtonTapped):
