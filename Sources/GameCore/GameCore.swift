@@ -5,6 +5,7 @@ import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
 import CubeCore
+import Dependencies
 import DictionaryClient
 import GameOverFeature
 import HapticsCore
@@ -20,51 +21,26 @@ import UserSettingsClient
 
 @Reducer
 public struct Game {
-  @Reducer
-  public struct Destination {
-    @ObservableState
-    public enum State: Equatable {
-      case alert(AlertState<Action.Alert>)
-      case bottomMenu(BottomMenuState<Action.BottomMenu>)
-      case gameOver(GameOver.State)
-      case settings(Settings.State = Settings.State())
-      case upgradeInterstitial(UpgradeInterstitial.State = .init())
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case alert(AlertState<Alert>)
+    @ReducerCaseEphemeral
+    case bottomMenu(BottomMenuState<BottomMenu>)
+    case gameOver(GameOver)
+    case settings(Settings)
+    case upgradeInterstitial(UpgradeInterstitial)
+
+    @CasePathable
+    public enum Alert {
+      case forfeitButtonTapped
     }
-
-    public enum Action {
-      case alert(Alert)
-      case bottomMenu(BottomMenu)
-      case gameOver(GameOver.Action)
-      case settings(Settings.Action)
-      case upgradeInterstitial(UpgradeInterstitial.Action)
-
-      @CasePathable
-      public enum Alert {
-        case forfeitButtonTapped
-      }
-      @CasePathable
-      public enum BottomMenu: Equatable {
-        case confirmRemoveCube(LatticePoint)
-        case endGameButtonTapped
-        case exitButtonTapped
-        case forfeitGameButtonTapped
-        case settingsButtonTapped
-      }
-    }
-
-    let dismissGame: DismissEffect
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.gameOver, action: \.gameOver) {
-        GameOver()
-          .dependency(\.dismiss, self.dismissGame)
-      }
-      Scope(state: \.settings, action: \.settings) {
-        Settings()
-      }
-      Scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial) {
-        UpgradeInterstitial()
-      }
+    @CasePathable
+    public enum BottomMenu: Equatable {
+      case confirmRemoveCube(LatticePoint)
+      case endGameButtonTapped
+      case exitButtonTapped
+      case forfeitGameButtonTapped
+      case settingsButtonTapped
     }
   }
 
@@ -220,7 +196,8 @@ public struct Game {
       }
       .filterActionsForYourTurn()
       .ifLet(\.$destination, action: \.destination) {
-        Destination(dismissGame: self.dismiss)
+        Destination.body
+          .dependency(\.dismissGame, self.dismiss)
       }
       .sounds()
   }
@@ -241,7 +218,7 @@ public struct Game {
         return .none
 
       case .delayedShowUpgradeInterstitial:
-        state.destination = .upgradeInterstitial()
+        state.destination = .upgradeInterstitial(UpgradeInterstitial.State())
         return .none
 
       case .destination(.presented(.alert(.forfeitButtonTapped))):
@@ -301,7 +278,7 @@ public struct Game {
         return .none
 
       case .destination(.presented(.bottomMenu(.settingsButtonTapped))):
-        state.destination = .settings()
+        state.destination = .settings(Settings.State())
         return .none
 
       case let .destination(.presented(.gameOver(.delegate(.startGame(inProgressGame))))):
@@ -572,7 +549,7 @@ extension TurnBasedMatchData {
   }
 }
 
-extension BottomMenuState where Action == Game.Destination.Action.BottomMenu {
+extension BottomMenuState where Action == Game.Destination.BottomMenu {
   public static func removeCube(
     index: LatticePoint,
     state: Game.State,
