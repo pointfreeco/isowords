@@ -122,12 +122,11 @@ public struct AppReducer {
 
           case .dailyChallengeReport:
             state.destination = nil
-            state.$savedGames
-//            state.home.destination = .dailyChallenge(
-//              DailyChallengeReducer.State(
-//                inProgressDailyChallengeUnlimited: state.$savedGames.inProgressDailyChallengeUnlimited
-//              )
-//            )
+            state.home.destination = .dailyChallenge(
+              DailyChallengeReducer.State(
+                inProgressDailyChallengeUnlimited: state.$savedGames.dailyChallengeUnlimited
+              )
+            )
           }
         }
 
