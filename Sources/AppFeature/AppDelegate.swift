@@ -94,6 +94,7 @@ public struct AppDelegateReducer {
               )
             )
           )
+        } catch: { _, _ in
         }
 
       case let .userNotifications(.willPresentNotification(_, completionHandler)):
