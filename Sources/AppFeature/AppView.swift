@@ -67,9 +67,9 @@ public struct AppReducer {
 
           switch (game.gameContext, game.gameMode) {
           case (.dailyChallenge, .unlimited):
-            state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
+            state.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
           case (.shared, .unlimited), (.solo, .unlimited):
-            state.home.savedGames.unlimited = InProgressGame(gameState: game)
+            state.savedGames.unlimited = InProgressGame(gameState: game)
           case (.turnBased, _), (_, .timed):
             return .none
           }
@@ -114,7 +114,7 @@ public struct AppReducer {
         {
           switch pushNotificationContent {
           case .dailyChallengeEndsSoon:
-            if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
+            if let inProgressGame = state.savedGames.dailyChallengeUnlimited {
               state.destination = .game(Game.State(inProgressGame: inProgressGame))
             } else {
               // TODO: load/retry
@@ -143,9 +143,9 @@ public struct AppReducer {
         guard let game = state.destination?.game else { return .none }
         switch (game.gameContext, game.gameMode) {
         case (.dailyChallenge, .unlimited):
-          state.home.savedGames.dailyChallengeUnlimited = nil
+          state.savedGames.dailyChallengeUnlimited = nil
         case (.solo, .unlimited):
-          state.home.savedGames.unlimited = nil
+          state.savedGames.unlimited = nil
         default:
           break
         }
@@ -153,7 +153,7 @@ public struct AppReducer {
 
       case .destination(.presented(.game(.activeGames(.dailyChallengeTapped)))),
         .home(.activeGames(.dailyChallengeTapped)):
-        guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
+        guard let inProgressGame = state.savedGames.dailyChallengeUnlimited
         else { return .none }
 
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
@@ -161,7 +161,7 @@ public struct AppReducer {
 
       case .destination(.presented(.game(.activeGames(.soloTapped)))),
         .home(.activeGames(.soloTapped)):
-        guard let inProgressGame = state.home.savedGames.unlimited
+        guard let inProgressGame = state.savedGames.unlimited
         else { return .none }
 
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
@@ -204,7 +204,7 @@ public struct AppReducer {
       ),
         .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
         state.destination = .game(
-          state.home.savedGames.unlimited
+          state.savedGames.unlimited
             .map { Game.State(inProgressGame: $0) }
             ?? Game.State(
               cubes: self.randomCubes(.en),
@@ -235,9 +235,9 @@ public struct AppReducer {
 
       case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
         if dailyChallenges.unlimited?.dailyChallenge.id
-          != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
+          != state.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
         {
-          state.home.savedGames.dailyChallengeUnlimited = nil
+          state.savedGames.dailyChallengeUnlimited = nil
           return .none
         }
         return .none
