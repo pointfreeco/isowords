@@ -1,4 +1,5 @@
 import ClientModels
+import CubeCore
 import Foundation
 import SharedModels
 
@@ -19,14 +20,19 @@ extension InProgressGame {
 extension Game.State {
   public init(inProgressGame: InProgressGame) {
     self.init(
-      cubes: inProgressGame.cubes,
-      gameContext: inProgressGame.gameContext,
+//      cubes: inProgressGame.cubes,
+//      gameContext: inProgressGame.gameContext,
       // TODO: inject gameCurrentTime from the outside
       gameCurrentTime: inProgressGame.gameStartTime,
       gameMode: inProgressGame.gameMode,
       gameStartTime: inProgressGame.gameStartTime,
       language: inProgressGame.language,
-      moves: inProgressGame.moves,
+//      moves: inProgressGame.moves,
+      puzzle: PuzzleState(
+        cubes: inProgressGame.cubes,
+        gameContext: inProgressGame.gameContext,
+        moves: inProgressGame.moves
+      ),
       secondsPlayed: inProgressGame.secondsPlayed
     )
   }
@@ -38,12 +44,17 @@ extension Game.State {
     gameStartTime: Date
   ) {
     self.init(
-      cubes: .init(archivableCubes: completedGame.cubes),
-      gameContext: .solo,
+//      cubes: .init(archivableCubes: completedGame.cubes),
+//      gameContext: .solo,
       gameCurrentTime: gameCurrentTime,
       gameMode: completedGame.gameMode,
       gameStartTime: gameStartTime,
       language: completedGame.language,
+      puzzle: PuzzleState(
+        cubes: .init(archivableCubes: completedGame.cubes),
+        gameContext: .solo,
+        moves: []
+      ),
       secondsPlayed: completedGame.secondsPlayed
     )
   }

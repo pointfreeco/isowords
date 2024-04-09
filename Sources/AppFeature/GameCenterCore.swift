@@ -1,6 +1,7 @@
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
+import CubeCore
 import Foundation
 import GameCore
 import GameOverFeature
@@ -154,11 +155,15 @@ public struct GameCenterLogic {
         )
       )
       let game = Game.State(
-        cubes: self.randomCubes(.en),
-        gameContext: .turnBased(context),
+//        cubes: self.randomCubes(.en),
+//        gameContext: .turnBased(context),
         gameCurrentTime: self.now,
         gameMode: .unlimited,
-        gameStartTime: match.creationDate
+        gameStartTime: match.creationDate,
+        puzzle: PuzzleState(
+          cubes: self.randomCubes(.en),
+          gameContext: .turnBased(context)
+        )
       )
       state.destination = .game(game)
       return .run { _ in

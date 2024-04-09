@@ -97,13 +97,15 @@ public struct AppReducer {
     Scope(state: \.home, action: \.home) {
       Home()
     }
-    Reduce { state, action in
+    Reduce {
+      state,
+      action in
       switch action {
       case .appDelegate(.didFinishLaunching):
         if !self.userDefaults.hasShownFirstLaunchOnboarding {
           state.destination = .onboarding(Onboarding.State(presentationStyle: .firstLaunch))
         }
-
+        
         return .run { send in
           async let migrate: Void = self.migrate()
           if self.userDefaults.installationTime <= 0 {
@@ -118,13 +120,13 @@ public struct AppReducer {
           )
           _ = try await migrate
         }
-
+        
       case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
         if let data =
-          try? JSONSerialization
+            try? JSONSerialization
           .data(withJSONObject: response.notification.request.content.userInfo),
-          let pushNotificationContent = try? JSONDecoder()
-            .decode(PushNotificationContent.self, from: data)
+           let pushNotificationContent = try? JSONDecoder()
+          .decode(PushNotificationContent.self, from: data)
         {
           switch pushNotificationContent {
           case .dailyChallengeEndsSoon:
@@ -133,23 +135,23 @@ public struct AppReducer {
             } else {
               // TODO: load/retry
             }
-
+            
           case .dailyChallengeReport:
             state.destination = nil
             state.home.destination = .dailyChallenge(.init())
           }
         }
-
+        
         return .run { _ in completionHandler() }
-
+        
       case .appDelegate:
         return .none
-
+        
       case .destination(
         .presented(.game(.destination(.presented(.bottomMenu(.endGameButtonTapped)))))
       ),
-        .destination(.presented(.game(.destination(.presented(.gameOver(.task)))))):
-
+          .destination(.presented(.game(.destination(.presented(.gameOver(.task)))))):
+        
         guard let game = state.destination?.game else { return .none }
         switch (game.gameContext, game.gameMode) {
         case (.dailyChallenge, .unlimited):
@@ -160,23 +162,23 @@ public struct AppReducer {
           break
         }
         return .none
-
+        
       case .destination(.presented(.game(.activeGames(.dailyChallengeTapped)))),
-        .home(.activeGames(.dailyChallengeTapped)):
+          .home(.activeGames(.dailyChallengeTapped)):
         guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
         else { return .none }
-
+        
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
         return .none
-
+        
       case .destination(.presented(.game(.activeGames(.soloTapped)))),
-        .home(.activeGames(.soloTapped)):
+          .home(.activeGames(.soloTapped)):
         guard let inProgressGame = state.home.savedGames.unlimited
         else { return .none }
-
+        
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
         return .none
-
+        
       case let .destination(.presented(.game(.activeGames(.turnBasedGameTapped(matchId))))),
         let .home(.activeGames(.turnBasedGameTapped(matchId))):
         return .run { send in
@@ -190,19 +192,23 @@ public struct AppReducer {
             )
           } catch {}
         }
-
+        
       case .destination(
         .presented(.game(.destination(.presented(.gameOver(.delegate(.startSoloGame(.timed)))))))
       ),
-        .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
+          .home(.destination(.presented(.solo(.gameButtonTapped(.timed))))):
         state.destination = .game(
           Game.State(
-            cubes: self.randomCubes(.en),
-            gameContext: .solo,
+            //            cubes: self.randomCubes(.en),
+            //            gameContext: .solo,
             gameCurrentTime: self.now,
             gameMode: .timed,
             gameStartTime: self.now,
-            isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
+            isGameLoaded: state.destination?.game?.isGameLoaded == .some(true),
+            puzzle: PuzzleState(
+              cubes: self.randomCubes(.en),
+              gameContext: .solo
+            )
           )
         )
         return .none
@@ -215,15 +221,21 @@ public struct AppReducer {
         .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
         state.destination = .game(
           state.home.savedGames.unlimited
-            .map { Game.State(inProgressGame: $0) }
-            ?? Game.State(
+            .map {
+              Game.State(inProgressGame: $0)
+            }
+          ?? Game.State(
+            //              cubes: self.randomCubes(.en),
+            //              gameContext: .solo,
+            gameCurrentTime: self.now,
+            gameMode: .unlimited,
+            gameStartTime: self.now,
+            isGameLoaded: state.destination?.game?.isGameLoaded == .some(true),
+            puzzle: PuzzleState(
               cubes: self.randomCubes(.en),
-              gameContext: .solo,
-              gameCurrentTime: self.now,
-              gameMode: .unlimited,
-              gameStartTime: self.now,
-              isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
+              gameContext: .solo
             )
+          )
         )
         return .none
 

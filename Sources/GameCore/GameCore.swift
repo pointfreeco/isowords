@@ -47,10 +47,10 @@ public struct Game {
   @ObservableState
   public struct State: Equatable {
     public var activeGames: ActiveGamesState
-    public var cubes: Puzzle
+//    public var cubes: Puzzle
     public var cubeStartedShakingAt: Date?
     @Presents public var destination: Destination.State?
-    public var gameContext: ClientModels.GameContext
+//    public var gameContext: ClientModels.GameContext
     public var gameCurrentTime: Date
     public var gameMode: GameMode
     public var gameStartTime: Date
@@ -62,19 +62,54 @@ public struct Game {
     public var isPanning: Bool
     public var isTrayVisible: Bool
     public var language: Language
-    public var moves: Moves
+//    public var moves: Moves
     public var optimisticallySelectedFace: IndexedCubeFace?
+    public var puzzle: PuzzleState
     public var secondsPlayed: Int
-    public var selectedWord: [IndexedCubeFace]
-    public var selectedWordIsValid: Bool
+//    public var selectedWord: [IndexedCubeFace]
+//    public var selectedWordIsValid: Bool
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
+
+    @available(*, deprecated)
+    public var cubes: Puzzle {
+      get { puzzle.cubes }
+      set { puzzle.cubes = newValue }
+    }
+    @available(*, deprecated)
+    public var gameContext: ClientModels.GameContext {
+      get { puzzle.gameContext }
+      set { puzzle.gameContext = newValue }
+    }
+    @available(*, deprecated)
+    public var moves: Moves {
+      get { puzzle.moves }
+      set { puzzle.moves = newValue }
+    }
+    @available(*, deprecated)
+    public var selectedWord: [IndexedCubeFace] {
+      get { puzzle.selectedWord }
+      set { puzzle.selectedWord = newValue }
+    }
+    @available(*, deprecated)
+    public var selectedWordIsValid: Bool {
+      get { puzzle.selectedWordIsValid }
+      set { puzzle.selectedWordIsValid = newValue }
+    }
+    @available(*, deprecated)
+    public var selectedWordString: String {
+      puzzle.selectedWordString
+    }
+    @available(*, deprecated)
+    public var playedWords: [PlayedWord] {
+      puzzle.playedWords
+    }
 
     public init(
       activeGames: ActiveGamesState = .init(),
-      cubes: Puzzle,
+//      cubes: Puzzle,
       cubeStartedShakingAt: Date? = nil,
       destination: Destination.State? = nil,
-      gameContext: ClientModels.GameContext,
+//      gameContext: ClientModels.GameContext,
       gameCurrentTime: Date,
       gameMode: GameMode,
       gameStartTime: Date,
@@ -84,20 +119,21 @@ public struct Game {
       isOnLowPowerMode: Bool = false,
       isTrayVisible: Bool = false,
       language: Language = .en,
-      moves: Moves = [],
+//      moves: Moves = [],
       optimisticallySelectedFace: IndexedCubeFace? = nil,
+      puzzle: PuzzleState,
       secondsPlayed: Int = 0,
-      selectedWord: [IndexedCubeFace] = [],
-      selectedWordIsValid: Bool = false,
+//      selectedWord: [IndexedCubeFace] = [],
+//      selectedWordIsValid: Bool = false,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
       @Dependency(\.userSettings) var userSettings
       self.activeGames = activeGames
-      self.cubes = cubes
+//      self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.destination = destination
       self.enableGyroMotion = userSettings.enableGyroMotion
-      self.gameContext = gameContext
+//      self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
       self.gameStartTime = gameStartTime
@@ -108,11 +144,12 @@ public struct Game {
       self.isPanning = isPanning
       self.isTrayVisible = isTrayVisible
       self.language = language
-      self.moves = moves
+//      self.moves = moves
       self.optimisticallySelectedFace = optimisticallySelectedFace
+      self.puzzle = puzzle
       self.secondsPlayed = secondsPlayed
-      self.selectedWord = selectedWord
-      self.selectedWordIsValid = selectedWordIsValid
+//      self.selectedWord = selectedWord
+//      self.selectedWordIsValid = selectedWordIsValid
       self.wordSubmitButton = wordSubmit
     }
 

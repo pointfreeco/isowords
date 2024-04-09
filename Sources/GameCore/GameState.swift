@@ -1,6 +1,7 @@
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
+import CubeCore
 import Foundation
 import SharedModels
 import Tagged
@@ -35,27 +36,8 @@ extension Game.State {
     self.isResumable && !self.gameContext.is(\.turnBased)
   }
 
-  public var playedWords: [PlayedWord] {
-    self.moves
-      .reduce(into: [PlayedWord]()) {
-        guard let word = $1.type.playedWord else { return }
-        $0.append(
-          .init(
-            isYourWord: $1.playerIndex == self.gameContext.turnBased?.localPlayerIndex,
-            reactions: $1.reactions,
-            score: $1.score,
-            word: self.cubes.string(from: word)
-          )
-        )
-      }
-  }
-
   public var selectedWordScore: Int {
     score(self.selectedWordString)
-  }
-
-  public var selectedWordString: String {
-    self.cubes.string(from: self.selectedWord)
   }
 
   public var selectedWordHasAlreadyBeenPlayed: Bool {
@@ -150,19 +132,29 @@ extension Game.State {
     turnBasedMatchData: TurnBasedMatchData
   ) {
     self.init(
-      cubes: Puzzle(archivableCubes: turnBasedMatchData.cubes, moves: turnBasedMatchData.moves),
-      gameContext: .turnBased(
-        .init(
-          localPlayer: localPlayer,
-          match: turnBasedMatch,
-          metadata: turnBasedMatchData.metadata
-        )
-      ),
+//      cubes: Puzzle(archivableCubes: turnBasedMatchData.cubes, moves: turnBasedMatchData.moves),
+//      gameContext: .turnBased(
+//        .init(
+//          localPlayer: localPlayer,
+//          match: turnBasedMatch,
+//          metadata: turnBasedMatchData.metadata
+//        )
+//      ),
       gameCurrentTime: gameCurrentTime,
       gameMode: turnBasedMatchData.gameMode,
       gameStartTime: turnBasedMatch.creationDate,
       language: turnBasedMatchData.language,
-      moves: turnBasedMatchData.moves
+      puzzle: PuzzleState(
+        cubes: Puzzle(archivableCubes: turnBasedMatchData.cubes, moves: turnBasedMatchData.moves),
+        gameContext: .turnBased(
+          .init(
+            localPlayer: localPlayer,
+            match: turnBasedMatch,
+            metadata: turnBasedMatchData.metadata
+          )
+        ),
+        moves: turnBasedMatchData.moves
+      )
     )
   }
 }

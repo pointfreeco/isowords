@@ -79,42 +79,48 @@ public struct Demo {
       }
     }
 
-    Reduce { state, action in
+    Reduce {
+      state,
+      action in
       switch action {
       case let .appStoreOverlay(isPresented: isPresented):
         state.appStoreOverlayIsPresented = isPresented
         return .none
-
+        
       case .fullVersionButtonTapped:
         return .run { _ in
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
-
+        
       case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
         state.appStoreOverlayIsPresented = true
         return .none
-
+        
       case .game:
         return .none
-
+        
       case .gameOverDelay:
         state.appStoreOverlayIsPresented = true
         return .none
-
+        
       case .onAppear:
         return .run { _ in
           await self.loadSounds(AudioPlayerClient.Sound.allCases)
         }
-
+        
       case .onboarding(.delegate(.getStarted)):
         state.step = .game(
           .init(
-            cubes: self.randomCubes(.en),
-            gameContext: .solo,
+            //            cubes: self.randomCubes(.en),
+            //            gameContext: .solo,
             gameCurrentTime: self.now,
             gameMode: .timed,
             gameStartTime: self.now,
-            isDemo: true
+            isDemo: true,
+            puzzle: PuzzleState.init(
+              cubes: self.randomCubes(.en),
+              gameContext: .solo
+            )
           )
         )
         return .none
