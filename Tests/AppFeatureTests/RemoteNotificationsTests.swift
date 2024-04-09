@@ -9,8 +9,8 @@ import XCTest
 
 @testable import AppFeature
 
-@MainActor
 class RemoteNotificationsTests: XCTestCase {
+  @MainActor
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
@@ -68,6 +68,7 @@ class RemoteNotificationsTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testRegisterForRemoteNotifications_NotAuthorized() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
     let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
@@ -94,6 +95,7 @@ class RemoteNotificationsTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testReceiveNotification_dailyChallengeEndsSoon() async {
     let inProgressGame = InProgressGame.mock
 

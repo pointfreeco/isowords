@@ -21,11 +21,11 @@ import XCTest
 @testable import ComposableGameCenter
 @testable import HomeFeature
 
-@MainActor
 class TurnBasedTests: XCTestCase {
   let mainQueue = DispatchQueue.test
   let mainRunLoop = RunLoop.test
 
+  @MainActor
   func testNewGame() async throws {
     try await withMainSerialExecutor {
       let didEndTurnWithRequest = ActorIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
@@ -113,13 +113,13 @@ class TurnBasedTests: XCTestCase {
       await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
-      await store.receive(\.home.activeMatchesResponse.success)
       await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
       await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
+      await store.receive(\.home.activeMatchesResponse.success)
 
       await store.send(.home(.destination(.presented(.multiplayer(.startButtonTapped)))))
 
@@ -274,6 +274,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testResumeGame() async {
     await withMainSerialExecutor {
       let listener = AsyncStreamProducer<LocalPlayerClient.ListenerEvent>()
@@ -338,13 +339,13 @@ class TurnBasedTests: XCTestCase {
       await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
-      await store.receive(\.home.activeMatchesResponse.success)
       await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
       await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
+      await store.receive(\.home.activeMatchesResponse.success)
 
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(.inProgress, didBecomeActive: true)))
@@ -378,6 +379,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testResumeForfeitedGame() async {
     await withMainSerialExecutor {
       let listener = AsyncStreamProducer<LocalPlayerClient.ListenerEvent>()
@@ -439,14 +441,14 @@ class TurnBasedTests: XCTestCase {
       await store.receive(\.home.serverConfigResponse) {
         $0.home.hasChangelog = true
       }
-      await store.receive(\.home.activeMatchesResponse.success)
       await store.receive(\.home.dailyChallengeResponse.success) {
         $0.home.dailyChallenges = dailyChallenges
       }
       await store.receive(\.home.weekInReviewResponse.success) {
         $0.home.weekInReview = weekInReview
       }
-      
+      await store.receive(\.home.activeMatchesResponse.success)
+
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(.forfeited, didBecomeActive: true)))
       
@@ -488,6 +490,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testRemovingCubes() async throws {
     let didEndTurnWithRequest = ActorIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
     let match = update(TurnBasedMatch.inProgress) {
@@ -653,6 +656,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testRematch() async {
     let localParticipant = TurnBasedParticipant.local
     let match = update(TurnBasedMatch.inProgress) {
@@ -737,6 +741,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testGameCenterNotification_ShowsRecentTurn() async {
     let localParticipant = TurnBasedParticipant.local
     let remoteParticipant = update(TurnBasedParticipant.remote) {
@@ -805,6 +810,7 @@ class TurnBasedTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testGameCenterNotification_DoesNotShow() async {
     let localParticipant = TurnBasedParticipant.local
     let remoteParticipant = update(TurnBasedParticipant.remote) {

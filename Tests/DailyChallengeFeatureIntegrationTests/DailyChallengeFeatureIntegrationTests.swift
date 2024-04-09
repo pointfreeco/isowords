@@ -13,8 +13,8 @@ import XCTest
 
 @testable import LeaderboardFeature
 
-@MainActor
 class DailyChallengeFeatureTests: XCTestCase {
+  @MainActor
   func testBasics() async {
     await withMainSerialExecutor {
       let uuid = UUID.incrementing
