@@ -63,18 +63,11 @@ struct CalendarView: View {
   }
 
   let store: StoreOf<DailyChallengeResults>
-  @ObservedObject var viewStore: ViewStore<ViewState, DailyChallengeResults.Action>
-
-  init(
-    store: StoreOf<DailyChallengeResults>
-  ) {
-    self.store = store
-    self.viewStore = ViewStore(store, observe: ViewState.init)
-  }
 
   var body: some View {
+    let viewState = ViewState(state: store.state)
     VStack(alignment: .leading, spacing: .grid(4)) {
-      ForEach(self.viewStore.months, id: \.date) { month in
+      ForEach(viewState.months, id: \.date) { month in
         VStack(alignment: .leading) {
           Text(month.name)
             .adaptiveFont(.matterMedium, size: 14)
@@ -85,7 +78,7 @@ struct CalendarView: View {
           ) {
             ForEach(month.results, id: \.gameNumber) { result in
               Button {
-                self.viewStore.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
+                store.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
               } label: {
                 VStack {
                   Text("\(dayFormatter.string(from: result.createdAt))")
@@ -98,12 +91,12 @@ struct CalendarView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.vertical, .grid(1) / 2)
-                .background(
-                  self.viewStore.currentChallenge == result.gameNumber
-                    ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
+                .background {
+                  if viewState.currentChallenge == result.gameNumber {
+                    RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
                       .fill(Color.adaptiveWhite)
-                    : nil
-                )
+                  }
+                }
               }
             }
           }
@@ -112,10 +105,10 @@ struct CalendarView: View {
         }
       }
 
-      if self.viewStore.months.isEmpty {
+      if viewState.months.isEmpty {
         HStack {
           Button {
-            self.viewStore.send(.loadHistory)
+            store.send(.loadHistory)
           } label: {
             Image(systemName: "arrow.clockwise")
           }
@@ -125,14 +118,14 @@ struct CalendarView: View {
         }
       }
     }
-    .redacted(reason: self.viewStore.isLoading ? .placeholder : [])
-    .disabled(self.viewStore.isLoading)
-    .overlay(
-      self.viewStore.isLoading
-        ? ProgressView()
+    .redacted(reason: viewState.isLoading ? .placeholder : [])
+    .disabled(viewState.isLoading)
+    .overlay {
+      if viewState.isLoading {
+        ProgressView()
           .progressViewStyle(CircularProgressViewStyle(tint: .black))
-        : nil
-    )
+      }
+    }
   }
 }
 

@@ -6,8 +6,8 @@ import XCTest
 @testable import ChangelogFeature
 @testable import UserDefaultsClient
 
-@MainActor
 class ChangelogFeatureTests: XCTestCase {
+  @MainActor
   func testOnAppear_IsUpToDate() async {
     let changelog = Changelog(
       changes: [
@@ -45,6 +45,7 @@ class ChangelogFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testOnAppear_IsUpBehind() async {
     let changelog = Changelog(
       changes: [

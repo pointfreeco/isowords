@@ -10,10 +10,10 @@ extension DateGenerator {
   }
 }
 
-@MainActor
 class OnboardingFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
 
+  @MainActor
   func testBasics_FirstLaunch() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
     
@@ -308,6 +308,7 @@ class OnboardingFeatureTests: XCTestCase {
     await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
 
+  @MainActor
   func testSkip_HasSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 
@@ -342,6 +343,7 @@ class OnboardingFeatureTests: XCTestCase {
     await isFirstLaunchOnboardingKeySet.withValue { XCTAssert($0) }
   }
 
+  @MainActor
   func testSkip_HasNotSeenOnboardingBefore() async {
     let isFirstLaunchOnboardingKeySet = ActorIsolated(false)
 

@@ -11,6 +11,7 @@ import UserSettingsClient
 
 @Reducer
 public struct CubePreview {
+  @ObservableState
   public struct State: Equatable {
     var cubes: Puzzle
     var enableGyroMotion: Bool
@@ -18,8 +19,8 @@ public struct CubePreview {
     var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
-    @BindingState var nub: CubeSceneView.ViewState.NubState
-    @BindingState var selectedCubeFaces: [IndexedCubeFace]
+    var nub: CubeSceneView.ViewState.NubState
+    var selectedCubeFaces: [IndexedCubeFace]
 
     public init(
       cubes: ArchivablePuzzle,
@@ -31,8 +32,9 @@ public struct CubePreview {
     ) {
       @Dependency(\.userSettings) var userSettings
 
-      self.cubes = .init(archivableCubes: cubes)
-      apply(moves: moves[0..<moveIndex], to: &self.cubes)
+      var cubes = Puzzle(archivableCubes: cubes)
+      apply(moves: moves[0..<moveIndex], to: &cubes)
+      self.cubes = cubes
 
       self.enableGyroMotion = userSettings.enableGyroMotion
       self.isAnimationReduced = userSettings.enableReducedAnimation
@@ -99,6 +101,10 @@ public struct CubePreview {
         return nil
       }
     }
+
+    var selectedWordString: String { cubes.string(from: selectedCubeFaces) }
+    var selectedWordIsFinalWord: Bool { finalWordString == selectedWordString }
+    var selectedWordScore: Int? { selectedWordIsFinalWord ? moves[moveIndex].score : nil }
   }
 
   public enum Action: BindableAction {
@@ -163,7 +169,7 @@ public struct CubePreview {
               // Move the nub to the face
               nub.location = .face(face)
               await send(
-                .set(\.$nub, nub),
+                .set(\.nub, nub),
                 animateWithDuration: moveDuration,
                 delay: 0, options: .curveEaseInOut
               )
@@ -176,21 +182,21 @@ public struct CubePreview {
               // Press the nub on the first character
               if faceIndex == 0 {
                 nub.isPressed = true
-                await send(.set(\.$nub, nub), animation: .default)
+                await send(.set(\.nub, nub), animation: .default)
               }
 
               // Select the faces that have been tapped so far
-              await send(.set(\.$selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
+              await send(.set(\.selectedCubeFaces, accumulatedSelectedFaces), animation: .default)
             }
 
             // Un-press the nub once finished selecting all faces
             nub.isPressed = false
-            await send(.set(\.$nub, nub))
+            await send(.set(\.nub, nub))
 
             // Move the nub off the screen
             nub.location = .offScreenRight
             await send(
-              .set(\.$nub, nub),
+              .set(\.nub, nub),
               animateWithDuration: 1,
               delay: 0,
               options: .curveEaseInOut
@@ -219,35 +225,16 @@ public struct CubePreview {
 public struct CubePreviewView: View {
   @Environment(\.deviceState) var deviceState
   let store: StoreOf<CubePreview>
-  @ObservedObject var viewStore: ViewStore<ViewState, CubePreview.Action>
-
-  struct ViewState: Equatable {
-    let isAnimationReduced: Bool
-    let selectedWordIsFinalWord: Bool
-    let selectedWordScore: Int?
-    let selectedWordString: String
-
-    init(state: CubePreview.State) {
-      self.isAnimationReduced = state.isAnimationReduced
-      self.selectedWordString = state.cubes.string(from: state.selectedCubeFaces)
-      self.selectedWordIsFinalWord = state.finalWordString == self.selectedWordString
-      self.selectedWordScore =
-        self.selectedWordIsFinalWord
-        ? state.moves[state.moveIndex].score
-        : nil
-    }
-  }
 
   public init(store: StoreOf<CubePreview>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
   }
 
   public var body: some View {
     GeometryReader { proxy in
       ZStack(alignment: .top) {
-        if !self.viewStore.selectedWordString.isEmpty {
-          (Text(self.viewStore.selectedWordString)
+        if !store.selectedWordString.isEmpty {
+          (Text(store.selectedWordString)
             + self.scoreText
             .baselineOffset(
               (self.deviceState.idiom == .pad ? 2 : 1) * 16
@@ -262,48 +249,37 @@ public struct CubePreviewView: View {
               .matterSemiBold,
               size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
             )
-            .opacity(self.viewStore.selectedWordIsFinalWord ? 1 : 0.5)
+            .opacity(store.selectedWordIsFinalWord ? 1 : 0.5)
             .allowsTightening(true)
             .minimumScaleFactor(0.2)
             .lineLimit(1)
             .transition(.opacity)
-            .animation(nil, value: self.viewStore.selectedWordString)
+            .animation(nil, value: store.selectedWordString)
             .adaptivePadding(.top, .grid(16))
         }
 
         CubeView(store: self.store.scope(state: \.cubeScenePreview, action: \.cubeScene))
-          .task { await self.viewStore.send(.task).finish() }
+          .task { await store.send(.task).finish() }
       }
-      .background(
-        self.viewStore.isAnimationReduced
-          ? nil
-          : BloomBackground(
+      .background {
+        if !store.isAnimationReduced {
+          BloomBackground(
             size: proxy.size,
-            store: self.store
-              .scope(
-                state: { _ in
-                  BloomBackground.ViewState(
-                    bloomCount: self.viewStore.selectedWordString.count,
-                    word: self.viewStore.selectedWordString
-                  )
-                },
-                action: absurd
-              )
+            word: store.selectedWordString
           )
-      )
+        }
+      }
     }
     .onTapGesture {
       UIView.setAnimationsEnabled(false)
-      self.viewStore.send(.tap)
+      store.send(.tap)
       UIView.setAnimationsEnabled(true)
     }
   }
 
   var scoreText: Text {
-    self.viewStore.selectedWordScore.map {
+    store.selectedWordScore.map {
       Text(" \($0)")
     } ?? Text("")
   }
 }
-
-private func absurd<A>(_: Never) -> A {}

@@ -6,26 +6,15 @@ import VocabFeature
 
 @Reducer
 public struct Stats {
-  @Reducer
-  public struct Destination {
-    public enum State: Equatable {
-      case vocab(Vocab.State)
-    }
-
-    public enum Action {
-      case vocab(Vocab.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.vocab, action: \.vocab) {
-        Vocab()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case vocab(Vocab)
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var averageWordLength: Double?
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var gamesPlayed: Int
     public var highestScoringWord: LocalDatabaseClient.Stats.Word?
     public var highScoreTimed: Int?
@@ -111,18 +100,16 @@ public struct Stats {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 }
 
 public struct StatsView: View {
-  let store: StoreOf<Stats>
-  @ObservedObject var viewStore: ViewStoreOf<Stats>
+  @Bindable var store: StoreOf<Stats>
 
   public init(store: StoreOf<Stats>) {
     self.store = store
-    self.viewStore = ViewStore(store, observe: { $0 })
   }
 
   public var body: some View {
@@ -131,7 +118,7 @@ public struct StatsView: View {
         HStack {
           Text("Games played")
           Spacer()
-          Text("\(self.viewStore.gamesPlayed)")
+          Text("\(store.gamesPlayed)")
             .foregroundColor(.isowordsOrange)
         }
         .adaptiveFont(.matterMedium, size: 16)
@@ -147,7 +134,7 @@ public struct StatsView: View {
               Text("Timed")
               Spacer()
               Group {
-                if let highScoreTimed = self.viewStore.highScoreTimed {
+                if let highScoreTimed = store.highScoreTimed {
                   Text("\(highScoreTimed)")
                 } else {
                   Text("none")
@@ -160,7 +147,7 @@ public struct StatsView: View {
               Text("Unlimited")
               Spacer()
               Group {
-                if let highScoreUnlimited = self.viewStore.highScoreUnlimited {
+                if let highScoreUnlimited = store.highScoreUnlimited {
                   Text("\(highScoreUnlimited)")
                 } else {
                   Text("none")
@@ -176,13 +163,13 @@ public struct StatsView: View {
 
       SettingsRow {
         Button {
-          self.viewStore.send(.vocabButtonTapped)
+          store.send(.vocabButtonTapped)
         } label: {
           HStack {
             Text("Words found")
             Spacer()
             Group {
-              Text("\(self.viewStore.wordsFound)")
+              Text("\(store.wordsFound)")
               Image(systemName: "arrow.right")
             }
             .foregroundColor(.isowordsOrange)
@@ -193,7 +180,7 @@ public struct StatsView: View {
         .buttonStyle(PlainButtonStyle())
       }
 
-      if let highestScoringWord = self.viewStore.highestScoringWord {
+      if let highestScoringWord = store.highestScoringWord {
         SettingsRow {
           VStack(alignment: .trailing, spacing: 12) {
             HStack {
@@ -218,17 +205,18 @@ public struct StatsView: View {
         HStack {
           Text("Time played")
           Spacer()
-          Text(timePlayed(seconds: self.viewStore.secondsPlayed))
+          Text(timePlayed(seconds: store.secondsPlayed))
             .foregroundColor(.isowordsOrange)
         }
         .adaptiveFont(.matterMedium, size: 16)
       }
     }
-    .task { await self.viewStore.send(.task).finish() }
+    .task { await store.send(.task).finish() }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination.vocab, action: \.destination.vocab),
-      destination: VocabView.init(store:)
-    )
+      item: $store.scope(state: \.destination?.vocab, action: \.destination.vocab)
+    ) { store in
+      VocabView(store: store)
+    }
     .navigationStyle(title: Text("Stats"))
   }
 }

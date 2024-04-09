@@ -66,23 +66,11 @@ public struct Blooms: View {
 }
 
 public struct BloomBackground: View {
-  public struct ViewState: Equatable {
-    let bloomCount: Int
-    let word: String
-
-    public init(
-      bloomCount: Int,
-      word: String
-    ) {
-      self.bloomCount = bloomCount
-      self.word = word
-    }
-  }
+  let word: String
 
   @State var blooms: [Bloom] = []
   @Environment(\.colorScheme) var colorScheme
   let size: CGSize
-  let store: Store<ViewState, Never>
   @State var vertexGenerator: AnyIterator<CGPoint> = {
     var rng = Xoshiro(seed: 0)
     var vertices: [CGPoint] = [
@@ -100,29 +88,27 @@ public struct BloomBackground: View {
       return vertices[index % vertices.count]
     }
   }()
-  @ObservedObject var viewStore: ViewStore<ViewState, Never>
 
-  public init(size: CGSize, store: Store<ViewState, Never>) {
+  public init(size: CGSize, word: String) {
     self.size = size
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
+    self.word = word
   }
 
   public var body: some View {
     Blooms(blooms: self.blooms)
-      .onChange(of: self.viewStore.bloomCount) { _, count in
+      .onChange(of: self.word.count) { _, count in
         withAnimation(.easeOut(duration: 1)) {
           self.renderBlooms(count: count)
         }
       }
-      .onAppear { self.renderBlooms(count: self.viewStore.bloomCount) }
+      .onAppear { self.renderBlooms(count: self.word.count) }
   }
 
   func renderBlooms(count: Int) {
     if count > self.blooms.count {
       let colors =
         Styleguide.letterColors.first { key, _ in
-          key.contains(self.viewStore.word)
+          key.contains(self.word)
         }?
         .value ?? []
       guard colors.count > 0

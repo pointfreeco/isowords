@@ -6,11 +6,7 @@ import SwiftUI
 
 struct StartNewGameView: View {
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Home>
-
-  init(store: StoreOf<Home>) {
-    self.store = store
-  }
+  @Bindable var store: StoreOf<Home>
 
   var body: some View {
     VStack(alignment: .leading) {
@@ -20,7 +16,7 @@ struct StartNewGameView: View {
         .padding(.vertical)
 
       Button {
-        self.store.send(.soloButtonTapped)
+        store.send(.soloButtonTapped)
       } label: {
         HStack {
           Text("Solo")
@@ -36,7 +32,7 @@ struct StartNewGameView: View {
       )
 
       Button {
-        self.store.send(.multiplayerButtonTapped)
+        store.send(.multiplayerButtonTapped)
       } label: {
         HStack {
           Text("Multiplayer")
@@ -52,13 +48,15 @@ struct StartNewGameView: View {
       )
     }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination.solo, action: \.destination.solo),
-      destination: SoloView.init(store:)
-    )
+      item: $store.scope(state: \.destination?.solo, action: \.destination.solo)
+    ) { store in
+      SoloView(store: store)
+    }
     .navigationDestination(
-      store: self.store.scope(state: \.$destination.multiplayer, action: \.destination.multiplayer),
-      destination: MultiplayerView.init(store:)
-    )
+      item: $store.scope(state: \.destination?.multiplayer, action: \.destination.multiplayer)
+    ) { store in
+      MultiplayerView(store: store)
+    }
   }
 }
 

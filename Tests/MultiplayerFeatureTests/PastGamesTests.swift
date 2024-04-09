@@ -8,8 +8,8 @@ import XCTest
 
 @testable import MultiplayerFeature
 
-@MainActor
 class PastGamesTests: XCTestCase {
+  @MainActor
   func testLoadMatches() async {
     let store = TestStore(initialState: PastGames.State()) {
       PastGames()
@@ -24,6 +24,7 @@ class PastGamesTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testOpenMatch() async {
     let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
       PastGames()
@@ -36,6 +37,7 @@ class PastGamesTests: XCTestCase {
     await store.receive(\.pastGames[id: "id"].delegate.openMatch)
   }
 
+  @MainActor
   func testRematch() async {
     let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
       PastGames()
@@ -58,6 +60,7 @@ class PastGamesTests: XCTestCase {
     await store.receive(\.pastGames[id: "id"].delegate.openMatch)
   }
 
+  @MainActor
   func testRematch_Failure() async {
     struct RematchFailure: Error, Equatable {}
 

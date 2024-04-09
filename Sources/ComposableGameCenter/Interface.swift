@@ -148,7 +148,7 @@ public struct TurnBasedMatchClient {
 }
 
 @DependencyClient
-public struct TurnBasedMatchmakerViewControllerClient {
+public struct TurnBasedMatchmakerViewControllerClient: Sendable {
   public var present: @Sendable (_ showExistingMatches: Bool) async throws -> Void
   public var dismiss: @Sendable () async -> Void
 }

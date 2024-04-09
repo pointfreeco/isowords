@@ -9,8 +9,8 @@ import XCTest
 @testable import LeaderboardFeature
 @testable import SharedModels
 
-@MainActor
 class LeaderboardFeatureTests: XCTestCase {
+  @MainActor
   func testScopeSwitcher() async {
     let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
@@ -24,6 +24,7 @@ class LeaderboardFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testTimeScopeSynchronization() async {
     let store = TestStore(initialState: Leaderboard.State()) {
       Leaderboard()
@@ -49,6 +50,7 @@ class LeaderboardFeatureTests: XCTestCase {
     await task2.cancel()
   }
 
+  @MainActor
   func testCubePreview() async {
     let wordId = Word.Id(rawValue: UUID(uuidString: "00000000-0000-0000-0000-00000000304d")!)
     let vocabEntry = FetchVocabLeaderboardResponse.Entry(
@@ -103,7 +105,6 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
     }
-
 
     await store.send(.vocab(.task)) {
       $0.vocab.isLoading = true

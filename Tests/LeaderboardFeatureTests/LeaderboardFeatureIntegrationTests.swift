@@ -9,8 +9,8 @@ import XCTest
 
 @testable import LeaderboardFeature
 
-@MainActor
 class LeaderboardFeatureIntegrationTests: XCTestCase {
+  @MainActor
   func testSoloIntegrationWithLeaderboardResults() async {
     await withMainSerialExecutor {
       let fetchLeaderboardsEntries = [
@@ -59,6 +59,7 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testVocabIntegrationWithLeaderboardResults() async {
     let fetchVocabEntries = [
       FetchVocabLeaderboardResponse.Entry.init(

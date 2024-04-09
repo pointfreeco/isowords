@@ -6,8 +6,8 @@ import SharedModels
 import SiteMiddleware
 import XCTest
 
-@MainActor
 class GameOverFeatureIntegrationTests: XCTestCase {
+  @MainActor
   func testSubmitSoloScore() async {
     await withMainSerialExecutor {
       let ranks: [TimeScope: LeaderboardScoreResult.Rank] = [

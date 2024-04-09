@@ -22,8 +22,8 @@ fileprivate extension DependencyValues {
   }
 }
 
-@MainActor
 class SettingsPurchaseTests: XCTestCase {
+  @MainActor
   func testUpgrade_HappyPath() async throws {
     let didAddPaymentProductIdentifier = ActorIsolated<String?>(nil)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -41,7 +41,8 @@ class SettingsPurchaseTests: XCTestCase {
       $0.apiClient.currentPlayer = { .some(.blobWithoutPurchase) }
       $0.apiClient.refreshCurrentPlayer = { .blobWithPurchase }
       $0.storeKit.addPayment = {
-        await didAddPaymentProductIdentifier.setValue($0.productIdentifier)
+        let productIdentifier = $0.productIdentifier
+        await didAddPaymentProductIdentifier.setValue(productIdentifier)
       }
       $0.storeKit.fetchProducts = { _ in
           .init(invalidProductIdentifiers: [], products: [.fullGame])
@@ -77,6 +78,7 @@ class SettingsPurchaseTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testRestore_HappyPath() async throws {
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -129,6 +131,7 @@ class SettingsPurchaseTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testRestore_NoPurchasesPath() async throws {
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -174,6 +177,7 @@ class SettingsPurchaseTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testRestore_ErrorPath() async throws {
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>

@@ -4,22 +4,16 @@ import SwiftUI
 import UserSettingsClient
 
 struct AppearanceSettingsView: View {
-  let store: StoreOf<Settings>
-  @ObservedObject var viewStore: ViewStoreOf<Settings>
-
-  init(store: StoreOf<Settings>) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: { $0 })
-  }
+  @Bindable var store: StoreOf<Settings>
 
   var body: some View {
     SettingsForm {
       SettingsSection(title: "Theme") {
-        ColorSchemePicker(colorScheme: self.viewStore.$userSettings.colorScheme)
+        ColorSchemePicker(colorScheme: $store.userSettings.colorScheme)
       }
 
       SettingsSection(title: "App Icon", padContents: false) {
-        AppIconPicker(appIcon: self.viewStore.$userSettings.appIcon.animation())
+        AppIconPicker(appIcon: $store.userSettings.appIcon.animation())
       }
     }
     .navigationStyle(title: Text("Appearance"))

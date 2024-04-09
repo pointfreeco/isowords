@@ -8,69 +8,40 @@ struct PlayersAndScoresView: View {
   @State var opponentImage: UIImage?
   let store: StoreOf<Game>
   @State var yourImage: UIImage?
-  @ObservedObject var viewStore: ViewStore<ViewState, Game.Action>
-
-  struct ViewState: Equatable {
-    let isYourTurn: Bool
-    let opponent: ComposableGameCenter.Player?
-    let opponentScore: Int
-    let you: ComposableGameCenter.Player?
-    let yourScore: Int
-
-    init(state: Game.State) {
-      self.isYourTurn = state.isYourTurn
-      self.opponent = state.gameContext.turnBased?.otherParticipant?.player
-      self.you = state.gameContext.turnBased?.localPlayer.player
-      self.yourScore =
-        state.gameContext.turnBased?.localPlayerIndex
-        .flatMap { state.turnBasedScores[$0] }
-        ?? (state.gameContext.is(\.turnBased) ? 0 : state.currentScore)
-      self.opponentScore =
-        state.gameContext.turnBased?.otherPlayerIndex
-        .flatMap { state.turnBasedScores[$0] } ?? 0
-    }
-  }
-
-  public init(
-    store: StoreOf<Game>
-  ) {
-    self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
-  }
 
   var body: some View {
     HStack(spacing: 0) {
       PlayerView(
-        displayName: (self.viewStore.you?.displayName).map { LocalizedStringKey($0) } ?? "You",
+        displayName: (store.you?.displayName).map { LocalizedStringKey($0) } ?? "You",
         image: self.defaultYourImage ?? self.yourImage,
-        isPlayerTurn: self.viewStore.isYourTurn,
+        isPlayerTurn: store.isYourTurn,
         isYou: true,
-        score: self.viewStore.yourScore
+        score: store.yourScore
       )
 
       PlayerView(
-        displayName: (self.viewStore.opponent?.displayName).map { LocalizedStringKey($0) }
+        displayName: (store.opponent?.displayName).map { LocalizedStringKey($0) }
           ?? "Your opponent",
         image: self.defaultOpponentImage ?? self.opponentImage,
-        isPlayerTurn: !self.viewStore.isYourTurn,
+        isPlayerTurn: !store.isYourTurn,
         isYou: false,
-        score: self.viewStore.opponentScore
+        score: store.opponentScore
       )
     }
     .onAppear {
-      self.viewStore.opponent?.rawValue?.loadPhoto(for: .small) { image, _ in
+      store.opponent?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.opponentImage = image
       }
-      self.viewStore.you?.rawValue?.loadPhoto(for: .small) { image, _ in
+      store.you?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.yourImage = image
       }
     }
-    .onChange(of: self.viewStore.opponent) { _, player in
+    .onChange(of: store.opponent) { _, player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.opponentImage = image
       }
     }
-    .onChange(of: self.viewStore.you) { _, player in
+    .onChange(of: store.you) { _, player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
         self.yourImage = image
       }
@@ -140,6 +111,24 @@ private struct PlayerView: View {
           .zIndex(1)
       }
     }
+  }
+}
+
+fileprivate extension Game.State {
+  var opponent: ComposableGameCenter.Player? {
+    self.gameContext.turnBased?.otherParticipant?.player
+  }
+  var opponentScore: Int {
+    self.gameContext.turnBased?.otherPlayerIndex
+      .flatMap { self.turnBasedScores[$0] } ?? 0
+  }
+  var you: ComposableGameCenter.Player? {
+    self.gameContext.turnBased?.localPlayer.player
+  }
+  var yourScore: Int {
+    self.gameContext.turnBased?.localPlayerIndex
+      .flatMap { self.turnBasedScores[$0] }
+    ?? (self.gameContext.is(\.turnBased) ? 0 : self.currentScore)
   }
 }
 

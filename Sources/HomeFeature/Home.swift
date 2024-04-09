@@ -22,54 +22,23 @@ public struct ActiveMatchResponse: Equatable {
 
 @Reducer
 public struct Home {
-  @Reducer
-  public struct Destination {
-    public enum State: Equatable {
-      case changelog(ChangelogReducer.State = .init())
-      case dailyChallenge(DailyChallengeReducer.State = .init())
-      case leaderboard(Leaderboard.State = .init())
-      case multiplayer(Multiplayer.State)
-      case settings(Settings.State = Settings.State())
-      case solo(Solo.State = .init())
-    }
-
-    public enum Action {
-      case changelog(ChangelogReducer.Action)
-      case dailyChallenge(DailyChallengeReducer.Action)
-      case leaderboard(Leaderboard.Action)
-      case multiplayer(Multiplayer.Action)
-      case settings(Settings.Action)
-      case solo(Solo.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.changelog, action: \.changelog) {
-        ChangelogReducer()
-      }
-      Scope(state: \.dailyChallenge, action: \.dailyChallenge) {
-        DailyChallengeReducer()
-      }
-      Scope(state: \.leaderboard, action: \.leaderboard) {
-        Leaderboard()
-      }
-      Scope(state: \.multiplayer, action: \.multiplayer) {
-        Multiplayer()
-      }
-      Scope(state: \.settings, action: \.settings) {
-        Settings()
-      }
-      Scope(state: \.solo, action: \.solo) {
-        Solo()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case changelog(ChangelogReducer)
+    case dailyChallenge(DailyChallengeReducer)
+    case leaderboard(Leaderboard)
+    case multiplayer(Multiplayer)
+    case settings(Settings)
+    case solo(Solo)
   }
 
+  @ObservableState
   public struct State: Equatable {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
-    @PresentationState public var nagBanner: NagBanner.State?
+    @Presents public var nagBanner: NagBanner.State?
     public var savedGames: SavedGamesState {
       didSet {
         guard var dailyChallengeState = self.destination?.dailyChallenge
@@ -163,7 +132,7 @@ public struct Home {
   public var body: some ReducerOf<Self> {
     Reduce(self.core)
       .ifLet(\.$destination, action: \.destination) {
-        Destination()
+        Destination.body
       }
       .ifLet(\.$nagBanner, action: \.nagBanner) {
         NagBanner()
@@ -286,7 +255,7 @@ public struct Home {
       return .none
 
     case .leaderboardButtonTapped:
-      state.destination = .leaderboard()
+      state.destination = .leaderboard(Leaderboard.State())
       return .none
 
     case .multiplayerButtonTapped:
@@ -297,7 +266,7 @@ public struct Home {
       return .none
 
     case .settingsButtonTapped:
-      state.destination = .settings()
+      state.destination = .settings(Settings.State())
       return .none
 
     case .soloButtonTapped:
@@ -410,28 +379,11 @@ extension GameCenterClient {
 }
 
 public struct HomeView: View {
-  struct ViewState: Equatable {
-    let hasActiveGames: Bool
-    let hasChangelog: Bool
-    let isNagBannerVisible: Bool
-
-    init(state: Home.State) {
-      self.hasActiveGames =
-        state.savedGames.dailyChallengeUnlimited != nil
-        || state.savedGames.unlimited != nil
-        || !state.turnBasedMatches.isEmpty
-      self.hasChangelog = state.hasChangelog
-      self.isNagBannerVisible = state.nagBanner != nil
-    }
-  }
-
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Home>
-  @ObservedObject var viewStore: ViewStore<ViewState, Home.Action>
+  @Bindable var store: StoreOf<Home>
 
   public init(store: StoreOf<Home>) {
     self.store = store
-    self.viewStore = ViewStore(store, observe: ViewState.init)
   }
 
   public var body: some View {
@@ -440,20 +392,20 @@ public struct HomeView: View {
         VStack(spacing: .grid(12)) {
           VStack(spacing: .grid(6)) {
             HStack {
-              CubeIconView(shake: self.viewStore.hasChangelog) {
-                self.viewStore.send(.cubeButtonTapped)
+              CubeIconView(shake: store.hasChangelog) {
+                store.send(.cubeButtonTapped)
               }
 
               Spacer()
 
               Button {
-                self.viewStore.send(.howToPlayButtonTapped, animation: .default)
+                store.send(.howToPlayButtonTapped, animation: .default)
               } label: {
                 Image(systemName: "questionmark.circle")
               }
 
               Button {
-                self.viewStore.send(.settingsButtonTapped)
+                store.send(.settingsButtonTapped)
               } label: {
                 Image(systemName: "gear")
               }
@@ -462,11 +414,11 @@ public struct HomeView: View {
             .foregroundColor(self.colorScheme == .dark ? .hex(0xF2E29F) : .isowordsBlack)
             .adaptivePadding(.horizontal)
 
-            DailyChallengeHeaderView(store: self.store)
+            DailyChallengeHeaderView(store: store)
               .screenEdgePadding(.horizontal)
           }
 
-          if self.viewStore.hasActiveGames {
+          if store.hasActiveGames {
             VStack(alignment: .leading) {
               Text("Active games")
                 .adaptiveFont(.matterMedium, size: 16)
@@ -474,19 +426,16 @@ public struct HomeView: View {
                 .screenEdgePadding(.horizontal)
 
               ActiveGamesView(
-                store: self.store.scope(
-                  state: \.activeGames,
-                  action: Home.Action.activeGames
-                ),
+                store: store.scope(state: \.activeGames, action: \.activeGames),
                 showMenuItems: true
               )
               .foregroundColor(self.colorScheme == .dark ? .hex(0xE9A27C) : .isowordsBlack)
             }
           }
 
-          StartNewGameView(store: self.store)
+          StartNewGameView(store: store)
             .screenEdgePadding(.horizontal)
-          LeaderboardLinkView(store: self.store)
+          LeaderboardLinkView(store: store)
             .screenEdgePadding(.horizontal)
         }
         .adaptivePadding(.vertical, .grid(4))
@@ -502,7 +451,7 @@ public struct HomeView: View {
             )
         )
 
-        if self.viewStore.isNagBannerVisible {
+        if store.nagBanner != nil {
           Spacer().frame(height: 80)
         }
       }
@@ -526,22 +475,22 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      IfLetStore(
-        self.store.scope(state: \.nagBanner, action: \.nagBanner.presented),
-        then: NagBannerView.init(store:)
-      )
+      if let store = store.scope(state: \.nagBanner, action: \.nagBanner.presented) {
+        NagBannerView(store: store)
+      }
     }
     .navigationBarHidden(true)
     .navigationDestination(
-      store: self.store.scope(state: \.$destination.settings, action: \.destination.settings)
+      item: $store.scope(state: \.destination?.settings, action: \.destination.settings)
     ) { store in
       SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
-      store: self.store.scope(state: \.$destination.changelog, action: \.destination.changelog),
-      content: ChangelogView.init(store:)
-    )
-    .task { await self.viewStore.send(.task).finish() }
+      item: $store.scope(state: \.destination?.changelog, action: \.destination.changelog)
+    ) { store in
+      ChangelogView(store: store)
+    }
+    .task { await store.send(.task).finish() }
   }
 }
 

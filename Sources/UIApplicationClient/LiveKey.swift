@@ -18,7 +18,6 @@ extension UIApplicationClient: DependencyKey {
         scene.keyWindow?.overrideUserInterfaceStyle = userInterfaceStyle
       }
     },
-    supportsAlternateIcons: { UIApplication.shared.supportsAlternateIcons },
     supportsAlternateIconsAsync: { await UIApplication.shared.supportsAlternateIcons }
   )
 }

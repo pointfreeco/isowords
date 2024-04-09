@@ -7,11 +7,11 @@ import XCTest
 @testable import DailyChallengeFeature
 @testable import SharedModels
 
-@MainActor
 class DailyChallengeFeatureTests: XCTestCase {
   let mainQueue = DispatchQueue.test
   let mainRunLoop = RunLoop.test
 
+  @MainActor
   func testOnAppear() async {
     let store = TestStore(initialState: DailyChallengeReducer.State()) {
       DailyChallengeReducer()
@@ -36,6 +36,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testTapGameThatWasPlayed() async {
     var dailyChallengeResponse = FetchTodaysDailyChallengeResponse.played
     dailyChallengeResponse.dailyChallenge.endsAt = Date().addingTimeInterval(60 * 60 * 2 + 1)
@@ -53,6 +54,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testTapGameThatWasNotStarted() async {
     var inProgressGame = InProgressGame.mock
     inProgressGame.gameStartTime = self.mainRunLoop.now.date
@@ -100,6 +102,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     await store.receive(\.delegate.startGame)
   }
 
+  @MainActor
   func testTapGameThatWasStarted_NotPlayed_HasLocalGame() async {
     var inProgressGame = InProgressGame.mock
     inProgressGame.gameStartTime = .mock
@@ -132,6 +135,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     await store.receive(\.delegate.startGame)
   }
 
+  @MainActor
   func testNotifications_OpenThenClose() async {
     let store = TestStore(
       initialState: DailyChallengeReducer.State()
@@ -147,6 +151,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testNotifications_GrantAccess() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
@@ -181,6 +186,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     await didRegisterForRemoteNotifications.withValue { XCTAssertNoDifference($0, true) }
   }
 
+  @MainActor
   func testNotifications_DenyAccess() async {
     let store = TestStore(initialState: DailyChallengeReducer.State()) {
       DailyChallengeReducer()

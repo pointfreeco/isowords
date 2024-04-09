@@ -56,98 +56,81 @@ public struct NotificationsAuthAlert {
 }
 
 extension View {
-  public func notificationsAlert<DestinationState, DestinationAction>(
-    store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>,
-    state toAlertState: @escaping (DestinationState) -> NotificationsAuthAlert.State?,
-    action fromAlertAction: @escaping (NotificationsAuthAlert.Action) -> DestinationAction
+  public func notificationsAlert(
+    _ store: Binding<Store<NotificationsAuthAlert.State, NotificationsAuthAlert.Action>?>
   ) -> some View {
-    self.modifier(
-      NotificationsAuthAlertViewModifier(
-        store: store, toAlertState: toAlertState, fromAlertAction: fromAlertAction
-      )
-    )
+    self.modifier(NotificationsAuthAlertViewModifier(store: store))
   }
 }
 
-struct NotificationsAuthAlertViewModifier<DestinationState, DestinationAction>: ViewModifier {
-  let store: Store<PresentationState<DestinationState>, PresentationAction<DestinationAction>>
-  let toAlertState: (DestinationState) -> NotificationsAuthAlert.State?
-  let fromAlertAction: (NotificationsAuthAlert.Action) -> DestinationAction
+struct NotificationsAuthAlertViewModifier: ViewModifier {
+  @Binding var store: Store<NotificationsAuthAlert.State, NotificationsAuthAlert.Action>?
 
   func body(content: Content) -> some View {
-    WithViewStore(
-      self.store, observe: { $0.wrappedValue.flatMap(self.toAlertState) }
-    ) { viewStore in
-      content
-        .overlay {
-          if viewStore.state != nil {
-            Rectangle()
-              .fill(Color.dailyChallenge.opacity(0.8))
-              .ignoresSafeArea()
-              .transition(.opacity.animation(.default))
-          }
+    let state = store?.withState { $0 }
+    content
+      .overlay {
+        if state != nil {
+          Rectangle()
+            .fill(Color.dailyChallenge.opacity(0.8))
+            .ignoresSafeArea()
+            .transition(.opacity.animation(.default))
         }
-        .overlay {
-          if let state = viewStore.state {
-            ZStack(alignment: .topTrailing) {
-              NotificationsAuthAlertView(
-                store: store.scope(
-                  state: { _ in state }, action: { .presented(fromAlertAction($0)) }
-                )
-              )
-
-              Button {
-                viewStore.send(.dismiss)
-              } label: {
-                Image(systemName: "xmark")
-                  .font(.system(size: 20))
-                  .foregroundColor(.dailyChallenge)
-                  .padding(.grid(5))
-              }
+      }
+      .overlay {
+        if state != nil {
+          ZStack(alignment: .topTrailing) {
+            NotificationsAuthAlertView {
+              store?.send(.turnOnNotificationsButtonTapped)
             }
-            .transition(
-              .scale(scale: 0.8, anchor: .center)
-                .animation(.spring())
-                .combined(with: .opacity.animation(.default))
-            )
+
+            Button {
+              store = nil
+            } label: {
+              Image(systemName: "xmark")
+                .font(.system(size: 20))
+                .foregroundColor(.dailyChallenge)
+                .padding(.grid(5))
+            }
           }
+          .transition(
+            .scale(scale: 0.8, anchor: .center)
+            .animation(.spring())
+            .combined(with: .opacity.animation(.default))
+          )
         }
-    }
+      }
   }
 }
 
 struct NotificationsAuthAlertView: View {
-  let store: StoreOf<NotificationsAuthAlert>
+  let action: () -> Void
 
   var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      VStack(spacing: .grid(8)) {
-        (Text("Want to get notified about ")
-          + Text("your ranks?").fontWeight(.medium))
-          .adaptiveFont(.matter, size: 28)
-          .foregroundColor(.dailyChallenge)
-          .lineLimit(.max)
-          .minimumScaleFactor(0.2)
-          .multilineTextAlignment(.center)
+    VStack(spacing: .grid(8)) {
+      (Text("Want to get notified about ")
+       + Text("your ranks?").fontWeight(.medium))
+      .adaptiveFont(.matter, size: 28)
+      .foregroundColor(.dailyChallenge)
+      .lineLimit(.max)
+      .minimumScaleFactor(0.2)
+      .multilineTextAlignment(.center)
 
-        Button("Turn on notifications") {
-          viewStore.send(.turnOnNotificationsButtonTapped, animation: .default)
+      Button("Turn on notifications") {
+        withAnimation {
+          action()
         }
-        .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
       }
-      .padding(.top, .grid(4))
-      .padding(.grid(8))
-      .background(Color.black)
+      .buttonStyle(ActionButtonStyle(backgroundColor: .dailyChallenge, foregroundColor: .black))
     }
+    .padding(.top, .grid(4))
+    .padding(.grid(8))
+    .background(Color.black)
   }
 }
 
 struct NotificationMenu_Previews: PreviewProvider {
   static var previews: some View {
-    NotificationsAuthAlertView(
-      store: Store(initialState: NotificationsAuthAlert.State()) {
-        NotificationsAuthAlert()
-      }
-    )
+    NotificationsAuthAlertView(action: {})
   }
 }

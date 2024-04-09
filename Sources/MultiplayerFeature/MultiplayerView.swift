@@ -4,25 +4,14 @@ import TcaHelpers
 
 @Reducer
 public struct Multiplayer {
-  @Reducer
-  public struct Destination {
-    public enum State: Equatable {
-      case pastGames(PastGames.State)
-    }
-
-    public enum Action {
-      case pastGames(PastGames.Action)
-    }
-
-    public var body: some ReducerOf<Self> {
-      Scope(state: \.pastGames, action: \.pastGames) {
-        PastGames()
-      }
-    }
+  @Reducer(state: .equatable)
+  public enum Destination {
+    case pastGames(PastGames)
   }
 
+  @ObservableState
   public struct State: Equatable {
-    @PresentationState public var destination: Destination.State?
+    @Presents public var destination: Destination.State?
     public var hasPastGames: Bool
 
     public init(
@@ -65,7 +54,7 @@ public struct Multiplayer {
       }
     }
     .ifLet(\.$destination, action: \.destination) {
-      Destination()
+      Destination.body
     }
   }
 }
@@ -73,20 +62,10 @@ public struct Multiplayer {
 public struct MultiplayerView: View {
   @Environment(\.adaptiveSize) var adaptiveSize
   @Environment(\.colorScheme) var colorScheme
-  let store: StoreOf<Multiplayer>
-  @ObservedObject var viewStore: ViewStore<ViewState, Multiplayer.Action>
+  @Bindable var store: StoreOf<Multiplayer>
 
   public init(store: StoreOf<Multiplayer>) {
     self.store = store
-    self.viewStore = ViewStore(self.store, observe: ViewState.init)
-  }
-
-  struct ViewState: Equatable {
-    let hasPastGames: Bool
-
-    init(state: Multiplayer.State) {
-      self.hasPastGames = state.hasPastGames
-    }
   }
 
   public var body: some View {
@@ -111,7 +90,7 @@ public struct MultiplayerView: View {
         Spacer()
 
         Button {
-          self.viewStore.send(.startButtonTapped)
+          store.send(.startButtonTapped)
         } label: {
           VStack(spacing: 20) {
             Image(systemName: "person.2.fill")
@@ -126,11 +105,11 @@ public struct MultiplayerView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .adaptivePadding(.vertical)
-        .adaptivePadding(.bottom, .grid(self.viewStore.hasPastGames ? 0 : 8))
+        .adaptivePadding(.bottom, .grid(store.hasPastGames ? 0 : 8))
 
-        if self.viewStore.hasPastGames {
+        if store.hasPastGames {
           Button {
-            self.viewStore.send(.pastGamesButtonTapped)
+            store.send(.pastGamesButtonTapped)
           } label: {
             HStack {
               Text("View past games")
@@ -149,9 +128,10 @@ public struct MultiplayerView: View {
         }
       }
       .navigationDestination(
-        store: self.store.scope(state: \.$destination.pastGames, action: \.destination.pastGames),
-        destination: PastGamesView.init(store:)
-      )
+        item: $store.scope(state: \.destination?.pastGames, action: \.destination.pastGames)
+      ) { store in
+        PastGamesView(store: store)
+      }
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
         foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,

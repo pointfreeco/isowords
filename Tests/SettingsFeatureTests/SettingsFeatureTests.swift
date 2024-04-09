@@ -28,8 +28,8 @@ extension DependencyValues {
   }
 }
 
-@MainActor
 class SettingsFeatureTests: XCTestCase {
+  @MainActor
   func testUserSettingsBackwardsDecodability() {
     XCTAssertNoDifference(
       try JSONDecoder().decode(UserSettings.self, from: Data("{}".utf8)),
@@ -61,7 +61,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Notifications
 
-  // TODO: Fix once we have the TestStore binding test helper
+  @MainActor
   func testEnableNotifications_NotDetermined_GrantAuthorization() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
@@ -97,7 +97,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableNotifications = true
     }
 
@@ -108,6 +108,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testEnableNotifications_NotDetermined_DenyAuthorization() async {
     let store = TestStore(
       initialState: Settings.State()
@@ -138,7 +139,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableNotifications = true
     }
 
@@ -149,6 +150,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testNotifications_PreviouslyGranted() async {
     let store = TestStore(
       initialState: Settings.State()
@@ -179,13 +181,14 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = false
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableNotifications = false
     }
 
     await task.cancel()
   }
 
+  @MainActor
   func testNotifications_PreviouslyDenied() async {
     let openedUrl = ActorIsolated<URL?>(nil)
     let store = TestStore(
@@ -223,7 +226,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableNotifications = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.alert = .userNotificationAuthorizationDenied
     }
 
@@ -238,6 +241,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testNotifications_RemoteSettingsUpdates() async {
     var userSettings = UserSettings(sendDailyChallengeReminder: false)
     let didUpdate = LockIsolated(false)
@@ -288,7 +292,7 @@ class SettingsFeatureTests: XCTestCase {
       }
 
       userSettings.sendDailyChallengeReminder = false
-      await store.send(.set(\.$userSettings, userSettings)) {
+      await store.send(.set(\.userSettings, userSettings)) {
         $0.userSettings.enableNotifications = false
         $0.userSettings.sendDailyChallengeReminder = false
       }
@@ -300,6 +304,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Sounds
 
+  @MainActor
   func testSetMusicVolume() async {
     let setMusicVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
@@ -313,13 +318,14 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.musicVolume = 0.5
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.musicVolume = 0.5
     }
 
     await setMusicVolume.withValue { XCTAssertNoDifference($0, 0.5) }
   }
 
+  @MainActor
   func testSetSoundEffectsVolume() async {
     let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
@@ -335,7 +341,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.soundEffectsVolume = 0.5
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
@@ -344,6 +350,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Appearance
 
+  @MainActor
   func testSetColorScheme() async {
     let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
     let store = TestStore(
@@ -359,18 +366,19 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.colorScheme = .light
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.colorScheme = .light
     }
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .light) }
 
     userSettings.colorScheme = .system
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.colorScheme = .system
     }
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .unspecified) }
   }
 
+  @MainActor
   func testSetAppIcon() async {
     let overriddenIconName = ActorIsolated<String?>(nil)
     let store = TestStore(
@@ -386,12 +394,13 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.appIcon = .icon2
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.appIcon = .icon2
     }
     await overriddenIconName.withValue { XCTAssertNoDifference($0, "icon-2") }
   }
 
+  @MainActor
   func testUnsetAppIcon() async {
     let overriddenIconName = ActorIsolated<String?>(nil)
     let store = TestStore(
@@ -421,7 +430,7 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.appIcon = nil
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.appIcon = nil
     }
     await overriddenIconName.withValue { XCTAssertNil($0) }
@@ -431,6 +440,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Developer
 
+  @MainActor
   func testSetApiBaseUrl() async {
     let setBaseUrl = ActorIsolated<URL?>(nil)
     let didLogout = ActorIsolated(false)
@@ -446,13 +456,14 @@ class SettingsFeatureTests: XCTestCase {
 
     var developer = store.state.developer
     developer.currentBaseUrl = .localhost
-    await store.send(.set(\.$developer, developer)) {
+    await store.send(.set(\.developer, developer)) {
       $0.developer.currentBaseUrl = .localhost
     }
     await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
     await didLogout.withValue { XCTAssert($0) }
   }
 
+  @MainActor
   func testToggleEnableGyroMotion() async {
     let store = TestStore(
       initialState: Settings.State()
@@ -465,15 +476,16 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableGyroMotion = false
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableGyroMotion = false
     }
     userSettings.enableGyroMotion = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableGyroMotion = true
     }
   }
 
+  @MainActor
   func testToggleEnableHaptics() async {
     let store = TestStore(
       initialState: Settings.State()
@@ -487,11 +499,11 @@ class SettingsFeatureTests: XCTestCase {
 
     var userSettings = store.state.userSettings
     userSettings.enableHaptics = false
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableHaptics = false
     }
     userSettings.enableHaptics = true
-    await store.send(.set(\.$userSettings, userSettings)) {
+    await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.enableHaptics = true
     }
   }
