@@ -325,6 +325,7 @@ class SettingsFeatureTests: XCTestCase {
     await setMusicVolume.withValue { XCTAssertNoDifference($0, 0.5) }
   }
 
+  @MainActor
   func testSetSoundEffectsVolume() async {
     let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
