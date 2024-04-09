@@ -10,10 +10,10 @@ import XCTest
 
 @testable import ServerConfigClient
 
-@MainActor
 class UpgradeInterstitialFeatureTests: XCTestCase {
   let scheduler = RunLoop.test
 
+  @MainActor
   func testUpgrade() async {
     await withMainSerialExecutor {
       let dismissed = LockIsolated(false)
@@ -47,7 +47,10 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
         $0.dismiss = .init { dismissed.setValue(true) }
         $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
-        $0.storeKit.addPayment = { await paymentAdded.setValue($0.productIdentifier) }
+        $0.storeKit.addPayment = {
+          let productIdentifier = $0.productIdentifier
+          await paymentAdded.setValue(productIdentifier)
+        }
         $0.storeKit.observer = { observer.stream }
         $0.storeKit.fetchProducts = { _ in
           .init(
@@ -84,6 +87,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testWaitAndDismiss() async {
     let dismissed = LockIsolated(false)
     let store = TestStore(
@@ -122,6 +126,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     XCTAssert(dismissed.value)
   }
 
+  @MainActor
   func testMaybeLater_Dismissable() async {
     let dismissed = LockIsolated(false)
     let store = TestStore(

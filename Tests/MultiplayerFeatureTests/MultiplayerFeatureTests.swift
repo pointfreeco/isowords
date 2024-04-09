@@ -3,8 +3,8 @@ import XCTest
 
 @testable import MultiplayerFeature
 
-@MainActor
 class MultiplayerFeatureTests: XCTestCase {
+  @MainActor
   func testStartGame_GameCenterAuthenticated() async {
     let didPresentMatchmakerViewController = ActorIsolated(false)
     let store = TestStore(initialState: Multiplayer.State(hasPastGames: false)) {
@@ -20,6 +20,7 @@ class MultiplayerFeatureTests: XCTestCase {
     await didPresentMatchmakerViewController.withValue { XCTAssertTrue($0) }
   }
 
+  @MainActor
   func testStartGame_GameCenterNotAuthenticated() async {
     let didPresentAuthentication = ActorIsolated(false)
     let store = TestStore(
@@ -37,6 +38,7 @@ class MultiplayerFeatureTests: XCTestCase {
     await didPresentAuthentication.withValue { XCTAssertTrue($0) }
   }
 
+  @MainActor
   func testNavigateToPastGames() async {
     let store = TestStore(
       initialState: Multiplayer.State(hasPastGames: true)
