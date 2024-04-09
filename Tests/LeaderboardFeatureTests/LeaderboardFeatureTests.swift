@@ -118,7 +118,6 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.destination = .cubePreview(
         .init(
           cubes: .mock,
-          isOnLowPowerMode: false,
           moveIndex: 0,
           moves: []
         )

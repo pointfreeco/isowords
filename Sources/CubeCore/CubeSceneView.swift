@@ -2,6 +2,7 @@ import ClientModels
 import Combine
 import ComposableArchitecture
 import CoreMotion
+import LowPowerModeClient
 import SceneKit
 import SharedModels
 import Styleguide
@@ -13,7 +14,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
     public var cubes: ViewPuzzle
     public var enableGyroMotion: Bool
-    public var isOnLowPowerMode: Bool
     public var nub: NubState?
     public var playedWords: [PlayedWord]
     public var selectedFaceCount: Int
@@ -23,7 +23,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     public init(
       cubes: ViewPuzzle,
       enableGyroMotion: Bool,
-      isOnLowPowerMode: Bool,
       nub: NubState?,
       playedWords: [PlayedWord],
       selectedFaceCount: Int,
@@ -32,7 +31,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     ) {
       self.cubes = cubes
       self.enableGyroMotion = enableGyroMotion
-      self.isOnLowPowerMode = isOnLowPowerMode
       self.nub = nub
       self.playedWords = playedWords
       self.selectedFaceCount = selectedFaceCount
@@ -75,6 +73,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let cameraNode = SCNNode()
   private var cancellables: Set<AnyCancellable> = []
   private let gameCubeNode = SCNNode()
+  @Shared(.isLowPowerEnabled) var isLowPowerEnabled = false
   private let light = SCNLight()
   private var motionManager: CMMotionManager?
   private var startingAttitude: Attitude?
@@ -189,16 +188,16 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     ambientLightNode.light = ambientLight
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
-    self.viewStore.publisher
-      .map { ($0.enableGyroMotion, $0.isOnLowPowerMode) }
+    self.viewStore.publisher.map(\.enableGyroMotion)
+      .combineLatest($isLowPowerEnabled.publisher)
       .removeDuplicates(by: ==)
-      .sink { [weak self] enableGyroMotion, isOnLowPowerMode in
+      .sink { [weak self] enableGyroMotion, isLowPowerEnabled in
         guard let self = self else { return }
 
         self.showsStatistics = self.showSceneStatistics
-        light.castsShadow = self.enableCubeShadow && !isOnLowPowerMode
+        light.castsShadow = self.enableCubeShadow && !isLowPowerEnabled
 
-        if isOnLowPowerMode || !enableGyroMotion {
+        if isLowPowerEnabled || !enableGyroMotion {
           self.stopMotionManager()
         } else {
           self.startMotionManager()
@@ -289,7 +288,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   // TODO: rename
   private func update() {
     self.showsStatistics = self.showSceneStatistics
-    self.light.castsShadow = self.enableCubeShadow && !self.viewStore.isOnLowPowerMode
+    self.light.castsShadow = self.enableCubeShadow && !self.isLowPowerEnabled
   }
 
   deinit {

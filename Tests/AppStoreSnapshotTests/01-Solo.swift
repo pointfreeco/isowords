@@ -68,7 +68,6 @@ var gameplayAppStoreView: AnyView {
     isDemo: false,
     isGameLoaded: true,
     isPanning: false,
-    isOnLowPowerMode: false,
     isTrayVisible: false,
     language: .en,
     moves: moves,

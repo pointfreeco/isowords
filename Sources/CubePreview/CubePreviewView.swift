@@ -14,7 +14,6 @@ public struct CubePreview {
   @ObservableState
   public struct State: Equatable {
     var cubes: Puzzle
-    var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
     var nub: CubeSceneView.ViewState.NubState
@@ -23,7 +22,6 @@ public struct CubePreview {
 
     public init(
       cubes: ArchivablePuzzle,
-      isOnLowPowerMode: Bool = false,
       moveIndex: Int,
       moves: Moves,
       nub: CubeSceneView.ViewState.NubState = .init(),
@@ -32,7 +30,6 @@ public struct CubePreview {
       var cubes = Puzzle(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &cubes)
       self.cubes = cubes
-      self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
       self.nub = nub
@@ -78,7 +75,6 @@ public struct CubePreview {
           }
         },
         enableGyroMotion: self.userSettings.enableGyroMotion,
-        isOnLowPowerMode: self.isOnLowPowerMode,
         nub: self.nub,
         playedWords: [],
         selectedFaceCount: self.selectedCubeFaces.count,
@@ -104,12 +100,10 @@ public struct CubePreview {
   public enum Action: BindableAction {
     case binding(BindingAction<State>)
     case cubeScene(CubeSceneView.ViewAction)
-    case lowPowerModeResponse(Bool)
     case tap
     case task
   }
 
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
 
   public init() {}
@@ -126,10 +120,6 @@ public struct CubePreview {
       case .cubeScene:
         return .none
 
-      case let .lowPowerModeResponse(isOn):
-        state.isOnLowPowerMode = isOn
-        return .none
-
       case .tap:
         state.nub.location = .offScreenRight
         switch state.moves[state.moveIndex].type {
@@ -143,12 +133,6 @@ public struct CubePreview {
       case .task:
         return .run { [move = state.moves[state.moveIndex], nub = state.nub] send in
           var nub = nub
-
-          await send(
-            .lowPowerModeResponse(
-              await self.lowPowerMode.start().first(where: { _ in true }) ?? false
-            )
-          )
 
           try await self.mainQueue.sleep(for: .seconds(1))
 

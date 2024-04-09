@@ -12,7 +12,6 @@ struct CubeCorePreviewApp: App {
           initialState: CubeSceneView.ViewState(
             cubes: .mock,
             enableGyroMotion: false,
-            isOnLowPowerMode: false,
             nub: nil,
             playedWords: [],
             selectedFaceCount: 0,

@@ -5,7 +5,6 @@ import CubeCore
 import DictionaryClient
 import FeedbackGeneratorClient
 import GameCore
-import LowPowerModeClient
 import PuzzleGen
 import SharedModels
 import Styleguide
@@ -183,7 +182,6 @@ public struct Onboarding {
   }
   @Dependency(\.dictionary) var dictionary
   @Dependency(\.feedbackGenerator) var feedbackGenerator
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.userDefaults) var userDefaults
 

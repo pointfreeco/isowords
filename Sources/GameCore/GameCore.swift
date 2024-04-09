@@ -80,7 +80,7 @@ public struct Game {
     public var gameStartTime: Date
     public var isDemo: Bool
     public var isGameLoaded: Bool
-    public var isOnLowPowerMode: Bool
+    @Shared(.isLowPowerEnabled) var isLowPowerEnabled = false
     public var isPanning: Bool
     public var isTrayVisible: Bool
     public var language: Language
@@ -104,7 +104,6 @@ public struct Game {
       isDemo: Bool = false,
       isGameLoaded: Bool = false,
       isPanning: Bool = false,
-      isOnLowPowerMode: Bool = false,
       isTrayVisible: Bool = false,
       language: Language = .en,
       moves: Moves = [],
@@ -124,7 +123,6 @@ public struct Game {
       self.gameStartTime = gameStartTime
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
-      self.isOnLowPowerMode = isOnLowPowerMode
       self.isPanning = isPanning
       self.isTrayVisible = isTrayVisible
       self.language = language
@@ -168,7 +166,6 @@ public struct Game {
     case doubleTap(index: LatticePoint)
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case lowPowerModeChanged(Bool)
     case matchesLoaded(Result<[TurnBasedMatch], Error>)
     case menuButtonTapped
     case task
@@ -191,7 +188,6 @@ public struct Game {
   @Dependency(\.dismiss) var dismiss
   @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.serverConfig.config) var serverConfig
@@ -321,10 +317,6 @@ public struct Game {
           }
         }
 
-      case let .lowPowerModeChanged(isOn):
-        state.isOnLowPowerMode = isOn
-        return .none
-
       case .matchesLoaded:
         return .none
 
@@ -338,12 +330,6 @@ public struct Game {
 
         return .run { [gameContext = state.gameContext] send in
           await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask {
-              for await isLowPower in await self.lowPowerMode.start() {
-                await send(.lowPowerModeChanged(isLowPower))
-              }
-            }
-
             if gameContext.is(\.turnBased) {
               group.addTask {
                 let playedGamesCount = await self.userDefaults
