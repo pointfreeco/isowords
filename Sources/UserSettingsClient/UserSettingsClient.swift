@@ -29,12 +29,7 @@ public struct UserSettingsClient {
 
 extension UserSettingsClient: DependencyKey {
   public static var liveValue: UserSettingsClient {
-    let userSettingsFileURL = FileManager.default
-      .urls(for: .documentDirectory, in: .userDomainMask)
-      .first!
-      .appendingPathComponent(userSettingsFileName)
-      .appendingPathExtension("json")
-    let initialUserSettingsData = (try? Data(contentsOf: userSettingsFileURL)) ?? Data()
+    let initialUserSettingsData = (try? Data(contentsOf: .userSettings)) ?? Data()
     let initialUserSettings =
       (try? JSONDecoder().decode(UserSettings.self, from: initialUserSettingsData))
       ?? UserSettings()
@@ -49,7 +44,7 @@ extension UserSettingsClient: DependencyKey {
         userSettings.withValue {
           $0 = updatedUserSettings
           subject.send(updatedUserSettings)
-          try? JSONEncoder().encode(updatedUserSettings).write(to: userSettingsFileURL)
+          try? JSONEncoder().encode(updatedUserSettings).write(to: .userSettings)
         }
       },
       stream: {
@@ -84,5 +79,3 @@ extension DependencyValues {
     set { self[UserSettingsClient.self] = newValue }
   }
 }
-
-public let userSettingsFileName = "user-settings"

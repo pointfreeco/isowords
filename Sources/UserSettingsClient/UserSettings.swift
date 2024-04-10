@@ -72,3 +72,9 @@ public struct UserSettings: Codable, Equatable {
       (try? container.decode(Bool.self, forKey: .sendDailyChallengeSummary)) ?? true
   }
 }
+
+extension URL {
+  public static let userSettings = Self.documentsDirectory
+    .appendingPathComponent("user-settings")
+    .appendingPathExtension("json")
+}
