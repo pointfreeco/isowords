@@ -87,7 +87,6 @@ public struct SoloView: View {
     }
     .adaptivePadding(.vertical)
     .screenEdgePadding(.horizontal)
-    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
       foregroundColor: self.colorScheme == .dark ? .solo : .isowordsBlack,

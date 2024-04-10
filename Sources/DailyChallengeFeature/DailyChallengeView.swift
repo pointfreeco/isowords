@@ -254,7 +254,7 @@ public struct DailyChallengeView: View {
   var unlimitedState: ButtonState {
     .init(
       fetchedResponse: store.dailyChallenges.unlimited,
-      inProgressGame: store.inProgressDailyChallengeUnlimited
+      inProgressGame: store.savedGames.dailyChallengeUnlimited
     )
   }
 
