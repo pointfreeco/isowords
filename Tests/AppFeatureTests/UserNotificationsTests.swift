@@ -7,8 +7,8 @@ import XCTest
 
 @testable import AppFeature
 
-@MainActor
 class UserNotificationsTests: XCTestCase {
+  @MainActor
   func testReceiveBackgroundNotification() async {
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let response = UserNotificationClient.Notification.Response(
@@ -43,6 +43,7 @@ class UserNotificationsTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testReceiveForegroundNotification() async {
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let notification = UserNotificationClient.Notification(

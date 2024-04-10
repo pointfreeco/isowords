@@ -26,8 +26,8 @@ extension DependencyValues {
   }
 }
 
-@MainActor
 class SettingsFeatureTests: XCTestCase {
+  @MainActor
   func testUserSettingsBackwardsDecodability() {
     XCTAssertNoDifference(
       try JSONDecoder().decode(UserSettings.self, from: Data("{}".utf8)),
@@ -59,7 +59,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Notifications
 
-  // TODO: Fix once we have the TestStore binding test helper
+  @MainActor
   func testEnableNotifications_NotDetermined_GrantAuthorization() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
 
@@ -105,6 +105,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testEnableNotifications_NotDetermined_DenyAuthorization() async {
     let store = TestStore(
       initialState: Settings.State()
@@ -145,6 +146,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testNotifications_PreviouslyGranted() async {
     let store = TestStore(
       initialState: Settings.State()
@@ -181,6 +183,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testNotifications_PreviouslyDenied() async {
     let openedUrl = ActorIsolated<URL?>(nil)
     let store = TestStore(
@@ -232,6 +235,7 @@ class SettingsFeatureTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testNotifications_RemoteSettingsUpdates() async {
     var userSettings = UserSettings(sendDailyChallengeReminder: false)
     let didUpdate = LockIsolated(false)
@@ -292,6 +296,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Sounds
 
+  @MainActor
   func testSetMusicVolume() async {
     let setMusicVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
@@ -312,6 +317,7 @@ class SettingsFeatureTests: XCTestCase {
     await setMusicVolume.withValue { XCTAssertNoDifference($0, 0.5) }
   }
 
+  @MainActor
   func testSetSoundEffectsVolume() async {
     let setSoundEffectsVolume = ActorIsolated<Float?>(nil)
     let store = TestStore(
@@ -336,6 +342,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Appearance
 
+  @MainActor
   func testSetColorScheme() async {
     let overriddenUserInterfaceStyle = ActorIsolated<UIUserInterfaceStyle?>(nil)
     let store = TestStore(
@@ -363,6 +370,7 @@ class SettingsFeatureTests: XCTestCase {
     await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .unspecified) }
   }
 
+  @MainActor
   func testSetAppIcon() async {
     let overriddenIconName = ActorIsolated<String?>(nil)
     let store = TestStore(
@@ -384,6 +392,7 @@ class SettingsFeatureTests: XCTestCase {
     await overriddenIconName.withValue { XCTAssertNoDifference($0, "icon-2") }
   }
 
+  @MainActor
   func testUnsetAppIcon() async {
     let overriddenIconName = ActorIsolated<String?>(nil)
     let store = TestStore(
@@ -423,6 +432,7 @@ class SettingsFeatureTests: XCTestCase {
 
   // MARK: - Developer
 
+  @MainActor
   func testSetApiBaseUrl() async {
     let setBaseUrl = ActorIsolated<URL?>(nil)
     let didLogout = ActorIsolated(false)

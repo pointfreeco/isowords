@@ -12,10 +12,8 @@ import XCTest
 @testable import LocalDatabaseClient
 @testable import UserDefaultsClient
 
-@MainActor
 class GameOverFeatureTests: XCTestCase {
-  let mainRunLoop = RunLoop.test
-
+  @MainActor
   func testSubmitLeaderboardScore() async throws {
     await withMainSerialExecutor {
       let store = TestStore(
@@ -80,6 +78,7 @@ class GameOverFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testSubmitDailyChallenge() async {
     await withMainSerialExecutor {
       let dailyChallengeResponses = [
@@ -185,6 +184,7 @@ class GameOverFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testTurnBased_TrackLeaderboards() async {
     await withMainSerialExecutor {
       let store = TestStore(
@@ -239,7 +239,9 @@ class GameOverFeatureTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testRequestReviewOnClose() async {
+    let mainRunLoop = RunLoop.test
     let lastReviewRequestTimeIntervalSet = ActorIsolated<Double?>(nil)
     let requestReviewCount = ActorIsolated(0)
     
@@ -273,7 +275,7 @@ class GameOverFeatureTests: XCTestCase {
           wordsFound: 1
         )
       }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      $0.mainRunLoop = mainRunLoop.eraseToAnyScheduler()
       $0.storeKit.requestReview = {
         await requestReviewCount.withValue { $0 += 1 }
       }
@@ -283,12 +285,12 @@ class GameOverFeatureTests: XCTestCase {
           await lastReviewRequestTimeIntervalSet.setValue(double)
         }
       }
-      $0.dismiss = DismissEffect {}
+      $0.dismissGame = DismissEffect {}
     }
 
     // Assert that the first time game over appears we do not request review
     await store.send(.closeButtonTapped)
-    await self.mainRunLoop.advance()
+    await mainRunLoop.advance()
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
 
@@ -308,12 +310,13 @@ class GameOverFeatureTests: XCTestCase {
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
-    await self.mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
+    await mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     await store.send(.closeButtonTapped).finish()
     await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
     await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
   }
 
+  @MainActor
   func testAutoCloseWhenNoWordsPlayed() async throws {
     let store = TestStore(
       initialState: GameOver.State(
@@ -331,13 +334,15 @@ class GameOverFeatureTests: XCTestCase {
     ) {
       GameOver()
     } withDependencies: {
-      $0.dismiss = DismissEffect {}
+      $0.dismissGame = DismissEffect {}
     }
 
     await store.send(.task)
   }
 
+  @MainActor
   func testShowUpgradeInterstitial() async {
+    let mainRunLoop = RunLoop.test
     let store = TestStore(
       initialState: GameOver.State(
         completedGame: .init(
@@ -358,7 +363,7 @@ class GameOverFeatureTests: XCTestCase {
       $0.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
       $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
       $0.database.playedGamesCount = { _ in 6 }
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
+      $0.mainRunLoop = mainRunLoop.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
       $0.userNotifications.getNotificationSettings = {
         (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
@@ -366,15 +371,16 @@ class GameOverFeatureTests: XCTestCase {
     }
 
     let task = await store.send(.task)
-    await self.mainRunLoop.advance(by: .seconds(1))
+    await mainRunLoop.advance(by: .seconds(1))
     await store.receive(\.delayedShowUpgradeInterstitial) {
       $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
     }
-    await self.mainRunLoop.advance(by: .seconds(1))
+    await mainRunLoop.advance(by: .seconds(1))
     await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
     await task.cancel()
   }
 
+  @MainActor
   func testSkipUpgradeIfLessThan6GamesPlayed() async {
     let store = TestStore(
       initialState: GameOver.State(

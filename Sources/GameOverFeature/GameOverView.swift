@@ -127,7 +127,7 @@ public struct GameOver {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
-  @Dependency(\.dismiss) var dismiss
+  @Dependency(\.dismissGame) var dismissGame
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.storeKit.requestReview) var requestReview
   @Dependency(\.serverConfig.config) var serverConfig
@@ -147,7 +147,7 @@ public struct GameOver {
         else {
           return .run { send in
             try? await self.requestReviewAsync()
-            await self.dismiss(animation: .default)
+            await self.dismissGame(animation: .default)
           }
         }
 
@@ -206,14 +206,14 @@ public struct GameOver {
       where state.destination.is(\.some.notificationsAuthAlert):
         return .run { _ in
           try? await self.requestReviewAsync()
-          await self.dismiss(animation: .default)
+          await self.dismissGame(animation: .default)
         }
 
       case .destination(
         .presented(.notificationsAuthAlert(.delegate(.didChooseNotificationSettings)))
       ):
         return .run { _ in
-          await self.dismiss(animation: .default)
+          await self.dismissGame(animation: .default)
         }
 
       case .destination:
@@ -274,7 +274,7 @@ public struct GameOver {
         return .run { [completedGame = state.completedGame, isDemo = state.isDemo] send in
           guard isDemo || completedGame.currentScore > 0
           else {
-            await self.dismiss(animation: .default)
+            await self.dismissGame(animation: .default)
             return
           }
 

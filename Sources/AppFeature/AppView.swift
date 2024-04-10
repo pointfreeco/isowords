@@ -241,6 +241,7 @@ public struct AppReducer {
           )
           async let refresh = self.refreshServerConfig()
           _ = try await (register, refresh)
+        } catch: { _, _ in
         }
 
       case .didChangeScenePhase:

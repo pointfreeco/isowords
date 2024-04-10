@@ -73,7 +73,7 @@ public struct UserSettings: Codable, Equatable {
   }
 }
 
-extension PersistenceKey where Self == FileStorageKey<UserSettings> {
+extension PersistenceReaderKey where Self == FileStorageKey<UserSettings> {
   public static var userSettings: Self {
     fileStorage(
       FileManager.default

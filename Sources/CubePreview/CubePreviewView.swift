@@ -239,7 +239,7 @@ public struct CubePreviewView: View {
           .task { await store.send(.task).finish() }
       }
       .background {
-        if !store.userSettings.enableReducedAnimation {
+        if !store.isAnimationReduced {
           BloomBackground(
             size: proxy.size,
             word: store.selectedWordString

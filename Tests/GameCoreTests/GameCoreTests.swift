@@ -4,8 +4,8 @@ import GameCore
 import GameOverFeature
 import XCTest
 
-@MainActor
 class GameCoreTests: XCTestCase {
+  @MainActor
   func testForfeitTurnBasedGame() async {
     let didEndMatchInTurn = ActorIsolated(false)
 

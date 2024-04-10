@@ -9,8 +9,8 @@ import XCTest
 
 @testable import LeaderboardFeature
 
-@MainActor
 class LeaderboardTests: XCTestCase {
+  @MainActor
   func testOnAppear() async {
     let store = TestStore(
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
@@ -28,6 +28,7 @@ class LeaderboardTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testChangeGameMode() async {
     let store = TestStore(
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
@@ -45,6 +46,7 @@ class LeaderboardTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testChangeTimeScope() async {
     let store = TestStore(
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
@@ -66,6 +68,7 @@ class LeaderboardTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testUnhappyPath() async {
     let store = TestStore(
       initialState: LeaderboardResults<TimeScope>.State(timeScope: .lastWeek)

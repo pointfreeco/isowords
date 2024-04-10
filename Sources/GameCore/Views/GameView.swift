@@ -71,7 +71,7 @@ public struct GameView<Content>: View where Content: View {
             )
             .ignoresSafeArea()
             .transition(
-              store.userSettings.enableReducedAnimation
+              store.isAnimationReduced
                 ? .opacity
                 : .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
                   .combined(with: .opacity)
@@ -126,7 +126,7 @@ public struct GameView<Content>: View where Content: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background {
-        if !store.userSettings.enableReducedAnimation {
+        if !store.isAnimationReduced {
           BloomBackground(
             size: proxy.size,
             word: store.selectedWordString

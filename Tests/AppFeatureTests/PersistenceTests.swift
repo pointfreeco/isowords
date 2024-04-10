@@ -19,8 +19,8 @@ import XCTest
 @testable import SoloFeature
 @testable import UserDefaultsClient
 
-@MainActor
 class PersistenceTests: XCTestCase {
+  @MainActor
   func testUnlimitedSaveAndQuit() async throws {
     let saves = ActorIsolated<[Data]>([])
 
@@ -141,6 +141,7 @@ class PersistenceTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testUnlimitedAbandon() async throws {
     let didArchiveGame = ActorIsolated(false)
     let saves = ActorIsolated<[Data]>([])
@@ -203,6 +204,7 @@ class PersistenceTests: XCTestCase {
     }
   }
 
+  @MainActor
   func testTimedAbandon() async {
     let didArchiveGame = ActorIsolated(false)
 
@@ -251,6 +253,7 @@ class PersistenceTests: XCTestCase {
     await didArchiveGame.withValue { XCTAssert($0) }
   }
 
+  @MainActor
   func testUnlimitedResume() async {
     let savedGames = SavedGamesState(dailyChallengeUnlimited: nil, unlimited: .mock)
     let store = TestStore(
@@ -275,6 +278,7 @@ class PersistenceTests: XCTestCase {
     await task.cancel()
   }
 
+  @MainActor
   func testTurnBasedAbandon() async {
     let store = TestStore(
       initialState: AppReducer.State(
