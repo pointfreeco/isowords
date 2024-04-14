@@ -21,7 +21,6 @@ public struct AppDelegateReducer {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
-  //@Dependency(\.build.number) var buildNumber
   @Dependency(\.dictionary.load) var loadDictionary
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle

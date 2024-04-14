@@ -72,13 +72,15 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let cameraNode = SCNNode()
   private var cancellables: Set<AnyCancellable> = []
   private let gameCubeNode = SCNNode()
-  @Published var isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
   private let light = SCNLight()
   private var motionManager: CMMotionManager?
   private var startingAttitude: Attitude?
   private let viewStore: ViewStore<ViewState, ViewAction>
   private var worldScale: Float = 1.0
 
+  @Published var isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled {
+    didSet { self.update() }
+  }
   var enableCubeShadow = true {
     didSet { self.update() }
   }
@@ -113,13 +115,11 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
     self.scene?.rootNode.addChildNode(self.gameCubeNode)
 
-    NotificationCenter.default.addObserver(
-      forName: .NSProcessInfoPowerStateDidChange,
-      object: nil,
-      queue: nil
-    ) { [weak self] _ in
-      self?.isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
-    }
+    NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)
+      .sink { [weak self] _ in
+        self?.isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
+      }
+      .store(in: &cancellables)
 
     self.viewStore.publisher.cubes
       .sink { cubes in

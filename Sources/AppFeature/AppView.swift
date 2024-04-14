@@ -10,7 +10,7 @@ import OnboardingFeature
 import SharedModels
 import Styleguide
 import SwiftUI
-import ServerConfigClient
+import ServerConfigPersistenceKey
 
 @Reducer
 public struct AppReducer {
@@ -28,7 +28,7 @@ public struct AppReducer {
     @Shared(.savedGames) var savedGames = SavedGamesState()
     @Shared(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding = false
     @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
-    @SharedReader(.serverConfigNew) var serverConfig = ServerConfig()
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
@@ -56,8 +56,6 @@ public struct AppReducer {
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.remoteNotifications) var remoteNotifications
-  //@Dependency(\.serverConfig.refresh) var refreshServerConfig
-  //@Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
@@ -240,7 +238,7 @@ public struct AppReducer {
             remoteNotifications: self.remoteNotifications,
             userNotifications: self.userNotifications
           )
-          async let refresh = serverConfig.persistence.reload() //.refreshServerConfig()
+          async let refresh = serverConfig.persistence.reload()
           _ = try await (register, refresh)
         } catch: { _, _ in
         }

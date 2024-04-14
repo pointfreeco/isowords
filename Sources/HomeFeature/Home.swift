@@ -8,12 +8,11 @@ import DeviceId
 import LeaderboardFeature
 import MultiplayerFeature
 import Overture
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import SettingsFeature
 import SharedModels
 import SoloFeature
 import SwiftUI
-import UserDefaultsClient
 import Build
 
 public struct ActiveMatchResponse: Equatable {
@@ -44,7 +43,7 @@ public struct Home {
     public var weekInReview: FetchWeekInReviewResponse?
     @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
     @Shared(.build) var build = Build()
-    @SharedReader(.serverConfigNew) var serverConfig = ServerConfig()
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
 
     public var hasChangelog: Bool {
       self.serverConfig.newestBuild > self.build.number
@@ -111,14 +110,11 @@ public struct Home {
   }
 
   @Dependency(\.apiClient) var apiClient
-  //@Dependency(\.build.number) var buildNumber
   @Dependency(\.deviceId) var deviceId
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.audioPlayer.play) var playSound
-  //@Dependency(\.serverConfig) var serverConfig
   @Dependency(\.timeZone) var timeZone
-  //@Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 
@@ -298,7 +294,7 @@ public struct Home {
       )
       await send(.authenticationResponse(currentPlayerEnvelope))
 
-      @SharedReader(.serverConfigNew) var serverConfig = ServerConfig()
+      @SharedReader(.serverConfig) var serverConfig = ServerConfig()
       async let serverConfigResponse: Void = $serverConfig.persistence.reload()
 
       async let dailyChallengeResponse: Void = send(

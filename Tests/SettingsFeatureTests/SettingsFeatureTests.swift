@@ -6,7 +6,6 @@ import ComposableUserNotifications
 import Overture
 import SharedModels
 import TestHelpers
-import UserDefaultsClient
 import UserNotifications
 import UserSettings
 import XCTest

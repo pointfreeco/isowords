@@ -9,7 +9,7 @@ import StatsFeature
 import StoreKit
 import UIApplicationClient
 import UserSettings
-import ServerConfigClient
+import ServerConfigPersistenceKey
 
 public struct DeveloperSettings: Equatable {
   public var currentBaseUrl: BaseUrl
@@ -46,16 +46,16 @@ public struct Settings {
   @ObservableState
   public struct State: Equatable {
     @Presents public var alert: AlertState<Action.Alert>?
+    @Shared(.build) var build = Build()
     public var developer: DeveloperSettings
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
     public var isRestoring: Bool
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
     @Shared(.userSettings) public var userSettings: UserSettings = UserSettings()
-    @Shared(.build) var build = Build()
-    @Shared(.serverConfig) var serverConfig = ServerConfigClass()
 
     public struct ProductError: Error, Equatable {}
 
@@ -109,10 +109,8 @@ public struct Settings {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
-  //@Dependency(\.build) var build
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
-  //@Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
   @Dependency(\.userNotifications) var userNotifications
 

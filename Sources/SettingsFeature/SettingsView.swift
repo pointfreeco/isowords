@@ -1,7 +1,7 @@
 import Build
 import ComposableArchitecture
 import ComposableStoreKit
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import StatsFeature
 import Styleguide
 import SwiftUI

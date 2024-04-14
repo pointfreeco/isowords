@@ -3,11 +3,10 @@ import AudioPlayerClient
 import ComposableStoreKit
 import ComposableUserNotifications
 import RemoteNotificationsClient
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import SettingsFeature
 import Styleguide
 import SwiftUI
-import UserDefaultsClient
 
 @main
 struct SettingsPreviewApp: App {

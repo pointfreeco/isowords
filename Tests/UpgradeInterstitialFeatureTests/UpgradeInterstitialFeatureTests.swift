@@ -8,7 +8,7 @@ import StoreKit
 import UpgradeInterstitialFeature
 import XCTest
 
-@testable import ServerConfigClient
+@testable import ServerConfigPersistenceKey
 
 class UpgradeInterstitialFeatureTests: XCTestCase {
   let scheduler = RunLoop.test

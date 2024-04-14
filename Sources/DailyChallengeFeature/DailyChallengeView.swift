@@ -120,11 +120,7 @@ public struct DailyChallengeReducer {
           await send(
             .startDailyChallengeResponse(
               Result {
-                try await startDailyChallengeAsync(
-                  challenge,
-                  apiClient: self.apiClient,
-                  date: { self.now }
-                )
+                try await startDailyChallenge(challenge)
               }
             )
           )

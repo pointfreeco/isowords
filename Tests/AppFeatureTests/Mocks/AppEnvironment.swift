@@ -4,7 +4,6 @@ import ComposableArchitecture
 import Foundation
 import Overture
 import SettingsFeature
-import UserDefaultsClient
 
 extension DependencyValues {
   mutating func didFinishLaunching() {

@@ -4,7 +4,6 @@ import ServerConfig
 import XCTest
 
 @testable import ChangelogFeature
-@testable import UserDefaultsClient
 
 class ChangelogFeatureTests: XCTestCase {
   @MainActor

@@ -13,7 +13,6 @@ import Styleguide
 import SwiftUI
 import SwiftUIHelpers
 import UpgradeInterstitialFeature
-import UserDefaultsClient
 
 @Reducer
 public struct GameOver {
@@ -131,8 +130,6 @@ public struct GameOver {
   @Dependency(\.dismissGame) var dismissGame
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.storeKit.requestReview) var requestReview
-  //@Dependency(\.serverConfig.config) var serverConfig
-  //@Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
   public init() {}
@@ -185,11 +182,7 @@ public struct GameOver {
             await send(
               .startDailyChallengeResponse(
                 Result {
-                  try await startDailyChallengeAsync(
-                    challenge,
-                    apiClient: self.apiClient,
-                    date: { self.mainRunLoop.now.date }
-                  )
+                  try await startDailyChallenge(challenge)
                 }
               )
             )

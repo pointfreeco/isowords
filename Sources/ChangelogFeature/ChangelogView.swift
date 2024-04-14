@@ -1,7 +1,7 @@
 import ApiClient
 import Build
 import ComposableArchitecture
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import SharedModels
 import Styleguide
 import SwiftUI
@@ -16,7 +16,7 @@ public struct ChangelogReducer {
     public var currentBuild: Build.Number
     public var isRequestInFlight: Bool
     public var isUpdateButtonVisible: Bool
-    @SharedReader(.serverConfigNew) var serverConfig = ServerConfig()
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
     @Shared(.build) var build = Build()
 
     public init(
@@ -48,9 +48,7 @@ public struct ChangelogReducer {
   }
 
   @Dependency(\.apiClient) var apiClient
-  //@Dependency(\.build.number) var buildNumber
   @Dependency(\.applicationClient.open) var openURL
-  //@Dependency(\.serverConfig) var serverConfig
 
   public init() {}
 
@@ -185,8 +183,6 @@ public struct ChangelogView: View {
               return apiClient
             }()
             $0.applicationClient = .noop
-            //$0.build.number = { 98 }
-            //$0.serverConfig = .noop
           }
         )
         .navigationStyle(

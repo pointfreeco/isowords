@@ -17,7 +17,6 @@ import XCTest
 @testable import AppFeature
 @testable import GameCore
 @testable import SoloFeature
-@testable import UserDefaultsClient
 
 class PersistenceTests: XCTestCase {
   @MainActor

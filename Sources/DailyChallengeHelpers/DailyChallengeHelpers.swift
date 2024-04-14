@@ -10,18 +10,17 @@ public enum DailyChallengeError: Error, Equatable {
   case couldNotFetch(nextStartsAt: Date)
 }
 
-public func startDailyChallengeAsync(
-  _ challenge: FetchTodaysDailyChallengeResponse,
-  apiClient: ApiClient,
-  date: @escaping () -> Date
+public func startDailyChallenge(
+  _ challenge: FetchTodaysDailyChallengeResponse
 ) async throws -> InProgressGame {
+  @Dependency(\.apiClient) var apiClient
+  @Dependency(\.date.now) var now
+  @Shared(.savedGames) var savedGames = SavedGamesState()
+
   guard challenge.yourResult.rank == nil
   else {
     throw DailyChallengeError.alreadyPlayed(endsAt: challenge.dailyChallenge.endsAt)
   }
-
-  @Shared(.savedGames) var savedGames = SavedGamesState()
-
   guard
     challenge.dailyChallenge.gameMode == .unlimited,
     let game = savedGames.dailyChallengeUnlimited
@@ -37,9 +36,8 @@ public func startDailyChallengeAsync(
           ),
           as: StartDailyChallengeResponse.self
         ),
-        date: date()
+        date: now
       )
-
     } catch {
       throw DailyChallengeError.couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt)
     }

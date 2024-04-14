@@ -10,7 +10,6 @@ import SharedModels
 import Styleguide
 import SwiftUI
 import UIApplicationClient
-import UserDefaultsClient
 import UserSettings
 
 @Reducer
@@ -184,7 +183,6 @@ public struct Onboarding {
   @Dependency(\.dictionary) var dictionary
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.mainQueue) var mainQueue
-  //@Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 

@@ -1,6 +1,6 @@
 import ComposableArchitecture
 import ComposableStoreKit
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import StoreKit
 import Styleguide
 import SwiftUI
@@ -21,8 +21,8 @@ public struct UpgradeInterstitial {
     public var isDismissable: Bool
     public var isPurchasing: Bool
     public var secondsPassedCount: Int
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
     public var upgradeInterstitialDuration: Int
-    @Shared(.serverConfig) var serverConfig = ServerConfigClass()
 
     public init(
       fullGameProduct: StoreKitClient.Product? = nil,
@@ -56,7 +56,6 @@ public struct UpgradeInterstitial {
 
   @Dependency(\.dismiss) var dismiss
   @Dependency(\.mainRunLoop) var mainRunLoop
-  //@Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
 
   public init() {}
@@ -300,14 +299,14 @@ public func shouldShowInterstitial(
   gamePlayedCount: Int,
   gameContext: GameContext
 ) -> Bool {
-  @Shared(.serverConfig) var serverConfig = ServerConfigClass()
+  @SharedReader(.serverConfig) var serverConfig = ServerConfig()
   let triggerCount = serverConfig.triggerCount(gameContext: gameContext)
   let triggerEvery = serverConfig.triggerEvery(gameContext: gameContext)
   return gamePlayedCount >= triggerCount
     && (gamePlayedCount - triggerCount) % triggerEvery == 0
 }
 
-extension ServerConfigClass {
+extension ServerConfig {
   fileprivate func triggerCount(gameContext: GameContext) -> Int {
     switch gameContext {
     case .dailyChallenge:

@@ -165,8 +165,6 @@ public struct Game {
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  //@Dependency(\.serverConfig.config) var serverConfig
-  //@Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 

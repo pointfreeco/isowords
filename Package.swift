@@ -219,7 +219,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
     .library(name: "RemoteNotificationsClient", targets: ["RemoteNotificationsClient"]),
     .library(name: "SelectionSoundsCore", targets: ["SelectionSoundsCore"]),
-    .library(name: "ServerConfigClient", targets: ["ServerConfigClient"]),
+    .library(name: "ServerConfigPersistenceKey", targets: ["ServerConfigPersistenceKey"]),
     .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
     .library(name: "SharedSwiftUIEnvironment", targets: ["SharedSwiftUIEnvironment"]),
     .library(name: "SoloFeature", targets: ["SoloFeature"]),
@@ -231,7 +231,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "UserSettings", targets: ["UserSettings"]),
     .library(name: "UIApplicationClient", targets: ["UIApplicationClient"]),
     .library(name: "UpgradeInterstitialFeature", targets: ["UpgradeInterstitialFeature"]),
-    .library(name: "UserDefaultsClient", targets: ["UserDefaultsClient"]),
     .library(name: "VocabFeature", targets: ["VocabFeature"]),
   ])
   package.targets.append(contentsOf: [
@@ -366,13 +365,12 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "ApiClient",
         "Build",
-        "ServerConfigClient",
+        "ServerConfigPersistenceKey",
         "SharedModels",
         "Styleguide",
         "SwiftUIHelpers",
         "TcaHelpers",
         "UIApplicationClient",
-        "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
       ]
@@ -519,7 +517,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FeedbackGeneratorClient",
         "OnboardingFeature",
         "SharedModels",
-        "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -611,7 +608,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SwiftUIHelpers",
         "TcaHelpers",
         "UpgradeInterstitialFeature",
-        "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -666,7 +662,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LeaderboardFeature",
         "LocalDatabaseClient",
         "MultiplayerFeature",
-        "ServerConfigClient",
+        "ServerConfigPersistenceKey",
         "SettingsFeature",
         "SharedModels",
         "SoloFeature",
@@ -675,7 +671,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
-        "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
       ]
@@ -798,7 +793,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       ]
     ),
     .target(
-      name: "ServerConfigClient",
+      name: "ServerConfigPersistenceKey",
       dependencies: [
         "ServerConfig",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -815,13 +810,12 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ComposableUserNotifications",
         "LocalDatabaseClient",
         "RemoteNotificationsClient",
-        "ServerConfigClient",
+        "ServerConfigPersistenceKey",
         "StatsFeature",
         "Styleguide",
         "SwiftUIHelpers",
         "TcaHelpers",
         "UIApplicationClient",
-        "UserDefaultsClient",
         "UserSettings",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
@@ -896,7 +890,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "OnboardingFeature",
         "SharedModels",
         "TcaHelpers",
-        "UserDefaultsClient",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -917,7 +910,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "UpgradeInterstitialFeature",
       dependencies: [
         "ComposableStoreKit",
-        "ServerConfigClient",
+        "ServerConfigPersistenceKey",
         "Styleguide",
         "SwiftUIHelpers",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -932,13 +925,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: ["__Snapshots__"]
-    ),
-    .target(
-      name: "UserDefaultsClient",
-      dependencies: [
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ]
     ),
     .target(
       name: "VocabFeature",
