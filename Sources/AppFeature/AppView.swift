@@ -24,9 +24,9 @@ public struct AppReducer {
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
-    @Shared(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding = false
+    @SharedReader(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding = false
     public var home: Home.State
-    @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
+    @Shared(.installationTime) var installationTime = 0
     @SharedReader(.serverConfig) var serverConfig = ServerConfig()
     @Shared(.savedGames) var savedGames = SavedGamesState()
 
@@ -238,8 +238,8 @@ public struct AppReducer {
             remoteNotifications: self.remoteNotifications,
             userNotifications: self.userNotifications
           )
-          async let refresh = serverConfig.persistence.reload()
-          _ = try await (register, refresh)
+          async let refresh: Void = serverConfig.persistence.reload()
+          _ = await (register, refresh)
         } catch: { _, _ in
         }
 

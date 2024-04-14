@@ -340,8 +340,7 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
 
   struct ActiveGamesView_Previews: PreviewProvider {
     static var previews: some View {
-      @Shared(.savedGames) var savedGames = SavedGamesState()
-      savedGames = SavedGamesState(
+      @Shared(.savedGames) var savedGames = SavedGamesState(
         dailyChallengeUnlimited: update(.mock) {
           $0?.moves = [.highScoringMove]
           $0?.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))

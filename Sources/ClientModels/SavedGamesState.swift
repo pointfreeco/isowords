@@ -13,7 +13,7 @@ public struct SavedGamesState: Codable, Equatable {
   }
 }
 
-extension PersistenceKey where Self == FileStorageKey<SavedGamesState> {
+extension PersistenceReaderKey where Self == FileStorageKey<SavedGamesState> {
   public static var savedGames: Self {
     fileStorage(.documentsDirectory.appending(path: "saved-games.json"))
   }

@@ -114,6 +114,7 @@ public struct Home {
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.audioPlayer.play) var playSound
   @Dependency(\.timeZone) var timeZone
+  @SharedReader(.serverConfig) var serverConfig = ServerConfig()
 
   public init() {}
 
@@ -293,7 +294,6 @@ public struct Home {
       )
       await send(.authenticationResponse(currentPlayerEnvelope))
 
-      @SharedReader(.serverConfig) var serverConfig = ServerConfig()
       async let serverConfigResponse: Void = $serverConfig.persistence.reload()
 
       async let dailyChallengeResponse: Void = send(
@@ -324,7 +324,7 @@ public struct Home {
           }
         )
       )
-      _ = try await (
+      _ = await (
         serverConfigResponse, dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse
       )
     } catch {}

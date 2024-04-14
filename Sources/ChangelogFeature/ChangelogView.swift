@@ -12,12 +12,12 @@ import UIApplicationClient
 public struct ChangelogReducer {
   @ObservableState
   public struct State: Equatable {
+    @SharedReader(.build) var build = Build()
     public var changelog: IdentifiedArrayOf<Change.State>
     public var currentBuild: Build.Number
     public var isRequestInFlight: Bool
     public var isUpdateButtonVisible: Bool
     @SharedReader(.serverConfig) var serverConfig = ServerConfig()
-    @Shared(.build) var build = Build()
 
     public init(
       changelog: IdentifiedArrayOf<Change.State> = [],

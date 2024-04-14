@@ -9,7 +9,6 @@ import Build
 @Reducer
 public struct AppDelegateReducer {
   public struct State: Equatable {
-    @Shared(.build) var build = Build()
     public init() {}
   }
 
@@ -25,6 +24,7 @@ public struct AppDelegateReducer {
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
   @Dependency(\.userNotifications) var userNotifications
+  @Shared(.build) var build = Build()
 
   public init() {}
 
@@ -84,14 +84,14 @@ public struct AppDelegateReducer {
 
       case let .didRegisterForRemoteNotifications(.success(tokenData)):
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-        return .run { [build = state.build] _ in
+        return .run { _ in
           let settings = await self.userNotifications.getNotificationSettings()
           _ = try await self.apiClient.apiRequest(
             route: .push(
               .register(
                 .init(
                   authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                  build: build.number,
+                  build: self.build.number,
                   token: token
                 )
               )

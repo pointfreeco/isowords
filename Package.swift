@@ -112,10 +112,7 @@ var package = Package(
     ),
     .target(
       name: "ServerConfig",
-      dependencies: [
-        "ApiClient",
-        "Build",
-      ]
+      dependencies: ["Build"]
     ),
     .target(
       name: "ServerRouter",
