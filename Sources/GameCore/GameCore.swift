@@ -314,7 +314,6 @@ public struct Game {
                   shouldShowInterstitial(
                     gamePlayedCount: multiplayerOpensCount,
                     gameContext: .init(gameContext: gameContext)
-                    //serverConfig: self.serverConfig()
                   )
                 else { return }
                 try await self.mainRunLoop.sleep(for: .seconds(3))

@@ -35,7 +35,6 @@ public struct GameOver {
     public var summary: RankSummary?
     public var turnBasedContext: TurnBasedContext?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    @Shared(.lastReviewRequest) public var lastReviewRequest = 0
 
     var completedMatch: CompletedMatch? {
       switch self.completedGame.gameContext {
@@ -129,8 +128,9 @@ public struct GameOver {
   @Dependency(\.database) var database
   @Dependency(\.dismissGame) var dismissGame
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.storeKit.requestReview) var requestReview
+  @Dependency(\.storeKit) var storeKit
   @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
+  @Shared(.lastReviewRequest) public var lastReviewRequest = 0
 
   public init() {}
 
@@ -143,8 +143,8 @@ public struct GameOver {
             .contains(state.userNotificationSettings?.authorizationStatus),
           case .dailyChallenge = state.completedGame.gameContext
         else {
-          return .run { [lastReviewRequest = state.$lastReviewRequest] send in
-            try await self.requestReview(lastReviewRequest: lastReviewRequest.eraseToAnyShared())
+          return .run { _ in
+            try await self.requestReview()
             await self.dismissGame(animation: .default)
           }
         }
@@ -198,8 +198,8 @@ public struct GameOver {
 
       case .destination(.dismiss)
       where state.destination.is(\.some.notificationsAuthAlert):
-        return .run { [lastReviewRequest = state.$lastReviewRequest] _ in
-          try await self.requestReview(lastReviewRequest: lastReviewRequest.eraseToAnyShared())
+        return .run { _ in
+          try await self.requestReview()
           await self.dismissGame(animation: .default)
         }
 
@@ -323,8 +323,6 @@ public struct GameOver {
                 shouldShowInterstitial(
                   gamePlayedCount: playedGamesCount,
                   gameContext: .init(gameContext: completedGame.gameContext)
-                  //,
-//                  serverConfig: self.serverConfig()
                 )
               else { return }
               await send(.delayedShowUpgradeInterstitial, animation: .easeIn)
@@ -355,18 +353,18 @@ public struct GameOver {
     }
   }
 
-  private func requestReview(lastReviewRequest: AnyShared<Double>) async throws {
+  private func requestReview() async throws {
     let stats = try await self.database.fetchStats()
-    let hasRequestedReviewBefore = lastReviewRequest.wrappedValue != 0
+    let hasRequestedReviewBefore = self.lastReviewRequest != 0
     let timeSinceLastReviewRequest =
-      self.mainRunLoop.now.date.timeIntervalSince1970 - lastReviewRequest.wrappedValue
+    self.mainRunLoop.now.date.timeIntervalSince1970 - self.lastReviewRequest
     let weekInSeconds: Double = 60 * 60 * 24 * 7
 
     if stats.gamesPlayed >= 3
       && (!hasRequestedReviewBefore || timeSinceLastReviewRequest >= weekInSeconds)
     {
-      await self.requestReview()
-      lastReviewRequest.wrappedValue = self.mainRunLoop.now.date.timeIntervalSince1970
+      await self.storeKit.requestReview()
+      self.lastReviewRequest = self.mainRunLoop.now.date.timeIntervalSince1970
     }
   }
 }
