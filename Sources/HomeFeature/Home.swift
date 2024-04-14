@@ -96,7 +96,6 @@ public struct Home {
     case leaderboardButtonTapped
     case multiplayerButtonTapped
     case nagBanner(PresentationAction<NagBanner.Action>)
-    //case serverConfigResponse(ServerConfig)
     case settingsButtonTapped
     case soloButtonTapped
     case task

@@ -24,11 +24,11 @@ public struct AppReducer {
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
-    public var home: Home.State
-    @Shared(.savedGames) var savedGames = SavedGamesState()
     @Shared(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding = false
+    public var home: Home.State
     @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
     @SharedReader(.serverConfig) var serverConfig = ServerConfig()
+    @Shared(.savedGames) var savedGames = SavedGamesState()
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
