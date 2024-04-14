@@ -144,9 +144,7 @@ public struct SettingsView: View {
       #endif
 
       VStack(spacing: 6) {
-        if let buildNumber = store.buildNumber {
-          Text("Build \(buildNumber.rawValue)")
-        }
+        Text("Build \(store.build.number.rawValue)")
         Button {
           store.send(.reportABugButtonTapped)
         } label: {

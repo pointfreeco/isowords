@@ -69,7 +69,7 @@ public struct Trailer {
         $0.remoteNotifications = .noop
         $0.serverConfig = .noop
         $0.storeKit = .noop
-        $0.userDefaults = .noop
+        //$0.userDefaults = .noop
         $0.userNotifications = .noop
       }
     }

@@ -9,7 +9,6 @@ import Dependencies
 import DictionaryClient
 import GameOverFeature
 import HapticsCore
-import LowPowerModeClient
 import Overture
 import SettingsFeature
 import SharedModels
@@ -56,7 +55,6 @@ public struct Game {
     public var gameStartTime: Date
     public var isDemo: Bool
     public var isGameLoaded: Bool
-    @Shared(.isLowPowerEnabled) var isLowPowerEnabled = false
     public var isPanning: Bool
     public var isTrayVisible: Bool
     public var language: Language
@@ -67,6 +65,7 @@ public struct Game {
     public var selectedWordIsValid: Bool
     @Shared(.userSettings) public var userSettings = UserSettings()
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
+    @Shared(.multiplayerOpensCount) var multiplayerOpensCount = 0
 
     public init(
       activeGames: ActiveGamesState = .init(),
@@ -166,8 +165,8 @@ public struct Game {
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.serverConfig.config) var serverConfig
-  @Dependency(\.userDefaults) var userDefaults
+  //@Dependency(\.serverConfig.config) var serverConfig
+  //@Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 
@@ -304,20 +303,20 @@ public struct Game {
       case .task:
         guard !state.isGameOver else { return .none }
         state.gameCurrentTime = self.date()
-
-        return .run { [gameContext = state.gameContext] send in
+        if state.gameContext.is(\.turnBased) {
+          state.multiplayerOpensCount += 1
+        }
+        return .run { [multiplayerOpensCount = state.multiplayerOpensCount, gameContext = state.gameContext] send in
           await withThrowingTaskGroup(of: Void.self) { group in
             if gameContext.is(\.turnBased) {
               group.addTask {
-                let playedGamesCount = await self.userDefaults
-                  .incrementMultiplayerOpensCount()
                 let isFullGamePurchased = self.currentPlayer()?.appleReceipt != nil
                 guard
                   !isFullGamePurchased,
                   shouldShowInterstitial(
-                    gamePlayedCount: playedGamesCount,
-                    gameContext: .init(gameContext: gameContext),
-                    serverConfig: self.serverConfig()
+                    gamePlayedCount: multiplayerOpensCount,
+                    gameContext: .init(gameContext: gameContext)
+                    //serverConfig: self.serverConfig()
                   )
                 else { return }
                 try await self.mainRunLoop.sleep(for: .seconds(3))
@@ -630,7 +629,7 @@ extension DependencyValues {
     self = Self.test
     self.apiClient = .noop
     self.audioPlayer = previousValues.audioPlayer
-    self.build = .noop
+    //self.build = .noop
     self.database = .noop
     self.date = previousValues.date
     self.dictionary = previousValues.dictionary
@@ -639,7 +638,7 @@ extension DependencyValues {
     self.mainRunLoop = previousValues.mainRunLoop
     self.mainQueue = previousValues.mainQueue
     self.remoteNotifications = .noop
-    self.serverConfig = .noop
+    //self.serverConfig = .noop
     self.storeKit = .noop
     self.userNotifications = .noop
   }

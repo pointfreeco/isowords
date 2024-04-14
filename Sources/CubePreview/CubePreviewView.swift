@@ -2,7 +2,6 @@ import Bloom
 import ComposableArchitecture
 import CubeCore
 import HapticsCore
-import LowPowerModeClient
 import Overture
 import SelectionSoundsCore
 import SharedModels

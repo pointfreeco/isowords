@@ -2,7 +2,6 @@ import ClientModels
 import Combine
 import ComposableArchitecture
 import CoreMotion
-import LowPowerModeClient
 import SceneKit
 import SharedModels
 import Styleguide
@@ -73,7 +72,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let cameraNode = SCNNode()
   private var cancellables: Set<AnyCancellable> = []
   private let gameCubeNode = SCNNode()
-  @Shared(.isLowPowerEnabled) var isLowPowerEnabled = false
+  @Published var isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
   private let light = SCNLight()
   private var motionManager: CMMotionManager?
   private var startingAttitude: Attitude?
@@ -113,6 +112,14 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     worldScale = self.worldScale(for: size)
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
     self.scene?.rootNode.addChildNode(self.gameCubeNode)
+
+    NotificationCenter.default.addObserver(
+      forName: .NSProcessInfoPowerStateDidChange,
+      object: nil,
+      queue: nil
+    ) { [weak self] _ in
+      self?.isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
+    }
 
     self.viewStore.publisher.cubes
       .sink { cubes in
@@ -189,7 +196,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
     self.viewStore.publisher.map(\.enableGyroMotion)
-      .combineLatest($isLowPowerEnabled.publisher)
+      .combineLatest(self.$isLowPowerEnabled)
       .removeDuplicates(by: ==)
       .sink { [weak self] enableGyroMotion, isLowPowerEnabled in
         guard let self = self else { return }

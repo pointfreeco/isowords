@@ -10,6 +10,7 @@ import OnboardingFeature
 import SharedModels
 import Styleguide
 import SwiftUI
+import ServerConfigClient
 
 @Reducer
 public struct AppReducer {
@@ -25,6 +26,9 @@ public struct AppReducer {
     @Presents public var destination: Destination.State?
     public var home: Home.State
     @Shared(.savedGames) var savedGames = SavedGamesState()
+    @Shared(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding = false
+    @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
+    @SharedReader(.serverConfigNew) var serverConfig = ServerConfig()
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
@@ -52,8 +56,8 @@ public struct AppReducer {
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.remoteNotifications) var remoteNotifications
-  @Dependency(\.serverConfig.refresh) var refreshServerConfig
-  @Dependency(\.userDefaults) var userDefaults
+  //@Dependency(\.serverConfig.refresh) var refreshServerConfig
+  //@Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
@@ -92,16 +96,13 @@ public struct AppReducer {
     Reduce { state, action in
       switch action {
       case .appDelegate(.didFinishLaunching):
-        if !self.userDefaults.hasShownFirstLaunchOnboarding {
+        if !state.hasShownFirstLaunchOnboarding {
           state.destination = .onboarding(Onboarding.State(presentationStyle: .firstLaunch))
         }
-
-        return .run { send in
-          if self.userDefaults.installationTime <= 0 {
-            await self.userDefaults.setInstallationTime(
-              self.now.timeIntervalSinceReferenceDate
-            )
-          }
+        if state.installationTime <= 0 {
+          state.installationTime = self.now.timeIntervalSinceReferenceDate
+        }
+        return .run { _ in
           try await self.migrate()
         }
 
@@ -234,12 +235,12 @@ public struct AppReducer {
         return .none
 
       case .didChangeScenePhase(.active):
-        return .run { _ in
+        return .run { [serverConfig = state.$serverConfig] _ in
           async let register: Void = registerForRemoteNotificationsAsync(
             remoteNotifications: self.remoteNotifications,
             userNotifications: self.userNotifications
           )
-          async let refresh = self.refreshServerConfig()
+          async let refresh = serverConfig.persistence.reload() //.refreshServerConfig()
           _ = try await (register, refresh)
         } catch: { _, _ in
         }

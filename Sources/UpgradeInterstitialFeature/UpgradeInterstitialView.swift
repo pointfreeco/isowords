@@ -22,6 +22,7 @@ public struct UpgradeInterstitial {
     public var isPurchasing: Bool
     public var secondsPassedCount: Int
     public var upgradeInterstitialDuration: Int
+    @Shared(.serverConfig) var serverConfig = ServerConfigClass()
 
     public init(
       fullGameProduct: StoreKitClient.Product? = nil,
@@ -55,7 +56,7 @@ public struct UpgradeInterstitial {
 
   @Dependency(\.dismiss) var dismiss
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.serverConfig.config) var serverConfig
+  //@Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
 
   public init() {}
@@ -93,7 +94,7 @@ public struct UpgradeInterstitial {
 
         guard
           event.isFullGamePurchased(
-            identifier: self.serverConfig().productIdentifiers.fullGame
+            identifier: state.serverConfig.productIdentifiers.fullGame
           )
         else { return .none }
         return .run { send in
@@ -103,9 +104,9 @@ public struct UpgradeInterstitial {
 
       case .task:
         state.upgradeInterstitialDuration =
-          self.serverConfig().upgradeInterstitial.duration
+        state.serverConfig.upgradeInterstitial.duration
 
-        return .run { [isDismissable = state.isDismissable] send in
+        return .run { [serverConfig = state.serverConfig, isDismissable = state.isDismissable] send in
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
               for await event in self.storeKit.observer() {
@@ -115,11 +116,11 @@ public struct UpgradeInterstitial {
 
             group.addTask {
               let response = try await self.storeKit.fetchProducts([
-                self.serverConfig().productIdentifiers.fullGame
+                serverConfig.productIdentifiers.fullGame
               ])
               guard
                 let product = response.products.first(where: { product in
-                  product.productIdentifier == self.serverConfig().productIdentifiers.fullGame
+                  product.productIdentifier == serverConfig.productIdentifiers.fullGame
                 })
               else { return }
               await send(.fullGameProductResponse(product), animation: .default)
@@ -145,9 +146,9 @@ public struct UpgradeInterstitial {
 
       case .upgradeButtonTapped:
         state.isPurchasing = true
-        return .run { _ in
+        return .run { [serverConfig = state.serverConfig] _ in
           let payment = SKMutablePayment()
-          payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
+          payment.productIdentifier = serverConfig.productIdentifiers.fullGame
           payment.quantity = 1
           await self.storeKit.addPayment(payment)
         }
@@ -297,16 +298,16 @@ extension StoreKitClient.PaymentTransactionObserverEvent {
 
 public func shouldShowInterstitial(
   gamePlayedCount: Int,
-  gameContext: GameContext,
-  serverConfig: ServerConfig
+  gameContext: GameContext
 ) -> Bool {
+  @Shared(.serverConfig) var serverConfig = ServerConfigClass()
   let triggerCount = serverConfig.triggerCount(gameContext: gameContext)
   let triggerEvery = serverConfig.triggerEvery(gameContext: gameContext)
   return gamePlayedCount >= triggerCount
     && (gamePlayedCount - triggerCount) % triggerEvery == 0
 }
 
-extension ServerConfig {
+extension ServerConfigClass {
   fileprivate func triggerCount(gameContext: GameContext) -> Int {
     switch gameContext {
     case .dailyChallenge:

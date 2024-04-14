@@ -1,44 +1,20 @@
-import Dependencies
-import DependenciesMacros
+import ComposableArchitecture
 import Foundation
 import Tagged
 
-@DependencyClient
-public struct Build {
-  public var gitSha: () -> String = { "deadbeef" }
-  public var number: () -> Number = { 0 }
+public struct Build: Equatable, Sendable {
+  public var gitSha = Bundle.main.infoDictionary?["GitSHA"] as? String ?? ""
+  public var number = Number(
+    rawValue: (Bundle.main.infoDictionary?["CFBundleVersion"] as? String)
+      .flatMap(Int.init)
+      ?? 0)
+  public init() {}
 
   public typealias Number = Tagged<((), number: ()), Int>
 }
 
-extension DependencyValues {
-  public var build: Build {
-    get { self[Build.self] }
-    set { self[Build.self] = newValue }
+extension PersistenceReaderKey where Self == InMemoryKey<Build> {
+  public static var build: Self {
+    inMemory("build")
   }
-}
-
-extension Build: TestDependencyKey {
-  public static let previewValue = Self.noop
-  public static let testValue = Self()
-}
-
-extension Build: DependencyKey {
-  public static let liveValue = Self(
-    gitSha: { Bundle.main.infoDictionary?["GitSHA"] as? String ?? "" },
-    number: {
-      .init(
-        rawValue: (Bundle.main.infoDictionary?["CFBundleVersion"] as? String)
-          .flatMap(Int.init)
-          ?? 0
-      )
-    }
-  )
-}
-
-extension Build {
-  public static let noop = Self(
-    gitSha: { "deadbeef" },
-    number: { 0 }
-  )
 }

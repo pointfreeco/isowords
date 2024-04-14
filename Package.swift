@@ -30,7 +30,7 @@ var package = Package(
     .package(url: "https://github.com/pointfreeco/swift-case-paths", from: "1.1.0"),
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture",
-      branch: "shared-state-beta"
+      branch: "shared-state-generics"
     ),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.1.0"),
@@ -46,8 +46,7 @@ var package = Package(
     .target(
       name: "Build",
       dependencies: [
-        .product(name: "Dependencies", package: "swift-dependencies"),
-        .product(name: "DependenciesMacros", package: "swift-dependencies"),
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Tagged", package: "swift-tagged"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
@@ -114,7 +113,8 @@ var package = Package(
     .target(
       name: "ServerConfig",
       dependencies: [
-        "Build"
+        "ApiClient",
+        "Build",
       ]
     ),
     .target(
@@ -213,7 +213,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .library(name: "IntegrationTestHelpers", targets: ["IntegrationTestHelpers"]),
     .library(name: "LeaderboardFeature", targets: ["LeaderboardFeature"]),
     .library(name: "LocalDatabaseClient", targets: ["LocalDatabaseClient"]),
-    .library(name: "LowPowerModeClient", targets: ["LowPowerModeClient"]),
     .library(name: "MultiplayerFeature", targets: ["MultiplayerFeature"]),
     .library(name: "NotificationHelpers", targets: ["NotificationHelpers"]),
     .library(name: "NotificationsAuthAlert", targets: ["NotificationsAuthAlert"]),
@@ -301,7 +300,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "HomeFeature",
         "LeaderboardFeature",
         "LocalDatabaseClient",
-        "LowPowerModeClient",
         "MultiplayerFeature",
         "NotificationHelpers",
         "OnboardingFeature",
@@ -450,7 +448,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "CubeCore",
         "FeedbackGeneratorClient",
         "HapticsCore",
-        "LowPowerModeClient",
         "SelectionSoundsCore",
         "SharedModels",
         "UserSettings",
@@ -520,7 +517,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameCore",
         "DictionaryClient",
         "FeedbackGeneratorClient",
-        "LowPowerModeClient",
         "OnboardingFeature",
         "SharedModels",
         "UserDefaultsClient",
@@ -575,7 +571,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameOverFeature",
         "FeedbackGeneratorClient",
         "HapticsCore",
-        "LowPowerModeClient",
         "PuzzleGen",
         "RemoteNotificationsClient",
         "SelectionSoundsCore",
@@ -670,7 +665,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "DeviceId",
         "LeaderboardFeature",
         "LocalDatabaseClient",
-        "LowPowerModeClient",
         "MultiplayerFeature",
         "ServerConfigClient",
         "SettingsFeature",
@@ -709,7 +703,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "AudioPlayerClient",
         "CubePreview",
-        "LowPowerModeClient",
         "Styleguide",
         "SwiftUIHelpers",
         "UserSettings",
@@ -733,12 +726,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "XCTestDebugSupport",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
         .product(name: "Overture", package: "swift-overture"),
-      ]
-    ),
-    .target(
-      name: "LowPowerModeClient",
-      dependencies: [
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture")
       ]
     ),
     .target(
@@ -783,7 +770,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameCore",
         "DictionaryClient",
         "FeedbackGeneratorClient",
-        "LowPowerModeClient",
         "PuzzleGen",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -828,7 +814,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ComposableStoreKit",
         "ComposableUserNotifications",
         "LocalDatabaseClient",
-        "LowPowerModeClient",
         "RemoteNotificationsClient",
         "ServerConfigClient",
         "StatsFeature",
@@ -908,7 +893,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "GameCore",
         "DictionaryClient",
         "FeedbackGeneratorClient",
-        "LowPowerModeClient",
         "OnboardingFeature",
         "SharedModels",
         "TcaHelpers",
@@ -963,7 +947,6 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "CubePreview",
         "FeedbackGeneratorClient",
         "LocalDatabaseClient",
-        "LowPowerModeClient",
         "SharedModels",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

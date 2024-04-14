@@ -4,10 +4,12 @@ import ComposableUserNotifications
 import Foundation
 import SettingsFeature
 import UserSettings
+import Build
 
 @Reducer
 public struct AppDelegateReducer {
   public struct State: Equatable {
+    @Shared(.build) var build = Build()
     public init() {}
   }
 
@@ -19,7 +21,7 @@ public struct AppDelegateReducer {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.build.number) var buildNumber
+  //@Dependency(\.build.number) var buildNumber
   @Dependency(\.dictionary.load) var loadDictionary
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.applicationClient.setUserInterfaceStyle) var setUserInterfaceStyle
@@ -83,14 +85,14 @@ public struct AppDelegateReducer {
 
       case let .didRegisterForRemoteNotifications(.success(tokenData)):
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-        return .run { _ in
+        return .run { [build = state.build] _ in
           let settings = await self.userNotifications.getNotificationSettings()
           _ = try await self.apiClient.apiRequest(
             route: .push(
               .register(
                 .init(
                   authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                  build: self.buildNumber(),
+                  build: build.number,
                   token: token
                 )
               )
