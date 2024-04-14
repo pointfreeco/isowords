@@ -144,7 +144,7 @@ public struct GameOver {
           case .dailyChallenge = state.completedGame.gameContext
         else {
           return .run { [lastReviewRequest = state.$lastReviewRequest] send in
-            try await self.requestReview(lastReviewRequest: lastReviewRequest[dynamicMember: \.self])
+            try await self.requestReview(lastReviewRequest: lastReviewRequest.eraseToAnyShared())
             await self.dismissGame(animation: .default)
           }
         }
@@ -199,7 +199,7 @@ public struct GameOver {
       case .destination(.dismiss)
       where state.destination.is(\.some.notificationsAuthAlert):
         return .run { [lastReviewRequest = state.$lastReviewRequest] _ in
-          try await self.requestReview(lastReviewRequest: lastReviewRequest[dynamicMember: \.self])
+          try await self.requestReview(lastReviewRequest: lastReviewRequest.eraseToAnyShared())
           await self.dismissGame(animation: .default)
         }
 

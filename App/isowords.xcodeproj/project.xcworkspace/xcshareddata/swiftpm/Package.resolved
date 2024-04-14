@@ -114,7 +114,7 @@
       "location" : "https://github.com/pointfreeco/swift-composable-architecture",
       "state" : {
         "branch" : "shared-state-generics",
-        "revision" : "e6bb5578b10404502c1de01b858672ad6abea297"
+        "revision" : "4ce58fb2274c60ada9b21e8542d6ab86764f3782"
       }
     },
     {
