@@ -1,4 +1,4 @@
-import Styleguide
+import ComposableArchitecture
 import UIKit
 
 public struct UserSettings: Codable, Equatable {
@@ -73,8 +73,14 @@ public struct UserSettings: Codable, Equatable {
   }
 }
 
-extension URL {
-  public static let userSettings = Self.documentsDirectory
-    .appendingPathComponent("user-settings")
-    .appendingPathExtension("json")
+extension PersistenceReaderKey where Self == FileStorageKey<UserSettings> {
+  public static var userSettings: Self {
+    fileStorage(
+      FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("user-settings")
+        .appendingPathExtension("json")
+    )
+  }
 }

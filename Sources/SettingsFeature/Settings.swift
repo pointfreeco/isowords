@@ -8,7 +8,8 @@ import SharedModels
 import StatsFeature
 import StoreKit
 import UIApplicationClient
-import UserSettingsClient
+import UserSettings
+import ServerConfigPersistenceKey
 
 public struct DeveloperSettings: Equatable {
   public var currentBaseUrl: BaseUrl
@@ -45,21 +46,21 @@ public struct Settings {
   @ObservableState
   public struct State: Equatable {
     @Presents public var alert: AlertState<Action.Alert>?
-    public var buildNumber: Build.Number?
+    @Shared(.build) var build = Build()
     public var developer: DeveloperSettings
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
     public var isPurchasing: Bool
     public var isRestoring: Bool
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    public var userSettings: UserSettings
+    @Shared(.userSettings) public var userSettings: UserSettings = UserSettings()
 
     public struct ProductError: Error, Equatable {}
 
     public init(
       alert: AlertState<Action.Alert>? = nil,
-      buildNumber: Build.Number? = nil,
       developer: DeveloperSettings = DeveloperSettings(),
       fullGameProduct: Result<StoreKitClient.Product, ProductError>? = nil,
       fullGamePurchasedAt: Date? = nil,
@@ -68,9 +69,7 @@ public struct Settings {
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
-      @Dependency(\.userSettings) var userSettings
       self.alert = alert
-      self.buildNumber = buildNumber
       self.developer = developer
       self.fullGameProduct = fullGameProduct
       self.fullGamePurchasedAt = fullGamePurchasedAt
@@ -78,7 +77,6 @@ public struct Settings {
       self.isRestoring = isRestoring
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
-      self.userSettings = userSettings.get()
     }
 
     public var isFullGamePurchased: Bool {
@@ -111,13 +109,10 @@ public struct Settings {
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.build) var build
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
-  @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
   @Dependency(\.userNotifications) var userNotifications
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -287,9 +282,9 @@ public struct Settings {
           }
 
         case .leaveUsAReviewButtonTapped:
-          return .run { _ in
+          return .run { [url = state.serverConfig.appStoreReviewUrl] _ in
             _ = await self.applicationClient
-              .open(self.serverConfig().appStoreReviewUrl, [:])
+              .open(url, [:])
           }
 
         case .onDismiss:
@@ -326,7 +321,7 @@ public struct Settings {
           state.fullGameProduct =
             response.products
             .first {
-              $0.productIdentifier == self.serverConfig().productIdentifiers.fullGame
+              $0.productIdentifier == state.serverConfig.productIdentifiers.fullGame
             }
             .map(Result.success)
             ?? Result.failure(.init())
@@ -337,7 +332,7 @@ public struct Settings {
           return .none
 
         case .reportABugButtonTapped:
-          return .run { _ in
+          return .run { [build = state.build] _ in
             let currentPlayer = self.apiClient.currentPlayer()
             var components = URLComponents()
             components.scheme = "mailto"
@@ -350,7 +345,7 @@ public struct Settings {
 
 
                   ---
-                  Build: \(self.build.number()) (\(self.build.gitSha()))
+                  Build: \(build.number) (\(build.gitSha))
                   \(currentPlayer?.player.id.rawValue.uuidString ?? "")
                   """
               ),
@@ -381,7 +376,6 @@ public struct Settings {
             .appleReceipt?
             .receipt
             .originalPurchaseDate
-          state.buildNumber = self.build.number()
           state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
           state.userSettings.appIcon = self.applicationClient.alternateIconName()
             .flatMap(AppIcon.init(rawValue:))
@@ -399,7 +393,7 @@ public struct Settings {
           }
 
           return .merge(
-            .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
+            .run { [serverConfig = state.serverConfig, shouldFetchProducts = !state.isFullGamePurchased] send in
               Task {
                 await withTaskCancellation(id: CancelID.paymentObserver, cancelInFlight: true) {
                   for await event in self.storeKit.observer() {
@@ -414,7 +408,7 @@ public struct Settings {
                   .productsResponse(
                     Result {
                       try await self.storeKit.fetchProducts([
-                        self.serverConfig().productIdentifiers.fullGame
+                        serverConfig.productIdentifiers.fullGame
                       ])
                     }
                   ),
@@ -456,14 +450,6 @@ public struct Settings {
       }
     }
     .ifLet(\.$alert, action: \.alert)
-    .onChange(of: \.userSettings) { _, userSettings in
-      Reduce { _, _ in
-        enum CancelID { case saveDebounce }
-
-        return .run { _ in await self.userSettings.set(userSettings) }
-          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
-      }
-    }
 
     Scope(state: \.stats, action: \.stats) {
       Stats()

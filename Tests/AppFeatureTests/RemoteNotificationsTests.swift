@@ -107,7 +107,6 @@ class RemoteNotificationsTests: XCTestCase {
       AppReducer()
     } withDependencies: {
       $0.didFinishLaunching()
-      $0.fileClient.save = { @Sendable _, _ in }
     }
 
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()

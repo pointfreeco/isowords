@@ -15,10 +15,8 @@ import TestHelpers
 import XCTest
 
 @testable import AppFeature
-@testable import FileClient
 @testable import GameCore
 @testable import SoloFeature
-@testable import UserDefaultsClient
 
 class PersistenceTests: XCTestCase {
   @MainActor
@@ -37,7 +35,6 @@ class PersistenceTests: XCTestCase {
       $0.dictionary.contains = { word, _ in word == "CAB" }
       $0.dictionary.randomCubes = { _ in .mock }
       $0.feedbackGenerator = .noop
-      $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
       $0.mainRunLoop = .immediate
       $0.mainQueue = .immediate
     }
@@ -151,7 +148,7 @@ class PersistenceTests: XCTestCase {
     let store = TestStore(
       initialState: AppReducer.State(
         destination: .game(update(.mock) { $0.gameMode = .unlimited }),
-        home: Home.State(savedGames: SavedGamesState(unlimited: .mock))
+        home: Home.State()
       )
     ) {
       AppReducer()
@@ -159,7 +156,6 @@ class PersistenceTests: XCTestCase {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didArchiveGame.setValue(true) }
       $0.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
-      $0.fileClient.save = { @Sendable _, data in await saves.withValue { $0.append(data) } }
       $0.mainQueue = .immediate
     }
 
@@ -269,13 +265,9 @@ class PersistenceTests: XCTestCase {
       $0.audioPlayer.setGlobalVolumeForMusic = { _ in }
       $0.audioPlayer.setGlobalVolumeForSoundEffects = { _ in }
       $0.applicationClient.setUserInterfaceStyle = { _ in }
-      $0.fileClient.override(load: savedGamesFileName, savedGames)
     }
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
-    await store.receive(\.savedGamesLoaded.success) {
-      $0.home.savedGames = savedGames
-    }
     await store.send(.home(.soloButtonTapped)) {
       $0.home.destination = .solo(.init(inProgressGame: .mock))
     }
@@ -300,12 +292,7 @@ class PersistenceTests: XCTestCase {
             )
           }
         ),
-        home: Home.State(
-          savedGames: SavedGamesState(
-            dailyChallengeUnlimited: .mock,
-            unlimited: .mock
-          )
-        )
+        home: Home.State()
       )
     ) {
       AppReducer()

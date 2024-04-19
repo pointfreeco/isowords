@@ -10,7 +10,6 @@ import UpgradeInterstitialFeature
 import XCTest
 
 @testable import LocalDatabaseClient
-@testable import UserDefaultsClient
 
 class GameOverFeatureTests: XCTestCase {
   @MainActor

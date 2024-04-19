@@ -2,7 +2,6 @@ import ApiClient
 import ClientModels
 import Combine
 import ComposableArchitecture
-import FileClient
 import Foundation
 import SharedModels
 
@@ -11,20 +10,20 @@ public enum DailyChallengeError: Error, Equatable {
   case couldNotFetch(nextStartsAt: Date)
 }
 
-public func startDailyChallengeAsync(
-  _ challenge: FetchTodaysDailyChallengeResponse,
-  apiClient: ApiClient,
-  date: @escaping () -> Date,
-  fileClient: FileClient
+public func startDailyChallenge(
+  _ challenge: FetchTodaysDailyChallengeResponse
 ) async throws -> InProgressGame {
+  @Dependency(\.apiClient) var apiClient
+  @Dependency(\.date.now) var now
+  @Shared(.savedGames) var savedGames = SavedGamesState()
+
   guard challenge.yourResult.rank == nil
   else {
     throw DailyChallengeError.alreadyPlayed(endsAt: challenge.dailyChallenge.endsAt)
   }
-
   guard
     challenge.dailyChallenge.gameMode == .unlimited,
-    let game = try? await fileClient.loadSavedGames().dailyChallengeUnlimited
+    let game = savedGames.dailyChallengeUnlimited
   else {
     do {
       return try await InProgressGame(
@@ -37,9 +36,8 @@ public func startDailyChallengeAsync(
           ),
           as: StartDailyChallengeResponse.self
         ),
-        date: date()
+        date: now
       )
-
     } catch {
       throw DailyChallengeError.couldNotFetch(nextStartsAt: challenge.dailyChallenge.endsAt)
     }

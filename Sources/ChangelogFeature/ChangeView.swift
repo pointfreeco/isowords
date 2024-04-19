@@ -1,6 +1,6 @@
 import Build
 import ComposableArchitecture
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import SwiftUI
 import Tagged
 

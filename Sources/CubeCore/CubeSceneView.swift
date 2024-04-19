@@ -13,7 +13,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
     public var cubes: ViewPuzzle
     public var enableGyroMotion: Bool
-    public var isOnLowPowerMode: Bool
     public var nub: NubState?
     public var playedWords: [PlayedWord]
     public var selectedFaceCount: Int
@@ -23,7 +22,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     public init(
       cubes: ViewPuzzle,
       enableGyroMotion: Bool,
-      isOnLowPowerMode: Bool,
       nub: NubState?,
       playedWords: [PlayedWord],
       selectedFaceCount: Int,
@@ -32,7 +30,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     ) {
       self.cubes = cubes
       self.enableGyroMotion = enableGyroMotion
-      self.isOnLowPowerMode = isOnLowPowerMode
       self.nub = nub
       self.playedWords = playedWords
       self.selectedFaceCount = selectedFaceCount
@@ -81,6 +78,9 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private let viewStore: ViewStore<ViewState, ViewAction>
   private var worldScale: Float = 1.0
 
+  @Published var isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled {
+    didSet { self.update() }
+  }
   var enableCubeShadow = true {
     didSet { self.update() }
   }
@@ -114,6 +114,12 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     worldScale = self.worldScale(for: size)
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
     self.scene?.rootNode.addChildNode(self.gameCubeNode)
+
+    NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange)
+      .sink { [weak self] _ in
+        self?.isLowPowerEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
+      }
+      .store(in: &cancellables)
 
     self.viewStore.publisher.cubes
       .sink { cubes in
@@ -189,16 +195,16 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     ambientLightNode.light = ambientLight
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
-    self.viewStore.publisher
-      .map { ($0.enableGyroMotion, $0.isOnLowPowerMode) }
+    self.viewStore.publisher.map(\.enableGyroMotion)
+      .combineLatest(self.$isLowPowerEnabled)
       .removeDuplicates(by: ==)
-      .sink { [weak self] enableGyroMotion, isOnLowPowerMode in
+      .sink { [weak self] enableGyroMotion, isLowPowerEnabled in
         guard let self = self else { return }
 
         self.showsStatistics = self.showSceneStatistics
-        light.castsShadow = self.enableCubeShadow && !isOnLowPowerMode
+        light.castsShadow = self.enableCubeShadow && !isLowPowerEnabled
 
-        if isOnLowPowerMode || !enableGyroMotion {
+        if isLowPowerEnabled || !enableGyroMotion {
           self.stopMotionManager()
         } else {
           self.startMotionManager()
@@ -289,7 +295,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   // TODO: rename
   private func update() {
     self.showsStatistics = self.showSceneStatistics
-    self.light.castsShadow = self.enableCubeShadow && !self.viewStore.isOnLowPowerMode
+    self.light.castsShadow = self.enableCubeShadow && !self.isLowPowerEnabled
   }
 
   deinit {

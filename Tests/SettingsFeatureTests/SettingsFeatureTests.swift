@@ -6,9 +6,8 @@ import ComposableUserNotifications
 import Overture
 import SharedModels
 import TestHelpers
-import UserDefaultsClient
 import UserNotifications
-import UserSettingsClient
+import UserSettings
 import XCTest
 
 @testable import SettingsFeature
@@ -19,12 +18,10 @@ extension DependencyValues {
     self.apiClient.currentPlayer = { .some(.init(appleReceipt: .mock, player: .blob)) }
     self.build.number = { 42 }
     self.mainQueue = .immediate
-    self.fileClient.save = { @Sendable _, _ in }
     self.storeKit.fetchProducts = { _ in
       .init(invalidProductIdentifiers: [], products: [])
     }
     self.storeKit.observer = { .finished }
-    self.userSettings = .mock()
   }
 }
 
@@ -72,7 +69,6 @@ class SettingsFeatureTests: XCTestCase {
     } withDependencies: {
       $0.setUpDefaults()
       $0.applicationClient.alternateIconName = { nil }
-      $0.fileClient.save = { @Sendable _, _ in }
       $0.mainQueue = .immediate
       $0.serverConfig.config = { .init() }
       $0.userDefaults.boolForKey = { _ in false }
@@ -117,7 +113,6 @@ class SettingsFeatureTests: XCTestCase {
     } withDependencies: {
       $0.setUpDefaults()
       $0.applicationClient.alternateIconName = { nil }
-      $0.fileClient.save = { @Sendable _, _ in }
       $0.mainQueue = .immediate
       $0.serverConfig.config = { .init() }
       $0.userDefaults.boolForKey = { _ in false }
@@ -159,7 +154,6 @@ class SettingsFeatureTests: XCTestCase {
     } withDependencies: {
       $0.setUpDefaults()
       $0.applicationClient.alternateIconName = { nil }
-      $0.fileClient.save = { @Sendable _, _ in }
       $0.mainQueue = .immediate
       $0.serverConfig.config = { .init() }
       $0.userDefaults.boolForKey = { _ in false }
@@ -205,7 +199,6 @@ class SettingsFeatureTests: XCTestCase {
         await openedUrl.setValue(url)
         return true
       }
-      $0.fileClient.save = { @Sendable _, _ in }
       $0.mainQueue = .immediate
       $0.serverConfig.config = { .init() }
       $0.userDefaults.boolForKey = { _ in false }
@@ -269,14 +262,12 @@ class SettingsFeatureTests: XCTestCase {
           }
         )
         $0.applicationClient.alternateIconName = { nil }
-        $0.fileClient.save = { @Sendable _, _ in }
         $0.mainQueue = .immediate
         $0.serverConfig.config = { .init() }
         $0.userDefaults.boolForKey = { _ in false }
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .authorized)
         }
-        $0.userSettings = .mock(initialUserSettings: userSettings)
       }
 
       let task = await store.send(.task) {
@@ -461,50 +452,5 @@ class SettingsFeatureTests: XCTestCase {
     }
     await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
     await didLogout.withValue { XCTAssert($0) }
-  }
-
-  @MainActor
-  func testToggleEnableGyroMotion() async {
-    let store = TestStore(
-      initialState: Settings.State()
-    ) {
-      Settings()
-    } withDependencies: {
-      $0.setUpDefaults()
-      $0.userSettings = .mock(initialUserSettings: UserSettings(enableGyroMotion: true))
-    }
-
-    var userSettings = store.state.userSettings
-    userSettings.enableGyroMotion = false
-    await store.send(.set(\.userSettings, userSettings)) {
-      $0.userSettings.enableGyroMotion = false
-    }
-    userSettings.enableGyroMotion = true
-    await store.send(.set(\.userSettings, userSettings)) {
-      $0.userSettings.enableGyroMotion = true
-    }
-  }
-
-  @MainActor
-  func testToggleEnableHaptics() async {
-    let store = TestStore(
-      initialState: Settings.State()
-    ) {
-      Settings()
-    } withDependencies: {
-      $0.setUpDefaults()
-      $0.userSettings = .mock(initialUserSettings: UserSettings(enableHaptics: true))
-    }
-
-
-    var userSettings = store.state.userSettings
-    userSettings.enableHaptics = false
-    await store.send(.set(\.userSettings, userSettings)) {
-      $0.userSettings.enableHaptics = false
-    }
-    userSettings.enableHaptics = true
-    await store.send(.set(\.userSettings, userSettings)) {
-      $0.userSettings.enableHaptics = true
-    }
   }
 }

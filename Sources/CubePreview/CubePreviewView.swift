@@ -2,43 +2,33 @@ import Bloom
 import ComposableArchitecture
 import CubeCore
 import HapticsCore
-import LowPowerModeClient
 import Overture
 import SelectionSoundsCore
 import SharedModels
 import SwiftUI
-import UserSettingsClient
+import UserSettings
 
 @Reducer
 public struct CubePreview {
   @ObservableState
   public struct State: Equatable {
     var cubes: Puzzle
-    var enableGyroMotion: Bool
-    var isAnimationReduced: Bool
-    var isOnLowPowerMode: Bool
     var moveIndex: Int
     var moves: Moves
     var nub: CubeSceneView.ViewState.NubState
     var selectedCubeFaces: [IndexedCubeFace]
+    @Shared(.userSettings) var userSettings = UserSettings()
 
     public init(
       cubes: ArchivablePuzzle,
-      isOnLowPowerMode: Bool = false,
       moveIndex: Int,
       moves: Moves,
       nub: CubeSceneView.ViewState.NubState = .init(),
       selectedCubeFaces: [IndexedCubeFace] = []
     ) {
-      @Dependency(\.userSettings) var userSettings
-
       var cubes = Puzzle(archivableCubes: cubes)
       apply(moves: moves[0..<moveIndex], to: &cubes)
       self.cubes = cubes
-
-      self.enableGyroMotion = userSettings.enableGyroMotion
-      self.isAnimationReduced = userSettings.enableReducedAnimation
-      self.isOnLowPowerMode = isOnLowPowerMode
       self.moveIndex = moveIndex
       self.moves = moves
       self.nub = nub
@@ -83,8 +73,7 @@ public struct CubePreview {
             }
           }
         },
-        enableGyroMotion: self.enableGyroMotion,
-        isOnLowPowerMode: self.isOnLowPowerMode,
+        enableGyroMotion: self.userSettings.enableGyroMotion,
         nub: self.nub,
         playedWords: [],
         selectedFaceCount: self.selectedCubeFaces.count,
@@ -110,14 +99,11 @@ public struct CubePreview {
   public enum Action: BindableAction {
     case binding(BindingAction<State>)
     case cubeScene(CubeSceneView.ViewAction)
-    case lowPowerModeResponse(Bool)
     case tap
     case task
   }
 
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -133,10 +119,6 @@ public struct CubePreview {
       case .cubeScene:
         return .none
 
-      case let .lowPowerModeResponse(isOn):
-        state.isOnLowPowerMode = isOn
-        return .none
-
       case .tap:
         state.nub.location = .offScreenRight
         switch state.moves[state.moveIndex].type {
@@ -150,12 +132,6 @@ public struct CubePreview {
       case .task:
         return .run { [move = state.moves[state.moveIndex], nub = state.nub] send in
           var nub = nub
-
-          await send(
-            .lowPowerModeResponse(
-              await self.lowPowerMode.start().first(where: { _ in true }) ?? false
-            )
-          )
 
           try await self.mainQueue.sleep(for: .seconds(1))
 
@@ -210,7 +186,7 @@ public struct CubePreview {
       }
     }
     .haptics(
-      isEnabled: { _ in self.userSettings.enableHaptics },
+      isEnabled: \.userSettings.enableHaptics,
       triggerOnChangeOf: \.selectedCubeFaces
     )
     .selectionSounds(
@@ -262,7 +238,7 @@ public struct CubePreviewView: View {
           .task { await store.send(.task).finish() }
       }
       .background {
-        if !store.isAnimationReduced {
+        if !store.userSettings.enableReducedAnimation {
           BloomBackground(
             size: proxy.size,
             word: store.selectedWordString

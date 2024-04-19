@@ -48,7 +48,6 @@ class DailyChallengeTests: XCTestCase {
     } withDependencies: {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didSave.setValue(true) }
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
     }
@@ -103,7 +102,6 @@ class DailyChallengeTests: XCTestCase {
     } withDependencies: {
       $0.audioPlayer.stop = { _ in }
       $0.database.saveGame = { _ in await didSave.setValue(true) }
-      $0.fileClient.load = { @Sendable _ in try await Task.never() }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.mainQueue = .immediate
     }

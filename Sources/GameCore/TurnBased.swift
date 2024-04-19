@@ -189,14 +189,11 @@ extension Reducer where State == Game.State, Action == Game.Action {
         .doubleTap,
         .gameCenter,
         .gameLoaded,
-        .lowPowerModeChanged,
         .matchesLoaded,
         .menuButtonTapped,
         .task,
-        .savedGamesLoaded,
         .timerTick,
         .trayButtonTapped,
-        .userSettingsUpdated,
         .wordSubmitButton:
         return true
       }

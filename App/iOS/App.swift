@@ -7,7 +7,7 @@ import Build
 import ComposableArchitecture
 import DictionarySqliteClient
 import ServerConfig
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import Styleguide
 import SwiftUI
 import UIApplicationClient
@@ -25,7 +25,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
           .appendingPathComponent("co.pointfree.Isowords")
           .appendingPathComponent("Isowords.sqlite3")
       )
-      $0.serverConfig = .live(apiClient: $0.apiClient, build: $0.build)
     }
   }
 
@@ -73,15 +72,4 @@ struct IsowordsApp: App {
 
 extension AudioPlayerClient {
   static let liveValue = Self.live(bundles: [AppAudioLibrary.bundle, AppClipAudioLibrary.bundle])
-}
-
-extension ServerConfigClient {
-  static func live(apiClient: ApiClient, build: Build) -> Self {
-    .live(
-      fetch: {
-        try await apiClient
-          .apiRequest(route: .config(build: build.number()), as: ServerConfig.self)
-      }
-    )
-  }
 }

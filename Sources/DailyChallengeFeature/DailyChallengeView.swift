@@ -25,20 +25,18 @@ public struct DailyChallengeReducer {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
     @Presents public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
-    public var inProgressDailyChallengeUnlimited: InProgressGame?
+    @Shared(.savedGames) public var savedGames = SavedGamesState()
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
 
     public init(
       dailyChallenges: [FetchTodaysDailyChallengeResponse] = [],
       destination: Destination.State? = nil,
       gameModeIsLoading: GameMode? = nil,
-      inProgressDailyChallengeUnlimited: InProgressGame? = nil,
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.gameModeIsLoading = gameModeIsLoading
-      self.inProgressDailyChallengeUnlimited = inProgressDailyChallengeUnlimited
       self.userNotificationSettings = userNotificationSettings
     }
 
@@ -66,7 +64,6 @@ public struct DailyChallengeReducer {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
@@ -108,7 +105,7 @@ public struct DailyChallengeReducer {
           isPlayable = !challenge.yourResult.started
         case .unlimited:
           isPlayable =
-            !challenge.yourResult.started || state.inProgressDailyChallengeUnlimited != nil
+          !challenge.yourResult.started || state.savedGames.dailyChallengeUnlimited != nil
         }
 
         guard isPlayable
@@ -123,12 +120,7 @@ public struct DailyChallengeReducer {
           await send(
             .startDailyChallengeResponse(
               Result {
-                try await startDailyChallengeAsync(
-                  challenge,
-                  apiClient: self.apiClient,
-                  date: { self.now },
-                  fileClient: self.fileClient
-                )
+                try await startDailyChallenge(challenge)
               }
             )
           )
@@ -258,7 +250,7 @@ public struct DailyChallengeView: View {
   var unlimitedState: ButtonState {
     .init(
       fetchedResponse: store.dailyChallenges.unlimited,
-      inProgressGame: store.inProgressDailyChallengeUnlimited
+      inProgressGame: store.savedGames.dailyChallengeUnlimited
     )
   }
 
@@ -459,16 +451,15 @@ private struct RingEffect: GeometryEffect {
 
   struct DailyChallengeView_Previews: PreviewProvider {
     static var previews: some View {
+      @Shared(.savedGames) var savedGames = SavedGamesState()
+      let _ = savedGames.dailyChallengeUnlimited = update(.mock) {
+        $0?.moves = [.highScoringMove]
+      }
+
       Preview {
         NavigationView {
           DailyChallengeView(
-            store: .init(
-              initialState: DailyChallengeReducer.State(
-                inProgressDailyChallengeUnlimited: update(.mock) {
-                  $0?.moves = [.highScoringMove]
-                }
-              )
-            ) {
+            store: .init(initialState: DailyChallengeReducer.State()) {
               DailyChallengeReducer()
             } withDependencies: {
               $0.userNotifications.getNotificationSettings = {

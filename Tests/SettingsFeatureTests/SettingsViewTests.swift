@@ -2,7 +2,7 @@ import ComposableArchitecture
 @testable import SettingsFeature
 import SnapshotTesting
 import Styleguide
-import UserSettingsClient
+import UserSettings
 import XCTest
 
 class SettingsViewTests: XCTestCase {
@@ -59,13 +59,14 @@ class SettingsViewTests: XCTestCase {
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
+    @Shared(.userSettings) var userSettings = UserSettings()
+    userSettings = UserSettings(enableNotifications: true)
+
     assertSnapshot(
       matching: NotificationsSettingsView(
         store: .init(
           initialState: .init()
         ) {
-        } withDependencies: {
-          $0.userSettings = .mock(initialUserSettings: UserSettings(enableNotifications: true))
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
@@ -83,15 +84,14 @@ class SettingsViewTests: XCTestCase {
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
 
+    @Shared(.userSettings) var userSettings = UserSettings()
+    userSettings = UserSettings(musicVolume: 0, soundEffectsVolume: 0)
+
     assertSnapshot(
       matching: SoundsSettingsView(
         store: Store(
           initialState: Settings.State()
         ) {
-        } withDependencies: {
-          $0.userSettings = .mock(
-            initialUserSettings: UserSettings(musicVolume: 0, soundEffectsVolume: 0)
-          )
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

@@ -8,12 +8,12 @@ import DeviceId
 import LeaderboardFeature
 import MultiplayerFeature
 import Overture
-import ServerConfigClient
+import ServerConfigPersistenceKey
 import SettingsFeature
 import SharedModels
 import SoloFeature
 import SwiftUI
-import UserDefaultsClient
+import Build
 
 public struct ActiveMatchResponse: Equatable {
   public let matches: [ActiveTurnBasedMatch]
@@ -36,50 +36,44 @@ public struct Home {
   public struct State: Equatable {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
     @Presents public var destination: Destination.State?
-    public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
     @Presents public var nagBanner: NagBanner.State?
-    public var savedGames: SavedGamesState {
-      didSet {
-        guard var dailyChallengeState = self.destination?.dailyChallenge
-        else { return }
-        dailyChallengeState.inProgressDailyChallengeUnlimited =
-          self.savedGames.dailyChallengeUnlimited
-        self.destination = .dailyChallenge(dailyChallengeState)
-      }
-    }
+    @Shared(.savedGames) public var savedGames = SavedGamesState()
     public var turnBasedMatches: [ActiveTurnBasedMatch]
     public var weekInReview: FetchWeekInReviewResponse?
+    @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
+    @Shared(.build) var build = Build()
+    //@SharedReader(.serverConfig) var serverConfig = ServerConfig()
+    @ObservationStateIgnored
+    @ServerConfig_ var serverConfig
+
+    public var hasChangelog: Bool {
+      self.serverConfig.newestBuild > self.build.number
+    }
 
     public var activeGames: ActiveGamesState {
       get {
-        .init(
-          savedGames: self.savedGames,
+        ActiveGamesState(
           turnBasedMatches: self.turnBasedMatches
         )
       }
       set {
-        self.savedGames = newValue.savedGames
         self.turnBasedMatches = newValue.turnBasedMatches
       }
     }
 
     public init(
       dailyChallenges: [FetchTodaysDailyChallengeResponse]? = nil,
-      hasChangelog: Bool = false,
       hasPastTurnBasedGames: Bool = false,
       nagBanner: NagBanner.State? = nil,
       destination: Destination.State? = nil,
-      savedGames: SavedGamesState = SavedGamesState(),
       turnBasedMatches: [ActiveTurnBasedMatch] = [],
       weekInReview: FetchWeekInReviewResponse? = nil
     ) {
       self.dailyChallenges = dailyChallenges
       self.destination = destination
-      self.hasChangelog = hasChangelog
       self.hasPastTurnBasedGames = hasPastTurnBasedGames
       self.nagBanner = nagBanner
-      self.savedGames = savedGames
       self.turnBasedMatches = turnBasedMatches
       self.weekInReview = weekInReview
     }
@@ -104,7 +98,6 @@ public struct Home {
     case leaderboardButtonTapped
     case multiplayerButtonTapped
     case nagBanner(PresentationAction<NagBanner.Action>)
-    case serverConfigResponse(ServerConfig)
     case settingsButtonTapped
     case soloButtonTapped
     case task
@@ -118,14 +111,12 @@ public struct Home {
   }
 
   @Dependency(\.apiClient) var apiClient
-  @Dependency(\.build.number) var buildNumber
   @Dependency(\.deviceId) var deviceId
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.audioPlayer.play) var playSound
-  @Dependency(\.serverConfig) var serverConfig
   @Dependency(\.timeZone) var timeZone
-  @Dependency(\.userDefaults) var userDefaults
+  //@SharedReader(.serverConfig) var serverConfig = ServerConfig()
 
   public init() {}
 
@@ -208,8 +199,8 @@ public struct Home {
     case let .authenticationResponse(currentPlayerEnvelope):
       let now = self.now.timeIntervalSinceReferenceDate
       let itsNagTime =
-        Int(now - self.userDefaults.installationTime)
-        >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
+        Int(now - state.installationTime)
+      >= state.serverConfig.upgradeInterstitial.nagBannerAfterInstallDuration
       let isFullGamePurchased =
         currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
 
@@ -226,15 +217,17 @@ public struct Home {
 
     case .dailyChallengeButtonTapped:
       state.destination = .dailyChallenge(
-        .init(
-          dailyChallenges: state.dailyChallenges ?? [],
-          inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
-        )
+        DailyChallengeReducer.State(dailyChallenges: state.dailyChallenges ?? [])
       )
       return .none
 
     case let .dailyChallengeResponse(.success(dailyChallenges)):
       state.dailyChallenges = dailyChallenges
+      if dailyChallenges.unlimited?.dailyChallenge.id
+          != state.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
+      {
+        state.savedGames.dailyChallengeUnlimited = nil
+      }
       return .none
 
     case .dailyChallengeResponse(.failure):
@@ -248,10 +241,6 @@ public struct Home {
       return .none
 
     case .howToPlayButtonTapped:
-      return .none
-
-    case let .serverConfigResponse(serverConfig):
-      state.hasChangelog = serverConfig.newestBuild > self.buildNumber()
       return .none
 
     case .leaderboardButtonTapped:
@@ -307,9 +296,8 @@ public struct Home {
       )
       await send(.authenticationResponse(currentPlayerEnvelope))
 
-      async let serverConfigResponse: Void = send(
-        .serverConfigResponse(self.serverConfig.refresh())
-      )
+      @ServerConfig_ var serverConfig
+      async let serverConfigResponse: Void = $serverConfig.reload()
 
       async let dailyChallengeResponse: Void = send(
         .dailyChallengeResponse(

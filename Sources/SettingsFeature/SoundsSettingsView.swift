@@ -49,22 +49,18 @@ struct SoundsSettingsView: View {
 
 #if DEBUG
   import SwiftUIHelpers
-  import UserSettingsClient
+  import UserSettings
 
   struct SoundsSettingsView_Previews: PreviewProvider {
     static var previews: some View {
-      Preview {
+      @Shared(.userSettings) var userSettings = UserSettings()
+      userSettings = UserSettings(musicVolume: 0.5, soundEffectsVolume: 0.75)
+
+      return Preview {
         NavigationView {
           SoundsSettingsView(
             store: Store(initialState: Settings.State()) {
               Settings()
-            } withDependencies: {
-              $0.userSettings = .mock(
-                initialUserSettings: UserSettings(
-                  musicVolume: 0.5,
-                  soundEffectsVolume: 0.5
-                )
-              )
             }
           )
         }

@@ -9,7 +9,6 @@ import Dependencies
 import DictionaryClient
 import GameOverFeature
 import HapticsCore
-import LowPowerModeClient
 import Overture
 import SettingsFeature
 import SharedModels
@@ -17,7 +16,7 @@ import SwiftUI
 import Tagged
 import TcaHelpers
 import UpgradeInterstitialFeature
-import UserSettingsClient
+import UserSettings
 
 @Reducer
 public struct Game {
@@ -54,11 +53,8 @@ public struct Game {
     public var gameCurrentTime: Date
     public var gameMode: GameMode
     public var gameStartTime: Date
-    public var enableGyroMotion: Bool
-    public var isAnimationReduced: Bool
     public var isDemo: Bool
     public var isGameLoaded: Bool
-    public var isOnLowPowerMode: Bool
     public var isPanning: Bool
     public var isTrayVisible: Bool
     public var language: Language
@@ -67,7 +63,9 @@ public struct Game {
     public var secondsPlayed: Int
     public var selectedWord: [IndexedCubeFace]
     public var selectedWordIsValid: Bool
+    @Shared(.userSettings) public var userSettings = UserSettings()
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
+    @Shared(.multiplayerOpensCount) var multiplayerOpensCount = 0
 
     public init(
       activeGames: ActiveGamesState = .init(),
@@ -81,7 +79,6 @@ public struct Game {
       isDemo: Bool = false,
       isGameLoaded: Bool = false,
       isPanning: Bool = false,
-      isOnLowPowerMode: Bool = false,
       isTrayVisible: Bool = false,
       language: Language = .en,
       moves: Moves = [],
@@ -91,20 +88,16 @@ public struct Game {
       selectedWordIsValid: Bool = false,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
-      @Dependency(\.userSettings) var userSettings
       self.activeGames = activeGames
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.destination = destination
-      self.enableGyroMotion = userSettings.enableGyroMotion
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
       self.gameStartTime = gameStartTime
-      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
-      self.isOnLowPowerMode = isOnLowPowerMode
       self.isPanning = isPanning
       self.isTrayVisible = isTrayVisible
       self.language = language
@@ -148,17 +141,14 @@ public struct Game {
     case doubleTap(index: LatticePoint)
     case gameCenter(GameCenterAction)
     case gameLoaded
-    case lowPowerModeChanged(Bool)
     case matchesLoaded(Result<[TurnBasedMatch], Error>)
     case menuButtonTapped
     case task
     case pan(UIGestureRecognizer.State, PanData?)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    case userSettingsUpdated(UserSettings)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
@@ -173,12 +163,8 @@ public struct Game {
   @Dependency(\.dismiss) var dismiss
   @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.lowPowerMode) var lowPowerMode
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.mainRunLoop) var mainRunLoop
-  @Dependency(\.serverConfig.config) var serverConfig
-  @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -305,10 +291,6 @@ public struct Game {
           }
         }
 
-      case let .lowPowerModeChanged(isOn):
-        state.isOnLowPowerMode = isOn
-        return .none
-
       case .matchesLoaded:
         return .none
 
@@ -319,26 +301,19 @@ public struct Game {
       case .task:
         guard !state.isGameOver else { return .none }
         state.gameCurrentTime = self.date()
-
-        return .run { [gameContext = state.gameContext] send in
+        if state.gameContext.is(\.turnBased) {
+          state.multiplayerOpensCount += 1
+        }
+        return .run { [multiplayerOpensCount = state.multiplayerOpensCount, gameContext = state.gameContext] send in
           await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask {
-              for await isLowPower in await self.lowPowerMode.start() {
-                await send(.lowPowerModeChanged(isLowPower))
-              }
-            }
-
             if gameContext.is(\.turnBased) {
               group.addTask {
-                let playedGamesCount = await self.userDefaults
-                  .incrementMultiplayerOpensCount()
                 let isFullGamePurchased = self.currentPlayer()?.appleReceipt != nil
                 guard
                   !isFullGamePurchased,
                   shouldShowInterstitial(
-                    gamePlayedCount: playedGamesCount,
-                    gameContext: .init(gameContext: gameContext),
-                    serverConfig: self.serverConfig()
+                    gamePlayedCount: multiplayerOpensCount,
+                    gameContext: .init(gameContext: gameContext)
                   )
                 else { return }
                 try await self.mainRunLoop.sleep(for: .seconds(3))
@@ -349,12 +324,6 @@ public struct Game {
             group.addTask {
               try await self.mainQueue.sleep(for: 0.5)
               await send(.gameLoaded)
-            }
-
-            group.addTask {
-              for await userSettings in self.userSettings.stream() {
-                await send(.userSettingsUpdated(userSettings))
-              }
             }
           }
           for music in AudioPlayerClient.Sound.allMusic {
@@ -395,9 +364,6 @@ public struct Game {
 
       case .pan:
         state.isPanning = false
-        return .none
-
-      case .savedGamesLoaded:
         return .none
 
       case let .submitButtonTapped(reaction: reaction),
@@ -509,11 +475,6 @@ public struct Game {
         return .none
 
       case .trayButtonTapped:
-        return .none
-
-      case let .userSettingsUpdated(userSettings):
-        state.enableGyroMotion = userSettings.enableGyroMotion
-        state.isAnimationReduced = userSettings.enableReducedAnimation
         return .none
 
       case .wordSubmitButton:
@@ -665,17 +626,16 @@ extension DependencyValues {
     self = Self.test
     self.apiClient = .noop
     self.audioPlayer = previousValues.audioPlayer
-    self.build = .noop
+    //self.build = .noop
     self.database = .noop
     self.date = previousValues.date
     self.dictionary = previousValues.dictionary
     self.feedbackGenerator = previousValues.feedbackGenerator
-    self.fileClient = .noop
     self.gameCenter = .noop
     self.mainRunLoop = previousValues.mainRunLoop
     self.mainQueue = previousValues.mainQueue
     self.remoteNotifications = .noop
-    self.serverConfig = .noop
+    //self.serverConfig = .noop
     self.storeKit = .noop
     self.userNotifications = .noop
   }

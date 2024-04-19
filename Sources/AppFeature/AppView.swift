@@ -2,6 +2,7 @@ import ClientModels
 import ComposableArchitecture
 import ComposableStoreKit
 import CubeCore
+import DailyChallengeFeature
 import GameCore
 import HomeFeature
 import NotificationHelpers
@@ -9,6 +10,7 @@ import OnboardingFeature
 import SharedModels
 import Styleguide
 import SwiftUI
+import ServerConfigPersistenceKey
 
 @Reducer
 public struct AppReducer {
@@ -22,7 +24,11 @@ public struct AppReducer {
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
+    @SharedReader(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding = false
     public var home: Home.State
+    @Shared(.installationTime) var installationTime = 0
+    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
+    @Shared(.savedGames) var savedGames = SavedGamesState()
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
@@ -42,18 +48,14 @@ public struct AppReducer {
     case gameCenter(GameCenterAction)
     case home(Home.Action)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, Error>)
   }
 
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter.turnBasedMatch.load) var loadTurnBasedMatch
   @Dependency(\.database.migrate) var migrate
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.remoteNotifications) var remoteNotifications
-  @Dependency(\.serverConfig.refresh) var refreshServerConfig
-  @Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
@@ -67,21 +69,13 @@ public struct AppReducer {
 
           switch (game.gameContext, game.gameMode) {
           case (.dailyChallenge, .unlimited):
-            state.home.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
+            state.savedGames.dailyChallengeUnlimited = InProgressGame(gameState: game)
           case (.shared, .unlimited), (.solo, .unlimited):
-            state.home.savedGames.unlimited = InProgressGame(gameState: game)
+            state.savedGames.unlimited = InProgressGame(gameState: game)
           case (.turnBased, _), (_, .timed):
             return .none
           }
           return .none
-        }
-      }
-      .onChange(of: \.home.savedGames) { _, savedGames in
-        Reduce { _, action in
-          if case .savedGamesLoaded(.success) = action { return .none }
-          return .run { _ in
-            try await self.fileClient.save(games: savedGames)
-          }
         }
       }
 
@@ -100,23 +94,14 @@ public struct AppReducer {
     Reduce { state, action in
       switch action {
       case .appDelegate(.didFinishLaunching):
-        if !self.userDefaults.hasShownFirstLaunchOnboarding {
+        if !state.hasShownFirstLaunchOnboarding {
           state.destination = .onboarding(Onboarding.State(presentationStyle: .firstLaunch))
         }
-
-        return .run { send in
-          async let migrate: Void = self.migrate()
-          if self.userDefaults.installationTime <= 0 {
-            await self.userDefaults.setInstallationTime(
-              self.now.timeIntervalSinceReferenceDate
-            )
-          }
-          await send(
-            .savedGamesLoaded(
-              Result { try await self.fileClient.loadSavedGames() }
-            )
-          )
-          _ = try await migrate
+        if state.installationTime <= 0 {
+          state.installationTime = self.now.timeIntervalSinceReferenceDate
+        }
+        return .run { _ in
+          try await self.migrate()
         }
 
       case let .appDelegate(.userNotifications(.didReceiveResponse(response, completionHandler))):
@@ -128,7 +113,7 @@ public struct AppReducer {
         {
           switch pushNotificationContent {
           case .dailyChallengeEndsSoon:
-            if let inProgressGame = state.home.savedGames.dailyChallengeUnlimited {
+            if let inProgressGame = state.savedGames.dailyChallengeUnlimited {
               state.destination = .game(Game.State(inProgressGame: inProgressGame))
             } else {
               // TODO: load/retry
@@ -136,7 +121,7 @@ public struct AppReducer {
 
           case .dailyChallengeReport:
             state.destination = nil
-            state.home.destination = .dailyChallenge(.init())
+            state.home.destination = .dailyChallenge(DailyChallengeReducer.State())
           }
         }
 
@@ -153,9 +138,9 @@ public struct AppReducer {
         guard let game = state.destination?.game else { return .none }
         switch (game.gameContext, game.gameMode) {
         case (.dailyChallenge, .unlimited):
-          state.home.savedGames.dailyChallengeUnlimited = nil
+          state.savedGames.dailyChallengeUnlimited = nil
         case (.solo, .unlimited):
-          state.home.savedGames.unlimited = nil
+          state.savedGames.unlimited = nil
         default:
           break
         }
@@ -163,7 +148,7 @@ public struct AppReducer {
 
       case .destination(.presented(.game(.activeGames(.dailyChallengeTapped)))),
         .home(.activeGames(.dailyChallengeTapped)):
-        guard let inProgressGame = state.home.savedGames.dailyChallengeUnlimited
+        guard let inProgressGame = state.savedGames.dailyChallengeUnlimited
         else { return .none }
 
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
@@ -171,7 +156,7 @@ public struct AppReducer {
 
       case .destination(.presented(.game(.activeGames(.soloTapped)))),
         .home(.activeGames(.soloTapped)):
-        guard let inProgressGame = state.home.savedGames.unlimited
+        guard let inProgressGame = state.savedGames.unlimited
         else { return .none }
 
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
@@ -214,7 +199,7 @@ public struct AppReducer {
       ),
         .home(.destination(.presented(.solo(.gameButtonTapped(.unlimited))))):
         state.destination = .game(
-          state.home.savedGames.unlimited
+          state.savedGames.unlimited
             .map { Game.State(inProgressGame: $0) }
             ?? Game.State(
               cubes: self.randomCubes(.en),
@@ -243,29 +228,18 @@ public struct AppReducer {
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
         return .none
 
-      case let .home(.dailyChallengeResponse(.success(dailyChallenges))):
-        if dailyChallenges.unlimited?.dailyChallenge.id
-          != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
-        {
-          state.home.savedGames.dailyChallengeUnlimited = nil
-          return .run { [savedGames = state.home.savedGames] _ in
-            try await self.fileClient.save(games: savedGames)
-          }
-        }
-        return .none
-
       case .home(.howToPlayButtonTapped):
         state.destination = .onboarding(Onboarding.State(presentationStyle: .help))
         return .none
 
       case .didChangeScenePhase(.active):
-        return .run { _ in
+        return .run { [serverConfig = state.$serverConfig] _ in
           async let register: Void = registerForRemoteNotificationsAsync(
             remoteNotifications: self.remoteNotifications,
             userNotifications: self.userNotifications
           )
-          async let refresh = self.refreshServerConfig()
-          _ = try await (register, refresh)
+          async let refresh: Void = serverConfig.persistence.reload()
+          _ = await (register, refresh)
         } catch: { _, _ in
         }
 
@@ -279,13 +253,6 @@ public struct AppReducer {
         return .none
 
       case .paymentTransaction:
-        return .none
-
-      case .savedGamesLoaded(.failure):
-        return .none
-
-      case let .savedGamesLoaded(.success(savedGames)):
-        state.home.savedGames = savedGames
         return .none
 
       case .verifyReceiptResponse:

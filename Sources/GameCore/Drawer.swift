@@ -3,7 +3,6 @@ import ComposableArchitecture
 
 @Reducer
 public struct ActiveGamesTray {
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.mainRunLoop.now.date) var now
 
@@ -32,11 +31,8 @@ public struct ActiveGamesTray {
         .destination,
         .gameCenter,
         .gameLoaded,
-        .lowPowerModeChanged,
         .matchesLoaded(.failure),
-        .savedGamesLoaded(.failure),
-        .timerTick,
-        .userSettingsUpdated:
+        .timerTick:
 
         return .none
 
@@ -49,10 +45,6 @@ public struct ActiveGamesTray {
 
       case .task:
         return self.activeGameEffects
-
-      case let .savedGamesLoaded(.success(savedGames)):
-        state.activeGames.savedGames = savedGames
-        return .none
 
       case .trayButtonTapped:
         guard state.isTrayAvailable else { return .none }
@@ -69,15 +61,6 @@ public struct ActiveGamesTray {
           await send(
             .matchesLoaded(
               Result { try await self.gameCenter.turnBasedMatch.loadMatches() }
-            ),
-            animation: .default
-          )
-        }
-
-        group.addTask {
-          await send(
-            .savedGamesLoaded(
-              Result { try await self.fileClient.loadSavedGames() }
             ),
             animation: .default
           )

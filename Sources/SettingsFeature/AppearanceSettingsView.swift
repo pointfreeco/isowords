@@ -1,7 +1,7 @@
 import ComposableArchitecture
 import Styleguide
 import SwiftUI
-import UserSettingsClient
+import UserSettings
 
 struct AppearanceSettingsView: View {
   @Bindable var store: StoreOf<Settings>

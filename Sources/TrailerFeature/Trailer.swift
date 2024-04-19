@@ -64,13 +64,11 @@ public struct Trailer {
         $0.build = .noop
         $0.database = .noop
         $0.feedbackGenerator = .noop
-        $0.fileClient = .noop
         $0.gameCenter = .noop
         $0.lowPowerMode = .false
         $0.remoteNotifications = .noop
         $0.serverConfig = .noop
         $0.storeKit = .noop
-        $0.userDefaults = .noop
         $0.userNotifications = .noop
       }
     }

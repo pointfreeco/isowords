@@ -2,7 +2,7 @@ import Build
 import Foundation
 import Tagged
 
-public struct ServerConfig: Codable, Equatable, Hashable {
+public struct ServerConfig: Codable, Equatable, Hashable, Sendable {
   public var appId: String
   public var newestBuild: Build.Number
   public var forceUpgradeVersion: Int
@@ -23,13 +23,13 @@ public struct ServerConfig: Codable, Equatable, Hashable {
     self.upgradeInterstitial = upgradeInterstitial
   }
 
-  public struct ProductIdentifiers: Codable, Equatable, Hashable {
+  public struct ProductIdentifiers: Codable, Equatable, Hashable, Sendable {
     public var fullGame: String = "co.pointfree.isowords_testing.full_game"
 
     public static let `default` = Self()
   }
 
-  public struct UpgradeInterstitial: Codable, Equatable, Hashable {
+  public struct UpgradeInterstitial: Codable, Equatable, Hashable, Sendable {
     public var dailyChallengeTriggerEvery = 1
     public var duration = 10
     public var multiplayerGameTriggerEvery = 4
