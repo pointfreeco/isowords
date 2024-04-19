@@ -5,6 +5,29 @@ import Dependencies
 import Foundation
 @_exported import ServerConfig
 
+@propertyWrapper
+public struct ServerConfig_: Equatable {
+  @Shared(.fileStorage(.serverConfig)) var config = ServerConfig()
+
+  public init(config: ServerConfig = ServerConfig()) {
+    self.config = config
+  }
+
+  public var projectedValue: Self { self }
+
+  public var wrappedValue: ServerConfig {
+    get { config }
+    nonmutating set { config = newValue }
+  }
+
+  public func reload() async throws {
+    @Dependency(\.apiClient) var apiClient
+    @Shared(.build) var build = Build()
+    self.config = try await apiClient
+      .apiRequest(route: .config(build: build.number), as: ServerConfig.self)
+  }
+}
+
 extension PersistenceReaderKey where Self == ServerConfigKey {
   public static var serverConfig: Self {
     ServerConfigKey()

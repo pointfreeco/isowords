@@ -43,7 +43,9 @@ public struct Home {
     public var weekInReview: FetchWeekInReviewResponse?
     @Shared(.installationTime) var installationTime = Date().timeIntervalSince1970
     @Shared(.build) var build = Build()
-    @SharedReader(.serverConfig) var serverConfig = ServerConfig()
+    //@SharedReader(.serverConfig) var serverConfig = ServerConfig()
+    @ObservationStateIgnored
+    @ServerConfig_ var serverConfig
 
     public var hasChangelog: Bool {
       self.serverConfig.newestBuild > self.build.number
@@ -114,7 +116,7 @@ public struct Home {
   @Dependency(\.mainRunLoop.now.date) var now
   @Dependency(\.audioPlayer.play) var playSound
   @Dependency(\.timeZone) var timeZone
-  @SharedReader(.serverConfig) var serverConfig = ServerConfig()
+  //@SharedReader(.serverConfig) var serverConfig = ServerConfig()
 
   public init() {}
 
@@ -294,7 +296,8 @@ public struct Home {
       )
       await send(.authenticationResponse(currentPlayerEnvelope))
 
-      async let serverConfigResponse: Void = $serverConfig.persistence.reload()
+      @ServerConfig_ var serverConfig
+      async let serverConfigResponse: Void = $serverConfig.reload()
 
       async let dailyChallengeResponse: Void = send(
         .dailyChallengeResponse(
@@ -324,7 +327,7 @@ public struct Home {
           }
         )
       )
-      _ = await (
+      _ = try await (
         serverConfigResponse, dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse
       )
     } catch {}
