@@ -8,14 +8,12 @@ import SwiftUI
 
 @ObservableState
 public struct ActiveGamesState: Equatable {
-  public var savedGames: SavedGamesState
+  @Shared(.savedGames) public var savedGames
   public var turnBasedMatches: [ActiveTurnBasedMatch]
 
   public init(
-    savedGames: SavedGamesState = .init(),
     turnBasedMatches: [ActiveTurnBasedMatch] = []
   ) {
-    self.savedGames = savedGames
     self.turnBasedMatches = turnBasedMatches
   }
 
@@ -342,23 +340,23 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
 
   struct ActiveGamesView_Previews: PreviewProvider {
     static var previews: some View {
-      Preview {
+      @Shared(.savedGames) var savedGames
+      savedGames = SavedGamesState(
+        dailyChallengeUnlimited: update(.mock) {
+          $0?.moves = [.highScoringMove]
+          $0?.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
+        },
+        unlimited: update(.mock) {
+          $0?.moves = [.highScoringMove]
+          $0?.gameStartTime = Date().addingTimeInterval(-60 * 60 * 7)
+        }
+      )
+
+      return Preview {
         ScrollView {
           ActiveGamesView(
             store: Store(
-              initialState: ActiveGamesState(
-                savedGames: SavedGamesState(
-                  dailyChallengeUnlimited: update(.mock) {
-                    $0?.moves = [.highScoringMove]
-                    $0?.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
-                  },
-                  unlimited: update(.mock) {
-                    $0?.moves = [.highScoringMove]
-                    $0?.gameStartTime = Date().addingTimeInterval(-60 * 60 * 7)
-                  }
-                ),
-                turnBasedMatches: []
-              )
+              initialState: ActiveGamesState(turnBasedMatches: [])
             ) {
             },
             showMenuItems: true
@@ -366,7 +364,6 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
           ActiveGamesView(
             store: Store(
               initialState: ActiveGamesState(
-                savedGames: .init(),
                 turnBasedMatches: [
                   .init(
                     id: "1",

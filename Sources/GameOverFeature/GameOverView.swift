@@ -128,7 +128,6 @@ public struct GameOver {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
   @Dependency(\.dismissGame) var dismissGame
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.storeKit.requestReview) var requestReview
   @Dependency(\.serverConfig.config) var serverConfig
@@ -188,8 +187,7 @@ public struct GameOver {
                   try await startDailyChallengeAsync(
                     challenge,
                     apiClient: self.apiClient,
-                    date: { self.mainRunLoop.now.date },
-                    fileClient: self.fileClient
+                    date: { self.mainRunLoop.now.date }
                   )
                 }
               )

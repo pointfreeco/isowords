@@ -10,20 +10,13 @@ import SwiftUI
 public struct Solo {
   @ObservableState
   public struct State: Equatable {
-    var inProgressGame: InProgressGame?
-
-    public init(inProgressGame: InProgressGame? = nil) {
-      self.inProgressGame = inProgressGame
-    }
+    @Shared(.savedGames) var savedGames
+    public init() {}
   }
 
   public enum Action {
     case gameButtonTapped(GameMode)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
-    case task
   }
-
-  @Dependency(\.fileClient) var fileClient
 
   public init() {}
 
@@ -32,18 +25,6 @@ public struct Solo {
       switch action {
       case .gameButtonTapped:
         return .none
-
-      case .savedGamesLoaded(.failure):
-        return .none
-
-      case let .savedGamesLoaded(.success(savedGameState)):
-        state.inProgressGame = savedGameState.unlimited
-        return .none
-
-      case .task:
-        return .run { send in
-          await send(.savedGamesLoaded(Result { try await self.fileClient.loadSavedGames() }))
-        }
       }
     }
   }
@@ -95,7 +76,7 @@ public struct SoloView: View {
           color: .solo,
           inactiveText: nil,
           isLoading: false,
-          resumeText: (store.inProgressGame?.currentScore).flatMap {
+          resumeText: (store.savedGames.unlimited?.currentScore).flatMap {
             $0 > 0 ? Text("\($0) points") : nil
           },
           action: { store.send(.gameButtonTapped(.unlimited), animation: .default) }
@@ -104,7 +85,6 @@ public struct SoloView: View {
     }
     .adaptivePadding(.vertical)
     .screenEdgePadding(.horizontal)
-    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
       foregroundColor: self.colorScheme == .dark ? .solo : .isowordsBlack,
@@ -118,45 +98,41 @@ public struct SoloView: View {
 
   struct SoloView_Previews: PreviewProvider {
     static var previews: some View {
-      Preview {
+      @Shared(.savedGames) var savedGames
+      savedGames.unlimited = update(.mock) {
+        $0.moves = [
+          .init(
+            playedAt: Date(),
+            playerIndex: nil,
+            reactions: nil,
+            score: 1_000,
+            type: .playedWord([
+              .init(
+                index: .init(x: .two, y: .two, z: .two),
+                side: .left
+              ),
+              .init(
+                index: .init(x: .two, y: .two, z: .two),
+                side: .right
+              ),
+              .init(
+                index: .init(x: .two, y: .two, z: .two),
+                side: .top
+              ),
+            ])
+          )
+        ]
+      }
+
+      return Preview {
         NavigationView {
-          SoloView(store: .solo)
+          SoloView(
+            store: Store(initialState: Solo.State()) {
+              Solo()
+            }
+          )
         }
       }
-    }
-  }
-
-  extension Store where State == Solo.State, Action == Solo.Action {
-    static let solo = Store(
-      initialState: Solo.State(
-        inProgressGame: .some(
-          update(.mock) {
-            $0.moves = [
-              .init(
-                playedAt: Date(),
-                playerIndex: nil,
-                reactions: nil,
-                score: 1_000,
-                type: .playedWord([
-                  .init(
-                    index: .init(x: .two, y: .two, z: .two),
-                    side: .left
-                  ),
-                  .init(
-                    index: .init(x: .two, y: .two, z: .two),
-                    side: .right
-                  ),
-                  .init(
-                    index: .init(x: .two, y: .two, z: .two),
-                    side: .top
-                  ),
-                ])
-              )
-            ]
-          })
-      )
-    ) {
-      Solo()
     }
   }
 #endif

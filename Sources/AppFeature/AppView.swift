@@ -42,11 +42,9 @@ public struct AppReducer {
     case gameCenter(GameCenterAction)
     case home(Home.Action)
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case verifyReceiptResponse(Result<ReceiptFinalizationEnvelope, Error>)
   }
 
-  @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter.turnBasedMatch.load) var loadTurnBasedMatch
   @Dependency(\.database.migrate) var migrate
   @Dependency(\.mainRunLoop.now.date) var now
@@ -76,14 +74,6 @@ public struct AppReducer {
           return .none
         }
       }
-      .onChange(of: \.home.savedGames) { _, savedGames in
-        Reduce { _, action in
-          if case .savedGamesLoaded(.success) = action { return .none }
-          return .run { _ in
-            try await self.fileClient.save(games: savedGames)
-          }
-        }
-      }
 
     GameCenterLogic()
     StoreKitLogic()
@@ -111,11 +101,6 @@ public struct AppReducer {
               self.now.timeIntervalSinceReferenceDate
             )
           }
-          await send(
-            .savedGamesLoaded(
-              Result { try await self.fileClient.loadSavedGames() }
-            )
-          )
           _ = try await migrate
         }
 
@@ -248,9 +233,7 @@ public struct AppReducer {
           != state.home.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
         {
           state.home.savedGames.dailyChallengeUnlimited = nil
-          return .run { [savedGames = state.home.savedGames] _ in
-            try await self.fileClient.save(games: savedGames)
-          }
+          return .none
         }
         return .none
 
@@ -279,13 +262,6 @@ public struct AppReducer {
         return .none
 
       case .paymentTransaction:
-        return .none
-
-      case .savedGamesLoaded(.failure):
-        return .none
-
-      case let .savedGamesLoaded(.success(savedGames)):
-        state.home.savedGames = savedGames
         return .none
 
       case .verifyReceiptResponse:

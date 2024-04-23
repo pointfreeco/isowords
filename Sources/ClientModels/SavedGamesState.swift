@@ -10,3 +10,14 @@ public struct SavedGamesState: Codable, Equatable {
     self.unlimited = unlimited
   }
 }
+
+import ComposableArchitecture
+
+extension PersistenceKey where Self == PersistenceKeyDefault<FileStorageKey<SavedGamesState>> {
+  public static var savedGames: Self {
+    PersistenceKeyDefault(
+      .fileStorage(.documentsDirectory.appending(path: "saved-games.json")),
+      SavedGamesState()
+    )
+  }
+}

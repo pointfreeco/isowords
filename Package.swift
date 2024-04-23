@@ -389,6 +389,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "ComposableGameCenter",
         "SharedModels",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .testTarget(

@@ -149,7 +149,6 @@ public struct Game {
     case menuButtonTapped
     case task
     case pan(UIGestureRecognizer.State, PanData?)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
@@ -383,9 +382,6 @@ public struct Game {
 
       case .pan:
         state.isPanning = false
-        return .none
-
-      case .savedGamesLoaded:
         return .none
 
       case let .submitButtonTapped(reaction: reaction),
@@ -653,7 +649,6 @@ extension DependencyValues {
     self.date = previousValues.date
     self.dictionary = previousValues.dictionary
     self.feedbackGenerator = previousValues.feedbackGenerator
-    self.fileClient = .noop
     self.gameCenter = .noop
     self.mainRunLoop = previousValues.mainRunLoop
     self.mainQueue = previousValues.mainQueue

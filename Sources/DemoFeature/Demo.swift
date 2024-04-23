@@ -60,7 +60,7 @@ public struct Demo {
       Scope(state: \.game, action: \.game) {
         Game().transformDependency(\.self) {
           $0.database = .noop
-          $0.fileClient = .noop
+          $0.defaultFileStorage = InMemoryFileStorage()
           $0.gameCenter = .noop
           $0.remoteNotifications = .noop
           $0.serverConfig = .noop
