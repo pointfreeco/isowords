@@ -10,7 +10,19 @@
         localPlayer: .live,
         reportAchievements: { try await GKAchievement.report($0) },
         showNotificationBanner: {
-          await GKNotificationBanner.show(withTitle: $0.title, message: $0.message)
+          if #available(iOS 16.1, *) {
+            var content = UNMutableNotificationContent()
+            content.title = $0.title ?? content.title
+            content.body = $0.message ?? content.body
+            let request = UNNotificationRequest(
+              identifier: UUID().uuidString,
+              content: content,
+              trigger: nil
+            )
+            try? await UNUserNotificationCenter.current().add(request)
+          } else {
+            await GKNotificationBanner.show(withTitle: $0.title, message: $0.message)
+          }
         },
         turnBasedMatch: .live,
         turnBasedMatchmakerViewController: .live

@@ -29,7 +29,7 @@ public struct GameCenterLogic {
           for await event in self.gameCenter.localPlayer.listener() {
             await send(.gameCenter(.listener(event)))
           }
-        }
+        } catch: { _, _ in }
 
       case .destination(
         .presented(.game(.destination(.presented(.gameOver(.rematchButtonTapped)))))

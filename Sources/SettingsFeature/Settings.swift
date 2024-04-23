@@ -53,7 +53,7 @@ public struct Settings {
     public var isRestoring: Bool
     public var stats: Stats.State
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
-    public var userSettings: UserSettings
+    @Shared(.userSettings) public var userSettings
 
     public struct ProductError: Error, Equatable {}
 
@@ -68,7 +68,6 @@ public struct Settings {
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
-      @Dependency(\.userSettings) var userSettings
       self.alert = alert
       self.buildNumber = buildNumber
       self.developer = developer
@@ -78,7 +77,6 @@ public struct Settings {
       self.isRestoring = isRestoring
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
-      self.userSettings = userSettings.get()
     }
 
     public var isFullGamePurchased: Bool {
@@ -117,7 +115,6 @@ public struct Settings {
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
   @Dependency(\.userNotifications) var userNotifications
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -456,14 +453,6 @@ public struct Settings {
       }
     }
     .ifLet(\.$alert, action: \.alert)
-    .onChange(of: \.userSettings) { _, userSettings in
-      Reduce { _, _ in
-        enum CancelID { case saveDebounce }
-
-        return .run { _ in await self.userSettings.set(userSettings) }
-          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
-      }
-    }
 
     Scope(state: \.stats, action: \.stats) {
       Stats()

@@ -20,6 +20,7 @@ public struct Onboarding {
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
+    @Shared(.userSettings) var userSettings
 
     public init(
       alert: AlertState<Action.Alert>? = nil,
@@ -182,7 +183,6 @@ public struct Onboarding {
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -380,7 +380,7 @@ public struct Onboarding {
     Scope(state: \.game, action: \.game) {
       Game()
         .haptics(
-          isEnabled: { _ in self.userSettings.enableHaptics },
+          isEnabled: \.userSettings.enableHaptics,
           triggerOnChangeOf: \.selectedWord
         )
     }

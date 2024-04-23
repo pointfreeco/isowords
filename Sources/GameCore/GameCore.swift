@@ -54,8 +54,6 @@ public struct Game {
     public var gameCurrentTime: Date
     public var gameMode: GameMode
     public var gameStartTime: Date
-    public var enableGyroMotion: Bool
-    public var isAnimationReduced: Bool
     public var isDemo: Bool
     public var isGameLoaded: Bool
     public var isOnLowPowerMode: Bool
@@ -67,6 +65,7 @@ public struct Game {
     public var secondsPlayed: Int
     public var selectedWord: [IndexedCubeFace]
     public var selectedWordIsValid: Bool
+    @Shared(.userSettings) public var userSettings
     public var wordSubmitButton: WordSubmitButtonFeature.ButtonState
 
     public init(
@@ -91,17 +90,14 @@ public struct Game {
       selectedWordIsValid: Bool = false,
       wordSubmit: WordSubmitButtonFeature.ButtonState = .init()
     ) {
-      @Dependency(\.userSettings) var userSettings
       self.activeGames = activeGames
       self.cubes = cubes
       self.cubeStartedShakingAt = cubeStartedShakingAt
       self.destination = destination
-      self.enableGyroMotion = userSettings.enableGyroMotion
       self.gameContext = gameContext
       self.gameCurrentTime = gameCurrentTime
       self.gameMode = gameMode
       self.gameStartTime = gameStartTime
-      self.isAnimationReduced = userSettings.enableReducedAnimation
       self.isDemo = isDemo
       self.isGameLoaded = isGameLoaded
       self.isOnLowPowerMode = isOnLowPowerMode
@@ -158,7 +154,6 @@ public struct Game {
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case timerTick(Date)
     case trayButtonTapped
-    case userSettingsUpdated(UserSettings)
     case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
@@ -178,7 +173,6 @@ public struct Game {
   @Dependency(\.mainRunLoop) var mainRunLoop
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
-  @Dependency(\.userSettings) var userSettings
 
   public init() {}
 
@@ -350,12 +344,6 @@ public struct Game {
               try await self.mainQueue.sleep(for: 0.5)
               await send(.gameLoaded)
             }
-
-            group.addTask {
-              for await userSettings in self.userSettings.stream() {
-                await send(.userSettingsUpdated(userSettings))
-              }
-            }
           }
           for music in AudioPlayerClient.Sound.allMusic {
             await self.audioPlayer.stop(music)
@@ -509,11 +497,6 @@ public struct Game {
         return .none
 
       case .trayButtonTapped:
-        return .none
-
-      case let .userSettingsUpdated(userSettings):
-        state.enableGyroMotion = userSettings.enableGyroMotion
-        state.isAnimationReduced = userSettings.enableReducedAnimation
         return .none
 
       case .wordSubmitButton:
