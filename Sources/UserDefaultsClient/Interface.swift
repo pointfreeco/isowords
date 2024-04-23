@@ -47,3 +47,22 @@ public struct UserDefaultsClient {
 let hasShownFirstLaunchOnboardingKey = "hasShownFirstLaunchOnboardingKey"
 let installationTimeKey = "installationTimeKey"
 let multiplayerOpensCount = "multiplayerOpensCount"
+
+import ComposableArchitecture
+
+extension PersistenceKey where Self == PersistenceKeyDefault<AppStorageKey<Bool>> {
+  public static var hasShownFirstLaunchOnboarding: Self {
+    PersistenceKeyDefault(
+      .appStorage("hasShownFirstLaunchOnboardingKey"),
+      false
+    )
+  }
+}
+extension PersistenceKey where Self == PersistenceKeyDefault<AppStorageKey<Double>> {
+  public static var installationTime: Self {
+    PersistenceKeyDefault(
+      .appStorage("installationTimeKey"),
+      0.0
+    )
+  }
+}

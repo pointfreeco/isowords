@@ -18,6 +18,7 @@ public struct Onboarding {
   public struct State: Equatable {
     @Presents public var alert: AlertState<Action.Alert>?
     public var game: Game.State
+    @Shared(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding
     public var presentationStyle: PresentationStyle
     public var step: Step
     @Shared(.userSettings) var userSettings
@@ -182,7 +183,6 @@ public struct Onboarding {
   @Dependency(\.dictionary) var dictionary
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 
@@ -204,8 +204,8 @@ public struct Onboarding {
         return .none
 
       case .delegate(.getStarted):
-        return .run { _ in
-          await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
+        return .run { [state] _ in
+          await state.hasShownFirstLaunchOnboarding = true
           await self.audioPlayer.stop(.onboardingBgMusic)
           Task.cancel(id: CancelID.delayedNextStep)
         }
@@ -268,7 +268,7 @@ public struct Onboarding {
         return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
 
       case .skipButtonTapped:
-        guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
+        guard !state.hasShownFirstLaunchOnboarding else {
           return .run { send in
             await send(.delegate(.getStarted), animation: .default)
             await self.audioPlayer.play(.uiSfxTap)

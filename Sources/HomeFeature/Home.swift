@@ -38,6 +38,7 @@ public struct Home {
     @Presents public var destination: Destination.State?
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
+    @SharedReader(.installationTime) public var installationTime
     @Presents public var nagBanner: NagBanner.State?
     @Shared(.savedGames) public var savedGames
     public var turnBasedMatches: [ActiveTurnBasedMatch]
@@ -113,7 +114,6 @@ public struct Home {
   @Dependency(\.audioPlayer.play) var playSound
   @Dependency(\.serverConfig) var serverConfig
   @Dependency(\.timeZone) var timeZone
-  @Dependency(\.userDefaults) var userDefaults
 
   public init() {}
 
@@ -196,7 +196,7 @@ public struct Home {
     case let .authenticationResponse(currentPlayerEnvelope):
       let now = self.now.timeIntervalSinceReferenceDate
       let itsNagTime =
-        Int(now - self.userDefaults.installationTime)
+        Int(now - state.installationTime)
         >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
       let isFullGamePurchased =
         currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil

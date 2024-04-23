@@ -16,17 +16,18 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
   let store = Store(
     initialState: AppReducer.State()
   ) {
-    AppReducer().transformDependency(\.self) {
-      $0.audioPlayer = .liveValue
-      $0.database = .live(
-        path: FileManager.default
-          .urls(for: .documentDirectory, in: .userDomainMask)
-          .first!
-          .appendingPathComponent("co.pointfree.Isowords")
-          .appendingPathComponent("Isowords.sqlite3")
-      )
-      $0.serverConfig = .live(apiClient: $0.apiClient, build: $0.build)
-    }
+    AppReducer()
+  } withDependencies: {
+    $0.audioPlayer = .liveValue
+    $0.database = .live(
+      path: FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("co.pointfree.Isowords")
+        .appendingPathComponent("Isowords.sqlite3")
+    )
+    $0.defaultAppStorage = UserDefaults(suiteName: "group.isowords")!
+    $0.serverConfig = .live(apiClient: $0.apiClient, build: $0.build)
   }
 
   func application(

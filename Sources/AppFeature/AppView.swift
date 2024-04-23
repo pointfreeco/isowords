@@ -22,6 +22,8 @@ public struct AppReducer {
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
+    @SharedReader(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding
+    @Shared(.installationTime) var installationTime
     public var home: Home.State
 
     public init(
@@ -51,7 +53,6 @@ public struct AppReducer {
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.serverConfig.refresh) var refreshServerConfig
-  @Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
@@ -90,16 +91,14 @@ public struct AppReducer {
     Reduce { state, action in
       switch action {
       case .appDelegate(.didFinishLaunching):
-        if !self.userDefaults.hasShownFirstLaunchOnboarding {
+        if !state.hasShownFirstLaunchOnboarding {
           state.destination = .onboarding(Onboarding.State(presentationStyle: .firstLaunch))
         }
 
-        return .run { send in
+        return .run { [state] send in
           async let migrate: Void = self.migrate()
-          if self.userDefaults.installationTime <= 0 {
-            await self.userDefaults.setInstallationTime(
-              self.now.timeIntervalSinceReferenceDate
-            )
+          if state.installationTime <= 0 {
+            state.installationTime = self.now.timeIntervalSinceReferenceDate
           }
           _ = try await migrate
         }
