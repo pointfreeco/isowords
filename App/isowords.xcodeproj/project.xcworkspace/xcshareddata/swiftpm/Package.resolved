@@ -113,8 +113,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-composable-architecture",
       "state" : {
-        "revision" : "115fe5af41d333b6156d4924d7c7058bc77fd580",
-        "version" : "1.9.2"
+        "branch" : "shared-state-beta",
+        "revision" : "76343472bde40429785fa17c771bc6be42db2a87"
       }
     },
     {
@@ -129,7 +129,7 @@
     {
       "identity" : "swift-crypto",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-crypto.git",
+      "location" : "https://github.com/apple/swift-crypto",
       "state" : {
         "revision" : "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
         "version" : "1.1.7"

@@ -22,7 +22,9 @@ public struct AppReducer {
   public struct State: Equatable {
     public var appDelegate: AppDelegateReducer.State
     @Presents public var destination: Destination.State?
+    @SharedReader(.hasShownFirstLaunchOnboarding) var hasShownFirstLaunchOnboarding
     public var home: Home.State
+    @Shared(.installationTime) var installationTime
 
     public init(
       appDelegate: AppDelegateReducer.State = AppDelegateReducer.State(),
@@ -53,7 +55,7 @@ public struct AppReducer {
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.serverConfig.refresh) var refreshServerConfig
-  @Dependency(\.userDefaults) var userDefaults
+  //@Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
@@ -100,17 +102,20 @@ public struct AppReducer {
     Reduce { state, action in
       switch action {
       case .appDelegate(.didFinishLaunching):
-        if !self.userDefaults.hasShownFirstLaunchOnboarding {
+        if !state.hasShownFirstLaunchOnboarding {
           state.destination = .onboarding(Onboarding.State(presentationStyle: .firstLaunch))
+        }
+        if state.installationTime <= 0 {
+          state.installationTime = now.timeIntervalSinceReferenceDate
         }
 
         return .run { send in
           async let migrate: Void = self.migrate()
-          if self.userDefaults.installationTime <= 0 {
-            await self.userDefaults.setInstallationTime(
-              self.now.timeIntervalSinceReferenceDate
-            )
-          }
+//          if self.userDefaults.installationTime <= 0 {
+//            await self.userDefaults.setInstallationTime(
+//              self.now.timeIntervalSinceReferenceDate
+//            )
+//          }
           await send(
             .savedGamesLoaded(
               Result { try await self.fileClient.loadSavedGames() }
