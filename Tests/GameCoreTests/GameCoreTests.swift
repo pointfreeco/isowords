@@ -63,7 +63,7 @@ class GameCoreTests: XCTestCase {
       )
     }
 
-    await didEndMatchInTurn.withValue { XCTAssertNoDifference($0, true) }
+    await didEndMatchInTurn.withValue { expectNoDifference($0, true) }
     await store.finish()
   }
 }

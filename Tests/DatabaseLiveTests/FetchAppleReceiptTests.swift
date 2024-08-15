@@ -20,7 +20,7 @@ class FetchAppleReceiptTests: DatabaseTestCase {
         .run.perform().unwrap()
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       receipt,
       .init(
         createdAt: receipt.createdAt,

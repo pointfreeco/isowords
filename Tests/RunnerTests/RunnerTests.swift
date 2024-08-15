@@ -34,9 +34,9 @@ final class RunnerTests: XCTestCase {
       .perform()
       .unwrap()
 
-    XCTAssertNoDifference(targetArn, "arn-deadbeef")
+    expectNoDifference(targetArn, "arn-deadbeef")
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self, from: JSONEncoder().encode(payload)),
       ApsPayload<PushNotificationContent>(

@@ -15,7 +15,7 @@ func assertBackwardsCompatibleCodable<A>(
   let expectedData = try JSONSerialization.data(withJSONObject: json, options: [.sortedKeys])
   let decodedValue = try decoder.decode(A.self, from: expectedData)
 
-  XCTAssertNoDifference(
+  expectNoDifference(
     value,
     decodedValue,
     "Value decoded from JSON does not match expected value",

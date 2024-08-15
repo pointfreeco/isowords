@@ -94,7 +94,7 @@ class FetchWeekInReviewTests: DatabaseTestCase {
 
     let ranks = try self.database.fetchLeaderboardWeeklyRanks(.en, lastPlayer)
       .run.perform().unwrap()
-    XCTAssertNoDifference(
+    expectNoDifference(
       [
         .init(gameMode: .timed, outOf: 95, rank: 95),
         .init(gameMode: .unlimited, outOf: 98, rank: 1),
@@ -104,6 +104,6 @@ class FetchWeekInReviewTests: DatabaseTestCase {
 
     let word = try self.database.fetchLeaderboardWeeklyWord(.en, lastPlayer)
       .run.perform().unwrap()
-    XCTAssertNoDifference(word, .init(letters: "DOGGO", score: 11000))
+    expectNoDifference(word, .init(letters: "DOGGO", score: 11000))
   }
 }

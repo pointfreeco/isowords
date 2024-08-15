@@ -151,8 +151,8 @@ class TurnBasedTests: XCTestCase {
       }
       store.dependencies.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")
       store.dependencies.userDefaults.setInteger = { int, key in
-        XCTAssertNoDifference(int, 1)
-        XCTAssertNoDifference(key, "multiplayerOpensCount")
+        expectNoDifference(int, 1)
+        expectNoDifference(key, "multiplayerOpensCount")
       }
       await store.receive(\.home.activeMatchesResponse.success)
 
@@ -239,7 +239,7 @@ class TurnBasedTests: XCTestCase {
       }
       try await didEndTurnWithRequest.withValue {
         let game = try XCTUnwrap(store.state.destination?.game)
-        XCTAssertNoDifference(
+        expectNoDifference(
           $0,
           .init(
             for: newMatch.matchId,
@@ -639,7 +639,7 @@ class TurnBasedTests: XCTestCase {
 
     try await didEndTurnWithRequest.withValue {
       let game = try XCTUnwrap(store.state.destination?.game)
-      XCTAssertNoDifference(
+      expectNoDifference(
         $0,
         .init(
           for: match.matchId,
@@ -719,7 +719,7 @@ class TurnBasedTests: XCTestCase {
     ) {
       $0.destination = nil
     }
-    await didRematchWithId.withValue { XCTAssertNoDifference($0, match.matchId) }
+    await didRematchWithId.withValue { expectNoDifference($0, match.matchId) }
     await self.mainQueue.advance()
 
     await store.receive(\.gameCenter.rematchResponse.success) {
@@ -800,7 +800,7 @@ class TurnBasedTests: XCTestCase {
 
     await self.mainQueue.advance()
     await notificationBannerRequest.withValue {
-      XCTAssertNoDifference(
+      expectNoDifference(
         $0,
         GameCenterClient.NotificationBannerRequest(
           title: "Blob played ABC!",

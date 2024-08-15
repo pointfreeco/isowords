@@ -44,14 +44,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef"
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -110,14 +110,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef"
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -176,14 +176,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS/deadbeef"
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -243,14 +243,14 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       createPlatformRequest,
       .init(
         apnsToken: "deadbeef",
         platformApplicationArn: "arn:aws:sns:us-east-1:1234567890:app/APNS_SANDBOX/deadbeef"
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       insertPushTokenRequest,
       .init(
         arn: "arn:deadbeef",
@@ -310,9 +310,9 @@ class PushMiddlewareTests: XCTestCase {
     let middleware = siteMiddleware(environment: environment)
     let result = middleware(connection(from: request)).perform()
 
-    XCTAssertNoDifference(playerId, Player.blob.id)
-    XCTAssertNoDifference(notificationType, .dailyChallengeEndsSoon)
-    XCTAssertNoDifference(sendNotifications, false)
+    expectNoDifference(playerId, Player.blob.id)
+    expectNoDifference(notificationType, .dailyChallengeEndsSoon)
+    expectNoDifference(sendNotifications, false)
 
     assertInlineSnapshot(of: result, as: .conn) {
       """

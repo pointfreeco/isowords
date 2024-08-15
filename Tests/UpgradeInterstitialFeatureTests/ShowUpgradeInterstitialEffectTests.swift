@@ -18,7 +18,7 @@ class ShowUpgradeInterstitialEffectTests: XCTestCase {
       )
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       shows,
       [
         false, false, false, false, false, false, false, false, false, true,

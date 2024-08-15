@@ -26,7 +26,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in true }
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       result,
       .init(
         totalScore: 42,
@@ -67,7 +67,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in true }
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       result,
       nil
     )
@@ -97,7 +97,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in false }
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       result,
       nil
     )
@@ -162,7 +162,7 @@ class VerificationTests: XCTestCase {
       isValidWord: { _ in true }
     )
 
-    XCTAssertNoDifference(result, nil)
+    expectNoDifference(result, nil)
   }
 
   func testDuplicateWord() {

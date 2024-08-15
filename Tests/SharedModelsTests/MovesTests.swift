@@ -12,7 +12,7 @@ class MovesTests: XCTestCase {
 
     let moves = try JSONDecoder().decode(Moves.self, from: Data(jsonString.utf8))
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       moves,
       [
         .init(
@@ -52,7 +52,7 @@ class MovesTests: XCTestCase {
       from: encodedMove
     )
 
-    XCTAssertNoDifference(decodedMove, move)
+    expectNoDifference(decodedMove, move)
 
     assertSnapshot(matching: move, as: .json)
   }

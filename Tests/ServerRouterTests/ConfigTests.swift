@@ -28,12 +28,12 @@ class ConfigTests: XCTestCase {
       )
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try testRouter.match(request: expectedRequest),
       expectedRoute
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try testRouter.request(
         for: .api(
           .init(

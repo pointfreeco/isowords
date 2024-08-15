@@ -104,11 +104,11 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       """
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       updatedPlayerId,
       .init(rawValue: UUID(uuidString: "b10bb10b-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       updatedAppleResponse,
       .some(.mock)
     )
@@ -192,11 +192,11 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       """
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       updatedPlayerId,
       .init(rawValue: UUID(uuidString: "b10bb10b-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       updatedData,
       .some(.mock)
     )
@@ -278,11 +278,11 @@ class VerifyReceiptMiddlewareTests: XCTestCase {
       """
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       updatedPlayerId,
       .init(rawValue: UUID(uuidString: "b10bb10b-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       updatedData,
       .some(.mock)
     )

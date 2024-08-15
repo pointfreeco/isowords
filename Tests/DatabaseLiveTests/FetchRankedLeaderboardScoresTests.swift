@@ -95,7 +95,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       lastDayScores,
       [
         .init(
@@ -120,7 +120,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       lastWeekScores,
       [
         .init(
@@ -145,7 +145,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       allTimeScores,
       [
         .init(
@@ -228,7 +228,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       scores,
       [
         .init(
@@ -275,7 +275,7 @@ class FetchRankedLeaderboardScoresTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       entries,
       [
         .init(

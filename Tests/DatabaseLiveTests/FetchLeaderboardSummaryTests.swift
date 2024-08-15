@@ -85,7 +85,7 @@ class FetchLeaderboardSummaryTests: DatabaseTestCase {
       }
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       summaries,
       [
         .lastDay: [
@@ -184,7 +184,7 @@ class FetchLeaderboardSummaryTests: DatabaseTestCase {
       }
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       summaries,
       [
         .lastDay: [

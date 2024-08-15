@@ -79,7 +79,7 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       entriesSortedByScore,
       [
         .init(
@@ -144,6 +144,6 @@ class FetchVocabLeaderboardTests: DatabaseTestCase {
     let scores = try self.database.fetchVocabLeaderboard(.en, lastPlayer, .allTime)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(scores.count, 110)
+    expectNoDifference(scores.count, 110)
   }
 }

@@ -30,8 +30,8 @@ class OnboardingFeatureTests: XCTestCase {
       $0.date = .runLoop($0.mainRunLoop)
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.userDefaults.setBool = { value, key in
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertNoDifference(value, true)
+        expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        expectNoDifference(value, true)
         await isFirstLaunchOnboardingKeySet.setValue(true)
       }
     }
@@ -319,12 +319,12 @@ class OnboardingFeatureTests: XCTestCase {
       $0.dictionary.load = { _ in true }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.userDefaults.boolForKey = { key in
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
         return true
       }
       $0.userDefaults.setBool = { value, key in
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertNoDifference(value, true)
+        expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        expectNoDifference(value, true)
         await isFirstLaunchOnboardingKeySet.setValue(true)
       }
     }
@@ -354,12 +354,12 @@ class OnboardingFeatureTests: XCTestCase {
       $0.dictionary.load = { _ in true }
       $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.userDefaults.boolForKey = { key in
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
         return false
       }
       $0.userDefaults.setBool = { value, key in
-        XCTAssertNoDifference(key, "hasShownFirstLaunchOnboardingKey")
-        XCTAssertNoDifference(value, true)
+        expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
+        expectNoDifference(value, true)
         await isFirstLaunchOnboardingKeySet.setValue(true)
       }
     }

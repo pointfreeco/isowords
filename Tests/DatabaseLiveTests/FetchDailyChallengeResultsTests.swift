@@ -12,7 +12,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
     let player = try self.database.insertPlayer(.blob)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try self.database.fetchDailyChallengeResults(
         .init(gameMode: .timed, gameNumber: 1, language: .en, playerId: player.id)
       )
@@ -92,7 +92,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       results,
       [
         .init(
@@ -161,7 +161,7 @@ class FetchDailyChallengeResultsTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       results,
       scores.enumerated()
         .map { idx, score in

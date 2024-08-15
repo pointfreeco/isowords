@@ -27,36 +27,36 @@ class DatabaseLiveTests: DatabaseTestCase {
         / 86_400
     )
 
-    XCTAssertNoDifference(createdChallenge.gameMode, .timed)
-    XCTAssertNoDifference(createdChallenge.gameNumber, gameNumber)
-    XCTAssertNoDifference(
+    expectNoDifference(createdChallenge.gameMode, .timed)
+    expectNoDifference(createdChallenge.gameNumber, gameNumber)
+    expectNoDifference(
       createdChallenge.id,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!))
-    XCTAssertNoDifference(createdChallenge.language, .en)
-    XCTAssertNoDifference(createdChallenge.puzzle, .mock)
+    expectNoDifference(createdChallenge.language, .en)
+    expectNoDifference(createdChallenge.puzzle, .mock)
 
     let fetchedChallenge = try self.database.fetchDailyChallengeById(createdChallenge.id)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(fetchedChallenge.gameMode, .timed)
-    XCTAssertNoDifference(fetchedChallenge.gameNumber, gameNumber)
-    XCTAssertNoDifference(
+    expectNoDifference(fetchedChallenge.gameMode, .timed)
+    expectNoDifference(fetchedChallenge.gameNumber, gameNumber)
+    expectNoDifference(
       fetchedChallenge.id,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!))
-    XCTAssertNoDifference(fetchedChallenge.language, .en)
-    XCTAssertNoDifference(fetchedChallenge.puzzle, .mock)
+    expectNoDifference(fetchedChallenge.language, .en)
+    expectNoDifference(fetchedChallenge.puzzle, .mock)
 
     let todaysChallenges = try self.database.fetchTodaysDailyChallenges(.en)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(todaysChallenges.count, 1)
-    XCTAssertNoDifference(todaysChallenges[0].gameMode, .timed)
-    XCTAssertNoDifference(todaysChallenges[0].gameNumber, gameNumber)
-    XCTAssertNoDifference(
+    expectNoDifference(todaysChallenges.count, 1)
+    expectNoDifference(todaysChallenges[0].gameMode, .timed)
+    expectNoDifference(todaysChallenges[0].gameNumber, gameNumber)
+    expectNoDifference(
       todaysChallenges[0].id,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!))
-    XCTAssertNoDifference(todaysChallenges[0].language, .en)
-    XCTAssertNoDifference(todaysChallenges[0].puzzle, .mock)
+    expectNoDifference(todaysChallenges[0].language, .en)
+    expectNoDifference(todaysChallenges[0].puzzle, .mock)
   }
 
   func testSubmitDailyChallengeScore() throws {
@@ -156,7 +156,7 @@ class DatabaseLiveTests: DatabaseTestCase {
       return
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       words,
       [
         Word(
@@ -171,11 +171,11 @@ class DatabaseLiveTests: DatabaseTestCase {
       ]
     )
 
-    XCTAssertNoDifference(score.gameMode, .timed)
-    XCTAssertNoDifference(
+    expectNoDifference(score.gameMode, .timed)
+    expectNoDifference(
       score.id, .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!))
-    XCTAssertNoDifference(score.language, .en)
-    XCTAssertNoDifference(
+    expectNoDifference(score.language, .en)
+    expectNoDifference(
       score.moves,
       [
         .init(
@@ -191,9 +191,9 @@ class DatabaseLiveTests: DatabaseTestCase {
         )
       ]
     )
-    XCTAssertNoDifference(score.playerId, createdPlayer.id)
-    XCTAssertNoDifference(score.puzzle, .mock)
-    XCTAssertNoDifference(score.score, 10)
+    expectNoDifference(score.playerId, createdPlayer.id)
+    expectNoDifference(score.puzzle, .mock)
+    expectNoDifference(score.score, 10)
   }
 
   func testSubmitLeaderboardScore_Duplicate() throws {
@@ -246,7 +246,7 @@ class DatabaseLiveTests: DatabaseTestCase {
       return
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       words,
       [
         Word(
@@ -261,11 +261,11 @@ class DatabaseLiveTests: DatabaseTestCase {
       ]
     )
 
-    XCTAssertNoDifference(score1.gameMode, .timed)
-    XCTAssertNoDifference(
+    expectNoDifference(score1.gameMode, .timed)
+    expectNoDifference(
       score1.id, .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!))
-    XCTAssertNoDifference(score1.language, .en)
-    XCTAssertNoDifference(
+    expectNoDifference(score1.language, .en)
+    expectNoDifference(
       score1.moves,
       [
         .init(
@@ -281,27 +281,27 @@ class DatabaseLiveTests: DatabaseTestCase {
         )
       ]
     )
-    XCTAssertNoDifference(score1.playerId, createdPlayer.id)
-    XCTAssertNoDifference(score1.puzzle, .mock)
-    XCTAssertNoDifference(score1.score, 10)
-    XCTAssertNoDifference(score2, score1)
+    expectNoDifference(score1.playerId, createdPlayer.id)
+    expectNoDifference(score1.puzzle, .mock)
+    expectNoDifference(score1.score, 10)
+    expectNoDifference(score2, score1)
   }
 
   func testInsertPlayer() throws {
     let createdPlayer = try self.database.insertPlayer(.blob)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       createdPlayer.accessToken,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!)
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       createdPlayer.deviceId,
       .init(rawValue: UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertNoDifference(createdPlayer.displayName, "Blob")
-    XCTAssertNoDifference(createdPlayer.gameCenterLocalPlayerId, "_id:blob")
-    XCTAssertNoDifference(
+    expectNoDifference(createdPlayer.displayName, "Blob")
+    expectNoDifference(createdPlayer.gameCenterLocalPlayerId, "_id:blob")
+    expectNoDifference(
       createdPlayer.id,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
     )
@@ -321,9 +321,9 @@ class DatabaseLiveTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(createdPlayer, fetchedPlayerByAccessToken)
-    XCTAssertNoDifference(createdPlayer, fetchedPlayerByDeviceId)
-    XCTAssertNoDifference(createdPlayer, fetchedPlayerByGameCenterId)
+    expectNoDifference(createdPlayer, fetchedPlayerByAccessToken)
+    expectNoDifference(createdPlayer, fetchedPlayerByDeviceId)
+    expectNoDifference(createdPlayer, fetchedPlayerByGameCenterId)
   }
 
   func testUpdateAppleReceipt() throws {
@@ -348,17 +348,17 @@ class DatabaseLiveTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       player.accessToken,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!)
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       player.deviceId,
       .init(rawValue: UUID(uuidString: "deadbeef-dead-beef-dead-beefdeadbeef")!)
     )
-    XCTAssertNoDifference(player.displayName, "Blob Jr")
-    XCTAssertNoDifference(player.gameCenterLocalPlayerId, "_id:blob-jr")
-    XCTAssertNoDifference(
+    expectNoDifference(player.displayName, "Blob Jr")
+    expectNoDifference(player.gameCenterLocalPlayerId, "_id:blob-jr")
+    expectNoDifference(
       player.id,
       .init(rawValue: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!)
     )
@@ -416,7 +416,7 @@ class DatabaseLiveTests: DatabaseTestCase {
       .run.perform().unwrap()
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       results,
       [
         .init(outOf: 4, rank: 3, score: 1_000),
@@ -463,7 +463,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     let sharedGame = try self.database.insertSharedGame(completedGame, createdPlayer)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       sharedGame,
       .init(
         code: sharedGame.code,
@@ -480,7 +480,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     let fetchedSharedGame = try self.database.fetchSharedGame(sharedGame.code)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       fetchedSharedGame,
       sharedGame
     )
@@ -524,7 +524,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       response,
       .init(
         moveIndex: 0,
@@ -573,7 +573,7 @@ class DatabaseLiveTests: DatabaseTestCase {
         return
       }
 
-      XCTAssertNoDifference(
+      expectNoDifference(
         tokens,
         [
           PushToken(
@@ -614,7 +614,7 @@ class DatabaseLiveTests: DatabaseTestCase {
         return
       }
 
-      XCTAssertNoDifference(
+      expectNoDifference(
         tokens,
         [
           PushToken(
@@ -635,8 +635,8 @@ class DatabaseLiveTests: DatabaseTestCase {
     var player = try self.database.insertPlayer(.blob)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(true, player.sendDailyChallengeReminder)
-    XCTAssertNoDifference(true, player.sendDailyChallengeSummary)
+    expectNoDifference(true, player.sendDailyChallengeReminder)
+    expectNoDifference(true, player.sendDailyChallengeSummary)
 
     try self.database
       .updatePushSetting(player.id, .dailyChallengeEndsSoon, false)
@@ -645,8 +645,8 @@ class DatabaseLiveTests: DatabaseTestCase {
     player = try self.database.fetchPlayerByAccessToken(player.accessToken)
       .run.perform().unwrap().unsafelyUnwrapped
 
-    XCTAssertNoDifference(false, player.sendDailyChallengeReminder)
-    XCTAssertNoDifference(true, player.sendDailyChallengeSummary)
+    expectNoDifference(false, player.sendDailyChallengeReminder)
+    expectNoDifference(true, player.sendDailyChallengeSummary)
 
     try self.database
       .updatePushSetting(player.id, .dailyChallengeReport, false)
@@ -655,8 +655,8 @@ class DatabaseLiveTests: DatabaseTestCase {
     player = try self.database.fetchPlayerByAccessToken(player.accessToken)
       .run.perform().unwrap().unsafelyUnwrapped
 
-    XCTAssertNoDifference(false, player.sendDailyChallengeReminder)
-    XCTAssertNoDifference(false, player.sendDailyChallengeSummary)
+    expectNoDifference(false, player.sendDailyChallengeReminder)
+    expectNoDifference(false, player.sendDailyChallengeSummary)
   }
 
   func testStartAndCompleteDailyChallenge() throws {
@@ -686,7 +686,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     var dailyChallengePlay = try self.database.startDailyChallenge(dailyChallenge.id, player.id)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       dailyChallengePlay,
       DailyChallengePlay(
         completedAt: nil,
@@ -700,7 +700,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     let activeDailyChallengeArns = try self.database.fetchActiveDailyChallengeArns()
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       activeDailyChallengeArns,
       [
         DatabaseClient.DailyChallengeArn(
@@ -711,7 +711,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     dailyChallengePlay = try self.database.completeDailyChallenge(dailyChallenge.id, player.id)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       dailyChallengePlay,
       DailyChallengePlay(
         completedAt: dailyChallengePlay.completedAt,
@@ -723,7 +723,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     )
     XCTAssertNotNil(dailyChallengePlay.completedAt)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try self.database.fetchActiveDailyChallengeArns()
         .run.perform().unwrap(),
       []
@@ -757,7 +757,7 @@ class DatabaseLiveTests: DatabaseTestCase {
     let dailyChallengePlay = try self.database.startDailyChallenge(dailyChallenge.id, player.id)
       .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       dailyChallengePlay,
       DailyChallengePlay(
         completedAt: nil,
@@ -768,7 +768,7 @@ class DatabaseLiveTests: DatabaseTestCase {
       )
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try self.database.fetchActiveDailyChallengeArns()
         .run.perform().unwrap(),
       []
@@ -779,12 +779,12 @@ class DatabaseLiveTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       result,
       .init(outOf: 0, rank: nil, score: nil, started: true)
     )
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try self.database.fetchActiveDailyChallengeArns()
         .run.perform().unwrap(),
       []

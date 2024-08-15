@@ -59,7 +59,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     var environment = ServerEnvironment.testValue
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.submitLeaderboardScore = { score in
-      XCTAssertNoDifference(
+      expectNoDifference(
         score,
         .init(
           dailyChallengeId: nil,
@@ -210,7 +210,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
     }
     environment.database.fetchPlayerByAccessToken = { _ in pure(player) }
     environment.database.submitLeaderboardScore = { score in
-      XCTAssertNoDifference(
+      expectNoDifference(
         score,
         .init(
           dailyChallengeId: .init(rawValue: .dailyChallengeId),
@@ -881,7 +881,7 @@ class LeaderboardMiddlewareTests: XCTestCase {
       """
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       scores.sorted(by: { $0.playerId == player.id && $1.playerId != player.id }),
       [
         .init(

@@ -83,7 +83,7 @@ class FetchDailyChallengeReportTests: DatabaseTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       report,
       [
         .init(

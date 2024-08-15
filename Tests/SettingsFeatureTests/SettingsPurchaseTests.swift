@@ -61,7 +61,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isPurchasing = true
     }
     await didAddPaymentProductIdentifier.withValue {
-      XCTAssertNoDifference($0, "xyz.isowords.full_game")
+      expectNoDifference($0, "xyz.isowords.full_game")
     }
     storeKitObserver.continuation.yield(.updatedTransactions([.purchasing]))
     storeKitObserver.continuation.yield(.updatedTransactions([.purchased]))
@@ -114,7 +114,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = true
     }
 
-    await didRestoreCompletedTransactions.withValue { XCTAssertNoDifference($0, true) }
+    await didRestoreCompletedTransactions.withValue { expectNoDifference($0, true) }
     storeKitObserver.continuation.yield(.updatedTransactions([.restored]))
     storeKitObserver.continuation.yield(.removedTransactions([.restored]))
     storeKitObserver.continuation.yield(
@@ -166,7 +166,7 @@ class SettingsPurchaseTests: XCTestCase {
       $0.isRestoring = true
     }
 
-    await didRestoreCompletedTransactions.withValue { XCTAssertNoDifference($0, true) }
+    await didRestoreCompletedTransactions.withValue { expectNoDifference($0, true) }
     storeKitObserver.continuation.yield(.restoreCompletedTransactionsFinished(transactions: []))
 
     await store.receive(\.paymentTransaction.restoreCompletedTransactionsFinished) {
