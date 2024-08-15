@@ -33,7 +33,7 @@ func runtimeWarning(
   _ args: @autoclosure () -> [CVarArg] = []
 ) {
   #if DEBUG && canImport(os)
-    if !_XCTIsTesting {
+    if !isTesting {
       unsafeBitCast(
         os_log as (OSLogType, UnsafeRawPointer, OSLog, StaticString, CVarArg...) -> Void,
         to: ((OSLogType, UnsafeRawPointer, OSLog, StaticString, [CVarArg]) -> Void).self
