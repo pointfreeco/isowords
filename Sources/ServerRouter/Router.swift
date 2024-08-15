@@ -327,7 +327,7 @@ public struct ServerRouter: ParserPrinter {
       encoder: jsonEncoder,
       secrets: ["SECRET_DEADBEEF"],
       sha256: {
-        XCTFail("Unimplemented: \(Self.self).sha256")
+        reportIssue("Unimplemented: \(Self.self).sha256")
         return $0
       }
     )

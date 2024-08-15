@@ -7,7 +7,7 @@
       let message = "Unimplemented\(message.isEmpty ? "" : ": \(message)")"
       return .init(
         run: .init {
-          XCTFail(message)
+          reportIssue(message)
           return .left(AnError(message: message))
         })
     }
