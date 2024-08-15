@@ -1,6 +1,6 @@
 #if DEBUG
   import Either
-  import XCTestDynamicOverlay
+  import IssueReporting
 
   extension EitherIO where E == Error {
     public static func unimplemented(_ message: String) -> Self {

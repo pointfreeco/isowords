@@ -4,7 +4,7 @@ import Parsing
 import SharedModels
 import Tagged
 import URLRouting
-import XCTestDynamicOverlay
+import IssueReporting
 
 #if canImport(FoundationNetworking)
   import FoundationNetworking

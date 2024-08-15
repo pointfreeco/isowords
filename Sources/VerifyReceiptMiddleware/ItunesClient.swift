@@ -2,7 +2,7 @@ import Either
 import Foundation
 import ServerTestHelpers
 import SharedModels
-import XCTestDynamicOverlay
+import IssueReporting
 
 #if canImport(FoundationNetworking)
   import FoundationNetworking

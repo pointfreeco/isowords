@@ -1,6 +1,6 @@
 import Either
 import ServerTestHelpers
-import XCTestDynamicOverlay
+import IssueReporting
 
 #if DEBUG
   extension DatabaseClient {
