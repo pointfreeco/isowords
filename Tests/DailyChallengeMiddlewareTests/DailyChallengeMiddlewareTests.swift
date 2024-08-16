@@ -303,7 +303,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
       """
     }
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       submittedScore,
       DatabaseClient.SubmitLeaderboardScore(
         dailyChallengeId: .init(rawValue: .dailyChallengeId),
@@ -317,7 +317,7 @@ class DailyChallengeMiddlewareTests: XCTestCase {
         words: [.init(moveIndex: 0, score: 27, word: "CAB")]
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       dailyChallengeRankRequest,
       .init(
         dailyChallengeId: .init(rawValue: .dailyChallengeId),

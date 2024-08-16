@@ -1,5 +1,5 @@
 import ServerTestHelpers
-import XCTestDynamicOverlay
+import IssueReporting
 
 #if DEBUG
   extension SnsClient {

@@ -291,8 +291,8 @@ class GameOverFeatureTests: XCTestCase {
     // Assert that the first time game over appears we do not request review
     await store.send(.closeButtonTapped)
     await mainRunLoop.advance()
-    await requestReviewCount.withValue { XCTAssertNoDifference($0, 0) }
-    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, nil) }
+    await requestReviewCount.withValue { expectNoDifference($0, 0) }
+    await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, nil) }
 
     // Assert that once the player plays enough games then a review request is made
     store.dependencies.database.fetchStats = {
@@ -306,14 +306,14 @@ class GameOverFeatureTests: XCTestCase {
       )
     }
     await store.send(.closeButtonTapped).finish()
-    await requestReviewCount.withValue { XCTAssertNoDifference($0, 1) }
-    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 0) }
+    await requestReviewCount.withValue { expectNoDifference($0, 1) }
+    await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
     await mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
     await store.send(.closeButtonTapped).finish()
-    await requestReviewCount.withValue { XCTAssertNoDifference($0, 2) }
-    await lastReviewRequestTimeIntervalSet.withValue { XCTAssertNoDifference($0, 60 * 60 * 24 * 7) }
+    await requestReviewCount.withValue { expectNoDifference($0, 2) }
+    await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, 60 * 60 * 24 * 7) }
   }
 
   @MainActor

@@ -63,11 +63,11 @@ class DailyChallengeReportsTests: XCTestCase {
     )
     .run.perform().unwrap()
 
-    XCTAssertNoDifference(pushes.count, 3)
+    expectNoDifference(pushes.count, 3)
 
     let pushMap = Dictionary(grouping: pushes, by: \.targetArn)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self,
         from: JSONEncoder().encode(
@@ -90,7 +90,7 @@ class DailyChallengeReportsTests: XCTestCase {
         content: .dailyChallengeReport
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self,
         from: JSONEncoder().encode(
@@ -116,7 +116,7 @@ class DailyChallengeReportsTests: XCTestCase {
         content: .dailyChallengeReport
       )
     )
-    XCTAssertNoDifference(
+    expectNoDifference(
       try JSONDecoder().decode(
         ApsPayload<PushNotificationContent>.self,
         from: JSONEncoder().encode(

@@ -27,7 +27,7 @@ public struct ServerEnvironment {
 }
 
 #if DEBUG
-  import XCTestDynamicOverlay
+  import IssueReporting
 
   extension ServerEnvironment {
     public static let testValue = Self(

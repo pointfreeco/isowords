@@ -183,7 +183,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.destination = nil
     }
 
-    await didRegisterForRemoteNotifications.withValue { XCTAssertNoDifference($0, true) }
+    await didRegisterForRemoteNotifications.withValue { expectNoDifference($0, true) }
   }
 
   @MainActor

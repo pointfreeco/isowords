@@ -35,7 +35,7 @@ class VocabMiddlewareTests: XCTestCase {
     var environment = ServerEnvironment.testValue
     environment.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
     environment.database.fetchVocabLeaderboardWord = { wordId in
-      XCTAssertNoDifference(
+      expectNoDifference(
         wordId,
         .init(rawValue: UUID(uuidString: "deadbeef-dead-beef-dead-beefdead304d")!)
       )

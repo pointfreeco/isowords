@@ -1,6 +1,6 @@
 #if DEBUG && canImport(os)
   import os
-  import XCTestDynamicOverlay
+  import IssueReporting
 
   // NB: Xcode runtime warnings offer a much better experience than traditional assertions and
   //     breakpoints, but Apple provides no means of creating custom runtime warnings ourselves.
@@ -33,7 +33,7 @@ func runtimeWarning(
   _ args: @autoclosure () -> [CVarArg] = []
 ) {
   #if DEBUG && canImport(os)
-    if !_XCTIsTesting {
+    if !isTesting {
       unsafeBitCast(
         os_log as (OSLogType, UnsafeRawPointer, OSLog, StaticString, CVarArg...) -> Void,
         to: ((OSLogType, UnsafeRawPointer, OSLog, StaticString, [CVarArg]) -> Void).self

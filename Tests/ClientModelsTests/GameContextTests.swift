@@ -10,7 +10,7 @@ class GameContextTests: XCTestCase {
     let jsonData = try jsonEncoder.encode(context)
     let json = String(decoding: jsonData, as: UTF8.self)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       json,
       """
       {
@@ -21,7 +21,7 @@ class GameContextTests: XCTestCase {
 
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       decodedContext,
       context
     )
@@ -32,7 +32,7 @@ class GameContextTests: XCTestCase {
     let jsonData = try jsonEncoder.encode(context)
     let json = String(decoding: jsonData, as: UTF8.self)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       json,
       """
       {
@@ -43,7 +43,7 @@ class GameContextTests: XCTestCase {
 
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       decodedContext,
       context
     )
@@ -54,7 +54,7 @@ class GameContextTests: XCTestCase {
     let jsonData = try jsonEncoder.encode(context)
     let json = String(decoding: jsonData, as: UTF8.self)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       json,
       """
       {
@@ -65,7 +65,7 @@ class GameContextTests: XCTestCase {
 
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       decodedContext,
       context
     )
@@ -82,7 +82,7 @@ class GameContextTests: XCTestCase {
     let jsonData = Data("{}".utf8)
     let decodedContext = try JSONDecoder().decode(GameContext.self, from: jsonData)
 
-    XCTAssertNoDifference(
+    expectNoDifference(
       decodedContext,
       .solo
     )

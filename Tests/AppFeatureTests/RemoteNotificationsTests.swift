@@ -37,7 +37,7 @@ class RemoteNotificationsTests: XCTestCase {
     // Register remote notifications on .didFinishLaunching
 
     let task = await store.send(.appDelegate(.didFinishLaunching))
-    await requestedAuthorizationOptions.withValue { XCTAssertNoDifference($0, [.alert, .sound]) }
+    await requestedAuthorizationOptions.withValue { expectNoDifference($0, [.alert, .sound]) }
     await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
 
     store.dependencies.apiClient.override(
@@ -142,7 +142,7 @@ class RemoteNotificationsTests: XCTestCase {
       )
     )
     await store.receive(\.appDelegate.userNotifications.willPresentNotification)
-    XCTAssertNoDifference(notificationPresentationOptions, .banner)
+    expectNoDifference(notificationPresentationOptions, .banner)
 
     delegate.continuation.yield(
       .didReceiveResponse(response, completionHandler: { didReceiveResponseCompletionHandler() })

@@ -37,7 +37,7 @@ class TurnBasedMatchDataTests: XCTestCase {
       from: encodedTurnBasedMatchData
     )
 
-    XCTAssertNoDifference(decodedTurnBasedMatchData, turnBasedMatchData)
+    expectNoDifference(decodedTurnBasedMatchData, turnBasedMatchData)
 
     assertSnapshot(matching: turnBasedMatchData, as: .json)
   }

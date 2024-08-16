@@ -11,7 +11,7 @@ extension Game.State {
 extension Game.Action.AllCasePaths {
   public var cubeScene: AnyCasePath<Game.Action, CubeSceneView.ViewAction> {
     AnyCasePath(
-      embed: CubeSceneView.ViewAction.to(gameAction:),
+      embed: { CubeSceneView.ViewAction.to(gameAction: $0) },
       extract: { gameAction in
         switch gameAction {
         case let .doubleTap(index: index):

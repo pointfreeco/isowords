@@ -61,7 +61,7 @@ class AppleVerifyReceiptResponseTests: XCTestCase {
       """
 
     let response = try JSONDecoder().decode(AppleVerifyReceiptResponse.self, from: Data(json.utf8))
-    XCTAssertNoDifference(
+    expectNoDifference(
       response,
       AppleVerifyReceiptResponse(
         environment: .sandbox,
@@ -100,6 +100,6 @@ class AppleVerifyReceiptResponseTests: XCTestCase {
     let roundtripResponse = try JSONDecoder().decode(
       AppleVerifyReceiptResponse.self, from: encodedJsonData)
 
-    XCTAssertNoDifference(roundtripResponse, response)
+    expectNoDifference(roundtripResponse, response)
   }
 }

@@ -31,7 +31,7 @@ extension DependencyValues {
 class SettingsFeatureTests: XCTestCase {
   @MainActor
   func testUserSettingsBackwardsDecodability() {
-    XCTAssertNoDifference(
+    expectNoDifference(
       try JSONDecoder().decode(UserSettings.self, from: Data("{}".utf8)),
       UserSettings()
     )
@@ -46,7 +46,7 @@ class SettingsFeatureTests: XCTestCase {
         "soundEffectsVolume": 0.5,
       }
       """
-    XCTAssertNoDifference(
+    expectNoDifference(
       try JSONDecoder().decode(UserSettings.self, from: Data(partialJson.utf8)),
       UserSettings(
         appIcon: .icon1,
@@ -235,7 +235,7 @@ class SettingsFeatureTests: XCTestCase {
     }
 
     await openedUrl.withValue {
-      XCTAssertNoDifference($0, URL(string: "settings:isowords//isowords/settings")!)
+      expectNoDifference($0, URL(string: "settings:isowords//isowords/settings")!)
     }
 
     await task.cancel()
@@ -322,7 +322,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.musicVolume = 0.5
     }
 
-    await setMusicVolume.withValue { XCTAssertNoDifference($0, 0.5) }
+    await setMusicVolume.withValue { expectNoDifference($0, 0.5) }
   }
 
   @MainActor
@@ -345,7 +345,7 @@ class SettingsFeatureTests: XCTestCase {
       $0.userSettings.soundEffectsVolume = 0.5
     }
 
-    await setSoundEffectsVolume.withValue { XCTAssertNoDifference($0, 0.5) }
+    await setSoundEffectsVolume.withValue { expectNoDifference($0, 0.5) }
   }
 
   // MARK: - Appearance
@@ -369,13 +369,13 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.colorScheme = .light
     }
-    await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .light) }
+    await overriddenUserInterfaceStyle.withValue { expectNoDifference($0, .light) }
 
     userSettings.colorScheme = .system
     await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.colorScheme = .system
     }
-    await overriddenUserInterfaceStyle.withValue { XCTAssertNoDifference($0, .unspecified) }
+    await overriddenUserInterfaceStyle.withValue { expectNoDifference($0, .unspecified) }
   }
 
   @MainActor
@@ -397,7 +397,7 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.userSettings, userSettings)) {
       $0.userSettings.appIcon = .icon2
     }
-    await overriddenIconName.withValue { XCTAssertNoDifference($0, "icon-2") }
+    await overriddenIconName.withValue { expectNoDifference($0, "icon-2") }
   }
 
   @MainActor
@@ -459,7 +459,7 @@ class SettingsFeatureTests: XCTestCase {
     await store.send(.set(\.developer, developer)) {
       $0.developer.currentBaseUrl = .localhost
     }
-    await setBaseUrl.withValue { XCTAssertNoDifference($0, URL(string: "http://localhost:9876")!) }
+    await setBaseUrl.withValue { expectNoDifference($0, URL(string: "http://localhost:9876")!) }
     await didLogout.withValue { XCTAssert($0) }
   }
 

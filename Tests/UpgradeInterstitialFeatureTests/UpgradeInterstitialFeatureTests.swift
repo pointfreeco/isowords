@@ -75,7 +75,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
 
       observer.continuation.yield(.updatedTransactions(transactions))
       await paymentAdded.withValue {
-        XCTAssertNoDifference($0, "co.pointfree.isowords_testing.full_game")
+        expectNoDifference($0, "co.pointfree.isowords_testing.full_game")
       }
 
       await store.receive(\.paymentTransaction.updatedTransactions)

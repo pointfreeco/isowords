@@ -172,6 +172,6 @@ class CubeCoreTests: XCTestCase {
         """
         {"playedAt":1234567890,"playerIndex":0,"score":0,"type":{"removedCube":{"x":1,"y":2,"z":1}}}
         """.utf8))
-    XCTAssertNoDifference(move, try jsonDecoder.decode(type(of: move), from: jsonEncoder.encode(move)))
+    expectNoDifference(move, try jsonDecoder.decode(type(of: move), from: jsonEncoder.encode(move)))
   }
 }

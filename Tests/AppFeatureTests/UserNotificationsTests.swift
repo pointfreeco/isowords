@@ -72,7 +72,7 @@ class UserNotificationsTests: XCTestCase {
 
     await store.receive(\.appDelegate.userNotifications.willPresentNotification)
     
-    XCTAssertNoDifference(didCallbackWithOptions, .banner)
+    expectNoDifference(didCallbackWithOptions, .banner)
 
     await task.cancel()
   }
