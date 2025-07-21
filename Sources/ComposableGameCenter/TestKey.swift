@@ -22,10 +22,10 @@ extension GameCenterClient {
   public static let noop = Self(
     gameCenterViewController: .noop,
     localPlayer: .noop,
-    reportAchievements: { _ in },
-    showNotificationBanner: { _ in },
     turnBasedMatch: .noop,
-    turnBasedMatchmakerViewController: .noop
+    turnBasedMatchmakerViewController: .noop,
+    reportAchievements: { _ in },
+    showNotificationBanner: { _ in }
   )
 }
 

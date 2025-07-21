@@ -7,10 +7,10 @@ import Tagged
 public struct GameCenterClient {
   public var gameCenterViewController: GameCenterViewControllerClient
   public var localPlayer: LocalPlayerClient
-  public var reportAchievements: @Sendable ([GKAchievement]) async throws -> Void
-  public var showNotificationBanner: @Sendable (NotificationBannerRequest) async -> Void
   public var turnBasedMatch: TurnBasedMatchClient
   public var turnBasedMatchmakerViewController: TurnBasedMatchmakerViewControllerClient
+  public var reportAchievements: @Sendable ([GKAchievement]) async throws -> Void
+  public var showNotificationBanner: @Sendable (NotificationBannerRequest) async -> Void
 
   public struct NotificationBannerRequest: Equatable {
     public var message: String?
