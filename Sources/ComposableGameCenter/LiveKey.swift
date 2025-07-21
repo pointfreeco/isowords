@@ -8,12 +8,12 @@
       Self(
         gameCenterViewController: .live,
         localPlayer: .live,
+        turnBasedMatch: .live,
+        turnBasedMatchmakerViewController: .live,
         reportAchievements: { try await GKAchievement.report($0) },
         showNotificationBanner: {
           await GKNotificationBanner.show(withTitle: $0.title, message: $0.message)
-        },
-        turnBasedMatch: .live,
-        turnBasedMatchmakerViewController: .live
+        }
       )
     }()
   }
