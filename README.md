@@ -110,7 +110,7 @@ This repo contains both the client and server code for running the entire [isowo
 
 # Learn More
 
-Most of the concepts discussed in this README are covered in-depth on [Point-Free](https://www.pointfree.co), a video series exploring functional programming and the Swift language, hosted by [Brandon Williams](https://www.twitter.com/mbrandonw) and [Stephen Celis](https://www.twitter.com/stephencelis).
+Most of the concepts discussed in this README are covered in-depth on [Point-Free](https://www.pointfree.co), a video series exploring functional programming and the Swift language, hosted by [Brandon Williams](https://twitter.com/mbrandonw) and [Stephen Celis](https://twitter.com/stephencelis).
 
 [![Point-Free](https://dbsqho33cgp4y.cloudfront.net/github/point-free-header.png)](https://www.pointfree.co)
 
