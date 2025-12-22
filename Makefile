@@ -358,7 +358,7 @@ define POSTGRES_ERROR_RUNNING
 
      Make sure it's spawned by running, e.g., if installed via Homebrew:
 
-       $$ \033[1mbrew\033[0m \033[38;5;66mservices start postgresql@15\033[0m
+       $$ \033[1mbrew\033[0m \033[38;5;66mservices start postgresql@12\033[0m
 
 endef
 export POSTGRES_ERROR_RUNNING
