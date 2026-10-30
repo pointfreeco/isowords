@@ -39,21 +39,17 @@ extension Game {
       else { return }
       let localPlayer = self.gameCenter.localPlayer.localPlayer()
       let now = self.now
-      try await MainActor.run {
-        try withAnimation {
-          _ = try store.modify {
-            $0.activeGames.turnBasedMatches = matches.activeMatches(for: localPlayer, at: now)
-          }
+      try withAnimation {
+        _ = try store.modify {
+          $0.activeGames.turnBasedMatches = matches.activeMatches(for: localPlayer, at: now)
         }
       }
     }
     store.addTask {
       guard let savedGames = try? await self.fileClient.loadSavedGames()
       else { return }
-      try await MainActor.run {
-        try withAnimation {
-          _ = try store.modify { $0.activeGames.savedGames = savedGames }
-        }
+      try withAnimation {
+        _ = try store.modify { $0.activeGames.savedGames = savedGames }
       }
     }
   }

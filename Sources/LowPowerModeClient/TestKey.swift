@@ -27,12 +27,12 @@ extension LowPowerModeClient {
     Self(
       start: {
         AsyncStream<Bool> { continuation in
-          let isLowPowerModeEnabled = ActorIsolated(false)
+          let isLowPowerModeEnabled = LockIsolated(false)
           Task {
-            await continuation.yield(isLowPowerModeEnabled.value)
+            continuation.yield(isLowPowerModeEnabled.value)
             for await _ in DispatchQueue.main.timer(interval: 2) {
               let isLowPowerModeEnabled =
-                await isLowPowerModeEnabled
+                isLowPowerModeEnabled
                 .withValue { isLowPowerModeEnabled -> Bool in
                   isLowPowerModeEnabled.toggle()
                   return isLowPowerModeEnabled

@@ -3,6 +3,7 @@ import Bloom
 import ComposableArchitecture
 import GameOverFeature
 import SettingsFeature
+import Styleguide
 import SwiftUI
 import UpgradeInterstitialFeature
 

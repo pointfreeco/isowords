@@ -7,6 +7,7 @@ import LowPowerModeClient
 import Overture
 import SelectionSoundsCore
 import SharedModels
+import Styleguide
 import SwiftUI
 import TcaHelpers
 import UserSettingsClient
@@ -171,16 +172,12 @@ public struct CubePreview {
             // Press the nub on the first character
             if faceIndex == 0 {
               nub.isPressed = true
-              try await MainActor.run { [nub] in
-                try withAnimation { _ = try store.modify { $0.nub = nub } }
-              }
+              try withAnimation { _ = try store.modify { $0.nub = nub } }
             }
 
             // Select the faces that have been tapped so far
-            try await MainActor.run { [accumulatedSelectedFaces] in
-              try withAnimation {
-                _ = try store.modify { $0.selectedCubeFaces = accumulatedSelectedFaces }
-              }
+            try withAnimation {
+              _ = try store.modify { $0.selectedCubeFaces = accumulatedSelectedFaces }
             }
           }
 

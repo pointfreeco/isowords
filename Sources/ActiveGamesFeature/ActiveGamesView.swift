@@ -66,10 +66,8 @@ public struct ActiveGames {
 
   private func post(_ event: Event, animated: Bool) {
     store.addTask {
-      try await MainActor.run {
-        try withAnimation(animated ? .default : nil) {
-          _ = try store.post(event)
-        }
+      try withAnimation(animated ? .default : nil) {
+        _ = try store.post(event)
       }
     }
   }

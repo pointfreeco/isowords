@@ -1,6 +1,7 @@
 import ClientModels
 import ComposableArchitecture
 import SharedModels
+import Styleguide
 import SwiftUI
 
 struct GameHeaderView: View {
@@ -18,7 +19,7 @@ struct GameHeaderView: View {
 
 extension Game.State {
   fileprivate var secondsRemaining: Int {
-    max(0, self.gameMode.seconds - self.secondsPlayed)
+    max(0, gameMode.seconds - secondsPlayed)
   }
 }
 

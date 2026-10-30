@@ -59,9 +59,7 @@ public struct UpgradeInterstitial {
       switch action {
       case .maybeLaterButtonTapped:
         store.addTask {
-          try await MainActor.run {
-            _ = try withAnimation { try store.dismiss() }
-          }
+          _ = try withAnimation { try store.dismiss() }
         }
 
       case let .paymentTransaction(event):
@@ -85,9 +83,7 @@ public struct UpgradeInterstitial {
         else { return }
         store.addTask {
           try store.post(FullGamePurchased())
-          try await MainActor.run {
-            _ = try withAnimation { try store.dismiss() }
-          }
+          _ = try withAnimation { try store.dismiss() }
         }
 
       case .upgradeButtonTapped:
@@ -105,9 +101,7 @@ public struct UpgradeInterstitial {
 
       store.addTask {
         for await event in self.storeKit.observer() {
-          try await MainActor.run {
-            _ = try withAnimation { try store.send(.paymentTransaction(event)) }
-          }
+          _ = try withAnimation { try store.send(.paymentTransaction(event)) }
         }
       }
 
@@ -120,18 +114,14 @@ public struct UpgradeInterstitial {
             product.productIdentifier == self.serverConfig().productIdentifiers.fullGame
           })
         else { return }
-        try await MainActor.run {
-          _ = try withAnimation { try store.modify { $0.fullGameProduct = product } }
-        }
+        _ = try withAnimation { try store.modify { $0.fullGameProduct = product } }
       }
 
       guard !state.isDismissable, state.secondsPassedCount < state.upgradeInterstitialDuration
       else { return }
       store.addTask {
         for await _ in self.clock.timer(interval: .seconds(1)) {
-          try await MainActor.run {
-            _ = try withAnimation { try store.modify { $0.secondsPassedCount += 1 } }
-          }
+          _ = try withAnimation { try store.modify { $0.secondsPassedCount += 1 } }
           if store.secondsPassedCount >= store.upgradeInterstitialDuration { break }
         }
       }

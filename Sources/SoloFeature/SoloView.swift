@@ -34,10 +34,8 @@ public struct Solo {
       switch action {
       case let .gameButtonTapped(gameMode):
         store.addTask {
-          try await MainActor.run {
-            try withAnimation {
-              _ = try store.post(key: StartGame.self, value: gameMode)
-            }
+          try withAnimation {
+            _ = try store.post(key: StartGame.self, value: gameMode)
           }
         }
       }

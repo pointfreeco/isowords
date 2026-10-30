@@ -16,7 +16,7 @@ extension LocalDatabaseClient: TestDependencyKey {
 
 extension LocalDatabaseClient {
   public static var mock: Self {
-    let games = ActorIsolated<[CompletedGame]>([])
+    let games = LockIsolated<[CompletedGame]>([])
 
     return Self(
       fetchGamesForWord: { _ in [] },
@@ -24,7 +24,7 @@ extension LocalDatabaseClient {
       fetchVocab: { Vocab(words: []) },
       migrate: {},
       playedGamesCount: { _ in 10 },
-      saveGame: { game in await games.withValue { $0.append(game) } }
+      saveGame: { game in games.withValue { $0.append(game) } }
     )
   }
 }

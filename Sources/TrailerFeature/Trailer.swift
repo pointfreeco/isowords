@@ -84,10 +84,8 @@ public struct Trailer {
         await self.audioPlayer.play(.onboardingBgMusic)
 
         // Fade the cube in after a second
-        try await MainActor.run {
-          try withAnimation(.easeInOut(duration: fadeInDuration)) {
-            _ = try store.modify { $0.opacity = 1 }
-          }
+        try withAnimation(.easeInOut(duration: fadeInDuration)) {
+          _ = try store.modify { $0.opacity = 1 }
         }
         try await self.clock.sleep(for: firstWordDelay)
 
@@ -119,10 +117,8 @@ public struct Trailer {
               await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
             }
             // Select the cube face
-            try await MainActor.run {
-              try withAnimation {
-                _ = try store.send(.game(.tap(.began, face)))
-              }
+            try withAnimation {
+              _ = try store.send(.game(.tap(.began, face)))
             }
           }
 
@@ -183,10 +179,8 @@ public struct Trailer {
           $0.nub = nub
         }
 
-        try await MainActor.run {
-          try withAnimation(.linear(duration: moveNubOffScreenDuration)) {
-            _ = try store.modify { $0.opacity = 0 }
-          }
+        try withAnimation(.linear(duration: moveNubOffScreenDuration)) {
+          _ = try store.modify { $0.opacity = 0 }
         }
       }
     }

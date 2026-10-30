@@ -1,21 +1,27 @@
 import ActiveGamesFeature
+import ApiClient
 import ClientModels
 import ComposableArchitecture
+import ComposableGameCenter
 import ComposableStoreKit
 import ComposableUserNotifications
 import CubeCore
 import DailyChallengeFeature
 import Dependencies
+import FileClient
 import GameCore
 import GameOverFeature
 import HomeFeature
 import MultiplayerFeature
 import NotificationHelpers
 import OnboardingFeature
+import RemoteNotificationsClient
+import ServerConfig
 import SharedModels
 import SoloFeature
 import Styleguide
 import SwiftUI
+import UserDefaultsClient
 
 @Feature
 public struct AppReducer {
@@ -110,12 +116,12 @@ public struct AppReducer {
         else { break }
         state.destination = .game(Game.State(inProgressGame: inProgressGame))
 
-      case let .turnBasedGameMenuItemTapped(.rematch(matchId)):
+      case .turnBasedGameMenuItemTapped(.rematch(let matchId)):
         store.addTask {
           try await self.rematch(matchId)
         }
 
-      case let .turnBasedGameTapped(matchId):
+      case .turnBasedGameTapped(let matchId):
         store.addTask {
           try await self.openTurnBasedMatch(id: matchId)
         }
@@ -135,7 +141,7 @@ public struct AppReducer {
       switch event {
       case .rematch:
         guard
-          case let .game(game) = state.destination,
+          case .game(let game) = state.destination,
           let turnBasedMatch = game.gameContext.turnBased
         else { return .stop }
 
@@ -145,7 +151,7 @@ public struct AppReducer {
         }
         return .stop
 
-      case let .startSoloGame(gameMode):
+      case .startSoloGame(let gameMode):
         self.startSoloGame(gameMode, state: &state)
         return .stop
 
@@ -314,7 +320,7 @@ public struct AppView: View {
         }
         .zIndex(0)
 
-      case let .game(store)?:
+      case .game(let store)?:
         GameView(
           content: CubeView(
             store: store,
@@ -326,7 +332,7 @@ public struct AppView: View {
         .transition(.game)
         .zIndex(1)
 
-      case let .onboarding(store)?:
+      case .onboarding(let store)?:
         OnboardingView(store: store)
           .zIndex(2)
       }

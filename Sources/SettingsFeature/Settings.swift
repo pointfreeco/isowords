@@ -207,10 +207,8 @@ public struct Settings {
           state.userSettings.enableNotifications = true
           store.addTask {
             let granted = try await self.userNotifications.requestAuthorization([.alert, .sound])
-            try await MainActor.run {
-              _ = try withAnimation {
-                try store.modify { $0.userSettings.enableNotifications = granted }
-              }
+            _ = try withAnimation {
+              try store.modify { $0.userSettings.enableNotifications = granted }
             }
             if granted {
               await self.registerForRemoteNotifications()
@@ -314,9 +312,7 @@ public struct Settings {
 
       store.addTask {
         for await event in self.storeKit.observer() {
-          try await MainActor.run {
-            _ = try withAnimation { try store.send(.paymentTransaction(event)) }
-          }
+          _ = try withAnimation { try store.send(.paymentTransaction(event)) }
         }
       }
 
@@ -335,9 +331,7 @@ public struct Settings {
           } catch {
             fullGameProduct = .failure(State.ProductError())
           }
-          try await MainActor.run {
-            _ = try withAnimation { try store.modify { $0.fullGameProduct = fullGameProduct } }
-          }
+          _ = try withAnimation { try store.modify { $0.fullGameProduct = fullGameProduct } }
         }
       }
 
@@ -399,27 +393,23 @@ public struct Settings {
       try store.modify { $0.isRestoring = false }
       return
     }
-    try await MainActor.run {
-      _ = try withAnimation(animated ? .default : nil) {
-        try store.modify {
-          $0.isRestoring = false
-          $0.fullGamePurchasedAt = envelope.appleReceipt?.receipt.originalPurchaseDate
-          $0.userSettings.sendDailyChallengeReminder = envelope.player.sendDailyChallengeReminder
-          $0.userSettings.sendDailyChallengeSummary = envelope.player.sendDailyChallengeSummary
-        }
+    _ = try withAnimation(animated ? .default : nil) {
+      try store.modify {
+        $0.isRestoring = false
+        $0.fullGamePurchasedAt = envelope.appleReceipt?.receipt.originalPurchaseDate
+        $0.userSettings.sendDailyChallengeReminder = envelope.player.sendDailyChallengeReminder
+        $0.userSettings.sendDailyChallengeSummary = envelope.player.sendDailyChallengeSummary
       }
     }
   }
 
   private func refreshUserNotificationSettings(animated: Bool) async throws {
     let settings = await self.userNotifications.getNotificationSettings()
-    try await MainActor.run {
-      _ = try withAnimation(animated ? .default : nil) {
-        try store.modify {
-          $0.userNotificationSettings = settings
-          // TODO: this is a bug, look into later
-          $0.userSettings.enableNotifications = settings.authorizationStatus == .authorized
-        }
+    _ = try withAnimation(animated ? .default : nil) {
+      try store.modify {
+        $0.userNotificationSettings = settings
+        // TODO: this is a bug, look into later
+        $0.userSettings.enableNotifications = settings.authorizationStatus == .authorized
       }
     }
   }

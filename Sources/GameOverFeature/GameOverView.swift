@@ -1,3 +1,4 @@
+import ApiClient
 import AudioPlayerClient
 import ClientModels
 import ComposableArchitecture
@@ -5,9 +6,11 @@ import ComposableGameCenter
 import ComposableUserNotifications
 import DailyChallengeHelpers
 import Dependencies
+import FileClient
 import LocalDatabaseClient
 import NotificationsAuthAlert
 import Overture
+import ServerConfig
 import SharedModels
 import SharedSwiftUIEnvironment
 import Styleguide
@@ -141,7 +144,7 @@ public struct GameOver {
           case .dailyChallenge = state.completedGame.gameContext
         else {
           store.addTask {
-            try? await self.requestReviewAsync()
+            try? await requestReviewAsync()
             try await dismissGame()
           }
           return
@@ -164,9 +167,9 @@ public struct GameOver {
             do {
               let inProgressGame = try await startDailyChallengeAsync(
                 challenge,
-                apiClient: self.apiClient,
-                date: { self.now },
-                fileClient: self.fileClient
+                apiClient: apiClient,
+                date: { now },
+                fileClient: fileClient
               )
               try store.modify { $0.gameModeIsLoading = nil }
               try store.post(Event.startGame(inProgressGame))
@@ -202,7 +205,7 @@ public struct GameOver {
     .onChange(of: store.destination?.notificationsAuthAlert != nil) { wasPresented, isPresented, _ in
       guard wasPresented, !isPresented else { return }
       store.addTask {
-        try? await self.requestReviewAsync()
+        try? await requestReviewAsync()
         try await dismissGame()
       }
     }
@@ -218,8 +221,8 @@ public struct GameOver {
       }
 
       store.addTask {
-        await self.audioPlayer.play(.transitionIn)
-        await self.audioPlayer.loop(.gameOverMusicLoop)
+        await audioPlayer.play(.transitionIn)
+        await audioPlayer.loop(.gameOverMusicLoop)
       }
 
       store.addTask {
@@ -231,7 +234,7 @@ public struct GameOver {
               score: completedGame.currentScore
             )
             response = try await .solo(
-              self.apiClient.request(
+              apiClient.request(
                 route: .demo(.submitGame(request)),
                 as: LeaderboardScoreResult.self
               )
@@ -239,7 +242,7 @@ public struct GameOver {
           } else if let request = ServerRoute.Api.Route.Games.SubmitRequest(
             completedGame: completedGame
           ) {
-            response = try await self.apiClient.apiRequest(
+            response = try await apiClient.apiRequest(
               route: .games(.submit(request)),
               as: SubmitGameResponse.self
             )
@@ -250,68 +253,60 @@ public struct GameOver {
           return
         }
         if let summary = State.RankSummary(response: response) {
-          try await MainActor.run {
-            try withAnimation {
-              try store.modify { $0.summary = summary }
-            }
+          try withAnimation {
+            _ = try store.modify { $0.summary = summary }
           }
         }
         try store.post(Event.gameSubmitted(response))
 
         guard case .dailyChallenge = response else { return }
         guard
-          let dailyChallenges = try? await self.apiClient.apiRequest(
+          let dailyChallenges = try? await apiClient.apiRequest(
             route: .dailyChallenge(.today(language: .en)),
             as: [FetchTodaysDailyChallengeResponse].self
           )
         else { return }
-        try await MainActor.run {
-          try withAnimation {
-            try store.modify { $0.dailyChallenges = dailyChallenges }
-          }
+        try withAnimation {
+          _ = try store.modify { $0.dailyChallenges = dailyChallenges }
         }
       }
 
       store.addTask {
-        try await self.clock.sleep(for: .seconds(1))
-        let playedGamesCount = try await self.database
+        try await clock.sleep(for: .seconds(1))
+        let playedGamesCount = try await database
           .playedGamesCount(.init(gameContext: completedGame.gameContext))
         let isFullGamePurchased =
-          self.apiClient.currentPlayer()?.appleReceipt != nil
+          apiClient.currentPlayer()?.appleReceipt != nil
         guard
           !isFullGamePurchased,
           shouldShowInterstitial(
             gamePlayedCount: playedGamesCount,
             gameContext: .init(gameContext: completedGame.gameContext),
-            serverConfig: self.serverConfig()
+            serverConfig: serverConfig()
           )
         else { return }
-        try await MainActor.run {
-          try withAnimation(.easeIn) {
-            try store.modify {
-              $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
-            }
+        try withAnimation(.easeIn) {
+          _ = try store.modify {
+            $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
           }
         }
       }
 
       store.addTask {
-        try await self.clock.sleep(for: .seconds(2))
+        try await clock.sleep(for: .seconds(2))
         try store.modify { $0.isViewEnabled = true }
       }
 
       store.addTask {
-        let settings = await self.getUserNotificationSettings()
+        let settings = await getUserNotificationSettings()
         try store.modify { $0.userNotificationSettings = settings }
       }
     }
   }
 
   private func dismissGame() async throws {
-    try await MainActor.run {
-      try withAnimation {
-        _ = try store.post(Event.dismissGame)
-      }
+    try withAnimation {
+      _ = try store.post(Event.dismissGame)
     }
   }
 

@@ -99,10 +99,8 @@ public struct PastGame {
   }
 
   private func openMatch(_ match: TurnBasedMatch) async throws {
-    try await MainActor.run {
-      try withAnimation {
-        _ = try store.post(key: OpenMatch.self, value: match)
-      }
+    try withAnimation {
+      _ = try store.post(key: OpenMatch.self, value: match)
     }
   }
 }

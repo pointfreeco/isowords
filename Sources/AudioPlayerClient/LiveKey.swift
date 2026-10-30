@@ -114,8 +114,8 @@ extension AudioPlayerClient {
       switch player {
       case let .music(player):
         player.setVolume(0, fadeDuration: 2.5)
-        Task {
-          try await Task.sleep(nanoseconds: 2_500 * NSEC_PER_MSEC)
+        _ = Task {
+          try await Task.sleep(for: .seconds(2.5))
           player.stop()
         }
 

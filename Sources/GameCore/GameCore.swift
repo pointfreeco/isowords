@@ -1,4 +1,5 @@
 import ActiveGamesFeature
+import ApiClient
 import AudioPlayerClient
 import BottomMenu
 import ClientModels
@@ -7,16 +8,20 @@ import ComposableGameCenter
 import CubeCore
 import Dependencies
 import DictionaryClient
+import FeedbackGeneratorClient
+import FileClient
 import GameOverFeature
 import HapticsCore
 import LowPowerModeClient
 import Overture
+import ServerConfig
 import SettingsFeature
 import SharedModels
 import SwiftUI
 import Tagged
 import TcaHelpers
 import UpgradeInterstitialFeature
+import UserDefaultsClient
 import UserSettingsClient
 
 @Feature
@@ -197,15 +202,13 @@ public struct Game {
       case .dismissGame:
         guard store.isPresented else { return .continue }
         store.addTask {
-          try await MainActor.run {
-            try withAnimation {
-              _ = try store.dismiss()
-            }
+          try withAnimation {
+            _ = try store.dismiss()
           }
         }
         return .stop
 
-      case let .startGame(inProgressGame):
+      case .startGame(let inProgressGame):
         let activeGames = state.activeGames
         let isGameLoaded = state.isGameLoaded
         state = .init(inProgressGame: inProgressGame)
@@ -223,10 +226,8 @@ public struct Game {
     }
     .onEvent(WordSubmitButtonFeature.ConfirmSubmit.self) { reaction, _ in
       store.addTask {
-        try await MainActor.run {
-          try withAnimation {
-            _ = try store.send(.submitButtonTapped(reaction: reaction))
-          }
+        try withAnimation {
+          _ = try store.send(.submitButtonTapped(reaction: reaction))
         }
       }
     }
@@ -282,7 +283,7 @@ public struct Game {
     case .cancelButtonTapped:
       state.selectedWord = []
 
-    case let .confirmRemoveCube(index):
+    case .confirmRemoveCube(let index):
       state.removeCube(at: index, playedAt: self.now)
 
     case .destination(.alert(.forfeitButtonTapped)):
@@ -311,7 +312,7 @@ public struct Game {
         }
       }
 
-    case let .destination(.bottomMenu(.confirmRemoveCube(index))):
+    case .destination(.bottomMenu(.confirmRemoveCube(let index))):
       state.removeCube(at: index, playedAt: self.now)
 
     case .destination(.bottomMenu(.endGameButtonTapped)):
@@ -319,10 +320,8 @@ public struct Game {
 
     case .destination(.bottomMenu(.exitButtonTapped)):
       store.addTask {
-        try await MainActor.run {
-          try withAnimation {
-            _ = try store.dismiss()
-          }
+        try withAnimation {
+          _ = try store.dismiss()
         }
       }
 
@@ -335,7 +334,7 @@ public struct Game {
     case .destination:
       break
 
-    case let .doubleTap(index):
+    case .doubleTap(let index):
       guard state.selectedWord.count <= 1
       else { return }
 
@@ -351,7 +350,7 @@ public struct Game {
     case .pan(.began, _):
       state.isPanning = true
 
-    case let .pan(.changed, .some(panData)):
+    case .pan(.changed, .some(let panData)):
       guard panData.normalizedPoint.isAwayFromCorners else { return }
 
       if let lastLetter = state.selectedWord.last,
@@ -364,8 +363,9 @@ public struct Game {
       if let index = state.selectedWord.firstIndex(of: panData.cubeFaceState) {
         state.selectedWord.removeSubrange((index + 1)...)
       } else if state.cubes.isPlayable(
-        side: panData.cubeFaceState.side, index: panData.cubeFaceState.index)
-      {
+        side: panData.cubeFaceState.side,
+        index: panData.cubeFaceState.index
+      ) {
         state.selectedWord.append(panData.cubeFaceState)
       }
 
@@ -376,7 +376,7 @@ public struct Game {
     case .pan:
       state.isPanning = false
 
-    case let .submitButtonTapped(reaction: reaction):
+    case .submitButtonTapped(reaction: let reaction):
       let move = Move(
         playedAt: self.now,
         playerIndex: state.gameContext.turnBased?.localPlayerIndex,
@@ -414,7 +414,7 @@ public struct Game {
         }
       }
 
-    case let .tap(.began, face):
+    case .tap(.began, let face):
       state.optimisticallySelectedFace = nil
 
       // If tapping off the cube, deselect everything
@@ -445,7 +445,7 @@ public struct Game {
         }
       }
 
-    case let .tap(.ended, face):
+    case .tap(.ended, let face):
       defer { state.optimisticallySelectedFace = nil }
 
       guard
@@ -504,11 +504,9 @@ public struct Game {
           )
         else { return }
         try await self.clock.sleep(for: .seconds(3))
-        try await MainActor.run {
-          try withAnimation {
-            _ = try store.modify {
-              $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
-            }
+        try withAnimation {
+          _ = try store.modify {
+            $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
           }
         }
       }
@@ -548,7 +546,6 @@ extension Game.Scopes {
     public let actionPath = \Game.Action.Cases.wordSubmitButton
   }
 }
-
 
 extension Game.Action {
   var requiresYourTurn: Bool {

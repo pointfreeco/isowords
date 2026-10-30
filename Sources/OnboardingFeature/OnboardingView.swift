@@ -327,28 +327,22 @@ public struct Onboarding {
       self.delayedNextStep.cancel()
       await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
       await self.audioPlayer.stop(.onboardingBgMusic)
-      try await MainActor.run {
-        try withAnimation {
-          _ = try store.post(GetStarted())
-        }
+      try withAnimation {
+        _ = try store.post(GetStarted())
       }
     }
   }
 
   private func nextStep() async throws {
-    try await MainActor.run {
-      try withAnimation {
-        _ = try store.modify { $0.step.next() }
-      }
+    try withAnimation {
+      _ = try store.modify { $0.step.next() }
     }
   }
 
   private func sendToGame(_ action: Game.Action) {
     store.addTask {
-      try await MainActor.run {
-        try withAnimation {
-          _ = try store.send(.game(action))
-        }
+      try withAnimation {
+        _ = try store.send(.game(action))
       }
     }
   }

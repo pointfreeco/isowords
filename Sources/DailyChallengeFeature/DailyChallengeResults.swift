@@ -4,6 +4,7 @@ import Dependencies
 import LeaderboardFeature
 import SharedModels
 import SwiftUI
+import Tagged
 
 @Feature
 public struct DailyChallengeResults {

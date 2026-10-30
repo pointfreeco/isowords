@@ -1,9 +1,11 @@
+import ApiClient
 import ClientModels
 import ComposableArchitecture
 import ComposableUserNotifications
 import DailyChallengeHelpers
 import DateHelpers
 import Dependencies
+import FileClient
 import NotificationsAuthAlert
 import Overture
 import SharedModels
@@ -152,10 +154,8 @@ public struct DailyChallengeReducer {
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
         )
-        try await MainActor.run {
-          try withAnimation {
-            _ = try store.modify { $0.dailyChallenges = dailyChallenges }
-          }
+        try withAnimation {
+          _ = try store.modify { $0.dailyChallenges = dailyChallenges }
         }
       }
     }

@@ -38,10 +38,8 @@ public struct NotificationsAuthAlert {
             )
           }
           let settings = await self.userNotifications.getNotificationSettings()
-          try await MainActor.run {
-            try withAnimation {
-              _ = try store.post(key: DidChooseNotificationSettings.self, value: settings)
-            }
+          try withAnimation {
+            _ = try store.post(key: DidChooseNotificationSettings.self, value: settings)
           }
           try store.dismiss()
         }

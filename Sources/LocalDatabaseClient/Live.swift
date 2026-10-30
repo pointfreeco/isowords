@@ -28,7 +28,7 @@ extension LocalDatabaseClient {
 
   public static func autoMigratingLive(path: URL) -> Self {
     let client = Self.live(path: path)
-    Task { try await client.migrate() }
+    _ = Task { try await client.migrate() }
     return client
   }
 }

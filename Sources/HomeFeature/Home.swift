@@ -1,4 +1,7 @@
 import ActiveGamesFeature
+import ApiClient
+import AudioPlayerClient
+import Build
 import ChangelogFeature
 import ClientModels
 import ComposableArchitecture
@@ -165,10 +168,8 @@ public struct Home {
 
       case .howToPlayButtonTapped:
         store.addTask {
-          try await MainActor.run {
-            try withAnimation {
-              _ = try store.post(HowToPlay())
-            }
+          try withAnimation {
+            _ = try store.post(HowToPlay())
           }
         }
 
@@ -218,38 +219,36 @@ public struct Home {
   private func modify(
     animated body: @escaping @Sendable (inout State) -> Void
   ) async throws {
-    try await MainActor.run {
-      try withAnimation {
-        _ = try store.modify(body)
-      }
+    try withAnimation {
+      _ = try store.modify(body)
     }
   }
 
   private func load() async throws {
-    try? await self.gameCenter.localPlayer.authenticate()
+    try? await gameCenter.localPlayer.authenticate()
 
-    let localPlayer = self.gameCenter.localPlayer.localPlayer()
+    let localPlayer = gameCenter.localPlayer.localPlayer()
     guard
-      let currentPlayerEnvelope = try? await self.apiClient.authenticate(
+      let currentPlayerEnvelope = try? await apiClient.authenticate(
         .init(
-          deviceId: .init(rawValue: self.deviceId.id()),
+          deviceId: .init(rawValue: deviceId.id()),
           displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
           gameCenterLocalPlayerId: localPlayer.isAuthenticated
             ? .init(rawValue: localPlayer.gamePlayerId.rawValue)
             : nil,
-          timeZone: self.timeZone.identifier
+          timeZone: timeZone.identifier
         )
       )
     else { return }
 
-    let now = self.now.timeIntervalSinceReferenceDate
+    let now = now.timeIntervalSinceReferenceDate
     let itsNagTime =
-      Int(now - self.userDefaults.installationTime)
-      >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
+      Int(now - userDefaults.installationTime)
+      >= serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
     let isFullGamePurchased =
       currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
     let showNagBanner = !isFullGamePurchased && itsNagTime
-    try await self.modify { state in
+    try await modify { state in
       if !showNagBanner {
         state.nagBanner = nil
       } else if state.nagBanner == nil {
@@ -259,17 +258,17 @@ public struct Home {
 
     try await withThrowingTaskGroup(of: Void.self) { group in
       group.addTask {
-        guard let serverConfig = try? await self.serverConfig.refresh()
+        guard let serverConfig = try? await serverConfig.refresh()
         else { return }
-        let hasChangelog = serverConfig.newestBuild > self.buildNumber()
-        try await self.modify { $0.hasChangelog = hasChangelog }
+        let hasChangelog = serverConfig.newestBuild > buildNumber()
+        try await modify { $0.hasChangelog = hasChangelog }
       }
       group.addTask {
-        let dailyChallenges = try? await self.apiClient.apiRequest(
+        let dailyChallenges = try? await apiClient.apiRequest(
           route: .dailyChallenge(.today(language: .en)),
           as: [FetchTodaysDailyChallengeResponse].self
         )
-        try await self.modify { state in
+        try await modify { state in
           guard let dailyChallenges else {
             state.dailyChallenges = []
             return
@@ -284,39 +283,39 @@ public struct Home {
       }
       group.addTask {
         guard
-          let weekInReview = try? await self.apiClient.apiRequest(
+          let weekInReview = try? await apiClient.apiRequest(
             route: .leaderboard(.weekInReview(language: .en)),
             as: FetchWeekInReviewResponse.self
           )
         else { return }
-        try await self.modify { $0.weekInReview = weekInReview }
+        try await modify { $0.weekInReview = weekInReview }
       }
       group.addTask {
-        try await self.loadActiveMatches()
+        try await loadActiveMatches()
       }
       try await group.waitForAll()
     }
   }
 
   private func loadActiveMatches() async throws {
-    guard let response = try? await self.gameCenter.loadActiveMatches(now: self.now)
+    guard let response = try? await gameCenter.loadActiveMatches(now: now)
     else { return }
-    try await self.modify {
+    try await modify {
       $0.hasPastTurnBasedGames = response.hasPastTurnBasedGames
       $0.turnBasedMatches = response.matches
     }
   }
 
   private func deleteMatch(_ matchId: TurnBasedMatch.Id) async throws {
-    let localPlayer = self.gameCenter.localPlayer.localPlayer()
+    let localPlayer = gameCenter.localPlayer.localPlayer()
 
     do {
-      let match = try await self.gameCenter.turnBasedMatch.load(matchId)
+      let match = try await gameCenter.turnBasedMatch.load(matchId)
       let currentParticipantIsLocalPlayer =
         match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
       if currentParticipantIsLocalPlayer {
-        try await self.gameCenter.turnBasedMatch
+        try await gameCenter.turnBasedMatch
           .endMatchInTurn(
             .init(
               for: match.matchId,
@@ -327,22 +326,22 @@ public struct Home {
             )
           )
       } else {
-        try await self.gameCenter.turnBasedMatch
+        try await gameCenter.turnBasedMatch
           .participantQuitOutOfTurn(match.matchId)
       }
     } catch {}
 
-    try await self.loadActiveMatches()
+    try await loadActiveMatches()
 
-    await self.playSound(.uiSfxActionDestructive)
+    await playSound(.uiSfxActionDestructive)
   }
 
   private func listenForGameCenterEvents() async throws {
-    for await event in self.gameCenter.localPlayer.listener() {
+    for await event in gameCenter.localPlayer.listener() {
       switch event {
       case .turnBased(.matchEnded),
         .turnBased(.receivedTurnEventForMatch):
-        try await self.loadActiveMatches()
+        try await loadActiveMatches()
       default:
         break
       }
@@ -354,8 +353,8 @@ extension GameCenterClient {
   fileprivate func loadActiveMatches(
     now: Date
   ) async throws -> ActiveMatchResponse {
-    let localPlayer = self.localPlayer.localPlayer()
-    let matches = try await self.turnBasedMatch.loadMatches()
+    let localPlayer = localPlayer.localPlayer()
+    let matches = try await turnBasedMatch.loadMatches()
     let activeMatches = matches.activeMatches(for: localPlayer, at: now)
     let hasPastTurnBasedGames = matches.contains { $0.status == .ended }
     return ActiveMatchResponse(matches: activeMatches, hasPastTurnBasedGames: hasPastTurnBasedGames)
@@ -395,7 +394,7 @@ public struct HomeView: View {
               }
             }
             .font(.system(size: 24))
-            .foregroundColor(self.colorScheme == .dark ? .hex(0xF2E29F) : .isowordsBlack)
+            .foregroundColor(colorScheme == .dark ? .hex(0xF2E29F) : .isowordsBlack)
             .adaptivePadding(.horizontal)
 
             DailyChallengeHeaderView(store: store)
@@ -406,14 +405,14 @@ public struct HomeView: View {
             VStack(alignment: .leading) {
               Text("Active games")
                 .adaptiveFont(.matterMedium, size: 16)
-                .foregroundColor(self.colorScheme == .dark ? .hex(0xEBAE83) : .isowordsBlack)
+                .foregroundColor(colorScheme == .dark ? .hex(0xEBAE83) : .isowordsBlack)
                 .screenEdgePadding(.horizontal)
 
               ActiveGamesView(
                 store: store.scope(\.activeGames),
                 showMenuItems: true
               )
-              .foregroundColor(self.colorScheme == .dark ? .hex(0xE9A27C) : .isowordsBlack)
+              .foregroundColor(colorScheme == .dark ? .hex(0xE9A27C) : .isowordsBlack)
             }
           }
 
@@ -424,7 +423,7 @@ public struct HomeView: View {
         }
         .adaptivePadding(.vertical, .grid(4))
         .background(
-          self.colorScheme == .dark
+          colorScheme == .dark
             ? AnyView(Color.isowordsBlack)
             : AnyView(
               LinearGradient(
@@ -440,7 +439,7 @@ public struct HomeView: View {
         }
       }
       .background(
-        (self.colorScheme == .dark
+        (colorScheme == .dark
           ? AnyView(Color.isowordsBlack)
           : AnyView(
             LinearGradient(
@@ -490,11 +489,11 @@ private struct CubeIconView: View {
   }
 
   var body: some View {
-    Button(action: self.action) {
+    Button(action: action) {
       Image(systemName: "cube.fill")
         .font(.system(size: 24))
-        .modifier(ShakeEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
-        .animation(.easeInOut(duration: 1), value: self.shake)
+        .modifier(ShakeEffect(animatableData: CGFloat(shake ? 1 : 0)))
+        .animation(.easeInOut(duration: 1), value: shake)
     }
   }
 }

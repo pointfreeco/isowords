@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import SharedModels
+import Styleguide
 import SwiftUI
 
 @Feature
@@ -92,12 +93,10 @@ public struct LeaderboardResults<TimeScope: Equatable> {
       } catch {
         envelope = nil
       }
-      try await MainActor.run {
-        try withAnimation {
-          _ = try store.modify {
-            $0.isLoading = false
-            $0.resultEnvelope = envelope
-          }
+      try withAnimation {
+        _ = try store.modify {
+          $0.isLoading = false
+          $0.resultEnvelope = envelope
         }
       }
     }
