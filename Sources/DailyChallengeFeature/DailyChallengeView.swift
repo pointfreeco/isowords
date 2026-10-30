@@ -11,6 +11,7 @@ import Overture
 import SharedModels
 import Styleguide
 import SwiftUI
+import SwiftUIHelpers
 
 @Feature
 public struct DailyChallengeReducer {
@@ -318,14 +319,7 @@ public struct DailyChallengeView: View {
     }
     .alert(
       store.destination?.alert?.title ?? Text(""),
-      isPresented: Binding(
-        get: { store.destination?.alert != nil },
-        set: { isPresented in
-          if !isPresented {
-            $store.scope(\.destination).alert.wrappedValue = nil
-          }
-        }
-      ),
+      isPresented: $store.scope(\.destination).alert.isPresent,
       presenting: store.destination?.alert
     ) { _ in
       Button("OK") {}

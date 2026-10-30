@@ -6,6 +6,7 @@ import Dependencies
 import GameCore
 import SharedModels
 import SwiftUI
+import Styleguide
 import TcaHelpers
 import UIApplicationClient
 
@@ -276,16 +277,16 @@ public struct TrailerView: View {
   }
 }
 
-private func moveNubDelay(characterIndex: Int) -> DispatchQueue.SchedulerTimeType.Stride {
+private func moveNubDelay(characterIndex: Int) -> Duration {
   if characterIndex == 0 {
     return firstCharacterDelay
   } else {
-    return 0
+    return .zero
   }
 }
 
-private let firstCharacterDelay: DispatchQueue.SchedulerTimeType.Stride = 0.3
-private let firstWordDelay: DispatchQueue.SchedulerTimeType.Stride = 1.5
+private let firstCharacterDelay: Duration = .seconds(0.3)
+private let firstWordDelay: Duration = .seconds(1.5)
 private let moveNubToFaceDuration = 0.45
 private let moveNubToSubmitButtonDuration = 0.4
 private let moveNubOffScreenDuration = 0.5

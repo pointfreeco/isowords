@@ -5,6 +5,7 @@ import GameOverFeature
 import SettingsFeature
 import Styleguide
 import SwiftUI
+import SwiftUIHelpers
 import UpgradeInterstitialFeature
 
 extension AnyTransition {
@@ -136,7 +137,7 @@ public struct GameView<Content>: View where Content: View {
       .bottomMenu($store.scope(\.destination).bottomMenu)
       .alert(
         "Are you sure?",
-        isPresented: $store.scope(\.destination).alert.isPresent(),
+        isPresented: $store.scope(\.destination).alert.isPresent,
         presenting: store.scope(\.destination)?.scope(\.alert)
       ) { alertStore in
         Button("Don't forfeit", role: .cancel) {}
@@ -157,18 +158,5 @@ public struct GameView<Content>: View where Content: View {
         }
       }
     }
-  }
-}
-
-extension Binding {
-  fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
-    Binding<Bool>(
-      get: { wrappedValue != nil },
-      set: { isPresented, transaction in
-        if !isPresented {
-          self.transaction(transaction).wrappedValue = nil
-        }
-      }
-    )
   }
 }

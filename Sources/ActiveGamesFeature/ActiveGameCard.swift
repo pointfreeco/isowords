@@ -16,16 +16,16 @@ struct ActiveGameCard<Title: View, Message: View>: View {
   @State var isAnimating = AnimationStep?.none {
     didSet {
       guard button.shouldAnimate else { return }
-      switch isAnimating {
+      switch self.isAnimating {
       case .icon:
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
           withAnimation(
             .interpolatingSpring(mass: 0.5, stiffness: 10, damping: 10, initialVelocity: 2)
-          ) { isAnimating = .title }
+          ) { self.isAnimating = .title }
         }
       case .title:
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          withAnimation { isAnimating = nil }
+          withAnimation { self.isAnimating = nil }
         }
       case .none:
         return

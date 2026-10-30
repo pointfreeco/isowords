@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Styleguide
 import SwiftUI
+import SwiftUIHelpers
 
 struct OnboardingStepView: View {
   @Bindable var store: StoreOf<Onboarding>
@@ -263,7 +264,7 @@ struct OnboardingStepView: View {
     }
     .alert(
       "Skip tutorial?",
-      isPresented: $store.scope(\.alert).isPresent(),
+      isPresented: $store.scope(\.alert).isPresent,
       presenting: store.scope(\.alert)
     ) { alertStore in
       Button("Yes, skip") {
@@ -368,16 +369,3 @@ extension Onboarding.State.Step {
     }
   }
 #endif
-
-extension Binding {
-  fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
-    Binding<Bool>(
-      get: { wrappedValue != nil },
-      set: { isPresented, transaction in
-        if !isPresented {
-          self.transaction(transaction).wrappedValue = nil
-        }
-      }
-    )
-  }
-}
