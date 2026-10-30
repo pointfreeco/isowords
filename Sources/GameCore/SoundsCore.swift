@@ -92,7 +92,7 @@ extension Game {
       guard !cubeWasShaking else { return }
       store.addTask(id: self.cubeShaking) {
         await self.audioPlayer.play(.cubeShake)
-        for await _ in self.mainQueue.timer(interval: .seconds(2)) {
+        for await _ in self.clock.timer(interval: .seconds(2)) {
           await self.audioPlayer.play(.cubeShake)
         }
       }

@@ -44,7 +44,6 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.audioPlayer = .noop
       $0.feedbackGenerator = .noop
       $0.lowPowerMode = .false
-      $0.mainQueue = .immediate
     } operation: {
       TestStore(initialState: Leaderboard.State()) {
         Leaderboard()
@@ -129,7 +128,6 @@ class LeaderboardFeatureTests: XCTestCase {
     let store = withDependencies {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.lowPowerMode = .false
-      $0.mainQueue = .immediate
     } operation: {
       TestStore(initialState: Leaderboard.State(scope: .vocab)) {
         Leaderboard()

@@ -1,6 +1,5 @@
 import BottomMenu
 import ClientModels
-import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
 import ConcurrencyExtras
@@ -39,7 +38,6 @@ class PersistenceTests: XCTestCase {
       $0.dictionary.contains = { word, _ in word == "CAB" }
       $0.dictionary.randomCubes = { _ in .mock }
       $0.fileClient.save = { @Sendable _, data in saves.withValue { $0.append(data) } }
-      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
     } operation: {
       TestStore(
         initialState: AppReducer.State(
@@ -47,6 +45,7 @@ class PersistenceTests: XCTestCase {
         )
       ) {
         AppReducer()
+          .environment(\.continuousClock, TestClock())
       }
     }
 
@@ -58,9 +57,9 @@ class PersistenceTests: XCTestCase {
     let newGame = Game.State(
       cubes: .mock,
       gameContext: .solo,
-      gameCurrentTime: RunLoop.immediate.now.date,
+      gameCurrentTime: Date(timeIntervalSinceReferenceDate: 0),
       gameMode: .unlimited,
-      gameStartTime: RunLoop.immediate.now.date
+      gameStartTime: Date(timeIntervalSinceReferenceDate: 0)
     )
     await store.send(.home(.destination(.solo(.gameButtonTapped(.unlimited)))))?.value
     store.expect {
@@ -104,7 +103,7 @@ class PersistenceTests: XCTestCase {
     var playedGame = newGame
     playedGame.moves = [
       .init(
-        playedAt: RunLoop.immediate.now.date,
+        playedAt: Date(timeIntervalSinceReferenceDate: 0),
         playerIndex: nil,
         reactions: nil,
         score: 27,
@@ -177,7 +176,6 @@ class PersistenceTests: XCTestCase {
       $0.didFinishLaunching()
       $0.database.saveGame = { _ in didArchiveGame.setValue(true) }
       $0.fileClient.save = { @Sendable _, data in saves.withValue { $0.append(data) } }
-      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
     } operation: {
       try TestStore(
         initialState: AppReducer.State(
@@ -186,9 +184,10 @@ class PersistenceTests: XCTestCase {
         )
       ) {
         AppReducer()
+          .environment(\.continuousClock, TestClock())
       } changes: {
         try $0.destination.modify(\.game) {
-          $0.gameCurrentTime = RunLoop.immediate.now.date
+          $0.gameCurrentTime = Date(timeIntervalSinceReferenceDate: 0)
         }
       }
     }
@@ -229,15 +228,15 @@ class PersistenceTests: XCTestCase {
     let store = try withDependencies {
       $0.didFinishLaunching()
       $0.database.saveGame = { _ in didArchiveGame.setValue(true) }
-      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
     } operation: {
       try TestStore(
         initialState: AppReducer.State(destination: .game(update(.mock) { $0.gameMode = .timed }))
       ) {
         AppReducer()
+          .environment(\.continuousClock, TestClock())
       } changes: {
         try $0.destination.modify(\.game) {
-          $0.gameCurrentTime = RunLoop.immediate.now.date
+          $0.gameCurrentTime = Date(timeIntervalSinceReferenceDate: 0)
         }
       }
     }
@@ -294,10 +293,10 @@ class PersistenceTests: XCTestCase {
     let store = withDependencies {
       $0.didFinishLaunching()
       $0.fileClient.override(load: savedGamesFileName, savedGames)
-      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
     } operation: {
       TestStore(initialState: AppReducer.State()) {
         AppReducer()
+          .environment(\.continuousClock, TestClock())
       }
     }
 
@@ -313,7 +312,7 @@ class PersistenceTests: XCTestCase {
       $0.destination = .game(
         snap(
           update(Game.State(inProgressGame: .mock)) {
-            $0.gameCurrentTime = RunLoop.immediate.now.date
+            $0.gameCurrentTime = Date(timeIntervalSinceReferenceDate: 0)
           }
         )
       )
@@ -326,7 +325,6 @@ class PersistenceTests: XCTestCase {
     let store = try withDependencies {
       $0.didFinishLaunching()
       $0.apiClient.currentPlayer = { nil }
-      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
     } operation: {
       try TestStore(
         initialState: AppReducer.State(
@@ -350,9 +348,10 @@ class PersistenceTests: XCTestCase {
         )
       ) {
         AppReducer()
+          .environment(\.continuousClock, TestClock())
       } changes: {
         try $0.destination.modify(\.game) {
-          $0.gameCurrentTime = RunLoop.immediate.now.date
+          $0.gameCurrentTime = Date(timeIntervalSinceReferenceDate: 0)
         }
       }
     }

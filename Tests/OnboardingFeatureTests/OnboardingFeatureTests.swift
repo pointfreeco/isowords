@@ -1,4 +1,3 @@
-import CombineSchedulers
 import ComposableArchitecture
 import ConcurrencyExtras
 import CustomDump
@@ -8,15 +7,9 @@ import XCTest
 
 @testable import OnboardingFeature
 
-extension Dependencies.DateGenerator {
-  static func runLoop(_ runLoop: AnySchedulerOf<RunLoop>) -> Self {
-    Self { runLoop.now.date }
-  }
-}
-
 class OnboardingFeatureTests: XCTestCase {
-  let mainQueue = DispatchQueue.test
-  let mainRunLoop = AnySchedulerOf<RunLoop>.immediate
+  let clock = TestClock<Duration>()
+  let now = Date(timeIntervalSinceReferenceDate: 0)
 
   @MainActor
   func testBasics_FirstLaunch() async {
@@ -29,9 +22,6 @@ class OnboardingFeatureTests: XCTestCase {
         ["GAME", "CUBES", "REMOVE", "WORD"].contains(word)
       }
       $0.feedbackGenerator = .noop
-      $0.mainRunLoop = self.mainRunLoop
-      $0.date = .runLoop($0.mainRunLoop)
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.userDefaults.setBool = { value, key in
         expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
         expectNoDifference(value, true)
@@ -40,10 +30,11 @@ class OnboardingFeatureTests: XCTestCase {
     } operation: {
       TestStore(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
         Onboarding()
+          .environment(\.continuousClock, self.clock)
       }
     }
 
-    await self.mainQueue.advance(by: .seconds(4))
+    await self.clock.advance(by: .seconds(4))
     store.expect {
       $0.step = .step2_FindWordsOnCube
     }
@@ -89,7 +80,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes.2.2.1.right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: nil,
           reactions: nil,
           score: 36,
@@ -106,7 +97,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     // Wait a moment to automatically go to the next step
-    await self.mainQueue.advance(by: .seconds(2))
+    await self.clock.advance(by: .seconds(2))
     store.expect {
       $0.step = .step7_BiggerCube
     }
@@ -153,7 +144,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes.2.2.1.top.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: nil,
           reactions: nil,
           score: 110,
@@ -171,7 +162,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
 
     // Wait a moment to automatically go to the next step
-    await self.mainQueue.advance(by: .seconds(2))
+    await self.clock.advance(by: .seconds(2))
     store.expect {
       $0.step = .step10_CubeDisappear
     }
@@ -208,7 +199,7 @@ class OnboardingFeatureTests: XCTestCase {
     }
     store.send(.cubeScene(.tap(.began, .init(index: .init(x: .two, y: .two, z: .one), side: .right))))
     await store.receive(\.game.tap) {
-      $0.game.cubeStartedShakingAt = self.mainRunLoop.now.date
+      $0.game.cubeStartedShakingAt = self.now
       $0.game.optimisticallySelectedFace = .init(index: .init(x: .two, y: .two, z: .one), side: .right)
       $0.game.selectedWord.append(.init(index: .init(x: .two, y: .two, z: .one), side: .right))
       $0.game.selectedWordIsValid = true
@@ -227,7 +218,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes.2.2.1.right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: nil,
           reactions: nil,
           score: 252,
@@ -245,7 +236,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = false
     }
 
-    await self.mainQueue.advance(by: .seconds(3))
+    await self.clock.advance(by: .seconds(3))
     store.expect {
       $0.step = .step14_LettersRevealed
     }
@@ -289,7 +280,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes.2.0.2.right.useCount += 1
       $0.game.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: nil,
           reactions: nil,
           score: 44,
@@ -305,7 +296,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.selectedWordIsValid = false
     }
 
-    await self.mainQueue.advance(by: .seconds(2))
+    await self.clock.advance(by: .seconds(2))
     store.expect {
       $0.step = .step18_OneLastThing
     }
@@ -321,7 +312,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.game.cubes.2.2.2.wasRemoved = true
       $0.game.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: nil,
           reactions: nil,
           score: 0,
@@ -331,7 +322,7 @@ class OnboardingFeatureTests: XCTestCase {
       $0.step = .step20_Congrats
     }
 
-    await self.mainQueue.advance(by: .seconds(2))
+    await self.clock.advance(by: .seconds(2))
     store.expect {
       $0.step = .step21_PlayAGameYourself
     }
@@ -349,7 +340,6 @@ class OnboardingFeatureTests: XCTestCase {
     let store = withDependencies {
       $0.audioPlayer = .noop
       $0.dictionary.load = { _ in true }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.userDefaults.boolForKey = { key in
         expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
         return true
@@ -362,10 +352,11 @@ class OnboardingFeatureTests: XCTestCase {
     } operation: {
       TestStore(initialState: Onboarding.State(presentationStyle: .help)) {
         Onboarding()
+          .environment(\.continuousClock, self.clock)
       }
     }
 
-    await self.mainQueue.advance(by: .seconds(4))
+    await self.clock.advance(by: .seconds(4))
     store.expect {
       $0.step = .step2_FindWordsOnCube
     }
@@ -384,7 +375,6 @@ class OnboardingFeatureTests: XCTestCase {
     let store = withDependencies {
       $0.audioPlayer = .noop
       $0.dictionary.load = { _ in true }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
       $0.userDefaults.boolForKey = { key in
         expectNoDifference(key, "hasShownFirstLaunchOnboardingKey")
         return false
@@ -397,10 +387,11 @@ class OnboardingFeatureTests: XCTestCase {
     } operation: {
       TestStore(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
         Onboarding()
+          .environment(\.continuousClock, self.clock)
       }
     }
 
-    await self.mainQueue.advance(by: .seconds(4))
+    await self.clock.advance(by: .seconds(4))
     store.expect {
       $0.step = .step2_FindWordsOnCube
     }

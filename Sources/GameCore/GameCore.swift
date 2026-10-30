@@ -156,14 +156,13 @@ public struct Game {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.date) var date
+  @FeatureEnvironment(\.date) var date
   @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.lowPowerMode) var lowPowerMode
-  @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @FeatureEnvironment(\.continuousClock) var clock
   @Dependency(\.database.saveGame) var saveGame
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
@@ -179,7 +178,7 @@ public struct Game {
     self.startsOnMount = startsOnMount
   }
 
-  var now: Date { self.mainRunLoop.now.date }
+  var now: Date { self.date.now }
 
   public var body: some Feature {
     Update { state, action in
@@ -407,7 +406,7 @@ public struct Game {
         await withThrowingTaskGroup(of: Void.self) { group in
           for face in removedFaces {
             group.addTask {
-              try await self.mainQueue
+              try await self.clock
                 .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
               await self.audioPlayer.play(.cubeRemove)
             }
@@ -504,7 +503,7 @@ public struct Game {
             serverConfig: self.serverConfig()
           )
         else { return }
-        try await self.mainRunLoop.sleep(for: .seconds(3))
+        try await self.clock.sleep(for: .seconds(3))
         try await MainActor.run {
           try withAnimation {
             _ = try store.modify {
@@ -516,11 +515,11 @@ public struct Game {
     }
 
     store.addTask {
-      try await self.mainQueue.sleep(for: 0.5)
+      try await self.clock.sleep(for: .seconds(0.5))
       try store.modify { $0.isGameLoaded = true }
-      for await instant in self.mainRunLoop.timer(interval: .seconds(1)) {
+      for await _ in self.clock.timer(interval: .seconds(1)) {
         try store.modify {
-          $0.gameCurrentTime = instant.date
+          $0.gameCurrentTime = self.now
           if $0.isYourTurn && !$0.isGameOver {
             $0.secondsPlayed += 1
           }
@@ -700,13 +699,10 @@ extension DependencyValues {
     self.audioPlayer = previousValues.audioPlayer
     self.build = .noop
     self.database = .noop
-    self.date = previousValues.date
     self.dictionary = previousValues.dictionary
     self.feedbackGenerator = previousValues.feedbackGenerator
     self.fileClient = .noop
     self.gameCenter = .noop
-    self.mainRunLoop = previousValues.mainRunLoop
-    self.mainQueue = previousValues.mainQueue
     self.remoteNotifications = .noop
     self.serverConfig = .noop
     self.storeKit = .noop

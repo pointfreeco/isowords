@@ -72,7 +72,7 @@ public struct DailyChallengeReducer {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.mainRunLoop.now.date) var now
+  @FeatureEnvironment(\.date.now) var now
   @Dependency(\.userNotifications.getNotificationSettings) var getUserNotificationSettings
 
   public init() {}

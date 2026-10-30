@@ -45,7 +45,6 @@ class GameOverFeatureTests: XCTestCase {
           }
         )
         $0.database.playedGamesCount = { _ in 0 }
-        $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .notDetermined)
@@ -159,7 +158,6 @@ class GameOverFeatureTests: XCTestCase {
           }
         )
         $0.database.playedGamesCount = { _ in 0 }
-        $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .notDetermined)
@@ -223,7 +221,6 @@ class GameOverFeatureTests: XCTestCase {
           withResponse: { try await OK(["turnBased": true]) }
         )
         $0.database.playedGamesCount = { _ in 10 }
-        $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .notDetermined)
@@ -263,7 +260,7 @@ class GameOverFeatureTests: XCTestCase {
 
   @MainActor
   func testRequestReviewOnClose() async {
-    let mainRunLoop = RunLoop.test
+    let now = LockIsolated(Date(timeIntervalSince1970: 0))
     let lastReviewRequestTimeIntervalSet = ActorIsolated<Double?>(nil)
     let requestReviewCount = ActorIsolated(0)
     let gamesPlayed = LockIsolated(1)
@@ -296,7 +293,6 @@ class GameOverFeatureTests: XCTestCase {
         )
       }
       $0.database.playedGamesCount = { _ in 0 }
-      $0.mainRunLoop = mainRunLoop.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
       $0.storeKit.requestReview = {
         await requestReviewCount.withValue { $0 += 1 }
@@ -319,6 +315,7 @@ class GameOverFeatureTests: XCTestCase {
         )
       ) {
         GameOver()
+          .environment(\.date, Dependencies.DateGenerator { now.value })
       }
     }
 
@@ -352,7 +349,7 @@ class GameOverFeatureTests: XCTestCase {
     await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
-    await mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
+    now.withValue { $0.addTimeInterval(60 * 60 * 24 * 7) }
     store.send(.closeButtonTapped)
     await store.receive(
       key: GameOver.Event.self,
@@ -393,7 +390,7 @@ class GameOverFeatureTests: XCTestCase {
 
   @MainActor
   func testShowUpgradeInterstitial() async {
-    let mainRunLoop = RunLoop.test
+    let clock = TestClock<Duration>()
     let store = withDependencies {
       $0.audioPlayer = .noop
       $0.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
@@ -401,7 +398,6 @@ class GameOverFeatureTests: XCTestCase {
         try await OK(["solo": ["ranks": [String: LeaderboardScoreResult.Rank]()]])
       }
       $0.database.playedGamesCount = { _ in 6 }
-      $0.mainRunLoop = mainRunLoop.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
       $0.storeKit = .noop
       $0.userNotifications.getNotificationSettings = {
@@ -423,6 +419,7 @@ class GameOverFeatureTests: XCTestCase {
         )
       ) {
         GameOver()
+          .environment(\.continuousClock, clock)
       }
     }
 
@@ -433,7 +430,7 @@ class GameOverFeatureTests: XCTestCase {
     ) {
       $0.summary = .leaderboard([:])
     }
-    await mainRunLoop.advance(by: .seconds(1))
+    await clock.advance(by: .seconds(1))
     store.expect {
       $0.destination = .upgradeInterstitial(
         UpgradeInterstitial.State.DebugSnapshot(
@@ -445,7 +442,7 @@ class GameOverFeatureTests: XCTestCase {
         )
       )
     }
-    await mainRunLoop.advance(by: .seconds(1))
+    await clock.advance(by: .seconds(1))
     store.expect {
       $0.isViewEnabled = true
       $0.destination = .upgradeInterstitial(
@@ -470,7 +467,6 @@ class GameOverFeatureTests: XCTestCase {
         try await OK(["solo": ["ranks": [String: LeaderboardScoreResult.Rank]()]])
       }
       $0.database.playedGamesCount = { _ in 5 }
-      $0.mainRunLoop = .immediate
       $0.serverConfig.config = { .init() }
       $0.userNotifications.getNotificationSettings = {
         .init(authorizationStatus: .notDetermined)

@@ -114,7 +114,7 @@ public struct CubePreview {
   }
 
   @Dependency(\.lowPowerMode) var lowPowerMode
-  @Dependency(\.mainQueue) var mainQueue
+  @FeatureEnvironment(\.continuousClock) var clock
   @StoreTaskID var selection
   @Dependency(\.userSettings) var userSettings
 
@@ -144,7 +144,7 @@ public struct CubePreview {
         let isOnLowPowerMode = await lowPowerMode.start().first(where: { _ in true }) ?? false
         try store.modify { $0.isOnLowPowerMode = isOnLowPowerMode }
 
-        try await mainQueue.sleep(for: .seconds(1))
+        try await clock.sleep(for: .seconds(1))
 
         var accumulatedSelectedFaces: [IndexedCubeFace] = []
         switch move.type {
@@ -164,7 +164,7 @@ public struct CubePreview {
             }
 
             // Pause a bit to allow the nub to animate to the face
-            try await mainQueue.sleep(
+            try await clock.sleep(
               for: .seconds(faceIndex == 0 ? moveDuration : 0.5 * moveDuration)
             )
 

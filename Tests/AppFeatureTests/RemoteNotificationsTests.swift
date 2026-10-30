@@ -1,5 +1,4 @@
 import ClientModels
-import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
 import ConcurrencyExtras
@@ -110,7 +109,6 @@ class RemoteNotificationsTests: XCTestCase {
     let store = withDependencies {
       $0.didFinishLaunching()
       $0.fileClient.save = { @Sendable _, _ in }
-      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
       $0.userNotifications.delegate = { delegate.stream }
     } operation: {
       TestStore(
@@ -119,6 +117,7 @@ class RemoteNotificationsTests: XCTestCase {
         }
       ) {
         AppReducer()
+          .environment(\.continuousClock, TestClock())
       }
     }
 
@@ -157,7 +156,7 @@ class RemoteNotificationsTests: XCTestCase {
       $0.destination = .game(
         snap(
           update(Game.State(inProgressGame: inProgressGame)) {
-            $0.gameCurrentTime = RunLoop.immediate.now.date
+            $0.gameCurrentTime = Date(timeIntervalSinceReferenceDate: 0)
           }
         )
       )

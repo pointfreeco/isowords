@@ -1,4 +1,3 @@
-import Combine
 import ComposableArchitecture
 import CustomDump
 import ComposableStoreKit
@@ -14,7 +13,7 @@ import XCTest
 @testable import ServerConfigClient
 
 class UpgradeInterstitialFeatureTests: XCTestCase {
-  let scheduler = RunLoop.test
+  let clock = TestClock<Duration>()
 
   @MainActor
   func testUpgrade() async {
@@ -43,7 +42,6 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
       ]
 
       let store = withDependencies {
-        $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.storeKit.addPayment = {
           let productIdentifier = $0.productIdentifier
@@ -89,7 +87,6 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   @MainActor
   func testWaitAndDismiss() async {
     let store = withDependencies {
-      $0.mainRunLoop = self.scheduler.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
       $0.storeKit.observer = { .finished }
       $0.storeKit.fetchProducts = { _ in
@@ -98,16 +95,17 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
     } operation: {
       TestStore(initialState: UpgradeInterstitial.State()) {
         UpgradeInterstitial()
+          .environment(\.continuousClock, self.clock)
       }
     }
 
-    await self.scheduler.advance(by: .seconds(1))
+    await self.clock.advance(by: .seconds(1))
     store.expect { $0.secondsPassedCount = 1 }
 
-    await self.scheduler.advance(by: .seconds(15))
+    await self.clock.advance(by: .seconds(15))
     store.expect { $0.secondsPassedCount = 10 }
 
-    await self.scheduler.run()
+    await self.clock.run()
 
     await store.send(.maybeLaterButtonTapped)?.value
     XCTAssertFalse(store.isPresented)
@@ -116,7 +114,6 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   @MainActor
   func testMaybeLater_Dismissable() async {
     let store = withDependencies {
-      $0.mainRunLoop = .immediate
       $0.serverConfig.config = { .init() }
       $0.storeKit.observer = { .finished }
       $0.storeKit.fetchProducts = { _ in

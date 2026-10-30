@@ -56,7 +56,7 @@ public struct WordSubmitButtonFeature {
   }
 
   @Dependency(\.feedbackGenerator) var feedbackGenerator
-  @Dependency(\.mainQueue) var mainQueue
+  @FeatureEnvironment(\.continuousClock) var clock
   @Dependency(\.audioPlayer.play) var playSound
 
   @StoreTaskID var submitButtonPressedDelay
@@ -97,7 +97,7 @@ public struct WordSubmitButtonFeature {
           if isClosing {
             await self.playSound(.uiSfxEmojiClose)
           }
-          try await self.mainQueue.sleep(for: 0.5)
+          try await self.clock.sleep(for: .seconds(0.5))
           guard store.isYourTurn else { return }
           try store.modify { $0.wordSubmitButton.areReactionsOpen = true }
           await self.feedbackGenerator.selectionChanged()

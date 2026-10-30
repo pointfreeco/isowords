@@ -103,10 +103,10 @@ public struct Home {
   @Dependency(\.build.number) var buildNumber
   @Dependency(\.deviceId) var deviceId
   @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop.now.date) var now
+  @FeatureEnvironment(\.date.now) var now
   @Dependency(\.audioPlayer.play) var playSound
   @Dependency(\.serverConfig) var serverConfig
-  @Dependency(\.timeZone) var timeZone
+  @FeatureEnvironment(\.timeZone) var timeZone
   @Dependency(\.userDefaults) var userDefaults
 
   @StoreTaskID var loadTask

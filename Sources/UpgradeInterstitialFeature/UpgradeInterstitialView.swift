@@ -48,7 +48,7 @@ public struct UpgradeInterstitial {
     public init() {}
   }
 
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @FeatureEnvironment(\.continuousClock) var clock
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
 
@@ -128,7 +128,7 @@ public struct UpgradeInterstitial {
       guard !state.isDismissable, state.secondsPassedCount < state.upgradeInterstitialDuration
       else { return }
       store.addTask {
-        for await _ in self.mainRunLoop.timer(interval: 1) {
+        for await _ in self.clock.timer(interval: .seconds(1)) {
           try await MainActor.run {
             _ = try withAnimation { try store.modify { $0.secondsPassedCount += 1 } }
           }

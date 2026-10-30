@@ -31,12 +31,9 @@ extension DependencyValues {
     self.gameCenter.localPlayer.localPlayer = { .notAuthenticated }
     self.gameCenter.turnBasedMatch.loadMatches = { [] }
     self.lowPowerMode.start = { .finished }
-    self.mainQueue = .immediate
-    self.mainRunLoop = .immediate
     self.serverConfig.config = { .init() }
     self.serverConfig.refresh = { .init() }
     self.storeKit.observer = { .finished }
-    self.timeZone = .newYork
     self.userDefaults.override(bool: true, forKey: "hasShownFirstLaunchOnboardingKey")
     self.userDefaults.override(double: 0, forKey: "installationTimeKey")
     self.userDefaults.override(integer: 0, forKey: "multiplayerOpensCount")

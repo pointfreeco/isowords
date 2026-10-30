@@ -182,7 +182,7 @@ public struct Onboarding {
     self._audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
   }
   @Dependency(\.dictionary) var dictionary
-  @Dependency(\.mainQueue) var mainQueue
+  @FeatureEnvironment(\.continuousClock) var clock
   @Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userSettings) var userSettings
 
@@ -293,7 +293,7 @@ public struct Onboarding {
         return
       }
       store.addTask {
-        try await self.mainQueue.sleep(for: .seconds(delay))
+        try await self.clock.sleep(for: .seconds(delay))
         try await self.nextStep()
       }
     }
@@ -315,7 +315,7 @@ public struct Onboarding {
         )
 
         if isFirstStep {
-          try await self.mainQueue.sleep(for: .seconds(firstStepDelay))
+          try await self.clock.sleep(for: .seconds(firstStepDelay))
           try await self.nextStep()
         }
       }

@@ -42,8 +42,8 @@ public struct Demo {
   }
 
   @Dependency(\.audioPlayer.load) var loadSounds
-  @Dependency(\.mainQueue) var mainQueue
-  @Dependency(\.mainRunLoop.now.date) var now
+  @FeatureEnvironment(\.continuousClock) var clock
+  @FeatureEnvironment(\.date.now) var now
   @Dependency(\.applicationClient.open) var openURL
   @Dependency(\.dictionary.randomCubes) var randomCubes
 
@@ -98,7 +98,7 @@ public struct Demo {
     }
     .onChange(of: store.isGameOver) { _, _, _ in
       store.addTask {
-        try await self.mainQueue.sleep(for: .seconds(2))
+        try await self.clock.sleep(for: .seconds(2))
         try store.modify { $0.appStoreOverlayIsPresented = true }
       }
     }

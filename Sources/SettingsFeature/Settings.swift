@@ -137,7 +137,7 @@ public struct Settings {
   @Dependency(\.applicationClient) var applicationClient
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.build) var build
-  @Dependency(\.mainQueue) var mainQueue
+  @FeatureEnvironment(\.continuousClock) var clock
   @Dependency(\.remoteNotifications.register) var registerForRemoteNotifications
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.storeKit) var storeKit
@@ -381,7 +381,7 @@ public struct Settings {
     }
     .onChange(of: store.userSettings) { _, userSettings, _ in
       store.addTask(id: saveUserSettings) {
-        try await self.mainQueue.sleep(for: .seconds(0.5))
+        try await self.clock.sleep(for: .seconds(0.5))
         await self.userSettings.set(userSettings)
       }
     }

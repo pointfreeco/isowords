@@ -50,7 +50,6 @@ class GameOverFeatureIntegrationTests: XCTestCase {
           router: .test
         )
         $0.database.playedGamesCount = { _ in 0 }
-        $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
           .init(authorizationStatus: .notDetermined)

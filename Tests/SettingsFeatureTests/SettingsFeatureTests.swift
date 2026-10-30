@@ -24,7 +24,6 @@ extension DependencyValues {
     self.applicationClient.alternateIconName = { nil }
     self.build.number = { 42 }
     self.database.fetchStats = { try await Task.never() }
-    self.mainQueue = .immediate
     self.fileClient.save = { @Sendable _, _ in }
     self.serverConfig.config = { .init() }
     self.storeKit.fetchProducts = { _ in

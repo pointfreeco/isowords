@@ -1,6 +1,5 @@
 import BottomMenu
 import ClientModels
-import Combine
 import ComposableArchitecture
 import ComposableGameCenter
 import ConcurrencyExtras
@@ -25,8 +24,8 @@ import XCTest
 
 @MainActor
 class TurnBasedTests: XCTestCase {
-  let mainQueue = DispatchQueue.test
-  let mainRunLoop = RunLoop.test
+  let clock = TestClock<Duration>()
+  let now = Date(timeIntervalSinceReferenceDate: 0)
 
   func testNewGame() async throws {
     try await withMainSerialExecutor {
@@ -37,13 +36,13 @@ class TurnBasedTests: XCTestCase {
 
       let listener = AsyncStreamProducer<LocalPlayerClient.ListenerEvent>()
 
-      let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
+      let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.now }
 
       let currentPlayer = CurrentPlayerEnvelope.mock
       let dailyChallenges = [
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
-            endsAt: self.mainRunLoop.now.date,
+            endsAt: self.now,
             gameMode: .unlimited,
             id: .init(rawValue: .dailyChallengeId),
             language: .en
@@ -52,7 +51,7 @@ class TurnBasedTests: XCTestCase {
         ),
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
-            endsAt: self.mainRunLoop.now.date,
+            endsAt: self.now,
             gameMode: .timed,
             id: .init(rawValue: .dailyChallengeId),
             language: .en
@@ -89,7 +88,6 @@ class TurnBasedTests: XCTestCase {
         }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
         $0.gameCenter.turnBasedMatchmakerViewController.present = { @Sendable _ in }
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
         $0.userDefaults.setInteger = { int, key in
           expectNoDifference(key, "multiplayerOpensCount")
           multiplayerOpensCounts.withValue { $0.append(int) }
@@ -101,6 +99,7 @@ class TurnBasedTests: XCTestCase {
           )
         ) {
           AppReducer()
+            .environment(\.continuousClock, self.clock)
         }
       }
 
@@ -115,7 +114,7 @@ class TurnBasedTests: XCTestCase {
 
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
-      await self.mainRunLoop.advance()
+      await self.clock.advance()
       await Task.megaYield()
 
       let initialGameState = try update(
@@ -137,7 +136,7 @@ class TurnBasedTests: XCTestCase {
         )
       ) {
         try $0.gameContext.modify(\.turnBased) {
-          $0.metadata.lastOpenedAt = self.mainRunLoop.now.date
+          $0.metadata.lastOpenedAt = self.now
         }
       }
       store.expect {
@@ -190,7 +189,7 @@ class TurnBasedTests: XCTestCase {
         $0.isGameLoaded = true
         $0.moves = [
           .init(
-            playedAt: self.mainRunLoop.now.date,
+            playedAt: self.now,
             playerIndex: 0,
             reactions: [0: .angel],
             score: 27,
@@ -211,7 +210,7 @@ class TurnBasedTests: XCTestCase {
               localPlayer: .mock,
               match: newMatch,
               metadata: .init(
-                lastOpenedAt: self.mainRunLoop.now.date,
+                lastOpenedAt: self.now,
                 playerIndexToId: [0: currentPlayer.player.id]
               )
             ),
@@ -247,7 +246,7 @@ class TurnBasedTests: XCTestCase {
               localPlayer: .mock,
               match: updatedMatch,
               metadata: .init(
-                lastOpenedAt: self.mainRunLoop.now.date,
+                lastOpenedAt: self.now,
                 playerIndexToId: [0: currentPlayer.player.id]
               )
             )
@@ -266,7 +265,7 @@ class TurnBasedTests: XCTestCase {
       let dailyChallenges = [
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
-            endsAt: self.mainRunLoop.now.date,
+            endsAt: self.now,
             gameMode: .unlimited,
             id: .init(rawValue: .dailyChallengeId),
             language: .en
@@ -275,7 +274,7 @@ class TurnBasedTests: XCTestCase {
         ),
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
-            endsAt: self.mainRunLoop.now.date,
+            endsAt: self.now,
             gameMode: .timed,
             id: .init(rawValue: .dailyChallengeId),
             language: .en
@@ -305,10 +304,10 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       } operation: {
         TestStore(initialState: AppReducer.State()) {
           AppReducer()
+            .environment(\.continuousClock, self.clock)
         }
       }
 
@@ -344,7 +343,7 @@ class TurnBasedTests: XCTestCase {
                 )
               )
             ) {
-              $0.gameCurrentTime = self.mainRunLoop.now.date
+              $0.gameCurrentTime = self.now
               $0.isGameLoaded = true
             }
           )
@@ -362,7 +361,7 @@ class TurnBasedTests: XCTestCase {
       let dailyChallenges = [
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
-            endsAt: self.mainRunLoop.now.date,
+            endsAt: self.now,
             gameMode: .unlimited,
             id: .init(rawValue: .dailyChallengeId),
             language: .en
@@ -371,7 +370,7 @@ class TurnBasedTests: XCTestCase {
         ),
         FetchTodaysDailyChallengeResponse(
           dailyChallenge: .init(
-            endsAt: self.mainRunLoop.now.date,
+            endsAt: self.now,
             gameMode: .timed,
             id: .init(rawValue: .dailyChallengeId),
             language: .en
@@ -425,10 +424,10 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .mock }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       } operation: {
         TestStore(initialState: AppReducer.State()) {
           AppReducer()
+            .environment(\.continuousClock, self.clock)
         }
       }
 
@@ -444,7 +443,7 @@ class TurnBasedTests: XCTestCase {
       await Task.megaYield()
 
       var gameState = Game.State(
-        gameCurrentTime: self.mainRunLoop.now.date,
+        gameCurrentTime: self.now,
         localPlayer: .mock,
         turnBasedMatch: forfeitedMatch,
         turnBasedMatchData: turnBasedMatchData
@@ -473,7 +472,7 @@ class TurnBasedTests: XCTestCase {
     let didEndTurnWithRequest = LockIsolated<TurnBasedMatchClient.EndTurnRequest?>(nil)
     let loadedMatch = LockIsolated<TurnBasedMatch?>(nil)
     let match = update(TurnBasedMatch.inProgress) {
-      $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
+      $0.creationDate = self.now.addingTimeInterval(-60*5)
       $0.participants = [.local, .remote]
     }
 
@@ -486,7 +485,7 @@ class TurnBasedTests: XCTestCase {
           metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
         )
       ),
-      gameCurrentTime: self.mainRunLoop.now.date,
+      gameCurrentTime: self.now,
       gameMode: .unlimited,
       gameStartTime: match.creationDate,
       secondsPlayed: 0
@@ -498,13 +497,12 @@ class TurnBasedTests: XCTestCase {
       $0.gameCenter.turnBasedMatch.endTurn = { didEndTurnWithRequest.setValue($0) }
       $0.gameCenter.turnBasedMatch.load = { _ in try XCTUnwrap(loadedMatch.value) }
       $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
-      $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
     } operation: {
       TestStore(
         initialState: AppReducer.State(destination: .game(initialGameState))
       ) {
         AppReducer()
+          .environment(\.continuousClock, self.clock)
       }
     }
 
@@ -527,7 +525,7 @@ class TurnBasedTests: XCTestCase {
       $0.cubes.0.0.0.wasRemoved = true
       $0.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: 0,
           reactions: nil,
           score: 0,
@@ -582,7 +580,7 @@ class TurnBasedTests: XCTestCase {
     updatedGameState = try update(updatedGameState) {
       $0.moves.append(
         .init(
-          playedAt: self.mainRunLoop.now.date,
+          playedAt: self.now,
           playerIndex: 0,
           reactions: nil,
           score: 0,
@@ -652,12 +650,12 @@ class TurnBasedTests: XCTestCase {
       let localParticipant = TurnBasedParticipant.local
       let match = update(TurnBasedMatch.inProgress) {
         $0.currentParticipant = localParticipant
-        $0.creationDate = self.mainRunLoop.now.date.addingTimeInterval(-60*5)
+        $0.creationDate = self.now.addingTimeInterval(-60*5)
         $0.participants = [localParticipant, .remote]
       }
       let didRematchWithId = LockIsolated<TurnBasedMatch.Id?>(nil)
 
-      let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.mainRunLoop.now.date }
+      let newMatch = update(TurnBasedMatch.new) { $0.creationDate = self.now }
 
       let index = LatticePoint(x: .two, y: .two, z: .two)
       let game = update(
@@ -670,7 +668,7 @@ class TurnBasedTests: XCTestCase {
               metadata: .init(lastOpenedAt: nil, playerIndexToId: [:])
             )
           ),
-          gameCurrentTime: self.mainRunLoop.now.date,
+          gameCurrentTime: self.now,
           gameMode: .unlimited,
           gameStartTime: .mock,
           moves: [
@@ -717,11 +715,10 @@ class TurnBasedTests: XCTestCase {
         }
         $0.gameCenter.turnBasedMatch.saveCurrentTurn = { _, _ in }
         $0.gameCenter.turnBasedMatchmakerViewController.dismiss = {}
-        $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       } operation: {
         TestStore(initialState: AppReducer.State(destination: .game(game))) {
           AppReducer()
+            .environment(\.continuousClock, self.clock)
         }
       }
 
@@ -755,10 +752,10 @@ class TurnBasedTests: XCTestCase {
                 .init(
                   localPlayer: .mock,
                   match: newMatch,
-                  metadata: .init(lastOpenedAt: self.mainRunLoop.now.date, playerIndexToId: [:])
+                  metadata: .init(lastOpenedAt: self.now, playerIndexToId: [:])
                 )
               ),
-              gameCurrentTime: self.mainRunLoop.now.date,
+              gameCurrentTime: self.now,
               gameMode: .unlimited,
               gameStartTime: newMatch.creationDate
             )
@@ -774,7 +771,7 @@ class TurnBasedTests: XCTestCase {
     await withMainSerialExecutor {
       let localParticipant = TurnBasedParticipant.local
       let remoteParticipant = update(TurnBasedParticipant.remote) {
-        $0.lastTurnDate = self.mainRunLoop.now.date - 10
+        $0.lastTurnDate = self.now - 10
       }
       let match = update(TurnBasedMatch.inProgress) {
         $0.currentParticipant = localParticipant
@@ -818,11 +815,10 @@ class TurnBasedTests: XCTestCase {
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .authenticated }
         $0.gameCenter.showNotificationBanner = { notificationBannerRequest.setValue($0) }
-        $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       } operation: {
         TestStore(initialState: AppReducer.State()) {
           AppReducer()
+            .environment(\.continuousClock, self.clock)
         }
       }
 
@@ -830,7 +826,7 @@ class TurnBasedTests: XCTestCase {
         .turnBased(.receivedTurnEventForMatch(match, didBecomeActive: false))
       )
 
-      await self.mainQueue.advance()
+      await self.clock.advance()
       await Task.megaYield()
       expectNoDifference(
         notificationBannerRequest.value,
@@ -848,7 +844,7 @@ class TurnBasedTests: XCTestCase {
     await withMainSerialExecutor {
       let localParticipant = TurnBasedParticipant.local
       let remoteParticipant = update(TurnBasedParticipant.remote) {
-        $0.lastTurnDate = self.mainRunLoop.now.date - 10
+        $0.lastTurnDate = self.now - 10
       }
       let match = update(TurnBasedMatch.inProgress) {
         $0.currentParticipant = remoteParticipant
@@ -882,18 +878,17 @@ class TurnBasedTests: XCTestCase {
         $0.didFinishLaunching()
         $0.gameCenter.localPlayer.listener = { listener.stream }
         $0.gameCenter.localPlayer.localPlayer = { .authenticated }
-        $0.mainQueue = self.mainQueue.eraseToAnyScheduler()
-        $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       } operation: {
         TestStore(initialState: AppReducer.State()) {
           AppReducer()
+            .environment(\.continuousClock, self.clock)
         }
       }
 
       listener.continuation.yield(
         .turnBased(.receivedTurnEventForMatch(match, didBecomeActive: false))
       )
-      await self.mainQueue.run()
+      await self.clock.run()
       await Task.megaYield()
 
       await store.dismount()

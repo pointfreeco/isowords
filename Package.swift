@@ -251,7 +251,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SharedModels",
         "Styleguide",
         "TcaHelpers",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -323,7 +323,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UserSettingsClient",
         "VocabFeature",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Gen", package: "swift-gen"),
@@ -361,7 +361,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "AudioPlayerClient",
       dependencies: [
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -371,7 +371,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "Bloom",
       dependencies: [
         "Styleguide",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Gen", package: "swift-gen"),
@@ -381,7 +381,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "BottomMenu",
       dependencies: [
         "Styleguide",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -398,7 +398,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UIApplicationClient",
         "UserDefaultsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Overture", package: "swift-overture"),
@@ -440,7 +440,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         "FirstPartyMocks",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Overture", package: "swift-overture"),
@@ -452,7 +452,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "ComposableStoreKit",
       dependencies: [
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -461,7 +461,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "ComposableUserNotifications",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -475,7 +475,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ClientModels",
         "SharedModels",
         "Styleguide",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Gen", package: "swift-gen"),
@@ -495,7 +495,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SelectionSoundsCore",
         "SharedModels",
         "UserSettingsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -524,7 +524,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "RemoteNotificationsClient",
         "SharedModels",
         "Styleguide",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Overture", package: "swift-overture"),
@@ -560,7 +560,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ApiClient",
         "FileClient",
         "SharedModels",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -581,7 +581,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "OnboardingFeature",
         "SharedModels",
         "UserDefaultsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -613,7 +613,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "FeedbackGeneratorClient",
       dependencies: [
         "XCTestDebugSupport",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -624,7 +624,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "ClientModels",
         "XCTestDebugSupport",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -659,7 +659,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
         "UserSettingsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ],
@@ -696,7 +696,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "TcaHelpers",
         "UpgradeInterstitialFeature",
         "UserDefaultsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -738,7 +738,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "FeedbackGeneratorClient",
         "TcaHelpers",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -772,7 +772,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UpgradeInterstitialFeature",
         "UserDefaultsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Overture", package: "swift-overture"),
@@ -810,7 +810,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "Styleguide",
         "SwiftUIHelpers",
         "UserSettingsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Overture", package: "swift-overture"),
@@ -834,7 +834,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SharedModels",
         "Sqlite",
         "XCTestDebugSupport",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "Overture", package: "swift-overture"),
@@ -844,7 +844,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "LowPowerModeClient",
       dependencies: [
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies")
       ]
@@ -856,7 +856,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ComposableGameCenter",
         "Styleguide",
         "TcaHelpers",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -876,7 +876,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       dependencies: [
         "ComposableUserNotifications",
         "RemoteNotificationsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -888,7 +888,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "NotificationHelpers",
         "RemoteNotificationsClient",
         "Styleguide",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -904,7 +904,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LowPowerModeClient",
         "PuzzleGen",
         "SharedModels",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -924,7 +924,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "AudioPlayerClient",
         "SharedModels",
         "TcaHelpers",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -932,7 +932,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "RemoteNotificationsClient",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -942,7 +942,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
       name: "ServerConfigClient",
       dependencies: [
         "ServerConfig",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -968,7 +968,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "UIApplicationClient",
         "UserDefaultsClient",
         "UserSettingsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -997,7 +997,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "FileClient",
         "SharedModels",
         "Styleguide",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -1009,7 +1009,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LocalDatabaseClient",
         "Styleguide",
         "VocabFeature",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -1036,7 +1036,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "TcaHelpers",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies")
       ]
@@ -1055,7 +1055,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "SharedModels",
         "TcaHelpers",
         "UserDefaultsClient",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -1071,7 +1071,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "UIApplicationClient",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies")
       ]
@@ -1083,7 +1083,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "ServerConfigClient",
         "Styleguide",
         "SwiftUIHelpers",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]
@@ -1104,7 +1104,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
     .target(
       name: "UserDefaultsClient",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
@@ -1119,7 +1119,7 @@ if ProcessInfo.processInfo.environment["TEST_SERVER"] == nil {
         "LocalDatabaseClient",
         "LowPowerModeClient",
         "SharedModels",
-        .product(name: "ComposableArchitecture", package: "tca26"),
+        .product(name: "ComposableArchitecture", package: "TCA26"),
         .product(name: "Dependencies", package: "swift-dependencies"),
         .product(name: "DependenciesMacros", package: "swift-dependencies"),
       ]

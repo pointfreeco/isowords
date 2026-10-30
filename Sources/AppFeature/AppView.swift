@@ -53,7 +53,7 @@ public struct AppReducer {
   @Dependency(\.fileClient) var fileClient
   @Dependency(\.gameCenter) var gameCenter
   @Dependency(\.database.migrate) var migrate
-  @Dependency(\.mainRunLoop.now.date) var now
+  @FeatureEnvironment(\.date.now) var now
   @Dependency(\.dictionary.randomCubes) var randomCubes
   @Dependency(\.serverConfig.refresh) var refreshServerConfig
   @Dependency(\.remoteNotifications) var remoteNotifications

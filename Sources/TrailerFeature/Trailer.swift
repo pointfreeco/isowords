@@ -49,7 +49,7 @@ public struct Trailer {
   }
 
   @Dependency(\.audioPlayer) var audioPlayer
-  @Dependency(\.mainQueue) var mainQueue
+  @FeatureEnvironment(\.continuousClock) var clock
 
   public init() {}
 
@@ -89,7 +89,7 @@ public struct Trailer {
             _ = try store.modify { $0.opacity = 1 }
           }
         }
-        try await self.mainQueue.sleep(for: firstWordDelay)
+        try await self.clock.sleep(for: firstWordDelay)
 
         // Play each word
         for word in replayableWords {
@@ -105,11 +105,11 @@ public struct Trailer {
             ) { [nub] in
               $0.nub = nub
             }
-            try await self.mainQueue.sleep(
+            try await self.clock.sleep(
               for: moveNubDelay(characterIndex: characterIndex)
             )
 
-            try await self.mainQueue.sleep(
+            try await self.clock.sleep(
               for: .seconds(
                 .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
             )
@@ -131,7 +131,7 @@ public struct Trailer {
           await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
 
           // Move the nub to the submit button
-          try await self.mainQueue.sleep(for: .seconds(0.3))
+          try await self.clock.sleep(for: .seconds(0.3))
 
           nub.location = .submitButton
           await store.modify(
@@ -142,7 +142,7 @@ public struct Trailer {
           }
 
           // Press the nub
-          try await self.mainQueue.sleep(
+          try await self.clock.sleep(
             for: .seconds(
               .random(
                 in:
@@ -153,7 +153,7 @@ public struct Trailer {
           )
 
           // Submit the word
-          try await self.mainQueue.sleep(for: .seconds(0.1))
+          try await self.clock.sleep(for: .seconds(0.1))
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask { [nub] in
               var nub = nub
@@ -162,11 +162,11 @@ public struct Trailer {
             }
             group.addTask { [nub] in
               var nub = nub
-              try await self.mainQueue.sleep(for: .seconds(0.2))
+              try await self.clock.sleep(for: .seconds(0.2))
               try await MainActor.run {
                 _ = try store.send(.game(.submitButtonTapped(reaction: nil)))
               }
-              try await self.mainQueue.sleep(for: .seconds(0.3))
+              try await self.clock.sleep(for: .seconds(0.3))
               nub.isPressed = false
               await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
             }
@@ -174,7 +174,7 @@ public struct Trailer {
         }
 
         // Move the nub off screen once all words have been played
-        try await self.mainQueue.sleep(for: .seconds(0.3))
+        try await self.clock.sleep(for: .seconds(0.3))
         nub.location = .offScreenBottom
         await store.modify(
           animateWithDuration: moveNubOffScreenDuration,

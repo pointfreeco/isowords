@@ -14,8 +14,7 @@ import XCTest
 @testable import SharedModels
 
 class DailyChallengeFeatureTests: XCTestCase {
-  let mainQueue = DispatchQueue.test
-  let mainRunLoop = RunLoop.test
+  let clock = TestClock<Duration>()
 
   @MainActor
   func testOnAppear() async {
@@ -24,7 +23,6 @@ class DailyChallengeFeatureTests: XCTestCase {
         route: .dailyChallenge(.today(language: .en)),
         withResponse: { try await OK([FetchTodaysDailyChallengeResponse.played]) }
       )
-      $0.mainRunLoop = .immediate
       $0.userNotifications.getNotificationSettings = {
         .init(authorizationStatus: .authorized)
       }
@@ -69,12 +67,11 @@ class DailyChallengeFeatureTests: XCTestCase {
   @MainActor
   func testTapGameThatWasNotStarted() async {
     var inProgressGame = InProgressGame.mock
-    inProgressGame.gameStartTime = self.mainRunLoop.now.date
+    inProgressGame.gameStartTime = Date(timeIntervalSinceReferenceDate: 0)
     inProgressGame.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
 
     let store = withDependencies {
       $0.mountDependencies(dailyChallenges: [.notStarted])
-      $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       $0.apiClient.override(
         route: .dailyChallenge(.start(gameMode: .unlimited, language: .en)),
         withResponse: {
@@ -103,6 +100,7 @@ class DailyChallengeFeatureTests: XCTestCase {
         initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted])
       ) {
         DailyChallengeReducer()
+          .environment(\.continuousClock, self.clock)
       }
     }
     await store.mountTask?.value
@@ -114,7 +112,7 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.gameModeIsLoading = .unlimited
     }
 
-    await self.mainRunLoop.advance()
+    await self.clock.advance()
     await store.receive(
       key: DailyChallengeReducer.StartGame.self,
       value: .equals(inProgressGame),
@@ -138,7 +136,6 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.fileClient.load = { @Sendable [inProgressGame] _ in
         try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
       }
-      $0.mainRunLoop = .immediate
     } operation: {
       TestStore(
         initialState: DailyChallengeReducer.State(
@@ -206,7 +203,6 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.remoteNotifications.register = {
         await didRegisterForRemoteNotifications.setValue(true)
       }
-      $0.mainRunLoop = .immediate
     } operation: {
       TestStore(initialState: DailyChallengeReducer.State()) {
         DailyChallengeReducer()
@@ -243,7 +239,6 @@ class DailyChallengeFeatureTests: XCTestCase {
         authorizationStatus.setValue(.denied)
         return false
       }
-      $0.mainRunLoop = .immediate
     } operation: {
       TestStore(initialState: DailyChallengeReducer.State()) {
         DailyChallengeReducer()

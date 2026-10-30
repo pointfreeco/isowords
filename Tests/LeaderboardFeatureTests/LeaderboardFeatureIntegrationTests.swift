@@ -46,7 +46,6 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
       let store = withDependencies {
         $0.apiClient = ApiClient(middleware: middleware, router: .test)
-        $0.mainQueue = .immediate
       } operation: {
         TestStore(initialState: Leaderboard.State()) {
           Leaderboard()
@@ -110,7 +109,6 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let store = withDependencies {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
-      $0.mainQueue = .immediate
     } operation: {
       TestStore(initialState: Leaderboard.State()) {
         Leaderboard()

@@ -122,7 +122,8 @@ public struct GameOver {
   @Dependency(\.audioPlayer) var audioPlayer
   @Dependency(\.database) var database
   @Dependency(\.fileClient) var fileClient
-  @Dependency(\.mainRunLoop) var mainRunLoop
+  @FeatureEnvironment(\.continuousClock) var clock
+  @FeatureEnvironment(\.date.now) var now
   @Dependency(\.storeKit.requestReview) var requestReview
   @Dependency(\.serverConfig.config) var serverConfig
   @Dependency(\.userDefaults) var userDefaults
@@ -164,7 +165,7 @@ public struct GameOver {
               let inProgressGame = try await startDailyChallengeAsync(
                 challenge,
                 apiClient: self.apiClient,
-                date: { self.mainRunLoop.now.date },
+                date: { self.now },
                 fileClient: self.fileClient
               )
               try store.modify { $0.gameModeIsLoading = nil }
@@ -272,7 +273,7 @@ public struct GameOver {
       }
 
       store.addTask {
-        try await self.mainRunLoop.sleep(for: .seconds(1))
+        try await self.clock.sleep(for: .seconds(1))
         let playedGamesCount = try await self.database
           .playedGamesCount(.init(gameContext: completedGame.gameContext))
         let isFullGamePurchased =
@@ -295,7 +296,7 @@ public struct GameOver {
       }
 
       store.addTask {
-        try await self.mainRunLoop.sleep(for: .seconds(2))
+        try await self.clock.sleep(for: .seconds(2))
         try store.modify { $0.isViewEnabled = true }
       }
 
@@ -319,7 +320,7 @@ public struct GameOver {
     let hasRequestedReviewBefore =
       self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey) != 0
     let timeSinceLastReviewRequest =
-      self.mainRunLoop.now.date.timeIntervalSince1970
+      self.now.timeIntervalSince1970
       - self.userDefaults.doubleForKey(lastReviewRequestTimeIntervalKey)
     let weekInSeconds: Double = 60 * 60 * 24 * 7
 
@@ -328,7 +329,7 @@ public struct GameOver {
     {
       await self.requestReview()
       await self.userDefaults.setDouble(
-        self.mainRunLoop.now.date.timeIntervalSince1970,
+        self.now.timeIntervalSince1970,
         lastReviewRequestTimeIntervalKey
       )
     }
