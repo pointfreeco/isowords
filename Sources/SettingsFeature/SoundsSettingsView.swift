@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Dependencies
 import Styleguide
 import SwiftUI
 
@@ -56,15 +57,17 @@ struct SoundsSettingsView: View {
       Preview {
         NavigationView {
           SoundsSettingsView(
-            store: Store(initialState: Settings.State()) {
-              Settings()
-            } withDependencies: {
+            store: withDependencies {
               $0.userSettings = .mock(
                 initialUserSettings: UserSettings(
                   musicVolume: 0.5,
                   soundEffectsVolume: 0.5
                 )
               )
+            } operation: {
+              Store(initialState: Settings.State()) {
+                Settings()
+              }
             }
           )
         }

@@ -3,6 +3,7 @@ import AppClipAudioLibrary
 import Build
 import ComposableArchitecture
 import DemoFeature
+import Dependencies
 import DictionaryFileClient
 import Styleguide
 import SwiftUI
@@ -18,10 +19,11 @@ struct AppClipApp: App {
       DemoView(
         store: Store(initialState: Demo.State()) {
           Demo()
-        } withDependencies: {
-          $0.apiClient = .appClip
-          $0.audioPlayer = .live(bundles: [AppClipAudioLibrary.bundle])
-          $0.dictionary = .file()
+            .transformDependency(\.self) {
+              $0.apiClient = .appClip
+              $0.audioPlayer = .live(bundles: [AppClipAudioLibrary.bundle])
+              $0.dictionary = .file()
+            }
         }
       )
     }

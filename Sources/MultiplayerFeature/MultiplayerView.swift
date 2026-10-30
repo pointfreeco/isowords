@@ -1,17 +1,17 @@
 import ComposableArchitecture
+import Dependencies
 import SwiftUI
 import TcaHelpers
 
-@Reducer
+@Feature
 public struct Multiplayer {
-  @Reducer(state: .equatable)
+  @Feature
   public enum Destination {
     case pastGames(PastGames)
   }
 
-  @ObservableState
-  public struct State: Equatable {
-    @Presents public var destination: Destination.State?
+  public struct State {
+    public var destination: Destination.State?
     public var hasPastGames: Bool
 
     public init(
@@ -24,7 +24,7 @@ public struct Multiplayer {
   }
 
   public enum Action {
-    case destination(PresentationAction<Destination.Action>)
+    case destination(Destination.Action)
     case pastGamesButtonTapped
     case startButtonTapped
   }
@@ -33,14 +33,14 @@ public struct Multiplayer {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .destination:
-        return .none
+        break
 
       case .startButtonTapped:
-        return .run { _ in
+        store.addTask {
           if self.gameCenter.localPlayer.localPlayer().isAuthenticated {
             try await self.gameCenter.turnBasedMatchmakerViewController.present(false)
           } else {
@@ -50,10 +50,9 @@ public struct Multiplayer {
 
       case .pastGamesButtonTapped:
         state.destination = .pastGames(PastGames.State())
-        return .none
       }
     }
-    .ifLet(\.$destination, action: \.destination) {
+    .ifLet(\.destination) {
       Destination.body
     }
   }
@@ -128,7 +127,7 @@ public struct MultiplayerView: View {
         }
       }
       .navigationDestination(
-        item: $store.scope(state: \.destination?.pastGames, action: \.destination.pastGames)
+        item: $store.scope(\.destination).pastGames
       ) { store in
         PastGamesView(store: store)
       }

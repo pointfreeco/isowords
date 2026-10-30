@@ -1,54 +1,49 @@
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
+import Dependencies
 import NotificationHelpers
 import RemoteNotificationsClient
 import Styleguide
 import SwiftUI
 
-@Reducer
+@Feature
 public struct NotificationsAuthAlert {
-  public struct State: Equatable {
+  public struct State {
     public init() {}
   }
 
   public enum Action {
-    case delegate(Delegate)
     case turnOnNotificationsButtonTapped
-
-    @CasePathable
-    public enum Delegate {
-      case didChooseNotificationSettings(UserNotificationClient.Notification.Settings)
-    }
   }
 
-  @Dependency(\.dismiss) var dismiss
+  public enum DidChooseNotificationSettings: FeatureEventKey {
+    public typealias Value = UserNotificationClient.Notification.Settings
+  }
+
   @Dependency(\.remoteNotifications) var remoteNotifications
   @Dependency(\.userNotifications) var userNotifications
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case .delegate:
-        return .none
-
       case .turnOnNotificationsButtonTapped:
-        return .run { send in
+        store.addTask {
           if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
             await registerForRemoteNotificationsAsync(
               remoteNotifications: self.remoteNotifications,
               userNotifications: self.userNotifications
             )
           }
-          await send(
-            .delegate(
-              .didChooseNotificationSettings(self.userNotifications.getNotificationSettings())
-            ),
-            animation: .default
-          )
-          await self.dismiss()
+          let settings = await self.userNotifications.getNotificationSettings()
+          try await MainActor.run {
+            try withAnimation {
+              _ = try store.post(key: DidChooseNotificationSettings.self, value: settings)
+            }
+          }
+          try store.dismiss()
         }
       }
     }
@@ -67,10 +62,10 @@ struct NotificationsAuthAlertViewModifier: ViewModifier {
   @Binding var store: Store<NotificationsAuthAlert.State, NotificationsAuthAlert.Action>?
 
   func body(content: Content) -> some View {
-    let state = store?.withState { $0 }
+    let isPresented = store != nil
     content
       .overlay {
-        if state != nil {
+        if isPresented {
           Rectangle()
             .fill(Color.dailyChallenge.opacity(0.8))
             .ignoresSafeArea()
@@ -78,7 +73,7 @@ struct NotificationsAuthAlertViewModifier: ViewModifier {
         }
       }
       .overlay {
-        if state != nil {
+        if isPresented {
           ZStack(alignment: .topTrailing) {
             NotificationsAuthAlertView {
               store?.send(.turnOnNotificationsButtonTapped)

@@ -8,6 +8,7 @@ import SnapshotTesting
 import Styleguide
 import XCTest
 
+@MainActor
 class HomeFeatureTests: XCTestCase {
   override class func setUp() {
     super.setUp()

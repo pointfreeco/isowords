@@ -1,10 +1,16 @@
 import ApiClient
 import ClientModels
 import ComposableArchitecture
-import NotificationsAuthAlert
+import ComposableUserNotifications
+import ConcurrencyExtras
+import CustomDump
+import Dependencies
+import SwiftUI
+import UserNotifications
 import XCTest
 
 @testable import DailyChallengeFeature
+@testable import NotificationsAuthAlert
 @testable import SharedModels
 
 class DailyChallengeFeatureTests: XCTestCase {
@@ -13,9 +19,7 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   @MainActor
   func testOnAppear() async {
-    let store = TestStore(initialState: DailyChallengeReducer.State()) {
-      DailyChallengeReducer()
-    } withDependencies: {
+    let store = withDependencies {
       $0.apiClient.override(
         route: .dailyChallenge(.today(language: .en)),
         withResponse: { try await OK([FetchTodaysDailyChallengeResponse.played]) }
@@ -24,15 +28,16 @@ class DailyChallengeFeatureTests: XCTestCase {
       $0.userNotifications.getNotificationSettings = {
         .init(authorizationStatus: .authorized)
       }
+    } operation: {
+      TestStore(initialState: DailyChallengeReducer.State()) {
+        DailyChallengeReducer()
+      }
     }
 
-    await store.send(.task)
-
-    await store.receive(\.userNotificationSettingsResponse) {
-      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
-    }
-    await store.receive(\.fetchTodaysDailyChallengeResponse.success) {
+    await store.mountTask?.value
+    store.expect {
       $0.dailyChallenges = [.played]
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
   }
 
@@ -41,17 +46,24 @@ class DailyChallengeFeatureTests: XCTestCase {
     var dailyChallengeResponse = FetchTodaysDailyChallengeResponse.played
     dailyChallengeResponse.dailyChallenge.endsAt = Date().addingTimeInterval(60 * 60 * 2 + 1)
 
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(dailyChallenges: [dailyChallengeResponse])
-    ) {
-      DailyChallengeReducer()
+    let store = withDependencies {
+      $0.mountDependencies(dailyChallenges: [dailyChallengeResponse])
+    } operation: {
+      TestStore(
+        initialState: DailyChallengeReducer.State(dailyChallenges: [dailyChallengeResponse])
+      ) {
+        DailyChallengeReducer()
+      }
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    await store.send(.gameButtonTapped(.unlimited)) {
-      $0.destination = .alert(
-        .alreadyPlayed(nextStartsAt: Date().addingTimeInterval(60 * 60 * 2 + 1))
-      )
+    withExhaustivity(.none) {
+      store.send(.gameButtonTapped(.unlimited))
     }
+    XCTAssertEqual(store.destination?.alert?.title, Text("Already played"))
   }
 
   @MainActor
@@ -60,11 +72,8 @@ class DailyChallengeFeatureTests: XCTestCase {
     inProgressGame.gameStartTime = self.mainRunLoop.now.date
     inProgressGame.gameContext = .dailyChallenge(.init(rawValue: .dailyChallengeId))
 
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted])
-    ) {
-      DailyChallengeReducer()
-    } withDependencies: {
+    let store = withDependencies {
+      $0.mountDependencies(dailyChallenges: [.notStarted])
       $0.mainRunLoop = self.mainRunLoop.eraseToAnyScheduler()
       $0.apiClient.override(
         route: .dailyChallenge(.start(gameMode: .unlimited, language: .en)),
@@ -89,17 +98,30 @@ class DailyChallengeFeatureTests: XCTestCase {
         struct FileNotFound: Error {}
         throw FileNotFound()
       }
+    } operation: {
+      TestStore(
+        initialState: DailyChallengeReducer.State(dailyChallenges: [.notStarted])
+      ) {
+        DailyChallengeReducer()
+      }
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    await store.send(.gameButtonTapped(.unlimited)) {
+    store.send(.gameButtonTapped(.unlimited)) {
       $0.gameModeIsLoading = .unlimited
     }
 
     await self.mainRunLoop.advance()
-    await store.receive(\.startDailyChallengeResponse.success) {
+    await store.receive(
+      key: DailyChallengeReducer.StartGame.self,
+      value: .equals(inProgressGame),
+      timeout: .seconds(1)
+    ) {
       $0.gameModeIsLoading = nil
     }
-    await store.receive(\.delegate.startGame)
   }
 
   @MainActor
@@ -111,42 +133,58 @@ class DailyChallengeFeatureTests: XCTestCase {
       .highScoringMove
     ]
 
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State(
-        dailyChallenges: [.started],
-        inProgressDailyChallengeUnlimited: inProgressGame
-      )
-    ) {
-      DailyChallengeReducer()
-    } withDependencies: {
+    let store = withDependencies {
+      $0.mountDependencies(dailyChallenges: [.started])
       $0.fileClient.load = { @Sendable [inProgressGame] _ in
         try JSONEncoder().encode(SavedGamesState(dailyChallengeUnlimited: inProgressGame))
       }
       $0.mainRunLoop = .immediate
+    } operation: {
+      TestStore(
+        initialState: DailyChallengeReducer.State(
+          dailyChallenges: [.started],
+          inProgressDailyChallengeUnlimited: inProgressGame
+        )
+      ) {
+        DailyChallengeReducer()
+      }
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    await store.send(.gameButtonTapped(.unlimited)) {
+    store.send(.gameButtonTapped(.unlimited)) {
       $0.gameModeIsLoading = .unlimited
     }
 
-    await store.receive(\.startDailyChallengeResponse.success) {
+    await store.receive(
+      key: DailyChallengeReducer.StartGame.self,
+      value: .equals(inProgressGame),
+      timeout: .seconds(1)
+    ) {
       $0.gameModeIsLoading = nil
     }
-    await store.receive(\.delegate.startGame)
   }
 
   @MainActor
   func testNotifications_OpenThenClose() async {
-    let store = TestStore(
-      initialState: DailyChallengeReducer.State()
-    ) {
-      DailyChallengeReducer()
+    let store = withDependencies {
+      $0.mountDependencies(dailyChallenges: [])
+    } operation: {
+      TestStore(initialState: DailyChallengeReducer.State()) {
+        DailyChallengeReducer()
+      }
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
-    await store.send(.notificationButtonTapped) {
-      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
+    store.send(.notificationButtonTapped) {
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State.DebugSnapshot())
     }
-    await store.send(.destination(.dismiss)) {
+    store.modify {
       $0.destination = nil
     }
   }
@@ -154,33 +192,39 @@ class DailyChallengeFeatureTests: XCTestCase {
   @MainActor
   func testNotifications_GrantAccess() async {
     let didRegisterForRemoteNotifications = ActorIsolated(false)
+    let authorizationStatus = LockIsolated<UNAuthorizationStatus>(.notDetermined)
 
-    let store = TestStore(initialState: DailyChallengeReducer.State()) {
-      DailyChallengeReducer()
-    } withDependencies: {
+    let store = withDependencies {
+      $0.mountDependencies(dailyChallenges: [])
       $0.userNotifications.getNotificationSettings = {
-        .init(authorizationStatus: .authorized)
+        .init(authorizationStatus: authorizationStatus.value)
       }
-      $0.userNotifications.requestAuthorization = { _ in true }
+      $0.userNotifications.requestAuthorization = { _ in
+        authorizationStatus.setValue(.authorized)
+        return true
+      }
       $0.remoteNotifications.register = {
         await didRegisterForRemoteNotifications.setValue(true)
       }
       $0.mainRunLoop = .immediate
+    } operation: {
+      TestStore(initialState: DailyChallengeReducer.State()) {
+        DailyChallengeReducer()
+      }
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    await store.send(.notificationButtonTapped) {
-      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
+    store.send(.notificationButtonTapped) {
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State.DebugSnapshot())
     }
-    await store.send(
-      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
-    )
-    await store.receive(
-      \.destination.notificationsAuthAlert.delegate.didChooseNotificationSettings
-    ) {
-      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
-    }
-    await store.receive(\.destination.dismiss) {
+    await store.send(.destination(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))?
+      .value
+    store.expect {
       $0.destination = nil
+      $0.userNotificationSettings = .init(authorizationStatus: .authorized)
     }
 
     await didRegisterForRemoteNotifications.withValue { expectNoDifference($0, true) }
@@ -188,29 +232,50 @@ class DailyChallengeFeatureTests: XCTestCase {
 
   @MainActor
   func testNotifications_DenyAccess() async {
-    let store = TestStore(initialState: DailyChallengeReducer.State()) {
-      DailyChallengeReducer()
-    } withDependencies: {
+    let authorizationStatus = LockIsolated<UNAuthorizationStatus>(.notDetermined)
+
+    let store = withDependencies {
+      $0.mountDependencies(dailyChallenges: [])
       $0.userNotifications.getNotificationSettings = {
-        .init(authorizationStatus: .denied)
+        .init(authorizationStatus: authorizationStatus.value)
       }
-      $0.userNotifications.requestAuthorization = { _ in false }
+      $0.userNotifications.requestAuthorization = { _ in
+        authorizationStatus.setValue(.denied)
+        return false
+      }
       $0.mainRunLoop = .immediate
+    } operation: {
+      TestStore(initialState: DailyChallengeReducer.State()) {
+        DailyChallengeReducer()
+      }
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
     }
 
-    await store.send(.notificationButtonTapped) {
-      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
+    store.send(.notificationButtonTapped) {
+      $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State.DebugSnapshot())
     }
-    await store.send(
-      .destination(.presented(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))
-    )
-    await store.receive(
-      \.destination.notificationsAuthAlert.delegate.didChooseNotificationSettings
-    ) {
+    await store.send(.destination(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))?
+      .value
+    store.expect {
+      $0.destination = nil
       $0.userNotificationSettings = .init(authorizationStatus: .denied)
     }
-    await store.receive(\.destination.dismiss) {
-      $0.destination = nil
+  }
+}
+
+extension DependencyValues {
+  fileprivate mutating func mountDependencies(
+    dailyChallenges: [FetchTodaysDailyChallengeResponse]
+  ) {
+    self.apiClient.override(
+      route: .dailyChallenge(.today(language: .en)),
+      withResponse: { try await OK(dailyChallenges) }
+    )
+    self.userNotifications.getNotificationSettings = {
+      .init(authorizationStatus: .authorized)
     }
   }
 }

@@ -1,12 +1,12 @@
 import ComposableArchitecture
+import Dependencies
 import SwiftUI
 import UpgradeInterstitialFeature
 
-@Reducer
+@Feature
 public struct NagBanner {
-  @ObservableState
-  public struct State: Equatable {
-    @Presents var upgradeInterstitial: UpgradeInterstitial.State? = nil
+  public struct State {
+    @DebugSnapshotTracked var upgradeInterstitial: UpgradeInterstitial.State? = nil
 
     public init(upgradeInterstitial: UpgradeInterstitial.State? = nil) {
       self.upgradeInterstitial = upgradeInterstitial
@@ -15,31 +15,28 @@ public struct NagBanner {
 
   public enum Action {
     case tapped
-    case upgradeInterstitial(PresentationAction<UpgradeInterstitial.Action>)
+    case upgradeInterstitial(UpgradeInterstitial.Action)
   }
-
-  @Dependency(\.dismiss) var dismiss
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .tapped:
         state.upgradeInterstitial = .init(isDismissable: true)
-        return .none
-
-      case .upgradeInterstitial(.presented(.delegate(.fullGamePurchased))):
-        return .run { _ in
-          await self.dismiss()
-        }
 
       case .upgradeInterstitial:
-        return .none
+        break
       }
     }
-    .ifLet(\.$upgradeInterstitial, action: \.upgradeInterstitial) {
+    .ifLet(\.upgradeInterstitial) {
       UpgradeInterstitial()
+    }
+    .onEvent(UpgradeInterstitial.FullGamePurchased.self) { _, _ in
+      store.addTask {
+        try store.dismiss()
+      }
     }
   }
 }
@@ -68,7 +65,7 @@ public struct NagBannerView: View {
     .frame(height: 56)
     .background(Color.white.edgesIgnoringSafeArea(.bottom))
     .sheet(
-      item: $store.scope(state: \.upgradeInterstitial, action: \.upgradeInterstitial)
+      item: $store.scope(\.upgradeInterstitial)
     ) { store in
       UpgradeInterstitialView(store: store)
     }

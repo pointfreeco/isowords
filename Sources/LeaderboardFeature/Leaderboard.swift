@@ -2,6 +2,7 @@ import ApiClient
 import ComposableArchitecture
 import CubeCore
 import CubePreview
+import Dependencies
 import SharedModels
 import SwiftUI
 import UserSettingsClient
@@ -29,16 +30,15 @@ public enum LeaderboardScope: CaseIterable, Equatable {
   }
 }
 
-@Reducer
+@Feature
 public struct Leaderboard {
-  @Reducer(state: .equatable)
+  @Feature
   public enum Destination {
     case cubePreview(CubePreview)
   }
 
-  @ObservableState
-  public struct State: Equatable {
-    @Presents public var destination: Destination.State?
+  public struct State {
+    public var destination: Destination.State?
     public var scope: LeaderboardScope = .games
     public var solo: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
     public var vocab: LeaderboardResults<TimeScope>.State = .init(timeScope: .lastWeek)
@@ -57,87 +57,71 @@ public struct Leaderboard {
   }
 
   public enum Action {
-    case destination(PresentationAction<Destination.Action>)
-    case fetchWordResponse(Result<FetchVocabWordResponse, Error>)
+    case destination(Destination.Action)
     case scopeTapped(LeaderboardScope)
     case solo(LeaderboardResults<TimeScope>.Action)
     case vocab(LeaderboardResults<TimeScope>.Action)
   }
 
   @Dependency(\.apiClient) var apiClient
+  @StoreTaskID var fetchWord
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .destination:
-        return .none
-
-      case .fetchWordResponse(.failure):
-        return .none
-
-      case let .fetchWordResponse(.success(response)):
-        state.destination = .cubePreview(
-          CubePreview.State(
-            cubes: response.puzzle,
-            moveIndex: response.moveIndex,
-            moves: response.moves
-          )
-        )
-        return .none
+        break
 
       case let .scopeTapped(scope):
         state.scope = scope
-        return .none
 
       case let .solo(.timeScopeChanged(timeScope)):
         state.vocab.timeScope = timeScope
-        return .none
 
       case .solo:
-        return .none
+        break
 
       case .vocab(.timeScopeChanged(.interesting)):
-        return .none
+        break
 
       case let .vocab(.timeScopeChanged(timeScope)):
         state.solo.timeScope = timeScope
-        return .none
 
       case let .vocab(.tappedRow(id)):
-        enum CancelID { case fetch }
-
         guard state.vocab.resultEnvelope != nil
-        else { return .none }
+        else { return }
 
-        return .run { send in
-          await send(
-            .fetchWordResponse(
-              Result {
-                try await self.apiClient.apiRequest(
-                  route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
-                  as: FetchVocabWordResponse.self
-                )
-              }
-            )
+        store.addTask(id: fetchWord) {
+          let response = try await apiClient.apiRequest(
+            route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
+            as: FetchVocabWordResponse.self
           )
+          try store.modify {
+            $0.destination = .cubePreview(
+              CubePreview.State(
+                cubes: response.puzzle,
+                moveIndex: response.moveIndex,
+                moves: response.moves
+              )
+            )
+          }
         }
-        .cancellable(id: CancelID.fetch, cancelInFlight: true)
 
       case .vocab:
-        return .none
+        break
       }
     }
-    .ifLet(\.$destination, action: \.destination) {
+    .ifLet(\.destination) {
       Destination.body
     }
 
-    Scope(state: \.solo, action: \.solo) {
-      LeaderboardResults(loadResults: self.apiClient.loadSoloResults(gameMode:timeScope:))
+    Scope(\.solo) {
+      LeaderboardResults(loadResults: apiClient.loadSoloResults(gameMode:timeScope:))
     }
-    Scope(state: \.vocab, action: \.vocab) {
-      LeaderboardResults(loadResults: self.apiClient.loadVocabResults(gameMode:timeScope:))
+    Scope(\.vocab) {
+      LeaderboardResults(loadResults: apiClient.loadVocabResults(gameMode:timeScope:))
     }
   }
 }
@@ -155,7 +139,7 @@ public struct LeaderboardView: View {
       HStack {
         ForEach(LeaderboardScope.allCases, id: \.self) { scope in
           Button {
-            store.send(.scopeTapped(scope), animation: .default)
+            withAnimation { _ = store.send(.scopeTapped(scope)) }
           } label: {
             Text(scope.title)
               .foregroundColor(store.state.scope == scope ? scope.color : nil)
@@ -171,7 +155,7 @@ public struct LeaderboardView: View {
         switch store.state.scope {
         case .games:
           LeaderboardResultsView(
-            store: store.scope(state: \.solo, action: \.solo),
+            store: store.scope(\.solo),
             title: Text("Solo"),
             subtitle: Text("\(store.solo.resultEnvelope?.outOf ?? 0) players"),
             isFilterable: true,
@@ -180,7 +164,7 @@ public struct LeaderboardView: View {
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  store.send(.solo(.timeScopeChanged(scope)), animation: .default)
+                  withAnimation { _ = store.send(.solo(.timeScopeChanged(scope))) }
                 }
                 .disabled(store.solo.timeScope == scope)
                 .opacity(store.solo.timeScope == scope ? 0.3 : 1)
@@ -191,7 +175,7 @@ public struct LeaderboardView: View {
 
         case .vocab:
           LeaderboardResultsView(
-            store: store.scope(state: \.vocab, action: \.vocab),
+            store: store.scope(\.vocab),
             title: (store.vocab.resultEnvelope?.outOf).flatMap {
               $0 == 0 ? nil : Text("\($0) words")
             },
@@ -202,7 +186,7 @@ public struct LeaderboardView: View {
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime, .interesting], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  store.send(.vocab(.timeScopeChanged(scope)), animation: .default)
+                  withAnimation { _ = store.send(.vocab(.timeScopeChanged(scope))) }
                 }
                 .disabled(store.vocab.timeScope == scope)
                 .opacity(store.vocab.timeScope == scope ? 0.3 : 1)
@@ -225,9 +209,7 @@ public struct LeaderboardView: View {
           : .isowordsRed,
       title: Text("Leaderboards")
     )
-    .sheet(
-      item: $store.scope(state: \.destination?.cubePreview, action: \.destination.cubePreview)
-    ) { store in
+    .sheet(item: $store.scope(\.destination).cubePreview) { store in
       CubePreviewView(store: store)
     }
   }
@@ -320,9 +302,9 @@ extension ResultEnvelope.Result {
         NavigationView {
           LeaderboardView(
             store: Store(initialState: Leaderboard.State()) {
-              Leaderboard()
-            } withDependencies: {
-              $0.apiClient = update(.noop) {
+              Leaderboard().dependency(
+                \.apiClient,
+                update(.noop) {
                 $0.apiRequest = { @Sendable route in
                   switch route {
                   case .leaderboard(.fetch(gameMode: _, language: _, timeScope: _)):
@@ -348,6 +330,7 @@ extension ResultEnvelope.Result {
                   }
                 }
               }
+              )
             }
           )
         }

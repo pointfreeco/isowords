@@ -14,6 +14,7 @@ class DailyChallengeResultsViewTests: XCTestCase {
 //    isRecording = true
   }
 
+  @MainActor
   func testDefault() {
     assertSnapshot(
       matching: DailyChallengeResultsView(
@@ -45,6 +46,7 @@ class DailyChallengeResultsViewTests: XCTestCase {
     )
   }
 
+  @MainActor
   func testTimeScopeOpenedLoading() {
     assertSnapshot(
       matching: DailyChallengeResultsView(
@@ -77,6 +79,7 @@ class DailyChallengeResultsViewTests: XCTestCase {
     )
   }
 
+  @MainActor
   func testTimeScopeOpened() {
     let historyResults = (1...30).map { idx in
       DailyChallengeHistoryResponse.Result(

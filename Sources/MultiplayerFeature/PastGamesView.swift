@@ -1,60 +1,40 @@
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
+import Dependencies
 import Styleguide
 import SwiftUI
 
-@Reducer
+@Feature
 public struct PastGames {
-  @ObservableState
-  public struct State: Equatable {
-    public var pastGames: IdentifiedArrayOf<PastGame.State> = []
+  public struct State {
+    public var pastGames: [PastGame.State] = []
   }
 
   public enum Action {
-    case matchesResponse(Result<[PastGame.State], Error>)
-    case pastGames(IdentifiedActionOf<PastGame>)
-    case task
+    case pastGames(PastGame.State.ID, PastGame.Action)
   }
 
   @Dependency(\.gameCenter) var gameCenter
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
-      switch action {
-      case let .matchesResponse(.success(matches)):
-        state.pastGames = IdentifiedArray(uniqueElements: matches)
-        return .none
-
-      case .matchesResponse(.failure):
-        return .none
-
-      case .pastGames:
-        return .none
-
-      case .task:
-        return .run { send in
-          await send(
-            .matchesResponse(
-              Result {
-                try await self.gameCenter.turnBasedMatch
-                  .loadMatches()
-                  .compactMap { match in
-                    PastGame.State(
-                      turnBasedMatch: match,
-                      localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId
-                    )
-                  }
-                  .sorted { $0.endDate > $1.endDate }
-              }
-            )
-          )
+  public var body: some Feature {
+    Update { _, _ in }
+      .forEach(\.pastGames) {
+        PastGame()
+      }
+      .onMount { _ in
+        store.addTask {
+          guard
+            let matches = try? await self.gameCenter.turnBasedMatch.loadMatches()
+          else { return }
+          let localPlayerId = self.gameCenter.localPlayer.localPlayer().gamePlayerId
+          let pastGames =
+            matches
+            .compactMap { PastGame.State(turnBasedMatch: $0, localPlayerId: localPlayerId) }
+            .sorted { $0.endDate > $1.endDate }
+          try store.modify { $0.pastGames = pastGames }
         }
       }
-    }
-    .forEach(\.pastGames, action: \.pastGames) {
-      PastGame()
-    }
   }
 }
 
@@ -64,7 +44,7 @@ struct PastGamesView: View {
 
   var body: some View {
     ScrollView {
-      ForEach(store.scope(state: \.pastGames, action: \.pastGames)) { store in
+      ForEach(store.scope(\.pastGames)) { store in
         Group {
           PastGameRow(store: store)
 
@@ -76,7 +56,6 @@ struct PastGamesView: View {
       }
       .padding()
     }
-    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
       foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,
@@ -104,7 +83,7 @@ struct PastGamesView: View {
     }
   }
 
-  let pastGames: IdentifiedArrayOf<PastGame.State> = [
+  let pastGames: [PastGame.State] = [
     .init(
       challengeeDisplayName: "Blob",
       challengerDisplayName: "Blob Jr",

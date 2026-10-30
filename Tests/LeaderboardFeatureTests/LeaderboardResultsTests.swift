@@ -16,13 +16,13 @@ class LeaderboardTests: XCTestCase {
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
     ) {
       LeaderboardResults<TimeScope>.happyPath
-    }
-
-    await store.send(.task) {
+    } changes: {
       $0.isLoading = true
       $0.resultEnvelope = .placeholder
     }
-    await store.receive(\.resultsResponse.success) {
+
+    await store.mountTask?.value
+    store.expect {
       $0.isLoading = false
       $0.resultEnvelope = timedResults
     }
@@ -34,13 +34,21 @@ class LeaderboardTests: XCTestCase {
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
     ) {
       LeaderboardResults<TimeScope>.happyPath
+    } changes: {
+      $0.isLoading = true
+      $0.resultEnvelope = .placeholder
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.isLoading = false
+      $0.resultEnvelope = timedResults
     }
 
     await store.send(.gameModeButtonTapped(.unlimited)) {
       $0.gameMode = .unlimited
       $0.isLoading = true
-    }
-    await store.receive(\.resultsResponse.success) {
+    }?.value
+    store.expect {
       $0.isLoading = false
       $0.resultEnvelope = untimedResults
     }
@@ -52,19 +60,26 @@ class LeaderboardTests: XCTestCase {
       initialState: LeaderboardResults.State(timeScope: TimeScope.lastWeek)
     ) {
       LeaderboardResults<TimeScope>.happyPath
+    } changes: {
+      $0.isLoading = true
+      $0.resultEnvelope = .placeholder
+    }
+    await store.mountTask?.value
+    store.expect {
+      $0.isLoading = false
+      $0.resultEnvelope = timedResults
     }
 
-    await store.send(.tappedTimeScopeLabel) {
+    store.send(.tappedTimeScopeLabel) {
       $0.isTimeScopeMenuVisible = true
     }
     await store.send(.timeScopeChanged(.lastDay)) {
       $0.isLoading = true
       $0.isTimeScopeMenuVisible = false
       $0.timeScope = .lastDay
-    }
-    await store.receive(\.resultsResponse.success) {
+    }?.value
+    store.expect {
       $0.isLoading = false
-      $0.resultEnvelope = timedResults
     }
   }
 
@@ -77,13 +92,13 @@ class LeaderboardTests: XCTestCase {
         struct SomeError: Error {}
         throw SomeError()
       })
-    }
-    store.exhaustivity = .off
-
-    await store.send(.task) {
+    } changes: {
       $0.isLoading = true
+      $0.resultEnvelope = .placeholder
     }
-    await store.receive(\.resultsResponse.failure) {
+
+    await store.mountTask?.value
+    store.expect {
       $0.isLoading = false
       $0.resultEnvelope = nil
     }

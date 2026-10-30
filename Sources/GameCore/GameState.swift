@@ -27,6 +27,16 @@ extension Game.State {
     self.destination.is(\.some.gameOver)
   }
 
+  var isOutOfTimeOrCubes: Bool {
+    let timesUp = self.gameMode == .timed && self.secondsPlayed >= self.gameMode.seconds
+    let allCubesRemoved = self.cubes.allSatisfy {
+      $0.allSatisfy {
+        $0.allSatisfy { !$0.isInPlay }
+      }
+    }
+    return timesUp || allCubesRemoved
+  }
+
   public var isResumable: Bool {
     self.gameMode == .unlimited && !self.isGameOver
   }
@@ -64,12 +74,12 @@ extension Game.State {
     }
   }
 
-  mutating func tryToRemoveCube(at index: LatticePoint) -> EffectOf<Game> {
-    guard self.canRemoveCube else { return .none }
+  mutating func tryToRemoveCube(at index: LatticePoint) -> Bool {
+    guard self.canRemoveCube else { return false }
 
     // Don't show menu for timed games.
     guard self.gameMode != .timed
-    else { return .send(.confirmRemoveCube(index)) }
+    else { return true }
 
     let isTurnEndingRemoval: Bool
     if let turnBasedMatch = self.gameContext.turnBased,
@@ -85,7 +95,7 @@ extension Game.State {
     self.destination = .bottomMenu(
       .removeCube(index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
     )
-    return .none
+    return false
   }
 
   mutating func removeCube(at index: LatticePoint, playedAt: Date) {

@@ -2,36 +2,25 @@ import ApiClient
 import CasePaths
 import ComposableArchitecture
 @_spi(Concurrency) import Dependencies
+import ConcurrencyExtras
+import CustomDump
+import Dependencies
 import GameOverFeature
 import Overture
+import ServerConfig
 import SharedModels
 import TestHelpers
-import UpgradeInterstitialFeature
 import XCTest
 
 @testable import LocalDatabaseClient
+@testable import UpgradeInterstitialFeature
 @testable import UserDefaultsClient
 
 class GameOverFeatureTests: XCTestCase {
   @MainActor
   func testSubmitLeaderboardScore() async throws {
     await withMainSerialExecutor {
-      let store = TestStore(
-        initialState: GameOver.State(
-          completedGame: .init(
-            cubes: .mock,
-            gameContext: .solo,
-            gameMode: .timed,
-            gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
-            language: .en,
-            moves: [.mock],
-            secondsPlayed: 0
-          ),
-          isDemo: false
-        )
-      ) {
-        GameOver()
-      } withDependencies: {
+      let store = withDependencies {
         $0.audioPlayer = .noop
         $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
         $0.apiClient.override(
@@ -59,22 +48,42 @@ class GameOverFeatureTests: XCTestCase {
         $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
-          (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+          .init(authorizationStatus: .notDetermined)
+        }
+      } operation: {
+        TestStore(
+          initialState: GameOver.State(
+            completedGame: .init(
+              cubes: .mock,
+              gameContext: .solo,
+              gameMode: .timed,
+              gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
+              language: .en,
+              moves: [.mock],
+              secondsPlayed: 0
+            ),
+            isDemo: false
+          )
+        ) {
+          GameOver()
         }
       }
 
-      let task = await store.send(.task)
-      await store.receive(\.delayedOnAppear) {
-        $0.isViewEnabled = true
-      }
-      await store.receive(\.submitGameResponse.success) {
+      await store.mountTask?.value
+      await store.receive(
+        key: GameOver.Event.self,
+        value: .matching { $0.is(\.gameSubmitted) }
+      ) {
+        $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
         $0.summary = .leaderboard([
           .lastDay: .init(outOf: 100, rank: 1),
           .lastWeek: .init(outOf: 1000, rank: 10),
           .allTime: .init(outOf: 10000, rank: 100),
         ])
       }
-      await task.cancel()
+      store.expect {
+        $0.isViewEnabled = true
+      }
     }
   }
 
@@ -102,22 +111,7 @@ class GameOverFeatureTests: XCTestCase {
         ),
       ]
 
-      let store = TestStore(
-        initialState: GameOver.State(
-          completedGame: .init(
-            cubes: .mock,
-            gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
-            gameMode: .timed,
-            gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
-            language: .en,
-            moves: [.mock],
-            secondsPlayed: 0
-          ),
-          isDemo: false
-        )
-      ) {
-        GameOver()
-      } withDependencies: {
+      let store = withDependencies {
         $0.audioPlayer = .noop
         $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
         $0.apiClient.override(
@@ -168,42 +162,46 @@ class GameOverFeatureTests: XCTestCase {
         $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
-          (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+          .init(authorizationStatus: .notDetermined)
+        }
+      } operation: {
+        TestStore(
+          initialState: GameOver.State(
+            completedGame: .init(
+              cubes: .mock,
+              gameContext: .dailyChallenge(.init(rawValue: .dailyChallengeId)),
+              gameMode: .timed,
+              gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
+              language: .en,
+              moves: [.mock],
+              secondsPlayed: 0
+            ),
+            isDemo: false
+          )
+        ) {
+          GameOver()
         }
       }
 
-      let task = await store.send(.task)
-      await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
-      await store.receive(\.submitGameResponse.success) {
+      await store.mountTask?.value
+      await store.receive(
+        key: GameOver.Event.self,
+        value: .matching { $0.is(\.gameSubmitted) }
+      ) {
+        $0.isViewEnabled = true
         $0.summary = .dailyChallenge(.init(outOf: 100, rank: 2, score: 1000, started: true))
+        $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
       }
-      await store.receive(\.dailyChallengeResponse.success) {
+      store.expect {
         $0.dailyChallenges = dailyChallengeResponses
       }
-      await task.cancel()
     }
   }
 
   @MainActor
   func testTurnBased_TrackLeaderboards() async {
     await withMainSerialExecutor {
-      let store = TestStore(
-        initialState: GameOver.State(
-          completedGame: .init(
-            cubes: .mock,
-            gameContext: .turnBased(playerIndexToId: [0: .init(rawValue: .deadbeef)]),
-            gameMode: .unlimited,
-            gameStartTime: .mock,
-            language: .en,
-            localPlayerIndex: 1,
-            moves: [.mock],
-            secondsPlayed: 0
-          ),
-          isDemo: false
-        )
-      ) {
-        GameOver()
-      } withDependencies: {
+      let store = withDependencies {
         $0.audioPlayer = .noop
         $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
         $0.apiClient.override(
@@ -228,14 +226,38 @@ class GameOverFeatureTests: XCTestCase {
         $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
-          (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+          .init(authorizationStatus: .notDetermined)
+        }
+      } operation: {
+        TestStore(
+          initialState: GameOver.State(
+            completedGame: .init(
+              cubes: .mock,
+              gameContext: .turnBased(playerIndexToId: [0: .init(rawValue: .deadbeef)]),
+              gameMode: .unlimited,
+              gameStartTime: .mock,
+              language: .en,
+              localPlayerIndex: 1,
+              moves: [.mock],
+              secondsPlayed: 0
+            ),
+            isDemo: false
+          )
+        ) {
+          GameOver()
         }
       }
 
-      let task = await store.send(.task)
-      await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
-      await store.receive(\.submitGameResponse.success.turnBased)
-      await task.cancel()
+      await store.mountTask?.value
+      await store.receive(
+        key: GameOver.Event.self,
+        value: .matching { $0[case: \.gameSubmitted]?.is(\.turnBased) == true }
+      ) {
+        $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
+      }
+      store.expect {
+        $0.isViewEnabled = true
+      }
     }
   }
 
@@ -244,7 +266,8 @@ class GameOverFeatureTests: XCTestCase {
     let mainRunLoop = RunLoop.test
     let lastReviewRequestTimeIntervalSet = ActorIsolated<Double?>(nil)
     let requestReviewCount = ActorIsolated(0)
-    
+    let gamesPlayed = LockIsolated(1)
+
     let completedGame = CompletedGame(
       cubes: .mock,
       gameContext: .solo,
@@ -255,27 +278,26 @@ class GameOverFeatureTests: XCTestCase {
       moves: [.mock],
       secondsPlayed: 0
     )
-    
-    let store = TestStore(
-      initialState: GameOver.State(
-        completedGame: completedGame,
-        isDemo: false,
-        isViewEnabled: true
-      )
-    ) {
-      GameOver()
-    } withDependencies: {
+
+    let store = withDependencies {
+      $0.apiClient.apiRequest = { @Sendable _ in
+        try await OK(["solo": ["ranks": [String: LeaderboardScoreResult.Rank]()]])
+      }
+      $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+      $0.audioPlayer = .noop
       $0.database.fetchStats = {
         LocalDatabaseClient.Stats(
           averageWordLength: nil,
-          gamesPlayed: 1,
+          gamesPlayed: gamesPlayed.value,
           highestScoringWord: nil,
           longestWord: nil,
           secondsPlayed: 1,
           wordsFound: 1
         )
       }
+      $0.database.playedGamesCount = { _ in 0 }
       $0.mainRunLoop = mainRunLoop.eraseToAnyScheduler()
+      $0.serverConfig.config = { .init() }
       $0.storeKit.requestReview = {
         await requestReviewCount.withValue { $0 += 1 }
       }
@@ -285,35 +307,62 @@ class GameOverFeatureTests: XCTestCase {
           await lastReviewRequestTimeIntervalSet.setValue(double)
         }
       }
-      $0.dismissGame = DismissEffect {}
+      $0.userNotifications.getNotificationSettings = {
+        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+      }
+    } operation: {
+      TestStore(
+        initialState: GameOver.State(
+          completedGame: completedGame,
+          isDemo: false,
+          isViewEnabled: true
+        )
+      ) {
+        GameOver()
+      }
+    }
+
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.gameSubmitted) },
+      timeout: .seconds(1)
+    ) {
+      $0.summary = .leaderboard([:])
     }
 
     // Assert that the first time game over appears we do not request review
-    await store.send(.closeButtonTapped)
-    await mainRunLoop.advance()
+    store.send(.closeButtonTapped)
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.dismissGame) },
+      timeout: .seconds(1)
+    )
     await requestReviewCount.withValue { expectNoDifference($0, 0) }
     await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, nil) }
 
     // Assert that once the player plays enough games then a review request is made
-    store.dependencies.database.fetchStats = {
-      .init(
-        averageWordLength: nil,
-        gamesPlayed: 3,
-        highestScoringWord: nil,
-        longestWord: nil,
-        secondsPlayed: 1,
-        wordsFound: 1
-      )
-    }
-    await store.send(.closeButtonTapped).finish()
+    gamesPlayed.setValue(3)
+    store.send(.closeButtonTapped)
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.dismissGame) },
+      timeout: .seconds(1)
+    )
     await requestReviewCount.withValue { expectNoDifference($0, 1) }
     await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, 0) }
 
     // Assert that when more than a week of time passes we again request review
     await mainRunLoop.advance(by: .seconds(60 * 60 * 24 * 7))
-    await store.send(.closeButtonTapped).finish()
+    store.send(.closeButtonTapped)
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.dismissGame) },
+      timeout: .seconds(1)
+    )
     await requestReviewCount.withValue { expectNoDifference($0, 2) }
     await lastReviewRequestTimeIntervalSet.withValue { expectNoDifference($0, 60 * 60 * 24 * 7) }
+
+    await store.dismount()
   }
 
   @MainActor
@@ -333,84 +382,126 @@ class GameOverFeatureTests: XCTestCase {
       )
     ) {
       GameOver()
-    } withDependencies: {
-      $0.dismissGame = DismissEffect {}
     }
 
-    await store.send(.task)
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.dismissGame) },
+      timeout: .seconds(1)
+    )
   }
 
   @MainActor
   func testShowUpgradeInterstitial() async {
     let mainRunLoop = RunLoop.test
-    let store = TestStore(
-      initialState: GameOver.State(
-        completedGame: .init(
-          cubes: .mock,
-          gameContext: .solo,
-          gameMode: .timed,
-          gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
-          language: .en,
-          moves: [.highScoringMove],
-          secondsPlayed: 0
-        ),
-        isDemo: false
-      )
-    ) {
-      GameOver()
-    } withDependencies: {
+    let store = withDependencies {
       $0.audioPlayer = .noop
       $0.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-      $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+      $0.apiClient.apiRequest = { @Sendable _ in
+        try await OK(["solo": ["ranks": [String: LeaderboardScoreResult.Rank]()]])
+      }
       $0.database.playedGamesCount = { _ in 6 }
       $0.mainRunLoop = mainRunLoop.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
+      $0.storeKit = .noop
       $0.userNotifications.getNotificationSettings = {
         (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
       }
+    } operation: {
+      TestStore(
+        initialState: GameOver.State(
+          completedGame: .init(
+            cubes: .mock,
+            gameContext: .solo,
+            gameMode: .timed,
+            gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
+            language: .en,
+            moves: [.highScoringMove],
+            secondsPlayed: 0
+          ),
+          isDemo: false
+        )
+      ) {
+        GameOver()
+      }
     }
 
-    let task = await store.send(.task)
-    await mainRunLoop.advance(by: .seconds(1))
-    await store.receive(\.delayedShowUpgradeInterstitial) {
-      $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.gameSubmitted) },
+      timeout: .seconds(1)
+    ) {
+      $0.summary = .leaderboard([:])
     }
     await mainRunLoop.advance(by: .seconds(1))
-    await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
-    await task.cancel()
+    store.expect {
+      $0.destination = .upgradeInterstitial(
+        UpgradeInterstitial.State.DebugSnapshot(
+          fullGameProduct: nil,
+          isDismissable: false,
+          isPurchasing: false,
+          secondsPassedCount: 0,
+          upgradeInterstitialDuration: ServerConfig.UpgradeInterstitial.default.duration
+        )
+      )
+    }
+    await mainRunLoop.advance(by: .seconds(1))
+    store.expect {
+      $0.isViewEnabled = true
+      $0.destination = .upgradeInterstitial(
+        UpgradeInterstitial.State.DebugSnapshot(
+          fullGameProduct: nil,
+          isDismissable: false,
+          isPurchasing: false,
+          secondsPassedCount: 1,
+          upgradeInterstitialDuration: ServerConfig.UpgradeInterstitial.default.duration
+        )
+      )
+    }
+    await store.dismount()
   }
 
   @MainActor
   func testSkipUpgradeIfLessThan6GamesPlayed() async {
-    let store = TestStore(
-      initialState: GameOver.State(
-        completedGame: .init(
-          cubes: .mock,
-          gameContext: .solo,
-          gameMode: .timed,
-          gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
-          language: .en,
-          moves: [.highScoringMove],
-          secondsPlayed: 0
-        ),
-        isDemo: false
-      )
-    ) {
-      GameOver()
-    } withDependencies: {
+    let store = withDependencies {
       $0.audioPlayer = .noop
       $0.apiClient.currentPlayer = { .init(appleReceipt: nil, player: .blob) }
-      $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+      $0.apiClient.apiRequest = { @Sendable _ in
+        try await OK(["solo": ["ranks": [String: LeaderboardScoreResult.Rank]()]])
+      }
       $0.database.playedGamesCount = { _ in 5 }
       $0.mainRunLoop = .immediate
       $0.serverConfig.config = { .init() }
       $0.userNotifications.getNotificationSettings = {
-        (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+        .init(authorizationStatus: .notDetermined)
+      }
+    } operation: {
+      TestStore(
+        initialState: GameOver.State(
+          completedGame: .init(
+            cubes: .mock,
+            gameContext: .solo,
+            gameMode: .timed,
+            gameStartTime: .init(timeIntervalSince1970: 1_234_567_890),
+            language: .en,
+            moves: [.highScoringMove],
+            secondsPlayed: 0
+          ),
+          isDemo: false
+        )
+      ) {
+        GameOver()
       }
     }
 
-    let task = await store.send(.task)
-    await store.receive(\.delayedOnAppear) { $0.isViewEnabled = true }
-    await task.cancel()
+    await store.mountTask?.value
+    await store.receive(
+      key: GameOver.Event.self,
+      value: .matching { $0.is(\.gameSubmitted) }
+    ) {
+      $0.isViewEnabled = true
+      $0.summary = .leaderboard([:])
+      $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
+    }
   }
 }

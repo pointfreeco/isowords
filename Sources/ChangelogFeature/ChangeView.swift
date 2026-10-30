@@ -4,10 +4,9 @@ import ServerConfigClient
 import SwiftUI
 import Tagged
 
-@Reducer
+@Feature
 public struct Change {
-  @ObservableState
-  public struct State: Equatable, Identifiable {
+  public struct State: Identifiable {
     public var change: Changelog.Change
     public var isExpanded = false
 
@@ -22,12 +21,11 @@ public struct Change {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .showButtonTapped:
         state.isExpanded.toggle()
-        return .none
       }
     }
   }
@@ -55,7 +53,7 @@ struct ChangeView: View {
 
         if !store.isExpanded {
           Button("Show") {
-            store.send(.showButtonTapped, animation: .default)
+            withAnimation { _ = store.send(.showButtonTapped) }
           }
         }
       }

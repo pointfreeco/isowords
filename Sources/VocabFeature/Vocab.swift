@@ -1,20 +1,20 @@
 import ComposableArchitecture
 import CubePreview
+import Dependencies
 import LocalDatabaseClient
 import SwiftUI
 
-@Reducer
-public struct Vocab: Reducer {
-  @Reducer(state: .equatable)
+@Feature
+public struct Vocab {
+  @Feature
   public enum Destination {
     case cubePreview(CubePreview)
   }
 
-  @ObservableState
-  public struct State: Equatable {
-    @Presents var destination: Destination.State?
-    var isAnimationReduced: Bool
-    var vocab: LocalDatabaseClient.Vocab?
+  public struct State {
+    @DebugSnapshotTracked var destination: Destination.State?
+    @DebugSnapshotTracked var isAnimationReduced: Bool
+    @DebugSnapshotTracked var vocab: LocalDatabaseClient.Vocab?
 
     public init(
       destination: Destination.State? = nil,
@@ -25,18 +25,10 @@ public struct Vocab: Reducer {
       self.isAnimationReduced = isAnimationReduced
       self.vocab = vocab
     }
-
-    public struct GamesResponse: Equatable {
-      var games: [LocalDatabaseClient.Game]
-      var word: String
-    }
   }
 
   public enum Action {
-    case destination(PresentationAction<Destination.Action>)
-    case gamesResponse(Result<State.GamesResponse, Error>)
-    case task
-    case vocabResponse(Result<LocalDatabaseClient.Vocab, Error>)
+    case destination(Destination.Action)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
   }
 
@@ -44,68 +36,46 @@ public struct Vocab: Reducer {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .destination:
-        return .none
-
-      case .gamesResponse(.failure):
-        return .none
-
-      case let .gamesResponse(.success(response)):
-        guard let game = response.games.first
-        else { return .none }
-
-        let possibleMoveIndex = game.completedGame.moves.firstIndex { move in
-          switch move.type {
-          case let .playedWord(cubeFaces):
-            return game.completedGame.cubes.string(from: cubeFaces) == response.word
-          case .removedCube:
-            return false
-          }
-        }
-        guard let moveIndex = possibleMoveIndex
-        else { return .none }
-
-        state.destination = .cubePreview(
-          CubePreview.State(
-            cubes: game.completedGame.cubes,
-            moveIndex: moveIndex,
-            moves: game.completedGame.moves
-          )
-        )
-        return .none
-
-      case .task:
-        return .run { send in
-          await send(.vocabResponse(Result { try await self.database.fetchVocab() }))
-        }
-
-      case let .vocabResponse(.success(vocab)):
-        state.vocab = vocab
-        return .none
-
-      case .vocabResponse(.failure):
-        return .none
+        break
 
       case let .wordTapped(word):
-        return .run { send in
-          await send(
-            .gamesResponse(
-              Result {
-                .init(
-                  games: try await self.database.fetchGamesForWord(word.letters),
-                  word: word.letters
-                )
+        store.addTask {
+          guard
+            let game = try await database.fetchGamesForWord(word.letters).first,
+            let moveIndex = game.completedGame.moves.firstIndex(where: { move in
+              switch move.type {
+              case let .playedWord(cubeFaces):
+                return game.completedGame.cubes.string(from: cubeFaces) == word.letters
+              case .removedCube:
+                return false
               }
+            })
+          else { return }
+
+          try store.modify {
+            $0.destination = .cubePreview(
+              CubePreview.State(
+                cubes: game.completedGame.cubes,
+                moveIndex: moveIndex,
+                moves: game.completedGame.moves
+              )
             )
-          )
+          }
         }
       }
     }
-    .ifLet(\.$destination, action: \.destination) {
+    .ifLet(\.destination) {
       Destination.body
+    }
+    .onMount { _ in
+      store.addTask {
+        let vocab = try await database.fetchVocab()
+        try store.modify { $0.vocab = vocab }
+      }
     }
   }
 }
@@ -146,10 +116,7 @@ public struct VocabView: View {
         }
       }
     }
-    .task { await store.send(.task).finish() }
-    .sheet(
-      item: $store.scope(state: \.destination?.cubePreview, action: \.destination.cubePreview)
-    ) { store in
+    .sheet(item: $store.scope(\.destination).cubePreview) { store in
       CubePreviewView(store: store)
     }
     .adaptiveFont(.matterMedium, size: 16)

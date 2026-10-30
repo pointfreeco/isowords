@@ -1,86 +1,58 @@
 import ActiveGamesFeature
 import ComposableArchitecture
+import Dependencies
+import SwiftUI
 
-@Reducer
-public struct ActiveGamesTray {
-  @Dependency(\.fileClient) var fileClient
-  @Dependency(\.gameCenter) var gameCenter
-  @Dependency(\.mainRunLoop.now.date) var now
+extension Game {
+  func activeGamesTray(state: inout State, action: Action) {
+    switch action {
+    case .cancelButtonTapped,
+      .confirmRemoveCube,
+      .doubleTap,
+      .destination(.bottomMenu(.confirmRemoveCube)),
+      .destination(.bottomMenu(.endGameButtonTapped)),
+      .destination(.bottomMenu(.forfeitGameButtonTapped)),
+      .menuButtonTapped,
+      .pan,
+      .submitButtonTapped,
+      .tap,
+      .wordSubmitButton:
 
-  public var body: some ReducerOf<Game> {
-    Reduce { state, action in
-      switch action {
-      case .cancelButtonTapped,
-        .confirmRemoveCube,
-        .doubleTap,
-        .destination(.presented(.bottomMenu(.confirmRemoveCube))),
-        .destination(.presented(.bottomMenu(.endGameButtonTapped))),
-        .destination(.presented(.bottomMenu(.forfeitGameButtonTapped))),
-        .menuButtonTapped,
-        .pan,
-        .submitButtonTapped,
-        .tap,
-        .wordSubmitButton:
+      state.isTrayVisible = false
 
-        state.isTrayVisible = false
-        return .none
+    case .activeGames,
+      .destination:
+      break
 
-      case .activeGames,
-        .delayedShowUpgradeInterstitial,
-        .destination(.presented(.bottomMenu(.exitButtonTapped))),
-        .destination(.presented(.bottomMenu(.settingsButtonTapped))),
-        .destination,
-        .gameCenter,
-        .gameLoaded,
-        .lowPowerModeChanged,
-        .matchesLoaded(.failure),
-        .savedGamesLoaded(.failure),
-        .timerTick,
-        .userSettingsUpdated:
-
-        return .none
-
-      case let .matchesLoaded(.success(matches)):
-        state.activeGames.turnBasedMatches = matches.activeMatches(
-          for: self.gameCenter.localPlayer.localPlayer(),
-          at: self.now
-        )
-        return .none
-
-      case .task:
-        return self.activeGameEffects
-
-      case let .savedGamesLoaded(.success(savedGames)):
-        state.activeGames.savedGames = savedGames
-        return .none
-
-      case .trayButtonTapped:
-        guard state.isTrayAvailable else { return .none }
-        state.isTrayVisible.toggle()
-        return state.isTrayVisible ? self.activeGameEffects : .none
+    case .trayButtonTapped:
+      guard state.isTrayAvailable else { return }
+      state.isTrayVisible.toggle()
+      if state.isTrayVisible {
+        self.loadActiveGames()
       }
     }
   }
 
-  var activeGameEffects: EffectOf<Self> {
-    .run { send in
-      await withThrowingTaskGroup(of: Void.self) { group in
-        group.addTask {
-          await send(
-            .matchesLoaded(
-              Result { try await self.gameCenter.turnBasedMatch.loadMatches() }
-            ),
-            animation: .default
-          )
+  func loadActiveGames() {
+    store.addTask {
+      guard let matches = try? await self.gameCenter.turnBasedMatch.loadMatches()
+      else { return }
+      let localPlayer = self.gameCenter.localPlayer.localPlayer()
+      let now = self.now
+      try await MainActor.run {
+        try withAnimation {
+          _ = try store.modify {
+            $0.activeGames.turnBasedMatches = matches.activeMatches(for: localPlayer, at: now)
+          }
         }
-
-        group.addTask {
-          await send(
-            .savedGamesLoaded(
-              Result { try await self.fileClient.loadSavedGames() }
-            ),
-            animation: .default
-          )
+      }
+    }
+    store.addTask {
+      guard let savedGames = try? await self.fileClient.loadSavedGames()
+      else { return }
+      try await MainActor.run {
+        try withAnimation {
+          _ = try store.modify { $0.activeGames.savedGames = savedGames }
         }
       }
     }

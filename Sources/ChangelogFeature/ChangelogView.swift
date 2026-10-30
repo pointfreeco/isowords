@@ -1,6 +1,7 @@
 import ApiClient
 import Build
 import ComposableArchitecture
+import Dependencies
 import ServerConfigClient
 import SharedModels
 import Styleguide
@@ -8,17 +9,16 @@ import SwiftUI
 import Tagged
 import UIApplicationClient
 
-@Reducer
+@Feature
 public struct ChangelogReducer {
-  @ObservableState
-  public struct State: Equatable {
-    public var changelog: IdentifiedArrayOf<Change.State>
+  public struct State {
+    public var changelog: [Change.State]
     public var currentBuild: Build.Number
     public var isRequestInFlight: Bool
     public var isUpdateButtonVisible: Bool
 
     public init(
-      changelog: IdentifiedArrayOf<Change.State> = [],
+      changelog: [Change.State] = [],
       currentBuild: Build.Number = 0,
       isRequestInFlight: Bool = false,
       isUpdateButtonVisible: Bool = false
@@ -29,19 +29,17 @@ public struct ChangelogReducer {
       self.isUpdateButtonVisible = isUpdateButtonVisible
     }
 
-    public var whatsNew: IdentifiedArrayOf<Change.State> {
+    public var whatsNew: [Change.State] {
       self.changelog.filter { $0.change.build >= self.currentBuild }
     }
 
-    public var pastUpdates: IdentifiedArrayOf<Change.State> {
+    public var pastUpdates: [Change.State] {
       self.changelog.filter { $0.change.build < self.currentBuild }
     }
   }
 
   public enum Action {
-    case changelog(IdentifiedActionOf<Change>)
-    case changelogResponse(Result<Changelog, Error>)
-    case task
+    case changelog(Change.State.ID, Change.Action)
     case updateButtonTapped
   }
 
@@ -52,55 +50,14 @@ public struct ChangelogReducer {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .changelog:
-        return .none
-
-      case let .changelogResponse(.success(changelog)):
-        state.changelog = IdentifiedArray(
-          uniqueElements:
-            changelog
-            .changes
-            .sorted(by: { $0.build > $1.build })
-            .enumerated()
-            .map { offset, change in
-              Change.State(
-                change: change,
-                isExpanded: offset == 0 || self.buildNumber() <= change.build
-              )
-            }
-        )
-        state.isRequestInFlight = false
-        state.isUpdateButtonVisible =
-          self.buildNumber() < (changelog.changes.map(\.build).max() ?? 0)
-
-        return .none
-
-      case .changelogResponse(.failure):
-        state.isRequestInFlight = false
-        return .none
-
-      case .task:
-        state.currentBuild = self.buildNumber()
-        state.isRequestInFlight = true
-
-        return .run { send in
-          await send(
-            .changelogResponse(
-              Result {
-                try await self.apiClient.apiRequest(
-                  route: .changelog(build: self.buildNumber()),
-                  as: Changelog.self
-                )
-              }
-            )
-          )
-        }
+        break
 
       case .updateButtonTapped:
-        return .run { _ in
+        store.addTask {
           _ = await self.openURL(
             self.serverConfig.config().appStoreUrl.absoluteURL,
             [:]
@@ -108,8 +65,41 @@ public struct ChangelogReducer {
         }
       }
     }
-    .forEach(\.changelog, action: \.changelog) {
+    .forEach(\.changelog) {
       Change()
+    }
+    .onMount { state in
+      state.currentBuild = self.buildNumber()
+      state.isRequestInFlight = true
+
+      store.addTask {
+        do {
+          let changelog = try await self.apiClient.apiRequest(
+            route: .changelog(build: self.buildNumber()),
+            as: Changelog.self
+          )
+          let buildNumber = self.buildNumber()
+          try store.modify {
+            $0.changelog =
+              changelog
+              .changes
+              .sorted(by: { $0.build > $1.build })
+              .enumerated()
+              .map { offset, change in
+                Change.State(
+                  change: change,
+                  isExpanded: offset == 0 || buildNumber <= change.build
+                )
+              }
+            $0.isRequestInFlight = false
+            $0.isUpdateButtonVisible =
+              buildNumber < (changelog.changes.map(\.build).max() ?? 0)
+          }
+        } catch is CancellationError {
+        } catch {
+          try store.modify { $0.isRequestInFlight = false }
+        }
+      }
     }
   }
 }
@@ -122,6 +112,7 @@ public struct ChangelogView: View {
   }
 
   public var body: some View {
+    let changes = store.scope(\.changelog)
     ScrollView {
       VStack(alignment: .leading) {
         if store.isUpdateButtonVisible {
@@ -137,20 +128,19 @@ public struct ChangelogView: View {
         Text("What's new?")
           .font(.largeTitle)
 
-        ForEach(store.scope(state: \.whatsNew, action: \.changelog)) { store in
+        ForEach(changes.filter { $0.change.build >= store.currentBuild }) { store in
           ChangeView(currentBuild: self.store.currentBuild, store: store)
         }
 
         Text("Past updates")
           .font(.largeTitle)
 
-        ForEach(store.scope(state: \.pastUpdates, action: \.changelog)) { store in
+        ForEach(changes.filter { $0.change.build < store.currentBuild }) { store in
           ChangeView(currentBuild: self.store.currentBuild, store: store)
         }
       }
       .padding()
     }
-    .task { await store.send(.task).finish() }
   }
 }
 
@@ -164,30 +154,32 @@ public struct ChangelogView: View {
         ChangelogView(
           store: Store(initialState: ChangelogReducer.State()) {
             ChangelogReducer()
-          } withDependencies: {
-            $0.apiClient = {
-              var apiClient = ApiClient.noop
-              apiClient.override(
-                routeCase: \.changelog,
-                withResponse: { _ in
-                  try await OK(
-                    update(Changelog.current) {
-                      $0.changes.append(
-                        Changelog.Change(
-                          version: "1.0",
-                          build: 60,
-                          log: "We launched!"
-                        )
+              .dependency(
+                \.apiClient,
+                {
+                  var apiClient = ApiClient.noop
+                  apiClient.override(
+                    routeCase: \.changelog,
+                    withResponse: { _ in
+                      try await OK(
+                        update(Changelog.current) {
+                          $0.changes.append(
+                            Changelog.Change(
+                              version: "1.0",
+                              build: 60,
+                              log: "We launched!"
+                            )
+                          )
+                        }
                       )
                     }
                   )
-                }
+                  return apiClient
+                }()
               )
-              return apiClient
-            }()
-            $0.applicationClient = .noop
-            $0.build.number = { 98 }
-            $0.serverConfig = .noop
+              .dependency(\.applicationClient, .noop)
+              .dependency(\.build.number, { 98 })
+              .dependency(\.serverConfig, .noop)
           }
         )
         .navigationStyle(

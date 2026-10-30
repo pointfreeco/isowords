@@ -1,13 +1,13 @@
 import ApiClient
 import ComposableArchitecture
+import Dependencies
 import LeaderboardFeature
 import SharedModels
 import SwiftUI
 
-@Reducer
+@Feature
 public struct DailyChallengeResults {
-  @ObservableState
-  public struct State: Equatable {
+  public struct State {
     public var history: DailyChallengeHistoryResponse?
     public var leaderboardResults: LeaderboardResults<DailyChallenge.GameNumber?>.State
 
@@ -23,66 +23,59 @@ public struct DailyChallengeResults {
 
   public enum Action {
     case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
-    case loadHistory
-    case fetchHistoryResponse(Result<DailyChallengeHistoryResponse, Error>)
+    case reloadHistoryButtonTapped
   }
 
   @Dependency(\.apiClient) var apiClient
+  @StoreTaskID var historyRequest
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Scope(state: \.leaderboardResults, action: \.leaderboardResults) {
-      LeaderboardResults(loadResults: self.apiClient.loadDailyChallengeResults)
+  public var body: some Feature {
+    Scope(\.leaderboardResults) {
+      LeaderboardResults(loadResults: apiClient.loadDailyChallengeResults)
     }
 
-    Reduce { state, action in
+    Update { state, action in
       switch action {
-      case let .fetchHistoryResponse(.success(response)):
-        state.history = response
-        return .none
-
-      case .fetchHistoryResponse(.failure):
-        state.history = .init(results: [])
-        return .none
-
       case .leaderboardResults(.gameModeButtonTapped):
         if let indices = state.history?.results.indices {
           for index in indices {
             state.history?.results[index].rank = nil
           }
         }
-        return .none
-
-      case .leaderboardResults(.tappedTimeScopeLabel):
-        guard
-          state.leaderboardResults.isTimeScopeMenuVisible
-        else { return .none }
-        return .send(.loadHistory)
 
       case .leaderboardResults:
-        return .none
+        break
 
-      case .loadHistory:
-        if state.history?.results.isEmpty == .some(true) {
-          state.history = nil
-        }
-
-        enum CancelID { case fetch }
-        return .run { [gameMode = state.leaderboardResults.gameMode] send in
-          await send(
-            .fetchHistoryResponse(
-              Result {
-                try await self.apiClient.apiRequest(
-                  route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
-                  as: DailyChallengeHistoryResponse.self
-                )
-              }
-            )
-          )
-        }
-        .cancellable(id: CancelID.fetch, cancelInFlight: true)
+      case .reloadHistoryButtonTapped:
+        loadHistory(&state)
       }
+    }
+    .onChange(of: store.leaderboardResults.isTimeScopeMenuVisible) { _, isVisible, state in
+      guard isVisible else { return }
+      loadHistory(&state)
+    }
+  }
+
+  private func loadHistory(_ state: inout State) {
+    if state.history?.results.isEmpty == .some(true) {
+      state.history = nil
+    }
+
+    store.addTask(id: historyRequest) { [gameMode = state.leaderboardResults.gameMode] in
+      let history: DailyChallengeHistoryResponse
+      do {
+        history = try await apiClient.apiRequest(
+          route: .dailyChallenge(.results(.history(gameMode: gameMode, language: .en))),
+          as: DailyChallengeHistoryResponse.self
+        )
+      } catch is CancellationError {
+        return
+      } catch {
+        history = .init(results: [])
+      }
+      try store.modify { $0.history = history }
     }
   }
 }
@@ -97,7 +90,7 @@ public struct DailyChallengeResultsView: View {
 
   public var body: some View {
     LeaderboardResultsView(
-      store: store.scope(state: \.leaderboardResults, action: \.leaderboardResults),
+      store: store.scope(\.leaderboardResults),
       title: Text("Daily Challenge"),
       subtitle: (store.leaderboardResults.resultEnvelope?.outOf)
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },

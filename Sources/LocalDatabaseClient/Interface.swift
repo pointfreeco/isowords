@@ -1,4 +1,5 @@
-import ComposableArchitecture
+import Dependencies
+import DependenciesMacros
 import Foundation
 import SharedModels
 

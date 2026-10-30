@@ -2,6 +2,9 @@ import ClientModels
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
+import ConcurrencyExtras
+import CustomDump
+import Dependencies
 import GameCore
 import Overture
 import UserNotifications
@@ -9,109 +12,115 @@ import XCTest
 
 @testable import AppFeature
 
+@MainActor
 class RemoteNotificationsTests: XCTestCase {
-  @MainActor
   func testRegisterForRemoteNotifications_OnActivate_Authorized() async {
-    let didRegisterForRemoteNotifications = ActorIsolated(false)
-    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
+    let didRegisterForRemoteNotifications = LockIsolated(false)
+    let requestedAuthorizationOptions = LockIsolated<UNAuthorizationOptions?>(nil)
 
-    let store = TestStore(
-      initialState: AppReducer.State()
-    ) {
-      AppReducer()
-    } withDependencies: {
+    let store = withDependencies {
       $0.didFinishLaunching()
+      $0.apiClient.override(
+        route: .push(
+          .register(.init(authorizationStatus: .authorized, build: 80, token: "6465616462656566"))
+        ),
+        withResponse: { (Data(), URLResponse()) }
+      )
+      $0.apiClient.override(
+        route: .push(
+          .register(.init(authorizationStatus: .authorized, build: 80, token: "6261616462656566"))
+        ),
+        withResponse: { (Data(), URLResponse()) }
+      )
       $0.build.number = { 80 }
       $0.remoteNotifications.register = {
-        await didRegisterForRemoteNotifications.setValue(true)
+        didRegisterForRemoteNotifications.setValue(true)
       }
       $0.userNotifications.getNotificationSettings = {
         .init(authorizationStatus: .authorized)
       }
       $0.userNotifications.requestAuthorization = { options in
-        await requestedAuthorizationOptions.setValue(options)
+        requestedAuthorizationOptions.setValue(options)
         return true
+      }
+    } operation: {
+      TestStore(initialState: AppReducer.State()) {
+        AppReducer()
       }
     }
 
-    // Register remote notifications on .didFinishLaunching
 
-    let task = await store.send(.appDelegate(.didFinishLaunching))
-    await requestedAuthorizationOptions.withValue { expectNoDifference($0, [.alert, .sound]) }
-    await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
+    await store.mountTask?.value
+    expectNoDifference(requestedAuthorizationOptions.value, [.alert, .sound])
+    XCTAssertTrue(didRegisterForRemoteNotifications.value)
 
-    store.dependencies.apiClient.override(
-      route: .push(
-        .register(.init(authorizationStatus: .authorized, build: 80, token: "6465616462656566"))
-      ),
-      withResponse: { (Data(), URLResponse()) }
-    )
     await store.send(
-      .appDelegate(.didRegisterForRemoteNotifications(.success(Data("deadbeef".utf8)))))
+      .appDelegate(.didRegisterForRemoteNotifications(.success(Data("deadbeef".utf8))))
+    )?.value
 
     // Register remote notifications on .didChangeScenePhase(.active)
 
-    await didRegisterForRemoteNotifications.setValue(false)
+    didRegisterForRemoteNotifications.setValue(false)
 
-    await store.send(.didChangeScenePhase(.active))
-    await didRegisterForRemoteNotifications.withValue { XCTAssertTrue($0) }
+    await store.send(.didChangeScenePhase(.active))?.value
+    XCTAssertTrue(didRegisterForRemoteNotifications.value)
 
-    store.dependencies.apiClient.override(
-      route: .push(
-        .register(.init(authorizationStatus: .authorized, build: 80, token: "6261616462656566"))
-      ),
-      withResponse: { (Data(), URLResponse()) }
-    )
     await store.send(
-      .appDelegate(.didRegisterForRemoteNotifications(.success(Data("baadbeef".utf8)))))
+      .appDelegate(.didRegisterForRemoteNotifications(.success(Data("baadbeef".utf8))))
+    )?.value
 
-    await task.cancel()
+    await store.dismount()
   }
 
-  @MainActor
   func testRegisterForRemoteNotifications_NotAuthorized() async {
-    let didRegisterForRemoteNotifications = ActorIsolated(false)
-    let requestedAuthorizationOptions = ActorIsolated<UNAuthorizationOptions?>(nil)
+    let didRegisterForRemoteNotifications = LockIsolated(false)
+    let requestedAuthorizationOptions = LockIsolated<UNAuthorizationOptions?>(nil)
 
-    let store = TestStore(initialState: AppReducer.State()) {
-      AppReducer()
-    } withDependencies: {
+    let store = withDependencies {
       $0.didFinishLaunching()
       $0.remoteNotifications.register = {
-        await didRegisterForRemoteNotifications.setValue(true)
+        didRegisterForRemoteNotifications.setValue(true)
       }
       $0.userNotifications.getNotificationSettings = {
         .init(authorizationStatus: .notDetermined)
       }
       $0.userNotifications.requestAuthorization = { options in
-        await requestedAuthorizationOptions.setValue(options)
+        requestedAuthorizationOptions.setValue(options)
         return true
       }
+    } operation: {
+      TestStore(initialState: AppReducer.State()) {
+        AppReducer()
+      }
     }
 
-    let task = await store.send(.appDelegate(.didFinishLaunching))
-    await store.send(.didChangeScenePhase(.active))
+    await store.mountTask?.value
+    expectNoDifference(requestedAuthorizationOptions.value, .provisional)
+    XCTAssertTrue(didRegisterForRemoteNotifications.value)
 
-    await task.cancel()
+    await store.send(.didChangeScenePhase(.active))?.value
+
+    await store.dismount()
   }
 
-  @MainActor
   func testReceiveNotification_dailyChallengeEndsSoon() async {
     let inProgressGame = InProgressGame.mock
+    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
 
-    let store = TestStore(
-      initialState: update(AppReducer.State()) {
-        $0.home.savedGames.dailyChallengeUnlimited = .mock
-      }
-    ) {
-      AppReducer()
-    } withDependencies: {
+    let store = withDependencies {
       $0.didFinishLaunching()
       $0.fileClient.save = { @Sendable _, _ in }
+      $0.mainQueue = DispatchQueue.test.eraseToAnyScheduler()
+      $0.userNotifications.delegate = { delegate.stream }
+    } operation: {
+      TestStore(
+        initialState: update(AppReducer.State()) {
+          $0.home.savedGames.dailyChallengeUnlimited = .mock
+        }
+      ) {
+        AppReducer()
+      }
     }
-
-    let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
-    store.dependencies.userNotifications.delegate = { delegate.stream }
 
     let notification = UserNotificationClient.Notification(
       date: .mock,
@@ -127,32 +136,36 @@ class RemoteNotificationsTests: XCTestCase {
     )
     let response = UserNotificationClient.Notification.Response(notification: notification)
 
-    var notificationPresentationOptions: UNNotificationPresentationOptions?
-    let willPresentNotificationCompletionHandler = { notificationPresentationOptions = $0 }
-
-    var didReceiveResponseCompletionHandlerCalled = false
-    let didReceiveResponseCompletionHandler = { didReceiveResponseCompletionHandlerCalled = true }
-
-    let task = await store.send(.appDelegate(.didFinishLaunching))
+    let notificationPresentationOptions = LockIsolated<UNNotificationPresentationOptions?>(nil)
+    let didReceiveResponseCompletionHandlerCalled = LockIsolated(false)
 
     delegate.continuation.yield(
       .willPresentNotification(
         notification,
-        completionHandler: { willPresentNotificationCompletionHandler($0) }
+        completionHandler: { notificationPresentationOptions.setValue($0) }
       )
     )
-    await store.receive(\.appDelegate.userNotifications.willPresentNotification)
-    expectNoDifference(notificationPresentationOptions, .banner)
-
     delegate.continuation.yield(
-      .didReceiveResponse(response, completionHandler: { didReceiveResponseCompletionHandler() })
+      .didReceiveResponse(
+        response,
+        completionHandler: { didReceiveResponseCompletionHandlerCalled.setValue(true) }
+      )
     )
-    await store.receive(\.appDelegate.userNotifications.didReceiveResponse) {
-      $0.destination = .game(Game.State(inProgressGame: inProgressGame))
-      $0.home.savedGames.unlimited = inProgressGame
+    delegate.continuation.finish()
+    await store.mountTask?.value
+    store.expect {
+      $0.destination = .game(
+        snap(
+          update(Game.State(inProgressGame: inProgressGame)) {
+            $0.gameCurrentTime = RunLoop.immediate.now.date
+          }
+        )
+      )
+      $0.home.activeGames.savedGames.unlimited = inProgressGame
     }
-    XCTAssert(didReceiveResponseCompletionHandlerCalled)
+    expectNoDifference(notificationPresentationOptions.value, .banner)
+    XCTAssert(didReceiveResponseCompletionHandlerCalled.value)
 
-    await task.cancel()
+    await store.dismount()
   }
 }

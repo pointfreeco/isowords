@@ -5,6 +5,7 @@ import AppFeature
 import AudioPlayerClient
 import Build
 import ComposableArchitecture
+import Dependencies
 import DictionarySqliteClient
 import ServerConfig
 import ServerConfigClient
@@ -27,14 +28,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
       )
       $0.serverConfig = .live(apiClient: $0.apiClient, build: $0.build)
     }
-  }
-
-  func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-  ) -> Bool {
-    self.store.send(.appDelegate(.didFinishLaunching))
-    return true
   }
 
   func application(

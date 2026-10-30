@@ -1,11 +1,11 @@
 import ComposableArchitecture
+import Dependencies
 import SharedModels
 import SwiftUI
 
-@Reducer
+@Feature
 public struct WordSubmitButtonFeature {
-  @ObservableState
-  public struct State: Equatable {
+  public struct State {
     public var isSelectedWordValid: Bool
     public let isTurnBasedMatch: Bool
     public let isYourTurn: Bool
@@ -24,7 +24,6 @@ public struct WordSubmitButtonFeature {
     }
   }
 
-  @ObservableState
   public struct ButtonState: Equatable {
     public var areReactionsOpen: Bool
     public var favoriteReactions: [Move.Reaction]
@@ -46,55 +45,45 @@ public struct WordSubmitButtonFeature {
 
   public enum Action {
     case backgroundTapped
-    case delayedSubmitButtonPressed
-    case delegate(Delegate)
     case reactionButtonTapped(Move.Reaction)
     case submitButtonPressed
     case submitButtonReleased
     case submitButtonTapped
+  }
 
-    public enum Delegate {
-      case confirmSubmit(reaction: Move.Reaction?)
-    }
+  public enum ConfirmSubmit: FeatureEventKey {
+    public typealias Value = Move.Reaction?
   }
 
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.audioPlayer.play) var playSound
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
-      enum CancelID { case submitButtonPressedDelay }
+  @StoreTaskID var submitButtonPressedDelay
 
+  public init() {}
+
+  public var body: some Feature {
+    Update { state, action in
       guard state.isYourTurn
-      else { return .none }
+      else { return }
 
       switch action {
       case .backgroundTapped:
         state.wordSubmitButton.areReactionsOpen = false
-        return .run { _ in await self.playSound(.uiSfxEmojiClose) }
-
-      case .delayedSubmitButtonPressed:
-        state.wordSubmitButton.areReactionsOpen = true
-        return .run { _ in
-          await self.feedbackGenerator.selectionChanged()
-          await self.playSound(.uiSfxEmojiOpen)
-        }
-
-      case .delegate:
-        return .none
+        store.addTask { await self.playSound(.uiSfxEmojiClose) }
 
       case let .reactionButtonTapped(reaction):
         state.wordSubmitButton.areReactionsOpen = false
-        return .run { send in
+        store.addTask {
           await self.feedbackGenerator.selectionChanged()
           await self.playSound(.uiSfxEmojiSend)
-          await send(.delegate(.confirmSubmit(reaction: reaction)))
+          try store.post(key: ConfirmSubmit.self, value: reaction)
         }
 
       case .submitButtonPressed:
         guard state.isTurnBasedMatch
-        else { return .none }
+        else { return }
 
         if state.wordSubmitButton.areReactionsOpen {
           state.wordSubmitButton.isClosing = true
@@ -102,36 +91,42 @@ public struct WordSubmitButtonFeature {
         state.wordSubmitButton.areReactionsOpen = false
         state.wordSubmitButton.isSubmitButtonPressed = true
 
-        return .run { [isClosing = state.wordSubmitButton.isClosing] send in
+        let isClosing = state.wordSubmitButton.isClosing
+        store.addTask(id: self.submitButtonPressedDelay) {
           await self.feedbackGenerator.selectionChanged()
           if isClosing {
             await self.playSound(.uiSfxEmojiClose)
           }
           try await self.mainQueue.sleep(for: 0.5)
-          await send(.delayedSubmitButtonPressed)
+          guard store.isYourTurn else { return }
+          try store.modify { $0.wordSubmitButton.areReactionsOpen = true }
+          await self.feedbackGenerator.selectionChanged()
+          await self.playSound(.uiSfxEmojiOpen)
         }
-        .cancellable(id: CancelID.submitButtonPressedDelay, cancelInFlight: true)
 
       case .submitButtonReleased:
         guard state.isTurnBasedMatch
-        else { return .none }
+        else { return }
 
         let wasClosing = state.wordSubmitButton.isClosing
         state.wordSubmitButton.isClosing = false
         state.wordSubmitButton.isSubmitButtonPressed = false
 
-        return .run { [areReactionsOpen = state.wordSubmitButton.areReactionsOpen] send in
-          Task.cancel(id: CancelID.submitButtonPressedDelay)
+        let areReactionsOpen = state.wordSubmitButton.areReactionsOpen
+        store.addTask {
+          self.submitButtonPressedDelay.cancel()
           guard !wasClosing && !areReactionsOpen
           else { return }
-          await send(.delegate(.confirmSubmit(reaction: nil)))
+          try store.post(key: ConfirmSubmit.self, value: nil)
         }
 
       case .submitButtonTapped:
         guard !state.isTurnBasedMatch
-        else { return .none }
+        else { return }
 
-        return .send(.delegate(.confirmSubmit(reaction: nil)))
+        store.addTask {
+          try store.post(key: ConfirmSubmit.self, value: nil)
+        }
       }
     }
   }
@@ -162,10 +157,10 @@ public struct WordSubmitButton: View {
         Spacer()
 
         ZStack {
-          ReactionsView(store: store.scope(state: \.wordSubmitButton, action: \.self))
+          ReactionsView(store: store)
 
           Button {
-            store.send(.submitButtonTapped, animation: .default)
+            withAnimation { _ = store.send(.submitButtonTapped) }
           } label: {
             Group {
               if !store.wordSubmitButton.areReactionsOpen {
@@ -190,12 +185,12 @@ public struct WordSubmitButton: View {
             DragGesture(minimumDistance: 0)
               .onChanged { touch in
                 if !self.isTouchDown {
-                  store.send(.submitButtonPressed, animation: .default)
+                  withAnimation { _ = store.send(.submitButtonPressed) }
                 }
                 self.isTouchDown = true
               }
               .onEnded { _ in
-                store.send(.submitButtonReleased, animation: .default)
+                withAnimation { _ = store.send(.submitButtonReleased) }
                 self.isTouchDown = false
               }
           )
@@ -211,19 +206,19 @@ public struct WordSubmitButton: View {
       }
     }
     .animation(.default, value: store.wordSubmitButton.areReactionsOpen)
-    .onTapGesture { store.send(.backgroundTapped, animation: .default) }
+    .onTapGesture { withAnimation { _ = store.send(.backgroundTapped) } }
   }
 }
 
 struct ReactionsView: View {
-  let store: Store<WordSubmitButtonFeature.ButtonState, WordSubmitButtonFeature.Action>
+  let store: StoreOf<WordSubmitButtonFeature>
 
   var body: some View {
-    ForEach(Array(store.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
+    ForEach(Array(store.wordSubmitButton.favoriteReactions.enumerated()), id: \.offset) { idx, reaction in
       let offset = self.offset(index: idx)
 
       Button {
-        store.send(.reactionButtonTapped(reaction), animation: .default)
+        withAnimation { _ = store.send(.reactionButtonTapped(reaction)) }
       } label: {
         Text(reaction.rawValue)
           .font(.system(size: 32))
@@ -231,23 +226,23 @@ struct ReactionsView: View {
       }
       .background(Color.white.opacity(0.5))
       .clipShape(Circle())
-      .rotationEffect(.degrees(store.areReactionsOpen ? -360 : 0))
-      .opacity(store.areReactionsOpen ? 1 : 0)
+      .rotationEffect(.degrees(store.wordSubmitButton.areReactionsOpen ? -360 : 0))
+      .opacity(store.wordSubmitButton.areReactionsOpen ? 1 : 0)
       .offset(x: offset.x, y: offset.y)
       .animation(
-        .default.delay(Double(idx) / Double(store.favoriteReactions.count * 10)),
-        value: store.areReactionsOpen
+        .default.delay(Double(idx) / Double(store.wordSubmitButton.favoriteReactions.count * 10)),
+        value: store.wordSubmitButton.areReactionsOpen
       )
     }
   }
 
   func offset(index: Int) -> CGPoint {
     let angle: CGFloat =
-      CGFloat.pi / CGFloat(store.favoriteReactions.count - 1) * CGFloat(index) + .pi
+      CGFloat.pi / CGFloat(store.wordSubmitButton.favoriteReactions.count - 1) * CGFloat(index) + .pi
 
     return .init(
-      x: store.areReactionsOpen ? cos(angle) * 130 : 0,
-      y: store.areReactionsOpen ? sin(angle) * 130 : 0
+      x: store.wordSubmitButton.areReactionsOpen ? cos(angle) * 130 : 0,
+      y: store.wordSubmitButton.areReactionsOpen ? sin(angle) * 130 : 0
     )
   }
 }
@@ -257,7 +252,7 @@ struct ReactionsView: View {
     static var previews: some View {
       NavigationView {
         WordSubmitButton(
-          store: .init(
+          store: Store(
             initialState: WordSubmitButtonFeature.State(
               isSelectedWordValid: true,
               isTurnBasedMatch: true,

@@ -1,14 +1,16 @@
 import Combine
 import ComposableArchitecture
 import ComposableUserNotifications
+import CustomDump
+import Dependencies
 import Overture
 import UserNotifications
 import XCTest
 
 @testable import AppFeature
 
+@MainActor
 class UserNotificationsTests: XCTestCase {
-  @MainActor
   func testReceiveBackgroundNotification() async {
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let response = UserNotificationClient.Notification.Response(
@@ -21,29 +23,28 @@ class UserNotificationsTests: XCTestCase {
         )
       )
     )
-    var didCallback = false
-    let completionHandler = { didCallback = true }
+    let didCallback = LockIsolated(false)
 
-    let store = TestStore(initialState: AppReducer.State()) {
-      AppReducer()
-    } withDependencies: {
+    let store = withDependencies {
       $0.didFinishLaunching()
       $0.userNotifications.delegate = { delegate.stream }
+    } operation: {
+      TestStore(initialState: AppReducer.State()) {
+        AppReducer()
+      }
     }
 
-    let task = await store.send(.appDelegate(.didFinishLaunching))
-
     delegate.continuation.yield(
-      .didReceiveResponse(response, completionHandler: { completionHandler() })
+      .didReceiveResponse(response, completionHandler: { didCallback.setValue(true) })
     )
 
-    await store.receive(\.appDelegate.userNotifications.didReceiveResponse)
-    XCTAssertTrue(didCallback)
+    delegate.continuation.finish()
+    await store.mountTask?.value
+    XCTAssertTrue(didCallback.value)
 
-    await task.cancel()
+    await store.dismount()
   }
 
-  @MainActor
   func testReceiveForegroundNotification() async {
     let delegate = AsyncStream<UserNotificationClient.DelegateEvent>.makeStream()
     let notification = UserNotificationClient.Notification(
@@ -54,26 +55,28 @@ class UserNotificationsTests: XCTestCase {
         trigger: nil
       )
     )
-    var didCallbackWithOptions: UNNotificationPresentationOptions?
-    let completionHandler = { didCallbackWithOptions = $0 }
+    let didCallbackWithOptions = LockIsolated<UNNotificationPresentationOptions?>(nil)
 
-    let store = TestStore(initialState: AppReducer.State()) {
-      AppReducer()
-    } withDependencies: {
+    let store = withDependencies {
       $0.didFinishLaunching()
       $0.userNotifications.delegate = { delegate.stream }
+    } operation: {
+      TestStore(initialState: AppReducer.State()) {
+        AppReducer()
+      }
     }
 
-    let task = await store.send(.appDelegate(.didFinishLaunching))
-
     delegate.continuation.yield(
-      .willPresentNotification(notification, completionHandler: { completionHandler($0) })
+      .willPresentNotification(
+        notification,
+        completionHandler: { didCallbackWithOptions.setValue($0) }
+      )
     )
+    delegate.continuation.finish()
+    await store.mountTask?.value
 
-    await store.receive(\.appDelegate.userNotifications.willPresentNotification)
-    
-    expectNoDifference(didCallbackWithOptions, .banner)
+    expectNoDifference(didCallbackWithOptions.value, .banner)
 
-    await task.cancel()
+    await store.dismount()
   }
 }

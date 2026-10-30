@@ -15,6 +15,7 @@ class GameOverViewTests: XCTestCase {
 //    isRecording = true
   }
 
+  @MainActor
   func testSolo() {
     assertSnapshot(
       matching: GameOverView(
@@ -43,6 +44,7 @@ class GameOverViewTests: XCTestCase {
     )
   }
 
+  @MainActor
   func testDailyChallenge() {
     assertSnapshot(
       matching: GameOverView(
@@ -65,6 +67,7 @@ class GameOverViewTests: XCTestCase {
     )
   }
 
+  @MainActor
   func testTurnBased() {
     var completedGame = CompletedGame.turnBased
     completedGame.cubes = turnBasedGame.puzzle

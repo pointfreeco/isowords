@@ -44,6 +44,7 @@ struct DeveloperSettingsView: View {
     static var previews: some View {
       DeveloperSettingsView(
         store: Store(initialState: Settings.State()) {
+          Settings()
         }
       )
     }

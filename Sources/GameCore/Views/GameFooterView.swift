@@ -142,6 +142,7 @@ public struct WordListView: View {
     static var previews: some View {
       WordListView(
         store: Store(initialState: .init(inProgressGame: .mock)) {
+          Game()
         }
       )
       .previewLayout(.fixed(width: 500, height: 100))
@@ -192,6 +193,7 @@ public struct WordListView: View {
             )
           )
         ) {
+          Game()
         }
       )
       .previewLayout(.fixed(width: 500, height: 100))

@@ -1,6 +1,4 @@
 import ClientModels
-import Combine
-import ComposableArchitecture
 import CoreMotion
 import SceneKit
 import SharedModels
@@ -73,12 +71,16 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private static let defaultCameraPosition = SCNVector3(2, 1.85, 2)
 
   private let cameraNode = SCNNode()
-  private var cancellables: Set<AnyCancellable> = []
   private let gameCubeNode = SCNNode()
   private let light = SCNLight()
   private var motionManager: CMMotionManager?
+  private let nub = NubUIView()
+  private var nubIsPressed: Bool?
+  private var nubLocation: ViewState.NubState.Location?
+  private let send: @MainActor (ViewAction) -> Void
   private var startingAttitude: Attitude?
-  private let viewStore: ViewStore<ViewState, ViewAction>
+  private let state: @MainActor () -> ViewState
+  private var viewState: ViewState?
   private var worldScale: Float = 1.0
 
   var enableCubeShadow = true {
@@ -90,9 +92,11 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
   public init(
     size: CGSize,
-    viewStore: ViewStore<ViewState, ViewAction>
+    state: @escaping @MainActor () -> ViewState,
+    send: @escaping @MainActor (ViewAction) -> Void
   ) {
-    self.viewStore = viewStore
+    self.send = send
+    self.state = state
 
     super.init(frame: .zero, options: nil)
 
@@ -114,56 +118,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     worldScale = self.worldScale(for: size)
     gameCubeNode.scale = .init(worldScale, worldScale, worldScale)
     self.scene?.rootNode.addChildNode(self.gameCubeNode)
-
-    self.viewStore.publisher.cubes
-      .sink { cubes in
-        SCNTransaction.begin()
-        SCNTransaction.commit()
-      }
-      .store(in: &self.cancellables)
-
-    self.viewStore.publisher.cubes
-      .removeDuplicates(by: { $0.letters == $1.letters })
-      .sink { [weak self] cubes in
-        guard let self = self else { return }
-
-        let letterGeometry = LetterGeometry(width: 1, height: 1)
-        letterGeometry.loadShaders(puzzle: cubes, worldScale: self.worldScale)
-
-        self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
-
-        LatticePoint.cubeIndices.forEach { index in
-          let cube = CubeNode(
-            letterGeometry: letterGeometry,
-            viewStatePublisher: self.viewStore.publisher.cubes[index]
-          )
-          cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
-          self.gameCubeNode.addChildNode(cube)
-        }
-
-        // NB: "Warm" the scene with selected/selectable faces to avoid a hitch when selecting the
-        //     first letter
-        [CubeFaceNode.ViewState.Status.selected, .selectable].forEach { status in
-          let warmer = CubeFaceNode(
-            letterGeometry: letterGeometry,
-            viewState: Store<CubeFaceNode.ViewState, Never>(
-              initialState: .init(
-                cubeFace: .init(letter: "A", side: .top),
-                letterIsHidden: true,
-                status: status
-              )
-            ) {
-            }.publisher
-          )
-          warmer.position = .init(-1, -1, -1)
-          warmer.scale = .init(0.001, 0.001, 0.001)
-          self.gameCubeNode.addChildNode(warmer)
-          DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            warmer.removeFromParentNode()
-          }
-        }
-      }
-      .store(in: &self.cancellables)
 
     let cameraLookAtOriginConstraint = SCNLookAtConstraint(target: self.gameCubeNode)
     cameraLookAtOriginConstraint.isGimbalLockEnabled = true
@@ -189,27 +143,6 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     ambientLightNode.light = ambientLight
     self.scene?.rootNode.addChildNode(ambientLightNode)
 
-    self.viewStore.publisher
-      .map { ($0.enableGyroMotion, $0.isOnLowPowerMode) }
-      .removeDuplicates(by: ==)
-      .sink { [weak self] enableGyroMotion, isOnLowPowerMode in
-        guard let self = self else { return }
-
-        self.showsStatistics = self.showSceneStatistics
-        light.castsShadow = self.enableCubeShadow && !isOnLowPowerMode
-
-        if isOnLowPowerMode || !enableGyroMotion {
-          self.stopMotionManager()
-        } else {
-          self.startMotionManager()
-        }
-      }
-      .store(in: &self.cancellables)
-
-    self.viewStore.publisher.playedWords
-      .sink { [weak self] _ in self?.startingAttitude = nil }
-      .store(in: &self.cancellables)
-
     let immediateTapRecognizer = UILongPressGestureRecognizer(
       target: self, action: #selector(tap(recognizer:)))
     immediateTapRecognizer.cancelsTouchesInView = false
@@ -229,67 +162,161 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     panRecognizer.delegate = self
     self.addGestureRecognizer(panRecognizer)
 
-    let nub = NubUIView()
-    nub.isHidden = true
-    self.addSubview(nub)
+    self.nub.isHidden = true
+    self.addSubview(self.nub)
 
-    self.viewStore.publisher.nub
-      .compactMap { $0?.isPressed }
-      .removeDuplicates()
-      .assign(to: \.isPressed, on: nub)
-      .store(in: &self.cancellables)
+    self.observeState()
+  }
 
-    self.viewStore.publisher.nub
-      .compactMap { $0?.location }
-      .removeDuplicates()
-      .sink { [weak self] location in
-        guard let self = self else { return }
-
-        nub.isHidden = false
-
-        switch location {
-        case .offScreenBottom:
-          nub.transform = .init(
-            translationX: UIScreen.main.bounds.width / 2,
-            y: UIScreen.main.bounds.height + 10
-          )
-        case .offScreenRight:
-          nub.transform = .init(
-            translationX: UIScreen.main.bounds.width + 10,
-            y: UIScreen.main.bounds.height / 2
-          )
-
-        case let .face(face):
-          let linearIndex =
-            3 * 3 * face.index.x.rawValue
-            + 3 * face.index.y.rawValue
-            + face.index.z.rawValue
-
-          let faceNode = self.gameCubeNode
-            .childNodes[linearIndex]
-            .childNodes[face.side.rawValue]
-
-          let rootPosition = self.scene!.rootNode.convertPosition(.init(), from: faceNode)
-          let screenPosition = self.projectPoint(rootPosition)
-          nub.transform = .init(
-            translationX: CGFloat(screenPosition.x) - nub.bounds.midX,
-            y: CGFloat(screenPosition.y) - nub.bounds.midY
-          )
-
-        case .submitButton:
-          nub.transform = .init(
-            translationX: self.bounds.midX - nub.bounds.midX + .random(in: -10...10),
-            y: self.bounds.maxY - nub.bounds.midY - 130 + .random(in: -10...10)
-          )
+  private func observeState() {
+    withObservationTracking {
+      self.apply(viewState: self.state())
+    } onChange: { [weak self] in
+      let animationDuration =
+        Thread.isMainThread
+        ? MainActor.assumeIsolated { UIView.inheritedAnimationDuration }
+        : 0
+      DispatchQueue.main.async {
+        guard let self else { return }
+        if animationDuration > 0 {
+          UIView.animate(
+            withDuration: animationDuration,
+            delay: 0,
+            options: [.beginFromCurrentState, .curveEaseInOut]
+          ) {
+            self.observeState()
+          }
+        } else {
+          self.observeState()
         }
       }
-      .store(in: &self.cancellables)
+    }
+  }
+
+  private func apply(viewState: ViewState) {
+    let oldViewState = self.viewState
+    self.viewState = viewState
+
+    if viewState.cubes != oldViewState?.cubes {
+      SCNTransaction.begin()
+      SCNTransaction.commit()
+    }
+
+    if viewState.cubes.letters != oldViewState?.cubes.letters {
+      self.loadCubes(viewState.cubes)
+    } else {
+      for case let cube as CubeNode in self.gameCubeNode.childNodes {
+        cube.update(viewState: viewState.cubes[cube.index])
+      }
+    }
+
+    if viewState.enableGyroMotion != oldViewState?.enableGyroMotion
+      || viewState.isOnLowPowerMode != oldViewState?.isOnLowPowerMode
+    {
+      self.showsStatistics = self.showSceneStatistics
+      self.light.castsShadow = self.enableCubeShadow && !viewState.isOnLowPowerMode
+
+      if viewState.isOnLowPowerMode || !viewState.enableGyroMotion {
+        self.stopMotionManager()
+      } else {
+        self.startMotionManager()
+      }
+    }
+
+    if viewState.playedWords != oldViewState?.playedWords {
+      self.startingAttitude = nil
+    }
+
+    if let isPressed = viewState.nub?.isPressed, isPressed != self.nubIsPressed {
+      self.nubIsPressed = isPressed
+      self.nub.isPressed = isPressed
+    }
+
+    if let location = viewState.nub?.location, location != self.nubLocation {
+      self.nubLocation = location
+      self.updateNub(location: location)
+    }
+  }
+
+  private func loadCubes(_ cubes: ViewState.ViewPuzzle) {
+    let letterGeometry = LetterGeometry(width: 1, height: 1)
+    letterGeometry.loadShaders(puzzle: cubes, worldScale: self.worldScale)
+
+    self.gameCubeNode.childNodes.forEach { $0.removeFromParentNode() }
+
+    LatticePoint.cubeIndices.forEach { index in
+      let cube = CubeNode(
+        letterGeometry: letterGeometry,
+        viewState: cubes[index]
+      )
+      cube.scale = SCNVector3(x: 1 / 3, y: 1 / 3, z: 1 / 3)
+      self.gameCubeNode.addChildNode(cube)
+    }
+
+    // NB: "Warm" the scene with selected/selectable faces to avoid a hitch when selecting the
+    //     first letter
+    [CubeFaceNode.ViewState.Status.selected, .selectable].forEach { status in
+      let warmer = CubeFaceNode(
+        letterGeometry: letterGeometry,
+        viewState: .init(
+          cubeFace: .init(letter: "A", side: .top),
+          letterIsHidden: true,
+          status: status
+        )
+      )
+      warmer.position = .init(-1, -1, -1)
+      warmer.scale = .init(0.001, 0.001, 0.001)
+      self.gameCubeNode.addChildNode(warmer)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        warmer.removeFromParentNode()
+      }
+    }
+  }
+
+  private func updateNub(location: ViewState.NubState.Location) {
+    self.nub.isHidden = false
+
+    switch location {
+    case .offScreenBottom:
+      self.nub.transform = .init(
+        translationX: UIScreen.main.bounds.width / 2,
+        y: UIScreen.main.bounds.height + 10
+      )
+    case .offScreenRight:
+      self.nub.transform = .init(
+        translationX: UIScreen.main.bounds.width + 10,
+        y: UIScreen.main.bounds.height / 2
+      )
+
+    case let .face(face):
+      let linearIndex =
+        3 * 3 * face.index.x.rawValue
+        + 3 * face.index.y.rawValue
+        + face.index.z.rawValue
+
+      let faceNode = self.gameCubeNode
+        .childNodes[linearIndex]
+        .childNodes[face.side.rawValue]
+
+      let rootPosition = self.scene!.rootNode.convertPosition(.init(), from: faceNode)
+      let screenPosition = self.projectPoint(rootPosition)
+      self.nub.transform = .init(
+        translationX: CGFloat(screenPosition.x) - self.nub.bounds.midX,
+        y: CGFloat(screenPosition.y) - self.nub.bounds.midY
+      )
+
+    case .submitButton:
+      self.nub.transform = .init(
+        translationX: self.bounds.midX - self.nub.bounds.midX + .random(in: -10...10),
+        y: self.bounds.maxY - self.nub.bounds.midY - 130 + .random(in: -10...10)
+      )
+    }
   }
 
   // TODO: rename
   private func update() {
     self.showsStatistics = self.showSceneStatistics
-    self.light.castsShadow = self.enableCubeShadow && !self.viewStore.isOnLowPowerMode
+    self.light.castsShadow = self.enableCubeShadow && !(self.viewState?.isOnLowPowerMode ?? false)
   }
 
   deinit {
@@ -317,7 +344,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
     guard let (_, _, cubeNode) = self.nodes(location: location)
     else { return }
 
-    self.viewStore.send(.doubleTap(index: cubeNode.index), animation: .default)
+    withAnimation(.default) { self.send(.doubleTap(index: cubeNode.index)) }
   }
 
   @objc private func tap(recognizer: UIGestureRecognizer) {
@@ -326,18 +353,16 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
 
     let location = recognizer.location(in: self)
 
-    self.viewStore.send(
-      .tap(
-        recognizer.state,
-        self.nodes(location: location)
-          .map { _, cubeFaceNode, cubeNode in
-            IndexedCubeFace(
-              index: cubeNode.index, side: cubeFaceNode.side
-            )
-          }
-      ),
-      animation: .default
+    let action = ViewAction.tap(
+      recognizer.state,
+      self.nodes(location: location)
+        .map { _, cubeFaceNode, cubeNode in
+          IndexedCubeFace(
+            index: cubeNode.index, side: cubeFaceNode.side
+          )
+        }
     )
+    withAnimation(.default) { self.send(action) }
   }
 
   @objc private func pan(recognizer: UIGestureRecognizer) {
@@ -355,7 +380,7 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
       )
     }
 
-    self.viewStore.send(.pan(recognizer.state, panData), animation: .default)
+    withAnimation(.default) { self.send(.pan(recognizer.state, panData)) }
   }
 
   required init?(coder: NSCoder) {

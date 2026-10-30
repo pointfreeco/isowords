@@ -43,7 +43,8 @@ struct AccessibilitySettingsView: View {
       Preview {
         NavigationView {
           AccessibilitySettingsView(
-            store: .init(initialState: Settings.State()) {
+            store: Store(initialState: Settings.State()) {
+              Settings()
             }
           )
         }

@@ -3,13 +3,17 @@ import Styleguide
 import SwiftUI
 
 struct NotificationsSettingsView: View {
-  @Bindable var store: StoreOf<Settings>
+  let store: StoreOf<Settings>
 
   var body: some View {
     SettingsForm {
       SettingsRow {
         Toggle(
-          "Enable notifications", isOn: $store.userSettings.enableNotifications.animation()
+          "Enable notifications",
+          isOn: Binding(
+            get: { store.userSettings.enableNotifications },
+            set: { isOn in withAnimation { _ = store.send(.enableNotificationsToggled(isOn)) } }
+          )
         )
         .adaptiveFont(.matterMedium, size: 16)
       }
@@ -18,7 +22,11 @@ struct NotificationsSettingsView: View {
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
             Toggle(
-              "Daily challenge reminders", isOn: $store.userSettings.sendDailyChallengeReminder
+              "Daily challenge reminders",
+              isOn: Binding(
+                get: { store.userSettings.sendDailyChallengeReminder },
+                set: { _ = store.send(.dailyChallengeReminderToggled($0)) }
+              )
             )
             .adaptiveFont(.matterMedium, size: 16)
 
@@ -30,7 +38,13 @@ struct NotificationsSettingsView: View {
 
         SettingsRow {
           VStack(alignment: .leading, spacing: 16) {
-            Toggle("Daily challenge summary", isOn: $store.userSettings.sendDailyChallengeSummary)
+            Toggle(
+              "Daily challenge summary",
+              isOn: Binding(
+                get: { store.userSettings.sendDailyChallengeSummary },
+                set: { _ = store.send(.dailyChallengeSummaryToggled($0)) }
+              )
+            )
               .adaptiveFont(.matterMedium, size: 16)
 
             Text("Receive your rank for yesterday’s challenge if you played.")

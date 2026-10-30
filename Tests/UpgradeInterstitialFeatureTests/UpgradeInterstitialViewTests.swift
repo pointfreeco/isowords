@@ -12,6 +12,7 @@ class UpgradeInterstitialViewTests: XCTestCase {
 //    isRecording = true
   }
 
+  @MainActor
   func testBeginning() {
     assertSnapshot(
       matching: UpgradeInterstitialView(
@@ -31,18 +32,21 @@ class UpgradeInterstitialViewTests: XCTestCase {
             secondsPassedCount: 0
           )
         ) {
+          EmptyFeature()
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))
     )
   }
 
+  @MainActor
   func testCountdownComplete() {
     assertSnapshot(
       matching: UpgradeInterstitialView(
         store: .init(
           initialState: .init(secondsPassedCount: 15, upgradeInterstitialDuration: 15)
         ) {
+          EmptyFeature()
         }
       ),
       as: .image(perceptualPrecision: 0.98, layout: .device(config: .iPhoneXsMax))

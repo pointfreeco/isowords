@@ -1,81 +1,48 @@
 import ComposableArchitecture
 import ComposableStoreKit
+import Dependencies
 import Foundation
 import SharedModels
 
-public struct ReceiptFinalizationEnvelope: Equatable {
-  let transactions: [StoreKitClient.PaymentTransaction]
-  let verifyEnvelope: VerifyReceiptEnvelope
-}
+extension AppReducer {
+  func observePaymentTransactions() async {
+    for await event in self.storeKit.observer() {
+      guard case let .updatedTransactions(transactions) = event
+      else { continue }
+      await self.finalize(transactions: transactions)
+    }
+  }
 
-@Reducer
-public struct StoreKitLogic<State> {
-  @Dependency(\.apiClient) var apiClient
-  @Dependency(\.storeKit) var storeKit
+  private func finalize(transactions: [StoreKitClient.PaymentTransaction]) async {
+    let verifiableTransactions = transactions.filter { $0.transactionState.canBeVerified }
+    let otherTransactions = transactions.filter { !$0.transactionState.canBeVerified }
 
-  public var body: some Reducer<State, AppReducer.Action> {
-    Reduce { state, action in
-      switch action {
-      case .appDelegate(.didFinishLaunching):
-        return .run { send in
-          for await event in self.storeKit.observer() {
-            await send(.paymentTransaction(event))
-          }
-        }
+    if !verifiableTransactions.isEmpty,
+      let appStoreReceiptURL = self.storeKit.appStoreReceiptURL(),
+      let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped),
+      let verifyEnvelope = try? await self.apiClient.apiRequest(
+        route: .verifyReceipt(receiptData),
+        as: VerifyReceiptEnvelope.self
+      )
+    {
+      for transaction in transactions
+      where verifyEnvelope.verifiedProductIds
+        .contains(where: { $0 == transaction.payment.productIdentifier })
+      {
+        await self.storeKit.finishTransaction(transaction)
+      }
+    }
 
-      case let .paymentTransaction(.updatedTransactions(transactions)):
-        return .run { send in
-          let verifiableTransactions = transactions.filter { $0.transactionState.canBeVerified }
-          let otherTransactions = transactions.filter { !$0.transactionState.canBeVerified }
+    for transaction in otherTransactions {
+      switch transaction.transactionState {
+      case .failed:
+        await self.storeKit.finishTransaction(transaction)
 
-          if !verifiableTransactions.isEmpty,
-            let appStoreReceiptURL = self.storeKit.appStoreReceiptURL(),
-            let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
-          {
-            await send(
-              .verifyReceiptResponse(
-                Result {
-                  try await ReceiptFinalizationEnvelope(
-                    transactions: transactions,
-                    verifyEnvelope: self.apiClient.apiRequest(
-                      route: .verifyReceipt(receiptData),
-                      as: VerifyReceiptEnvelope.self
-                    )
-                  )
-                }
-              )
-            )
-          }
+      case .deferred, .purchased, .purchasing, .restored:
+        return
 
-          for transaction in otherTransactions {
-            switch transaction.transactionState {
-            case .failed:
-              await self.storeKit.finishTransaction(transaction)
-
-            case .deferred, .purchased, .purchasing, .restored:
-              return
-
-            @unknown default:
-              return
-            }
-          }
-        }
-
-      case let .verifyReceiptResponse(.success(envelope)):
-        return .run { _ in
-          for transaction in envelope.transactions
-          where envelope.verifyEnvelope.verifiedProductIds
-            .contains(where: { $0 == transaction.payment.productIdentifier })
-          {
-            await self.storeKit.finishTransaction(transaction)
-          }
-        }
-
-      case .verifyReceiptResponse(.failure):
-        return .none
-
-      default:
-        return .none
+      @unknown default:
+        return
       }
     }
   }

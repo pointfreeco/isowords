@@ -1,12 +1,16 @@
 import ApiClient
+import AudioPlayerClient
 import Build
 import ComposableArchitecture
 import ComposableStoreKit
 import ComposableUserNotifications
+import Dependencies
 import RemoteNotificationsClient
+import ServerConfigClient
 import SharedModels
 import StatsFeature
 import StoreKit
+import SwiftUI
 import UIApplicationClient
 import UserSettingsClient
 
@@ -40,12 +44,23 @@ public struct DeveloperSettings: Equatable {
   }
 }
 
-@Reducer
+@Feature
 public struct Settings {
-  @ObservableState
-  public struct State: Equatable {
-    @Presents public var alert: AlertState<Action.Alert>?
+  @Feature public enum Destination {
+    case noRestoredPurchasesAlert
+    case restoredPurchasesFailedAlert
+    case userNotificationAuthorizationDeniedAlert(UserNotificationAuthorizationDeniedAlert)
+  }
+
+  @Feature public struct UserNotificationAuthorizationDeniedAlert: Prompt {
+    public enum Action {
+      case openSettingsButtonTapped
+    }
+  }
+
+  public struct State {
     public var buildNumber: Build.Number?
+    public var destination: Destination.State?
     public var developer: DeveloperSettings
     public var fullGameProduct: Result<StoreKitClient.Product, ProductError>?
     public var fullGamePurchasedAt: Date?
@@ -58,9 +73,9 @@ public struct Settings {
     public struct ProductError: Error, Equatable {}
 
     public init(
-      alert: AlertState<Action.Alert>? = nil,
       buildNumber: Build.Number? = nil,
-      developer: DeveloperSettings = DeveloperSettings(),
+      destination: Destination.State? = nil,
+      developer: DeveloperSettings? = nil,
       fullGameProduct: Result<StoreKitClient.Product, ProductError>? = nil,
       fullGamePurchasedAt: Date? = nil,
       isPurchasing: Bool = false,
@@ -68,10 +83,18 @@ public struct Settings {
       stats: Stats.State = .init(),
       userNotificationSettings: UserNotificationClient.Notification.Settings? = nil
     ) {
+      @Dependency(\.apiClient) var apiClient
+      @Dependency(\.applicationClient) var applicationClient
       @Dependency(\.userSettings) var userSettings
-      self.alert = alert
       self.buildNumber = buildNumber
-      self.developer = developer
+      self.destination = destination
+      self.developer =
+        developer
+        ?? DeveloperSettings(
+          currentBaseUrl: DeveloperSettings.BaseUrl(
+            rawValue: apiClient.baseUrl().absoluteString
+          ) ?? .production
+        )
       self.fullGameProduct = fullGameProduct
       self.fullGamePurchasedAt = fullGamePurchasedAt
       self.isPurchasing = isPurchasing
@@ -79,6 +102,17 @@ public struct Settings {
       self.stats = stats
       self.userNotificationSettings = userNotificationSettings
       self.userSettings = userSettings.get()
+
+      let currentPlayer = apiClient.currentPlayer()
+      self.stats.isAnimationReduced = self.userSettings.enableReducedAnimation
+      self.userSettings.appIcon = applicationClient.alternateIconName()
+        .flatMap(AppIcon.init(rawValue:))
+      self.userSettings.sendDailyChallengeSummary =
+        currentPlayer?.player.sendDailyChallengeSummary
+        ?? self.userSettings.sendDailyChallengeSummary
+      self.userSettings.sendDailyChallengeReminder =
+        currentPlayer?.player.sendDailyChallengeReminder
+        ?? self.userSettings.sendDailyChallengeReminder
     }
 
     public var isFullGamePurchased: Bool {
@@ -86,26 +120,17 @@ public struct Settings {
     }
   }
 
-  public enum Action: BindableAction {
-    case alert(PresentationAction<Alert>)
-    case binding(BindingAction<State>)
-    case currentPlayerRefreshed(Result<CurrentPlayerEnvelope, Error>)
-    case didBecomeActive
+  public enum Action {
+    case dailyChallengeReminderToggled(Bool)
+    case dailyChallengeSummaryToggled(Bool)
+    case destination(Destination.Action)
+    case enableNotificationsToggled(Bool)
     case leaveUsAReviewButtonTapped
-    case onDismiss
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
-    case productsResponse(Result<StoreKitClient.ProductsResponse, Error>)
     case reportABugButtonTapped
     case restoreButtonTapped
     case stats(Stats.Action)
     case tappedProduct(StoreKitClient.Product)
-    case task
-    case userNotificationAuthorizationResponse(Result<Bool, Error>)
-    case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
-
-    public enum Alert: Equatable {
-      case openSettingButtonTapped
-    }
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -119,383 +144,283 @@ public struct Settings {
   @Dependency(\.userNotifications) var userNotifications
   @Dependency(\.userSettings) var userSettings
 
+  @StoreTaskID var saveUserSettings
+
   public init() {}
 
-  private enum CancelID {
-    case paymentObserver
-  }
-
-  public var body: some ReducerOf<Self> {
-    CombineReducers {
-      BindingReducer()
-        .onChange(of: \.developer.currentBaseUrl.url) { _, url in
-          Reduce { _, _ in
-            .run { _ in
-              await self.apiClient.setBaseUrl(url)
-              await self.apiClient.logout()
-            }
-          }
-        }
-        .onChange(of: \.userSettings.enableNotifications) { _, enableNotifications in
-          Reduce { state, _ in
-            guard
-              enableNotifications,
-              let userNotificationSettings = state.userNotificationSettings
-            else {
-              // TODO: API request to opt out of all notifications
-              state.userSettings.enableNotifications = false
-              return .none
-            }
-
-            switch userNotificationSettings.authorizationStatus {
-            case .notDetermined, .provisional:
-              state.userSettings.enableNotifications = true
-              return .run { send in
-                await send(
-                  .userNotificationAuthorizationResponse(
-                    Result {
-                      try await self.userNotifications.requestAuthorization([.alert, .sound])
-                    }
-                  ),
-                  animation: .default
+  public var body: some Feature {
+    Update { state, action in
+      switch action {
+      case let .dailyChallengeReminderToggled(sendDailyChallengeReminder):
+        state.userSettings.sendDailyChallengeReminder = sendDailyChallengeReminder
+        store.addTask {
+          _ = try await self.apiClient.apiRequest(
+            route: .push(
+              .updateSetting(
+                .init(
+                  notificationType: .dailyChallengeEndsSoon,
+                  sendNotifications: sendDailyChallengeReminder
                 )
-              }
-
-            case .denied:
-              state.alert = .userNotificationAuthorizationDenied
-              state.userSettings.enableNotifications = false
-              return .none
-
-            case .authorized:
-              state.userSettings.enableNotifications = true
-              return .send(.userNotificationAuthorizationResponse(.success(true)))
-
-            case .ephemeral:
-              state.userSettings.enableNotifications = true
-              return .none
-
-            @unknown default:
-              return .none
-            }
-          }
-        }
-        .onChange(of: \.userSettings.sendDailyChallengeReminder) { _, sendDailyChallengeReminder in
-          Reduce { state, _ in
-            .run { send in
-              _ = try await self.apiClient.apiRequest(
-                route: .push(
-                  .updateSetting(
-                    .init(
-                      notificationType: .dailyChallengeEndsSoon,
-                      sendNotifications: sendDailyChallengeReminder
-                    )
-                  )
-                )
-              )
-              await send(
-                .currentPlayerRefreshed(
-                  Result { try await self.apiClient.refreshCurrentPlayer() }
-                )
-              )
-            }
-          }
-        }
-        .onChange(of: \.userSettings.sendDailyChallengeSummary) { _, sendDailyChallengeSummary in
-          Reduce { state, _ in
-            .run { send in
-              _ = try await self.apiClient.apiRequest(
-                route: .push(
-                  .updateSetting(
-                    .init(
-                      notificationType: .dailyChallengeReport,
-                      sendNotifications: sendDailyChallengeSummary
-                    )
-                  )
-                )
-              )
-              await send(
-                .currentPlayerRefreshed(
-                  Result { try await self.apiClient.refreshCurrentPlayer() }
-                )
-              )
-            }
-          }
-        }
-        .onChange(of: \.userSettings.appIcon) { _, appIcon in
-          Reduce { _, _ in
-            .run { _ in
-              try await self.applicationClient.setAlternateIconName(appIcon?.rawValue)
-            }
-          }
-        }
-        .onChange(of: \.userSettings.colorScheme) { _, colorScheme in
-          Reduce { _, _ in
-            .run { _ in
-              await self.applicationClient.setUserInterfaceStyle(colorScheme.userInterfaceStyle)
-            }
-          }
-        }
-        .onChange(of: \.userSettings.musicVolume) { _, musicVolume in
-          Reduce { _, _ in
-            .run { _ in
-              await self.audioPlayer.setGlobalVolumeForMusic(musicVolume)
-            }
-          }
-        }
-        .onChange(of: \.userSettings.soundEffectsVolume) { _, soundEffectsVolume in
-          Reduce { _, _ in
-            .run { _ in
-              await self.audioPlayer.setGlobalVolumeForSoundEffects(soundEffectsVolume)
-            }
-          }
-        }
-
-      Reduce { state, action in
-        switch action {
-        case .alert(.presented(.openSettingButtonTapped)):
-          return .run { _ in
-            guard
-              let url = await URL(string: self.applicationClient.openSettingsURLString())
-            else { return }
-            _ = await self.applicationClient.open(url, [:])
-          }
-
-        case .alert:
-          return .none
-
-        case .binding:
-          return .none
-
-        case let .currentPlayerRefreshed(.success(envelope)):
-          state.isRestoring = false
-          state.fullGamePurchasedAt = envelope.appleReceipt?.receipt.originalPurchaseDate
-          state.userSettings.sendDailyChallengeReminder = envelope.player.sendDailyChallengeReminder
-          state.userSettings.sendDailyChallengeSummary = envelope.player.sendDailyChallengeSummary
-          return .none
-
-        case .currentPlayerRefreshed(.failure):
-          state.isRestoring = false
-          return .none
-
-        case .didBecomeActive:
-          return .run { send in
-            await send(
-              .userNotificationSettingsResponse(
-                self.userNotifications.getNotificationSettings()
               )
             )
-          }
-
-        case .leaveUsAReviewButtonTapped:
-          return .run { _ in
-            _ = await self.applicationClient
-              .open(self.serverConfig().appStoreReviewUrl, [:])
-          }
-
-        case .onDismiss:
-          return .cancel(id: CancelID.paymentObserver)
-
-        case .paymentTransaction(.removedTransactions):
-          state.isPurchasing = false
-          return .run { send in
-            await send(
-              .currentPlayerRefreshed(
-                Result { try await self.apiClient.refreshCurrentPlayer() }
-              ),
-              animation: .default
-            )
-          }
-
-        case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
-          state.isRestoring = false
-          state.alert = transactions.isEmpty ? .noRestoredPurchases : nil
-          return .none
-
-        case .paymentTransaction(.restoreCompletedTransactionsFailed):
-          state.isRestoring = false
-          state.alert = .restoredPurchasesFailed
-          return .none
-
-        case let .paymentTransaction(.updatedTransactions(transactions)):
-          if transactions.contains(where: { $0.error != nil }) {
-            state.isPurchasing = false
-          }
-          return .none
-
-        case let .productsResponse(.success(response)):
-          state.fullGameProduct =
-            response.products
-            .first {
-              $0.productIdentifier == self.serverConfig().productIdentifiers.fullGame
-            }
-            .map(Result.success)
-            ?? Result.failure(.init())
-          return .none
-
-        case .productsResponse(.failure):
-          state.fullGameProduct = .failure(.init())
-          return .none
-
-        case .reportABugButtonTapped:
-          return .run { _ in
-            let currentPlayer = self.apiClient.currentPlayer()
-            var components = URLComponents()
-            components.scheme = "mailto"
-            components.path = "support@pointfree.co"
-            components.queryItems = [
-              URLQueryItem(name: "subject", value: "I found a bug in isowords"),
-              URLQueryItem(
-                name: "body",
-                value: """
-
-
-                  ---
-                  Build: \(self.build.number()) (\(self.build.gitSha()))
-                  \(currentPlayer?.player.id.rawValue.uuidString ?? "")
-                  """
-              ),
-            ]
-
-            _ = await self.applicationClient.open(components.url!, [:])
-          }
-
-        case .restoreButtonTapped:
-          state.isRestoring = true
-          return .run { _ in await self.storeKit.restoreCompletedTransactions() }
-
-        case .stats:
-          return .none
-
-        case let .tappedProduct(product):
-          state.isPurchasing = true
-          return .run { _ in
-            let payment = SKMutablePayment()
-            payment.productIdentifier = product.productIdentifier
-            payment.quantity = 1
-            await self.storeKit.addPayment(payment)
-          }
-
-        case .task:
-          state.fullGamePurchasedAt =
-            self.apiClient.currentPlayer()?
-            .appleReceipt?
-            .receipt
-            .originalPurchaseDate
-          state.buildNumber = self.build.number()
-          state.stats.isAnimationReduced = state.userSettings.enableReducedAnimation
-          state.userSettings.appIcon = self.applicationClient.alternateIconName()
-            .flatMap(AppIcon.init(rawValue:))
-          state.userSettings.sendDailyChallengeSummary =
-            self.apiClient.currentPlayer()?.player.sendDailyChallengeSummary
-            ?? state.userSettings.sendDailyChallengeSummary
-          state.userSettings.sendDailyChallengeReminder =
-            self.apiClient.currentPlayer()?.player.sendDailyChallengeReminder
-            ?? state.userSettings.sendDailyChallengeReminder
-
-          if let baseUrl = DeveloperSettings.BaseUrl(
-            rawValue: self.apiClient.baseUrl().absoluteString)
-          {
-            state.developer.currentBaseUrl = baseUrl
-          }
-
-          return .merge(
-            .run { [shouldFetchProducts = !state.isFullGamePurchased] send in
-              Task {
-                await withTaskCancellation(id: CancelID.paymentObserver, cancelInFlight: true) {
-                  for await event in self.storeKit.observer() {
-                    await send(.paymentTransaction(event), animation: .default)
-                  }
-                }
-              }
-
-              async let productsResponse: Void =
-                shouldFetchProducts
-                ? send(
-                  .productsResponse(
-                    Result {
-                      try await self.storeKit.fetchProducts([
-                        self.serverConfig().productIdentifiers.fullGame
-                      ])
-                    }
-                  ),
-                  animation: .default
-                )
-                : ()
-
-              async let settingsResponse: Void = send(
-                .userNotificationSettingsResponse(
-                  self.userNotifications.getNotificationSettings()
-                ),
-                animation: .default
-              )
-
-              _ = await (productsResponse, settingsResponse)
-            },
-
-            .publisher {
-              NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
-                .map { _ in .didBecomeActive }
-            }
           )
+          try await self.refreshCurrentPlayer(animated: false)
+        }
 
-        case let .userNotificationAuthorizationResponse(.success(granted)):
-          state.userSettings.enableNotifications = granted
-          return granted
-            ? .run { _ in await self.registerForRemoteNotifications() }
-            : .none
+      case let .dailyChallengeSummaryToggled(sendDailyChallengeSummary):
+        state.userSettings.sendDailyChallengeSummary = sendDailyChallengeSummary
+        store.addTask {
+          _ = try await self.apiClient.apiRequest(
+            route: .push(
+              .updateSetting(
+                .init(
+                  notificationType: .dailyChallengeReport,
+                  sendNotifications: sendDailyChallengeSummary
+                )
+              )
+            )
+          )
+          try await self.refreshCurrentPlayer(animated: false)
+        }
 
-        case .userNotificationAuthorizationResponse:
-          return .none
+      case .destination(.userNotificationAuthorizationDeniedAlert(.openSettingsButtonTapped)):
+        store.addTask {
+          guard
+            let url = await URL(string: self.applicationClient.openSettingsURLString())
+          else { return }
+          _ = await self.applicationClient.open(url, [:])
+        }
 
-        case let .userNotificationSettingsResponse(settings):
-          state.userNotificationSettings = settings
-          // TODO: this is a bug, look into later
-          state.userSettings.enableNotifications = settings.authorizationStatus == .authorized
-          return .none
+      case let .enableNotificationsToggled(enableNotifications):
+        state.userSettings.enableNotifications = enableNotifications
+        guard
+          enableNotifications,
+          let userNotificationSettings = state.userNotificationSettings
+        else {
+          // TODO: API request to opt out of all notifications
+          state.userSettings.enableNotifications = false
+          return
+        }
+
+        switch userNotificationSettings.authorizationStatus {
+        case .notDetermined, .provisional:
+          state.userSettings.enableNotifications = true
+          store.addTask {
+            let granted = try await self.userNotifications.requestAuthorization([.alert, .sound])
+            try await MainActor.run {
+              _ = try withAnimation {
+                try store.modify { $0.userSettings.enableNotifications = granted }
+              }
+            }
+            if granted {
+              await self.registerForRemoteNotifications()
+            }
+          }
+
+        case .denied:
+          state.destination = .userNotificationAuthorizationDeniedAlert(
+            UserNotificationAuthorizationDeniedAlert.State()
+          )
+          state.userSettings.enableNotifications = false
+
+        case .authorized:
+          state.userSettings.enableNotifications = true
+          store.addTask {
+            await self.registerForRemoteNotifications()
+          }
+
+        case .ephemeral:
+          state.userSettings.enableNotifications = true
+
+        @unknown default:
+          break
+        }
+
+      case .leaveUsAReviewButtonTapped:
+        store.addTask {
+          _ = await self.applicationClient
+            .open(self.serverConfig().appStoreReviewUrl, [:])
+        }
+
+      case .paymentTransaction(.removedTransactions):
+        state.isPurchasing = false
+        store.addTask {
+          try await self.refreshCurrentPlayer(animated: true)
+        }
+
+      case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
+        state.isRestoring = false
+        state.destination = transactions.isEmpty ? .noRestoredPurchasesAlert : nil
+
+      case .paymentTransaction(.restoreCompletedTransactionsFailed):
+        state.isRestoring = false
+        state.destination = .restoredPurchasesFailedAlert
+
+      case let .paymentTransaction(.updatedTransactions(transactions)):
+        if transactions.contains(where: { $0.error != nil }) {
+          state.isPurchasing = false
+        }
+
+      case .reportABugButtonTapped:
+        store.addTask {
+          let currentPlayer = self.apiClient.currentPlayer()
+          var components = URLComponents()
+          components.scheme = "mailto"
+          components.path = "support@pointfree.co"
+          components.queryItems = [
+            URLQueryItem(name: "subject", value: "I found a bug in isowords"),
+            URLQueryItem(
+              name: "body",
+              value: """
+
+
+                ---
+                Build: \(self.build.number()) (\(self.build.gitSha()))
+                \(currentPlayer?.player.id.rawValue.uuidString ?? "")
+                """
+            ),
+          ]
+
+          _ = await self.applicationClient.open(components.url!, [:])
+        }
+
+      case .restoreButtonTapped:
+        state.isRestoring = true
+        store.addTask { await self.storeKit.restoreCompletedTransactions() }
+
+      case .stats:
+        break
+
+      case let .tappedProduct(product):
+        state.isPurchasing = true
+        store.addTask {
+          let payment = SKMutablePayment()
+          payment.productIdentifier = product.productIdentifier
+          payment.quantity = 1
+          await self.storeKit.addPayment(payment)
         }
       }
     }
-    .ifLet(\.$alert, action: \.alert)
-    .onChange(of: \.userSettings) { _, userSettings in
-      Reduce { _, _ in
-        enum CancelID { case saveDebounce }
+    .ifLet(\.destination) {
+      Destination.body
+    }
+    .onMount { state in
+      state.fullGamePurchasedAt =
+        self.apiClient.currentPlayer()?
+        .appleReceipt?
+        .receipt
+        .originalPurchaseDate
+      state.buildNumber = self.build.number()
 
-        return .run { _ in await self.userSettings.set(userSettings) }
-          .debounce(id: CancelID.saveDebounce, for: .seconds(0.5), scheduler: self.mainQueue)
+      store.addTask {
+        for await event in self.storeKit.observer() {
+          try await MainActor.run {
+            _ = try withAnimation { try store.send(.paymentTransaction(event)) }
+          }
+        }
+      }
+
+      if !state.isFullGamePurchased {
+        store.addTask {
+          let fullGameProduct: Result<StoreKitClient.Product, State.ProductError>
+          do {
+            let response = try await self.storeKit.fetchProducts([
+              self.serverConfig().productIdentifiers.fullGame
+            ])
+            fullGameProduct =
+              response.products
+              .first { $0.productIdentifier == self.serverConfig().productIdentifiers.fullGame }
+              .map(Result.success)
+              ?? .failure(State.ProductError())
+          } catch {
+            fullGameProduct = .failure(State.ProductError())
+          }
+          try await MainActor.run {
+            _ = try withAnimation { try store.modify { $0.fullGameProduct = fullGameProduct } }
+          }
+        }
+      }
+
+      store.addTask {
+        try await self.refreshUserNotificationSettings(animated: true)
+      }
+
+      store.addTask {
+        for await _ in NotificationCenter.default.notifications(
+          named: UIApplication.didBecomeActiveNotification
+        ) {
+          try await self.refreshUserNotificationSettings(animated: false)
+        }
+      }
+    }
+    .onChange(of: store.developer.currentBaseUrl) { _, currentBaseUrl, _ in
+      store.addTask {
+        await self.apiClient.setBaseUrl(currentBaseUrl.url)
+        await self.apiClient.logout()
+      }
+    }
+    .onChange(of: store.userSettings.appIcon) { _, appIcon, _ in
+      store.addTask {
+        try await self.applicationClient.setAlternateIconName(appIcon?.rawValue)
+      }
+    }
+    .onChange(of: store.userSettings.colorScheme) { _, colorScheme, _ in
+      store.addTask {
+        await self.applicationClient.setUserInterfaceStyle(colorScheme.userInterfaceStyle)
+      }
+    }
+    .onChange(of: store.userSettings.musicVolume) { _, musicVolume, _ in
+      store.addTask {
+        await self.audioPlayer.setGlobalVolumeForMusic(musicVolume)
+      }
+    }
+    .onChange(of: store.userSettings.soundEffectsVolume) { _, soundEffectsVolume, _ in
+      store.addTask {
+        await self.audioPlayer.setGlobalVolumeForSoundEffects(soundEffectsVolume)
+      }
+    }
+    .onChange(of: store.userSettings) { _, userSettings, _ in
+      store.addTask(id: saveUserSettings) {
+        try await self.mainQueue.sleep(for: .seconds(0.5))
+        await self.userSettings.set(userSettings)
       }
     }
 
-    Scope(state: \.stats, action: \.stats) {
+    Scope(\.stats) {
       Stats()
     }
   }
-}
 
-extension AlertState where Action == Settings.Action.Alert {
-  static let userNotificationAuthorizationDenied = Self {
-    TextState("Permission Denied")
-  } actions: {
-    ButtonState { TextState("Ok") }
-    ButtonState(action: .openSettingButtonTapped) {
-      TextState("Open settings")
+  private func refreshCurrentPlayer(animated: Bool) async throws {
+    let envelope: CurrentPlayerEnvelope
+    do {
+      envelope = try await self.apiClient.refreshCurrentPlayer()
+    } catch {
+      try store.modify { $0.isRestoring = false }
+      return
     }
-  } message: {
-    TextState("Turn on notifications in iOS settings.")
+    try await MainActor.run {
+      _ = try withAnimation(animated ? .default : nil) {
+        try store.modify {
+          $0.isRestoring = false
+          $0.fullGamePurchasedAt = envelope.appleReceipt?.receipt.originalPurchaseDate
+          $0.userSettings.sendDailyChallengeReminder = envelope.player.sendDailyChallengeReminder
+          $0.userSettings.sendDailyChallengeSummary = envelope.player.sendDailyChallengeSummary
+        }
+      }
+    }
   }
 
-  static let restoredPurchasesFailed = Self {
-    TextState("Error")
-  } actions: {
-    ButtonState { TextState("Ok") }
-  } message: {
-    TextState("We couldn’t restore purchases, please try again.")
-  }
-
-  static let noRestoredPurchases = Self {
-    TextState("No Purchases")
-  } actions: {
-    ButtonState { TextState("Ok") }
-  } message: {
-    TextState("No purchases were found to restore.")
+  private func refreshUserNotificationSettings(animated: Bool) async throws {
+    let settings = await self.userNotifications.getNotificationSettings()
+    try await MainActor.run {
+      _ = try withAnimation(animated ? .default : nil) {
+        try store.modify {
+          $0.userNotificationSettings = settings
+          // TODO: this is a bug, look into later
+          $0.userSettings.enableNotifications = settings.authorizationStatus == .authorized
+        }
+      }
+    }
   }
 }

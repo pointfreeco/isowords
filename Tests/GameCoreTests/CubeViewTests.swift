@@ -1,5 +1,5 @@
-import ComposableArchitecture
 import CubeCore
+import GameCore
 import SharedModels
 import SnapshotTesting
 import Styleguide
@@ -17,6 +17,7 @@ class CubeViewTests: XCTestCase {
 //    isRecording = true
   }
 
+  @MainActor
   func testLetterSurfaceShaderBorderBuffer() throws {
     let json = """
       [
@@ -534,20 +535,16 @@ class CubeViewTests: XCTestCase {
       """
     let cubes = try JSONDecoder().decode(Puzzle.self, from: Data(json.utf8))
 
-    let view = CubeView(
-      store: Store<CubeSceneView.ViewState, CubeSceneView.ViewAction>(
-        initialState: .init(
-          game: .init(
-            cubes: cubes,
-            gameContext: .solo,
-            gameCurrentTime: .mock,
-            gameMode: .unlimited,
-            gameStartTime: .mock
-          )
-        )
-      ) {
-      }
+    let viewState = CubeSceneView.ViewState(
+      game: .init(
+        cubes: cubes,
+        gameContext: .solo,
+        gameCurrentTime: .mock,
+        gameMode: .unlimited,
+        gameStartTime: .mock
+      )
     )
+    let view = CubeView(state: { viewState }, send: { _ in })
 
     assertSnapshot(
       matching: view,

@@ -3,6 +3,7 @@ import CasePaths
 import Foundation
 import Tagged
 
+@CasePathable
 public enum ServerRoute: Equatable {
   case api(Api)
   case appSiteAssociation
@@ -15,6 +16,7 @@ public enum ServerRoute: Equatable {
   case privacyPolicy
   case sharedGame(SharedGame)
 
+  @CasePathable
   public enum Demo: Equatable {
     case submitGame(SubmitRequest)
 
@@ -59,11 +61,13 @@ public enum ServerRoute: Equatable {
       case sharedGame(SharedGame)
       case verifyReceipt(Data)
 
+      @CasePathable
       public enum DailyChallenge: Equatable, Sendable {
         case results(Results)
         case start(gameMode: GameMode, language: Language)
         case today(language: Language)
 
+        @CasePathable
         public enum Results: Equatable, Sendable {
           case fetch(
             gameMode: GameMode, gameNumber: SharedModels.DailyChallenge.GameNumber?,
@@ -132,17 +136,20 @@ public enum ServerRoute: Equatable {
         }
       }
 
+      @CasePathable
       public enum Leaderboard: Equatable, Sendable {
         case fetch(gameMode: GameMode, language: Language, timeScope: TimeScope)
         case vocab(Vocab)
         case weekInReview(language: Language)
 
+        @CasePathable
         public enum Vocab: Equatable, Sendable {
           case fetch(language: Language, timeScope: TimeScope)
           case fetchWord(wordId: Word.Id)
         }
       }
 
+      @CasePathable
       public enum Push: Equatable, Sendable {
         case register(Register)
         case updateSetting(Setting)
@@ -186,6 +193,7 @@ public enum ServerRoute: Equatable {
         }
       }
 
+      @CasePathable
       public enum SharedGame: Equatable, Sendable {
         case fetch(SharedModels.SharedGame.Code)
         case share(CompletedGame)
@@ -212,6 +220,7 @@ public enum ServerRoute: Equatable {
     }
   }
 
+  @CasePathable
   public enum SharedGame: Equatable {
     case show(SharedModels.SharedGame.Code)
   }

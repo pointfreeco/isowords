@@ -2,18 +2,19 @@ import AudioPlayerClient
 import Bloom
 import ComposableArchitecture
 import CubeCore
+import Dependencies
 import GameCore
 import SharedModels
 import SwiftUI
+import TcaHelpers
 import UIApplicationClient
 
-@Reducer
+@Feature
 public struct Trailer {
-  @ObservableState
-  public struct State: Equatable {
-    var game: Game.State
-    var nub: CubeSceneView.ViewState.NubState
-    var opacity: Double
+  public struct State {
+    @DebugSnapshotTracked var game: Game.State
+    @DebugSnapshotTracked var nub: CubeSceneView.ViewState.NubState
+    @DebugSnapshotTracked var opacity: Double
 
     public init(
       game: Game.State,
@@ -43,10 +44,8 @@ public struct Trailer {
     }
   }
 
-  public enum Action: BindableAction {
-    case binding(BindingAction<State>)
+  public enum Action {
     case game(Game.Action)
-    case task
   }
 
   @Dependency(\.audioPlayer) var audioPlayer
@@ -54,133 +53,140 @@ public struct Trailer {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Scope(state: \.game, action: \.game) {
-      Game().transformDependency(\.self) {
-        $0.apiClient = .noop
-        $0.applicationClient = .noop
-        $0.audioPlayer = self.audioPlayer
-          .filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
-        $0.build = .noop
-        $0.database = .noop
-        $0.feedbackGenerator = .noop
-        $0.fileClient = .noop
-        $0.gameCenter = .noop
-        $0.lowPowerMode = .false
-        $0.remoteNotifications = .noop
-        $0.serverConfig = .noop
-        $0.storeKit = .noop
-        $0.userDefaults = .noop
-        $0.userNotifications = .noop
-      }
+  public var body: some Feature {
+    Scope(\.game) {
+      Game(startsOnMount: false)
     }
+    .transformDependency(\.self) {
+      $0.apiClient = .noop
+      $0.applicationClient = .noop
+      $0.audioPlayer = self.audioPlayer
+        .filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
+      $0.build = .noop
+      $0.database = .noop
+      $0.feedbackGenerator = .noop
+      $0.fileClient = .noop
+      $0.gameCenter = .noop
+      $0.lowPowerMode = .false
+      $0.remoteNotifications = .noop
+      $0.serverConfig = .noop
+      $0.storeKit = .noop
+      $0.userDefaults = .noop
+      $0.userNotifications = .noop
+    }
+    .onMount { state in
+      let nub = state.nub
+      store.addTask {
+        var nub = nub
+        await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
 
-    BindingReducer()
+        // Play trailer music
+        await self.audioPlayer.play(.onboardingBgMusic)
 
-    Reduce { state, action in
-      switch action {
-      case .binding:
-        return .none
+        // Fade the cube in after a second
+        try await MainActor.run {
+          try withAnimation(.easeInOut(duration: fadeInDuration)) {
+            _ = try store.modify { $0.opacity = 1 }
+          }
+        }
+        try await self.mainQueue.sleep(for: firstWordDelay)
 
-      case .game:
-        return .none
+        // Play each word
+        for word in replayableWords {
+          // Play each character in the word
+          for (characterIndex, character) in word.enumerated() {
+            let face = IndexedCubeFace(index: character.index, side: character.side)
 
-      case .task:
-        return .run { [nub = state.nub] send in
-          var nub = nub
-          await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-
-          // Play trailer music
-          await self.audioPlayer.play(.onboardingBgMusic)
-
-          // Fade the cube in after a second
-          await send(.set(\.opacity, 1), animation: .easeInOut(duration: fadeInDuration))
-          try await self.mainQueue.sleep(for: firstWordDelay)
-
-          // Play each word
-          for word in replayableWords {
-            // Play each character in the word
-            for (characterIndex, character) in word.enumerated() {
-              let face = IndexedCubeFace(index: character.index, side: character.side)
-
-              // Move the nub to the face being played
-              nub.location = .face(face)
-              await send(
-                .set(\.nub, nub),
-                animateWithDuration: moveNubToFaceDuration,
-                options: .curveEaseInOut
-              )
-              try await self.mainQueue.sleep(
-                for: moveNubDelay(characterIndex: characterIndex)
-              )
-
-              try await self.mainQueue.sleep(
-                for: .seconds(
-                  .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
-              )
-              // Press the nub on the first character
-              nub.isPressed = true
-              if characterIndex == 0 {
-                await send(.set(\.nub, nub), animateWithDuration: 0.3)
-              }
-              // Select the cube face
-              await send(.game(.tap(.began, face)), animation: .default)
-            }
-
-            // Release the  nub when the last character is played
-            nub.isPressed = false
-            await send(.set(\.nub, nub), animateWithDuration: 0.3)
-
-            // Move the nub to the submit button
-            try await self.mainQueue.sleep(for: .seconds(0.3))
-
-            nub.location = .submitButton
-            await send(
-              .set(\.nub, nub),
-              animateWithDuration: moveNubToSubmitButtonDuration,
+            // Move the nub to the face being played
+            nub.location = .face(face)
+            await store.modify(
+              animateWithDuration: moveNubToFaceDuration,
               options: .curveEaseInOut
+            ) { [nub] in
+              $0.nub = nub
+            }
+            try await self.mainQueue.sleep(
+              for: moveNubDelay(characterIndex: characterIndex)
             )
 
-            // Press the nub
             try await self.mainQueue.sleep(
               for: .seconds(
-                .random(
-                  in:
-                    moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration
-                    + submitHestitationDuration)
-                )
-              )
+                .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
             )
-
-            // Submit the word
-            try await self.mainQueue.sleep(for: .seconds(0.1))
-            await withThrowingTaskGroup(of: Void.self) { group in
-              group.addTask { [nub] in
-                var nub = nub
-                nub.isPressed = true
-                await send(.set(\.nub, nub), animateWithDuration: 0.3)
-              }
-              group.addTask { [nub] in
-                var nub = nub
-                try await self.mainQueue.sleep(for: .seconds(0.2))
-                await send(.game(.submitButtonTapped(reaction: nil)))
-                try await self.mainQueue.sleep(for: .seconds(0.3))
-                nub.isPressed = false
-                await send(.set(\.nub, nub), animateWithDuration: 0.3)
+            // Press the nub on the first character
+            nub.isPressed = true
+            if characterIndex == 0 {
+              await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
+            }
+            // Select the cube face
+            try await MainActor.run {
+              try withAnimation {
+                _ = try store.send(.game(.tap(.began, face)))
               }
             }
           }
 
-          // Move the nub off screen once all words have been played
+          // Release the  nub when the last character is played
+          nub.isPressed = false
+          await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
+
+          // Move the nub to the submit button
           try await self.mainQueue.sleep(for: .seconds(0.3))
-          nub.location = .offScreenBottom
-          await send(
-            .set(\.nub, nub),
-            animateWithDuration: moveNubOffScreenDuration,
+
+          nub.location = .submitButton
+          await store.modify(
+            animateWithDuration: moveNubToSubmitButtonDuration,
             options: .curveEaseInOut
+          ) { [nub] in
+            $0.nub = nub
+          }
+
+          // Press the nub
+          try await self.mainQueue.sleep(
+            for: .seconds(
+              .random(
+                in:
+                  moveNubToSubmitButtonDuration...(moveNubToSubmitButtonDuration
+                  + submitHestitationDuration)
+              )
+            )
           )
 
-          await send(.set(\.opacity, 0), animation: .linear(duration: moveNubOffScreenDuration))
+          // Submit the word
+          try await self.mainQueue.sleep(for: .seconds(0.1))
+          await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask { [nub] in
+              var nub = nub
+              nub.isPressed = true
+              await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
+            }
+            group.addTask { [nub] in
+              var nub = nub
+              try await self.mainQueue.sleep(for: .seconds(0.2))
+              try await MainActor.run {
+                _ = try store.send(.game(.submitButtonTapped(reaction: nil)))
+              }
+              try await self.mainQueue.sleep(for: .seconds(0.3))
+              nub.isPressed = false
+              await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
+            }
+          }
+        }
+
+        // Move the nub off screen once all words have been played
+        try await self.mainQueue.sleep(for: .seconds(0.3))
+        nub.location = .offScreenBottom
+        await store.modify(
+          animateWithDuration: moveNubOffScreenDuration,
+          options: .curveEaseInOut
+        ) { [nub] in
+          $0.nub = nub
+        }
+
+        try await MainActor.run {
+          try withAnimation(.linear(duration: moveNubOffScreenDuration)) {
+            _ = try store.modify { $0.opacity = 0 }
+          }
         }
       }
     }
@@ -226,12 +232,7 @@ public struct TrailerView: View {
           Spacer()
 
           if !store.game.selectedWordString.isEmpty {
-            WordSubmitButton(
-              store: store.scope(
-                state: \.game.wordSubmitButtonFeature,
-                action: \.game.wordSubmitButton
-              )
-            )
+            WordSubmitButton(store: store.scope(\.game).scope(\.wordSubmitButtonFeature))
             .transition(
               AnyTransition
                 .asymmetric(insertion: .offset(y: 50), removal: .offset(y: 50))
@@ -242,13 +243,17 @@ public struct TrailerView: View {
 
           WordListView(
             isLeftToRight: true,
-            store: store.scope(state: \.game, action: \.game)
+            store: store.scope(\.game)
           )
         }
         .adaptivePadding(.top, .grid(18))
         .adaptivePadding(.bottom, .grid(2))
 
-        CubeView(store: store.scope(state: \.cubeScene, action: \.game.cubeScene))
+        CubeView(
+          store: store,
+          state: \.cubeScene,
+          action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
+        )
           .adaptivePadding(
             self.deviceState.idiom == .pad ? .horizontal : [],
             .grid(30)
@@ -266,7 +271,6 @@ public struct TrailerView: View {
       .grid(15)
     )
     .opacity(store.opacity)
-    .task { await store.send(.task).finish() }
   }
 
   var scoreText: Text {

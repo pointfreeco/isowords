@@ -157,6 +157,7 @@ fileprivate extension Game.State {
               )
             )
           ) {
+            Game()
           }
         )
         .previewLayout(.fixed(width: 320, height: 100))
@@ -194,6 +195,7 @@ fileprivate extension Game.State {
               )
             )
           ) {
+            Game()
           }
         )
         .previewLayout(.fixed(width: 320, height: 100))

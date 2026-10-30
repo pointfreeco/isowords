@@ -19,7 +19,7 @@ func assertBackwardsCompatibleCodable<A>(
     value,
     decodedValue,
     "Value decoded from JSON does not match expected value",
-    file: file,
+    filePath: file,
     line: line
   )
 

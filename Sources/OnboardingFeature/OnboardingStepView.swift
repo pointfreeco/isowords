@@ -186,7 +186,7 @@ struct OnboardingStepView: View {
         Group {
           if store.isNextButtonVisible {
             Button {
-              store.send(.nextButtonTapped, animation: .default)
+              withAnimation { _ = store.send(.nextButtonTapped) }
             } label: {
               Image(systemName: "arrow.right")
                 .frame(width: 80, height: 80)
@@ -206,9 +206,7 @@ struct OnboardingStepView: View {
           } else if !store.step.isFullscreen {
             if store.isSubmitButtonVisible {
               Button {
-                store.send(
-                  .game(.submitButtonTapped(reaction: nil)), animation: .default
-                )
+                withAnimation { _ = store.send(.submitButtonTapped) }
               } label: {
                 Image(systemName: "hand.thumbsup")
                   .frame(width: 80, height: 80)
@@ -228,7 +226,7 @@ struct OnboardingStepView: View {
             }
           } else if store.isGetStartedButtonVisible {
             Button {
-              store.send(.getStartedButtonTapped, animation: .default)
+              withAnimation { _ = store.send(.getStartedButtonTapped) }
             } label: {
               HStack {
                 switch store.presentationStyle {
@@ -263,8 +261,24 @@ struct OnboardingStepView: View {
         )
       }
     }
-    .task { await store.send(.task).finish() }
-    .alert($store.scope(state: \.alert, action: \.alert))
+    .alert(
+      "Skip tutorial?",
+      isPresented: $store.scope(\.alert).isPresent(),
+      presenting: store.scope(\.alert)
+    ) { alertStore in
+      Button("Yes, skip") {
+        withAnimation { _ = alertStore.send(.skipButtonTapped) }
+      }
+      Button("No, resume", role: .cancel) {}
+    } message: { _ in
+      Text(
+        """
+        Are you sure you want to skip the tutorial? It only takes about a minute to complete.
+
+        You can always view it again later in settings.
+        """
+      )
+    }
   }
 }
 
@@ -354,3 +368,16 @@ extension Onboarding.State.Step {
     }
   }
 #endif
+
+extension Binding {
+  fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
+    Binding<Bool>(
+      get: { self.wrappedValue != nil },
+      set: { isPresented, transaction in
+        if !isPresented {
+          self.transaction(transaction).wrappedValue = nil
+        }
+      }
+    )
+  }
+}

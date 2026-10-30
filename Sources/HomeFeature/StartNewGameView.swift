@@ -48,12 +48,12 @@ struct StartNewGameView: View {
       )
     }
     .navigationDestination(
-      item: $store.scope(state: \.destination?.solo, action: \.destination.solo)
+      item: $store.scope(\.destination).solo
     ) { store in
       SoloView(store: store)
     }
     .navigationDestination(
-      item: $store.scope(state: \.destination?.multiplayer, action: \.destination.multiplayer)
+      item: $store.scope(\.destination).multiplayer
     ) { store in
       MultiplayerView(store: store)
     }
@@ -67,7 +67,7 @@ struct StartNewGameView: View {
     static var previews: some View {
       Preview {
         StartNewGameView(
-          store: Store(initialState: .init()) {
+          store: Store(initialState: Home.State()) {
           }
         )
       }

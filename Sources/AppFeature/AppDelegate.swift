@@ -1,19 +1,22 @@
 import AudioPlayerClient
 import ComposableArchitecture
 import ComposableUserNotifications
+import Dependencies
 import Foundation
 import SettingsFeature
 
-@Reducer
+@Feature
 public struct AppDelegateReducer {
-  public struct State: Equatable {
+  public struct State {
     public init() {}
   }
 
   public enum Action {
-    case didFinishLaunching
     case didRegisterForRemoteNotifications(Result<Data, Error>)
-    case userNotifications(UserNotificationClient.DelegateEvent)
+  }
+
+  public enum DidReceiveNotificationResponse: FeatureEventKey {
+    public typealias Value = UserNotificationClient.Notification.Response
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -27,63 +30,17 @@ public struct AppDelegateReducer {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case .didFinishLaunching:
-        let userNotificationsEventStream = self.userNotifications.delegate()
-        return .run { send in
-          await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask {
-              for await event in userNotificationsEventStream {
-                await send(.userNotifications(event))
-              }
-            }
-
-            group.addTask {
-              let settings = await self.userNotifications.getNotificationSettings()
-              switch settings.authorizationStatus {
-              case .authorized:
-                guard
-                  try await self.userNotifications.requestAuthorization([.alert, .sound])
-                else { return }
-              case .notDetermined, .provisional:
-                guard try await self.userNotifications.requestAuthorization(.provisional)
-                else { return }
-              default:
-                return
-              }
-              await self.registerForRemoteNotifications()
-            }
-
-            group.addTask {
-              _ = try self.loadDictionary(.en)
-            }
-
-            group.addTask {
-              await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-            }
-
-            group.addTask {
-              await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
-              await self.audioPlayer.setGlobalVolumeForMusic(
-                self.audioPlayer.secondaryAudioShouldBeSilencedHint()
-                  ? 0
-                  : userSettings.musicVolume
-              )
-              await self.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
-            }
-          }
-        }
-
       case .didRegisterForRemoteNotifications(.failure):
-        return .none
+        break
 
       case let .didRegisterForRemoteNotifications(.success(tokenData)):
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-        return .run { _ in
+        store.addTask {
           let settings = await self.userNotifications.getNotificationSettings()
-          _ = try await self.apiClient.apiRequest(
+          _ = try? await self.apiClient.apiRequest(
             route: .push(
               .register(
                 .init(
@@ -94,16 +51,55 @@ public struct AppDelegateReducer {
               )
             )
           )
-        } catch: { _, _ in
         }
+      }
+    }
+    .onMount { _ in
+      let userNotificationsEventStream = self.userNotifications.delegate()
+      store.addTask {
+        for await event in userNotificationsEventStream {
+          switch event {
+          case let .didReceiveResponse(response, completionHandler):
+            try store.post(key: DidReceiveNotificationResponse.self, value: response)
+            completionHandler()
 
-      case let .userNotifications(.willPresentNotification(_, completionHandler)):
-        return .run { _ in
-          completionHandler(.banner)
+          case .openSettingsForNotification:
+            break
+
+          case let .willPresentNotification(_, completionHandler):
+            completionHandler(.banner)
+          }
         }
-
-      case .userNotifications:
-        return .none
+      }
+      store.addTask {
+        let settings = await self.userNotifications.getNotificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized:
+          guard
+            try await self.userNotifications.requestAuthorization([.alert, .sound])
+          else { return }
+        case .notDetermined, .provisional:
+          guard try await self.userNotifications.requestAuthorization(.provisional)
+          else { return }
+        default:
+          return
+        }
+        await self.registerForRemoteNotifications()
+      }
+      store.addTask {
+        _ = try self.loadDictionary(.en)
+      }
+      store.addTask {
+        await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+      }
+      store.addTask {
+        await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
+        await self.audioPlayer.setGlobalVolumeForMusic(
+          self.audioPlayer.secondaryAudioShouldBeSilencedHint()
+            ? 0
+            : userSettings.musicVolume
+        )
+        await self.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
       }
     }
   }

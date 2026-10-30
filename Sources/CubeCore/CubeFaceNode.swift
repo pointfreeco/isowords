@@ -1,5 +1,3 @@
-import Combine
-import ComposableArchitecture
 import SceneKit
 import SharedModels
 import SwiftUI
@@ -29,18 +27,17 @@ public class CubeFaceNode: SCNNode {
 
   public let side: CubeFace.Side
 
-  private var cancellables: Set<AnyCancellable> = []
-  private let uuid = UUID()
+  private let letterNode: SCNNode
+  private var viewState: ViewState?
 
   public init(
     letterGeometry: SCNGeometry,
-    viewState viewStatePublisher: StorePublisher<ViewState>
+    viewState: ViewState
   ) {
-    let viewState = viewStatePublisher.currentValue
     self.side = viewState.cubeFace.side
+    self.letterNode = SCNNode(geometry: letterGeometry)
     super.init()
 
-    let letterNode = SCNNode(geometry: letterGeometry)
     letterNode.castsShadow = false
     letterNode.name = "text"
     letterNode.position = .init(0, 0, 0.01)
@@ -60,17 +57,18 @@ public class CubeFaceNode: SCNNode {
       self.position = SCNVector3(0.5, 0, 0)
     }
 
-    viewStatePublisher
-      .sink { [weak self] state in
-        guard let self = self else { return }
-        guard state.cubeFace.useCount <= 2 else { return }
-        self.geometry = plane(
-          status: state.status,
-          useCount: state.cubeFace.useCount
-        )
-        letterNode.isHidden = state.letterIsHidden
-      }
-      .store(in: &self.cancellables)
+    self.update(viewState: viewState)
+  }
+
+  func update(viewState: ViewState) {
+    guard viewState != self.viewState else { return }
+    self.viewState = viewState
+    guard viewState.cubeFace.useCount <= 2 else { return }
+    self.geometry = plane(
+      status: viewState.status,
+      useCount: viewState.cubeFace.useCount
+    )
+    self.letterNode.isHidden = viewState.letterIsHidden
   }
 
   required init?(coder: NSCoder) {

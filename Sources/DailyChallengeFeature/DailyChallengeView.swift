@@ -3,27 +3,38 @@ import ComposableArchitecture
 import ComposableUserNotifications
 import DailyChallengeHelpers
 import DateHelpers
+import Dependencies
 import NotificationsAuthAlert
 import Overture
 import SharedModels
 import Styleguide
 import SwiftUI
 
-@Reducer
+@Feature
 public struct DailyChallengeReducer {
-  @Reducer(state: .equatable)
+  @Feature
   public enum Destination {
-    case alert(AlertState<Alert>)
+    case alert(Alert)
     case notificationsAuthAlert(NotificationsAuthAlert)
     case results(DailyChallengeResults)
 
-    public enum Alert: Equatable {}
+    @Feature
+    public struct Alert: Prompt {
+      public struct State {
+        public var message: Text
+        public var title: Text
+
+        public init(title: Text, message: Text) {
+          self.message = message
+          self.title = title
+        }
+      }
+    }
   }
 
-  @ObservableState
-  public struct State: Equatable {
+  public struct State {
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]
-    @Presents public var destination: Destination.State?
+    public var destination: Destination.State?
     public var gameModeIsLoading: GameMode?
     public var inProgressDailyChallengeUnlimited: InProgressGame?
     public var userNotificationSettings: UserNotificationClient.Notification.Settings?
@@ -49,20 +60,14 @@ public struct DailyChallengeReducer {
   }
 
   public enum Action {
-    case delegate(Delegate)
-    case destination(PresentationAction<Destination.Action>)
-    case fetchTodaysDailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
+    case destination(Destination.Action)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
     case resultsButtonTapped
-    case startDailyChallengeResponse(Result<InProgressGame, Error>)
-    case task
-    case userNotificationSettingsResponse(UserNotificationClient.Notification.Settings)
+  }
 
-    @CasePathable
-    public enum Delegate: Equatable {
-      case startGame(InProgressGame)
-    }
+  public enum StartGame: FeatureEventKey {
+    public typealias Value = InProgressGame
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -72,35 +77,17 @@ public struct DailyChallengeReducer {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case .delegate:
-        return .none
-
-      case let .destination(
-        .presented(
-          .notificationsAuthAlert(.delegate(.didChooseNotificationSettings(settings)))
-        )
-      ):
-        state.userNotificationSettings = settings
-        return .none
-
       case .destination:
-        return .none
-
-      case .fetchTodaysDailyChallengeResponse(.failure):
-        return .none
-
-      case let .fetchTodaysDailyChallengeResponse(.success(response)):
-        state.dailyChallenges = response
-        return .none
+        break
 
       case let .gameButtonTapped(gameMode):
         guard
           let challenge = state.dailyChallenges
             .first(where: { $0.dailyChallenge.gameMode == gameMode })
-        else { return .none }
+        else { return }
 
         let isPlayable: Bool
         switch challenge.dailyChallenge.gameMode {
@@ -114,124 +101,90 @@ public struct DailyChallengeReducer {
         guard isPlayable
         else {
           state.destination = .alert(.alreadyPlayed(nextStartsAt: challenge.dailyChallenge.endsAt))
-          return .none
+          return
         }
 
         state.gameModeIsLoading = challenge.dailyChallenge.gameMode
 
-        return .run { send in
-          await send(
-            .startDailyChallengeResponse(
-              Result {
-                try await startDailyChallengeAsync(
-                  challenge,
-                  apiClient: self.apiClient,
-                  date: { self.now },
-                  fileClient: self.fileClient
-                )
-              }
+        store.addTask {
+          do {
+            let inProgressGame = try await startDailyChallengeAsync(
+              challenge,
+              apiClient: apiClient,
+              date: { now },
+              fileClient: fileClient
             )
-          )
+            try store.modify { $0.gameModeIsLoading = nil }
+            try store.post(key: StartGame.self, value: inProgressGame)
+          } catch let DailyChallengeError.alreadyPlayed(endsAt) {
+            try store.modify {
+              $0.destination = .alert(.alreadyPlayed(nextStartsAt: endsAt))
+              $0.gameModeIsLoading = nil
+            }
+          } catch let DailyChallengeError.couldNotFetch(nextStartsAt) {
+            try store.modify {
+              $0.destination = .alert(.couldNotFetchDaily(nextStartsAt: nextStartsAt))
+              $0.gameModeIsLoading = nil
+            }
+          } catch {}
         }
 
       case .notificationButtonTapped:
         state.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
-        return .none
 
       case .resultsButtonTapped:
         state.destination = .results(DailyChallengeResults.State())
-        return .none
-
-      case let .startDailyChallengeResponse(.failure(DailyChallengeError.alreadyPlayed(endsAt))):
-        state.destination = .alert(.alreadyPlayed(nextStartsAt: endsAt))
-        state.gameModeIsLoading = nil
-        return .none
-
-      case let .startDailyChallengeResponse(
-        .failure(DailyChallengeError.couldNotFetch(nextStartsAt))
-      ):
-        state.destination = .alert(.couldNotFetchDaily(nextStartsAt: nextStartsAt))
-        state.gameModeIsLoading = nil
-        return .none
-
-      case .startDailyChallengeResponse(.failure):
-        return .none
-
-      case let .startDailyChallengeResponse(.success(inProgressGame)):
-        state.gameModeIsLoading = nil
-        return .send(.delegate(.startGame(inProgressGame)))
-
-      case .task:
-        return .run { send in
-          await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-              await send(
-                .userNotificationSettingsResponse(
-                  self.getUserNotificationSettings()
-                )
-              )
-            }
-
-            group.addTask {
-              await send(
-                .fetchTodaysDailyChallengeResponse(
-                  Result {
-                    try await self.apiClient.apiRequest(
-                      route: .dailyChallenge(.today(language: .en)),
-                      as: [FetchTodaysDailyChallengeResponse].self
-                    )
-                  }
-                ),
-                animation: .default
-              )
-            }
-          }
-        }
-
-      case let .userNotificationSettingsResponse(settings):
-        state.userNotificationSettings = settings
-        return .none
       }
     }
-    .ifLet(\.$destination, action: \.destination) {
+    .ifLet(\.destination) {
       Destination.body
+    }
+    .onEvent(NotificationsAuthAlert.DidChooseNotificationSettings.self) { settings, state in
+      state.userNotificationSettings = settings
+    }
+    .onMount { _ in
+      store.addTask {
+        let settings = await getUserNotificationSettings()
+        try store.modify { $0.userNotificationSettings = settings }
+      }
+      store.addTask {
+        let dailyChallenges = try await apiClient.apiRequest(
+          route: .dailyChallenge(.today(language: .en)),
+          as: [FetchTodaysDailyChallengeResponse].self
+        )
+        try await MainActor.run {
+          try withAnimation {
+            _ = try store.modify { $0.dailyChallenges = dailyChallenges }
+          }
+        }
+      }
     }
   }
 }
 
-extension AlertState where Action == DailyChallengeReducer.Destination.Alert {
+extension DailyChallengeReducer.Destination.Alert.State {
   static func alreadyPlayed(nextStartsAt: Date) -> Self {
-    Self {
-      TextState("Already played")
-    } actions: {
-      ButtonState {
-        TextState("OK")
-      }
-    } message: {
-      TextState(
+    Self(
+      title: Text("Already played"),
+      message: Text(
         """
         You already played today’s daily challenge. You can play the next one in \
         \(nextStartsAt, formatter: relativeFormatter).
         """
       )
-    }
+    )
   }
 
   static func couldNotFetchDaily(nextStartsAt: Date) -> Self {
-    Self {
-      TextState("Couldn’t start today’s daily")
-    } actions: {
-      ButtonState {
-        TextState("OK")
-      }
-    } message: {
-      TextState(
+    Self(
+      title: Text("Couldn’t start today’s daily"),
+      message: Text(
         """
         We’re sorry. We were unable to fetch today’s daily or you already started it \
         earlier today. You can play the next daily in \(nextStartsAt, formatter: relativeFormatter).
         """
       )
-    }
+    )
   }
 }
 
@@ -309,7 +262,7 @@ public struct DailyChallengeView: View {
             inactiveText: timedState.inactiveText,
             isLoading: store.gameModeIsLoading == .timed,
             resumeText: timedState.resumeText,
-            action: { store.send(.gameButtonTapped(.timed), animation: .default) }
+            action: { withAnimation { _ = store.send(.gameButtonTapped(.timed)) } }
           )
           .disabled(store.gameModeIsLoading != nil)
 
@@ -320,7 +273,7 @@ public struct DailyChallengeView: View {
             inactiveText: unlimitedState.inactiveText,
             isLoading: store.gameModeIsLoading == .unlimited,
             resumeText: unlimitedState.resumeText,
-            action: { store.send(.gameButtonTapped(.unlimited), animation: .default) }
+            action: { withAnimation { _ = store.send(.gameButtonTapped(.unlimited)) } }
           )
           .disabled(store.gameModeIsLoading != nil)
         }
@@ -345,7 +298,6 @@ public struct DailyChallengeView: View {
         .foregroundColor(self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge)
         .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
-      .task { await store.send(.task).finish() }
       .navigationStyle(
         backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
         foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
@@ -353,7 +305,7 @@ public struct DailyChallengeView: View {
         trailing: Group {
           if !store.isNotificationStatusDetermined {
             ReminderBell {
-              store.send(.notificationButtonTapped, animation: .default)
+              withAnimation { _ = store.send(.notificationButtonTapped) }
             }
             .transition(
               .scale(scale: 0)
@@ -364,18 +316,26 @@ public struct DailyChallengeView: View {
       )
       .edgesIgnoringSafeArea(.bottom)
     }
-    .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
-    .navigationDestination(
-      item: $store.scope(state: \.destination?.results, action: \.destination.results)
-    ) { store in
+    .alert(
+      store.destination?.alert?.title ?? Text(""),
+      isPresented: Binding(
+        get: { store.destination?.alert != nil },
+        set: { isPresented in
+          if !isPresented {
+            $store.scope(\.destination).alert.wrappedValue = nil
+          }
+        }
+      ),
+      presenting: store.destination?.alert
+    ) { _ in
+      Button("OK") {}
+    } message: { alert in
+      alert.message
+    }
+    .navigationDestination(item: $store.scope(\.destination).results) { store in
       DailyChallengeResultsView(store: store)
     }
-    .notificationsAlert(
-      $store.scope(
-        state: \.destination?.notificationsAuthAlert,
-        action: \.destination.notificationsAuthAlert
-      )
-    )
+    .notificationsAlert($store.scope(\.destination).notificationsAuthAlert)
   }
 }
 
@@ -470,10 +430,9 @@ private struct RingEffect: GeometryEffect {
               )
             ) {
               DailyChallengeReducer()
-            } withDependencies: {
-              $0.userNotifications.getNotificationSettings = {
-                .init(authorizationStatus: .notDetermined)
-              }
+                .dependency(\.userNotifications.getNotificationSettings) {
+                  .init(authorizationStatus: .notDetermined)
+                }
             }
           )
         }

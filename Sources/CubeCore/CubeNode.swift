@@ -1,5 +1,3 @@
-import Combine
-import ComposableArchitecture
 import Gen
 import SceneKit
 import SharedModels
@@ -64,26 +62,26 @@ public class CubeNode: SCNNode {
   private var topPlaneNode: CubeFaceNode
   private lazy var shakeAnimationActionKey = "shake animation: \(ObjectIdentifier(self))"
   private lazy var removeAnimationActionKey = "remove animation: \(ObjectIdentifier(self))"
-  private var cancellables: Set<AnyCancellable> = []
+  private var isAnimating = true
+  private var viewState: ViewState
 
   public init(
     letterGeometry: SCNGeometry,
-    viewStatePublisher: StorePublisher<ViewState>
+    viewState: ViewState
   ) {
-    let viewState = viewStatePublisher.currentValue
-
     self.index = viewState.index
+    self.viewState = viewState
     self.leftPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      viewState: viewStatePublisher.left
+      viewState: viewState.left
     )
     self.rightPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      viewState: viewStatePublisher.right
+      viewState: viewState.right
     )
     self.topPlaneNode = CubeFaceNode(
       letterGeometry: letterGeometry,
-      viewState: viewStatePublisher.top
+      viewState: viewState.top
     )
 
     super.init()
@@ -103,49 +101,63 @@ public class CubeNode: SCNNode {
       }
     }
 
-    viewStatePublisher
-      .prefix(while: \.isInPlay)
-      .map { ($0.isCriticallySelected, $0.index, $0.cubeShakeStartedAt) }
-      .removeDuplicates(by: ==)
-      .sink { [weak self] isCriticallySelected, index, cubeShakeStartedAt in
-        self?.updateAnimation(
-          cubeShakeStartedAt: cubeShakeStartedAt,
-          isCriticallySelected: isCriticallySelected,
-          index: index
+    self.isAnimating = viewState.isInPlay
+    if viewState.isInPlay {
+      self.updateAnimation(
+        cubeShakeStartedAt: viewState.cubeShakeStartedAt,
+        isCriticallySelected: viewState.isCriticallySelected,
+        index: viewState.index
+      )
+    }
+  }
+
+  func update(viewState: ViewState) {
+    let oldViewState = self.viewState
+    self.viewState = viewState
+
+    self.leftPlaneNode.update(viewState: viewState.left)
+    self.rightPlaneNode.update(viewState: viewState.right)
+    self.topPlaneNode.update(viewState: viewState.top)
+
+    if self.isAnimating {
+      if !viewState.isInPlay {
+        self.isAnimating = false
+      } else if oldViewState.isCriticallySelected != viewState.isCriticallySelected
+        || oldViewState.index != viewState.index
+        || oldViewState.cubeShakeStartedAt != viewState.cubeShakeStartedAt
+      {
+        self.updateAnimation(
+          cubeShakeStartedAt: viewState.cubeShakeStartedAt,
+          isCriticallySelected: viewState.isCriticallySelected,
+          index: viewState.index
         )
       }
-      .store(in: &self.cancellables)
+    }
 
-    viewStatePublisher.isInPlay
-      .dropFirst()
-      .sink { [weak self] isInPlay in
-        guard let self = self else { return }
+    guard oldViewState.isInPlay != viewState.isInPlay else { return }
+    self.removeAction(forKey: self.removeAnimationActionKey)
+    if !viewState.isInPlay {
+      self.isHidden = false
 
-        self.removeAction(forKey: self.removeAnimationActionKey)
-        if !isInPlay {
-          self.isHidden = false
-
-          let action = SCNAction.sequence([
-            .wait(duration: Double(removeCubeDelay(index: self.index)) / 1000),
-            .scale(to: 0.4, duration: 0.1),
-            .scale(to: 0, duration: 0.1),
-          ])
-          action.timingMode = .easeOut
-          self.runAction(action, forKey: self.removeAnimationActionKey) {
-            self.isHidden = true
-          }
-        } else {
-          self.isHidden = false
-          self.scale = .init(0, 0, 0)
-          let action = SCNAction.sequence([
-            .scale(to: 0.4, duration: 0.1),
-            .scale(to: 0.3333, duration: 0.1),
-          ])
-          action.timingMode = .easeOut
-          self.runAction(action, forKey: self.removeAnimationActionKey)
-        }
+      let action = SCNAction.sequence([
+        .wait(duration: Double(removeCubeDelay(index: self.index)) / 1000),
+        .scale(to: 0.4, duration: 0.1),
+        .scale(to: 0, duration: 0.1),
+      ])
+      action.timingMode = .easeOut
+      self.runAction(action, forKey: self.removeAnimationActionKey) {
+        self.isHidden = true
       }
-      .store(in: &self.cancellables)
+    } else {
+      self.isHidden = false
+      self.scale = .init(0, 0, 0)
+      let action = SCNAction.sequence([
+        .scale(to: 0.4, duration: 0.1),
+        .scale(to: 0.3333, duration: 0.1),
+      ])
+      action.timingMode = .easeOut
+      self.runAction(action, forKey: self.removeAnimationActionKey)
+    }
   }
 
   required init?(coder: NSCoder) {

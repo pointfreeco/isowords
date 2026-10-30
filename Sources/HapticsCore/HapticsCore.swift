@@ -1,30 +1,27 @@
 import ComposableArchitecture
+import Dependencies
 import FeedbackGeneratorClient
-import TcaHelpers
 
-extension Reducer {
+extension FeatureProtocol {
   public func haptics<Trigger: Equatable>(
     isEnabled: @escaping (State) -> Bool,
-    triggerOnChangeOf trigger: @escaping (State) -> Trigger
-  ) -> some ReducerOf<Self> {
-    Haptics(base: self, isEnabled: isEnabled, trigger: trigger)
+    triggerOnChangeOf trigger: Trigger
+  ) -> some Feature {
+    self.modifier(Haptics(isEnabled: isEnabled, trigger: trigger))
   }
 }
 
-@Reducer
-private struct Haptics<Base: Reducer, Trigger: Equatable> {
-  let base: Base
-  let isEnabled: (Base.State) -> Bool
-  let trigger: (Base.State) -> Trigger
+@FeatureModifier
+private struct Haptics<State, Action, Trigger: Equatable> {
+  let isEnabled: (State) -> Bool
+  let trigger: Trigger
 
   @Dependency(\.feedbackGenerator) var feedbackGenerator
 
-  var body: some ReducerOf<Base> {
-    self.base.onChange(of: self.trigger) { _, _ in
-      Reduce { state, _ in
-        guard self.isEnabled(state) else { return .none }
-        return .run { _ in await self.feedbackGenerator.selectionChanged() }
-      }
+  func body(content: Content) -> some Feature {
+    content.onChange(of: trigger) { state in
+      guard isEnabled(state) else { return }
+      store.addTask { await feedbackGenerator.selectionChanged() }
     }
   }
 }

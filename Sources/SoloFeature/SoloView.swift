@@ -1,16 +1,16 @@
 import ClientModels
 import ComposableArchitecture
+import Dependencies
 import FileClient
 import Overture
 import SharedModels
 import Styleguide
 import SwiftUI
 
-@Reducer
+@Feature
 public struct Solo {
-  @ObservableState
-  public struct State: Equatable {
-    var inProgressGame: InProgressGame?
+  public struct State {
+    @DebugSnapshotTracked var inProgressGame: InProgressGame?
 
     public init(inProgressGame: InProgressGame? = nil) {
       self.inProgressGame = inProgressGame
@@ -19,31 +19,34 @@ public struct Solo {
 
   public enum Action {
     case gameButtonTapped(GameMode)
-    case savedGamesLoaded(Result<SavedGamesState, Error>)
-    case task
+  }
+
+  public enum StartGame: FeatureEventKey {
+    public typealias Value = GameMode
   }
 
   @Dependency(\.fileClient) var fileClient
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case .gameButtonTapped:
-        return .none
-
-      case .savedGamesLoaded(.failure):
-        return .none
-
-      case let .savedGamesLoaded(.success(savedGameState)):
-        state.inProgressGame = savedGameState.unlimited
-        return .none
-
-      case .task:
-        return .run { send in
-          await send(.savedGamesLoaded(Result { try await self.fileClient.loadSavedGames() }))
+      case let .gameButtonTapped(gameMode):
+        store.addTask {
+          try await MainActor.run {
+            try withAnimation {
+              _ = try store.post(key: StartGame.self, value: gameMode)
+            }
+          }
         }
+      }
+    }
+    .onMount { _ in
+      store.addTask {
+        guard let savedGames = try? await self.fileClient.loadSavedGames()
+        else { return }
+        try store.modify { $0.inProgressGame = savedGames.unlimited }
       }
     }
   }
@@ -86,7 +89,7 @@ public struct SoloView: View {
           inactiveText: nil,
           isLoading: false,
           resumeText: nil,
-          action: { store.send(.gameButtonTapped(.timed), animation: .default) }
+          action: { withAnimation { _ = store.send(.gameButtonTapped(.timed)) } }
         )
 
         GameButton(
@@ -98,13 +101,12 @@ public struct SoloView: View {
           resumeText: (store.inProgressGame?.currentScore).flatMap {
             $0 > 0 ? Text("\($0) points") : nil
           },
-          action: { store.send(.gameButtonTapped(.unlimited), animation: .default) }
+          action: { withAnimation { _ = store.send(.gameButtonTapped(.unlimited)) } }
         )
       }
     }
     .adaptivePadding(.vertical)
     .screenEdgePadding(.horizontal)
-    .task { await store.send(.task).finish() }
     .navigationStyle(
       backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
       foregroundColor: self.colorScheme == .dark ? .solo : .isowordsBlack,

@@ -1,7 +1,9 @@
 import ApiClient
 import AudioPlayerClient
+import ComposableArchitecture
 import ComposableStoreKit
 import ComposableUserNotifications
+import Dependencies
 import FileClient
 import RemoteNotificationsClient
 import ServerConfigClient
@@ -22,12 +24,13 @@ struct SettingsPreviewApp: App {
         SettingsView(
           store: .init(initialState: Settings.State()) {
             Settings()
-          } withDependencies: {
-            $0.apiClient = .noop
-            $0.audioPlayer = .noop
-            $0.build = .noop
-            $0.database = .noop
-            $0.serverConfig = .live(fetch: { .init() })
+              .transformDependency(\.self) {
+                $0.apiClient = .noop
+                $0.audioPlayer = .noop
+                $0.build = .noop
+                $0.database = .noop
+                $0.serverConfig = .live(fetch: { .init() })
+              }
           },
           navPresentationStyle: .modal
         )

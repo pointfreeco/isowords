@@ -67,7 +67,7 @@ public struct GameView<Content>: View where Content: View {
 
           if !store.selectedWordString.isEmpty {
             WordSubmitButton(
-              store: store.scope(state: \.wordSubmitButtonFeature, action: \.wordSubmitButton)
+              store: store.scope(\.wordSubmitButtonFeature)
             )
             .ignoresSafeArea()
             .transition(
@@ -79,7 +79,7 @@ public struct GameView<Content>: View where Content: View {
           }
 
           ActiveGamesView(
-            store: store.scope(state: \.activeGames, action: \.activeGames),
+            store: store.scope(\.activeGames),
             showMenuItems: false
           )
           .adaptivePadding(.vertical, 8)
@@ -103,9 +103,7 @@ public struct GameView<Content>: View where Content: View {
         .offset(y: store.isTrayVisible ? self.trayHeight : 0)
         .zIndex(0)
 
-        if let store = store.scope(
-          state: \.destination?.gameOver, action: \.destination.gameOver.presented
-        ) {
+        if let store = store.scope(\.destination)?.scope(\.gameOver) {
           GameOverView(store: store)
             .background(Color.adaptiveWhite.ignoresSafeArea())
             .transition(
@@ -115,10 +113,7 @@ public struct GameView<Content>: View where Content: View {
               )
             )
             .zIndex(1)
-        } else if let store = store.scope(
-          state: \.destination?.upgradeInterstitial,
-          action: \.destination.upgradeInterstitial.presented
-        ) {
+        } else if let store = store.scope(\.destination)?.scope(\.upgradeInterstitial) {
           UpgradeInterstitialView(store: store)
             .transition(.opacity)
             .zIndex(2)
@@ -137,16 +132,42 @@ public struct GameView<Content>: View where Content: View {
         Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
       )
-      .bottomMenu($store.scope(state: \.destination?.bottomMenu, action: \.destination.bottomMenu))
-      .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
-      .sheet(
-        item: $store.scope(state: \.destination?.settings, action: \.destination.settings)
-      ) { store in
+      .bottomMenu($store.scope(\.destination).bottomMenu)
+      .alert(
+        "Are you sure?",
+        isPresented: $store.scope(\.destination).alert.isPresent(),
+        presenting: store.scope(\.destination)?.scope(\.alert)
+      ) { alertStore in
+        Button("Don't forfeit", role: .cancel) {}
+        Button("Yes, forfeit", role: .destructive) {
+          withAnimation { _ = alertStore.send(.forfeitButtonTapped) }
+        }
+      } message: { _ in
+        Text(
+          """
+          Forfeiting will end the game and your opponent will win. Are you sure you want to \
+          forfeit?
+          """
+        )
+      }
+      .sheet(item: $store.scope(\.destination).settings) { store in
         NavigationStack {
           SettingsView(store: store, navPresentationStyle: .modal)
         }
       }
     }
-    .task { await store.send(.task).finish() }
+  }
+}
+
+extension Binding {
+  fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
+    Binding<Bool>(
+      get: { self.wrappedValue != nil },
+      set: { isPresented, transaction in
+        if !isPresented {
+          self.transaction(transaction).wrappedValue = nil
+        }
+      }
+    )
   }
 }

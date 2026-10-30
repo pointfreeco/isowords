@@ -1,4 +1,5 @@
 import Build
+import CasePaths
 import Foundation
 import Parsing
 import SharedModels
@@ -33,7 +34,7 @@ public struct ServerRouter: ParserPrinter {
 
   public var body: some Router<ServerRoute> {
     OneOf {
-      Route(.case(ServerRoute.api)) {
+      Route(.case(\ServerRoute.AllCasePaths.api)) {
         Path { "api" }
         Parse(.memberwise(ServerRoute.Api.init(accessToken:isDebug:route:))) {
           Query {
@@ -46,7 +47,7 @@ public struct ServerRouter: ParserPrinter {
         }
       }
 
-      Route(.case(ServerRoute.authenticate)) {
+      Route(.case(\ServerRoute.AllCasePaths.authenticate)) {
         Method.post
         Path {
           "api"
@@ -62,51 +63,51 @@ public struct ServerRouter: ParserPrinter {
           )
       }
 
-      Route(.case(ServerRoute.appSiteAssociation)) {
+      Route(.case(\ServerRoute.AllCasePaths.appSiteAssociation)) {
         Path {
           ".well-known"
           "apple-app-site-association"
         }
       }
 
-      Route(.case(ServerRoute.appStore)) {
+      Route(.case(\ServerRoute.AllCasePaths.appStore)) {
         Path { "app-store" }
       }
 
-      Route(.case(ServerRoute.demo)) {
+      Route(.case(\ServerRoute.AllCasePaths.demo)) {
         Method.post
         Path {
           "demo"
           "games"
         }
         Body(.json(ServerRoute.Demo.SubmitRequest.self))
-          .map(.case(ServerRoute.Demo.submitGame))
+          .map(.case(\ServerRoute.Demo.AllCasePaths.submitGame))
       }
 
       OneOf {
-        Route(.case(ServerRoute.download)) {
+        Route(.case(\ServerRoute.AllCasePaths.download)) {
           Path { "download" }
         }
 
-        Route(.case(ServerRoute.home))
+        Route(.case(\ServerRoute.AllCasePaths.home))
 
-        Route(.case(ServerRoute.pressKit)) {
+        Route(.case(\ServerRoute.AllCasePaths.pressKit)) {
           Path { "press-kit" }
         }
 
-        Route(.case(ServerRoute.privacyPolicy)) {
+        Route(.case(\ServerRoute.AllCasePaths.privacyPolicy)) {
           Path { "privacy-policy" }
         }
       }
 
-      Route(.case(ServerRoute.sharedGame)) {
+      Route(.case(\ServerRoute.AllCasePaths.sharedGame)) {
         Path {
           OneOf {
             "shared-games"
             "sharedGames"
           }
           Parse(.string.representing(SharedGame.Code.self))
-            .map(.case(ServerRoute.SharedGame.show))
+            .map(.case(\ServerRoute.SharedGame.AllCasePaths.show))
         }
       }
     }
@@ -116,7 +117,7 @@ public struct ServerRouter: ParserPrinter {
   @ParserBuilder<URLRequestData>
   var apiRouter: AnyParserPrinter<URLRequestData, ServerRoute.Api.Route> {
     let dailyChallengeRouter = OneOf {
-      Route(.case(ServerRoute.Api.Route.DailyChallenge.start(gameMode:language:))) {
+      Route(.case(\ServerRoute.Api.Route.DailyChallenge.AllCasePaths.start, as: (GameMode, Language).self)) {
         Method.post
         Query {
           Field("gameMode") { GameMode.parser() }
@@ -124,18 +125,19 @@ public struct ServerRouter: ParserPrinter {
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.DailyChallenge.today(language:))) {
+      Route(.case(\ServerRoute.Api.Route.DailyChallenge.AllCasePaths.today)) {
         Path { "today" }
         Query {
           Field("language") { Language.parser() }
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.DailyChallenge.results)) {
+      Route(.case(\ServerRoute.Api.Route.DailyChallenge.AllCasePaths.results)) {
         Path { "results" }
         OneOf {
           Route(
-            .case(ServerRoute.Api.Route.DailyChallenge.Results.fetch(gameMode:gameNumber:language:))
+            .case(\ServerRoute.Api.Route.DailyChallenge.Results.AllCasePaths.fetch,
+              as: (GameMode, SharedModels.DailyChallenge.GameNumber?, Language).self)
           ) {
             Query {
               OneOf {
@@ -156,7 +158,7 @@ public struct ServerRouter: ParserPrinter {
             }
           }
 
-          Route(.case(ServerRoute.Api.Route.DailyChallenge.Results.history(gameMode:language:))) {
+          Route(.case(\ServerRoute.Api.Route.DailyChallenge.Results.AllCasePaths.history, as: (GameMode, Language).self)) {
             Path { "history" }
             Query {
               OneOf {
@@ -170,7 +172,7 @@ public struct ServerRouter: ParserPrinter {
       }
     }
 
-    let gamesRouter = Route(.case(ServerRoute.Api.Route.Games.submit)) {
+    let gamesRouter = Route(.case(\ServerRoute.Api.Route.Games.AllCasePaths.submit)) {
       Method.post
       verifiedDataBody(date: date, secrets: secrets, sha256: sha256)
         .map(
@@ -183,7 +185,8 @@ public struct ServerRouter: ParserPrinter {
     }
 
     let leaderboardRouter = OneOf {
-      Route(.case(ServerRoute.Api.Route.Leaderboard.fetch(gameMode:language:timeScope:))) {
+      Route(.case(\ServerRoute.Api.Route.Leaderboard.AllCasePaths.fetch,
+          as: (GameMode, Language, TimeScope).self)) {
         Query {
           Field("gameMode") { GameMode.parser() }
           Field("language") { Language.parser() }
@@ -191,17 +194,17 @@ public struct ServerRouter: ParserPrinter {
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.Leaderboard.vocab)) {
+      Route(.case(\ServerRoute.Api.Route.Leaderboard.AllCasePaths.vocab)) {
         Path { "vocab" }
         OneOf {
-          Route(.case(ServerRoute.Api.Route.Leaderboard.Vocab.fetch(language:timeScope:))) {
+          Route(.case(\ServerRoute.Api.Route.Leaderboard.Vocab.AllCasePaths.fetch, as: (Language, TimeScope).self)) {
             Query {
               Field("language") { Language.parser() }
               Field("timeScope") { TimeScope.parser() }
             }
           }
 
-          Route(.case(ServerRoute.Api.Route.Leaderboard.Vocab.fetchWord(wordId:))) {
+          Route(.case(\ServerRoute.Api.Route.Leaderboard.Vocab.AllCasePaths.fetchWord)) {
             Path {
               "words"
               UUID.parser().map(.representing(Word.Id.self))
@@ -210,7 +213,7 @@ public struct ServerRouter: ParserPrinter {
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.Leaderboard.weekInReview(language:))) {
+      Route(.case(\ServerRoute.Api.Route.Leaderboard.AllCasePaths.weekInReview)) {
         Path { "week-in-review" }
         Query {
           Field("language") { Language.parser() }
@@ -219,13 +222,13 @@ public struct ServerRouter: ParserPrinter {
     }
 
     let pushRouter = OneOf {
-      Route(.case(ServerRoute.Api.Route.Push.register)) {
+      Route(.case(\ServerRoute.Api.Route.Push.AllCasePaths.register)) {
         Method.post
         Path { "push-tokens" }
         Body(.json(ServerRoute.Api.Route.Push.Register.self))
       }
 
-      Route(.case(ServerRoute.Api.Route.Push.updateSetting)) {
+      Route(.case(\ServerRoute.Api.Route.Push.AllCasePaths.updateSetting)) {
         Method.post
         Path { "push-settings" }
         Body(.json(ServerRoute.Api.Route.Push.Setting.self))
@@ -233,57 +236,57 @@ public struct ServerRouter: ParserPrinter {
     }
 
     let sharedGameRouter = OneOf {
-      Route(.case(ServerRoute.Api.Route.SharedGame.fetch)) {
+      Route(.case(\ServerRoute.Api.Route.SharedGame.AllCasePaths.fetch)) {
         Path {
           Parse(.string.representing(SharedGame.Code.self))
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.SharedGame.share)) {
+      Route(.case(\ServerRoute.Api.Route.SharedGame.AllCasePaths.share)) {
         Method.post
         Body(.json(CompletedGame.self))
       }
     }
 
     OneOf {
-      Route(.case(ServerRoute.Api.Route.changelog(build:))) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.changelog)) {
         Path { "changelog" }
         Query {
           Field("build") { Digits().map(.representing(Build.Number.self)) }
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.config(build:))) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.config)) {
         Path { "config" }
         Query {
           Field("build") { Digits().map(.representing(Build.Number.self)) }
         }
       }
 
-      Route(.case(ServerRoute.Api.Route.currentPlayer)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.currentPlayer)) {
         Path { "current-player" }
       }
 
-      Route(.case(ServerRoute.Api.Route.dailyChallenge)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.dailyChallenge)) {
         Path { "daily-challenges" }
         dailyChallengeRouter
       }
 
-      Route(.case(ServerRoute.Api.Route.games)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.games)) {
         Path { "games" }
         gamesRouter
       }
 
-      Route(.case(ServerRoute.Api.Route.leaderboard)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.leaderboard)) {
         Path { "leaderboard-scores" }
         leaderboardRouter
       }
 
-      Route(.case(ServerRoute.Api.Route.push)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.push)) {
         pushRouter
       }
 
-      Route(.case(ServerRoute.Api.Route.sharedGame)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.sharedGame)) {
         Path {
           OneOf {
             "shared-games"
@@ -293,7 +296,7 @@ public struct ServerRouter: ParserPrinter {
         sharedGameRouter
       }
 
-      Route(.case(ServerRoute.Api.Route.verifyReceipt)) {
+      Route(.case(\ServerRoute.Api.Route.AllCasePaths.verifyReceipt)) {
         Method.post
         Path { "verify-receipt" }
         Body()
@@ -350,5 +353,18 @@ public struct ServerRouter: ParserPrinter {
 extension Body {
   init() where Bytes == Parsers.ReplaceError<Rest<Bytes.Input>> {
     self.init { Rest<Bytes.Input>().replaceError(with: .init()) }
+  }
+}
+
+extension Conversion {
+  fileprivate static func `case`<Enum: CasePathable, Path: CasePath, Values>(
+    _ keyPath: KeyPath<Enum.AllCasePaths, Path>,
+    as _: Values.Type
+  ) -> Self where Self == AnyCasePath<Enum, Values>, Path.Root == Enum {
+    let path = Enum.allCasePaths[keyPath: keyPath]
+    return AnyCasePath(
+      embed: { path.embed($0 as! Path.Value) },
+      extract: { path.extract(from: $0).map { $0 as! Values } }
+    )
   }
 }

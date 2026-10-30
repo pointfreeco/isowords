@@ -18,6 +18,7 @@ class DailyChallengeViewTests: XCTestCase {
 //    isRecording = true
   }
 
+  @MainActor
   func testDefault() {
     assertSnapshot(
       matching: DailyChallengeView(
@@ -29,6 +30,7 @@ class DailyChallengeViewTests: XCTestCase {
     )
   }
 
+  @MainActor
   func testTimedGamePlayed_UnlimitedGameResumable() {
     assertSnapshot(
       matching: DailyChallengeView(

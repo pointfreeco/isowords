@@ -1,12 +1,15 @@
 import ClientModels
 import ComposableArchitecture
+import ConcurrencyExtras
+import CustomDump
+import Dependencies
 import GameCore
 import GameOverFeature
 import XCTest
 
 class GameCoreTests: XCTestCase {
   @MainActor
-  func testForfeitTurnBasedGame() async {
+  func testForfeitTurnBasedGame() async throws {
     let didEndMatchInTurn = ActorIsolated(false)
 
     var gameState = Game.State(inProgressGame: .mock)
@@ -18,52 +21,39 @@ class GameCoreTests: XCTestCase {
       )
     )
 
-    let store = TestStore(initialState: gameState) {
-      Game()
-    } withDependencies: {
+    let store = withDependencies {
       $0.audioPlayer.stop = { _ in }
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.gameCenter.turnBasedMatch.endMatchInTurn = { _ in
         await didEndMatchInTurn.setValue(true)
       }
+    } operation: {
+      TestStore(initialState: gameState) {
+        Game(startsOnMount: false)
+      }
     }
 
-    await store.send(.menuButtonTapped) {
-      $0.destination = .bottomMenu(.gameMenu(state: $0))
+    store.send(.menuButtonTapped) {
+      $0.destination = snap(Game.Destination.State.bottomMenu(.gameMenu(state: gameState)))
     }
-    await store.send(.destination(.presented(.bottomMenu(.forfeitGameButtonTapped)))) {
-      $0.destination = .alert(
-        AlertState {
-          TextState("Are you sure?")
-        } actions: {
-          ButtonState(role: .cancel) {
-            TextState("Don't forfeit")
-          }
-          ButtonState(role: .destructive, action: .forfeitButtonTapped) {
-            TextState("Yes, forfeit")
-          }
-        } message: {
-          TextState(
-            """
-            Forfeiting will end the game and your opponent will win. Are you sure you want to \
-            forfeit?
-            """
+    store.send(.destination(.bottomMenu(.forfeitGameButtonTapped))) {
+      $0.destination = snap(Game.Destination.State.alert(Game.Destination.Alert.State()))
+    }
+
+    let task = store.send(.destination(.alert(.forfeitButtonTapped))) {
+      $0.destination = snap(
+        Game.Destination.State.gameOver(
+          GameOver.State(
+            completedGame: .init(gameState: gameState),
+            isDemo: false,
+            turnBasedContext: gameState.gameContext.turnBased
           )
-        }
-      )
-    }
-
-    await store.send(.destination(.presented(.alert(.forfeitButtonTapped)))) {
-      $0.destination = .gameOver(
-        GameOver.State(
-          completedGame: .init(gameState: gameState),
-          isDemo: false,
-          turnBasedContext: gameState.gameContext.turnBased
         )
       )
     }
+    await task?.value
 
     await didEndMatchInTurn.withValue { expectNoDifference($0, true) }
-    await store.finish()
+    await store.dismount()
   }
 }

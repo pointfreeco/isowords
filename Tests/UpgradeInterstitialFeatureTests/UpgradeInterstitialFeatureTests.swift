@@ -1,7 +1,10 @@
 import Combine
 import ComposableArchitecture
+import CustomDump
 import ComposableStoreKit
 @_spi(Concurrency) import Dependencies
+import ConcurrencyExtras
+import Dependencies
 import FirstPartyMocks
 import ServerConfig
 import StoreKit
@@ -16,8 +19,6 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
   @MainActor
   func testUpgrade() async {
     await withMainSerialExecutor {
-      let dismissed = LockIsolated(false)
-
       let paymentAdded = ActorIsolated<String?>(nil)
 
       let observer = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
@@ -41,10 +42,7 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
         )
       ]
 
-      let store = TestStore(initialState: UpgradeInterstitial.State()) {
-        UpgradeInterstitial()
-      } withDependencies: {
-        $0.dismiss = .init { dismissed.setValue(true) }
+      let store = withDependencies {
         $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.storeKit.addPayment = {
@@ -58,94 +56,101 @@ class UpgradeInterstitialFeatureTests: XCTestCase {
             products: [fullGameProduct]
           )
         }
+      } operation: {
+        TestStore(initialState: Presenter.State(interstitial: UpgradeInterstitial.State())) {
+          Presenter()
+        }
       }
 
-      let task = await store.send(.task)
-
-      await store.receive(\.fullGameProductResponse) {
-        $0.fullGameProduct = fullGameProduct
+      await Task.megaYield()
+      store.expect {
+        $0.interstitial?.fullGameProduct = fullGameProduct
+        $0.interstitial?.secondsPassedCount = 1
       }
 
-      await store.receive(\.timerTick) {
-        $0.secondsPassedCount = 1
-      }
-      await store.send(.upgradeButtonTapped) {
-        $0.isPurchasing = true
-      }
-
-      observer.continuation.yield(.updatedTransactions(transactions))
+      await store.send(.interstitial(.upgradeButtonTapped)) {
+        $0.interstitial?.isPurchasing = true
+      }?.value
       await paymentAdded.withValue {
         expectNoDifference($0, "co.pointfree.isowords_testing.full_game")
       }
 
-      await store.receive(\.paymentTransaction.updatedTransactions)
-      await store.receive(\.delegate.fullGamePurchased)
+      observer.continuation.yield(.updatedTransactions(transactions))
 
-      await task.cancel()
-
-      XCTAssert(dismissed.value)
+      await store.receive(
+        \.interstitial.paymentTransaction.updatedTransactions, timeout: .seconds(1)
+      ) {
+        $0.didPurchaseFullGame = true
+        $0.interstitial = nil
+      }
     }
   }
 
   @MainActor
   func testWaitAndDismiss() async {
-    let dismissed = LockIsolated(false)
-    let store = TestStore(
-      initialState: UpgradeInterstitial.State()
-    ) {
-      UpgradeInterstitial()
-    } withDependencies: {
-      $0.dismiss = .init { dismissed.setValue(true) }
+    let store = withDependencies {
       $0.mainRunLoop = self.scheduler.eraseToAnyScheduler()
       $0.serverConfig.config = { .init() }
       $0.storeKit.observer = { .finished }
       $0.storeKit.fetchProducts = { _ in
         .init(invalidProductIdentifiers: [], products: [])
       }
+    } operation: {
+      TestStore(initialState: UpgradeInterstitial.State()) {
+        UpgradeInterstitial()
+      }
     }
 
-    await store.send(.task)
-
     await self.scheduler.advance(by: .seconds(1))
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 1 }
+    store.expect { $0.secondsPassedCount = 1 }
 
     await self.scheduler.advance(by: .seconds(15))
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 2 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 3 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 4 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 5 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 6 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 7 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 8 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 9 }
-    await store.receive(\.timerTick) { $0.secondsPassedCount = 10 }
+    store.expect { $0.secondsPassedCount = 10 }
 
     await self.scheduler.run()
 
-    await store.send(.maybeLaterButtonTapped)
-    XCTAssert(dismissed.value)
+    await store.send(.maybeLaterButtonTapped)?.value
+    XCTAssertFalse(store.isPresented)
   }
 
   @MainActor
   func testMaybeLater_Dismissable() async {
-    let dismissed = LockIsolated(false)
-    let store = TestStore(
-      initialState: UpgradeInterstitial.State(isDismissable: true)
-    ) {
-      UpgradeInterstitial()
-    } withDependencies: {
-      $0.dismiss = .init { dismissed.setValue(true) }
+    let store = withDependencies {
       $0.mainRunLoop = .immediate
       $0.serverConfig.config = { .init() }
       $0.storeKit.observer = { .finished }
       $0.storeKit.fetchProducts = { _ in
         .init(invalidProductIdentifiers: [], products: [])
       }
+    } operation: {
+      TestStore(initialState: UpgradeInterstitial.State(isDismissable: true)) {
+        UpgradeInterstitial()
+      }
     }
 
-    await store.send(.task)
-    await store.send(.maybeLaterButtonTapped)
-    XCTAssert(dismissed.value)
+    await store.mountTask?.value
+    await store.send(.maybeLaterButtonTapped)?.value
+    XCTAssertFalse(store.isPresented)
+  }
+}
+
+@Feature
+private struct Presenter {
+  struct State {
+    var didPurchaseFullGame = false
+    var interstitial: UpgradeInterstitial.State?
+  }
+  enum Action {
+    case interstitial(UpgradeInterstitial.Action)
+  }
+  var body: some Feature {
+    EmptyFeature()
+      .ifLet(\.interstitial) {
+        UpgradeInterstitial()
+      }
+      .onEvent(UpgradeInterstitial.FullGamePurchased.self) { _, state in
+        state.didPurchaseFullGame = true
+      }
   }
 }
 

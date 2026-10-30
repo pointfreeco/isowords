@@ -1,7 +1,9 @@
 import ApiClient
 import ComposableArchitecture
+import ConcurrencyExtras
 import DailyChallengeFeature
 @_spi(Concurrency) import Dependencies
+import Dependencies
 import Either
 import IntegrationTestHelpers
 import Overture
@@ -74,25 +76,27 @@ class DailyChallengeFeatureTests: XCTestCase {
         }
       }
 
-      let store = TestStore(initialState: DailyChallengeResults.State()) {
-        DailyChallengeResults()
-      } withDependencies: {
+      let store = withDependencies {
         $0.apiClient = ApiClient(
           middleware: siteMiddleware(environment: serverEnvironment),
           router: .test
         )
+      } operation: {
+        TestStore(initialState: DailyChallengeResults.State()) {
+          DailyChallengeResults()
+        } changes: {
+          $0.leaderboardResults.isLoading = true
+          $0.leaderboardResults.resultEnvelope = .placeholder
+        }
       }
 
-      await store.send(.leaderboardResults(.task)) {
-        $0.leaderboardResults.isLoading = true
-        $0.leaderboardResults.resultEnvelope = .placeholder
-      }
-      await store.receive(\.leaderboardResults.resultsResponse.success) {
+      await store.mountTask?.value
+      store.expect {
         $0.leaderboardResults.isLoading = false
         $0.leaderboardResults.resultEnvelope = timedResultEnvelope
       }
-      await store.send(.loadHistory)
-      await store.receive(\.fetchHistoryResponse.success) {
+      await store.send(.reloadHistoryButtonTapped)?.value
+      store.expect {
         $0.history = .init(results: [historyResult])
       }
     }

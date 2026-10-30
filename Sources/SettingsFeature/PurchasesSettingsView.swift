@@ -29,7 +29,7 @@ struct PurchasesSettingsView: View {
           case let .success(product):
             SettingsRow {
               Button {
-                store.send(.tappedProduct(product), animation: .default)
+                withAnimation { _ = store.send(.tappedProduct(product)) }
               } label: {
                 Text("Upgrade")
                   .foregroundColor(.isowordsOrange)
@@ -52,7 +52,7 @@ struct PurchasesSettingsView: View {
         if !store.isRestoring {
           SettingsRow {
             Button {
-              store.send(.restoreButtonTapped, animation: .default)
+              withAnimation { _ = store.send(.restoreButtonTapped) }
             } label: {
               Text("Restore purchases")
                 .foregroundColor(.isowordsOrange)

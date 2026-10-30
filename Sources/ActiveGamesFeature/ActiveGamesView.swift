@@ -6,36 +6,72 @@ import SharedModels
 import Styleguide
 import SwiftUI
 
-@ObservableState
-public struct ActiveGamesState: Equatable {
-  public var savedGames: SavedGamesState
-  public var turnBasedMatches: [ActiveTurnBasedMatch]
+@Feature
+public struct ActiveGames {
+  public struct State {
+    public var savedGames: SavedGamesState
+    public var turnBasedMatches: [ActiveTurnBasedMatch]
 
-  public init(
-    savedGames: SavedGamesState = .init(),
-    turnBasedMatches: [ActiveTurnBasedMatch] = []
-  ) {
-    self.savedGames = savedGames
-    self.turnBasedMatches = turnBasedMatches
+    public init(
+      savedGames: SavedGamesState = .init(),
+      turnBasedMatches: [ActiveTurnBasedMatch] = []
+    ) {
+      self.savedGames = savedGames
+      self.turnBasedMatches = turnBasedMatches
+    }
+
+    public var isEmpty: Bool {
+      self.savedGames.dailyChallengeUnlimited == nil
+        && self.savedGames.unlimited == nil
+        && self.turnBasedMatches.isEmpty
+    }
   }
 
-  public var isEmpty: Bool {
-    self.savedGames.dailyChallengeUnlimited == nil
-      && self.savedGames.unlimited == nil
-      && self.turnBasedMatches.isEmpty
+  public enum Action {
+    case dailyChallengeTapped
+    case soloTapped
+    case turnBasedGameMenuItemTapped(TurnBasedMenuAction)
+    case turnBasedGameTapped(ComposableGameCenter.TurnBasedMatch.Id)
   }
-}
-
-public enum ActiveGamesAction {
-  case dailyChallengeTapped
-  case soloTapped
-  case turnBasedGameMenuItemTapped(TurnBasedMenuAction)
-  case turnBasedGameTapped(ComposableGameCenter.TurnBasedMatch.Id)
 
   public enum TurnBasedMenuAction {
     case deleteMatch(ComposableGameCenter.TurnBasedMatch.Id)
     case rematch(ComposableGameCenter.TurnBasedMatch.Id)
     case sendReminder(ComposableGameCenter.TurnBasedMatch.Id, otherPlayerIndex: Move.PlayerIndex)
+  }
+
+  public enum Event: FeatureEventKey {
+    case dailyChallengeTapped
+    case soloTapped
+    case turnBasedGameMenuItemTapped(TurnBasedMenuAction)
+    case turnBasedGameTapped(ComposableGameCenter.TurnBasedMatch.Id)
+  }
+
+  public init() {}
+
+  public var body: some Feature {
+    Update { _, action in
+      switch action {
+      case .dailyChallengeTapped:
+        post(.dailyChallengeTapped, animated: true)
+      case .soloTapped:
+        post(.soloTapped, animated: true)
+      case let .turnBasedGameMenuItemTapped(menuAction):
+        post(.turnBasedGameMenuItemTapped(menuAction), animated: false)
+      case let .turnBasedGameTapped(matchId):
+        post(.turnBasedGameTapped(matchId), animated: true)
+      }
+    }
+  }
+
+  private func post(_ event: Event, animated: Bool) {
+    store.addTask {
+      try await MainActor.run {
+        try withAnimation(animated ? .default : nil) {
+          _ = try store.post(event)
+        }
+      }
+    }
   }
 }
 
@@ -45,10 +81,10 @@ public struct ActiveGamesView: View {
   @Environment(\.colorScheme) var colorScheme
   @Environment(\.date) var date
   let showMenuItems: Bool
-  let store: Store<ActiveGamesState, ActiveGamesAction>
+  let store: StoreOf<ActiveGames>
 
   public init(
-    store: Store<ActiveGamesState, ActiveGamesAction>,
+    store: StoreOf<ActiveGames>,
     showMenuItems: Bool
   ) {
     self.showMenuItems = showMenuItems
@@ -69,7 +105,7 @@ public struct ActiveGamesView: View {
               .fontWeight(.medium)
               + Text("\nleft to play!")
               .foregroundColor(self.color.opacity(0.4)),
-            tapAction: { store.send(.dailyChallengeTapped, animation: .default) },
+            tapAction: { withAnimation { _ = store.send(.dailyChallengeTapped) } },
             title: Text("Daily challenge")
           )
         }
@@ -82,7 +118,7 @@ public struct ActiveGamesView: View {
               title: Text("Resume")
             ),
             message: soloMessage(inProgressGame: inProgressGame),
-            tapAction: { store.send(.soloTapped, animation: .default) },
+            tapAction: { withAnimation { _ = store.send(.soloTapped) } },
             title: Text("Solo")
           )
         }
@@ -91,7 +127,7 @@ public struct ActiveGamesView: View {
           let sendReminderAction =
             !match.isYourTurn && match.isStale
             ? match.theirIndex.map { otherPlayerIndex in
-              ActiveGamesAction.turnBasedGameMenuItemTapped(
+              ActiveGames.Action.turnBasedGameMenuItemTapped(
                 .sendReminder(match.id, otherPlayerIndex: otherPlayerIndex)
               )
             }
@@ -100,7 +136,7 @@ public struct ActiveGamesView: View {
           ActiveGameCard(
             button: turnBasedButton(match: match),
             message: turnBasedMessage(match: match),
-            tapAction: { store.send(.turnBasedGameTapped(match.id), animation: .default) },
+            tapAction: { withAnimation { _ = store.send(.turnBasedGameTapped(match.id)) } },
             buttonAction: self.showMenuItems
               ? sendReminderAction.map { action in { store.send(action) } }
               : nil,
@@ -346,7 +382,7 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
         ScrollView {
           ActiveGamesView(
             store: Store(
-              initialState: ActiveGamesState(
+              initialState: ActiveGames.State(
                 savedGames: SavedGamesState(
                   dailyChallengeUnlimited: update(.mock) {
                     $0?.moves = [.highScoringMove]
@@ -360,12 +396,13 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
                 turnBasedMatches: []
               )
             ) {
+              ActiveGames()
             },
             showMenuItems: true
           )
           ActiveGamesView(
             store: Store(
-              initialState: ActiveGamesState(
+              initialState: ActiveGames.State(
                 savedGames: .init(),
                 turnBasedMatches: [
                   .init(
@@ -411,6 +448,7 @@ private let relativeDateFormatter = RelativeDateTimeFormatter()
                 ]
               )
             ) {
+              ActiveGames()
             },
             showMenuItems: true
           )

@@ -1,53 +1,70 @@
 import ApiClient
 import ComposableArchitecture
+import CustomDump
+import Dependencies
 import Either
 import IntegrationTestHelpers
 import Overture
 import SiteMiddleware
 import XCTest
 
+@testable import CubePreview
 @testable import LeaderboardFeature
 @testable import SharedModels
 
 class LeaderboardFeatureTests: XCTestCase {
   @MainActor
   func testScopeSwitcher() async {
-    let store = TestStore(initialState: Leaderboard.State()) {
-      Leaderboard()
+    let store = withDependencies {
+      $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
+    } operation: {
+      TestStore(initialState: Leaderboard.State()) {
+        Leaderboard()
+      } changes: {
+        $0.solo.isLoading = true
+        $0.solo.resultEnvelope = .placeholder
+        $0.vocab.isLoading = true
+        $0.vocab.resultEnvelope = .placeholder
+      }
     }
 
-    await store.send(.scopeTapped(.vocab)) {
+    store.send(.scopeTapped(.vocab)) {
       $0.scope = .vocab
     }
-    await store.send(.scopeTapped(.games)) {
+    store.send(.scopeTapped(.games)) {
       $0.scope = .games
     }
+    await store.dismount()
   }
 
   @MainActor
   func testTimeScopeSynchronization() async {
-    let store = TestStore(initialState: Leaderboard.State()) {
-      Leaderboard()
-    } withDependencies: {
+    let store = withDependencies {
       $0.apiClient.apiRequest = { @Sendable _ in try await Task.never() }
       $0.audioPlayer = .noop
       $0.feedbackGenerator = .noop
       $0.lowPowerMode = .false
       $0.mainQueue = .immediate
+    } operation: {
+      TestStore(initialState: Leaderboard.State()) {
+        Leaderboard()
+      } changes: {
+        $0.solo.isLoading = true
+        $0.solo.resultEnvelope = .placeholder
+        $0.vocab.isLoading = true
+        $0.vocab.resultEnvelope = .placeholder
+      }
     }
 
-    let task1 = await store.send(.solo(.timeScopeChanged(.lastDay))) {
+    await store.send(.solo(.timeScopeChanged(.lastDay))) {
       $0.solo.timeScope = .lastDay
-      $0.solo.isLoading = true
       $0.vocab.timeScope = .lastDay
     }
-    let task2 = await store.send(.vocab(.timeScopeChanged(.allTime))) {
+    await store.send(.vocab(.timeScopeChanged(.allTime))) {
       $0.solo.timeScope = .allTime
       $0.vocab.timeScope = .allTime
-      $0.vocab.isLoading = true
     }
-    await task1.cancel()
-    await task2.cancel()
+    await store.dismount()
   }
 
   @MainActor
@@ -65,9 +82,18 @@ class LeaderboardFeatureTests: XCTestCase {
       word: "BASKETBALL",
       wordId: wordId
     )
+    let moves: Moves = [
+      .init(
+        playedAt: .mock,
+        playerIndex: nil,
+        reactions: nil,
+        score: 0,
+        type: .removedCube(.init(x: .two, y: .two, z: .two))
+      )
+    ]
     let fetchWordResponse = FetchVocabWordResponse(
       moveIndex: 0,
-      moves: [],
+      moves: moves,
       playerDisplayName: nil,
       playerId: .init(rawValue: .deadbeef),
       puzzle: .mock
@@ -89,6 +115,7 @@ class LeaderboardFeatureTests: XCTestCase {
 
     let siteEnvironment = update(ServerEnvironment.testValue) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
+      $0.database.fetchRankedLeaderboardScores = { _ in pure([]) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure([vocabEntry])
       }
@@ -99,33 +126,42 @@ class LeaderboardFeatureTests: XCTestCase {
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let store = TestStore(initialState: Leaderboard.State(scope: .vocab)) {
-      Leaderboard()
-    } withDependencies: {
+    let store = withDependencies {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
+      $0.lowPowerMode = .false
       $0.mainQueue = .immediate
+    } operation: {
+      TestStore(initialState: Leaderboard.State(scope: .vocab)) {
+        Leaderboard()
+      } changes: {
+        $0.solo.isLoading = true
+        $0.solo.resultEnvelope = .placeholder
+        $0.vocab.isLoading = true
+        $0.vocab.resultEnvelope = .placeholder
+      }
     }
 
-    await store.send(.vocab(.task)) {
-      $0.vocab.isLoading = true
-      $0.vocab.resultEnvelope = .placeholder
-    }
-    await store.receive(\.vocab.resultsResponse.success) {
+    await store.mountTask?.value
+    store.expect {
+      $0.solo.isLoading = false
+      $0.solo.resultEnvelope = ResultEnvelope()
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = resultsEnvelope
     }
-    await store.send(.vocab(.tappedRow(id: wordId.rawValue)))
-    await store.receive(\.fetchWordResponse.success) {
+    await store.send(.vocab(.tappedRow(id: wordId.rawValue)))?.value
+    store.expect {
       $0.destination = .cubePreview(
-        .init(
-          cubes: .mock,
-          isOnLowPowerMode: false,
-          moveIndex: 0,
-          moves: []
+        snap(
+          CubePreview.State(
+            cubes: .mock,
+            isOnLowPowerMode: false,
+            moveIndex: 0,
+            moves: moves
+          )
         )
       )
     }
-    await store.send(.destination(.dismiss)) {
+    store.modify {
       $0.destination = nil
     }
   }

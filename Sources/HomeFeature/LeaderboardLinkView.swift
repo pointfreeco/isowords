@@ -45,7 +45,7 @@ struct LeaderboardLinkView: View {
         )
       )
       .navigationDestination(
-        item: $store.scope(state: \.destination?.leaderboard, action: \.destination.leaderboard)
+        item: $store.scope(\.destination).leaderboard
       ) { store in
         LeaderboardView(store: store)
       }
@@ -132,7 +132,7 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
     static var previews: some View {
       Preview {
         LeaderboardLinkView(
-          store: Store(initialState: .init()) {
+          store: Store(initialState: Home.State()) {
           }
         )
       }

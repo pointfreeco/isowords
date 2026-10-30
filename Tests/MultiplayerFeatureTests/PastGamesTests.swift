@@ -1,6 +1,7 @@
 import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
+import Dependencies
 import Overture
 import SharedModels
 import TestHelpers
@@ -11,82 +12,81 @@ import XCTest
 class PastGamesTests: XCTestCase {
   @MainActor
   func testLoadMatches() async {
-    let store = TestStore(initialState: PastGames.State()) {
-      PastGames()
-    } withDependencies: {
+    let store = withDependencies {
       $0.gameCenter.localPlayer.localPlayer = { .authenticated }
       $0.gameCenter.turnBasedMatch.loadMatches = { [match] }
+    } operation: {
+      TestStore(initialState: PastGames.State()) {
+        PastGames()
+      }
     }
 
-    await store.send(.task)
-    await store.receive(\.matchesResponse.success) {
-      $0.pastGames = [pastGameState]
+    await store.mountTask?.value
+    store.expect {
+      $0.pastGames = [snap(pastGameState)]
     }
   }
 
   @MainActor
   func testOpenMatch() async {
-    let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
-      PastGames()
-    } withDependencies: {
+    let store = withDependencies {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatch.loadMatches = { [match] }
       $0.gameCenter.turnBasedMatch.load = { _ in match }
+    } operation: {
+      TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
+        PastGames()
+      }
     }
+    await store.mountTask?.value
 
-    await store.send(.pastGames(.element(id: "id", action: .tappedRow)))
-    await store.receive(\.pastGames[id: "id"].matchResponse.success)
-    await store.receive(\.pastGames[id: "id"].delegate.openMatch)
+    await store.send(.pastGames("id", .tappedRow))?.value
+    await store.receive(key: PastGame.OpenMatch.self, value: .equals(match))
   }
 
   @MainActor
   func testRematch() async {
-    let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
-      PastGames()
-    } withDependencies: {
+    let store = withDependencies {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatch.loadMatches = { [match] }
       $0.gameCenter.turnBasedMatch.rematch = { _ in match }
-    }
-
-    await store.send(.pastGames(.element(id: "id", action: .rematchButtonTapped))) {
-      try XCTUnwrap(&$0.pastGames[id: "id"]) {
-        $0.isRematchRequestInFlight = true
+    } operation: {
+      TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
+        PastGames()
       }
     }
+    await store.mountTask?.value
 
-    await store.receive(\.pastGames[id: "id"].rematchResponse.success) {
-      try XCTUnwrap(&$0.pastGames[id: "id"]) {
-        $0.isRematchRequestInFlight = false
-      }
+    await store.send(.pastGames("id", .rematchButtonTapped)) {
+      $0.pastGames[0].isRematchRequestInFlight = true
+    }?.value
+    store.expect {
+      $0.pastGames[0].isRematchRequestInFlight = false
     }
-
-    await store.receive(\.pastGames[id: "id"].delegate.openMatch)
+    await store.receive(key: PastGame.OpenMatch.self, value: .equals(match))
   }
 
   @MainActor
   func testRematch_Failure() async {
     struct RematchFailure: Error, Equatable {}
 
-    let store = TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
-      PastGames()
-    } withDependencies: {
+    let store = withDependencies {
+      $0.gameCenter.localPlayer.localPlayer = { .authenticated }
+      $0.gameCenter.turnBasedMatch.loadMatches = { [match] }
       $0.gameCenter.turnBasedMatch.rematch = { _ in throw RematchFailure() }
-    }
-
-    await store.send(.pastGames(.element(id: "id", action: .rematchButtonTapped))) {
-      try XCTUnwrap(&$0.pastGames[id: "id"]) {
-        $0.isRematchRequestInFlight = true
+    } operation: {
+      TestStore(initialState: PastGames.State(pastGames: [pastGameState])) {
+        PastGames()
       }
     }
+    await store.mountTask?.value
 
-    await store.receive(\.pastGames[id: "id"].rematchResponse.failure) {
-      try XCTUnwrap(&$0.pastGames[id: "id"]) {
-        $0.isRematchRequestInFlight = false
-        $0.alert = .init {
-          TextState("Error")
-        } actions: {
-          ButtonState { TextState("Ok") }
-        } message: {
-          TextState("We couldn’t start the rematch. Try again later.")
-        }
-      }
+    await store.send(.pastGames("id", .rematchButtonTapped)) {
+      $0.pastGames[0].isRematchRequestInFlight = true
+    }?.value
+    store.expect {
+      $0.pastGames[0].isRematchRequestInFlight = false
+      $0.pastGames[0].isRematchErrorAlertPresented = true
     }
   }
 }
@@ -119,7 +119,7 @@ private let match = TurnBasedMatch(
       moves: [
         update(.highScoringMove) { $0.playerIndex = 0 },
         .mock,
-        .playedWord(length: 10)
+        .playedWord(length: 10),
       ]
     )
   ),

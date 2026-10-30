@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Dependencies
 import Styleguide
 import SwiftUI
 
@@ -15,8 +16,9 @@ struct UpgradeInterstitialPreviewApp: App {
       UpgradeInterstitialView(
         store: Store(initialState: UpgradeInterstitial.State()) {
           UpgradeInterstitial()
-        } withDependencies: {
-          $0.serverConfig = .noop
+            .transformDependency(\.self) {
+              $0.serverConfig = .noop
+            }
         }
       )
     }

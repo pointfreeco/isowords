@@ -1,28 +1,38 @@
 import AudioPlayerClient
-import Combine
 import ComposableArchitecture
 import CubeCore
+import Dependencies
 import DictionaryClient
 import FeedbackGeneratorClient
 import GameCore
+import HapticsCore
 import PuzzleGen
 import SharedModels
 import Styleguide
 import SwiftUI
 import UIApplicationClient
 import UserDefaultsClient
+import UserSettingsClient
 
-@Reducer
+@Feature
 public struct Onboarding {
-  @ObservableState
-  public struct State: Equatable {
-    @Presents public var alert: AlertState<Action.Alert>?
+  @Feature public struct Alert: Prompt {
+    public struct State {
+      public init() {}
+    }
+    public enum Action {
+      case skipButtonTapped
+    }
+  }
+
+  public struct State {
+    public var alert: Alert.State?
     public var game: Game.State
     public var presentationStyle: PresentationStyle
     public var step: Step
 
     public init(
-      alert: AlertState<Action.Alert>? = nil,
+      alert: Alert.State? = nil,
       game: Game.State = .onboarding,
       presentationStyle: PresentationStyle,
       step: Step = Step.allCases.first!
@@ -154,24 +164,17 @@ public struct Onboarding {
   }
 
   public enum Action {
-    case alert(PresentationAction<Alert>)
-    case delayedNextStep
-    case delegate(Delegate)
+    case alert(Alert.Action)
+    case cubeScene(CubeSceneView.ViewAction)
     case game(Game.Action)
     case getStartedButtonTapped
     case nextButtonTapped
     case skipButtonTapped
-    case task
+    case submitButtonTapped
+  }
 
-    @CasePathable
-    public enum Alert {
-      case skipButtonTapped
-    }
-
-    @CasePathable
-    public enum Delegate {
-      case getStarted
-    }
+  public struct GetStarted: FeatureEventKey {
+    public init() {}
   }
 
   @Dependency(\.audioPlayer) var _audioPlayer
@@ -179,213 +182,174 @@ public struct Onboarding {
     self._audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
   }
   @Dependency(\.dictionary) var dictionary
-  @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.mainQueue) var mainQueue
   @Dependency(\.userDefaults) var userDefaults
   @Dependency(\.userSettings) var userSettings
 
+  @StoreTaskID var delayedNextStep
+
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case .alert(.dismiss):
-        return .none
-
-      case .alert(.presented(.skipButtonTapped)):
+      case .alert(.skipButtonTapped):
         state.step = State.Step.allCases.last!
-        return .run { _ in
+        store.addTask {
+          self.delayedNextStep.cancel()
           await self.audioPlayer.play(.uiSfxTap)
-          Task.cancel(id: CancelID.delayedNextStep)
         }
 
-      case .delayedNextStep:
+      case let .cubeScene(viewAction):
+        guard !state.step.isCongratsStep else { return }
+        switch viewAction {
+        case let .doubleTap(index: index):
+          guard state.step == .step19_DoubleTapToRemove else { return }
+          state.step.next()
+          self.sendToGame(.confirmRemoveCube(index))
+
+        case let .pan(recognizerState, panData):
+          if let indexedCubeFace = panData?.cubeFaceState,
+            !isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
+          {
+            return
+          }
+          self.sendToGame(.pan(recognizerState, panData))
+
+        case let .tap(gestureState, indexedCubeFace):
+          let indexedCubeFace = indexedCubeFace.flatMap {
+            isVisible(step: state.step, index: $0.index, side: $0.side) ? $0 : nil
+          }
+          self.sendToGame(.tap(gestureState, indexedCubeFace))
+        }
+
+      case .game:
+        break
+
+      case .getStartedButtonTapped:
+        self.getStarted()
+
+      case .nextButtonTapped:
         state.step.next()
-        return .none
+        store.addTask { await self.audioPlayer.play(.uiSfxTap) }
 
-      case .delegate(.getStarted):
-        return .run { _ in
-          await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
-          await self.audioPlayer.stop(.onboardingBgMusic)
-          Task.cancel(id: CancelID.delayedNextStep)
+      case .skipButtonTapped:
+        guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
+          self.getStarted()
+          store.addTask { await self.audioPlayer.play(.uiSfxTap) }
+          return
         }
+        state.alert = Alert.State()
+        store.addTask { await self.audioPlayer.play(.uiSfxTap) }
 
-      case .game where state.step.isCongratsStep:
-        return .none
-
-      case .game(.submitButtonTapped):
+      case .submitButtonTapped:
+        guard !state.step.isCongratsStep else { return }
         switch state.step {
         case .step5_SubmitGame where state.game.selectedWordString == "GAME",
           .step8_FindCubes where state.game.selectedWordString == "CUBES",
           .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
           .step16_FindAnyWord where self.dictionary.contains(state.game.selectedWordString, .en):
-
           state.step.next()
-
-          return self.gameReducer.reduce(
-            into: &state,
-            action: .game(.submitButtonTapped(reaction: nil))
-          )
+          self.sendToGame(.submitButtonTapped(reaction: nil))
 
         default:
           state.game.selectedWord = []
-          return .none
-        }
-
-      case let .game(.confirmRemoveCube(index)):
-        state.step.next()
-        return self.gameReducer.reduce(into: &state, action: .game(.confirmRemoveCube(index)))
-
-      case let .game(.doubleTap(index: index)):
-        guard state.step == .some(.step19_DoubleTapToRemove)
-        else { return .none }
-        return .send(.game(.confirmRemoveCube(index)))
-
-      case let .game(.tap(gestureState, .some(indexedCubeFace))):
-        let index =
-          isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
-          ? indexedCubeFace
-          : nil
-
-        return self.gameReducer.reduce(into: &state, action: .game(.tap(gestureState, index)))
-
-      case let .game(.pan(recognizerState, panData)):
-        if let indexedCubeFace = panData?.cubeFaceState,
-          !isVisible(step: state.step, index: indexedCubeFace.index, side: indexedCubeFace.side)
-        {
-          return .none
-        }
-        return self.gameReducer.reduce(into: &state, action: .game(.pan(recognizerState, panData)))
-
-      case .game:
-        return self.gameReducer.reduce(into: &state, action: action)
-
-      case .getStartedButtonTapped:
-        return .send(.delegate(.getStarted))
-
-      case .nextButtonTapped:
-        state.step.next()
-        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
-
-      case .skipButtonTapped:
-        guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
-          return .run { send in
-            await send(.delegate(.getStarted), animation: .default)
-            await self.audioPlayer.play(.uiSfxTap)
-          }
-        }
-        state.alert = AlertState {
-          TextState("Skip tutorial?")
-        } actions: {
-          ButtonState(action: .send(.skipButtonTapped, animation: .default)) {
-            TextState("Yes, skip")
-          }
-          ButtonState(role: .cancel) {
-            TextState("No, resume")
-          }
-        } message: {
-          TextState(
-            """
-            Are you sure you want to skip the tutorial? It only takes about a minute to complete.
-
-            You can always view it again later in settings.
-            """
-          )
-        }
-        return .run { _ in await self.audioPlayer.play(.uiSfxTap) }
-
-      case .task:
-        let firstStepDelay: Int = {
-          switch state.presentationStyle {
-          case .demo, .firstLaunch:
-            return 4
-          case .help:
-            return 2
-          }
-        }()
-
-        return .run { [step = state.step, presentationStyle = state.presentationStyle] send in
-          await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-          _ = try self.dictionary.load(.en)
-          await self.audioPlayer.play(
-            presentationStyle == .demo ? .timedGameBgLoop1 : .onboardingBgMusic
-          )
-
-          if step == State.Step.allCases[0] {
-            try await self.mainQueue.sleep(for: .seconds(firstStepDelay))
-            await send(.delayedNextStep, animation: .default)
-          }
-        }
-        .cancellable(id: CancelID.delayedNextStep)
-      }
-    }
-    .ifLet(\.$alert, action: \.alert)
-    .onChange(of: \.game.selectedWordString) { _, selectedWord in
-      Reduce { state, _ in
-        switch state.step {
-        case .step4_FindGame where selectedWord == "GAME",
-          .step11_FindRemove where selectedWord.isRemove:
-          state.step.next()
-          return .none
-        case .step5_SubmitGame where selectedWord != "GAME",
-          .step12_CubeIsShaking where !selectedWord.isRemove:
-          state.step.previous()
-          return .none
-        default:
-          return .none
         }
       }
     }
-    .onChange(of: \.step) { _, step in
-      Reduce { _, _ in
-        switch step {
-        case .step1_Welcome,
-          .step2_FindWordsOnCube,
-          .step3_ConnectLettersTouching,
-          .step4_FindGame,
-          .step5_SubmitGame,
-          .step7_BiggerCube,
-          .step8_FindCubes,
-          .step10_CubeDisappear,
-          .step11_FindRemove,
-          .step12_CubeIsShaking,
-          .step14_LettersRevealed,
-          .step15_FullCube,
-          .step16_FindAnyWord,
-          .step18_OneLastThing,
-          .step19_DoubleTapToRemove,
-          .step21_PlayAGameYourself:
-          return .none
+    .ifLet(\.alert) {
+      Alert()
+    }
+    Scope(\.game) {
+      Game(startsOnMount: false)
+    }
+    .transformDependency(\.self) {
+      $0.gameOnboarding()
+    }
+    .haptics(
+      isEnabled: { _ in self.userSettings.enableHaptics },
+      triggerOnChangeOf: store.game.selectedWord
+    )
+    .onChange(of: store.game.selectedWordString) { _, selectedWord, state in
+      switch state.step {
+      case .step4_FindGame where selectedWord == "GAME",
+        .step11_FindRemove where selectedWord.isRemove:
+        state.step.next()
+      case .step5_SubmitGame where selectedWord != "GAME",
+        .step12_CubeIsShaking where !selectedWord.isRemove:
+        state.step.previous()
+      default:
+        break
+      }
+    }
+    .onChange(of: store.step) { _, step, _ in
+      let delay: Int
+      switch step {
+      case .step13_Congrats:
+        delay = 3
+      case .step6_Congrats, .step9_Congrats, .step17_Congrats, .step20_Congrats:
+        delay = 2
+      default:
+        return
+      }
+      store.addTask {
+        try await self.mainQueue.sleep(for: .seconds(delay))
+        try await self.nextStep()
+      }
+    }
+    .onMount { state in
+      let firstStepDelay: Int
+      switch state.presentationStyle {
+      case .demo, .firstLaunch:
+        firstStepDelay = 4
+      case .help:
+        firstStepDelay = 2
+      }
+      let isFirstStep = state.step == State.Step.allCases[0]
+      let presentationStyle = state.presentationStyle
+      store.addTask(id: self.delayedNextStep) {
+        await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        _ = try self.dictionary.load(.en)
+        await self.audioPlayer.play(
+          presentationStyle == .demo ? .timedGameBgLoop1 : .onboardingBgMusic
+        )
 
-        case .step13_Congrats:
-          return .run { send in
-            try await self.mainQueue.sleep(for: .seconds(3))
-            await send(.delayedNextStep, animation: .default)
-          }
-
-        case .step6_Congrats,
-          .step9_Congrats,
-          .step17_Congrats,
-          .step20_Congrats:
-          return .run { send in
-            try await self.mainQueue.sleep(for: .seconds(2))
-            await send(.delayedNextStep, animation: .default)
-          }
+        if isFirstStep {
+          try await self.mainQueue.sleep(for: .seconds(firstStepDelay))
+          try await self.nextStep()
         }
       }
     }
   }
 
-  var gameReducer: some ReducerOf<Self> {
-    Scope(state: \.game, action: \.game) {
-      Game()
-        .haptics(
-          isEnabled: { _ in self.userSettings.enableHaptics },
-          triggerOnChangeOf: \.selectedWord
-        )
+  private func getStarted() {
+    store.addTask {
+      self.delayedNextStep.cancel()
+      await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
+      await self.audioPlayer.stop(.onboardingBgMusic)
+      try await MainActor.run {
+        try withAnimation {
+          _ = try store.post(GetStarted())
+        }
+      }
     }
-    .transformDependency(\.self) {
-      $0.gameOnboarding()
+  }
+
+  private func nextStep() async throws {
+    try await MainActor.run {
+      try withAnimation {
+        _ = try store.modify { $0.step.next() }
+      }
+    }
+  }
+
+  private func sendToGame(_ action: Game.Action) {
+    store.addTask {
+      try await MainActor.run {
+        try withAnimation {
+          _ = try store.send(.game(action))
+        }
+      }
     }
   }
 }
@@ -400,13 +364,13 @@ public struct OnboardingView: View {
 
   public var body: some View {
     ZStack(alignment: .topTrailing) {
-      CubeView(store: store.scope(state: \.cubeScene, action: \.game.cubeScene))
+      CubeView(store: store, state: \.cubeScene, action: { .cubeScene($0) })
         .opacity(store.step.isFullscreen ? 0 : 1)
 
       OnboardingStepView(store: store)
 
       if store.isSkipButtonVisible {
-        Button("Skip") { store.send(.skipButtonTapped, animation: .default) }
+        Button("Skip") { withAnimation { _ = store.send(.skipButtonTapped) } }
           .adaptiveFont(.matterMedium, size: 18)
           .buttonStyle(PlainButtonStyle())
           .padding(.horizontal)
@@ -456,15 +420,12 @@ extension String {
   }
 }
 
-private enum CancelID {
-  case delayedNextStep
-}
-
 #if DEBUG
   struct OnboardingView_Previews: PreviewProvider {
     static var previews: some View {
       OnboardingView(
-        store: Store(initialState: .init(presentationStyle: .firstLaunch)) {
+        store: Store(initialState: Onboarding.State(presentationStyle: .firstLaunch)) {
+          Onboarding()
         }
       )
     }

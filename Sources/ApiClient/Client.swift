@@ -31,6 +31,8 @@ public struct ApiClient: Sendable {
         )
       #endif
       return (data, response)
+    } catch let error as CancellationError {
+      throw error
     } catch {
       throw ApiError(error: error, file: file, line: line)
     }
@@ -67,6 +69,8 @@ public struct ApiClient: Sendable {
         )
       #endif
       return (data, response)
+    } catch let error as CancellationError {
+      throw error
     } catch {
       throw ApiError(error: error, file: file, line: line)
     }

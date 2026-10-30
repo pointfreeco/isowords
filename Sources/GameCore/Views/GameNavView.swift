@@ -7,7 +7,7 @@ struct GameNavView: View {
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
       Button {
-        store.send(.trayButtonTapped, animation: .default)
+        withAnimation { _ = store.send(.trayButtonTapped) }
       } label: {
         HStack {
           Text(store.displayTitle)
@@ -31,7 +31,7 @@ struct GameNavView: View {
       .disabled(!store.isTrayAvailable)
 
       Button {
-        store.send(.menuButtonTapped, animation: .default)
+        withAnimation { _ = store.send(.menuButtonTapped) }
       } label: {
         Image(systemName: "ellipsis")
           .foregroundColor(.adaptiveBlack)
@@ -59,6 +59,7 @@ struct GameNavView: View {
       VStack {
         GameNavView(
           store: Store(initialState: .init(inProgressGame: .mock)) {
+            Game()
           }
         )
         Spacer()

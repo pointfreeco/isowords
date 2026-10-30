@@ -1,5 +1,7 @@
 import ComposableArchitecture
 @_spi(Concurrency) import Dependencies
+import ConcurrencyExtras
+import Dependencies
 import GameOverFeature
 import IntegrationTestHelpers
 import SharedModels
@@ -41,14 +43,7 @@ class GameOverFeatureIntegrationTests: XCTestCase {
       serverEnvironment.dictionary.contains = { _, _ in true }
       serverEnvironment.router = .test
       
-      let store = TestStore(
-        initialState: GameOver.State(
-          completedGame: .mock,
-          isDemo: false
-        )
-      ) {
-        GameOver()
-      } withDependencies: {
+      let store = withDependencies {
         $0.audioPlayer = .noop
         $0.apiClient = .init(
           middleware: siteMiddleware(environment: serverEnvironment),
@@ -58,19 +53,30 @@ class GameOverFeatureIntegrationTests: XCTestCase {
         $0.mainRunLoop = .immediate
         $0.serverConfig.config = { .init() }
         $0.userNotifications.getNotificationSettings = {
-          (try? await Task.never()) ?? .init(authorizationStatus: .notDetermined)
+          .init(authorizationStatus: .notDetermined)
+        }
+      } operation: {
+        TestStore(
+          initialState: GameOver.State(
+            completedGame: .mock,
+            isDemo: false
+          )
+        ) {
+          GameOver()
         }
       }
 
-      let task = await store.send(.task)
-      
-      await store.receive(\.submitGameResponse.success) {
+      await store.mountTask?.value
+      await store.receive(
+        key: GameOver.Event.self,
+        value: .matching { $0.is(\.gameSubmitted) }
+      ) {
         $0.summary = .leaderboard(ranks)
+        $0.userNotificationSettings = .init(authorizationStatus: .notDetermined)
       }
-      await store.receive(\.delayedOnAppear) {
+      store.expect {
         $0.isViewEnabled = true
       }
-      await task.cancel()
     }
   }
 }

@@ -1,6 +1,8 @@
 import ApiClient
 import ComposableArchitecture
 @_spi(Concurrency) import Dependencies
+import ConcurrencyExtras
+import Dependencies
 import Either
 import Overture
 import SharedModels
@@ -38,23 +40,30 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
         $0.database.fetchRankedLeaderboardScores = { _ in
           pure(fetchLeaderboardsEntries)
         }
+        $0.database.fetchVocabLeaderboard = { _, _, _ in pure([]) }
       }
       let middleware = siteMiddleware(environment: siteEnvironment)
 
-      let store = TestStore(initialState: Leaderboard.State()) {
-        Leaderboard()
-      } withDependencies: {
+      let store = withDependencies {
         $0.apiClient = ApiClient(middleware: middleware, router: .test)
         $0.mainQueue = .immediate
+      } operation: {
+        TestStore(initialState: Leaderboard.State()) {
+          Leaderboard()
+        } changes: {
+          $0.solo.isLoading = true
+          $0.solo.resultEnvelope = .placeholder
+          $0.vocab.isLoading = true
+          $0.vocab.resultEnvelope = .placeholder
+        }
       }
 
-      await store.send(.solo(.task)) {
-        $0.solo.isLoading = true
-        $0.solo.resultEnvelope = .placeholder
-      }
-      await store.receive(\.solo.resultsResponse.success) {
+      await store.mountTask?.value
+      store.expect {
         $0.solo.isLoading = false
         $0.solo.resultEnvelope = results
+        $0.vocab.isLoading = false
+        $0.vocab.resultEnvelope = ResultEnvelope()
       }
     }
   }
@@ -92,24 +101,31 @@ class LeaderboardFeatureIntegrationTests: XCTestCase {
 
     let siteEnvironment = update(ServerEnvironment.testValue) {
       $0.database.fetchPlayerByAccessToken = { _ in pure(.blob) }
+      $0.database.fetchRankedLeaderboardScores = { _ in pure([]) }
       $0.database.fetchVocabLeaderboard = { _, _, _ in
         pure(fetchVocabEntries)
       }
     }
     let middleware = siteMiddleware(environment: siteEnvironment)
 
-    let store = TestStore(initialState: Leaderboard.State()) {
-      Leaderboard()
-    } withDependencies: {
+    let store = withDependencies {
       $0.apiClient = ApiClient(middleware: middleware, router: .test)
       $0.mainQueue = .immediate
+    } operation: {
+      TestStore(initialState: Leaderboard.State()) {
+        Leaderboard()
+      } changes: {
+        $0.solo.isLoading = true
+        $0.solo.resultEnvelope = .placeholder
+        $0.vocab.isLoading = true
+        $0.vocab.resultEnvelope = .placeholder
+      }
     }
 
-    await store.send(.vocab(.task)) {
-      $0.vocab.isLoading = true
-      $0.vocab.resultEnvelope = .placeholder
-    }
-    await store.receive(\.vocab.resultsResponse.success) {
+    await store.mountTask?.value
+    store.expect {
+      $0.solo.isLoading = false
+      $0.solo.resultEnvelope = ResultEnvelope()
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = results
     }

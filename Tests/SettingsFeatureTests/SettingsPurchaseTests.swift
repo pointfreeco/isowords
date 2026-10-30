@@ -1,7 +1,11 @@
 import Combine
 import ComposableArchitecture
 import ComposableStoreKit
+import ConcurrencyExtras
+import CustomDump
+@_spi(Concurrency) import Dependencies
 import FileClient
+import LocalDatabaseClient
 import SharedModels
 import XCTest
 
@@ -13,6 +17,7 @@ fileprivate extension DependencyValues {
     self.apiClient.baseUrl = { URL(string: "http://localhost:9876")! }
     self.applicationClient.alternateIconName = { nil }
     self.build.number = { 42 }
+    self.database.fetchStats = { try await Task.never() }
     self.mainQueue = .immediate
     self.fileClient.save = { @Sendable _, _ in }
     self.userNotifications.getNotificationSettings = {
@@ -23,17 +28,19 @@ fileprivate extension DependencyValues {
 }
 
 class SettingsPurchaseTests: XCTestCase {
+  override func invokeTest() {
+    withMainSerialExecutor {
+      super.invokeTest()
+    }
+  }
+
   @MainActor
   func testUpgrade_HappyPath() async throws {
     let didAddPaymentProductIdentifier = ActorIsolated<String?>(nil)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .makeStream()
 
-    let store = TestStore(
-      initialState: Settings.State()
-    ) {
-      Settings()
-    } withDependencies: {
+    let store = withDependencies {
       $0.setUpDefaults()
       $0.serverConfig.config = {
         .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
@@ -45,21 +52,24 @@ class SettingsPurchaseTests: XCTestCase {
         await didAddPaymentProductIdentifier.setValue(productIdentifier)
       }
       $0.storeKit.fetchProducts = { _ in
-          .init(invalidProductIdentifiers: [], products: [.fullGame])
+        .init(invalidProductIdentifiers: [], products: [.fullGame])
       }
       $0.storeKit.observer = { storeKitObserver.stream }
+    } operation: {
+      TestStore(initialState: Settings.State()) {
+        Settings()
+      } changes: {
+        $0.buildNumber = 42
+      }
     }
 
-    let task = await store.send(.task) {
-      $0.buildNumber = 42
-      $0.developer.currentBaseUrl = .localhost
-    }
-    await store.receive(\.productsResponse.success) {
+    await Task.megaYield()
+    store.expect {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.tappedProduct(.fullGame)) {
       $0.isPurchasing = true
-    }
+    }?.value
     await didAddPaymentProductIdentifier.withValue {
       expectNoDifference($0, "xyz.isowords.full_game")
     }
@@ -67,15 +77,14 @@ class SettingsPurchaseTests: XCTestCase {
     storeKitObserver.continuation.yield(.updatedTransactions([.purchased]))
     storeKitObserver.continuation.yield(.removedTransactions([.purchased]))
 
-    await store.receive(\.paymentTransaction.updatedTransactions)
-    await store.receive(\.paymentTransaction.updatedTransactions)
-    await store.receive(\.paymentTransaction.removedTransactions) {
+    await store.receive(\.paymentTransaction.updatedTransactions, timeout: .seconds(1))
+    await store.receive(\.paymentTransaction.updatedTransactions, timeout: .seconds(1))
+    await store.receive(\.paymentTransaction.removedTransactions, timeout: .seconds(1)) {
+      $0.fullGamePurchasedAt = .mock
       $0.isPurchasing = false
     }
-    await store.receive(\.currentPlayerRefreshed.success) {
-      $0.fullGamePurchasedAt = .mock
-    }
-    await task.cancel()
+
+    await store.dismount()
   }
 
   @MainActor
@@ -83,11 +92,7 @@ class SettingsPurchaseTests: XCTestCase {
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .makeStream()
-    let store = TestStore(
-      initialState: Settings.State()
-    ) {
-      Settings()
-    } withDependencies: {
+    let store = withDependencies {
       $0.setUpDefaults()
       $0.serverConfig.config = {
         .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
@@ -98,21 +103,24 @@ class SettingsPurchaseTests: XCTestCase {
         await didRestoreCompletedTransactions.setValue(true)
       }
       $0.storeKit.fetchProducts = { _ in
-          .init(invalidProductIdentifiers: [], products: [.fullGame])
+        .init(invalidProductIdentifiers: [], products: [.fullGame])
       }
       $0.storeKit.observer = { storeKitObserver.stream }
+    } operation: {
+      TestStore(initialState: Settings.State()) {
+        Settings()
+      } changes: {
+        $0.buildNumber = 42
+      }
     }
 
-    let task = await store.send(.task) {
-      $0.buildNumber = 42
-      $0.developer.currentBaseUrl = .localhost
-    }
-    await store.receive(\.productsResponse.success) {
+    await Task.megaYield()
+    store.expect {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.restoreButtonTapped) {
       $0.isRestoring = true
-    }
+    }?.value
 
     await didRestoreCompletedTransactions.withValue { expectNoDifference($0, true) }
     storeKitObserver.continuation.yield(.updatedTransactions([.restored]))
@@ -120,15 +128,16 @@ class SettingsPurchaseTests: XCTestCase {
     storeKitObserver.continuation.yield(
       .restoreCompletedTransactionsFinished(transactions: [.restored]))
 
-    await store.receive(\.paymentTransaction.updatedTransactions)
-    await store.receive(\.paymentTransaction.removedTransactions)
-    await store.receive(\.paymentTransaction.restoreCompletedTransactionsFinished) {
+    await store.receive(\.paymentTransaction.updatedTransactions, timeout: .seconds(1))
+    await store.receive(\.paymentTransaction.removedTransactions, timeout: .seconds(1)) {
+      $0.fullGamePurchasedAt = .mock
       $0.isRestoring = false
     }
-    await store.receive(\.currentPlayerRefreshed.success) {
-      $0.fullGamePurchasedAt = .mock
-    }
-    await task.cancel()
+    await store.receive(
+      \.paymentTransaction.restoreCompletedTransactionsFinished, timeout: .seconds(1)
+    )
+
+    await store.dismount()
   }
 
   @MainActor
@@ -136,11 +145,7 @@ class SettingsPurchaseTests: XCTestCase {
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .makeStream()
-    let store = TestStore(
-      initialState: Settings.State()
-    ) {
-      Settings()
-    } withDependencies: {
+    let store = withDependencies {
       $0.setUpDefaults()
       $0.serverConfig.config = {
         .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
@@ -150,31 +155,36 @@ class SettingsPurchaseTests: XCTestCase {
         await didRestoreCompletedTransactions.setValue(true)
       }
       $0.storeKit.fetchProducts = { _ in
-          .init(invalidProductIdentifiers: [], products: [.fullGame])
+        .init(invalidProductIdentifiers: [], products: [.fullGame])
       }
       $0.storeKit.observer = { storeKitObserver.stream }
+    } operation: {
+      TestStore(initialState: Settings.State()) {
+        Settings()
+      } changes: {
+        $0.buildNumber = 42
+      }
     }
 
-    let task = await store.send(.task) {
-      $0.buildNumber = 42
-      $0.developer.currentBaseUrl = .localhost
-    }
-    await store.receive(\.productsResponse.success) {
+    await Task.megaYield()
+    store.expect {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.restoreButtonTapped) {
       $0.isRestoring = true
-    }
+    }?.value
 
     await didRestoreCompletedTransactions.withValue { expectNoDifference($0, true) }
     storeKitObserver.continuation.yield(.restoreCompletedTransactionsFinished(transactions: []))
 
-    await store.receive(\.paymentTransaction.restoreCompletedTransactionsFinished) {
+    await store.receive(
+      \.paymentTransaction.restoreCompletedTransactionsFinished, timeout: .seconds(1)
+    ) {
       $0.isRestoring = false
-      $0.alert = .noRestoredPurchases
+      $0.destination = .noRestoredPurchasesAlert
     }
 
-    await task.cancel()
+    await store.dismount()
   }
 
   @MainActor
@@ -182,11 +192,7 @@ class SettingsPurchaseTests: XCTestCase {
     let didRestoreCompletedTransactions = ActorIsolated(false)
     let storeKitObserver = AsyncStream<StoreKitClient.PaymentTransactionObserverEvent>
       .makeStream()
-    let store = TestStore(
-      initialState: Settings.State()
-    ) {
-      Settings()
-    } withDependencies: {
+    let store = withDependencies {
       $0.setUpDefaults()
       $0.serverConfig.config = {
         .init(productIdentifiers: .init(fullGame: "xyz.isowords.full_game"))
@@ -196,21 +202,24 @@ class SettingsPurchaseTests: XCTestCase {
         await didRestoreCompletedTransactions.setValue(true)
       }
       $0.storeKit.fetchProducts = { _ in
-          .init(invalidProductIdentifiers: [], products: [.fullGame])
+        .init(invalidProductIdentifiers: [], products: [.fullGame])
       }
       $0.storeKit.observer = { storeKitObserver.stream }
+    } operation: {
+      TestStore(initialState: Settings.State()) {
+        Settings()
+      } changes: {
+        $0.buildNumber = 42
+      }
     }
 
-    let task = await store.send(.task) {
-      $0.buildNumber = 42
-      $0.developer.currentBaseUrl = .localhost
-    }
-    await store.receive(\.productsResponse.success) {
+    await Task.megaYield()
+    store.expect {
       $0.fullGameProduct = .success(.fullGame)
     }
     await store.send(.restoreButtonTapped) {
       $0.isRestoring = true
-    }
+    }?.value
 
     await didRestoreCompletedTransactions.withValue { XCTAssert($0) }
 
@@ -218,12 +227,14 @@ class SettingsPurchaseTests: XCTestCase {
     storeKitObserver.continuation
       .yield(.restoreCompletedTransactionsFailed(restoreCompletedTransactionsError))
 
-    await store.receive(\.paymentTransaction.restoreCompletedTransactionsFailed) {
+    await store.receive(
+      \.paymentTransaction.restoreCompletedTransactionsFailed, timeout: .seconds(1)
+    ) {
       $0.isRestoring = false
-      $0.alert = .restoredPurchasesFailed
+      $0.destination = .restoredPurchasesFailedAlert
     }
 
-    await task.cancel()
+    await store.dismount()
   }
 }
 

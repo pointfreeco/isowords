@@ -2,6 +2,7 @@ import ClientModels
 import ComposableArchitecture
 import CubeCore
 import CubePreview
+import Dependencies
 import PuzzleGen
 import SharedModels
 import Styleguide
@@ -58,8 +59,9 @@ struct CubePreviewPreviewApp: App {
           )
         ) {
           CubePreview()
-        } withDependencies: {
-          $0.audioPlayer = .noop
+            .transformDependency(\.self) {
+              $0.audioPlayer = .noop
+            }
         }
       )
     }

@@ -1,20 +1,20 @@
 import ComposableArchitecture
+import Dependencies
 import LocalDatabaseClient
 import Styleguide
 import SwiftUI
 import VocabFeature
 
-@Reducer
+@Feature
 public struct Stats {
-  @Reducer(state: .equatable)
+  @Feature
   public enum Destination {
     case vocab(Vocab)
   }
 
-  @ObservableState
-  public struct State: Equatable {
+  public struct State {
     public var averageWordLength: Double?
-    @Presents public var destination: Destination.State?
+    public var destination: Destination.State?
     public var gamesPlayed: Int
     public var highestScoringWord: LocalDatabaseClient.Stats.Word?
     public var highScoreTimed: Int?
@@ -50,10 +50,7 @@ public struct Stats {
   }
 
   public enum Action {
-    case backButtonTapped
-    case destination(PresentationAction<Destination.Action>)
-    case statsResponse(Result<LocalDatabaseClient.Stats, Error>)
-    case task
+    case destination(Destination.Action)
     case vocabButtonTapped
   }
 
@@ -61,34 +58,11 @@ public struct Stats {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case .backButtonTapped:
-        return .none
-
       case .destination:
-        return .none
-
-      case .statsResponse(.failure):
-        // TODO
-        return .none
-
-      case let .statsResponse(.success(stats)):
-        state.averageWordLength = stats.averageWordLength
-        state.gamesPlayed = stats.gamesPlayed
-        state.highestScoringWord = stats.highestScoringWord
-        state.highScoreTimed = stats.highScoreTimed
-        state.highScoreUnlimited = stats.highScoreUnlimited
-        state.longestWord = stats.longestWord
-        state.secondsPlayed = stats.secondsPlayed
-        state.wordsFound = stats.wordsFound
-        return .none
-
-      case .task:
-        return .run { send in
-          await send(.statsResponse(Result { try await self.database.fetchStats() }))
-        }
+        break
 
       case .vocabButtonTapped:
         state.destination = .vocab(
@@ -96,11 +70,25 @@ public struct Stats {
             isAnimationReduced: state.isAnimationReduced
           )
         )
-        return .none
       }
     }
-    .ifLet(\.$destination, action: \.destination) {
+    .ifLet(\.destination) {
       Destination.body
+    }
+    .onMount { _ in
+      store.addTask {
+        let stats = try await database.fetchStats()
+        try store.modify {
+          $0.averageWordLength = stats.averageWordLength
+          $0.gamesPlayed = stats.gamesPlayed
+          $0.highestScoringWord = stats.highestScoringWord
+          $0.highScoreTimed = stats.highScoreTimed
+          $0.highScoreUnlimited = stats.highScoreUnlimited
+          $0.longestWord = stats.longestWord
+          $0.secondsPlayed = stats.secondsPlayed
+          $0.wordsFound = stats.wordsFound
+        }
+      }
     }
   }
 }
@@ -211,10 +199,7 @@ public struct StatsView: View {
         .adaptiveFont(.matterMedium, size: 16)
       }
     }
-    .task { await store.send(.task).finish() }
-    .navigationDestination(
-      item: $store.scope(state: \.destination?.vocab, action: \.destination.vocab)
-    ) { store in
+    .navigationDestination(item: $store.scope(\.destination).vocab) { store in
       VocabView(store: store)
     }
     .navigationStyle(title: Text("Stats"))

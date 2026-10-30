@@ -4,6 +4,7 @@ import ClientModels
 import ComposableArchitecture
 import ComposableGameCenter
 import DailyChallengeFeature
+import Dependencies
 import DeviceId
 import LeaderboardFeature
 import MultiplayerFeature
@@ -15,14 +16,14 @@ import SoloFeature
 import SwiftUI
 import UserDefaultsClient
 
-public struct ActiveMatchResponse: Equatable {
-  public let matches: [ActiveTurnBasedMatch]
-  public let hasPastTurnBasedGames: Bool
+struct ActiveMatchResponse: Equatable {
+  let matches: [ActiveTurnBasedMatch]
+  let hasPastTurnBasedGames: Bool
 }
 
-@Reducer
+@Feature
 public struct Home {
-  @Reducer(state: .equatable)
+  @Feature
   public enum Destination {
     case changelog(ChangelogReducer)
     case dailyChallenge(DailyChallengeReducer)
@@ -32,36 +33,24 @@ public struct Home {
     case solo(Solo)
   }
 
-  @ObservableState
-  public struct State: Equatable {
+  public struct State {
+    public var activeGames: ActiveGames.State
     public var dailyChallenges: [FetchTodaysDailyChallengeResponse]?
-    @Presents public var destination: Destination.State?
+    public var destination: Destination.State?
     public var hasChangelog: Bool
     public var hasPastTurnBasedGames: Bool
-    @Presents public var nagBanner: NagBanner.State?
-    public var savedGames: SavedGamesState {
-      didSet {
-        guard var dailyChallengeState = self.destination?.dailyChallenge
-        else { return }
-        dailyChallengeState.inProgressDailyChallengeUnlimited =
-          self.savedGames.dailyChallengeUnlimited
-        self.destination = .dailyChallenge(dailyChallengeState)
-      }
-    }
-    public var turnBasedMatches: [ActiveTurnBasedMatch]
+    public var nagBanner: NagBanner.State?
+    @Trigger public var refresh
     public var weekInReview: FetchWeekInReviewResponse?
 
-    public var activeGames: ActiveGamesState {
-      get {
-        .init(
-          savedGames: self.savedGames,
-          turnBasedMatches: self.turnBasedMatches
-        )
-      }
-      set {
-        self.savedGames = newValue.savedGames
-        self.turnBasedMatches = newValue.turnBasedMatches
-      }
+    public var savedGames: SavedGamesState {
+      get { self.activeGames.savedGames }
+      set { self.activeGames.savedGames = newValue }
+    }
+
+    public var turnBasedMatches: [ActiveTurnBasedMatch] {
+      get { self.activeGames.turnBasedMatches }
+      set { self.activeGames.turnBasedMatches = newValue }
     }
 
     public init(
@@ -74,13 +63,15 @@ public struct Home {
       turnBasedMatches: [ActiveTurnBasedMatch] = [],
       weekInReview: FetchWeekInReviewResponse? = nil
     ) {
+      self.activeGames = ActiveGames.State(
+        savedGames: savedGames,
+        turnBasedMatches: turnBasedMatches
+      )
       self.dailyChallenges = dailyChallenges
       self.destination = destination
       self.hasChangelog = hasChangelog
       self.hasPastTurnBasedGames = hasPastTurnBasedGames
       self.nagBanner = nagBanner
-      self.savedGames = savedGames
-      self.turnBasedMatches = turnBasedMatches
       self.weekInReview = weekInReview
     }
 
@@ -92,29 +83,20 @@ public struct Home {
   }
 
   public enum Action {
-    case activeMatchesResponse(Result<ActiveMatchResponse, Error>)
-    case activeGames(ActiveGamesAction)
-    case authenticationResponse(CurrentPlayerEnvelope)
+    case activeGames(ActiveGames.Action)
     case cubeButtonTapped
     case dailyChallengeButtonTapped
-    case dailyChallengeResponse(Result<[FetchTodaysDailyChallengeResponse], Error>)
-    case destination(PresentationAction<Destination.Action>)
-    case gameButtonTapped(GameButtonAction)
+    case destination(Destination.Action)
     case howToPlayButtonTapped
     case leaderboardButtonTapped
     case multiplayerButtonTapped
-    case nagBanner(PresentationAction<NagBanner.Action>)
-    case serverConfigResponse(ServerConfig)
+    case nagBanner(NagBanner.Action)
     case settingsButtonTapped
     case soloButtonTapped
-    case task
-    case weekInReviewResponse(Result<FetchWeekInReviewResponse, Error>)
   }
 
-  public enum GameButtonAction: Equatable {
-    case dailyChallenge
-    case multiplayer
-    case solo
+  public struct HowToPlay: FeatureEventKey {
+    public init() {}
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -127,175 +109,128 @@ public struct Home {
   @Dependency(\.timeZone) var timeZone
   @Dependency(\.userDefaults) var userDefaults
 
+  @StoreTaskID var loadTask
+
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Reduce(self.core)
-      .ifLet(\.$destination, action: \.destination) {
-        Destination.body
+  public var body: some Feature {
+    Scope(\.activeGames) {
+      ActiveGames()
+    }
+    .onEvent(ActiveGames.Event.self) { event, _ in
+      switch event {
+      case let .turnBasedGameMenuItemTapped(.deleteMatch(matchId)):
+        store.addTask {
+          try await deleteMatch(matchId)
+        }
+        return .stop
+
+      case let .turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex)):
+        store.addTask {
+          try await gameCenter.turnBasedMatch.sendReminder(
+            .init(
+              for: matchId,
+              to: [otherPlayerIndex.rawValue],
+              localizableMessageKey: "It’s your turn now!",
+              arguments: []
+            )
+          )
+        }
+        return .stop
+
+      case .dailyChallengeTapped, .soloTapped, .turnBasedGameMenuItemTapped(.rematch),
+        .turnBasedGameTapped:
+        return .continue
       }
-      .ifLet(\.$nagBanner, action: \.nagBanner) {
-        NagBanner()
-      }
-  }
+    }
 
-  private func core(state: inout State, action: Action) -> EffectOf<Self> {
-    switch action {
-    case let .activeMatchesResponse(.success(response)):
-      state.hasPastTurnBasedGames = response.hasPastTurnBasedGames
-      state.turnBasedMatches = response.matches
-      return .none
+    Update { state, action in
+      switch action {
+      case .activeGames:
+        break
 
-    case .activeMatchesResponse(.failure):
-      return .none
+      case .cubeButtonTapped:
+        state.destination = .changelog(ChangelogReducer.State())
 
-    case let .activeGames(.turnBasedGameMenuItemTapped(.deleteMatch(matchId))):
-      return .run { send in
-        let localPlayer = self.gameCenter.localPlayer.localPlayer()
-
-        do {
-          let match = try await self.gameCenter.turnBasedMatch.load(matchId)
-          let currentParticipantIsLocalPlayer =
-            match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
-
-          if currentParticipantIsLocalPlayer {
-            try await self.gameCenter.turnBasedMatch
-              .endMatchInTurn(
-                .init(
-                  for: match.matchId,
-                  matchData: match.matchData ?? Data(),
-                  localPlayerId: localPlayer.gamePlayerId,
-                  localPlayerMatchOutcome: .quit,
-                  message: "\(localPlayer.displayName) forfeited the match."
-                )
-              )
-          } else {
-            try await self.gameCenter.turnBasedMatch
-              .participantQuitOutOfTurn(match.matchId)
-          }
-        } catch {}
-
-        await send(
-          .activeMatchesResponse(
-            Result {
-              try await self.gameCenter.loadActiveMatches(now: self.now)
-            }
-          ),
-          animation: .default
-        )
-
-        await self.playSound(.uiSfxActionDestructive)
-      }
-
-    case .activeGames(.turnBasedGameMenuItemTapped(.rematch)):
-      return .none
-
-    case let .activeGames(.turnBasedGameMenuItemTapped(.sendReminder(matchId, otherPlayerIndex))):
-      return .run { _ in
-        try await self.gameCenter.turnBasedMatch.sendReminder(
+      case .dailyChallengeButtonTapped:
+        state.destination = .dailyChallenge(
           .init(
-            for: matchId,
-            to: [otherPlayerIndex.rawValue],
-            localizableMessageKey: "It’s your turn now!",
-            arguments: []
+            dailyChallenges: state.dailyChallenges ?? [],
+            inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
           )
         )
+
+      case .destination:
+        break
+
+      case .howToPlayButtonTapped:
+        store.addTask {
+          try await MainActor.run {
+            try withAnimation {
+              _ = try store.post(HowToPlay())
+            }
+          }
+        }
+
+      case .leaderboardButtonTapped:
+        state.destination = .leaderboard(Leaderboard.State())
+
+      case .multiplayerButtonTapped:
+        state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
+
+      case .nagBanner:
+        break
+
+      case .settingsButtonTapped:
+        state.destination = .settings(Settings.State())
+
+      case .soloButtonTapped:
+        state.destination = .solo(.init(inProgressGame: state.savedGames.unlimited))
       }
-
-    case .activeGames:
-      return .none
-
-    case let .authenticationResponse(currentPlayerEnvelope):
-      let now = self.now.timeIntervalSinceReferenceDate
-      let itsNagTime =
-        Int(now - self.userDefaults.installationTime)
-        >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
-      let isFullGamePurchased =
-        currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
-
-      state.nagBanner =
-        !isFullGamePurchased && itsNagTime
-        ? .init()
-        : nil
-
-      return .none
-
-    case .cubeButtonTapped:
-      state.destination = .changelog(ChangelogReducer.State())
-      return .none
-
-    case .dailyChallengeButtonTapped:
-      state.destination = .dailyChallenge(
-        .init(
-          dailyChallenges: state.dailyChallenges ?? [],
-          inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
-        )
-      )
-      return .none
-
-    case let .dailyChallengeResponse(.success(dailyChallenges)):
-      state.dailyChallenges = dailyChallenges
-      return .none
-
-    case .dailyChallengeResponse(.failure):
-      state.dailyChallenges = []
-      return .none
-
-    case .destination:
-      return .none
-
-    case .gameButtonTapped:
-      return .none
-
-    case .howToPlayButtonTapped:
-      return .none
-
-    case let .serverConfigResponse(serverConfig):
-      state.hasChangelog = serverConfig.newestBuild > self.buildNumber()
-      return .none
-
-    case .leaderboardButtonTapped:
-      state.destination = .leaderboard(Leaderboard.State())
-      return .none
-
-    case .multiplayerButtonTapped:
-      state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
-      return .none
-
-    case .nagBanner:
-      return .none
-
-    case .settingsButtonTapped:
-      state.destination = .settings(Settings.State())
-      return .none
-
-    case .soloButtonTapped:
-      state.destination = .solo(.init(inProgressGame: state.savedGames.unlimited))
-      return .none
-
-    case .task:
-      return .run { send in
-        async let authenticate: Void = self.authenticate(send: send)
-        await self.listenForGameCenterEvents(send: send)
-        _ = await authenticate
+    }
+    .ifLet(\.destination) {
+      Destination.body
+    }
+    .ifLet(\.nagBanner) {
+      NagBanner()
+    }
+    .onChange(of: store.savedGames.dailyChallengeUnlimited) { state in
+      let inProgressGame = state.savedGames.dailyChallengeUnlimited
+      try? state.destination?.modify(\.dailyChallenge) {
+        $0.inProgressDailyChallengeUnlimited = inProgressGame
       }
-      .animation()
-
-    case .weekInReviewResponse(.failure):
-      return .none
-
-    case let .weekInReviewResponse(.success(response)):
-      state.weekInReview = response
-      return .none
+    }
+    .onMount { _ in
+      store.addTask(id: loadTask) {
+        try await load()
+      }
+      store.addTask {
+        try await listenForGameCenterEvents()
+      }
+    }
+    .onTrigger(store.refresh) { _ in
+      store.addTask(id: loadTask) {
+        try await load()
+      }
     }
   }
 
-  private func authenticate(send: Send<Action>) async {
-    do {
-      try? await self.gameCenter.localPlayer.authenticate()
+  private func modify(
+    animated body: @escaping @Sendable (inout State) -> Void
+  ) async throws {
+    try await MainActor.run {
+      try withAnimation {
+        _ = try store.modify(body)
+      }
+    }
+  }
 
-      let localPlayer = self.gameCenter.localPlayer.localPlayer()
-      let currentPlayerEnvelope = try await self.apiClient.authenticate(
+  private func load() async throws {
+    try? await self.gameCenter.localPlayer.authenticate()
+
+    let localPlayer = self.gameCenter.localPlayer.localPlayer()
+    guard
+      let currentPlayerEnvelope = try? await self.apiClient.authenticate(
         .init(
           deviceId: .init(rawValue: self.deviceId.id()),
           displayName: localPlayer.isAuthenticated ? localPlayer.displayName : nil,
@@ -305,65 +240,114 @@ public struct Home {
           timeZone: self.timeZone.identifier
         )
       )
-      await send(.authenticationResponse(currentPlayerEnvelope))
+    else { return }
 
-      async let serverConfigResponse: Void = send(
-        .serverConfigResponse(self.serverConfig.refresh())
-      )
+    let now = self.now.timeIntervalSinceReferenceDate
+    let itsNagTime =
+      Int(now - self.userDefaults.installationTime)
+      >= self.serverConfig.config().upgradeInterstitial.nagBannerAfterInstallDuration
+    let isFullGamePurchased =
+      currentPlayerEnvelope.appleReceipt?.receipt.originalPurchaseDate != nil
+    let showNagBanner = !isFullGamePurchased && itsNagTime
+    try await self.modify { state in
+      if !showNagBanner {
+        state.nagBanner = nil
+      } else if state.nagBanner == nil {
+        state.nagBanner = NagBanner.State()
+      }
+    }
 
-      async let dailyChallengeResponse: Void = send(
-        .dailyChallengeResponse(
-          Result {
-            try await self.apiClient.apiRequest(
-              route: .dailyChallenge(.today(language: .en)),
-              as: [FetchTodaysDailyChallengeResponse].self
-            )
-          }
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      group.addTask {
+        guard let serverConfig = try? await self.serverConfig.refresh()
+        else { return }
+        let hasChangelog = serverConfig.newestBuild > self.buildNumber()
+        try await self.modify { $0.hasChangelog = hasChangelog }
+      }
+      group.addTask {
+        let dailyChallenges = try? await self.apiClient.apiRequest(
+          route: .dailyChallenge(.today(language: .en)),
+          as: [FetchTodaysDailyChallengeResponse].self
         )
-      )
-      async let weekInReviewResponse: Void = send(
-        .weekInReviewResponse(
-          Result {
-            try await self.apiClient.apiRequest(
-              route: .leaderboard(.weekInReview(language: .en)),
-              as: FetchWeekInReviewResponse.self
-            )
+        try await self.modify { state in
+          guard let dailyChallenges else {
+            state.dailyChallenges = []
+            return
           }
-        )
-      )
-      async let activeMatchesResponse: Void = send(
-        .activeMatchesResponse(
-          Result {
-            try await self.gameCenter
-              .loadActiveMatches(now: self.now)
+          state.dailyChallenges = dailyChallenges
+          if dailyChallenges.unlimited?.dailyChallenge.id
+            != state.savedGames.dailyChallengeUnlimited?.gameContext.dailyChallenge
+          {
+            state.savedGames.dailyChallengeUnlimited = nil
           }
-        )
-      )
-      _ = try await (
-        serverConfigResponse, dailyChallengeResponse, weekInReviewResponse, activeMatchesResponse
-      )
-    } catch {}
+        }
+      }
+      group.addTask {
+        guard
+          let weekInReview = try? await self.apiClient.apiRequest(
+            route: .leaderboard(.weekInReview(language: .en)),
+            as: FetchWeekInReviewResponse.self
+          )
+        else { return }
+        try await self.modify { $0.weekInReview = weekInReview }
+      }
+      group.addTask {
+        try await self.loadActiveMatches()
+      }
+      try await group.waitForAll()
+    }
   }
 
-  private func listenForGameCenterEvents(send: Send<Action>) async {
+  private func loadActiveMatches() async throws {
+    guard let response = try? await self.gameCenter.loadActiveMatches(now: self.now)
+    else { return }
+    try await self.modify {
+      $0.hasPastTurnBasedGames = response.hasPastTurnBasedGames
+      $0.turnBasedMatches = response.matches
+    }
+  }
+
+  private func deleteMatch(_ matchId: TurnBasedMatch.Id) async throws {
+    let localPlayer = self.gameCenter.localPlayer.localPlayer()
+
+    do {
+      let match = try await self.gameCenter.turnBasedMatch.load(matchId)
+      let currentParticipantIsLocalPlayer =
+        match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
+
+      if currentParticipantIsLocalPlayer {
+        try await self.gameCenter.turnBasedMatch
+          .endMatchInTurn(
+            .init(
+              for: match.matchId,
+              matchData: match.matchData ?? Data(),
+              localPlayerId: localPlayer.gamePlayerId,
+              localPlayerMatchOutcome: .quit,
+              message: "\(localPlayer.displayName) forfeited the match."
+            )
+          )
+      } else {
+        try await self.gameCenter.turnBasedMatch
+          .participantQuitOutOfTurn(match.matchId)
+      }
+    } catch {}
+
+    try await self.loadActiveMatches()
+
+    await self.playSound(.uiSfxActionDestructive)
+  }
+
+  private func listenForGameCenterEvents() async throws {
     for await event in self.gameCenter.localPlayer.listener() {
       switch event {
       case .turnBased(.matchEnded),
         .turnBased(.receivedTurnEventForMatch):
-        await send(
-          .activeMatchesResponse(
-            Result {
-              try await self.gameCenter
-                .loadActiveMatches(now: self.now)
-            }
-          )
-        )
+        try await self.loadActiveMatches()
       default:
         break
       }
     }
   }
-
 }
 
 extension GameCenterClient {
@@ -399,7 +383,7 @@ public struct HomeView: View {
               Spacer()
 
               Button {
-                store.send(.howToPlayButtonTapped, animation: .default)
+                store.send(.howToPlayButtonTapped)
               } label: {
                 Image(systemName: "questionmark.circle")
               }
@@ -426,7 +410,7 @@ public struct HomeView: View {
                 .screenEdgePadding(.horizontal)
 
               ActiveGamesView(
-                store: store.scope(state: \.activeGames, action: \.activeGames),
+                store: store.scope(\.activeGames),
                 showMenuItems: true
               )
               .foregroundColor(self.colorScheme == .dark ? .hex(0xE9A27C) : .isowordsBlack)
@@ -475,22 +459,21 @@ public struct HomeView: View {
           .ignoresSafeArea()
       )
 
-      if let store = store.scope(state: \.nagBanner, action: \.nagBanner.presented) {
+      if let store = store.scope(\.nagBanner) {
         NagBannerView(store: store)
       }
     }
     .navigationBarHidden(true)
     .navigationDestination(
-      item: $store.scope(state: \.destination?.settings, action: \.destination.settings)
+      item: $store.scope(\.destination).settings
     ) { store in
       SettingsView(store: store, navPresentationStyle: .navigation)
     }
     .sheet(
-      item: $store.scope(state: \.destination?.changelog, action: \.destination.changelog)
+      item: $store.scope(\.destination).changelog
     ) { store in
       ChangelogView(store: store)
     }
-    .task { await store.send(.task).finish() }
   }
 }
 

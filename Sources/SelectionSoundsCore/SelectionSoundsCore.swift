@@ -1,64 +1,58 @@
 import AudioPlayerClient
 import ComposableArchitecture
+import Dependencies
 import SharedModels
-import TcaHelpers
 
-extension Reducer {
+extension FeatureProtocol {
   public func selectionSounds(
     contains: @escaping (State, String) -> Bool,
     hasBeenPlayed: @escaping (State, String) -> Bool,
     puzzle: @escaping (State) -> Puzzle,
-    selectedWord: @escaping (State) -> [IndexedCubeFace]
-  ) -> SelectionSounds<Self> {
-    SelectionSounds(
-      base: self,
-      contains: contains,
-      hasBeenPlayed: hasBeenPlayed,
-      puzzle: puzzle,
-      selectedWord: selectedWord
+    selectedWord: [IndexedCubeFace]
+  ) -> some Feature {
+    self.modifier(
+      SelectionSounds(
+        contains: contains,
+        hasBeenPlayed: hasBeenPlayed,
+        puzzle: puzzle,
+        selectedWord: selectedWord
+      )
     )
   }
 }
 
-@Reducer
-public struct SelectionSounds<Base: Reducer> {
-  let base: Base
-  let contains: (Base.State, String) -> Bool
-  let hasBeenPlayed: (Base.State, String) -> Bool
-  let puzzle: (Base.State) -> Puzzle
-  let selectedWord: (Base.State) -> [IndexedCubeFace]
+@FeatureModifier
+private struct SelectionSounds<State, Action> {
+  let contains: (State, String) -> Bool
+  let hasBeenPlayed: (State, String) -> Bool
+  let puzzle: (State) -> Puzzle
+  let selectedWord: [IndexedCubeFace]
 
   @Dependency(\.audioPlayer.play) var playSound
 
-  public var body: some ReducerOf<Base> {
-    self.base.onChange(of: self.selectedWord) { previousSelection, selection in
-      Reduce { state, action in
-        .run { [state] _ in
-          if let noteIndex = noteIndex(
-            selectedWord: selection,
-            cubes: self.puzzle(state),
-            notes: AudioPlayerClient.Sound.allNotes
-          ) {
-            await self.playSound(AudioPlayerClient.Sound.allNotes[noteIndex])
+  func body(content: Content) -> some Feature {
+    content.onChange(of: selectedWord) { _, selection, state in
+      let puzzle = self.puzzle(state)
+      let selectedWordString = puzzle.string(from: selection)
+      let validCount =
+        !hasBeenPlayed(state, selectedWordString) && contains(state, selectedWordString)
+        ? selectedWordString
+          .indices
+          .dropFirst(2)
+          .reduce(into: 0) { count, index in
+            count += contains(state, String(selectedWordString[...index])) ? 1 : 0
           }
-
-          let selectedWordString = self.puzzle(state).string(from: selection)
-          if !hasBeenPlayed(state, selectedWordString)
-            && contains(state, selectedWordString)
-          {
-            let validCount = selectedWordString
-              .indices
-              .dropFirst(2)
-              .reduce(into: 0) { count, index in
-                count +=
-                  contains(state, String(selectedWordString[...index]))
-                  ? 1
-                  : 0
-              }
-            if validCount > 0 {
-              await self.playSound(.validWord(level: validCount))
-            }
-          }
+        : 0
+      store.addTask {
+        if let noteIndex = noteIndex(
+          selectedWord: selection,
+          cubes: puzzle,
+          notes: AudioPlayerClient.Sound.allNotes
+        ) {
+          await playSound(AudioPlayerClient.Sound.allNotes[noteIndex])
+        }
+        if validCount > 0 {
+          await playSound(.validWord(level: validCount))
         }
       }
     }

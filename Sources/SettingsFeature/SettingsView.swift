@@ -1,6 +1,7 @@
 import Build
 import ComposableArchitecture
 import ComposableStoreKit
+import Dependencies
 import ServerConfigClient
 import StatsFeature
 import Styleguide
@@ -34,7 +35,7 @@ public struct SettingsView: View {
                   switch fullGameProduct {
                   case let .success(product):
                     Button {
-                      store.send(.tappedProduct(product), animation: .default)
+                      withAnimation { _ = store.send(.tappedProduct(product)) }
                     } label: {
                       HStack(alignment: .top, spacing: 0) {
                         Text(product.priceLocale.currencySymbol ?? "$")
@@ -115,7 +116,7 @@ public struct SettingsView: View {
         title: "Accessibility"
       )
       SettingsNavigationLink(
-        destination: StatsView(store: store.scope(state: \.stats, action: \.stats)),
+        destination: StatsView(store: store.scope(\.stats)),
         title: "Stats"
       )
       SettingsNavigationLink(
@@ -162,15 +163,49 @@ public struct SettingsView: View {
       backgroundColor: .adaptiveWhite,
       foregroundColor: .hex(self.colorScheme == .dark ? 0x7d7d7d : 0x393939),
       title: Text("Settings"),
-      navPresentationStyle: self.navPresentationStyle,
-      onDismiss: { store.send(.onDismiss) }
+      navPresentationStyle: self.navPresentationStyle
     )
-    .task { await store.send(.task).finish() }
-    .alert($store.scope(state: \.alert, action: \.alert))
+    .alert(
+      "No Purchases",
+      isPresented: $store.scope(\.destination).noRestoredPurchasesAlert.isPresent()
+    ) {
+      Button("Ok", role: .cancel) {}
+    } message: {
+      Text("No purchases were found to restore.")
+    }
+    .alert(
+      "Error",
+      isPresented: $store.scope(\.destination).restoredPurchasesFailedAlert.isPresent()
+    ) {
+      Button("Ok", role: .cancel) {}
+    } message: {
+      Text("We couldn’t restore purchases, please try again.")
+    }
+    .alert(
+      "Permission Denied",
+      isPresented: $store.scope(\.destination).userNotificationAuthorizationDeniedAlert.isPresent(),
+      presenting: store.scope(\.destination)?.scope(\.userNotificationAuthorizationDeniedAlert)
+    ) { alertStore in
+      Button("Ok", role: .cancel) {}
+      Button("Open settings") {
+        alertStore.send(.openSettingsButtonTapped)
+      }
+    } message: { _ in
+      Text("Turn on notifications in iOS settings.")
+    }
     .sheet(isPresented: $isSharePresented) {
       ActivityView(activityItems: [URL(string: "https://www.isowords.xyz")!])
         .ignoresSafeArea()
     }
+  }
+}
+
+extension Binding {
+  fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
+    Binding<Bool>(
+      get: { self.wrappedValue != nil },
+      set: { if !$0 { self.wrappedValue = nil } }
+    )
   }
 }
 
@@ -235,25 +270,27 @@ public struct SupportButtonStyle: ButtonStyle {
       Preview {
         NavigationView {
           SettingsView(
-            store: Store(
-              initialState: Settings.State(
-                fullGameProduct: .success(
-                  StoreKitClient.Product(
-                    downloadContentLengths: [],
-                    downloadContentVersion: "",
-                    isDownloadable: false,
-                    localizedDescription: "",
-                    localizedTitle: "",
-                    price: 4.99,
-                    priceLocale: Locale.init(identifier: "en_GB"),
-                    productIdentifier: ""
+            store: withDependencies {
+              $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+            } operation: {
+              Store(
+                initialState: Settings.State(
+                  fullGameProduct: .success(
+                    StoreKitClient.Product(
+                      downloadContentLengths: [],
+                      downloadContentVersion: "",
+                      isDownloadable: false,
+                      localizedDescription: "",
+                      localizedTitle: "",
+                      price: 4.99,
+                      priceLocale: Locale.init(identifier: "en_GB"),
+                      productIdentifier: ""
+                    )
                   )
                 )
-              )
-            ) {
-              Settings()
-            } withDependencies: {
-              $0.apiClient.currentPlayer = { .init(appleReceipt: .mock, player: .blob) }
+              ) {
+                Settings()
+              }
             },
             navPresentationStyle: .navigation
           )

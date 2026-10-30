@@ -2,9 +2,8 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
-// NB: `@Reducer` prevents us from synthesizing conditional conformances in this file.
-public struct LeaderboardResults<TimeScope>: Reducer {
-  @ObservableState
+@Feature
+public struct LeaderboardResults<TimeScope: Equatable> {
   public struct State {
     public var gameMode: GameMode
     public var isLoading: Bool
@@ -32,18 +31,16 @@ public struct LeaderboardResults<TimeScope>: Reducer {
     }
   }
 
-  @CasePathable
   public enum Action {
     case dismissTimeScopeMenu
     case gameModeButtonTapped(GameMode)
-    case resultsResponse(Result<ResultEnvelope, Error>)
     case tappedRow(id: UUID)
     case tappedTimeScopeLabel
-    case task
     case timeScopeChanged(TimeScope)
   }
 
   public let loadResults: @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
+  @StoreTaskID var request
 
   public init(
     loadResults: @escaping @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
@@ -51,69 +48,62 @@ public struct LeaderboardResults<TimeScope>: Reducer {
     self.loadResults = loadResults
   }
 
-  public var body: some ReducerOf<Self> {
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
       case .dismissTimeScopeMenu:
         state.isTimeScopeMenuVisible = false
-        return .none
 
       case let .gameModeButtonTapped(gameMode):
         state.gameMode = gameMode
         state.isLoading = true
-        return .run { [timeScope = state.timeScope] send in
-          await send(
-            .resultsResponse(Result { try await self.loadResults(gameMode, timeScope) }),
-            animation: .default
-          )
-        }
-
-      case .resultsResponse(.failure):
-        state.isLoading = false
-        state.resultEnvelope = nil
-        return .none
-
-      case let .resultsResponse(.success(envelope)):
-        state.isLoading = false
-        state.resultEnvelope = envelope
-        return .none
+        load(gameMode: gameMode, timeScope: state.timeScope)
 
       case .tappedRow:
-        return .none
+        break
 
       case .tappedTimeScopeLabel:
         state.isTimeScopeMenuVisible.toggle()
-        return .none
-
-      case .task:
-        state.isLoading = true
-        state.isTimeScopeMenuVisible = false
-        state.resultEnvelope = .placeholder
-
-        return .run { [gameMode = state.gameMode, timeScope = state.timeScope] send in
-          await send(
-            .resultsResponse(Result { try await self.loadResults(gameMode, timeScope) }),
-            animation: .default
-          )
-        }
 
       case let .timeScopeChanged(timeScope):
-        state.isLoading = true
         state.isTimeScopeMenuVisible = false
         state.timeScope = timeScope
+      }
+    }
+    .onChange(of: store.timeScope) { _, timeScope, state in
+      state.isLoading = true
+      load(gameMode: state.gameMode, timeScope: timeScope)
+    }
+    .onMount { state in
+      state.isLoading = true
+      state.isTimeScopeMenuVisible = false
+      state.resultEnvelope = .placeholder
+      load(gameMode: state.gameMode, timeScope: state.timeScope)
+    }
+  }
 
-        return .run { [gameMode = state.gameMode] send in
-          await send(
-            .resultsResponse(Result { try await self.loadResults(gameMode, timeScope) }),
-            animation: .default
-          )
+  private func load(gameMode: GameMode, timeScope: TimeScope) {
+    store.addTask(id: request) {
+      let envelope: ResultEnvelope?
+      do {
+        envelope = try await loadResults(gameMode, timeScope)
+      } catch is CancellationError {
+        return
+      } catch {
+        envelope = nil
+      }
+      try await MainActor.run {
+        try withAnimation {
+          _ = try store.modify {
+            $0.isLoading = false
+            $0.resultEnvelope = envelope
+          }
         }
       }
     }
   }
 }
 
-extension LeaderboardResults.State: Equatable where TimeScope: Equatable {}
 
 public struct LeaderboardResultsView<TimeScope, TimeScopeMenu>: View
 where
@@ -161,7 +151,7 @@ where
         Spacer()
 
         Button {
-          store.send(.tappedTimeScopeLabel, animation: .default)
+          withAnimation { _ = store.send(.tappedTimeScopeLabel) }
         } label: {
           HStack {
             self.timeScopeLabel
@@ -266,7 +256,7 @@ where
         store.isTimeScopeMenuVisible
           ? Color.black.opacity(0.4)
             .onTapGesture {
-              store.send(.dismissTimeScopeMenu, animation: .default)
+              withAnimation { _ = store.send(.dismissTimeScopeMenu) }
             }
           : nil
       )
@@ -295,7 +285,6 @@ where
       alignment: .topTrailing
 
     )
-    .task { await store.send(.task).finish() }
   }
 }
 

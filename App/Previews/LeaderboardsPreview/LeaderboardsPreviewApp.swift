@@ -1,6 +1,7 @@
 import ApiClient
 import CasePaths
 import ComposableArchitecture
+import Dependencies
 import LeaderboardFeature
 import Overture
 import SharedModels
@@ -57,11 +58,12 @@ struct LeaderboardsPreviewApp: App {
       LeaderboardView(
         store: Store(initialState: Leaderboard.State()) {
           Leaderboard()
-        } withDependencies: {
-          $0.apiClient = apiClient
-          $0.audioPlayer = .noop
-          $0.feedbackGenerator = .noop
-          $0.lowPowerMode = .false
+            .transformDependency(\.self) {
+              $0.apiClient = apiClient
+              $0.audioPlayer = .noop
+              $0.feedbackGenerator = .noop
+              $0.lowPowerMode = .false
+            }
         }
       )
     }

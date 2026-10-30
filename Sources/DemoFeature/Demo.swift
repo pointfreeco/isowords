@@ -1,47 +1,44 @@
 import AudioPlayerClient
 import ComposableArchitecture
 import CubeCore
+import Dependencies
 import GameCore
+import GameOverFeature
 import OnboardingFeature
 import ServerConfig
+import SharedModels
 import StoreKit
 import SwiftUI
 import TcaHelpers
 
-@Reducer
+@Feature
 public struct Demo {
-  @ObservableState
-  public struct State: Equatable {
-    var appStoreOverlayIsPresented: Bool
-    var step: Step
+  @Feature public enum Step {
+    case game(Game)
+    case onboarding(Onboarding)
+  }
+
+  public struct State {
+    @DebugSnapshotTracked var appStoreOverlayIsPresented: Bool
+    @DebugSnapshotTracked var step: Step.State
 
     public init(
       appStoreOverlayIsPresented: Bool = false,
-      step: Step = .onboarding(.init(presentationStyle: .demo))
+      step: Step.State = .onboarding(.init(presentationStyle: .demo))
     ) {
       self.appStoreOverlayIsPresented = appStoreOverlayIsPresented
       self.step = step
     }
 
-    @CasePathable
-    @dynamicMemberLookup
-    public enum Step: Equatable {
-      case game(Game.State)
-      case onboarding(Onboarding.State)
-    }
-
     var isGameOver: Bool {
-      self.step.game?.destination.is(\.some.gameOver) == true
+      guard case let .game(game) = self.step else { return false }
+      return game.destination.is(\.some.gameOver)
     }
   }
 
   public enum Action {
-    case appStoreOverlay(isPresented: Bool)
     case fullVersionButtonTapped
-    case game(Game.Action)
-    case gameOverDelay
-    case onAppear
-    case onboarding(Onboarding.Action)
+    case step(Step.Action)
   }
 
   @Dependency(\.audioPlayer.load) var loadSounds
@@ -52,75 +49,62 @@ public struct Demo {
 
   public init() {}
 
-  public var body: some ReducerOf<Self> {
-    Scope(state: \.step, action: \.self) {
-      Scope(state: \.onboarding, action: \.onboarding) {
-        Onboarding()
-      }
-      Scope(state: \.game, action: \.game) {
-        Game().transformDependency(\.self) {
-          $0.database = .noop
-          $0.fileClient = .noop
-          $0.gameCenter = .noop
-          $0.remoteNotifications = .noop
-          $0.serverConfig = .noop
-          $0.storeKit = .noop
-          $0.userDefaults = .noop
-          $0.userNotifications = .noop
-        }
-      }
-    }
-    .onChange(of: \.isGameOver) { _, _ in
-      Reduce { _, _ in
-        .run { send in
-          try await self.mainQueue.sleep(for: .seconds(2))
-          await send(.gameOverDelay)
-        }
-      }
-    }
-
-    Reduce { state, action in
+  public var body: some Feature {
+    Update { state, action in
       switch action {
-      case let .appStoreOverlay(isPresented: isPresented):
-        state.appStoreOverlayIsPresented = isPresented
-        return .none
-
       case .fullVersionButtonTapped:
-        return .run { _ in
+        store.addTask {
           _ = await self.openURL(ServerConfig().appStoreUrl, [:])
         }
 
-      case .game(.destination(.presented(.gameOver(.submitGameResponse(.success))))):
-        state.appStoreOverlayIsPresented = true
-        return .none
-
-      case .game:
-        return .none
-
-      case .gameOverDelay:
-        state.appStoreOverlayIsPresented = true
-        return .none
-
-      case .onAppear:
-        return .run { _ in
-          await self.loadSounds(AudioPlayerClient.Sound.allCases)
+      case .step:
+        break
+      }
+    }
+    Scope(\.step) {
+      Update { _, _ in }
+        .ifCaseLet(\.onboarding) {
+          Onboarding()
         }
-
-      case .onboarding(.delegate(.getStarted)):
-        state.step = .game(
-          .init(
-            cubes: self.randomCubes(.en),
-            gameContext: .solo,
-            gameCurrentTime: self.now,
-            gameMode: .timed,
-            gameStartTime: self.now,
-            isDemo: true
-          )
+        .ifCaseLet(\.game) {
+          Game().transformDependency(\.self) {
+            $0.database = .noop
+            $0.fileClient = .noop
+            $0.gameCenter = .noop
+            $0.remoteNotifications = .noop
+            $0.serverConfig = .noop
+            $0.storeKit = .noop
+            $0.userDefaults = .noop
+            $0.userNotifications = .noop
+          }
+        }
+    }
+    .onEvent(Onboarding.GetStarted.self) { _, state in
+      state.step = .game(
+        Game.State(
+          cubes: self.randomCubes(.en),
+          gameContext: .solo,
+          gameCurrentTime: self.now,
+          gameMode: .timed,
+          gameStartTime: self.now,
+          isDemo: true
         )
-        return .none
-
-      case .onboarding:
-        return .none
+      )
+    }
+    .onEvent(GameOver.Event.self) { event, state -> FeatureEventPropagation in
+      guard case .gameSubmitted = event else { return .continue }
+      state.appStoreOverlayIsPresented = true
+      return .stop
+    }
+    .onChange(of: store.isGameOver) { _, _, _ in
+      store.addTask {
+        try await self.mainQueue.sleep(for: .seconds(2))
+        try store.modify { $0.appStoreOverlayIsPresented = true }
+      }
+    }
+    .onMount { _ in
+      store.addTask {
+        await self.loadSounds(AudioPlayerClient.Sound.allCases)
       }
     }
   }
@@ -135,31 +119,28 @@ public struct DemoView: View {
 
   public var body: some View {
     Group {
-      switch store.step {
-      case .onboarding:
-        if let store = store.scope(state: \.step.onboarding, action: \.onboarding) {
-          OnboardingView(store: store)
-            .onAppear { self.store.send(.onAppear) }
-        }
+      switch store.scope(\.step) {
+      case let .onboarding(store):
+        OnboardingView(store: store)
 
-      case .game:
-        if let store = store.scope(state: \.step.game, action: \.game) {
-          GameWrapper(
-            content: GameView(
-              content: CubeView(store: store.scope(state: \.cubeScene, action: \.cubeScene)),
-              store: store
+      case let .game(store):
+        GameWrapper(
+          content: GameView(
+            content: CubeView(
+              store: store,
+              state: \.cubeScene,
+              action: CubeSceneView.ViewAction.to(gameAction:)
             ),
-            isGameOver: self.store.isGameOver,
-            bannerAction: {
-              self.store.send(.fullVersionButtonTapped)
-            }
-          )
-        }
+            store: store
+          ),
+          isGameOver: self.store.isGameOver,
+          bannerAction: {
+            self.store.send(.fullVersionButtonTapped)
+          }
+        )
       }
     }
-    .appStoreOverlay(
-      isPresented: $store.appStoreOverlayIsPresented.sending(\.appStoreOverlay)
-    ) {
+    .appStoreOverlay(isPresented: $store.appStoreOverlayIsPresented) {
       SKOverlay.AppClipConfiguration(position: .bottom)
     }
   }

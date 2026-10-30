@@ -1,85 +1,89 @@
 import ComposableArchitecture
 import SwiftUI
 
-public struct BottomMenuState<Action> {
-  public var buttons: [Button]
-  public var footerButton: Button?
-  public var message: TextState?
-  public var title: TextState
+@Feature
+public struct BottomMenuPrompt<MenuAction>: Prompt {
+  public typealias Action = MenuAction
 
-  public init(
-    title: TextState,
-    message: TextState? = nil,
-    buttons: [Button] = [],
-    footerButton: Button? = nil
-  ) {
-    self.buttons = buttons
-    self.footerButton = footerButton
-    self.message = message
-    self.title = title
-  }
-
-  public struct Button {
-    public let action: MenuAction?
-    public let icon: Image
-    public let title: TextState
+  public struct State {
+    public var buttons: [Button]
+    public var footerButton: Button?
+    public var message: Text?
+    public var title: Text
 
     public init(
-      title: TextState,
-      icon: Image,
-      action: MenuAction? = nil
+      title: Text,
+      message: Text? = nil,
+      buttons: [Button] = [],
+      footerButton: Button? = nil
     ) {
-      self.action = action
-      self.icon = icon
+      self.buttons = buttons
+      self.footerButton = footerButton
+      self.message = message
       self.title = title
     }
+
+    public struct Button {
+      public let action: ButtonAction?
+      public let icon: Image
+      public let title: Text
+
+      public init(
+        title: Text,
+        icon: Image,
+        action: ButtonAction? = nil
+      ) {
+        self.action = action
+        self.icon = icon
+        self.title = title
+      }
+    }
+
+    public struct ButtonAction {
+      public let action: Action
+      fileprivate let animation: Animation
+
+      fileprivate enum Animation {
+        case inherited
+        case explicit(SwiftUI.Animation?)
+      }
+
+      public init(
+        action: Action,
+        animation: SwiftUI.Animation?
+      ) {
+        self.action = action
+        self.animation = .explicit(animation)
+      }
+
+      public init(
+        action: Action
+      ) {
+        self.action = action
+        self.animation = .inherited
+      }
+    }
   }
 
-  public struct MenuAction {
-    public let action: Action
-    fileprivate let animation: Animation
-
-    fileprivate enum Animation: Equatable {
-      case inherited
-      case explicit(SwiftUI.Animation?)
-    }
-
-    public init(
-      action: Action,
-      animation: SwiftUI.Animation?
-    ) {
-      self.action = action
-      self.animation = .explicit(animation)
-    }
-
-    public init(
-      action: Action
-    ) {
-      self.action = action
-      self.animation = .inherited
-    }
-  }
+  public init() {}
 }
 
-extension BottomMenuState: Equatable where Action: Equatable {}
-extension BottomMenuState.Button: Equatable where Action: Equatable {}
-extension BottomMenuState.MenuAction: Equatable where Action: Equatable {}
-extension BottomMenuState: _EphemeralState {
-  public static var actionType: Any.Type { Action.self }
-}
+public typealias BottomMenuState<Action> = BottomMenuPrompt<Action>.State
 
 extension View {
-  public func bottomMenu<MenuAction: Equatable>(
+  public func bottomMenu<MenuAction>(
     _ item: Binding<Store<BottomMenuState<MenuAction>, MenuAction>?>
   ) -> some View {
     let store = item.wrappedValue
-    let state = store?.withState { $0 }
+    let state = store?.state
     return self.bottomMenu(
       item: Binding(
         get: {
           state?.converted(
             send: { store?.send($0) },
-            sendWithAnimation: { store?.send($0, animation: $1) }
+            sendWithAnimation: { action, animation in
+              withAnimation(animation) { _ = store?.send(action) }
+            }
           )
         },
         set: {
@@ -92,14 +96,14 @@ extension View {
   }
 }
 
-extension BottomMenuState {
+extension BottomMenuPrompt.State {
   fileprivate func converted(
-    send: @escaping (Action) -> Void,
-    sendWithAnimation: @escaping (Action, Animation?) -> Void
+    send: @escaping (MenuAction) -> Void,
+    sendWithAnimation: @escaping (MenuAction, Animation?) -> Void
   ) -> BottomMenu {
     .init(
-      title: Text(self.title),
-      message: self.message.map { Text($0) },
+      title: self.title,
+      message: self.message,
       buttons: self.buttons.map { $0.converted(send: send, sendWithAnimation: sendWithAnimation) },
       footerButton: self.footerButton.map {
         $0.converted(send: send, sendWithAnimation: sendWithAnimation)
@@ -108,13 +112,13 @@ extension BottomMenuState {
   }
 }
 
-extension BottomMenuState.Button {
+extension BottomMenuPrompt.State.Button {
   fileprivate func converted(
-    send: @escaping (Action) -> Void,
-    sendWithAnimation: @escaping (Action, Animation?) -> Void
+    send: @escaping (MenuAction) -> Void,
+    sendWithAnimation: @escaping (MenuAction, Animation?) -> Void
   ) -> BottomMenu.Button {
     .init(
-      title: Text(self.title),
+      title: self.title,
       icon: self.icon,
       action: {
         if let action = self.action {
@@ -131,63 +135,75 @@ extension BottomMenuState.Button {
 }
 
 #if DEBUG
-  import ComposableArchitecture
   import SwiftUIHelpers
 
-  @Reducer
-  private struct BottomMenuReducer {
-    @ObservableState
-    struct State: Equatable {
-      @Presents var bottomMenu: BottomMenuState<Action.BottomMenu>?
+  @Feature
+  private struct BottomMenuPreview {
+    @Feature enum Destination {
+      case bottomMenu(BottomMenuPrompt<Menu>)
     }
 
-    enum Action: Equatable {
-      case bottomMenu(PresentationAction<BottomMenu>)
+    enum Menu {
+      case endGameButtonTapped
+      case mainMenuButtonTapped
+      case settingsButtonTapped
+    }
+
+    struct State {
+      var destination: Destination.State?
+    }
+
+    enum Action {
+      case destination(Destination.Action)
       case showMenuButtonTapped
-
-      enum BottomMenu: Equatable {}
     }
 
-    var body: some ReducerOf<Self> {
-      Reduce { state, action in
+    var body: some Feature {
+      Update { state, action in
         switch action {
+        case .destination:
+          break
         case .showMenuButtonTapped:
-          state.bottomMenu = .init(
-            title: .init("vs mbrandonw"),
-            buttons: [
-              .init(
-                title: .init("Main menu"),
-                icon: Image(systemName: "flag")
-              ),
-              .init(
-                title: .init("End game"),
-                icon: Image(systemName: "flag")
-              ),
-            ],
-            footerButton: .init(
-              title: .init("Settings"),
-              icon: Image(systemName: "gear")
+          state.destination = .bottomMenu(
+            BottomMenuState(
+              title: Text("vs mbrandonw"),
+              buttons: [
+                .init(
+                  title: Text("Main menu"),
+                  icon: Image(systemName: "flag"),
+                  action: .init(action: .mainMenuButtonTapped)
+                ),
+                .init(
+                  title: Text("End game"),
+                  icon: Image(systemName: "flag"),
+                  action: .init(action: .endGameButtonTapped, animation: .default)
+                ),
+              ],
+              footerButton: .init(
+                title: Text("Settings"),
+                icon: Image(systemName: "gear"),
+                action: .init(action: .settingsButtonTapped)
+              )
             )
           )
-          return .none
-        case .bottomMenu:
-          return .none
         }
       }
-      .ifLet(\.$bottomMenu, action: \.bottomMenu)
+      .ifLet(\.destination) {
+        Destination.body
+      }
     }
   }
 
   struct BottomMenu_TCA_Previews: PreviewProvider {
     struct TestView: View {
-      @Bindable fileprivate var store = Store(initialState: BottomMenuReducer.State()) {
-        BottomMenuReducer()
+      @Bindable fileprivate var store = Store(initialState: BottomMenuPreview.State()) {
+        BottomMenuPreview()
       }
 
       var body: some View {
-        Button("Present") { store.send(.showMenuButtonTapped, animation: .default) }
+        Button("Present") { withAnimation { _ = store.send(.showMenuButtonTapped) } }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .bottomMenu($store.scope(state: \.bottomMenu, action: \.bottomMenu))
+          .bottomMenu($store.scope(\.destination).bottomMenu)
       }
     }
 

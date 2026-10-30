@@ -1,5 +1,5 @@
 import AVFoundation
-import ComposableArchitecture
+import ConcurrencyExtras
 
 extension AudioPlayerClient {
   public static func live(bundles: [Bundle]) -> Self {
