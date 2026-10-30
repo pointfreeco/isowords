@@ -40,7 +40,7 @@ public struct DeveloperSettings: Equatable {
       }
     }
 
-    var url: URL { URL(string: self.rawValue)! }
+    var url: URL { URL(string: rawValue)! }
   }
 }
 
@@ -116,7 +116,7 @@ public struct Settings {
     }
 
     public var isFullGamePurchased: Bool {
-      self.fullGamePurchasedAt != nil
+      fullGamePurchasedAt != nil
     }
   }
 
@@ -154,7 +154,7 @@ public struct Settings {
       case let .dailyChallengeReminderToggled(sendDailyChallengeReminder):
         state.userSettings.sendDailyChallengeReminder = sendDailyChallengeReminder
         store.addTask {
-          _ = try await self.apiClient.apiRequest(
+          _ = try await apiClient.apiRequest(
             route: .push(
               .updateSetting(
                 .init(
@@ -164,13 +164,13 @@ public struct Settings {
               )
             )
           )
-          try await self.refreshCurrentPlayer(animated: false)
+          try await refreshCurrentPlayer(animated: false)
         }
 
       case let .dailyChallengeSummaryToggled(sendDailyChallengeSummary):
         state.userSettings.sendDailyChallengeSummary = sendDailyChallengeSummary
         store.addTask {
-          _ = try await self.apiClient.apiRequest(
+          _ = try await apiClient.apiRequest(
             route: .push(
               .updateSetting(
                 .init(
@@ -180,15 +180,15 @@ public struct Settings {
               )
             )
           )
-          try await self.refreshCurrentPlayer(animated: false)
+          try await refreshCurrentPlayer(animated: false)
         }
 
       case .destination(.userNotificationAuthorizationDeniedAlert(.openSettingsButtonTapped)):
         store.addTask {
           guard
-            let url = await URL(string: self.applicationClient.openSettingsURLString())
+            let url = await URL(string: applicationClient.openSettingsURLString())
           else { return }
-          _ = await self.applicationClient.open(url, [:])
+          _ = await applicationClient.open(url, [:])
         }
 
       case let .enableNotificationsToggled(enableNotifications):
@@ -206,12 +206,12 @@ public struct Settings {
         case .notDetermined, .provisional:
           state.userSettings.enableNotifications = true
           store.addTask {
-            let granted = try await self.userNotifications.requestAuthorization([.alert, .sound])
+            let granted = try await userNotifications.requestAuthorization([.alert, .sound])
             _ = try withAnimation {
               try store.modify { $0.userSettings.enableNotifications = granted }
             }
             if granted {
-              await self.registerForRemoteNotifications()
+              await registerForRemoteNotifications()
             }
           }
 
@@ -224,7 +224,7 @@ public struct Settings {
         case .authorized:
           state.userSettings.enableNotifications = true
           store.addTask {
-            await self.registerForRemoteNotifications()
+            await registerForRemoteNotifications()
           }
 
         case .ephemeral:
@@ -236,14 +236,14 @@ public struct Settings {
 
       case .leaveUsAReviewButtonTapped:
         store.addTask {
-          _ = await self.applicationClient
-            .open(self.serverConfig().appStoreReviewUrl, [:])
+          _ = await applicationClient
+            .open(serverConfig().appStoreReviewUrl, [:])
         }
 
       case .paymentTransaction(.removedTransactions):
         state.isPurchasing = false
         store.addTask {
-          try await self.refreshCurrentPlayer(animated: true)
+          try await refreshCurrentPlayer(animated: true)
         }
 
       case let .paymentTransaction(.restoreCompletedTransactionsFinished(transactions)):
@@ -261,7 +261,7 @@ public struct Settings {
 
       case .reportABugButtonTapped:
         store.addTask {
-          let currentPlayer = self.apiClient.currentPlayer()
+          let currentPlayer = apiClient.currentPlayer()
           var components = URLComponents()
           components.scheme = "mailto"
           components.path = "support@pointfree.co"
@@ -273,18 +273,18 @@ public struct Settings {
 
 
                 ---
-                Build: \(self.build.number()) (\(self.build.gitSha()))
+                Build: \(build.number()) (\(build.gitSha()))
                 \(currentPlayer?.player.id.rawValue.uuidString ?? "")
                 """
             ),
           ]
 
-          _ = await self.applicationClient.open(components.url!, [:])
+          _ = await applicationClient.open(components.url!, [:])
         }
 
       case .restoreButtonTapped:
         state.isRestoring = true
-        store.addTask { await self.storeKit.restoreCompletedTransactions() }
+        store.addTask { await storeKit.restoreCompletedTransactions() }
 
       case .stats:
         break
@@ -295,7 +295,7 @@ public struct Settings {
           let payment = SKMutablePayment()
           payment.productIdentifier = product.productIdentifier
           payment.quantity = 1
-          await self.storeKit.addPayment(payment)
+          await storeKit.addPayment(payment)
         }
       }
     }
@@ -304,14 +304,14 @@ public struct Settings {
     }
     .onMount { state in
       state.fullGamePurchasedAt =
-        self.apiClient.currentPlayer()?
+        apiClient.currentPlayer()?
         .appleReceipt?
         .receipt
         .originalPurchaseDate
-      state.buildNumber = self.build.number()
+      state.buildNumber = build.number()
 
       store.addTask {
-        for await event in self.storeKit.observer() {
+        for await event in storeKit.observer() {
           _ = try withAnimation { try store.send(.paymentTransaction(event)) }
         }
       }
@@ -320,12 +320,12 @@ public struct Settings {
         store.addTask {
           let fullGameProduct: Result<StoreKitClient.Product, State.ProductError>
           do {
-            let response = try await self.storeKit.fetchProducts([
-              self.serverConfig().productIdentifiers.fullGame
+            let response = try await storeKit.fetchProducts([
+              serverConfig().productIdentifiers.fullGame
             ])
             fullGameProduct =
               response.products
-              .first { $0.productIdentifier == self.serverConfig().productIdentifiers.fullGame }
+              .first { $0.productIdentifier == serverConfig().productIdentifiers.fullGame }
               .map(Result.success)
               ?? .failure(State.ProductError())
           } catch {
@@ -336,46 +336,46 @@ public struct Settings {
       }
 
       store.addTask {
-        try await self.refreshUserNotificationSettings(animated: true)
+        try await refreshUserNotificationSettings(animated: true)
       }
 
       store.addTask {
         for await _ in NotificationCenter.default.notifications(
           named: UIApplication.didBecomeActiveNotification
         ) {
-          try await self.refreshUserNotificationSettings(animated: false)
+          try await refreshUserNotificationSettings(animated: false)
         }
       }
     }
     .onChange(of: store.developer.currentBaseUrl) { _, currentBaseUrl, _ in
       store.addTask {
-        await self.apiClient.setBaseUrl(currentBaseUrl.url)
-        await self.apiClient.logout()
+        await apiClient.setBaseUrl(currentBaseUrl.url)
+        await apiClient.logout()
       }
     }
     .onChange(of: store.userSettings.appIcon) { _, appIcon, _ in
       store.addTask {
-        try await self.applicationClient.setAlternateIconName(appIcon?.rawValue)
+        try await applicationClient.setAlternateIconName(appIcon?.rawValue)
       }
     }
     .onChange(of: store.userSettings.colorScheme) { _, colorScheme, _ in
       store.addTask {
-        await self.applicationClient.setUserInterfaceStyle(colorScheme.userInterfaceStyle)
+        await applicationClient.setUserInterfaceStyle(colorScheme.userInterfaceStyle)
       }
     }
     .onChange(of: store.userSettings.musicVolume) { _, musicVolume, _ in
       store.addTask {
-        await self.audioPlayer.setGlobalVolumeForMusic(musicVolume)
+        await audioPlayer.setGlobalVolumeForMusic(musicVolume)
       }
     }
     .onChange(of: store.userSettings.soundEffectsVolume) { _, soundEffectsVolume, _ in
       store.addTask {
-        await self.audioPlayer.setGlobalVolumeForSoundEffects(soundEffectsVolume)
+        await audioPlayer.setGlobalVolumeForSoundEffects(soundEffectsVolume)
       }
     }
     .onChange(of: store.userSettings) { _, userSettings, _ in
       store.addTask(id: saveUserSettings) {
-        try await self.clock.sleep(for: .seconds(0.5))
+        try await clock.sleep(for: .seconds(0.5))
         await self.userSettings.set(userSettings)
       }
     }
@@ -388,7 +388,7 @@ public struct Settings {
   private func refreshCurrentPlayer(animated: Bool) async throws {
     let envelope: CurrentPlayerEnvelope
     do {
-      envelope = try await self.apiClient.refreshCurrentPlayer()
+      envelope = try await apiClient.refreshCurrentPlayer()
     } catch {
       try store.modify { $0.isRestoring = false }
       return
@@ -404,7 +404,7 @@ public struct Settings {
   }
 
   private func refreshUserNotificationSettings(animated: Bool) async throws {
-    let settings = await self.userNotifications.getNotificationSettings()
+    let settings = await userNotifications.getNotificationSettings()
     _ = try withAnimation(animated ? .default : nil) {
       try store.modify {
         $0.userNotificationSettings = settings

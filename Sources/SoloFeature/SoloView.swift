@@ -42,7 +42,7 @@ public struct Solo {
     }
     .onMount { _ in
       store.addTask {
-        guard let savedGames = try? await self.fileClient.loadSavedGames()
+        guard let savedGames = try? await fileClient.loadSavedGames()
         else { return }
         try store.modify { $0.inProgressGame = savedGames.unlimited }
       }
@@ -69,7 +69,7 @@ public struct SoloView: View {
         Text("and refine")
         Text("your skills")
       }
-      .font(.custom(.matter, size: self.adaptiveSize.pad(48, by: 2)))
+      .font(.custom(.matter, size: adaptiveSize.pad(48, by: 2)))
       .multilineTextAlignment(.center)
 
       Spacer()
@@ -106,8 +106,8 @@ public struct SoloView: View {
     .adaptivePadding(.vertical)
     .screenEdgePadding(.horizontal)
     .navigationStyle(
-      backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .solo,
-      foregroundColor: self.colorScheme == .dark ? .solo : .isowordsBlack,
+      backgroundColor: colorScheme == .dark ? .isowordsBlack : .solo,
+      foregroundColor: colorScheme == .dark ? .solo : .isowordsBlack,
       title: Text("Solo")
     )
   }

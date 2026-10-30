@@ -78,7 +78,7 @@ public struct UpgradeInterstitial {
 
         guard
           event.isFullGamePurchased(
-            identifier: self.serverConfig().productIdentifiers.fullGame
+            identifier: serverConfig().productIdentifiers.fullGame
           )
         else { return }
         store.addTask {
@@ -90,28 +90,28 @@ public struct UpgradeInterstitial {
         state.isPurchasing = true
         store.addTask {
           let payment = SKMutablePayment()
-          payment.productIdentifier = self.serverConfig().productIdentifiers.fullGame
+          payment.productIdentifier = serverConfig().productIdentifiers.fullGame
           payment.quantity = 1
-          await self.storeKit.addPayment(payment)
+          await storeKit.addPayment(payment)
         }
       }
     }
     .onMount { state in
-      state.upgradeInterstitialDuration = self.serverConfig().upgradeInterstitial.duration
+      state.upgradeInterstitialDuration = serverConfig().upgradeInterstitial.duration
 
       store.addTask {
-        for await event in self.storeKit.observer() {
+        for await event in storeKit.observer() {
           _ = try withAnimation { try store.send(.paymentTransaction(event)) }
         }
       }
 
       store.addTask {
-        let response = try await self.storeKit.fetchProducts([
-          self.serverConfig().productIdentifiers.fullGame
+        let response = try await storeKit.fetchProducts([
+          serverConfig().productIdentifiers.fullGame
         ])
         guard
           let product = response.products.first(where: { product in
-            product.productIdentifier == self.serverConfig().productIdentifiers.fullGame
+            product.productIdentifier == serverConfig().productIdentifiers.fullGame
           })
         else { return }
         _ = try withAnimation { try store.modify { $0.fullGameProduct = product } }
@@ -120,7 +120,7 @@ public struct UpgradeInterstitial {
       guard !state.isDismissable, state.secondsPassedCount < state.upgradeInterstitialDuration
       else { return }
       store.addTask {
-        for await _ in self.clock.timer(interval: .seconds(1)) {
+        for await _ in clock.timer(interval: .seconds(1)) {
           _ = try withAnimation { try store.modify { $0.secondsPassedCount += 1 } }
           if store.secondsPassedCount >= store.upgradeInterstitialDuration { break }
         }

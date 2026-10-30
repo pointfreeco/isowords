@@ -14,7 +14,7 @@ extension FeatureStore {
       withDuration: duration,
       delay: delay,
       options: animationOptions,
-      animations: { _ = try? self.send(action) }
+      animations: { _ = try? send(action) }
     )
   }
 
@@ -30,7 +30,7 @@ extension FeatureStore {
       withDuration: duration,
       delay: delay,
       options: animationOptions,
-      animations: { _ = try? self.modify(body) }
+      animations: { _ = try? modify(body) }
     )
   }
 }

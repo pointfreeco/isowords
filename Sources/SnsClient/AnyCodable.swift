@@ -6,6 +6,6 @@ public struct AnyEncodable: Encodable {
   }
 
   public func encode(to encoder: Encoder) throws {
-    try self._encode(encoder)
+    try _encode(encoder)
   }
 }

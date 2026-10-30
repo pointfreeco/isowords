@@ -79,7 +79,7 @@ public struct SettingsView: View {
             )
 
             Button {
-              self.isSharePresented.toggle()
+              isSharePresented.toggle()
             } label: {
               Image(systemName: "person.2.fill")
                 .font(.system(size: 40))
@@ -161,9 +161,9 @@ public struct SettingsView: View {
     }
     .navigationStyle(
       backgroundColor: .adaptiveWhite,
-      foregroundColor: .hex(self.colorScheme == .dark ? 0x7d7d7d : 0x393939),
+      foregroundColor: .hex(colorScheme == .dark ? 0x7d7d7d : 0x393939),
       title: Text("Settings"),
-      navPresentationStyle: self.navPresentationStyle
+      navPresentationStyle: navPresentationStyle
     )
     .alert(
       "No Purchases",
@@ -203,8 +203,8 @@ public struct SettingsView: View {
 extension Binding {
   fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
     Binding<Bool>(
-      get: { self.wrappedValue != nil },
-      set: { if !$0 { self.wrappedValue = nil } }
+      get: { wrappedValue != nil },
+      set: { if !$0 { wrappedValue = nil } }
     )
   }
 }
@@ -216,10 +216,10 @@ struct SettingsNavigationLink<Destination>: View where Destination: View {
   var body: some View {
     SettingsRow {
       NavigationLink(
-        destination: self.destination,
+        destination: destination,
         label: {
           HStack {
-            Text(self.title)
+            Text(title)
             Spacer()
             Image(systemName: "arrow.right")
               .font(.system(size: 20))
@@ -252,11 +252,11 @@ public struct SupportButtonStyle: ButtonStyle {
             .stroke(Color.adaptiveWhite, lineWidth: 3)
         )
 
-      Text(self.title)
+      Text(title)
     }
     .foregroundColor(.adaptiveWhite)
     .frame(width: 240, height: 210, alignment: .center)
-    .background(self.backgroundColor)
+    .background(backgroundColor)
     .cornerRadius(12)
     .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
   }

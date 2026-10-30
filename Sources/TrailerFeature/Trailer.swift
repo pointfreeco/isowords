@@ -40,7 +40,7 @@ public struct Trailer {
     }
 
     fileprivate var cubeScene: CubeSceneView.ViewState {
-      .init(game: self.game, nub: self.nub)
+      .init(game: game, nub: nub)
     }
   }
 
@@ -60,7 +60,7 @@ public struct Trailer {
     .transformDependency(\.self) {
       $0.apiClient = .noop
       $0.applicationClient = .noop
-      $0.audioPlayer = self.audioPlayer
+      $0.audioPlayer = audioPlayer
         .filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
       $0.build = .noop
       $0.database = .noop
@@ -78,16 +78,16 @@ public struct Trailer {
       let nub = state.nub
       store.addTask {
         var nub = nub
-        await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        await audioPlayer.load(AudioPlayerClient.Sound.allCases)
 
         // Play trailer music
-        await self.audioPlayer.play(.onboardingBgMusic)
+        await audioPlayer.play(.onboardingBgMusic)
 
         // Fade the cube in after a second
         try withAnimation(.easeInOut(duration: fadeInDuration)) {
           _ = try store.modify { $0.opacity = 1 }
         }
-        try await self.clock.sleep(for: firstWordDelay)
+        try await clock.sleep(for: firstWordDelay)
 
         // Play each word
         for word in replayableWords {
@@ -103,11 +103,11 @@ public struct Trailer {
             ) { [nub] in
               $0.nub = nub
             }
-            try await self.clock.sleep(
+            try await clock.sleep(
               for: moveNubDelay(characterIndex: characterIndex)
             )
 
-            try await self.clock.sleep(
+            try await clock.sleep(
               for: .seconds(
                 .random(in: (0.3 * moveNubToFaceDuration)...(0.7 * moveNubToFaceDuration)))
             )
@@ -127,7 +127,7 @@ public struct Trailer {
           await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
 
           // Move the nub to the submit button
-          try await self.clock.sleep(for: .seconds(0.3))
+          try await clock.sleep(for: .seconds(0.3))
 
           nub.location = .submitButton
           await store.modify(
@@ -138,7 +138,7 @@ public struct Trailer {
           }
 
           // Press the nub
-          try await self.clock.sleep(
+          try await clock.sleep(
             for: .seconds(
               .random(
                 in:
@@ -149,7 +149,7 @@ public struct Trailer {
           )
 
           // Submit the word
-          try await self.clock.sleep(for: .seconds(0.1))
+          try await clock.sleep(for: .seconds(0.1))
           await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask { [nub] in
               var nub = nub
@@ -158,11 +158,11 @@ public struct Trailer {
             }
             group.addTask { [nub] in
               var nub = nub
-              try await self.clock.sleep(for: .seconds(0.2))
+              try await clock.sleep(for: .seconds(0.2))
               try await MainActor.run {
                 _ = try store.send(.game(.submitButtonTapped(reaction: nil)))
               }
-              try await self.clock.sleep(for: .seconds(0.3))
+              try await clock.sleep(for: .seconds(0.3))
               nub.isPressed = false
               await store.modify(animateWithDuration: 0.3) { [nub] in $0.nub = nub }
             }
@@ -170,7 +170,7 @@ public struct Trailer {
         }
 
         // Move the nub off screen once all words have been played
-        try await self.clock.sleep(for: .seconds(0.3))
+        try await clock.sleep(for: .seconds(0.3))
         nub.location = .offScreenBottom
         await store.modify(
           animateWithDuration: moveNubOffScreenDuration,
@@ -201,19 +201,19 @@ public struct TrailerView: View {
         VStack {
           if !store.game.selectedWordString.isEmpty {
             (Text(store.game.selectedWordString)
-              + self.scoreText
+              + scoreText
               .baselineOffset(
-                (self.deviceState.idiom == .pad ? 2 : 1) * 16
+                (deviceState.idiom == .pad ? 2 : 1) * 16
               )
               .font(
                 .custom(
                   .matterMedium,
-                  size: (self.deviceState.idiom == .pad ? 2 : 1) * 20
+                  size: (deviceState.idiom == .pad ? 2 : 1) * 20
                 )
               ))
               .adaptiveFont(
                 .matterSemiBold,
-                size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
+                size: (deviceState.idiom == .pad ? 2 : 1) * 32
               )
               .opacity(store.game.selectedWordIsValid ? 1 : 0.5)
               .allowsTightening(true)
@@ -249,7 +249,7 @@ public struct TrailerView: View {
           action: { .game(CubeSceneView.ViewAction.to(gameAction: $0)) }
         )
           .adaptivePadding(
-            self.deviceState.idiom == .pad ? .horizontal : [],
+            deviceState.idiom == .pad ? .horizontal : [],
             .grid(30)
           )
       }
@@ -261,7 +261,7 @@ public struct TrailerView: View {
       }
     }
     .padding(
-      self.deviceState.idiom == .pad ? .vertical : [],
+      deviceState.idiom == .pad ? .vertical : [],
       .grid(15)
     )
     .opacity(store.opacity)
