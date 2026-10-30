@@ -44,15 +44,15 @@ public struct Onboarding {
     }
 
     fileprivate var isSkipButtonVisible: Bool {
-      self.step != Onboarding.State.Step.allCases.last
+      step != Onboarding.State.Step.allCases.last
     }
 
     fileprivate var cubeScene: CubeSceneView.ViewState {
-      var viewState = CubeSceneView.ViewState(game: self.game, nub: nil)
+      var viewState = CubeSceneView.ViewState(game: game, nub: nil)
 
       LatticePoint.cubeIndices.forEach { index in
         CubeFace.Side.allCases.forEach { side in
-          if !isVisible(step: self.step, index: index, side: side) {
+          if !isVisible(step: step, index: index, side: side) {
             viewState.cubes[index][side].letterIsHidden = true
             viewState.cubes[index][side].status = .deselected
           }
@@ -92,11 +92,11 @@ public struct Onboarding {
       case step21_PlayAGameYourself
 
       mutating func next() {
-        self = Self(rawValue: self.rawValue + 1) ?? Self.allCases.last!
+        self = Self(rawValue: rawValue + 1) ?? Self.allCases.last!
       }
 
       mutating func previous() {
-        self = Self(rawValue: self.rawValue - 1) ?? Self.allCases.first!
+        self = Self(rawValue: rawValue - 1) ?? Self.allCases.first!
       }
 
       var isFullscreen: Bool {
@@ -179,7 +179,7 @@ public struct Onboarding {
 
   @Dependency(\.audioPlayer) var _audioPlayer
   var audioPlayer: AudioPlayerClient {
-    self._audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
+    _audioPlayer.filteredSounds(doNotInclude: AudioPlayerClient.Sound.allValidWords)
   }
   @Dependency(\.dictionary) var dictionary
   @FeatureEnvironment(\.continuousClock) var clock
@@ -196,8 +196,8 @@ public struct Onboarding {
       case .alert(.skipButtonTapped):
         state.step = State.Step.allCases.last!
         store.addTask {
-          self.delayedNextStep.cancel()
-          await self.audioPlayer.play(.uiSfxTap)
+          delayedNextStep.cancel()
+          await audioPlayer.play(.uiSfxTap)
         }
 
       case let .cubeScene(viewAction):
@@ -206,7 +206,7 @@ public struct Onboarding {
         case let .doubleTap(index: index):
           guard state.step == .step19_DoubleTapToRemove else { return }
           state.step.next()
-          self.sendToGame(.confirmRemoveCube(index))
+          sendToGame(.confirmRemoveCube(index))
 
         case let .pan(recognizerState, panData):
           if let indexedCubeFace = panData?.cubeFaceState,
@@ -214,33 +214,33 @@ public struct Onboarding {
           {
             return
           }
-          self.sendToGame(.pan(recognizerState, panData))
+          sendToGame(.pan(recognizerState, panData))
 
         case let .tap(gestureState, indexedCubeFace):
           let indexedCubeFace = indexedCubeFace.flatMap {
             isVisible(step: state.step, index: $0.index, side: $0.side) ? $0 : nil
           }
-          self.sendToGame(.tap(gestureState, indexedCubeFace))
+          sendToGame(.tap(gestureState, indexedCubeFace))
         }
 
       case .game:
         break
 
       case .getStartedButtonTapped:
-        self.getStarted()
+        getStarted()
 
       case .nextButtonTapped:
         state.step.next()
-        store.addTask { await self.audioPlayer.play(.uiSfxTap) }
+        store.addTask { await audioPlayer.play(.uiSfxTap) }
 
       case .skipButtonTapped:
-        guard !self.userDefaults.hasShownFirstLaunchOnboarding else {
-          self.getStarted()
-          store.addTask { await self.audioPlayer.play(.uiSfxTap) }
+        guard !userDefaults.hasShownFirstLaunchOnboarding else {
+          getStarted()
+          store.addTask { await audioPlayer.play(.uiSfxTap) }
           return
         }
         state.alert = Alert.State()
-        store.addTask { await self.audioPlayer.play(.uiSfxTap) }
+        store.addTask { await audioPlayer.play(.uiSfxTap) }
 
       case .submitButtonTapped:
         guard !state.step.isCongratsStep else { return }
@@ -248,9 +248,9 @@ public struct Onboarding {
         case .step5_SubmitGame where state.game.selectedWordString == "GAME",
           .step8_FindCubes where state.game.selectedWordString == "CUBES",
           .step12_CubeIsShaking where state.game.selectedWordString.isRemove,
-          .step16_FindAnyWord where self.dictionary.contains(state.game.selectedWordString, .en):
+          .step16_FindAnyWord where dictionary.contains(state.game.selectedWordString, .en):
           state.step.next()
-          self.sendToGame(.submitButtonTapped(reaction: nil))
+          sendToGame(.submitButtonTapped(reaction: nil))
 
         default:
           state.game.selectedWord = []
@@ -267,7 +267,7 @@ public struct Onboarding {
       $0.gameOnboarding()
     }
     .haptics(
-      isEnabled: { _ in self.userSettings.enableHaptics },
+      isEnabled: { _ in userSettings.enableHaptics },
       triggerOnChangeOf: store.game.selectedWord
     )
     .onChange(of: store.game.selectedWordString) { _, selectedWord, state in
@@ -293,8 +293,8 @@ public struct Onboarding {
         return
       }
       store.addTask {
-        try await self.clock.sleep(for: .seconds(delay))
-        try await self.nextStep()
+        try await clock.sleep(for: .seconds(delay))
+        try await nextStep()
       }
     }
     .onMount { state in
@@ -307,16 +307,16 @@ public struct Onboarding {
       }
       let isFirstStep = state.step == State.Step.allCases[0]
       let presentationStyle = state.presentationStyle
-      store.addTask(id: self.delayedNextStep) {
-        await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
-        _ = try self.dictionary.load(.en)
-        await self.audioPlayer.play(
+      store.addTask(id: delayedNextStep) {
+        await audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        _ = try dictionary.load(.en)
+        await audioPlayer.play(
           presentationStyle == .demo ? .timedGameBgLoop1 : .onboardingBgMusic
         )
 
         if isFirstStep {
-          try await self.clock.sleep(for: .seconds(firstStepDelay))
-          try await self.nextStep()
+          try await clock.sleep(for: .seconds(firstStepDelay))
+          try await nextStep()
         }
       }
     }
@@ -324,9 +324,9 @@ public struct Onboarding {
 
   private func getStarted() {
     store.addTask {
-      self.delayedNextStep.cancel()
-      await self.userDefaults.setHasShownFirstLaunchOnboarding(true)
-      await self.audioPlayer.stop(.onboardingBgMusic)
+      delayedNextStep.cancel()
+      await userDefaults.setHasShownFirstLaunchOnboarding(true)
+      await audioPlayer.stop(.onboardingBgMusic)
       try withAnimation {
         _ = try store.post(GetStarted())
       }

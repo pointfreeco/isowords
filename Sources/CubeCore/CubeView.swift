@@ -26,7 +26,7 @@ public struct CubeView: View {
 
   public var body: some View {
     GeometryReader { geometry in
-      CubeRepresentable(size: geometry.size, state: self.state, send: self.send)
+      CubeRepresentable(size: geometry.size, state: state, send: send)
     }
   }
 }
@@ -40,11 +40,11 @@ private struct CubeRepresentable: UIViewRepresentable {
   let send: @MainActor (CubeSceneView.ViewAction) -> Void
 
   func makeUIView(context: Context) -> CubeSceneView {
-    CubeSceneView(size: self.size, state: self.state, send: self.send)
+    CubeSceneView(size: size, state: state, send: send)
   }
 
   func updateUIView(_ sceneView: CubeSceneView, context: Context) {
-    sceneView.enableCubeShadow = self.enableCubeShadow
-    sceneView.showSceneStatistics = self.showSceneStatistics
+    sceneView.enableCubeShadow = enableCubeShadow
+    sceneView.showSceneStatistics = showSceneStatistics
   }
 }

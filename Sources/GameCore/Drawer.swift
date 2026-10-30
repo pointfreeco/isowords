@@ -28,17 +28,16 @@ extension Game {
       guard state.isTrayAvailable else { return }
       state.isTrayVisible.toggle()
       if state.isTrayVisible {
-        self.loadActiveGames()
+        loadActiveGames()
       }
     }
   }
 
   func loadActiveGames() {
     store.addTask {
-      guard let matches = try? await self.gameCenter.turnBasedMatch.loadMatches()
+      guard let matches = try? await gameCenter.turnBasedMatch.loadMatches()
       else { return }
-      let localPlayer = self.gameCenter.localPlayer.localPlayer()
-      let now = self.now
+      let localPlayer = gameCenter.localPlayer.localPlayer()
       try withAnimation {
         _ = try store.modify {
           $0.activeGames.turnBasedMatches = matches.activeMatches(for: localPlayer, at: now)
@@ -46,7 +45,7 @@ extension Game {
       }
     }
     store.addTask {
-      guard let savedGames = try? await self.fileClient.loadSavedGames()
+      guard let savedGames = try? await fileClient.loadSavedGames()
       else { return }
       try withAnimation {
         _ = try store.modify { $0.activeGames.savedGames = savedGames }

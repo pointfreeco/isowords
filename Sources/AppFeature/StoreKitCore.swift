@@ -6,10 +6,10 @@ import SharedModels
 
 extension AppReducer {
   func observePaymentTransactions() async {
-    for await event in self.storeKit.observer() {
+    for await event in storeKit.observer() {
       guard case let .updatedTransactions(transactions) = event
       else { continue }
-      await self.finalize(transactions: transactions)
+      await finalize(transactions: transactions)
     }
   }
 
@@ -18,9 +18,9 @@ extension AppReducer {
     let otherTransactions = transactions.filter { !$0.transactionState.canBeVerified }
 
     if !verifiableTransactions.isEmpty,
-      let appStoreReceiptURL = self.storeKit.appStoreReceiptURL(),
+      let appStoreReceiptURL = storeKit.appStoreReceiptURL(),
       let receiptData = try? Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped),
-      let verifyEnvelope = try? await self.apiClient.apiRequest(
+      let verifyEnvelope = try? await apiClient.apiRequest(
         route: .verifyReceipt(receiptData),
         as: VerifyReceiptEnvelope.self
       )
@@ -29,14 +29,14 @@ extension AppReducer {
       where verifyEnvelope.verifiedProductIds
         .contains(where: { $0 == transaction.payment.productIdentifier })
       {
-        await self.storeKit.finishTransaction(transaction)
+        await storeKit.finishTransaction(transaction)
       }
     }
 
     for transaction in otherTransactions {
       switch transaction.transactionState {
       case .failed:
-        await self.storeKit.finishTransaction(transaction)
+        await storeKit.finishTransaction(transaction)
 
       case .deferred, .purchased, .purchasing, .restored:
         return

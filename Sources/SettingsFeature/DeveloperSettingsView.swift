@@ -26,11 +26,11 @@ struct DeveloperSettingsView: View {
       }
 
       SettingsRow {
-        Toggle("Shadows", isOn: self.$enableCubeShadow)
+        Toggle("Shadows", isOn: $enableCubeShadow)
       }
 
       SettingsRow {
-        Toggle("Scene statistics", isOn: self.$showSceneStatistics)
+        Toggle("Scene statistics", isOn: $showSceneStatistics)
       }
     }
     .navigationStyle(title: Text("Developer"))

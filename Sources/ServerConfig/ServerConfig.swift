@@ -43,12 +43,12 @@ public struct ServerConfig: Codable, Equatable, Hashable {
   }
 
   public var appStoreUrl: URL {
-    URL(string: "https://apps.apple.com/us/app/isowords/id\(self.appId)")!
+    URL(string: "https://apps.apple.com/us/app/isowords/id\(appId)")!
   }
 
   public var appStoreReviewUrl: URL {
     URL(
-      string: "https://itunes.apple.com/us/app/apple-store/id\(self.appId)?mt=8&action=write-review"
+      string: "https://itunes.apple.com/us/app/apple-store/id\(appId)?mt=8&action=write-review"
     )!
   }
 }

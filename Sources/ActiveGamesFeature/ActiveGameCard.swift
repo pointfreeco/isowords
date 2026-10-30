@@ -15,17 +15,17 @@ struct ActiveGameCard<Title: View, Message: View>: View {
 
   @State var isAnimating = AnimationStep?.none {
     didSet {
-      guard self.button.shouldAnimate else { return }
-      switch self.isAnimating {
+      guard button.shouldAnimate else { return }
+      switch isAnimating {
       case .icon:
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
           withAnimation(
             .interpolatingSpring(mass: 0.5, stiffness: 10, damping: 10, initialVelocity: 2)
-          ) { self.isAnimating = .title }
+          ) { isAnimating = .title }
         }
       case .title:
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          withAnimation { self.isAnimating = nil }
+          withAnimation { isAnimating = nil }
         }
       case .none:
         return
@@ -35,64 +35,64 @@ struct ActiveGameCard<Title: View, Message: View>: View {
 
   var body: some View {
     ZStack(alignment: .bottomLeading) {
-      Button(action: self.tapAction) {
+      Button(action: tapAction) {
         VStack(alignment: .leading, spacing: 0) {
-          self.title
+          title
             .lineLimit(1)
             .padding(.all, .grid(3))
             .adaptiveFont(.matterMedium, size: 12)
             .opacity(0.5)
-            .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
+            .foregroundColor(colorScheme == .light ? .isowordsOrange : .isowordsBlack)
 
           Divider()
             .background(
-              (self.colorScheme == .light ? Color.isowordsOrange : .isowordsBlack)
+              (colorScheme == .light ? Color.isowordsOrange : .isowordsBlack)
                 .opacity(0.3)
             )
 
-          self.message
+          message
             .padding(.all, .grid(3))
             .adaptiveFont(.matterMedium, size: 16)
-            .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
+            .foregroundColor(colorScheme == .light ? .isowordsOrange : .isowordsBlack)
 
           Spacer()
         }
       }
       .buttonStyle(
         ActiveGameButtonStyle(
-          backgroundColor: self.colorScheme == .light ? .isowordsBlack : .isowordsOrange,
-          foregroundColor: self.colorScheme == .light ? .isowordsOrange : .isowordsBlack
+          backgroundColor: colorScheme == .light ? .isowordsBlack : .isowordsOrange,
+          foregroundColor: colorScheme == .light ? .isowordsOrange : .isowordsBlack
         )
       )
 
       Group {
-        if self.button.isActive {
+        if button.isActive {
           Button {
-            (self.buttonAction ?? self.tapAction)()
-            guard self.button.shouldAnimate else { return }
-            withAnimation(.interactiveSpring()) { self.isAnimating = .icon }
+            (buttonAction ?? tapAction)()
+            guard button.shouldAnimate else { return }
+            withAnimation(.interactiveSpring()) { isAnimating = .icon }
           } label: {
             HStack(alignment: .firstTextBaseline, spacing: .grid(1)) {
-              self.button.icon?
-                .offset(x: self.button.shouldAnimate && isAnimating == .icon ? 8 : 0)
-              self.button.title
-                .offset(x: self.button.shouldAnimate && isAnimating == .title ? 6 : 0)
+              button.icon?
+                .offset(x: button.shouldAnimate && isAnimating == .icon ? 8 : 0)
+              button.title
+                .offset(x: button.shouldAnimate && isAnimating == .title ? 6 : 0)
             }
             .padding(.vertical, .grid(2))
             .padding(.leading, .grid(3))
             .padding(.trailing, .grid(4))
-            .foregroundColor(self.colorScheme == .light ? .isowordsBlack : .isowordsOrange)
+            .foregroundColor(colorScheme == .light ? .isowordsBlack : .isowordsOrange)
             .background(
-              Capsule().fill(self.colorScheme == .light ? Color.isowordsOrange : .isowordsBlack)
+              Capsule().fill(colorScheme == .light ? Color.isowordsOrange : .isowordsBlack)
             )
             .adaptiveFont(.matterMedium, size: 12)
           }
           .buttonStyle(PlainButtonStyle())
         } else {
-          self.button.title
+          button.title
             .padding(.bottom, .grid(2))
             .adaptiveFont(.matterMedium, size: 12)
-            .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
+            .foregroundColor(colorScheme == .light ? .isowordsOrange : .isowordsBlack)
             .opacity(0.5)
         }
       }

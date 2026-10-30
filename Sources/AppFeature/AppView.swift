@@ -89,10 +89,10 @@ public struct AppReducer {
         case .didChangeScenePhase(.active):
           store.addTask {
             async let register: Void = registerForRemoteNotificationsAsync(
-              remoteNotifications: self.remoteNotifications,
-              userNotifications: self.userNotifications
+              remoteNotifications: remoteNotifications,
+              userNotifications: userNotifications
             )
-            async let refresh = self.refreshServerConfig()
+            async let refresh = refreshServerConfig()
             _ = try? await (register, refresh)
           }
 
@@ -118,12 +118,12 @@ public struct AppReducer {
 
       case .turnBasedGameMenuItemTapped(.rematch(let matchId)):
         store.addTask {
-          try await self.rematch(matchId)
+          try await rematch(matchId)
         }
 
       case .turnBasedGameTapped(let matchId):
         store.addTask {
-          try await self.openTurnBasedMatch(id: matchId)
+          try await openTurnBasedMatch(id: matchId)
         }
 
       case .turnBasedGameMenuItemTapped:
@@ -132,7 +132,7 @@ public struct AppReducer {
       return .stop
     }
     .onEvent(AppDelegateReducer.DidReceiveNotificationResponse.self) { response, state in
-      self.handle(response, state: &state)
+      handle(response, state: &state)
     }
     .onEvent(DailyChallengeReducer.StartGame.self) { inProgressGame, state in
       state.destination = .game(Game.State(inProgressGame: inProgressGame))
@@ -147,12 +147,12 @@ public struct AppReducer {
 
         state.destination = nil
         store.addTask {
-          try await self.rematch(turnBasedMatch.match.matchId)
+          try await rematch(turnBasedMatch.match.matchId)
         }
         return .stop
 
       case .startSoloGame(let gameMode):
-        self.startSoloGame(gameMode, state: &state)
+        startSoloGame(gameMode, state: &state)
         return .stop
 
       case .dismissGame, .gameSubmitted, .startGame:
@@ -167,11 +167,11 @@ public struct AppReducer {
     }
     .onEvent(PastGame.OpenMatch.self) { match, _ in
       store.addTask {
-        try await self.handleTurnBasedMatch(match, didBecomeActive: true)
+        try await handleTurnBasedMatch(match, didBecomeActive: true)
       }
     }
     .onEvent(Solo.StartGame.self) { gameMode, state in
-      self.startSoloGame(gameMode, state: &state)
+      startSoloGame(gameMode, state: &state)
     }
     .onChange(of: store.destination?.game?.moves) { _, _, state in
       guard let game = state.destination?.game, game.isSavable
@@ -200,12 +200,12 @@ public struct AppReducer {
       }
     }
     .onChange(of: store.home.savedGames) { _, savedGames, _ in
-      guard savedGames != self.persistedSavedGames
+      guard savedGames != persistedSavedGames
       else { return }
 
-      self.persistedSavedGames = savedGames
+      persistedSavedGames = savedGames
       store.addTask {
-        try await self.fileClient.save(games: savedGames)
+        try await fileClient.save(games: savedGames)
       }
     }
     .onChange(of: store.destination == nil) { _, isHomeVisible, _ in
@@ -215,34 +215,34 @@ public struct AppReducer {
       }
     }
     .onMount { state in
-      if !self.userDefaults.hasShownFirstLaunchOnboarding {
+      if !userDefaults.hasShownFirstLaunchOnboarding {
         state.destination = .onboarding(Onboarding.State(presentationStyle: .firstLaunch))
       }
 
       store.addTask {
-        async let migrate: Void = self.migrate()
-        if self.userDefaults.installationTime <= 0 {
-          await self.userDefaults.setInstallationTime(
-            self.now.timeIntervalSinceReferenceDate
+        async let migrate: Void = migrate()
+        if userDefaults.installationTime <= 0 {
+          await userDefaults.setInstallationTime(
+            now.timeIntervalSinceReferenceDate
           )
         }
-        if let savedGames = try? await self.fileClient.loadSavedGames() {
-          try await self.savedGamesLoaded(savedGames)
+        if let savedGames = try? await fileClient.loadSavedGames() {
+          try await savedGamesLoaded(savedGames)
         }
         _ = try await migrate
       }
       store.addTask {
-        try await self.listenForGameCenterEvents()
+        try await listenForGameCenterEvents()
       }
       store.addTask {
-        await self.observePaymentTransactions()
+        await observePaymentTransactions()
       }
     }
   }
 
   @MainActor
   private func savedGamesLoaded(_ savedGames: SavedGamesState) throws {
-    self.persistedSavedGames = savedGames
+    persistedSavedGames = savedGames
     try store.modify { $0.home.savedGames = savedGames }
   }
 
@@ -251,11 +251,11 @@ public struct AppReducer {
     case .timed:
       state.destination = .game(
         Game.State(
-          cubes: self.randomCubes(.en),
+          cubes: randomCubes(.en),
           gameContext: .solo,
-          gameCurrentTime: self.now,
+          gameCurrentTime: now,
           gameMode: .timed,
-          gameStartTime: self.now,
+          gameStartTime: now,
           isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
         )
       )
@@ -265,11 +265,11 @@ public struct AppReducer {
         state.home.savedGames.unlimited
           .map { Game.State(inProgressGame: $0) }
           ?? Game.State(
-            cubes: self.randomCubes(.en),
+            cubes: randomCubes(.en),
             gameContext: .solo,
-            gameCurrentTime: self.now,
+            gameCurrentTime: now,
             gameMode: .unlimited,
-            gameStartTime: self.now,
+            gameStartTime: now,
             isGameLoaded: state.destination?.game?.isGameLoaded == .some(true)
           )
       )

@@ -47,18 +47,18 @@ extension AudioPlayerClient {
     }
 
     func load(sounds: [Sound]) throws {
-      let sounds = sounds.filter { !self.players.keys.contains($0) }
+      let sounds = sounds.filter { !players.keys.contains($0) }
       try AVAudioSession.sharedInstance().setCategory(.ambient)
       try AVAudioSession.sharedInstance().setActive(true, options: [])
       var errors: [Sound: Error] = [:]
       for sound in sounds {
-        for bundle in self.bundles {
+        for bundle in bundles {
           do {
             guard let url = bundle.url(forResource: sound.name, withExtension: "mp3")
             else { continue }
             switch sound.category {
             case .music:
-              self.players[sound] = try .music(AVAudioPlayer(contentsOf: url))
+              players[sound] = try .music(AVAudioPlayer(contentsOf: url))
 
             case .soundEffect:
               let file = try AVAudioFile(forReading: url)
@@ -72,7 +72,7 @@ extension AudioPlayerClient {
               let node = AVAudioPlayerNode()
               audioEngine.attach(node)
               audioEngine.connect(node, to: soundEffectsNode, format: nil)
-              self.players[sound] = .soundEffect(node, buffer)
+              players[sound] = .soundEffect(node, buffer)
             }
           } catch {
             errors[sound] = error
@@ -83,17 +83,17 @@ extension AudioPlayerClient {
     }
 
     func play(sound: Sound, loop: Bool = false) throws {
-      guard let player = self.players[sound] else { throw Failure.soundNotLoaded(sound) }
+      guard let player = players[sound] else { throw Failure.soundNotLoaded(sound) }
 
       switch player {
       case let .music(player):
         player.currentTime = 0
         player.numberOfLoops = loop ? -1 : 0
-        player.volume = self.musicVolume
+        player.volume = musicVolume
         player.play()
 
       case let .soundEffect(node, buffer):
-        if !self.audioEngine.isRunning {
+        if !audioEngine.isRunning {
           try audioEngine.start()
         }
 
@@ -109,7 +109,7 @@ extension AudioPlayerClient {
     }
 
     func stop(sound: Sound) throws {
-      guard let player = self.players[sound] else { throw Failure.soundNotLoaded(sound) }
+      guard let player = players[sound] else { throw Failure.soundNotLoaded(sound) }
 
       switch player {
       case let .music(player):
@@ -125,7 +125,7 @@ extension AudioPlayerClient {
     }
 
     func setVolume(of sound: Sound, to volume: Float) throws {
-      guard let player = self.players[sound] else { throw Failure.soundNotLoaded(sound) }
+      guard let player = players[sound] else { throw Failure.soundNotLoaded(sound) }
 
       switch player {
       case let .music(player):
@@ -137,14 +137,14 @@ extension AudioPlayerClient {
     }
 
     func setMusicVolume(to volume: Float) {
-      self.musicVolume = volume
-      for (sound, _) in self.players where sound.category == .music {
-        try? self.setVolume(of: sound, to: volume)
+      musicVolume = volume
+      for (sound, _) in players where sound.category == .music {
+        try? setVolume(of: sound, to: volume)
       }
     }
 
     func setSoundEffectsVolume(to volume: Float) {
-      self.soundEffectsNode.volume = 0.25 * volume
+      soundEffectsNode.volume = 0.25 * volume
     }
   }
 }

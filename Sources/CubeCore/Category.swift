@@ -8,21 +8,21 @@ struct Category: OptionSet {
 
 extension SCNCamera {
   var category: Category {
-    get { Category(rawValue: self.categoryBitMask) }
-    set { self.categoryBitMask = newValue.rawValue }
+    get { Category(rawValue: categoryBitMask) }
+    set { categoryBitMask = newValue.rawValue }
   }
 }
 
 extension SCNNode {
   var category: Category {
-    get { Category(rawValue: self.categoryBitMask) }
-    set { self.categoryBitMask = newValue.rawValue }
+    get { Category(rawValue: categoryBitMask) }
+    set { categoryBitMask = newValue.rawValue }
   }
 }
 
 extension SCNLight {
   var category: Category {
-    get { Category(rawValue: self.categoryBitMask) }
-    set { self.categoryBitMask = newValue.rawValue }
+    get { Category(rawValue: categoryBitMask) }
+    set { categoryBitMask = newValue.rawValue }
   }
 }

@@ -49,7 +49,7 @@ public struct BottomMenu {
     }
 
     fileprivate func additionalAction(_ action: @escaping () -> Void) -> Self {
-      .init(title: self.title, icon: self.icon, id: self.id) {
+      .init(title: title, icon: icon, id: id) {
         action()
         self.action()
       }
@@ -61,7 +61,7 @@ extension View {
   public func bottomMenu(
     item: Binding<BottomMenu?>
   ) -> some View {
-    self.modifier(BottomMenuModifier(item: item))
+    modifier(BottomMenuModifier(item: item))
   }
 }
 
@@ -73,13 +73,13 @@ private struct BottomMenuModifier: ViewModifier {
   func body(content: Content) -> some View {
     content
       .overlay {
-        if self.item != nil {
+        if item != nil {
           Rectangle()
             .fill(Color.isowordsBlack.opacity(0.4))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onTapGesture {
               withAnimation {
-                self.item = nil
+                item = nil
               }
             }
             .transition(.opacity.animation(.default))
@@ -87,7 +87,7 @@ private struct BottomMenuModifier: ViewModifier {
         }
       }
       .overlay(alignment: .bottom) {
-        if let menu = self.item {
+        if let menu = item {
           VStack(spacing: 24) {
             Group {
               HStack {
@@ -96,7 +96,7 @@ private struct BottomMenuModifier: ViewModifier {
                 Spacer()
                 Button {
                   withAnimation {
-                    self.item = nil
+                    item = nil
                   }
                 } label: {
                   Image(systemName: "xmark.circle.fill")
@@ -109,7 +109,7 @@ private struct BottomMenuModifier: ViewModifier {
                   .adaptiveFont(.matterMedium, size: 24)
               }
             }
-            .foregroundColor(self.colorScheme == .light ? .white : .isowordsOrange)
+            .foregroundColor(colorScheme == .light ? .white : .isowordsOrange)
 
             HStack(spacing: 24) {
               ForEach(menu.buttons) { button in
@@ -130,8 +130,8 @@ private struct BottomMenuModifier: ViewModifier {
               }
               .buttonStyle(
                 ActionButtonStyle(
-                  backgroundColor: self.colorScheme == .dark ? .isowordsOrange : .white,
-                  foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .isowordsOrange
+                  backgroundColor: colorScheme == .dark ? .isowordsOrange : .white,
+                  foregroundColor: colorScheme == .dark ? .isowordsBlack : .isowordsOrange
                 )
               )
             }
@@ -141,13 +141,13 @@ private struct BottomMenuModifier: ViewModifier {
           .padding(.bottom)
           .background {
             Group {
-              self.colorScheme == .light ? Color.isowordsOrange : .hex(0x242424)
+              colorScheme == .light ? Color.isowordsOrange : .hex(0x242424)
             }
             .adaptiveCornerRadius([UIRectCorner.topLeft, .topRight], .grid(3))
             .ignoresSafeArea()
           }
           .transition(.move(edge: .bottom).animation(.default))
-          .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
+          .screenEdgePadding(deviceState.isPad ? .horizontal : [])
         }
       }
   }
@@ -158,18 +158,18 @@ private struct MenuButton: View {
   @Environment(\.colorScheme) var colorScheme
 
   var body: some View {
-    Button(action: self.button.action) {
+    Button(action: button.action) {
       VStack(spacing: 16) {
-        self.button.icon
-          .colorMultiply(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
+        button.icon
+          .colorMultiply(colorScheme == .light ? .isowordsOrange : .isowordsBlack)
 
-        self.button.title
+        button.title
           .adaptiveFont(.matterMedium, size: 18)
       }
-      .foregroundColor(self.colorScheme == .light ? .isowordsOrange : .isowordsBlack)
+      .foregroundColor(colorScheme == .light ? .isowordsOrange : .isowordsBlack)
       .frame(maxWidth: .infinity)
       .padding(.vertical, 24)
-      .background(self.colorScheme == .light ? Color.white : .isowordsOrange)
+      .background(colorScheme == .light ? Color.white : .isowordsOrange)
       .continuousCornerRadius(12)
     }
     .buttonStyle(MenuButtonStyle())
@@ -191,13 +191,13 @@ public struct MenuButtonStyle: ButtonStyle {
       @State var menu: BottomMenu? = Self.sampleMenu
 
       var body: some View {
-        Button("Present") { withAnimation { self.toggle() } }
+        Button("Present") { withAnimation { toggle() } }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .bottomMenu(item: self.$menu.animation())
+          .bottomMenu(item: $menu.animation())
       }
 
       func toggle() {
-        self.menu = self.menu == nil ? Self.sampleMenu : nil
+        menu = menu == nil ? Self.sampleMenu : nil
       }
 
       static let sampleMenu = BottomMenu(

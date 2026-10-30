@@ -24,14 +24,8 @@
 
     @inlinable
     public var rotationMatrix: CMRotationMatrix {
-      let q = self.quaternion
-
-      let s =
-        1
-        / (self.quaternion.w * self.quaternion.w
-          + self.quaternion.x * self.quaternion.x
-          + self.quaternion.y * self.quaternion.y
-          + self.quaternion.z * self.quaternion.z)
+      let q = quaternion
+      let s = 1 / (q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z)
 
       var matrix = CMRotationMatrix()
 
@@ -52,7 +46,7 @@
 
     @inlinable
     public var roll: Double {
-      let q = self.quaternion
+      let q = quaternion
       return atan2(
         2 * (q.w * q.x + q.y * q.z),
         1 - 2 * (q.x * q.x + q.y * q.y)
@@ -61,7 +55,7 @@
 
     @inlinable
     public var pitch: Double {
-      let q = self.quaternion
+      let q = quaternion
       let p = 2 * (q.w * q.y - q.z * q.x)
       return p > 1
         ? Double.pi / 2
@@ -72,7 +66,7 @@
 
     @inlinable
     public var yaw: Double {
-      let q = self.quaternion
+      let q = quaternion
       return atan2(
         2 * (q.w * q.z + q.x * q.y),
         1 - 2 * (q.y * q.y + q.z * q.z)
@@ -87,10 +81,10 @@
     }
 
     public func hash(into hasher: inout Hasher) {
-      hasher.combine(self.quaternion.w)
-      hasher.combine(self.quaternion.x)
-      hasher.combine(self.quaternion.y)
-      hasher.combine(self.quaternion.z)
+      hasher.combine(quaternion.w)
+      hasher.combine(quaternion.x)
+      hasher.combine(quaternion.y)
+      hasher.combine(quaternion.z)
     }
   }
 
@@ -98,22 +92,22 @@
     @usableFromInline
     var inverse: CMQuaternion {
       let invSumOfSquares =
-        1 / (self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w)
+        1 / (x * x + y * y + z * z + w * w)
       return CMQuaternion(
-        x: -self.x * invSumOfSquares,
-        y: -self.y * invSumOfSquares,
-        z: -self.z * invSumOfSquares,
-        w: self.w * invSumOfSquares
+        x: -x * invSumOfSquares,
+        y: -y * invSumOfSquares,
+        z: -z * invSumOfSquares,
+        w: w * invSumOfSquares
       )
     }
 
     @usableFromInline
     func multiplied(by other: Self) -> Self {
       var result = self
-      result.w = self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z
-      result.x = self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y
-      result.y = self.w * other.y - self.x * other.z + self.y * other.w + self.z * other.x
-      result.z = self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w
+      result.w = w * other.w - x * other.x - y * other.y - z * other.z
+      result.x = w * other.x + x * other.w + y * other.z - z * other.y
+      result.y = w * other.y - x * other.z + y * other.w + z * other.x
+      result.z = w * other.z + x * other.y - y * other.x + z * other.w
       return result
     }
   }

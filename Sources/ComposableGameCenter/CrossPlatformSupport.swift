@@ -12,7 +12,7 @@
     }
 
     public func dismiss() {
-      self.dismiss(animated: true, completion: nil)
+      dismiss(animated: true, completion: nil)
     }
   }
 #endif

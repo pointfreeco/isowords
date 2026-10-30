@@ -57,7 +57,7 @@ public struct DailyChallengeReducer {
 
     var isNotificationStatusDetermined: Bool {
       ![.notDetermined, .provisional]
-         .contains(self.userNotificationSettings?.authorizationStatus)
+         .contains(userNotificationSettings?.authorizationStatus)
     }
   }
 
@@ -237,12 +237,12 @@ public struct DailyChallengeView: View {
                 + Text("\nplayed!"))
             }
           }
-          .font(.custom(.matterMedium, size: self.adaptiveSize.pad(48, by: 2)))
+          .font(.custom(.matterMedium, size: adaptiveSize.pad(48, by: 2)))
           .lineLimit(3)
           .minimumScaleFactor(0.2)
           .multilineTextAlignment(.center)
 
-          (Text("(") + Text(timeDescriptionUntilTomorrow(now: self.date())) + Text(" left)"))
+          (Text("(") + Text(timeDescriptionUntilTomorrow(now: date())) + Text(" left)"))
             .adaptiveFont(.matter, size: 20)
         }
         .screenEdgePadding(.horizontal)
@@ -288,19 +288,19 @@ public struct DailyChallengeView: View {
               .adaptiveFont(.matterMedium, size: 16)
             Spacer()
             Image(systemName: "arrow.right")
-              .font(.system(size: self.adaptiveSize.pad(16)))
+              .font(.system(size: adaptiveSize.pad(16)))
           }
           .adaptivePadding(.horizontal, .grid(5))
           .adaptivePadding(.vertical, .grid(9))
           .padding(.bottom, proxy.safeAreaInsets.bottom / 2)
         }
         .frame(maxWidth: .infinity)
-        .foregroundColor(self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge)
-        .background(self.colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
+        .foregroundColor(colorScheme == .dark ? .isowordsBlack : .dailyChallenge)
+        .background(colorScheme == .dark ? Color.dailyChallenge : .isowordsBlack)
       }
       .navigationStyle(
-        backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
-        foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
+        backgroundColor: colorScheme == .dark ? .isowordsBlack : .dailyChallenge,
+        foregroundColor: colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
         title: Text("Daily Challenge"),
         trailing: Group {
           if !store.isNotificationStatusDetermined {
@@ -391,13 +391,13 @@ private struct ReminderBell: View {
   let action: () -> Void
 
   var body: some View {
-    Button(action: self.action) {
+    Button(action: action) {
       Image(systemName: "bell.badge.fill")
         .font(.system(size: 20))
-        .modifier(RingEffect(animatableData: CGFloat(self.shake ? 1 : 0)))
+        .modifier(RingEffect(animatableData: CGFloat(shake ? 1 : 0)))
         .onAppear {
           withAnimation(.easeInOut(duration: 1).delay(2)) {
-            self.shake = true
+            shake = true
           }
         }
     }

@@ -36,12 +36,12 @@ import ConcurrencyExtras
             func gameCenterViewControllerDidFinish(
               _ gameCenterViewController: GKGameCenterViewController
             ) {
-              self.continuation.yield()
-              self.continuation.finish()
+              continuation.yield()
+              continuation.finish()
             }
           }
 
-          await self.dismiss()
+          await dismiss()
           let viewController = await GKGameCenterViewController()
           self.viewController = viewController
           _ = await AsyncStream<Void> { continuation in
@@ -60,7 +60,7 @@ import ConcurrencyExtras
         }
 
         func dismiss() async {
-          guard let viewController = self.viewController else { return }
+          guard let viewController else { return }
           await viewController.dismiss()
           self.viewController = nil
         }
@@ -116,50 +116,50 @@ import ConcurrencyExtras
                 _ player: GKPlayer, didComplete challenge: GKChallenge,
                 issuedByFriend friendPlayer: GKPlayer
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .challenge(.didComplete(challenge, issuedByFriend: friendPlayer)))
               }
               func player(_ player: GKPlayer, didReceive challenge: GKChallenge) {
-                self.continuation.yield(.challenge(.didReceive(challenge)))
+                continuation.yield(.challenge(.didReceive(challenge)))
               }
               func player(
                 _ player: GKPlayer, issuedChallengeWasCompleted challenge: GKChallenge,
                 byFriend friendPlayer: GKPlayer
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .challenge(.issuedChallengeWasCompleted(challenge, byFriend: friendPlayer)))
               }
               func player(_ player: GKPlayer, wantsToPlay challenge: GKChallenge) {
-                self.continuation.yield(.challenge(.wantsToPlay(challenge)))
+                continuation.yield(.challenge(.wantsToPlay(challenge)))
               }
               func player(_ player: GKPlayer, didAccept invite: GKInvite) {
-                self.continuation.yield(.invite(.didAccept(invite)))
+                continuation.yield(.invite(.didAccept(invite)))
               }
               func player(
                 _ player: GKPlayer, didRequestMatchWithRecipients recipientPlayers: [GKPlayer]
               ) {
-                self.continuation.yield(.invite(.didRequestMatchWithRecipients(recipientPlayers)))
+                continuation.yield(.invite(.didRequestMatchWithRecipients(recipientPlayers)))
               }
               func player(_ player: GKPlayer, didModifySavedGame savedGame: GKSavedGame) {
-                self.continuation.yield(.savedGame(.didModifySavedGame(savedGame)))
+                continuation.yield(.savedGame(.didModifySavedGame(savedGame)))
               }
               func player(_ player: GKPlayer, hasConflictingSavedGames savedGames: [GKSavedGame]) {
-                self.continuation.yield(.savedGame(.hasConflictingSavedGames(savedGames)))
+                continuation.yield(.savedGame(.hasConflictingSavedGames(savedGames)))
               }
               func player(
                 _ player: GKPlayer, didRequestMatchWithOtherPlayers playersToInvite: [GKPlayer]
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .turnBased(.didRequestMatchWithOtherPlayers(playersToInvite)))
               }
               func player(_ player: GKPlayer, matchEnded match: GKTurnBasedMatch) {
-                self.continuation.yield(.turnBased(.matchEnded(.init(rawValue: match))))
+                continuation.yield(.turnBased(.matchEnded(.init(rawValue: match))))
               }
               func player(
                 _ player: GKPlayer, receivedExchangeCancellation exchange: GKTurnBasedExchange,
                 for match: GKTurnBasedMatch
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .turnBased(.receivedExchangeCancellation(exchange, match: .init(rawValue: match)))
                 )
               }
@@ -167,27 +167,27 @@ import ConcurrencyExtras
                 _ player: GKPlayer, receivedExchangeReplies replies: [GKTurnBasedExchangeReply],
                 forCompletedExchange exchange: GKTurnBasedExchange, for match: GKTurnBasedMatch
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .turnBased(.receivedExchangeReplies(replies, match: .init(rawValue: match))))
               }
               func player(
                 _ player: GKPlayer, receivedExchangeRequest exchange: GKTurnBasedExchange,
                 for match: GKTurnBasedMatch
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .turnBased(.receivedExchangeRequest(exchange, match: .init(rawValue: match))))
               }
               func player(
                 _ player: GKPlayer, receivedTurnEventFor match: GKTurnBasedMatch,
                 didBecomeActive: Bool
               ) {
-                self.continuation.yield(
+                continuation.yield(
                   .turnBased(
                     .receivedTurnEventForMatch(
                       .init(rawValue: match), didBecomeActive: didBecomeActive)))
               }
               func player(_ player: GKPlayer, wantsToQuitMatch match: GKTurnBasedMatch) {
-                self.continuation.yield(.turnBased(.wantsToQuitMatch(.init(rawValue: match))))
+                continuation.yield(.turnBased(.wantsToQuitMatch(.init(rawValue: match))))
               }
             }
 

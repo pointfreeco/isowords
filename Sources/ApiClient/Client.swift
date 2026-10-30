@@ -20,7 +20,7 @@ public struct ApiClient: Sendable {
     line: UInt = #line
   ) async throws -> (Data, URLResponse) {
     do {
-      let (data, response) = try await self.apiRequest(route)
+      let (data, response) = try await apiRequest(route)
       #if DEBUG
         print(
           """
@@ -44,7 +44,7 @@ public struct ApiClient: Sendable {
     file: StaticString = #file,
     line: UInt = #line
   ) async throws -> A {
-    let (data, _) = try await self.apiRequest(route: route, file: file, line: line)
+    let (data, _) = try await apiRequest(route: route, file: file, line: line)
     do {
       return try apiDecode(A.self, from: data)
     } catch {
@@ -58,7 +58,7 @@ public struct ApiClient: Sendable {
     line: UInt = #line
   ) async throws -> (Data, URLResponse) {
     do {
-      let (data, response) = try await self.request(route)
+      let (data, response) = try await request(route)
       #if DEBUG
         print(
           """
@@ -82,7 +82,7 @@ public struct ApiClient: Sendable {
     file: StaticString = #file,
     line: UInt = #line
   ) async throws -> A {
-    let (data, _) = try await self.request(route: route, file: file, line: line)
+    let (data, _) = try await request(route: route, file: file, line: line)
     do {
       return try apiDecode(A.self, from: data)
     } catch {

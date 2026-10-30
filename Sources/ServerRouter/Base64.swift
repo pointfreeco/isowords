@@ -6,7 +6,7 @@ extension Conversion where Self == Base64 {
 }
 
 extension Conversion where Output == String {
-  var base64: Conversions.Map<Self, Base64> { self.map(.base64) }
+  var base64: Conversions.Map<Self, Base64> { map(.base64) }
 }
 
 struct Base64: Conversion {

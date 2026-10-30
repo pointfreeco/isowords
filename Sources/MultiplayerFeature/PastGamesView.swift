@@ -25,9 +25,9 @@ public struct PastGames {
       .onMount { _ in
         store.addTask {
           guard
-            let matches = try? await self.gameCenter.turnBasedMatch.loadMatches()
+            let matches = try? await gameCenter.turnBasedMatch.loadMatches()
           else { return }
-          let localPlayerId = self.gameCenter.localPlayer.localPlayer().gamePlayerId
+          let localPlayerId = gameCenter.localPlayer.localPlayer().gamePlayerId
           let pastGames =
             matches
             .compactMap { PastGame.State(turnBasedMatch: $0, localPlayerId: localPlayerId) }
@@ -50,15 +50,15 @@ struct PastGamesView: View {
 
           Divider()
             .frame(height: 2)
-            .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
+            .background(colorScheme == .light ? Color.isowordsBlack : .multiplayer)
             .padding(.vertical, .grid(8))
         }
       }
       .padding()
     }
     .navigationStyle(
-      backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
-      foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,
+      backgroundColor: colorScheme == .dark ? .isowordsBlack : .multiplayer,
+      foregroundColor: colorScheme == .dark ? .multiplayer : .isowordsBlack,
       title: Text("Past games")
     )
   }

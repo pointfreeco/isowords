@@ -47,13 +47,13 @@ public struct Home {
     public var weekInReview: FetchWeekInReviewResponse?
 
     public var savedGames: SavedGamesState {
-      get { self.activeGames.savedGames }
-      set { self.activeGames.savedGames = newValue }
+      get { activeGames.savedGames }
+      set { activeGames.savedGames = newValue }
     }
 
     public var turnBasedMatches: [ActiveTurnBasedMatch] {
-      get { self.activeGames.turnBasedMatches }
-      set { self.activeGames.turnBasedMatches = newValue }
+      get { activeGames.turnBasedMatches }
+      set { activeGames.turnBasedMatches = newValue }
     }
 
     public init(
@@ -79,9 +79,9 @@ public struct Home {
     }
 
     var hasActiveGames: Bool {
-      self.savedGames.dailyChallengeUnlimited != nil
-        || self.savedGames.unlimited != nil
-        || !self.turnBasedMatches.isEmpty
+      savedGames.dailyChallengeUnlimited != nil
+        || savedGames.unlimited != nil
+        || !turnBasedMatches.isEmpty
     }
   }
 

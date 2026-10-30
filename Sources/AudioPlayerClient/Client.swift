@@ -30,7 +30,7 @@ public struct AudioPlayerClient {
     var client = self
     client.play = { sound in
       guard doNotIncludeSounds.contains(sound)
-      else { return await self.play(sound) }
+      else { return await play(sound) }
     }
     return client
   }

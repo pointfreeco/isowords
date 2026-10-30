@@ -18,7 +18,7 @@ public struct PastGame {
     public var opponentDisplayName: String
 
     public var id: TurnBasedMatch.Id {
-      self.matchId
+      matchId
     }
 
     enum Outcome: Equatable {
@@ -28,9 +28,9 @@ public struct PastGame {
     }
 
     var outcome: Outcome {
-      self.challengeeScore < self.challengerScore
+      challengeeScore < challengerScore
         ? .challenger
-        : self.challengeeScore > self.challengerScore
+        : challengeeScore > challengerScore
           ? .challengee
           : .tied
     }
@@ -76,7 +76,7 @@ public struct PastGame {
         state.isRematchRequestInFlight = true
         store.addTask { [matchId = state.matchId] in
           do {
-            let match = try await self.gameCenter.turnBasedMatch.rematch(matchId)
+            let match = try await gameCenter.turnBasedMatch.rematch(matchId)
             try store.modify { $0.isRematchRequestInFlight = false }
             try await openMatch(match)
           } catch is CancellationError {
@@ -90,7 +90,7 @@ public struct PastGame {
 
       case .tappedRow:
         store.addTask { [matchId = state.matchId] in
-          guard let match = try? await self.gameCenter.turnBasedMatch.load(matchId)
+          guard let match = try? await gameCenter.turnBasedMatch.load(matchId)
           else { return }
           try await openMatch(match)
         }
@@ -150,13 +150,13 @@ struct PastGameRow: View {
             }
           }
 
-          self.rematchButton(matchId: store.matchId)
+          rematchButton(matchId: store.matchId)
             .hidden()
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
 
-      self.rematchButton(matchId: store.matchId)
+      rematchButton(matchId: store.matchId)
     }
     .alert("Error", isPresented: $store.isRematchErrorAlertPresented) {
       Button("Ok") {}
@@ -174,19 +174,19 @@ struct PastGameRow: View {
           ProgressView()
             .progressViewStyle(
               CircularProgressViewStyle(
-                tint: self.colorScheme == .light ? .multiplayer : .isowordsBlack
+                tint: colorScheme == .light ? .multiplayer : .isowordsBlack
               )
             )
         }
 
         Text("Rematch")
           .adaptiveFont(.matterMedium, size: 14)
-          .foregroundColor(self.colorScheme == .light ? .multiplayer : .isowordsBlack)
+          .foregroundColor(colorScheme == .light ? .multiplayer : .isowordsBlack)
       }
       .padding(.horizontal)
       .padding(.vertical, .grid(2))
     }
-    .background(self.colorScheme == .light ? Color.isowordsBlack : .multiplayer)
+    .background(colorScheme == .light ? Color.isowordsBlack : .multiplayer)
     .continuousCornerRadius(999)
   }
 }

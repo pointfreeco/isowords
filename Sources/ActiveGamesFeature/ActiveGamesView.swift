@@ -21,9 +21,9 @@ public struct ActiveGames {
     }
 
     public var isEmpty: Bool {
-      self.savedGames.dailyChallengeUnlimited == nil
-        && self.savedGames.unlimited == nil
-        && self.turnBasedMatches.isEmpty
+      savedGames.dailyChallengeUnlimited == nil
+        && savedGames.unlimited == nil
+        && turnBasedMatches.isEmpty
     }
   }
 
@@ -99,10 +99,10 @@ public struct ActiveGamesView: View {
               isActive: true,
               title: Text("Resume")
             ),
-            message: Text(timeDescriptionUntilTomorrow(now: self.date()))
+            message: Text(timeDescriptionUntilTomorrow(now: date()))
               .fontWeight(.medium)
               + Text("\nleft to play!")
-              .foregroundColor(self.color.opacity(0.4)),
+              .foregroundColor(color.opacity(0.4)),
             tapAction: { withAnimation { _ = store.send(.dailyChallengeTapped) } },
             title: Text("Daily challenge")
           )
@@ -135,13 +135,13 @@ public struct ActiveGamesView: View {
             button: turnBasedButton(match: match),
             message: turnBasedMessage(match: match),
             tapAction: { withAnimation { _ = store.send(.turnBasedGameTapped(match.id)) } },
-            buttonAction: self.showMenuItems
+            buttonAction: showMenuItems
               ? sendReminderAction.map { action in { store.send(action) } }
               : nil,
             title: Text("vs \(match.theirName ?? "your opponent")")
           )
           .contextMenu(
-            self.showMenuItems
+            showMenuItems
               ? ContextMenu {
                 if match.status == .open, !match.isYourTurn,
                   let sendReminderAction = sendReminderAction
@@ -188,11 +188,11 @@ public struct ActiveGamesView: View {
   func turnBasedMessage(match: ActiveTurnBasedMatch) -> some View {
     if match.isStale && !match.isYourTurn {
       Text("they haven’t played in awhile")
-        .foregroundColor(self.color.opacity(0.4))
+        .foregroundColor(color.opacity(0.4))
     } else if let playedWord = match.playedWord {
       Text(playedWord.isYourWord ? "you played " : "they played ")
-        .foregroundColor(self.color.opacity(0.4))
-        + self.text(for: playedWord)
+        .foregroundColor(color.opacity(0.4))
+        + text(for: playedWord)
     } else if match.isYourTurn {
       Text("you haven’t played a word yet!")
     } else {
@@ -203,15 +203,15 @@ public struct ActiveGamesView: View {
   func soloMessage(inProgressGame: InProgressGame) -> Text {
     if let lastPlayedWord = inProgressGame.lastPlayedWord {
       return Text("your last word was ")
-        .foregroundColor(self.color.opacity(0.4))
-        + self.text(for: lastPlayedWord)
+        .foregroundColor(color.opacity(0.4))
+        + text(for: lastPlayedWord)
     } else {
       return Text("you haven’t played a word yet!")
     }
   }
 
   var color: Color {
-    self.colorScheme == .light ? .isowordsOrange : .isowordsBlack
+    colorScheme == .light ? .isowordsOrange : .isowordsBlack
   }
 
   func text(for playedWord: PlayedWord) -> Text {
@@ -225,7 +225,7 @@ public struct ActiveGamesView: View {
 
 extension InProgressGame {
   fileprivate var lastPlayedWord: PlayedWord? {
-    self.moves
+    moves
       .last(where: { $0.type.is(\.playedWord) })
       .flatMap { move in
         move.type.playedWord.map {
@@ -233,7 +233,7 @@ extension InProgressGame {
             isYourWord: false,
             reactions: move.reactions,
             score: move.score,
-            word: self.cubes.string(from: $0)
+            word: cubes.string(from: $0)
           )
         }
       }
@@ -288,10 +288,10 @@ struct ActiveTurnBasedGameSubtitleView: View {
 
   var body: some View {
     HStack(alignment: .top, spacing: 2) {
-      Text(self.word)
-      Text("\(self.score)")
+      Text(word)
+      Text("\(score)")
         .adaptiveFont(.matterMedium, size: 12)
-      self.reaction.map { Text($0.rawValue) }
+      reaction.map { Text($0.rawValue) }
     }
   }
 }
@@ -304,19 +304,19 @@ struct ActiveGameView<Subtitle: View>: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text(self.title)
+      Text(title)
         .frame(maxWidth: .infinity, alignment: .topLeading)
 
-      self.subtitle
+      subtitle
 
       Spacer()
 
-      Text(self.footer)
+      Text(footer)
         .adaptiveFont(.matterMedium, size: 14)
     }
     .padding()
     .frame(width: 180, height: ActiveGamesView.height)
-    .opacity(self.isYourTurn ? 1 : 0.5)
+    .opacity(isYourTurn ? 1 : 0.5)
     // NB: This is a hack to force re-renders of this view because sometimes SwiftUI doesn't
     //     finish updating the opacity while animating.
     .id(UUID())
@@ -350,9 +350,9 @@ struct ActiveGameButtonStyle: ButtonStyle {
   }
 
   func makeBody(configuration: Configuration) -> some View {
-    return configuration.label
+    configuration.label
       .foregroundColor(
-        self.foregroundColor
+        foregroundColor
           .opacity(configuration.isPressed ? 0.9 : 1)
       )
       .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -360,7 +360,7 @@ struct ActiveGameButtonStyle: ButtonStyle {
       .background(
         RoundedRectangle(cornerRadius: 13)
           .fill(
-            self.backgroundColor
+            backgroundColor
               .opacity(configuration.isPressed ? 0.5 : 1)
           )
       )

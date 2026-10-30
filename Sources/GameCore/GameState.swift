@@ -7,7 +7,7 @@ import Tagged
 
 extension Game.State {
   public var displayTitle: String {
-    switch self.gameContext {
+    switch gameContext {
     case .dailyChallenge:
       return "Daily challenge"
     case .shared, .solo:
@@ -20,16 +20,16 @@ extension Game.State {
   }
 
   public var currentScore: Int {
-    self.moves.reduce(into: 0) { $0 += $1.score }
+    moves.reduce(into: 0) { $0 += $1.score }
   }
 
   public var isGameOver: Bool {
-    self.destination.is(\.some.gameOver)
+    destination.is(\.some.gameOver)
   }
 
   var isOutOfTimeOrCubes: Bool {
-    let timesUp = self.gameMode == .timed && self.secondsPlayed >= self.gameMode.seconds
-    let allCubesRemoved = self.cubes.allSatisfy {
+    let timesUp = gameMode == .timed && secondsPlayed >= gameMode.seconds
+    let allCubesRemoved = cubes.allSatisfy {
       $0.allSatisfy {
         $0.allSatisfy { !$0.isInPlay }
       }
@@ -38,52 +38,52 @@ extension Game.State {
   }
 
   public var isResumable: Bool {
-    self.gameMode == .unlimited && !self.isGameOver
+    gameMode == .unlimited && !isGameOver
   }
 
   public var isSavable: Bool {
-    self.isResumable && !self.gameContext.is(\.turnBased)
+    isResumable && !gameContext.is(\.turnBased)
   }
 
   public var playedWords: [PlayedWord] {
-    self.moves
+    moves
       .reduce(into: [PlayedWord]()) {
         guard let word = $1.type.playedWord else { return }
         $0.append(
           .init(
-            isYourWord: $1.playerIndex == self.gameContext.turnBased?.localPlayerIndex,
+            isYourWord: $1.playerIndex == gameContext.turnBased?.localPlayerIndex,
             reactions: $1.reactions,
             score: $1.score,
-            word: self.cubes.string(from: word)
+            word: cubes.string(from: word)
           )
         )
       }
   }
 
   public var selectedWordScore: Int {
-    score(self.selectedWordString)
+    score(selectedWordString)
   }
 
   public var selectedWordString: String {
-    self.cubes.string(from: self.selectedWord)
+    cubes.string(from: selectedWord)
   }
 
   public var selectedWordHasAlreadyBeenPlayed: Bool {
-    self.moves.contains {
-      $0.type.playedWord.map { self.cubes.string(from: $0) } == self.selectedWordString
+    moves.contains {
+      $0.type.playedWord.map { cubes.string(from: $0) } == selectedWordString
     }
   }
 
   mutating func tryToRemoveCube(at index: LatticePoint) -> Bool {
-    guard self.canRemoveCube else { return false }
+    guard canRemoveCube else { return false }
 
     // Don't show menu for timed games.
-    guard self.gameMode != .timed
+    guard gameMode != .timed
     else { return true }
 
     let isTurnEndingRemoval: Bool
-    if let turnBasedMatch = self.gameContext.turnBased,
-      let move = self.moves.last,
+    if let turnBasedMatch = gameContext.turnBased,
+      let move = moves.last,
       case .removedCube = move.type,
       move.playerIndex == turnBasedMatch.localPlayerIndex
     {
@@ -92,7 +92,7 @@ extension Game.State {
       isTurnEndingRemoval = false
     }
 
-    self.destination = .bottomMenu(
+    destination = .bottomMenu(
       .removeCube(index: index, state: self, isTurnEndingRemoval: isTurnEndingRemoval)
     )
     return false
@@ -101,7 +101,7 @@ extension Game.State {
   mutating func removeCube(at index: LatticePoint, playedAt: Date) {
     let move = Move(
       playedAt: playedAt,
-      playerIndex: self.gameContext.turnBased?.localPlayerIndex,
+      playerIndex: gameContext.turnBased?.localPlayerIndex,
       reactions: nil,
       score: 0,
       type: .removedCube(index)
@@ -109,22 +109,22 @@ extension Game.State {
 
     let result = verify(
       move: move,
-      on: &self.cubes,
+      on: &cubes,
       isValidWord: { _ in false },
-      previousMoves: self.moves
+      previousMoves: moves
     )
 
     guard result != nil
     else { return }
 
-    self.moves.append(move)
-    self.selectedWord = []
+    moves.append(move)
+    selectedWord = []
   }
 
   var canRemoveCube: Bool {
-    guard let turnBasedMatch = self.gameContext.turnBased else { return true }
+    guard let turnBasedMatch = gameContext.turnBased else { return true }
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
-    guard let lastMove = self.moves.last else { return true }
+    guard let lastMove = moves.last else { return true }
     guard
       !lastMove.type.is(\.removedCube),
       lastMove.playerIndex != turnBasedMatch.localPlayerIndex
@@ -135,10 +135,10 @@ extension Game.State {
   }
 
   public var isYourTurn: Bool {
-    guard let turnBasedMatch = self.gameContext.turnBased else { return true }
+    guard let turnBasedMatch = gameContext.turnBased else { return true }
     guard turnBasedMatch.match.status == .open else { return false }
     guard turnBasedMatch.currentParticipantIsLocalPlayer else { return false }
-    guard let lastMove = self.moves.last else { return true }
+    guard let lastMove = moves.last else { return true }
     guard lastMove.playerIndex == turnBasedMatch.localPlayerIndex else { return true }
     guard lastMove.type.is(\.playedWord) else { return true }
     return false
@@ -146,7 +146,7 @@ extension Game.State {
 
   public var turnBasedScores: [Move.PlayerIndex: Int] {
     Dictionary(
-      grouping: self.moves
+      grouping: moves
         .compactMap { move in move.playerIndex.map { (playerIndex: $0, score: move.score) } },
       by: \.playerIndex
     )

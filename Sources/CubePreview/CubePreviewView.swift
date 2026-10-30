@@ -48,10 +48,10 @@ public struct CubePreview {
     }
 
     var cubeScenePreview: CubeSceneView.ViewState {
-      let selectedWordString = self.cubes.string(from: self.selectedCubeFaces)
+      let selectedWordString = cubes.string(from: selectedCubeFaces)
 
       return CubeSceneView.ViewState(
-        cubes: self.cubes.enumerated().map { x, cubes in
+        cubes: cubes.enumerated().map { x, cubes in
           cubes.enumerated().map { y, cubes in
             cubes.enumerated().map { z, cube in
               let index = LatticePoint(x: x, y: y, z: z)
@@ -65,19 +65,19 @@ public struct CubePreview {
                     letter: cube.left.letter,
                     side: .left
                   ),
-                  status: self.selectedCubeFaces.contains(.init(index: index, side: .left))
+                  status: selectedCubeFaces.contains(.init(index: index, side: .left))
                     ? .selected
                     : .deselected
                 ),
                 right: .init(
                   cubeFace: .init(letter: cube.right.letter, side: .right),
-                  status: self.selectedCubeFaces.contains(.init(index: index, side: .right))
+                  status: selectedCubeFaces.contains(.init(index: index, side: .right))
                     ? .selected
                     : .deselected
                 ),
                 top: .init(
                   cubeFace: .init(letter: cube.top.letter, side: .top),
-                  status: self.selectedCubeFaces.contains(.init(index: index, side: .top))
+                  status: selectedCubeFaces.contains(.init(index: index, side: .top))
                     ? .selected
                     : .deselected
                 )
@@ -85,20 +85,20 @@ public struct CubePreview {
             }
           }
         },
-        enableGyroMotion: self.enableGyroMotion,
-        isOnLowPowerMode: self.isOnLowPowerMode,
-        nub: self.nub,
+        enableGyroMotion: enableGyroMotion,
+        isOnLowPowerMode: isOnLowPowerMode,
+        nub: nub,
         playedWords: [],
-        selectedFaceCount: self.selectedCubeFaces.count,
-        selectedWordIsValid: selectedWordString == self.finalWordString,
+        selectedFaceCount: selectedCubeFaces.count,
+        selectedWordIsValid: selectedWordString == finalWordString,
         selectedWordString: selectedWordString
       )
     }
 
     var finalWordString: String? {
-      switch self.moves[self.moveIndex].type {
+      switch moves[moveIndex].type {
       case let .playedWord(faces):
-        return self.cubes.string(from: faces)
+        return cubes.string(from: faces)
       case .removedCube:
         return nil
       }
@@ -226,19 +226,19 @@ public struct CubePreviewView: View {
       ZStack(alignment: .top) {
         if !store.selectedWordString.isEmpty {
           (Text(store.selectedWordString)
-            + self.scoreText
+            + scoreText
             .baselineOffset(
-              (self.deviceState.idiom == .pad ? 2 : 1) * 16
+              (deviceState.idiom == .pad ? 2 : 1) * 16
             )
             .font(
               .custom(
                 .matterMedium,
-                size: (self.deviceState.idiom == .pad ? 2 : 1) * 20
+                size: (deviceState.idiom == .pad ? 2 : 1) * 20
               )
             ))
             .adaptiveFont(
               .matterSemiBold,
-              size: (self.deviceState.idiom == .pad ? 2 : 1) * 32
+              size: (deviceState.idiom == .pad ? 2 : 1) * 32
             )
             .opacity(store.selectedWordIsFinalWord ? 1 : 0.5)
             .allowsTightening(true)

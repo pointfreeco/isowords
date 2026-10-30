@@ -32,7 +32,7 @@ private struct SelectionSounds<State, Action> {
 
   func body(content: Content) -> some Feature {
     content.onChange(of: selectedWord) { _, selection, state in
-      let puzzle = self.puzzle(state)
+      let puzzle = puzzle(state)
       let selectedWordString = puzzle.string(from: selection)
       let validCount =
         !hasBeenPlayed(state, selectedWordString) && contains(state, selectedWordString)

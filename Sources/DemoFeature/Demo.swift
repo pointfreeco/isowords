@@ -31,7 +31,7 @@ public struct Demo {
     }
 
     var isGameOver: Bool {
-      guard case let .game(game) = self.step else { return false }
+      guard case let .game(game) = step else { return false }
       return game.destination.is(\.some.gameOver)
     }
   }
@@ -54,7 +54,7 @@ public struct Demo {
       switch action {
       case .fullVersionButtonTapped:
         store.addTask {
-          _ = await self.openURL(ServerConfig().appStoreUrl, [:])
+          _ = await openURL(ServerConfig().appStoreUrl, [:])
         }
 
       case .step:
@@ -82,11 +82,11 @@ public struct Demo {
     .onEvent(Onboarding.GetStarted.self) { _, state in
       state.step = .game(
         Game.State(
-          cubes: self.randomCubes(.en),
+          cubes: randomCubes(.en),
           gameContext: .solo,
-          gameCurrentTime: self.now,
+          gameCurrentTime: now,
           gameMode: .timed,
-          gameStartTime: self.now,
+          gameStartTime: now,
           isDemo: true
         )
       )
@@ -98,13 +98,13 @@ public struct Demo {
     }
     .onChange(of: store.isGameOver) { _, _, _ in
       store.addTask {
-        try await self.clock.sleep(for: .seconds(2))
+        try await clock.sleep(for: .seconds(2))
         try store.modify { $0.appStoreOverlayIsPresented = true }
       }
     }
     .onMount { _ in
       store.addTask {
-        await self.loadSounds(AudioPlayerClient.Sound.allCases)
+        await loadSounds(AudioPlayerClient.Sound.allCases)
       }
     }
   }
@@ -133,7 +133,7 @@ public struct DemoView: View {
             ),
             store: store
           ),
-          isGameOver: self.store.isGameOver,
+          isGameOver: store.isGameOver,
           bannerAction: {
             self.store.send(.fullVersionButtonTapped)
           }
@@ -154,11 +154,11 @@ struct GameWrapper<Content: View>: View {
 
   var body: some View {
     ZStack(alignment: .top) {
-      self.content
+      content
 
-      if !self.isGameOver {
+      if !isGameOver {
         Button {
-          self.bannerAction()
+          bannerAction()
         } label: {
           HStack {
             Text("Having fun?")
@@ -185,7 +185,7 @@ struct GameWrapper<Content: View>: View {
         .frame(maxWidth: .infinity)
         .background(
           Color.black
-            .opacity(self.colorScheme == .dark ? 1 : 0.04)
+            .opacity(colorScheme == .dark ? 1 : 0.04)
             .edgesIgnoringSafeArea(.top)
         )
         .transition(.offset(x: 0, y: 300))

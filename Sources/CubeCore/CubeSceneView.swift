@@ -84,10 +84,10 @@ public class CubeSceneView: SCNView, UIGestureRecognizerDelegate {
   private var worldScale: Float = 1.0
 
   var enableCubeShadow = true {
-    didSet { self.update() }
+    didSet { update() }
   }
   var showSceneStatistics = false {
-    didSet { self.update() }
+    didSet { update() }
   }
 
   public init(

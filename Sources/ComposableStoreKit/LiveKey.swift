@@ -57,17 +57,17 @@ private class ProductRequest: NSObject, SKProductsRequestDelegate {
   }
 
   func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-    self.continuation.yield(
+    continuation.yield(
       .init(
         invalidProductIdentifiers: response.invalidProductIdentifiers,
         products: response.products.map(StoreKitClient.Product.init(rawValue:))
       )
     )
-    self.continuation.finish()
+    continuation.finish()
   }
 
   func request(_ request: SKRequest, didFailWithError error: Error) {
-    self.continuation.finish(throwing: error)
+    continuation.finish(throwing: error)
   }
 }
 
@@ -81,7 +81,7 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   func paymentQueue(
     _ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]
   ) {
-    self.continuation.yield(
+    continuation.yield(
       .updatedTransactions(
         transactions.map(StoreKitClient.PaymentTransaction.init(rawValue:))
       )
@@ -91,7 +91,7 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   func paymentQueue(
     _ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]
   ) {
-    self.continuation.yield(
+    continuation.yield(
       .removedTransactions(
         transactions.map(StoreKitClient.PaymentTransaction.init(rawValue:))
       )
@@ -99,7 +99,7 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   }
 
   func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-    self.continuation.yield(
+    continuation.yield(
       .restoreCompletedTransactionsFinished(
         transactions: queue.transactions.map(StoreKitClient.PaymentTransaction.init)
       )
@@ -109,6 +109,6 @@ private class Observer: NSObject, SKPaymentTransactionObserver {
   func paymentQueue(
     _ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error
   ) {
-    self.continuation.yield(.restoreCompletedTransactionsFailed(error))
+    continuation.yield(.restoreCompletedTransactionsFailed(error))
   }
 }

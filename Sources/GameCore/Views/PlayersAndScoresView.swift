@@ -13,7 +13,7 @@ struct PlayersAndScoresView: View {
     HStack(spacing: 0) {
       PlayerView(
         displayName: (store.you?.displayName).map { LocalizedStringKey($0) } ?? "You",
-        image: self.defaultYourImage ?? self.yourImage,
+        image: defaultYourImage ?? yourImage,
         isPlayerTurn: store.isYourTurn,
         isYou: true,
         score: store.yourScore
@@ -22,7 +22,7 @@ struct PlayersAndScoresView: View {
       PlayerView(
         displayName: (store.opponent?.displayName).map { LocalizedStringKey($0) }
           ?? "Your opponent",
-        image: self.defaultOpponentImage ?? self.opponentImage,
+        image: defaultOpponentImage ?? opponentImage,
         isPlayerTurn: !store.isYourTurn,
         isYou: false,
         score: store.opponentScore
@@ -30,20 +30,20 @@ struct PlayersAndScoresView: View {
     }
     .onAppear {
       store.opponent?.rawValue?.loadPhoto(for: .small) { image, _ in
-        self.opponentImage = image
+        opponentImage = image
       }
       store.you?.rawValue?.loadPhoto(for: .small) { image, _ in
-        self.yourImage = image
+        yourImage = image
       }
     }
     .onChange(of: store.opponent) { _, player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
-        self.opponentImage = image
+        opponentImage = image
       }
     }
     .onChange(of: store.you) { _, player in
       player?.rawValue?.loadPhoto(for: .small) { image, _ in
-        self.yourImage = image
+        yourImage = image
       }
     }
   }
@@ -58,18 +58,18 @@ private struct PlayerView: View {
 
   var body: some View {
     HStack {
-      if self.isYou {
-        self.nameAndScore
-        self.avatar
+      if isYou {
+        nameAndScore
+        avatar
       } else {
-        self.avatar
-        self.nameAndScore
+        avatar
+        nameAndScore
       }
     }
-    .frame(minWidth: 0, maxWidth: .infinity, alignment: self.isYou ? .trailing : .leading)
-    .offset(x: self.isYou ? 8 : -8)
+    .frame(minWidth: 0, maxWidth: .infinity, alignment: isYou ? .trailing : .leading)
+    .offset(x: isYou ? 8 : -8)
     .applying {
-      if self.isPlayerTurn {
+      if isPlayerTurn {
         $0.zIndex(1)
       } else {
         $0.opacity(0.4)
@@ -78,23 +78,23 @@ private struct PlayerView: View {
   }
 
   var nameAndScore: some View {
-    VStack(alignment: self.isYou ? .trailing : .leading, spacing: 0) {
+    VStack(alignment: isYou ? .trailing : .leading, spacing: 0) {
       HStack(alignment: .center) {
-        Text(self.displayName)
+        Text(displayName)
           .adaptiveFont(.matterMedium, size: 14)
           .multilineTextAlignment(.trailing)
           .lineLimit(1)
       }
-      Text("\(self.score)")
+      Text("\(score)")
         .adaptiveFont(.matterMedium, size: 16)
     }
   }
 
   var avatar: some View {
-    ZStack(alignment: self.isYou ? .bottomLeading : .bottomTrailing) {
+    ZStack(alignment: isYou ? .bottomLeading : .bottomTrailing) {
       Rectangle()
         .overlay(
-          self.image.map {
+          image.map {
             Image(uiImage: $0)
               .resizable()
               .scaledToFill()
@@ -104,7 +104,7 @@ private struct PlayerView: View {
         .frame(width: 40, height: 40, alignment: .center)
         .clipShape(Circle())
 
-      if self.isPlayerTurn {
+      if isPlayerTurn {
         Circle()
           .frame(width: 10, height: 10)
           .foregroundColor(.yellow)
@@ -116,19 +116,19 @@ private struct PlayerView: View {
 
 fileprivate extension Game.State {
   var opponent: ComposableGameCenter.Player? {
-    self.gameContext.turnBased?.otherParticipant?.player
+    gameContext.turnBased?.otherParticipant?.player
   }
   var opponentScore: Int {
-    self.gameContext.turnBased?.otherPlayerIndex
-      .flatMap { self.turnBasedScores[$0] } ?? 0
+    gameContext.turnBased?.otherPlayerIndex
+      .flatMap { turnBasedScores[$0] } ?? 0
   }
   var you: ComposableGameCenter.Player? {
-    self.gameContext.turnBased?.localPlayer.player
+    gameContext.turnBased?.localPlayer.player
   }
   var yourScore: Int {
-    self.gameContext.turnBased?.localPlayerIndex
-      .flatMap { self.turnBasedScores[$0] }
-    ?? (self.gameContext.is(\.turnBased) ? 0 : self.currentScore)
+    gameContext.turnBased?.localPlayerIndex
+      .flatMap { turnBasedScores[$0] }
+    ?? (gameContext.is(\.turnBased) ? 0 : currentScore)
   }
 }
 

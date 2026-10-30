@@ -8,10 +8,10 @@ public struct FileClient {
   public var save: @Sendable (String, Data) async throws -> Void
 
   public func load<A: Decodable>(_ type: A.Type, from fileName: String) async throws -> A {
-    try await JSONDecoder().decode(A.self, from: self.load(fileName))
+    try await JSONDecoder().decode(A.self, from: load(fileName))
   }
 
   public func save<A: Encodable>(_ data: A, to fileName: String) async throws {
-    try await self.save(fileName, JSONEncoder().encode(data))
+    try await save(fileName, JSONEncoder().encode(data))
   }
 }

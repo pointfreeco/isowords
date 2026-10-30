@@ -45,7 +45,7 @@ struct ScoreView: View {
                   ? "(used)"
                   : ""
             )
-            .adaptiveFont(.matterMedium, size: self.deviceState.isPad ? 18 : 14)
+            .adaptiveFont(.matterMedium, size: deviceState.isPad ? 18 : 14)
             .alignmentGuide(.top) { _ in 0 }
             .alignmentGuide(.trailing) { _ in 0 },
             alignment: .topTrailing
@@ -68,24 +68,24 @@ struct ScoreView: View {
           )
         )
         .foregroundColor(.white)
-        .colorMultiply(self.isTimeAccented ? .red : .adaptiveBlack)
-        .scaleEffect(self.isTimeAccented ? 1.5 : 1)
+        .colorMultiply(isTimeAccented ? .red : .adaptiveBlack)
+        .scaleEffect(isTimeAccented ? 1.5 : 1)
         .onChange(of: store.secondsRemaining) { _, secondsRemaining in
           guard secondsRemaining == 10 || (secondsRemaining <= 5 && secondsRemaining > 0)
           else { return }
 
           withAnimation(.spring()) {
-            self.isTimeAccented = true
+            isTimeAccented = true
           }
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             withAnimation(.spring()) {
-              self.isTimeAccented = false
+              isTimeAccented = false
             }
           }
         }
       }
     }
-    .adaptiveFont(.matterSemiBold, size: self.deviceState.isPad ? 40 : 32)
+    .adaptiveFont(.matterSemiBold, size: deviceState.isPad ? 40 : 32)
     .adaptivePadding(.horizontal)
   }
 }

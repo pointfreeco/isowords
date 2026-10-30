@@ -43,10 +43,10 @@ public struct Multiplayer {
 
       case .startButtonTapped:
         store.addTask {
-          if self.gameCenter.localPlayer.localPlayer().isAuthenticated {
-            try await self.gameCenter.turnBasedMatchmakerViewController.present(false)
+          if gameCenter.localPlayer.localPlayer().isAuthenticated {
+            try await gameCenter.turnBasedMatchmakerViewController.present(false)
           } else {
-            await self.gameCenter.localPlayer.presentAuthenticationViewController()
+            await gameCenter.localPlayer.presentAuthenticationViewController()
           }
         }
 
@@ -75,14 +75,14 @@ public struct MultiplayerView: View {
         Spacer()
           .frame(maxHeight: .grid(16))
 
-        VStack(spacing: 20 + self.adaptiveSize.padding) {
+        VStack(spacing: 20 + adaptiveSize.padding) {
           VStack(spacing: -8) {
             Text("Play")
             Text("against a")
             Text("friend")
           }
           .multilineTextAlignment(.center)
-          .font(.custom(.matter, size: self.adaptiveSize.pad(48, by: 2)))
+          .font(.custom(.matter, size: adaptiveSize.pad(48, by: 2)))
 
           Text("(it’s fun, trust us)")
             .adaptiveFont(.matter, size: 20)
@@ -95,13 +95,13 @@ public struct MultiplayerView: View {
         } label: {
           VStack(spacing: 20) {
             Image(systemName: "person.2.fill")
-              .font(.system(size: self.adaptiveSize.pad(40)))
+              .font(.system(size: adaptiveSize.pad(40)))
             Text("Start a game!")
               .adaptiveFont(.matterMedium, size: 16)
           }
           .adaptivePadding(.all, .grid(7))
-          .background(self.colorScheme == .dark ? Color.multiplayer : .isowordsBlack)
-          .foregroundColor(self.colorScheme == .dark ? .isowordsBlack : .multiplayer)
+          .background(colorScheme == .dark ? Color.multiplayer : .isowordsBlack)
+          .foregroundColor(colorScheme == .dark ? .isowordsBlack : .multiplayer)
           .continuousCornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
@@ -117,15 +117,15 @@ public struct MultiplayerView: View {
                 .adaptiveFont(.matterMedium, size: 16)
               Spacer()
               Image(systemName: "arrow.right")
-                .font(.system(size: self.adaptiveSize.pad(16)))
+                .font(.system(size: adaptiveSize.pad(16)))
             }
             .adaptivePadding(.horizontal, .grid(5))
             .adaptivePadding(.vertical, .grid(9))
             .padding(.bottom, proxy.safeAreaInsets.bottom / 2)
           }
           .frame(maxWidth: .infinity)
-          .foregroundColor((self.colorScheme == .dark ? .isowordsBlack : .multiplayer))
-          .background(self.colorScheme == .dark ? Color.multiplayer : .isowordsBlack)
+          .foregroundColor((colorScheme == .dark ? .isowordsBlack : .multiplayer))
+          .background(colorScheme == .dark ? Color.multiplayer : .isowordsBlack)
         }
       }
       .navigationDestination(
@@ -134,8 +134,8 @@ public struct MultiplayerView: View {
         PastGamesView(store: store)
       }
       .navigationStyle(
-        backgroundColor: self.colorScheme == .dark ? .isowordsBlack : .multiplayer,
-        foregroundColor: self.colorScheme == .dark ? .multiplayer : .isowordsBlack,
+        backgroundColor: colorScheme == .dark ? .isowordsBlack : .multiplayer,
+        foregroundColor: colorScheme == .dark ? .multiplayer : .isowordsBlack,
         title: Text("Multiplayer")
       )
       .edgesIgnoringSafeArea(.bottom)

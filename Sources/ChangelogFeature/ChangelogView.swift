@@ -30,11 +30,11 @@ public struct ChangelogReducer {
     }
 
     public var whatsNew: [Change.State] {
-      self.changelog.filter { $0.change.build >= self.currentBuild }
+      changelog.filter { $0.change.build >= currentBuild }
     }
 
     public var pastUpdates: [Change.State] {
-      self.changelog.filter { $0.change.build < self.currentBuild }
+      changelog.filter { $0.change.build < currentBuild }
     }
   }
 
@@ -58,8 +58,8 @@ public struct ChangelogReducer {
 
       case .updateButtonTapped:
         store.addTask {
-          _ = await self.openURL(
-            self.serverConfig.config().appStoreUrl.absoluteURL,
+          _ = await openURL(
+            serverConfig.config().appStoreUrl.absoluteURL,
             [:]
           )
         }
@@ -69,16 +69,16 @@ public struct ChangelogReducer {
       Change()
     }
     .onMount { state in
-      state.currentBuild = self.buildNumber()
+      state.currentBuild = buildNumber()
       state.isRequestInFlight = true
 
       store.addTask {
         do {
-          let changelog = try await self.apiClient.apiRequest(
-            route: .changelog(build: self.buildNumber()),
+          let changelog = try await apiClient.apiRequest(
+            route: .changelog(build: buildNumber()),
             as: Changelog.self
           )
-          let buildNumber = self.buildNumber()
+          let buildNumber = buildNumber()
           try store.modify {
             $0.changelog =
               changelog

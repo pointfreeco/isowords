@@ -11,24 +11,24 @@ import SwiftUI
 extension AppReducer {
   @MainActor
   func listenForGameCenterEvents() async throws {
-    try await self.gameCenter.localPlayer.authenticate()
-    for await event in self.gameCenter.localPlayer.listener() {
+    try await gameCenter.localPlayer.authenticate()
+    for await event in gameCenter.localPlayer.listener() {
       switch event {
       case let .turnBased(.matchEnded(match)):
-        try await self.matchEnded(match)
+        try await matchEnded(match)
 
       case let .turnBased(.receivedTurnEventForMatch(match, didBecomeActive)):
-        try await self.handleTurnBasedMatch(match, didBecomeActive: didBecomeActive)
+        try await handleTurnBasedMatch(match, didBecomeActive: didBecomeActive)
 
       case let .turnBased(.wantsToQuitMatch(match)):
-        try? await self.gameCenter.turnBasedMatch.endMatchInTurn(
+        try? await gameCenter.turnBasedMatch.endMatchInTurn(
           .init(
             for: match.matchId,
             matchData: match.matchData ?? Data(),
-            localPlayerId: self.gameCenter.localPlayer.localPlayer().gamePlayerId,
+            localPlayerId: gameCenter.localPlayer.localPlayer().gamePlayerId,
             localPlayerMatchOutcome: .quit,
             message: """
-              \(self.gameCenter.localPlayer.localPlayer().displayName) \
+              \(gameCenter.localPlayer.localPlayer().displayName) \
               forfeited the match.
               """
           )
@@ -42,16 +42,16 @@ extension AppReducer {
 
   @MainActor
   func openTurnBasedMatch(id matchId: TurnBasedMatch.Id) async throws {
-    guard let match = try? await self.gameCenter.turnBasedMatch.load(matchId)
+    guard let match = try? await gameCenter.turnBasedMatch.load(matchId)
     else { return }
-    try await self.handleTurnBasedMatch(match, didBecomeActive: true, animation: .default)
+    try await handleTurnBasedMatch(match, didBecomeActive: true, animation: .default)
   }
 
   @MainActor
   func rematch(_ matchId: TurnBasedMatch.Id) async throws {
-    guard let match = try? await self.gameCenter.turnBasedMatch.rematch(matchId)
+    guard let match = try? await gameCenter.turnBasedMatch.rematch(matchId)
     else { return }
-    try await self.handleTurnBasedMatch(match, didBecomeActive: true)
+    try await handleTurnBasedMatch(match, didBecomeActive: true)
   }
 
   @MainActor
@@ -63,13 +63,13 @@ extension AppReducer {
     else { return }
 
     let newGame = Game.State(
-      gameCurrentTime: self.now,
-      localPlayer: self.gameCenter.localPlayer.localPlayer(),
+      gameCurrentTime: now,
+      localPlayer: gameCenter.localPlayer.localPlayer(),
       turnBasedMatch: match,
       turnBasedMatchData: turnBasedMatchData
     )
     try store.modify { $0.destination = .game(newGame) }
-    try? await self.saveGame(.init(gameState: newGame))
+    try? await saveGame(.init(gameState: newGame))
   }
 
   @MainActor
@@ -80,31 +80,31 @@ extension AppReducer {
   ) async throws {
     guard let matchData = match.matchData, !matchData.isEmpty else {
       let context = TurnBasedContext(
-        localPlayer: self.gameCenter.localPlayer.localPlayer(),
+        localPlayer: gameCenter.localPlayer.localPlayer(),
         match: match,
         metadata: .init(
-          lastOpenedAt: self.now,
+          lastOpenedAt: now,
           playerIndexToId: [:]
         )
       )
       let game = Game.State(
-        cubes: self.randomCubes(.en),
+        cubes: randomCubes(.en),
         gameContext: .turnBased(context),
-        gameCurrentTime: self.now,
+        gameCurrentTime: now,
         gameMode: .unlimited,
         gameStartTime: match.creationDate
       )
       try withAnimation(animation) {
         _ = try store.modify { $0.destination = .game(game) }
       }
-      await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
-      try? await self.gameCenter.turnBasedMatch.saveCurrentTurn(
+      await gameCenter.turnBasedMatchmakerViewController.dismiss()
+      try? await gameCenter.turnBasedMatch.saveCurrentTurn(
         match.matchId,
         Data(
           turnBasedMatchData: .init(
             context: context,
             gameState: game,
-            playerId: self.currentPlayer()?.player.id
+            playerId: currentPlayer()?.player.id
           )
         )
       )
@@ -115,8 +115,8 @@ extension AppReducer {
 
     if didBecomeActive {
       var gameState = Game.State(
-        gameCurrentTime: self.now,
-        localPlayer: self.gameCenter.localPlayer.localPlayer(),
+        gameCurrentTime: now,
+        localPlayer: gameCenter.localPlayer.localPlayer(),
         turnBasedMatch: match,
         turnBasedMatchData: turnBasedMatchData
       )
@@ -139,11 +139,11 @@ extension AppReducer {
       try withAnimation(animation) {
         _ = try store.modify { [gameState] in $0.destination = .game(gameState) }
       }
-      await self.gameCenter.turnBasedMatchmakerViewController.dismiss()
+      await gameCenter.turnBasedMatchmakerViewController.dismiss()
       if gameState.isYourTurn {
         var turnBasedMatchData = turnBasedMatchData
-        turnBasedMatchData.metadata.lastOpenedAt = self.now
-        try? await self.gameCenter.turnBasedMatch.saveCurrentTurn(
+        turnBasedMatchData.metadata.lastOpenedAt = now
+        try? await gameCenter.turnBasedMatch.saveCurrentTurn(
           match.matchId,
           Data(turnBasedMatchData: turnBasedMatchData)
         )
@@ -152,7 +152,7 @@ extension AppReducer {
     }
 
     let context = TurnBasedContext(
-      localPlayer: self.gameCenter.localPlayer.localPlayer(),
+      localPlayer: gameCenter.localPlayer.localPlayer(),
       match: match,
       metadata: turnBasedMatchData.metadata
     )
@@ -161,10 +161,10 @@ extension AppReducer {
       context.currentParticipantIsLocalPlayer,
       match.participants.allSatisfy({ $0.matchOutcome == .none }),
       let lastTurnDate = match.participants.compactMap(\.lastTurnDate).max(),
-      lastTurnDate > self.now.addingTimeInterval(-60)
+      lastTurnDate > now.addingTimeInterval(-60)
     else { return }
 
-    await self.gameCenter.showNotificationBanner(
+    await gameCenter.showNotificationBanner(
       .init(title: match.message, message: nil)
     )
   }

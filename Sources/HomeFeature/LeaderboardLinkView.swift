@@ -22,7 +22,7 @@ struct LeaderboardLinkView: View {
         }
         .adaptiveFont(.matterMedium, size: 12)
       }
-      .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
+      .foregroundColor(colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
 
       Button {
         store.send(.leaderboardButtonTapped)
@@ -32,16 +32,16 @@ struct LeaderboardLinkView: View {
 
           Divider()
             .frame(height: 2)
-            .background(self.colorScheme == .dark ? Color.isowordsBlack : .hex(0xE26C5E))
+            .background(colorScheme == .dark ? Color.isowordsBlack : .hex(0xE26C5E))
 
-          self.weekInReview(store.weekInReview)
+          weekInReview(store.weekInReview)
             .adaptiveFont(.matterMedium, size: 14)
         }
       }
       .buttonStyle(
         LeaderboardLinkButtonStyle(
-          backgroundColor: self.colorScheme == .dark ? .hex(0xE26C5E) : .isowordsBlack,
-          foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE26C5E)
+          backgroundColor: colorScheme == .dark ? .hex(0xE26C5E) : .isowordsBlack,
+          foregroundColor: colorScheme == .dark ? .isowordsBlack : .hex(0xE26C5E)
         )
       )
       .navigationDestination(
@@ -108,7 +108,7 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
   public func makeBody(configuration: Self.Configuration) -> some View {
     return configuration.label
       .foregroundColor(
-        self.foregroundColor
+        foregroundColor
           .opacity(!configuration.isPressed ? 1 : 0.5)
       )
       .padding([.leading, .top, .trailing], .grid(5))
@@ -116,8 +116,8 @@ public struct LeaderboardLinkButtonStyle: ButtonStyle {
       .background(
         RoundedRectangle(cornerRadius: 13)
           .fill(
-            self.backgroundColor
-              .opacity(self.isActive && !configuration.isPressed ? 1 : 0.5)
+            backgroundColor
+              .opacity(isActive && !configuration.isPressed ? 1 : 0.5)
           )
       )
       .scaleEffect(configuration.isPressed ? 0.95 : 1.0)

@@ -27,8 +27,8 @@ public struct LeaderboardResults<TimeScope: Equatable> {
     }
 
     var nonDisplayedResultsCount: Int {
-      (self.resultEnvelope?.outOf ?? 0)
-        - (self.resultEnvelope?.nonContiguousResult?.rank ?? self.resultEnvelope?.results.count ?? 0)
+      (resultEnvelope?.outOf ?? 0)
+        - (resultEnvelope?.nonContiguousResult?.rank ?? resultEnvelope?.results.count ?? 0)
     }
   }
 
@@ -140,11 +140,11 @@ where
   public var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       HStack {
-        self.title
+        title
           .animation(nil)
           .adaptiveFont(.matterMedium, size: 16)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
+          .foregroundColor(colorScheme == .dark ? color : .isowordsBlack)
           .redacted(reason: store.isLoading ? .placeholder : [])
 
         Spacer()
@@ -153,7 +153,7 @@ where
           withAnimation { _ = store.send(.tappedTimeScopeLabel) }
         } label: {
           HStack {
-            self.timeScopeLabel
+            timeScopeLabel
               .adaptiveFont(.matterMedium, size: 10)
             Image(systemName: "chevron.down")
               .font(.system(size: 10))
@@ -163,14 +163,14 @@ where
           }
           .padding(.vertical, 8)
           .padding(.horizontal, 16)
-          .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
-          .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
+          .background(color.opacity(colorScheme == .dark ? 0.1 : 0.3))
+          .foregroundColor(colorScheme == .dark ? color : .isowordsBlack)
           .continuousCornerRadius(.grid(5))
         }
       }
 
       VStack(alignment: .leading, spacing: 0) {
-        if self.isFilterable {
+        if isFilterable {
           HStack(spacing: .grid(4)) {
             ForEach(GameMode.allCases) { gameMode in
               Button {
@@ -184,17 +184,17 @@ where
             }
           }
           .padding([.leading, .trailing, .bottom], .grid(5))
-          .padding(self.isFilterable ? .top : [], .grid(5))
+          .padding(isFilterable ? .top : [], .grid(5))
 
           Divider()
         }
 
         ScrollView {
-          if !self.isFilterable {
+          if !isFilterable {
             Spacer().frame(height: .grid(6))
           }
 
-          self.subtitle
+          subtitle
             .adaptiveFont(.matterMedium, size: 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.init(top: .grid(4), leading: .grid(5), bottom: .grid(3), trailing: .grid(5)))
@@ -206,7 +206,7 @@ where
               Button {
                 store.send(.tappedRow(id: result.id))
               } label: {
-                ResultRow(color: self.color, result: result)
+                ResultRow(color: color, result: result)
               }
             }
 
@@ -219,7 +219,7 @@ where
               Button {
                 store.send(.tappedRow(id: result.id))
               } label: {
-                ResultRow(color: self.color, result: result)
+                ResultRow(color: color, result: result)
               }
             }
 
@@ -239,7 +239,7 @@ where
         .disabled(store.isLoading)
         .redacted(reason: store.isLoading ? .placeholder : [])
       }
-      .background(self.color)
+      .background(color)
       .foregroundColor(.isowordsBlack)
       .overlay(
         store.isLoading
@@ -264,14 +264,14 @@ where
     .overlay(
       store.isTimeScopeMenuVisible
         ? VStack {
-          self.timeScopeMenu
+          timeScopeMenu
             .adaptiveFont(.matterMedium, size: 12)
         }
         .padding(.vertical, .grid(4))
         .padding(.horizontal, .grid(5))
-        .background(self.color.opacity(self.colorScheme == .dark ? 0.1 : 0.3))
+        .background(color.opacity(colorScheme == .dark ? 0.1 : 0.3))
         .background(Color.adaptiveWhite)
-        .foregroundColor(self.colorScheme == .dark ? self.color : .isowordsBlack)
+        .foregroundColor(colorScheme == .dark ? color : .isowordsBlack)
         .continuousCornerRadius(.grid(5))
         .padding(.leading, .grid(8))
         .offset(y: .grid(11))
@@ -295,16 +295,16 @@ struct ResultRow: View {
 
   var body: some View {
     HStack(alignment: .firstTextBaseline, spacing: .grid(2)) {
-      self.result.rank
-        .formatted(font: .custom(.matterMedium, size: self.adaptiveSize.pad(12)))
+      result.rank
+        .formatted(font: .custom(.matterMedium, size: adaptiveSize.pad(12)))
         .opacity(0.5)
         .frame(width: 40, alignment: .center)
       VStack(alignment: .leading) {
-        Text(self.result.title)
+        Text(result.title)
           .adaptiveFont(.matterMedium, size: 14)
           .lineLimit(1)
 
-        if let subtitle = self.result.subtitle {
+        if let subtitle = result.subtitle {
           Text(subtitle)
             .adaptiveFont(.matterMedium, size: 12)
             .lineLimit(1)
@@ -312,14 +312,14 @@ struct ResultRow: View {
         }
       }
       Spacer()
-      self.result.score
-        .formatted(font: .custom(.matterSemiBold, size: self.adaptiveSize.pad(12)))
+      result.score
+        .formatted(font: .custom(.matterSemiBold, size: adaptiveSize.pad(12)))
     }
-    .foregroundColor(self.result.isYourScore ? self.color : .isowordsBlack)
-    .padding(.vertical, self.result.isYourScore ? .grid(1) : 0)
+    .foregroundColor(result.isYourScore ? color : .isowordsBlack)
+    .padding(.vertical, result.isYourScore ? .grid(1) : 0)
     .padding(.horizontal, .grid(2))
     .background(
-      self.result.isYourScore
+      result.isYourScore
         ? RoundedRectangle(cornerRadius: .grid(2), style: .continuous)
           .fill(Color.isowordsBlack)
         : nil

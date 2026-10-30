@@ -17,14 +17,14 @@ struct DailyChallengeHeaderView: View {
 
     VStack(alignment: .leading, spacing: 20) {
       VStack(alignment: .center, spacing: -.grid(2)) {
-        if self.hasPlayedAllDailyChallenges {
+        if hasPlayedAllDailyChallenges {
           Text("Next daily")
             .foregroundColor(colorScheme == .dark ? yellow1 : .isowordsBlack)
           Text("challenge")
             .foregroundColor(colorScheme == .dark ? yellow2 : .isowordsBlack)
           Text("starts in")
             .foregroundColor(colorScheme == .dark ? yellow3 : .isowordsBlack)
-          (Text(timeDescriptionUntilTomorrow(now: self.date())) + Text("."))
+          (Text(timeDescriptionUntilTomorrow(now: date())) + Text("."))
             .fontWeight(.medium)
             .foregroundColor(colorScheme == .dark ? yellow4 : .isowordsBlack)
         } else {
@@ -34,7 +34,7 @@ struct DailyChallengeHeaderView: View {
             .foregroundColor(colorScheme == .dark ? yellow2 : .isowordsBlack)
           Text("ends in")
             .foregroundColor(colorScheme == .dark ? yellow3 : .isowordsBlack)
-          (Text(timeDescriptionUntilTomorrow(now: self.date())) + Text("!"))
+          (Text(timeDescriptionUntilTomorrow(now: date())) + Text("!"))
             .fontWeight(.medium)
             .foregroundColor(colorScheme == .dark ? yellow4 : .isowordsBlack)
         }
@@ -50,7 +50,7 @@ struct DailyChallengeHeaderView: View {
         } label: {
           HStack {
             Group {
-              if self.hasPlayedAllDailyChallenges {
+              if hasPlayedAllDailyChallenges {
                 Text("View results")
               } else {
                 Text("Play now")
@@ -62,8 +62,8 @@ struct DailyChallengeHeaderView: View {
         }
         .buttonStyle(
           ActionButtonStyle(
-            backgroundColor: self.colorScheme == .dark ? yellow5 : .isowordsBlack,
-            foregroundColor: self.colorScheme == .dark ? .isowordsBlack : yellow5
+            backgroundColor: colorScheme == .dark ? yellow5 : .isowordsBlack,
+            foregroundColor: colorScheme == .dark ? .isowordsBlack : yellow5
           )
         )
 
@@ -71,7 +71,7 @@ struct DailyChallengeHeaderView: View {
           if let numberOfPlayers = numberOfPlayers {
             if numberOfPlayers == 0 {
               Text("No one has played. Be the first!")
-            } else if self.hasPlayedAllDailyChallenges {
+            } else if hasPlayedAllDailyChallenges {
               if numberOfPlayers - 1 == 1 {
                 Text("You and ")
                   + Text("\(numberOfPlayers - 1)").fontWeight(.medium)
@@ -95,7 +95,7 @@ struct DailyChallengeHeaderView: View {
               .redacted(reason: .placeholder)
           }
         }
-        .foregroundColor(self.colorScheme == .dark ? yellow6 : .isowordsBlack)
+        .foregroundColor(colorScheme == .dark ? yellow6 : .isowordsBlack)
         .adaptiveFont(.matter, size: 12)
         .padding(.top)
       }

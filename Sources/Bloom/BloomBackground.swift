@@ -33,7 +33,7 @@ public struct Blooms: View {
 
   public var body: some View {
     ZStack {
-      ForEach(self.blooms) { bloom in
+      ForEach(blooms) { bloom in
         Rectangle()
           .fill(
             RadialGradient(
@@ -54,7 +54,7 @@ public struct Blooms: View {
             .asymmetric(
               insertion: .opacity,
               removal: AnyTransition.opacity.animation(
-                .easeInOut(duration: (1 - Double(bloom.index) / Double(self.blooms.count)))
+                .easeInOut(duration: (1 - Double(bloom.index) / Double(blooms.count)))
               )
             )
           )
@@ -94,44 +94,44 @@ public struct BloomBackground: View {
   }
 
   public var body: some View {
-    Blooms(blooms: self.blooms)
-      .onChange(of: self.word.count) { _, count in
+    Blooms(blooms: blooms)
+      .onChange(of: word.count) { _, count in
         withAnimation(.easeOut(duration: 1)) {
-          self.renderBlooms(count: count)
+          renderBlooms(count: count)
         }
       }
-      .onAppear { self.renderBlooms(count: self.word.count) }
+      .onAppear { renderBlooms(count: word.count) }
   }
 
   func renderBlooms(count: Int) {
-    if count > self.blooms.count {
+    if count > blooms.count {
       let colors =
         Styleguide.letterColors.first { key, _ in
-          key.contains(self.word)
+          key.contains(word)
         }?
         .value ?? []
       guard colors.count > 0
       else { return }
-      (self.blooms.count..<count).forEach { index in
+      (blooms.count..<count).forEach { index in
         let color = colors[index % colors.count]
-          .withAlphaComponent(self.colorScheme == .dark ? 0.5 : 1)
+          .withAlphaComponent(colorScheme == .dark ? 0.5 : 1)
         var vertex = vertexGenerator.next()!
-        let width = self.size.width * 1.2
-        let height = self.size.height * 0.85
+        let width = size.width * 1.2
+        let height = size.height * 0.85
         vertex.x *= CGFloat(index) * width
         vertex.y *= CGFloat(index) * height
         let size = (1 + CGFloat(index) * 0.1) * width
 
         let bloom = Bloom(
           color: color,
-          index: self.blooms.count,
+          index: blooms.count,
           size: size,
           offset: vertex
         )
-        self.blooms.append(bloom)
+        blooms.append(bloom)
       }
     } else {
-      self.blooms.removeLast(self.blooms.count - count)
+      blooms.removeLast(blooms.count - count)
     }
   }
 }

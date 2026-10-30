@@ -61,8 +61,8 @@ struct MailgunError: Error {}
 
 extension URLRequest {
   mutating func attachBasicAuth(username: String = "", password: String = "") {
-    self.allHTTPHeaderFields = self.allHTTPHeaderFields ?? [:]
-    self.allHTTPHeaderFields?["Authorization"] =
+    allHTTPHeaderFields = allHTTPHeaderFields ?? [:]
+    allHTTPHeaderFields?["Authorization"] =
       "Basic " + Data((username + ":" + password).utf8).base64EncodedString()
   }
 }

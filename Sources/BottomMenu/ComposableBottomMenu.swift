@@ -76,7 +76,7 @@ extension View {
   ) -> some View {
     let store = item.wrappedValue
     let state = store?.state
-    return self.bottomMenu(
+    return bottomMenu(
       item: Binding(
         get: {
           state?.converted(
@@ -102,10 +102,10 @@ extension BottomMenuPrompt.State {
     sendWithAnimation: @escaping (MenuAction, Animation?) -> Void
   ) -> BottomMenu {
     .init(
-      title: self.title,
-      message: self.message,
-      buttons: self.buttons.map { $0.converted(send: send, sendWithAnimation: sendWithAnimation) },
-      footerButton: self.footerButton.map {
+      title: title,
+      message: message,
+      buttons: buttons.map { $0.converted(send: send, sendWithAnimation: sendWithAnimation) },
+      footerButton: footerButton.map {
         $0.converted(send: send, sendWithAnimation: sendWithAnimation)
       }
     )
@@ -118,10 +118,10 @@ extension BottomMenuPrompt.State.Button {
     sendWithAnimation: @escaping (MenuAction, Animation?) -> Void
   ) -> BottomMenu.Button {
     .init(
-      title: self.title,
-      icon: self.icon,
+      title: title,
+      icon: icon,
       action: {
-        if let action = self.action {
+        if let action {
           switch action.animation {
           case .inherited:
             send(action.action)

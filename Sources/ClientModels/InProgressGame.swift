@@ -39,16 +39,16 @@ public struct InProgressGame: Codable, Equatable {
   }
 
   public var language: Language {
-    get { self._language ?? .en }
-    set { self._language = newValue }
+    get { _language ?? .en }
+    set { _language = newValue }
   }
 
   public var currentScore: Int {
-    self.moves.reduce(into: 0) { $0 += $1.score }
+    moves.reduce(into: 0) { $0 += $1.score }
   }
 
   public func score(forPlayerIndex index: Move.PlayerIndex) -> Int {
-    self.moves.reduce(into: 0) {
+    moves.reduce(into: 0) {
       $0 += $1.playerIndex == index ? $1.score : 0
     }
   }

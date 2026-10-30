@@ -92,7 +92,7 @@ public struct StoreKitClient {
       self.transactionState = transactionState
     }
 
-    public var original: PaymentTransaction? { self._original() }
+    public var original: PaymentTransaction? { _original() }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
       lhs.error == rhs.error

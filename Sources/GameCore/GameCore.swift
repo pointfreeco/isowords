@@ -123,24 +123,24 @@ public struct Game {
     }
 
     public var isNavVisible: Bool {
-      !self.isDemo
+      !isDemo
     }
 
     public var isTrayAvailable: Bool {
-      self.gameMode != .timed && !self.activeGames.isEmpty
+      gameMode != .timed && !activeGames.isEmpty
     }
 
     public var wordSubmitButtonFeature: WordSubmitButtonFeature.State {
       get {
         .init(
-          isSelectedWordValid: self.selectedWordIsValid,
-          isTurnBasedMatch: self.gameContext.is(\.turnBased),
-          isYourTurn: self.gameContext.turnBased?.currentParticipantIsLocalPlayer ?? true,
-          wordSubmitButton: self.wordSubmitButton
+          isSelectedWordValid: selectedWordIsValid,
+          isTurnBasedMatch: gameContext.is(\.turnBased),
+          isYourTurn: gameContext.turnBased?.currentParticipantIsLocalPlayer ?? true,
+          wordSubmitButton: wordSubmitButton
         )
       }
       set {
-        self.wordSubmitButton = newValue.wordSubmitButton
+        wordSubmitButton = newValue.wordSubmitButton
       }
     }
   }
@@ -161,7 +161,7 @@ public struct Game {
 
   @Dependency(\.apiClient) var apiClient
   @Dependency(\.audioPlayer) var audioPlayer
-  @FeatureEnvironment(\.date) var date
+  @FeatureEnvironment(\.date.now) var now
   @Dependency(\.dictionary.contains) var dictionaryContains
   @Dependency(\.feedbackGenerator) var feedbackGenerator
   @Dependency(\.fileClient) var fileClient
@@ -182,8 +182,6 @@ public struct Game {
   public init(startsOnMount: Bool = true) {
     self.startsOnMount = startsOnMount
   }
-
-  var now: Date { self.date.now }
 
   public var body: some Feature {
     Update { state, action in
@@ -238,39 +236,39 @@ public struct Game {
       .onChange(of: store.selectedWord) { previousSelection, selectedWord, state in
         state.selectedWordIsValid =
           !state.selectedWordHasAlreadyBeenPlayed
-          && self.dictionaryContains(state.selectedWordString, state.language)
-        self.selectedWordChanged(from: previousSelection, to: selectedWord, state: &state)
+          && dictionaryContains(state.selectedWordString, state.language)
+        selectedWordChanged(from: previousSelection, to: selectedWord, state: &state)
       }
       .onChange(of: store.isOutOfTimeOrCubes, initial: true) { _, isOutOfTimeOrCubes, state in
         guard isOutOfTimeOrCubes else { return }
-        self.endGame(state: &state)
+        endGame(state: &state)
       }
       .onChange(of: store.isGameOver) { _, _, _ in
-        self.gameOverChanged()
+        gameOverChanged()
       }
       .onChange(of: store.secondsPlayed) { _, secondsPlayed, state in
-        self.secondsPlayedChanged(secondsPlayed, state: state)
+        secondsPlayedChanged(secondsPlayed, state: state)
       }
       .onChange(of: store.moves.last) { _, lastMove, state in
-        self.lastMoveChanged(lastMove, state: state)
+        lastMoveChanged(lastMove, state: state)
       }
       .selectionSounds(
-        contains: { self.dictionaryContains($1, $0.language) },
+        contains: { dictionaryContains($1, $0.language) },
         hasBeenPlayed: { $0.hasBeenPlayed(word: $1) },
         puzzle: \.cubes,
         selectedWord: store.selectedWord
       )
       .onMount { state in
-        guard self.startsOnMount else { return }
-        self.mountSounds(state: state)
-        self.mountTurnBased()
-        self.loadActiveGames()
-        self.mountCore(state: &state)
+        guard startsOnMount else { return }
+        mountSounds(state: state)
+        mountTurnBased()
+        loadActiveGames()
+        mountCore(state: &state)
       }
       .onDismount {
-        guard self.startsOnMount else { return }
+        guard startsOnMount else { return }
         for music in AudioPlayerClient.Sound.allMusic {
-          await self.audioPlayer.stop(music)
+          await audioPlayer.stop(music)
         }
       }
   }
@@ -284,20 +282,20 @@ public struct Game {
       state.selectedWord = []
 
     case .confirmRemoveCube(let index):
-      state.removeCube(at: index, playedAt: self.now)
+      state.removeCube(at: index, playedAt: now)
 
     case .destination(.alert(.forfeitButtonTapped)):
-      self.endGame(state: &state)
+      endGame(state: &state)
       guard let match = state.gameContext.turnBased?.match
       else { return }
 
       store.addTask {
-        let localPlayer = self.gameCenter.localPlayer.localPlayer()
+        let localPlayer = gameCenter.localPlayer.localPlayer()
         let currentParticipantIsLocalPlayer =
           match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
 
         if currentParticipantIsLocalPlayer {
-          try await self.gameCenter.turnBasedMatch.endMatchInTurn(
+          try await gameCenter.turnBasedMatch.endMatchInTurn(
             .init(
               for: match.matchId,
               matchData: match.matchData ?? Data(),
@@ -307,16 +305,16 @@ public struct Game {
             )
           )
         } else {
-          try await self.gameCenter.turnBasedMatch
+          try await gameCenter.turnBasedMatch
             .participantQuitOutOfTurn(match.matchId)
         }
       }
 
     case .destination(.bottomMenu(.confirmRemoveCube(let index))):
-      state.removeCube(at: index, playedAt: self.now)
+      state.removeCube(at: index, playedAt: now)
 
     case .destination(.bottomMenu(.endGameButtonTapped)):
-      self.endGame(state: &state)
+      endGame(state: &state)
 
     case .destination(.bottomMenu(.exitButtonTapped)):
       store.addTask {
@@ -378,7 +376,7 @@ public struct Game {
 
     case .submitButtonTapped(reaction: let reaction):
       let move = Move(
-        playedAt: self.now,
+        playedAt: now,
         playerIndex: state.gameContext.turnBased?.localPlayerIndex,
         reactions: zip(state.gameContext.turnBased?.localPlayerIndex, reaction)
           .map { [$0: $1] },
@@ -390,7 +388,7 @@ public struct Game {
       let result = verify(
         move: move,
         on: &cubes,
-        isValidWord: { self.dictionaryContains($0, state.language) },
+        isValidWord: { dictionaryContains($0, state.language) },
         previousMoves: state.moves
       )
       state.cubes = cubes
@@ -406,9 +404,9 @@ public struct Game {
         await withThrowingTaskGroup(of: Void.self) { group in
           for face in removedFaces {
             group.addTask {
-              try await self.clock
+              try await clock
                 .sleep(for: .milliseconds(removeCubeDelay(index: face.index)))
-              await self.audioPlayer.play(.cubeRemove)
+              await audioPlayer.play(.cubeRemove)
             }
           }
         }
@@ -481,10 +479,10 @@ public struct Game {
 
   private func mountCore(state: inout State) {
     guard !state.isGameOver else { return }
-    state.gameCurrentTime = self.now
+    state.gameCurrentTime = now
 
     store.addTask {
-      for await isLowPower in await self.lowPowerMode.start() {
+      for await isLowPower in await lowPowerMode.start() {
         try store.modify { $0.isOnLowPowerMode = isLowPower }
       }
     }
@@ -492,18 +490,18 @@ public struct Game {
     if state.gameContext.is(\.turnBased) {
       let gameContext = state.gameContext
       store.addTask {
-        let playedGamesCount = await self.userDefaults
+        let playedGamesCount = await userDefaults
           .incrementMultiplayerOpensCount()
-        let isFullGamePurchased = self.apiClient.currentPlayer()?.appleReceipt != nil
+        let isFullGamePurchased = apiClient.currentPlayer()?.appleReceipt != nil
         guard
           !isFullGamePurchased,
           shouldShowInterstitial(
             gamePlayedCount: playedGamesCount,
             gameContext: .init(gameContext: gameContext),
-            serverConfig: self.serverConfig()
+            serverConfig: serverConfig()
           )
         else { return }
-        try await self.clock.sleep(for: .seconds(3))
+        try await clock.sleep(for: .seconds(3))
         try withAnimation {
           _ = try store.modify {
             $0.destination = .upgradeInterstitial(UpgradeInterstitial.State())
@@ -513,11 +511,11 @@ public struct Game {
     }
 
     store.addTask {
-      try await self.clock.sleep(for: .seconds(0.5))
+      try await clock.sleep(for: .seconds(0.5))
       try store.modify { $0.isGameLoaded = true }
-      for await _ in self.clock.timer(interval: .seconds(1)) {
+      for await _ in clock.timer(interval: .seconds(1)) {
         try store.modify {
-          $0.gameCurrentTime = self.now
+          $0.gameCurrentTime = now
           if $0.isYourTurn && !$0.isGameOver {
             $0.secondsPlayed += 1
           }
@@ -526,7 +524,7 @@ public struct Game {
     }
 
     store.addTask {
-      for await userSettings in self.userSettings.stream() {
+      for await userSettings in userSettings.stream() {
         try store.modify {
           $0.enableGyroMotion = userSettings.enableGyroMotion
           $0.isAnimationReduced = userSettings.enableReducedAnimation
@@ -668,7 +666,7 @@ extension CGPoint {
   private static let threshold: CGFloat = 0.35
   private static let thresholdSquared = threshold * threshold
   var isAwayFromCorners: Bool {
-    self.x * self.x + self.y * self.y <= Self.thresholdSquared
+    x * x + y * y <= Self.thresholdSquared
   }
 }
 

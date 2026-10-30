@@ -7,7 +7,7 @@ extension FeatureProtocol {
     isEnabled: @escaping (State) -> Bool,
     triggerOnChangeOf trigger: Trigger
   ) -> some Feature {
-    self.modifier(Haptics(isEnabled: isEnabled, trigger: trigger))
+    modifier(Haptics(isEnabled: isEnabled, trigger: trigger))
   }
 }
 

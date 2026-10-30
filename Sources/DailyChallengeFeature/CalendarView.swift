@@ -14,8 +14,8 @@ struct CalendarView: View {
         state.leaderboardResults.timeScope
         ?? state.history?.results.first?.gameNumber
       if let history = state.history {
-        self.isLoading = false
-        self.months =
+        isLoading = false
+        months =
           Dictionary
           .init(
             grouping: history.results,
@@ -28,8 +28,8 @@ struct CalendarView: View {
           .map(Month.init)
           .sorted(by: >)
       } else {
-        self.isLoading = true
-        self.months = [
+        isLoading = true
+        months = [
           .init(
             date: nil,
             results: (1...30).map {
@@ -56,7 +56,7 @@ struct CalendarView: View {
       }
 
       var name: LocalizedStringKey {
-        self.date.map { "\($0, formatter: monthFormatter)" }
+        date.map { "\($0, formatter: monthFormatter)" }
           ?? "Loading"
       }
     }

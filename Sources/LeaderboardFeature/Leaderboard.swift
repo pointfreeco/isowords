@@ -202,7 +202,7 @@ public struct LeaderboardView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .navigationStyle(
-      foregroundColor: self.colorScheme == .light
+      foregroundColor: colorScheme == .light
         ? .hex(0x393939)
         : store.state.scope == .games
           ? .isowordsOrange
@@ -221,7 +221,7 @@ extension ApiClient {
     gameMode: GameMode,
     timeScope: TimeScope
   ) async throws -> ResultEnvelope {
-    let response = try await self.apiRequest(
+    let response = try await apiRequest(
       route: .leaderboard(
         .fetch(
           gameMode: gameMode,
@@ -257,7 +257,7 @@ extension ApiClient {
     gameMode: GameMode,
     timeScope: TimeScope
   ) async throws -> ResultEnvelope {
-    let response = try await self.apiRequest(
+    let response = try await apiRequest(
       route: .leaderboard(
         .vocab(
           .fetch(

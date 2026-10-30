@@ -39,7 +39,7 @@ public struct TurnBasedMatchData: Codable, Equatable {
   }
 
   public func score(forPlayerIndex index: Move.PlayerIndex) -> Int {
-    self.moves.reduce(into: 0) {
+    moves.reduce(into: 0) {
       $0 += $1.playerIndex == index ? $1.score : 0
     }
   }
@@ -92,8 +92,8 @@ extension TurnBasedMatchData.Metadata {
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
-    try container.encode(self.playerIndexToId.transformKeys(\.rawValue), forKey: .playerIndexToId)
-    try container.encodeIfPresent(self.lastOpenedAt, forKey: .lastOpenedAt)
+    try container.encode(playerIndexToId.transformKeys(\.rawValue), forKey: .playerIndexToId)
+    try container.encodeIfPresent(lastOpenedAt, forKey: .lastOpenedAt)
   }
 }
 

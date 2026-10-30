@@ -11,7 +11,7 @@ public struct Change {
     public var isExpanded = false
 
     public var id: Build.Number {
-      self.change.build
+      change.build
     }
   }
 
@@ -41,7 +41,7 @@ struct ChangeView: View {
         Text(store.change.version)
           .font(.title)
 
-        if store.change.build == self.currentBuild {
+        if store.change.build == currentBuild {
           Text("Installed")
             .font(.footnote)
             .padding(.grid(1))

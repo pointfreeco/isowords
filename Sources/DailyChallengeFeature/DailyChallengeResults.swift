@@ -97,7 +97,7 @@ public struct DailyChallengeResultsView: View {
         .flatMap { $0 == 0 ? nil : Text("\($0) players") },
       isFilterable: true,
       color: .dailyChallenge,
-      timeScopeLabel: Text(self.timeScopeLabelText),
+      timeScopeLabel: Text(timeScopeLabelText),
       timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
         CalendarView(store: store)
       }
@@ -108,7 +108,7 @@ public struct DailyChallengeResultsView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .navigationStyle(
       backgroundColor: .adaptiveWhite,
-      foregroundColor: self.colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
+      foregroundColor: colorScheme == .dark ? .dailyChallenge : .isowordsBlack,
       title: Text("Leaderboard")
     )
   }
@@ -142,7 +142,7 @@ extension ApiClient {
     timeScope gameNumber: DailyChallenge.GameNumber?
   ) async throws -> ResultEnvelope {
     try await ResultEnvelope(
-      self.apiRequest(
+      apiRequest(
         route: .dailyChallenge(
           .results(
             .fetch(

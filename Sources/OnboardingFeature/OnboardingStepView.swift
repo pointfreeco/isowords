@@ -161,7 +161,7 @@ struct OnboardingStepView: View {
             }
           }
           .foregroundColor(
-            self.colorScheme == .dark
+            colorScheme == .dark
               ? store.step.color
               : Color.isowordsBlack
           )
@@ -191,12 +191,12 @@ struct OnboardingStepView: View {
               Image(systemName: "arrow.right")
                 .frame(width: 80, height: 80)
                 .background(
-                  self.colorScheme == .dark
+                  colorScheme == .dark
                     ? store.step.color
                     : Color.isowordsBlack
                 )
                 .foregroundColor(
-                  self.colorScheme == .dark
+                  colorScheme == .dark
                     ? Color.isowordsBlack
                     : store.step.color
                 )
@@ -211,12 +211,12 @@ struct OnboardingStepView: View {
                 Image(systemName: "hand.thumbsup")
                   .frame(width: 80, height: 80)
                   .background(
-                    self.colorScheme == .dark
+                    colorScheme == .dark
                       ? store.step.color
                       : Color.isowordsBlack
                   )
                   .foregroundColor(
-                    self.colorScheme == .dark
+                    colorScheme == .dark
                       ? Color.isowordsBlack
                       : store.step.color
                   )
@@ -241,10 +241,10 @@ struct OnboardingStepView: View {
             }
             .buttonStyle(
               ActionButtonStyle(
-                backgroundColor: self.colorScheme == .dark
+                backgroundColor: colorScheme == .dark
                   ? store.step.color
                   : .isowordsBlack,
-                foregroundColor: self.colorScheme == .dark
+                foregroundColor: colorScheme == .dark
                   ? .isowordsBlack
                   : store.step.color
               )
@@ -290,7 +290,7 @@ private struct FullscreenStepView: View {
   }
 
   var body: some View {
-    self.text
+    text
       .adaptiveFont(.matter, size: 40)
       .minimumScaleFactor(0.2)
   }
@@ -306,30 +306,30 @@ private struct InlineStepView: View {
   }
 
   var body: some View {
-    self.text
+    text
       .adaptiveFont(.matter, size: 28)
       .minimumScaleFactor(0.2)
-      .frame(height: self.height)
+      .frame(height: height)
   }
 }
 
 fileprivate extension Onboarding.State {
-  var isGetStartedButtonVisible: Bool { self.step == Onboarding.State.Step.allCases.last }
+  var isGetStartedButtonVisible: Bool { step == Onboarding.State.Step.allCases.last }
   var isNextButtonVisible: Bool {
-    self.step != Onboarding.State.Step.allCases.first
-      && self.step.isFullscreen
-      && self.step != Onboarding.State.Step.allCases.last
+    step != Onboarding.State.Step.allCases.first
+      && step.isFullscreen
+      && step != Onboarding.State.Step.allCases.last
   }
   var isSubmitButtonVisible: Bool {
-    switch self.step {
+    switch step {
     case .step5_SubmitGame:
-      return self.game.selectedWordString == "GAME"
+      return game.selectedWordString == "GAME"
     case .step8_FindCubes:
-      return self.game.selectedWordString == "CUBES"
+      return game.selectedWordString == "CUBES"
     case .step12_CubeIsShaking:
-      return self.game.selectedWordString.isRemove
+      return game.selectedWordString.isRemove
     case .step16_FindAnyWord:
-      return !self.game.selectedWordString.isEmpty
+      return !game.selectedWordString.isEmpty
     default:
       return false
     }
@@ -338,7 +338,7 @@ fileprivate extension Onboarding.State {
 
 extension Onboarding.State.Step {
   var color: Color {
-    let t = Double(self.rawValue) / Double(Self.allCases.count - 1)
+    let t = Double(rawValue) / Double(Self.allCases.count - 1)
     return Color(
       red: (t * 0xE1 + (1 - t) * 0xF3) / 0xFF,
       green: (t * 0x66 + (1 - t) * 0xEB) / 0xFF,
@@ -372,7 +372,7 @@ extension Onboarding.State.Step {
 extension Binding {
   fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
     Binding<Bool>(
-      get: { self.wrappedValue != nil },
+      get: { wrappedValue != nil },
       set: { isPresented, transaction in
         if !isPresented {
           self.transaction(transaction).wrappedValue = nil

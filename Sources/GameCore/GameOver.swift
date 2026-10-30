@@ -19,7 +19,7 @@ extension Game {
     case .dailyChallenge, .shared, .solo:
       let completedGame = CompletedGame(gameState: state)
       store.addTask {
-        try await self.saveGame(completedGame)
+        try await saveGame(completedGame)
       }
 
     case .turnBased:

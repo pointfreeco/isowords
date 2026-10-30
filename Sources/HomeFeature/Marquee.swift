@@ -17,38 +17,38 @@ struct Marquee<Content>: View where Content: View {
 
   var body: some View {
     VStack {
-      if self.isLoaded {
+      if isLoaded {
         GeometryReader { outer in
           ScrollView(.horizontal) {
             HStack(spacing: outer.size.width * 2 / 3) {
               Color.clear
                 .frame(width: outer.size.width * 1 / 3)
-              self.messages()
+              messages()
             }
             .fixedSize()
-            .offset(x: -self.size.width)
+            .offset(x: -size.width)
             .animation(
               Animation
-                .linear(duration: self.duration)
+                .linear(duration: duration)
                 .repeatForever(autoreverses: false),
-              value: self.size.width
+              value: size.width
             )
             .background(
               GeometryReader { inner in
                 Color.clear
-                  .onAppear { self.size = inner.size }
+                  .onAppear { size = inner.size }
               }
             )
           }
           .disabled(true)
         }
-        .frame(height: self.size.height)
+        .frame(height: size.height)
       }
     }
     .frame(maxWidth: .infinity)
     .onAppear {
       DispatchQueue.main.async {
-        self.isLoaded = true
+        isLoaded = true
       }
     }
   }

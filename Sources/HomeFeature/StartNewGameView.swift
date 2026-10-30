@@ -12,7 +12,7 @@ struct StartNewGameView: View {
     VStack(alignment: .leading) {
       Text("Start a game")
         .adaptiveFont(.matterMedium, size: 16)
-        .foregroundColor(self.colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
+        .foregroundColor(colorScheme == .dark ? .hex(0xE79072) : .isowordsBlack)
         .padding(.vertical)
 
       Button {
@@ -26,8 +26,8 @@ struct StartNewGameView: View {
       }
       .buttonStyle(
         ActionButtonStyle(
-          backgroundColor: self.colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
-          foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
+          backgroundColor: colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
+          foregroundColor: colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
         )
       )
 
@@ -42,8 +42,8 @@ struct StartNewGameView: View {
       }
       .buttonStyle(
         ActionButtonStyle(
-          backgroundColor: self.colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
-          foregroundColor: self.colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
+          backgroundColor: colorScheme == .dark ? .hex(0xE5876D) : .isowordsBlack,
+          foregroundColor: colorScheme == .dark ? .isowordsBlack : .hex(0xE5876D)
         )
       )
     }

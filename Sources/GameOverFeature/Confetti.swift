@@ -185,10 +185,10 @@ class ConfettiView: UIView {
 
       emitterLayer.birthRate = 0
       emitterLayer.emitterCells = createConfettiCells()
-      emitterLayer.emitterPosition = CGPoint(x: self.bounds.midX, y: self.bounds.minY - 100)
+      emitterLayer.emitterPosition = CGPoint(x: bounds.midX, y: bounds.minY - 100)
       emitterLayer.emitterSize = CGSize(width: 100, height: 100)
       emitterLayer.emitterShape = .sphere
-      emitterLayer.frame = self.bounds
+      emitterLayer.frame = bounds
 
       emitterLayer.beginTime = CACurrentMediaTime()
       return emitterLayer
@@ -227,7 +227,7 @@ struct ConfettiRepresentable: UIViewRepresentable {
   typealias UIViewType = UIView
 
   func makeUIView(context: Context) -> UIView {
-    ConfettiView(foregroundColor: UIColor(self.foregroundColor))
+    ConfettiView(foregroundColor: UIColor(foregroundColor))
   }
 
   func updateUIView(_ uiView: UIView, context: Context) {}
@@ -237,7 +237,7 @@ struct Confetti: View {
   let foregroundColor: Color
 
   var body: some View {
-    ConfettiRepresentable(foregroundColor: self.foregroundColor)
+    ConfettiRepresentable(foregroundColor: foregroundColor)
       .frame(width: 0, height: 0)
   }
 }

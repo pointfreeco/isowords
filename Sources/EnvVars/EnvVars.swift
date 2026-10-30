@@ -64,6 +64,6 @@ public struct EnvVars: Codable {
   }
 
   public var secrets: [String] {
-    self._secrets.split(separator: ",").map(String.init)
+    _secrets.split(separator: ",").map(String.init)
   }
 }

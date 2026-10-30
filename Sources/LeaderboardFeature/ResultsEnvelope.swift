@@ -41,21 +41,21 @@ public struct ResultEnvelope: Equatable {
   }
 
   public var contiguousResults: ArraySlice<Result> {
-    for (index, prevIndex) in zip(self.results.indices.dropFirst(), self.results.indices) {
-      if self.results[index].denseRank - self.results[prevIndex].denseRank > 1 {
-        return self.results[self.results.startIndex..<index]
+    for (index, prevIndex) in zip(results.indices.dropFirst(), results.indices) {
+      if results[index].denseRank - results[prevIndex].denseRank > 1 {
+        return results[results.startIndex..<index]
       }
     }
-    return self.results[...]
+    return results[...]
   }
 
   public var nonContiguousResult: Result? {
-    guard self.results.count >= 2
+    guard results.count >= 2
     else { return nil }
 
-    let lastIndex = self.results.count - 1
-    if self.results[lastIndex].denseRank - self.results[lastIndex - 1].denseRank > 1 {
-      return self.results.last
+    let lastIndex = results.count - 1
+    if results[lastIndex].denseRank - results[lastIndex - 1].denseRank > 1 {
+      return results.last
     } else {
       return nil
     }

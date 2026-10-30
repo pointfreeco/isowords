@@ -57,10 +57,10 @@ extension ApiClient: DependencyKey {
 
       func apiRequest(route: ServerRoute.Api.Route) async throws -> (Data, URLResponse) {
         try await ApiClientLive.apiRequest(
-          accessToken: self.currentPlayer.value?.player.accessToken,
-          baseUrl: self.baseUrl.value,
+          accessToken: currentPlayer.value?.player.accessToken,
+          baseUrl: baseUrl.value,
           route: route,
-          router: self.router
+          router: router
         )
       }
 
@@ -68,7 +68,7 @@ extension ApiClient: DependencyKey {
         -> CurrentPlayerEnvelope
       {
         let (data, _) = try await ApiClientLive.request(
-          baseUrl: self.baseUrl.value,
+          baseUrl: baseUrl.value,
           route: .authenticate(
             .init(
               deviceId: request.deviceId,
@@ -85,15 +85,15 @@ extension ApiClient: DependencyKey {
       }
 
       func logout() {
-        self.currentPlayer.value = nil
+        currentPlayer.value = nil
       }
 
       func refreshCurrentPlayer() async throws -> CurrentPlayerEnvelope {
         let (data, _) = try await ApiClientLive.apiRequest(
-          accessToken: self.currentPlayer.value?.player.accessToken,
-          baseUrl: self.baseUrl.value,
+          accessToken: currentPlayer.value?.player.accessToken,
+          baseUrl: baseUrl.value,
           route: .currentPlayer,
-          router: self.router
+          router: router
         )
         let currentPlayer = try apiDecode(CurrentPlayerEnvelope.self, from: data)
         self.currentPlayer.value = currentPlayer
@@ -102,18 +102,18 @@ extension ApiClient: DependencyKey {
 
       func request(route: ServerRoute) async throws -> (Data, URLResponse) {
         try await ApiClientLive.request(
-          baseUrl: self.baseUrl.value,
+          baseUrl: baseUrl.value,
           route: route,
-          router: self.router
+          router: router
         )
       }
 
       func setBaseUrl(_ url: URL) {
-        self.baseUrl.value = url
+        baseUrl.value = url
       }
 
       fileprivate func setCurrentPlayer(_ player: CurrentPlayerEnvelope) {
-        self.currentPlayer.value = player
+        currentPlayer.value = player
       }
     }
 
@@ -187,7 +187,7 @@ extension URLRequest {
     let bundleVersion = infoDictionary[kCFBundleVersionKey as String].map { " bundle/\($0)" } ?? ""
     let gitSha = (infoDictionary["GitSHA"] as? String).map { $0.isEmpty ? "" : "git/\($0)" } ?? ""
 
-    self.setValue(
+    setValue(
       "\(bundleName)\(marketingVersion)\(bundleVersion)\(gitSha)", forHTTPHeaderField: "User-Agent")
   }
 }

@@ -10,14 +10,14 @@ class LetterGeometry: SCNPlane {
     puzzle: CubeSceneView.ViewState.ViewPuzzle,
     worldScale: Float
   ) {
-    self.firstMaterial?.lightingModel = .constant
-    self.shaderModifiers = [
+    firstMaterial?.lightingModel = .constant
+    shaderModifiers = [
       .geometry: shaderSource(fileName: "Face.geometry"),
       .surface: shaderSource(fileName: "Letter.surface"),
     ]
-    self.setValue(letterTileSize, forKey: .letterTextureSize)
-    self.setValue(worldScale, forKey: .worldScale)
-    self.setValue(
+    setValue(letterTileSize, forKey: .letterTextureSize)
+    setValue(worldScale, forKey: .worldScale)
+    setValue(
       SCNMaterialProperty(contents: lettersBitmap(puzzle)),
       forKey: .lettersTexture
     )

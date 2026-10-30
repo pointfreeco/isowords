@@ -19,36 +19,36 @@ public struct TurnBasedContext: Equatable {
   }
 
   public var currentParticipantIsLocalPlayer: Bool {
-    self.match.currentParticipant?.player?.gamePlayerId == self.localPlayer.gamePlayerId
+    match.currentParticipant?.player?.gamePlayerId == localPlayer.gamePlayerId
   }
 
   public var lastPlayedAt: Date {
-    self.match.participants.lazy.compactMap(\.lastTurnDate).max() ?? self.match.creationDate
+    match.participants.lazy.compactMap(\.lastTurnDate).max() ?? match.creationDate
   }
 
   public var localParticipant: TurnBasedParticipant? {
-    self.match.participants
-      .first { $0.player?.gamePlayerId == self.localPlayer.gamePlayerId }
+    match.participants
+      .first { $0.player?.gamePlayerId == localPlayer.gamePlayerId }
   }
 
   public var localPlayerIndex: Move.PlayerIndex? {
-    self.match.participants
-      .firstIndex(where: { $0.player?.gamePlayerId == self.localPlayer.gamePlayerId })
+    match.participants
+      .firstIndex(where: { $0.player?.gamePlayerId == localPlayer.gamePlayerId })
       .map(Tagged.init(rawValue:))
   }
 
   public var otherParticipant: TurnBasedParticipant? {
-    self.match.participants
-      .first { $0.player?.gamePlayerId != self.localPlayer.gamePlayerId }
+    match.participants
+      .first { $0.player?.gamePlayerId != localPlayer.gamePlayerId }
   }
 
   public var otherPlayer: ComposableGameCenter.Player? {
-    self.otherParticipant?.player
+    otherParticipant?.player
   }
 
   public var otherPlayerIndex: Move.PlayerIndex? {
-    self.match.participants
-      .firstIndex { $0.player?.gamePlayerId != self.localPlayer.gamePlayerId }
+    match.participants
+      .firstIndex { $0.player?.gamePlayerId != localPlayer.gamePlayerId }
       .map(Tagged.init(rawValue:))
   }
 }

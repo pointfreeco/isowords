@@ -44,13 +44,13 @@ public struct AppDelegateReducer {
       case let .didRegisterForRemoteNotifications(.success(tokenData)):
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
         store.addTask {
-          let settings = await self.userNotifications.getNotificationSettings()
-          _ = try? await self.apiClient.apiRequest(
+          let settings = await userNotifications.getNotificationSettings()
+          _ = try? await apiClient.apiRequest(
             route: .push(
               .register(
                 .init(
                   authorizationStatus: .init(rawValue: settings.authorizationStatus.rawValue),
-                  build: self.buildNumber(),
+                  build: buildNumber(),
                   token: token
                 )
               )
@@ -60,7 +60,7 @@ public struct AppDelegateReducer {
       }
     }
     .onMount { _ in
-      let userNotificationsEventStream = self.userNotifications.delegate()
+      let userNotificationsEventStream = userNotifications.delegate()
       store.addTask {
         for await event in userNotificationsEventStream {
           switch event {
@@ -77,34 +77,34 @@ public struct AppDelegateReducer {
         }
       }
       store.addTask {
-        let settings = await self.userNotifications.getNotificationSettings()
+        let settings = await userNotifications.getNotificationSettings()
         switch settings.authorizationStatus {
         case .authorized:
           guard
-            try await self.userNotifications.requestAuthorization([.alert, .sound])
+            try await userNotifications.requestAuthorization([.alert, .sound])
           else { return }
         case .notDetermined, .provisional:
-          guard try await self.userNotifications.requestAuthorization(.provisional)
+          guard try await userNotifications.requestAuthorization(.provisional)
           else { return }
         default:
           return
         }
-        await self.registerForRemoteNotifications()
+        await registerForRemoteNotifications()
       }
       store.addTask {
-        _ = try self.loadDictionary(.en)
+        _ = try loadDictionary(.en)
       }
       store.addTask {
-        await self.audioPlayer.load(AudioPlayerClient.Sound.allCases)
+        await audioPlayer.load(AudioPlayerClient.Sound.allCases)
       }
       store.addTask {
-        await self.audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
-        await self.audioPlayer.setGlobalVolumeForMusic(
-          self.audioPlayer.secondaryAudioShouldBeSilencedHint()
+        await audioPlayer.setGlobalVolumeForSoundEffects(userSettings.soundEffectsVolume)
+        await audioPlayer.setGlobalVolumeForMusic(
+          audioPlayer.secondaryAudioShouldBeSilencedHint()
             ? 0
             : userSettings.musicVolume
         )
-        await self.setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
+        await setUserInterfaceStyle(userSettings.colorScheme.userInterfaceStyle)
       }
     }
   }

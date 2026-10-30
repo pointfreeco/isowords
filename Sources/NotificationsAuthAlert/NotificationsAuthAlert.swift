@@ -31,13 +31,13 @@ public struct NotificationsAuthAlert {
       switch action {
       case .turnOnNotificationsButtonTapped:
         store.addTask {
-          if try await self.userNotifications.requestAuthorization([.alert, .sound]) {
+          if try await userNotifications.requestAuthorization([.alert, .sound]) {
             await registerForRemoteNotificationsAsync(
-              remoteNotifications: self.remoteNotifications,
-              userNotifications: self.userNotifications
+              remoteNotifications: remoteNotifications,
+              userNotifications: userNotifications
             )
           }
-          let settings = await self.userNotifications.getNotificationSettings()
+          let settings = await userNotifications.getNotificationSettings()
           try withAnimation {
             _ = try store.post(key: DidChooseNotificationSettings.self, value: settings)
           }
@@ -52,7 +52,7 @@ extension View {
   public func notificationsAlert(
     _ store: Binding<Store<NotificationsAuthAlert.State, NotificationsAuthAlert.Action>?>
   ) -> some View {
-    self.modifier(NotificationsAuthAlertViewModifier(store: store))
+    modifier(NotificationsAuthAlertViewModifier(store: store))
   }
 }
 

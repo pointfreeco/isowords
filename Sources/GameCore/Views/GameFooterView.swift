@@ -18,7 +18,7 @@ public struct GameFooterView: View {
   public var body: some View {
     if store.selectedWordString.isEmpty {
       WordListView(
-        isLeftToRight: self.isLeftToRight,
+        isLeftToRight: isLeftToRight,
         store: store
       )
       .transition(
@@ -58,7 +58,7 @@ public struct WordListView: View {
           ScrollViewReader { reader in
             HStack(spacing: 10) {
               ForEach(
-                self.isLeftToRight ? store.playedWords : store.playedWords.reversed(),
+                isLeftToRight ? store.playedWords : store.playedWords.reversed(),
                 id: \.word
               ) { word in
                 ZStack(alignment: .topTrailing) {
@@ -70,7 +70,7 @@ public struct WordListView: View {
                   }
                   .adaptivePadding(EdgeInsets(top: 6, leading: 12, bottom: 8, trailing: 12))
                   .foregroundColor(Color.adaptiveWhite)
-                  .background(self.colors(for: word))
+                  .background(colors(for: word))
                   .adaptiveCornerRadius(
                     UIRectCorner.allCorners.subtracting(
                       word.isYourWord ? .bottomLeft : .bottomRight),
@@ -78,9 +78,9 @@ public struct WordListView: View {
                   )
 
                   HStack(spacing: -15) {
-                    ForEach(self.reactions(for: word)) { reaction in
+                    ForEach(reactions(for: word)) { reaction in
                       Text(reaction.rawValue)
-                        .font(.system(size: 20 + self.adaptiveSize.padding))
+                        .font(.system(size: 20 + adaptiveSize.padding))
                         .rotationEffect(.degrees(10))
                     }
                   }
@@ -93,17 +93,17 @@ public struct WordListView: View {
                 .id(SpacerId())
             }
             .onAppear {
-              guard self.isLeftToRight else { return }
-              reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)
+              guard isLeftToRight else { return }
+              reader.scrollTo(SpacerId(), anchor: isLeftToRight ? .trailing : .leading)
             }
             .onChange(of: store.playedWords) {
-              guard self.isLeftToRight else { return }
+              guard isLeftToRight else { return }
               withAnimation {
-                reader.scrollTo(SpacerId(), anchor: self.isLeftToRight ? .trailing : .leading)
+                reader.scrollTo(SpacerId(), anchor: isLeftToRight ? .trailing : .leading)
               }
             }
-            .screenEdgePadding(self.deviceState.isPad ? .leading : [])
-            .adaptivePadding(self.deviceState.isPhone ? .leading : [])
+            .screenEdgePadding(deviceState.isPad ? .leading : [])
+            .adaptivePadding(deviceState.isPhone ? .leading : [])
             .padding(.vertical)
           }
         }

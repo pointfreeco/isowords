@@ -24,7 +24,7 @@ extension Game {
       let turnBasedMatchData = TurnBasedMatchData(
         context: turnBasedContext,
         gameState: state,
-        playerId: self.apiClient.currentPlayer()?.player.id
+        playerId: apiClient.currentPlayer()?.player.id
       )
       let matchData = Data(turnBasedMatchData: turnBasedMatchData)
       let isGameOver = state.isGameOver || state.isOutOfTimeOrCubes
@@ -38,7 +38,7 @@ extension Game {
               completedGame: completedGame,
               turnBasedContext: turnBasedContext
             ) {
-              try await self.gameCenter.turnBasedMatch.endMatchInTurn(
+              try await gameCenter.turnBasedMatch.endMatchInTurn(
                 .init(
                   for: turnBasedContext.match.matchId,
                   matchData: matchData,
@@ -47,7 +47,7 @@ extension Game {
                   message: "Game over! Let’s see how you did!"
                 )
               )
-              try await self.saveGame(completedGame)
+              try await saveGame(completedGame)
             }
           } else {
             switch move.type {
@@ -58,7 +58,7 @@ extension Game {
                   == turnBasedContext.localPlayerIndex
 
               if shouldEndTurn {
-                try await self.gameCenter.turnBasedMatch.endTurn(
+                try await gameCenter.turnBasedMatch.endTurn(
                   .init(
                     for: turnBasedContext.match.matchId,
                     matchData: matchData,
@@ -66,7 +66,7 @@ extension Game {
                   )
                 )
               } else {
-                try await self.gameCenter.turnBasedMatch
+                try await gameCenter.turnBasedMatch
                   .saveCurrentTurn(turnBasedContext.match.matchId, matchData)
               }
 
@@ -75,7 +75,7 @@ extension Game {
               let score = SharedModels.score(word)
               let reaction = (move.reactions?.values.first).map { " \($0.rawValue)" } ?? ""
 
-              try await self.gameCenter.turnBasedMatch.endTurn(
+              try await gameCenter.turnBasedMatch.endTurn(
                 .init(
                   for: turnBasedContext.match.matchId,
                   matchData: matchData,
@@ -87,14 +87,14 @@ extension Game {
               )
             }
           }
-          match = try await self.gameCenter.turnBasedMatch.load(turnBasedContext.match.matchId)
+          match = try await gameCenter.turnBasedMatch.load(turnBasedContext.match.matchId)
         } catch {
           return
         }
         guard let turnBasedMatchData = match.matchData?.turnBasedMatchData
         else { return }
-        let localPlayer = self.gameCenter.localPlayer.localPlayer()
-        let now = self.now
+        let localPlayer = gameCenter.localPlayer.localPlayer()
+        let now = now
         try store.modify { state in
           var gameState = Game.State(
             gameCurrentTime: now,
@@ -118,7 +118,7 @@ extension Game {
 
   func mountTurnBased() {
     store.addTask {
-      for await event in self.gameCenter.localPlayer.listener() {
+      for await event in gameCenter.localPlayer.listener() {
         let match: TurnBasedMatch
         switch event {
         case let .turnBased(.receivedTurnEventForMatch(turnBasedMatch, _)),
@@ -127,13 +127,12 @@ extension Game {
         default:
           continue
         }
-        let now = self.now
         var isMatchOver: Bool?
         try store.modify { isMatchOver = $0.receive(turnBasedMatch: match, now: now) }
         guard let isMatchOver else { continue }
-        await self.feedbackGenerator.selectionChanged()
+        await feedbackGenerator.selectionChanged()
         if isMatchOver {
-          try? await self.gameCenter.turnBasedMatch.remove(match)
+          try? await gameCenter.turnBasedMatch.remove(match)
         }
       }
     }
@@ -143,7 +142,7 @@ extension Game {
 extension Game.State {
   fileprivate mutating func receive(turnBasedMatch match: TurnBasedMatch, now: Date) -> Bool? {
     guard
-      let turnBasedContext = self.gameContext.turnBased,
+      let turnBasedContext = gameContext.turnBased,
       turnBasedContext.match.matchId == match.matchId,
       let turnBasedMatchData = match.matchData?.turnBasedMatchData
     else { return nil }
@@ -154,17 +153,17 @@ extension Game.State {
       turnBasedMatch: match,
       turnBasedMatchData: turnBasedMatchData
     )
-    self.isGameLoaded = true
+    isGameLoaded = true
 
     guard
       match.status != .ended,
       match.participants.allSatisfy({ $0.matchOutcome == .none })
     else {
-      self.destination = .gameOver(
+      destination = .gameOver(
         GameOver.State(
           completedGame: CompletedGame(gameState: self),
-          isDemo: self.isDemo,
-          turnBasedContext: self.gameContext.turnBased
+          isDemo: isDemo,
+          turnBasedContext: gameContext.turnBased
         )
       )
       return true

@@ -35,21 +35,21 @@ public class CubeNode: SCNNode {
       get {
         switch face {
         case .top:
-          return self.top
+          return top
         case .left:
-          return self.left
+          return left
         case .right:
-          return self.right
+          return right
         }
       }
       set {
         switch face {
         case .top:
-          self.top = newValue
+          top = newValue
         case .left:
-          self.left = newValue
+          left = newValue
         case .right:
-          self.right = newValue
+          right = newValue
         }
       }
     }
@@ -112,21 +112,21 @@ public class CubeNode: SCNNode {
   }
 
   func update(viewState: ViewState) {
-    let oldViewState = self.viewState
+    let oldViewState = viewState
     self.viewState = viewState
 
-    self.leftPlaneNode.update(viewState: viewState.left)
-    self.rightPlaneNode.update(viewState: viewState.right)
-    self.topPlaneNode.update(viewState: viewState.top)
+    leftPlaneNode.update(viewState: viewState.left)
+    rightPlaneNode.update(viewState: viewState.right)
+    topPlaneNode.update(viewState: viewState.top)
 
-    if self.isAnimating {
+    if isAnimating {
       if !viewState.isInPlay {
-        self.isAnimating = false
+        isAnimating = false
       } else if oldViewState.isCriticallySelected != viewState.isCriticallySelected
         || oldViewState.index != viewState.index
         || oldViewState.cubeShakeStartedAt != viewState.cubeShakeStartedAt
       {
-        self.updateAnimation(
+        updateAnimation(
           cubeShakeStartedAt: viewState.cubeShakeStartedAt,
           isCriticallySelected: viewState.isCriticallySelected,
           index: viewState.index
@@ -135,28 +135,28 @@ public class CubeNode: SCNNode {
     }
 
     guard oldViewState.isInPlay != viewState.isInPlay else { return }
-    self.removeAction(forKey: self.removeAnimationActionKey)
+    removeAction(forKey: removeAnimationActionKey)
     if !viewState.isInPlay {
-      self.isHidden = false
+      isHidden = false
 
       let action = SCNAction.sequence([
-        .wait(duration: Double(removeCubeDelay(index: self.index)) / 1000),
+        .wait(duration: Double(removeCubeDelay(index: index)) / 1000),
         .scale(to: 0.4, duration: 0.1),
         .scale(to: 0, duration: 0.1),
       ])
       action.timingMode = .easeOut
-      self.runAction(action, forKey: self.removeAnimationActionKey) {
+      runAction(action, forKey: removeAnimationActionKey) {
         self.isHidden = true
       }
     } else {
-      self.isHidden = false
-      self.scale = .init(0, 0, 0)
+      isHidden = false
+      scale = .init(0, 0, 0)
       let action = SCNAction.sequence([
         .scale(to: 0.4, duration: 0.1),
         .scale(to: 0.3333, duration: 0.1),
       ])
       action.timingMode = .easeOut
-      self.runAction(action, forKey: self.removeAnimationActionKey)
+      runAction(action, forKey: removeAnimationActionKey)
     }
   }
 
@@ -169,7 +169,7 @@ public class CubeNode: SCNNode {
     isCriticallySelected: Bool,
     index: LatticePoint
   ) {
-    self.position = SCNVector3(
+    position = SCNVector3(
       CGFloat(index.x.rawValue - 1) / 3,
       CGFloat(index.y.rawValue - 1) / 3,
       CGFloat(index.z.rawValue - 1) / 3
@@ -182,7 +182,7 @@ public class CubeNode: SCNNode {
     let shakeDuration: TimeInterval = duration / TimeInterval(numShakes)
 
     guard isCriticallySelected, let cubeShakeStartedAt = cubeShakeStartedAt else {
-      self.removeAction(forKey: self.shakeAnimationActionKey)
+      removeAction(forKey: shakeAnimationActionKey)
       DispatchQueue.main.asyncAfter(deadline: .now() + shakeDuration) {
         self.position = SCNVector3(
           CGFloat(index.x.rawValue - 1) / 3,
@@ -209,14 +209,14 @@ public class CubeNode: SCNNode {
       ? 0
       : 2 - Date().timeIntervalSince(cubeShakeStartedAt).truncatingRemainder(dividingBy: 2)
 
-    self.runAction(
+    runAction(
       .sequence(
         [
           .wait(duration: initialWaitTime),
           .repeatForever(.sequence(actions + [.wait(duration: waitTime)])),
         ]
       ),
-      forKey: self.shakeAnimationActionKey
+      forKey: shakeAnimationActionKey
     )
   }
 }

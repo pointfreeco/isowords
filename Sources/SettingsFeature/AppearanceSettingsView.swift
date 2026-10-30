@@ -73,11 +73,11 @@ struct ColorSchemePicker: View {
   var body: some View {
     ZStack {
       HStack {
-        if self.colorScheme != .system {
+        if colorScheme != .system {
           Spacer()
             .frame(maxWidth: .infinity)
         }
-        if self.colorScheme == .light {
+        if colorScheme == .light {
           Spacer()
             .frame(maxWidth: .infinity)
         }
@@ -86,11 +86,11 @@ struct ColorSchemePicker: View {
           .continuousCornerRadius(12)
           .frame(maxWidth: .infinity)
           .padding(4)
-        if self.colorScheme == .system {
+        if colorScheme == .system {
           Spacer()
             .frame(maxWidth: .infinity)
         }
-        if self.colorScheme != .light {
+        if colorScheme != .light {
           Spacer()
             .frame(maxWidth: .infinity)
         }
@@ -106,9 +106,9 @@ struct ColorSchemePicker: View {
             Text(colorScheme.title)
               .foregroundColor(Color.white)
               .colorMultiply(
-                self.titleColor(
-                  colorScheme: self.envColorScheme,
-                  isSelected: self.colorScheme == colorScheme
+                titleColor(
+                  colorScheme: envColorScheme,
+                  isSelected: colorScheme == colorScheme
                 )
               )
               .frame(maxWidth: .infinity)
@@ -121,7 +121,7 @@ struct ColorSchemePicker: View {
     }
     .background(
       Rectangle()
-        .fill(self.envColorScheme == .light ? Color.hex(0xF5F5F5) : .hex(0x222222))
+        .fill(envColorScheme == .light ? Color.hex(0xF5F5F5) : .hex(0x222222))
     )
     .continuousCornerRadius(12)
   }

@@ -3,7 +3,7 @@ import SwiftUI
 class NubUIView: UIView {
   var isPressed: Bool = false {
     didSet {
-      self.render()
+      render()
     }
   }
 
@@ -18,34 +18,34 @@ class NubUIView: UIView {
 
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     super.touchesBegan(touches, with: event)
-    self.isPressed = true
+    isPressed = true
   }
 
   override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     super.touchesEnded(touches, with: event)
-    self.isPressed = false
+    isPressed = false
   }
 
   func render() {
-    let duration = self.isPressed ? 0 : 0.3
+    let duration = isPressed ? 0 : 0.3
     UIView.animate(withDuration: duration) {
       CATransaction.begin()
-      if self.isPressed {
-        self.layer.borderWidth = 4
-        self.layer.shadowOffset = .zero
-        self.layer.shadowOpacity = 0
-        self.layer.shadowRadius = 0
-        self.layer.removeAnimation(forKey: "borderWidth")
+      if isPressed {
+        layer.borderWidth = 4
+        layer.shadowOffset = .zero
+        layer.shadowOpacity = 0
+        layer.shadowRadius = 0
+        layer.removeAnimation(forKey: "borderWidth")
       } else {
-        self.layer.borderWidth = 0
-        self.layer.shadowOffset = .init(width: 0, height: 2)
-        self.layer.shadowOpacity = 1
-        self.layer.shadowRadius = 3
+        layer.borderWidth = 0
+        layer.shadowOffset = .init(width: 0, height: 2)
+        layer.shadowOpacity = 1
+        layer.shadowRadius = 3
         let borderWidth = CABasicAnimation(keyPath: "borderWidth")
         borderWidth.fromValue = 4
         borderWidth.toValue = 0
         borderWidth.duration = 0.3
-        self.layer.add(borderWidth, forKey: "borderWidth")
+        layer.add(borderWidth, forKey: "borderWidth")
       }
       CATransaction.commit()
     }
@@ -110,7 +110,7 @@ struct UIViewRepresenting<View: UIView>: UIViewRepresentable {
   }
 
   func makeUIView(context: Context) -> View {
-    self.view
+    view
   }
 
   func updateUIView(_ uiView: View, context: Context) {}

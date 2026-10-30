@@ -32,7 +32,7 @@ public struct GameView<Content>: View where Content: View {
       ZStack {
         ZStack(alignment: .top) {
           if store.isGameLoaded {
-            self.content
+            content
               .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
               .ignoresSafeArea()
               .transition(
@@ -41,7 +41,7 @@ public struct GameView<Content>: View where Content: View {
                   removal: .game
                 )
               )
-              .adaptivePadding(self.deviceState.isPad ? .horizontal : [], .grid(30))
+              .adaptivePadding(deviceState.isPad ? .horizontal : [], .grid(30))
           } else {
             ProgressView()
               .progressViewStyle(CircularProgressViewStyle(tint: .adaptiveBlack))
@@ -59,7 +59,7 @@ public struct GameView<Content>: View where Content: View {
               }
               GameHeaderView(store: store)
             }
-            .screenEdgePadding(self.deviceState.isPad ? .horizontal : [])
+            .screenEdgePadding(deviceState.isPad ? .horizontal : [])
             Spacer()
             GameFooterView(store: store)
               .padding(.bottom)
@@ -99,9 +99,9 @@ public struct GameView<Content>: View where Content: View {
           )
           .fixedSize(horizontal: false, vertical: true)
           .opacity(store.isTrayVisible ? 1 : 0)
-          .offset(y: -self.trayHeight)
+          .offset(y: -trayHeight)
         }
-        .offset(y: store.isTrayVisible ? self.trayHeight : 0)
+        .offset(y: store.isTrayVisible ? trayHeight : 0)
         .zIndex(0)
 
         if let store = store.scope(\.destination)?.scope(\.gameOver) {
@@ -130,7 +130,7 @@ public struct GameView<Content>: View where Content: View {
         }
       }
       .background(
-        Color(self.colorScheme == .dark ? .hex(0x111111) : .white)
+        Color(colorScheme == .dark ? .hex(0x111111) : .white)
           .ignoresSafeArea()
       )
       .bottomMenu($store.scope(\.destination).bottomMenu)
@@ -163,7 +163,7 @@ public struct GameView<Content>: View where Content: View {
 extension Binding {
   fileprivate func isPresent<Wrapped>() -> Binding<Bool> where Value == Wrapped? {
     Binding<Bool>(
-      get: { self.wrappedValue != nil },
+      get: { wrappedValue != nil },
       set: { isPresented, transaction in
         if !isPresented {
           self.transaction(transaction).wrappedValue = nil

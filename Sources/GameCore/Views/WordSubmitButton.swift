@@ -74,13 +74,13 @@ public struct WordSubmitButtonFeature {
       switch action {
       case .backgroundTapped:
         state.wordSubmitButton.areReactionsOpen = false
-        store.addTask { await self.playSound(.uiSfxEmojiClose) }
+        store.addTask { await playSound(.uiSfxEmojiClose) }
 
       case let .reactionButtonTapped(reaction):
         state.wordSubmitButton.areReactionsOpen = false
         store.addTask {
-          await self.feedbackGenerator.selectionChanged()
-          await self.playSound(.uiSfxEmojiSend)
+          await feedbackGenerator.selectionChanged()
+          await playSound(.uiSfxEmojiSend)
           try store.post(key: ConfirmSubmit.self, value: reaction)
         }
 
@@ -95,16 +95,16 @@ public struct WordSubmitButtonFeature {
         state.wordSubmitButton.isSubmitButtonPressed = true
 
         let isClosing = state.wordSubmitButton.isClosing
-        store.addTask(id: self.submitButtonPressedDelay) {
-          await self.feedbackGenerator.selectionChanged()
+        store.addTask(id: submitButtonPressedDelay) {
+          await feedbackGenerator.selectionChanged()
           if isClosing {
-            await self.playSound(.uiSfxEmojiClose)
+            await playSound(.uiSfxEmojiClose)
           }
-          try await self.clock.sleep(for: .seconds(0.5))
+          try await clock.sleep(for: .seconds(0.5))
           guard store.isYourTurn else { return }
           try store.modify { $0.wordSubmitButton.areReactionsOpen = true }
-          await self.feedbackGenerator.selectionChanged()
-          await self.playSound(.uiSfxEmojiOpen)
+          await feedbackGenerator.selectionChanged()
+          await playSound(.uiSfxEmojiOpen)
         }
 
       case .submitButtonReleased:
@@ -117,7 +117,7 @@ public struct WordSubmitButtonFeature {
 
         let areReactionsOpen = state.wordSubmitButton.areReactionsOpen
         store.addTask {
-          self.submitButtonPressedDelay.cancel()
+          submitButtonPressedDelay.cancel()
           guard !wasClosing && !areReactionsOpen
           else { return }
           try store.post(key: ConfirmSubmit.self, value: nil)

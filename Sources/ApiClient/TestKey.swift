@@ -33,12 +33,12 @@ extension ApiClient {
     withResponse response: @escaping @Sendable () async throws -> (Data, URLResponse)
   ) {
     let fulfill = expectation(description: "route")
-    self.apiRequest = { @Sendable [self] route in
+    apiRequest = { @Sendable [self] route in
       if route == matchingRoute {
         fulfill()
         return try await response()
       } else {
-        return try await self.apiRequest(route)
+        return try await apiRequest(route)
       }
     }
   }
@@ -48,12 +48,12 @@ extension ApiClient {
     withResponse response: @escaping @Sendable (Path.Value) async throws -> (Data, URLResponse)
   ) {
     let fulfill = expectation(description: "route")
-    self.apiRequest = { @Sendable [self] route in
+    apiRequest = { @Sendable [self] route in
       if let value = route[case: matchingRoute] {
         fulfill()
         return try await response(value)
       } else {
-        return try await self.apiRequest(route)
+        return try await apiRequest(route)
       }
     }
   }
@@ -63,12 +63,12 @@ extension ApiClient {
     withResponse response: @escaping @Sendable (Value) async throws -> (Data, URLResponse)
   ) {
     let fulfill = expectation(description: "route")
-    self.apiRequest = { @Sendable [self] route in
+    apiRequest = { @Sendable [self] route in
       if let value = matchingRoute.extract(from: route) {
         fulfill()
         return try await response(value)
       } else {
-        return try await self.apiRequest(route)
+        return try await apiRequest(route)
       }
     }
   }

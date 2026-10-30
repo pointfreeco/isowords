@@ -43,7 +43,7 @@ public struct ServerRouter: ParserPrinter {
           Headers {
             Field("X-Debug", default: false) { Bool.parser() }
           }
-          self.apiRouter
+          apiRouter
         }
       }
 
@@ -306,11 +306,11 @@ public struct ServerRouter: ParserPrinter {
   }
 
   public func parse(_ input: inout URLRequestData) throws -> ServerRoute {
-    try self.body.parse(&input)
+    try body.parse(&input)
   }
 
   public func print(_ output: ServerRoute, into input: inout URLRequestData) throws {
-    try self.body.print(output, into: &input)
+    try body.print(output, into: &input)
   }
 }
 
