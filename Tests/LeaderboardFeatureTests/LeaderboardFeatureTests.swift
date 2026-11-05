@@ -55,11 +55,11 @@ class LeaderboardFeatureTests: XCTestCase {
       }
     }
 
-    await store.send(.solo(.timeScopeChanged(.lastDay))) {
+    await store.send(to: \.solo, .timeScopeChanged(.lastDay)) {
       $0.solo.timeScope = .lastDay
       $0.vocab.timeScope = .lastDay
     }
-    await store.send(.vocab(.timeScopeChanged(.allTime))) {
+    await store.send(to: \.vocab, .timeScopeChanged(.allTime)) {
       $0.solo.timeScope = .allTime
       $0.vocab.timeScope = .allTime
     }
@@ -146,7 +146,7 @@ class LeaderboardFeatureTests: XCTestCase {
       $0.vocab.isLoading = false
       $0.vocab.resultEnvelope = resultsEnvelope
     }
-    await store.send(.vocab(.tappedRow(id: wordId.rawValue)))?.value
+    await store.send(to: \.vocab, .tappedRow(id: wordId.rawValue))?.value
     store.expect {
       $0.destination = .cubePreview(
         snap(

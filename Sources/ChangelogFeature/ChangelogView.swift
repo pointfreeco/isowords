@@ -39,7 +39,6 @@ public struct ChangelogReducer {
   }
 
   public enum Action {
-    case changelog(Change.State.ID, Change.Action)
     case updateButtonTapped
   }
 
@@ -53,9 +52,6 @@ public struct ChangelogReducer {
   public var body: some Feature {
     Update { state, action in
       switch action {
-      case .changelog:
-        break
-
       case .updateButtonTapped:
         store.addTask {
           _ = await openURL(

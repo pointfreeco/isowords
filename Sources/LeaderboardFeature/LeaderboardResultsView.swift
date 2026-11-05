@@ -41,12 +41,16 @@ public struct LeaderboardResults<TimeScope: Equatable> {
   }
 
   public let loadResults: @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
+  public let onRowTapped: @Sendable (UUID) async throws -> Void
   @StoreTaskID var request
+  @StoreTaskID var rowTap
 
   public init(
-    loadResults: @escaping @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope
+    loadResults: @escaping @Sendable (GameMode, TimeScope) async throws -> ResultEnvelope,
+    onRowTapped: @escaping @Sendable (UUID) async throws -> Void = { _ in }
   ) {
     self.loadResults = loadResults
+    self.onRowTapped = onRowTapped
   }
 
   public var body: some Feature {
@@ -60,8 +64,12 @@ public struct LeaderboardResults<TimeScope: Equatable> {
         state.isLoading = true
         load(gameMode: gameMode, timeScope: state.timeScope)
 
-      case .tappedRow:
-        break
+      case let .tappedRow(id):
+        guard state.resultEnvelope != nil
+        else { return }
+        store.addTask(id: rowTap) {
+          try await onRowTapped(id)
+        }
 
       case .tappedTimeScopeLabel:
         state.isTimeScopeMenuVisible.toggle()

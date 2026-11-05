@@ -50,7 +50,6 @@ public struct Stats {
   }
 
   public enum Action {
-    case destination(Destination.Action)
     case vocabButtonTapped
   }
 
@@ -61,9 +60,6 @@ public struct Stats {
   public var body: some Feature {
     Update { state, action in
       switch action {
-      case .destination:
-        break
-
       case .vocabButtonTapped:
         state.destination = .vocab(
           .init(

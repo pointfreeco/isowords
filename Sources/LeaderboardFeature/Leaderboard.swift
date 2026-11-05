@@ -57,43 +57,35 @@ public struct Leaderboard {
   }
 
   public enum Action {
-    case destination(Destination.Action)
     case scopeTapped(LeaderboardScope)
-    case solo(LeaderboardResults<TimeScope>.Action)
-    case vocab(LeaderboardResults<TimeScope>.Action)
   }
 
   @Dependency(\.apiClient) var apiClient
-  @StoreTaskID var fetchWord
 
   public init() {}
 
   public var body: some Feature {
     Update { state, action in
       switch action {
-      case .destination:
-        break
-
       case let .scopeTapped(scope):
         state.scope = scope
+      }
+    }
+    .ifLet(\.destination) {
+      Destination.body
+    }
 
-      case let .solo(.timeScopeChanged(timeScope)):
-        state.vocab.timeScope = timeScope
-
-      case .solo:
-        break
-
-      case .vocab(.timeScopeChanged(.interesting)):
-        break
-
-      case let .vocab(.timeScopeChanged(timeScope)):
-        state.solo.timeScope = timeScope
-
-      case let .vocab(.tappedRow(id)):
-        guard state.vocab.resultEnvelope != nil
-        else { return }
-
-        store.addTask(id: fetchWord) {
+    Scope(\.solo) {
+      LeaderboardResults(loadResults: apiClient.loadSoloResults(gameMode:timeScope:))
+    }
+    .onChange(of: store.solo.timeScope) { state in
+      guard state.vocab.timeScope != state.solo.timeScope else { return }
+      state.vocab.timeScope = state.solo.timeScope
+    }
+    Scope(\.vocab) {
+      LeaderboardResults(
+        loadResults: apiClient.loadVocabResults(gameMode:timeScope:),
+        onRowTapped: { id in
           let response = try await apiClient.apiRequest(
             route: .leaderboard(.vocab(.fetchWord(wordId: .init(rawValue: id)))),
             as: FetchVocabWordResponse.self
@@ -108,20 +100,14 @@ public struct Leaderboard {
             )
           }
         }
-
-      case .vocab:
-        break
-      }
+      )
     }
-    .ifLet(\.destination) {
-      Destination.body
-    }
-
-    Scope(\.solo) {
-      LeaderboardResults(loadResults: apiClient.loadSoloResults(gameMode:timeScope:))
-    }
-    Scope(\.vocab) {
-      LeaderboardResults(loadResults: apiClient.loadVocabResults(gameMode:timeScope:))
+    .onChange(of: store.vocab.timeScope) { state in
+      guard
+        state.vocab.timeScope != .interesting,
+        state.solo.timeScope != state.vocab.timeScope
+      else { return }
+      state.solo.timeScope = state.vocab.timeScope
     }
   }
 }
@@ -164,7 +150,7 @@ public struct LeaderboardView: View {
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  withAnimation { _ = store.send(.solo(.timeScopeChanged(scope))) }
+                  withAnimation { _ = store.scope(\.solo).send(.timeScopeChanged(scope)) }
                 }
                 .disabled(store.solo.timeScope == scope)
                 .opacity(store.solo.timeScope == scope ? 0.3 : 1)
@@ -186,7 +172,7 @@ public struct LeaderboardView: View {
             timeScopeMenu: VStack(alignment: .trailing, spacing: .grid(2)) {
               ForEach([TimeScope.lastDay, .lastWeek, .allTime, .interesting], id: \.self) { scope in
                 Button(scope.displayTitle) {
-                  withAnimation { _ = store.send(.vocab(.timeScopeChanged(scope))) }
+                  withAnimation { _ = store.scope(\.vocab).send(.timeScopeChanged(scope)) }
                 }
                 .disabled(store.vocab.timeScope == scope)
                 .opacity(store.vocab.timeScope == scope ? 0.3 : 1)

@@ -26,7 +26,6 @@ public struct Multiplayer {
   }
 
   public enum Action {
-    case destination(Destination.Action)
     case pastGamesButtonTapped
     case startButtonTapped
   }
@@ -38,9 +37,6 @@ public struct Multiplayer {
   public var body: some Feature {
     Update { state, action in
       switch action {
-      case .destination:
-        break
-
       case .startButtonTapped:
         store.addTask {
           if gameCenter.localPlayer.localPlayer().isAuthenticated {

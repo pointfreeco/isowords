@@ -78,7 +78,7 @@ struct CalendarView: View {
           ) {
             ForEach(month.results, id: \.gameNumber) { result in
               Button {
-                store.send(.leaderboardResults(.timeScopeChanged(result.gameNumber)))
+                store.scope(\.leaderboardResults).send(.timeScopeChanged(result.gameNumber))
               } label: {
                 VStack {
                   Text("\(dayFormatter.string(from: result.createdAt))")

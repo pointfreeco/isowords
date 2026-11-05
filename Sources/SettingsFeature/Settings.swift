@@ -129,7 +129,6 @@ public struct Settings {
     case paymentTransaction(StoreKitClient.PaymentTransactionObserverEvent)
     case reportABugButtonTapped
     case restoreButtonTapped
-    case stats(Stats.Action)
     case tappedProduct(StoreKitClient.Product)
   }
 
@@ -285,9 +284,6 @@ public struct Settings {
       case .restoreButtonTapped:
         state.isRestoring = true
         store.addTask { await storeKit.restoreCompletedTransactions() }
-
-      case .stats:
-        break
 
       case let .tappedProduct(product):
         state.isPurchasing = true

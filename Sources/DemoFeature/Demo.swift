@@ -38,7 +38,6 @@ public struct Demo {
 
   public enum Action {
     case fullVersionButtonTapped
-    case step(Step.Action)
   }
 
   @Dependency(\.audioPlayer.load) var loadSounds
@@ -56,9 +55,6 @@ public struct Demo {
         store.addTask {
           _ = await openURL(ServerConfig().appStoreUrl, [:])
         }
-
-      case .step:
-        break
       }
     }
     Scope(\.step) {

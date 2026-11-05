@@ -146,7 +146,6 @@ public struct Game {
   }
 
   public enum Action {
-    case activeGames(ActiveGames.Action)
     case cancelButtonTapped
     case confirmRemoveCube(LatticePoint)
     case destination(Destination.Action)
@@ -156,7 +155,6 @@ public struct Game {
     case submitButtonTapped(reaction: Move.Reaction?)
     case tap(UIGestureRecognizer.State, IndexedCubeFace?)
     case trayButtonTapped
-    case wordSubmitButton(WordSubmitButtonFeature.Action)
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -275,9 +273,6 @@ public struct Game {
 
   private func core(state: inout State, action: Action) {
     switch action {
-    case .activeGames:
-      break
-
     case .cancelButtonTapped:
       state.selectedWord = []
 
@@ -471,9 +466,6 @@ public struct Game {
 
     case .trayButtonTapped:
       break
-
-    case .wordSubmitButton:
-      break
     }
   }
 
@@ -541,7 +533,7 @@ extension Game.Scopes {
 
   public struct WordSubmitButtonFeatureScope: ScopePath {
     public let statePath = \Game.State.wordSubmitButtonFeature
-    public let actionPath = \Game.Action.Cases.wordSubmitButton
+    public let actionPath = _localActionPath(\Game.State.wordSubmitButtonFeature, Game.Action.self)
   }
 }
 

@@ -48,10 +48,7 @@ public struct AppReducer {
   }
 
   public enum Action {
-    case appDelegate(AppDelegateReducer.Action)
-    case destination(Destination.Action)
     case didChangeScenePhase(ScenePhase)
-    case home(Home.Action)
   }
 
   @Dependency(\.apiClient) var apiClient
@@ -83,9 +80,6 @@ public struct AppReducer {
       }
       Update { state, action in
         switch action {
-        case .appDelegate, .destination, .home:
-          break
-
         case .didChangeScenePhase(.active):
           store.addTask {
             async let register: Void = registerForRemoteNotificationsAsync(

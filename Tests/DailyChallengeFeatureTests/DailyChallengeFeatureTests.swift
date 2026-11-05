@@ -216,7 +216,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     store.send(.notificationButtonTapped) {
       $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State.DebugSnapshot())
     }
-    await store.send(.destination(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))?
+    await store.send(to: \.destination?.notificationsAuthAlert, .turnOnNotificationsButtonTapped)?
       .value
     store.expect {
       $0.destination = nil
@@ -252,7 +252,7 @@ class DailyChallengeFeatureTests: XCTestCase {
     store.send(.notificationButtonTapped) {
       $0.destination = .notificationsAuthAlert(NotificationsAuthAlert.State.DebugSnapshot())
     }
-    await store.send(.destination(.notificationsAuthAlert(.turnOnNotificationsButtonTapped)))?
+    await store.send(to: \.destination?.notificationsAuthAlert, .turnOnNotificationsButtonTapped)?
       .value
     store.expect {
       $0.destination = nil

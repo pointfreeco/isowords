@@ -11,10 +11,6 @@ public struct PastGames {
     public var pastGames: [PastGame.State] = []
   }
 
-  public enum Action {
-    case pastGames(PastGame.State.ID, PastGame.Action)
-  }
-
   @Dependency(\.gameCenter) var gameCenter
 
   public var body: some Feature {

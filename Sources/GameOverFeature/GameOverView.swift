@@ -107,7 +107,6 @@ public struct GameOver {
 
   public enum Action {
     case closeButtonTapped
-    case destination(Destination.Action)
     case gameButtonTapped(GameMode)
     case rematchButtonTapped
   }
@@ -151,9 +150,6 @@ public struct GameOver {
         }
 
         state.destination = .notificationsAuthAlert(NotificationsAuthAlert.State())
-
-      case .destination:
-        break
 
       case let .gameButtonTapped(gameMode):
         switch state.completedGame.gameContext {

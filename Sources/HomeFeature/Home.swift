@@ -86,14 +86,11 @@ public struct Home {
   }
 
   public enum Action {
-    case activeGames(ActiveGames.Action)
     case cubeButtonTapped
     case dailyChallengeButtonTapped
-    case destination(Destination.Action)
     case howToPlayButtonTapped
     case leaderboardButtonTapped
     case multiplayerButtonTapped
-    case nagBanner(NagBanner.Action)
     case settingsButtonTapped
     case soloButtonTapped
   }
@@ -149,9 +146,6 @@ public struct Home {
 
     Update { state, action in
       switch action {
-      case .activeGames:
-        break
-
       case .cubeButtonTapped:
         state.destination = .changelog(ChangelogReducer.State())
 
@@ -162,9 +156,6 @@ public struct Home {
             inProgressDailyChallengeUnlimited: state.savedGames.dailyChallengeUnlimited
           )
         )
-
-      case .destination:
-        break
 
       case .howToPlayButtonTapped:
         store.addTask {
@@ -178,9 +169,6 @@ public struct Home {
 
       case .multiplayerButtonTapped:
         state.destination = .multiplayer(.init(hasPastGames: state.hasPastTurnBasedGames))
-
-      case .nagBanner:
-        break
 
       case .settingsButtonTapped:
         state.destination = .settings(Settings.State())

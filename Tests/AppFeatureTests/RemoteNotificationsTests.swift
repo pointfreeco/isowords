@@ -54,7 +54,7 @@ class RemoteNotificationsTests: XCTestCase {
     XCTAssertTrue(didRegisterForRemoteNotifications.value)
 
     await store.send(
-      .appDelegate(.didRegisterForRemoteNotifications(.success(Data("deadbeef".utf8))))
+      to: \.appDelegate, .didRegisterForRemoteNotifications(.success(Data("deadbeef".utf8)))
     )?.value
 
     // Register remote notifications on .didChangeScenePhase(.active)
@@ -65,7 +65,7 @@ class RemoteNotificationsTests: XCTestCase {
     XCTAssertTrue(didRegisterForRemoteNotifications.value)
 
     await store.send(
-      .appDelegate(.didRegisterForRemoteNotifications(.success(Data("baadbeef".utf8))))
+      to: \.appDelegate, .didRegisterForRemoteNotifications(.success(Data("baadbeef".utf8)))
     )?.value
 
     await store.dismount()

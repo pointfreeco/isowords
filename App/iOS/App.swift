@@ -14,9 +14,7 @@ import SwiftUI
 import UIApplicationClient
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
-  let store = Store(
-    initialState: AppReducer.State()
-  ) {
+  let rootStore = Store(initialState: AppReducer.State()) {
     AppReducer().transformDependency(\.self) {
       $0.audioPlayer = .liveValue
       $0.database = .live(
@@ -30,18 +28,20 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
   }
 
+  var store: StoreOf<AppDelegateReducer> { rootStore.scope(\.appDelegate) }
+
   func application(
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
-    self.store.send(.appDelegate(.didRegisterForRemoteNotifications(.success(deviceToken))))
+    store.send(.didRegisterForRemoteNotifications(.success(deviceToken)))
   }
 
   func application(
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
-    self.store.send(.appDelegate(.didRegisterForRemoteNotifications(.failure(error))))
+    store.send(.didRegisterForRemoteNotifications(.failure(error)))
   }
 }
 
@@ -50,16 +50,18 @@ struct IsowordsApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @Environment(\.scenePhase) private var scenePhase
 
+  var store: StoreOf<AppReducer> { appDelegate.rootStore }
+
   init() {
     Styleguide.registerFonts()
   }
 
   var body: some Scene {
     WindowGroup {
-      AppView(store: self.appDelegate.store)
+      AppView(store: store)
     }
-    .onChange(of: self.scenePhase) { _, newPhase in
-      self.appDelegate.store.send(.didChangeScenePhase(newPhase))
+    .onChange(of: scenePhase) { _, newPhase in
+      store.send(.didChangeScenePhase(newPhase))
     }
   }
 }

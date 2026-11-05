@@ -61,41 +61,41 @@ class PersistenceTests: XCTestCase {
       gameMode: .unlimited,
       gameStartTime: Date(timeIntervalSinceReferenceDate: 0)
     )
-    await store.send(.home(.destination(.solo(.gameButtonTapped(.unlimited)))))?.value
+    await store.send(to: \.home.destination?.solo, .gameButtonTapped(.unlimited))?.value
     store.expect {
       $0.destination = .game(snap(newGame))
       $0.home.activeGames.savedGames.unlimited = InProgressGame(gameState: newGame)
     }
-    try store.send(.destination(.game(.tap(.began, C)))) {
+    try store.send(to: \.destination?.game, .tap(.began, C)) {
       try $0.destination.modify(\.game) {
         $0.optimisticallySelectedFace = C
         $0.selectedWord = [C]
       }
     }
-    try store.send(.destination(.game(.tap(.ended, C)))) {
+    try store.send(to: \.destination?.game, .tap(.ended, C)) {
       try $0.destination.modify(\.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    try store.send(.destination(.game(.tap(.began, A)))) {
+    try store.send(to: \.destination?.game, .tap(.began, A)) {
       try $0.destination.modify(\.game) {
         $0.optimisticallySelectedFace = A
         $0.selectedWord = [C, A]
       }
     }
-    try store.send(.destination(.game(.tap(.ended, A)))) {
+    try store.send(to: \.destination?.game, .tap(.ended, A)) {
       try $0.destination.modify(\.game) {
         $0.optimisticallySelectedFace = nil
       }
     }
-    try store.send(.destination(.game(.tap(.began, B)))) {
+    try store.send(to: \.destination?.game, .tap(.began, B)) {
       try $0.destination.modify(\.game) {
         $0.optimisticallySelectedFace = B
         $0.selectedWord = [C, A, B]
         $0.selectedWordIsValid = true
       }
     }
-    try store.send(.destination(.game(.tap(.ended, B)))) {
+    try store.send(to: \.destination?.game, .tap(.ended, B)) {
       try $0.destination.modify(\.game) {
         $0.optimisticallySelectedFace = nil
       }
@@ -113,7 +113,7 @@ class PersistenceTests: XCTestCase {
     playedGame.cubes[index].left.useCount = 1
     playedGame.cubes[index].right.useCount = 1
     playedGame.cubes[index].top.useCount = 1
-    try store.send(.destination(.game(.submitButtonTapped(reaction: nil)))) {
+    try store.send(to: \.destination?.game, .submitButtonTapped(reaction: nil)) {
       try $0.destination.modify(\.game) {
         $0.moves = playedGame.moves
         $0.selectedWord = []
@@ -122,7 +122,7 @@ class PersistenceTests: XCTestCase {
       }
       $0.home.activeGames.savedGames.unlimited = InProgressGame(gameState: playedGame)
     }
-    try store.send(.destination(.game(.menuButtonTapped))) {
+    try store.send(to: \.destination?.game, .menuButtonTapped) {
       try $0.destination.modify(\.game) {
         $0.destination = .bottomMenu(
           snap(
@@ -151,7 +151,7 @@ class PersistenceTests: XCTestCase {
         )
       }
     }
-    try await store.send(.destination(.game(.destination(.bottomMenu(.exitButtonTapped))))) {
+    try await store.send(to: \.destination?.game, .destination(.bottomMenu(.exitButtonTapped))) {
       try $0.destination.modify(\.game) {
         $0.destination = nil
       }
@@ -193,12 +193,12 @@ class PersistenceTests: XCTestCase {
     }
 
     let game = try XCTUnwrap(store.state.destination?.game)
-    try store.send(.destination(.game(.menuButtonTapped))) {
+    try store.send(to: \.destination?.game, .menuButtonTapped) {
       try $0.destination.modify(\.game) {
         $0.destination = .bottomMenu(snap(BottomMenuState.gameMenu(state: game)))
       }
     }
-    try store.send(.destination(.game(.destination(.bottomMenu(.endGameButtonTapped))))) {
+    try store.send(to: \.destination?.game, .destination(.bottomMenu(.endGameButtonTapped))) {
       try $0.destination.modify(\.game) {
         $0.destination = .gameOver(
           snap(
@@ -242,7 +242,7 @@ class PersistenceTests: XCTestCase {
     }
 
     let game = try XCTUnwrap(store.state.destination?.game)
-    try store.send(.destination(.game(.menuButtonTapped))) {
+    try store.send(to: \.destination?.game, .menuButtonTapped) {
       try $0.destination.modify(\.game) {
         $0.destination = .bottomMenu(
           snap(
@@ -266,7 +266,7 @@ class PersistenceTests: XCTestCase {
         )
       }
     }
-    try store.send(.destination(.game(.destination(.bottomMenu(.endGameButtonTapped))))) {
+    try store.send(to: \.destination?.game, .destination(.bottomMenu(.endGameButtonTapped))) {
       try $0.destination.modify(\.game) {
         $0.destination = .gameOver(
           snap(
@@ -304,10 +304,10 @@ class PersistenceTests: XCTestCase {
     store.expect {
       $0.home.activeGames.savedGames = savedGames
     }
-    await store.send(.home(.soloButtonTapped)) {
+    await store.send(to: \.home, .soloButtonTapped) {
       $0.home.destination = .solo(snap(Solo.State(inProgressGame: .mock)))
     }?.value
-    await store.send(.home(.destination(.solo(.gameButtonTapped(.unlimited)))))?.value
+    await store.send(to: \.home.destination?.solo, .gameButtonTapped(.unlimited))?.value
     store.expect {
       $0.destination = .game(
         snap(
@@ -357,12 +357,12 @@ class PersistenceTests: XCTestCase {
     }
 
     let game = try XCTUnwrap(store.state.destination?.game)
-    try store.send(.destination(.game(.menuButtonTapped))) {
+    try store.send(to: \.destination?.game, .menuButtonTapped) {
       try $0.destination.modify(\.game) {
         $0.destination = .bottomMenu(snap(BottomMenuState.gameMenu(state: game)))
       }
     }
-    try store.send(.destination(.game(.destination(.bottomMenu(.endGameButtonTapped))))) {
+    try store.send(to: \.destination?.game, .destination(.bottomMenu(.endGameButtonTapped))) {
       var gameOver = GameOver.State(
         completedGame: .init(gameState: game),
         isDemo: false

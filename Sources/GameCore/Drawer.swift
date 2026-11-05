@@ -15,13 +15,11 @@ extension Game {
       .menuButtonTapped,
       .pan,
       .submitButtonTapped,
-      .tap,
-      .wordSubmitButton:
+      .tap:
 
       state.isTrayVisible = false
 
-    case .activeGames,
-      .destination:
+    case .destination:
       break
 
     case .trayButtonTapped:

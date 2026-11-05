@@ -63,7 +63,6 @@ public struct DailyChallengeReducer {
   }
 
   public enum Action {
-    case destination(Destination.Action)
     case gameButtonTapped(GameMode)
     case notificationButtonTapped
     case resultsButtonTapped
@@ -83,9 +82,6 @@ public struct DailyChallengeReducer {
   public var body: some Feature {
     Update { state, action in
       switch action {
-      case .destination:
-        break
-
       case let .gameButtonTapped(gameMode):
         guard
           let challenge = state.dailyChallenges

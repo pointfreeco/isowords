@@ -40,7 +40,7 @@ class PastGamesTests: XCTestCase {
     }
     await store.mountTask?.value
 
-    await store.send(.pastGames("id", .tappedRow))?.value
+    await store.send(to: \.pastGames[id: "id"], .tappedRow)?.value
     await store.receive(key: PastGame.OpenMatch.self, value: .equals(match))
   }
 
@@ -57,7 +57,7 @@ class PastGamesTests: XCTestCase {
     }
     await store.mountTask?.value
 
-    await store.send(.pastGames("id", .rematchButtonTapped)) {
+    await store.send(to: \.pastGames[id: "id"], .rematchButtonTapped) {
       $0.pastGames[0].isRematchRequestInFlight = true
     }?.value
     store.expect {
@@ -81,7 +81,7 @@ class PastGamesTests: XCTestCase {
     }
     await store.mountTask?.value
 
-    await store.send(.pastGames("id", .rematchButtonTapped)) {
+    await store.send(to: \.pastGames[id: "id"], .rematchButtonTapped) {
       $0.pastGames[0].isRematchRequestInFlight = true
     }?.value
     store.expect {

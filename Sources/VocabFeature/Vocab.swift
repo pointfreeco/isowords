@@ -28,7 +28,6 @@ public struct Vocab {
   }
 
   public enum Action {
-    case destination(Destination.Action)
     case wordTapped(LocalDatabaseClient.Vocab.Word)
   }
 
@@ -39,9 +38,6 @@ public struct Vocab {
   public var body: some Feature {
     Update { state, action in
       switch action {
-      case .destination:
-        break
-
       case let .wordTapped(word):
         store.addTask {
           guard

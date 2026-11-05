@@ -15,7 +15,6 @@ public struct NagBanner {
 
   public enum Action {
     case tapped
-    case upgradeInterstitial(UpgradeInterstitial.Action)
   }
 
   public init() {}
@@ -25,9 +24,6 @@ public struct NagBanner {
       switch action {
       case .tapped:
         state.upgradeInterstitial = .init(isDismissable: true)
-
-      case .upgradeInterstitial:
-        break
       }
     }
     .ifLet(\.upgradeInterstitial) {

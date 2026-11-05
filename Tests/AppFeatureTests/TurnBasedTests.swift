@@ -110,7 +110,7 @@ class TurnBasedTests: XCTestCase {
         $0.home.weekInReview = weekInReview
       }
 
-      await store.send(.home(.destination(.multiplayer(.startButtonTapped))))?.value
+      await store.send(to: \.home.destination?.multiplayer, .startButtonTapped)?.value
 
       listener.continuation
         .yield(.turnBased(.receivedTurnEventForMatch(newMatch, didBecomeActive: true)))
@@ -150,36 +150,36 @@ class TurnBasedTests: XCTestCase {
       let A = IndexedCubeFace(index: index, side: .left)
       let B = IndexedCubeFace(index: index, side: .right)
 
-      try store.send(.destination(.game(.tap(.began, C)))) {
+      try store.send(to: \.destination?.game, .tap(.began, C)) {
         try $0.destination.modify(\.game) {
           $0.optimisticallySelectedFace = C
           $0.selectedWord = [C]
         }
       }
-      try store.send(.destination(.game(.tap(.ended, C)))) {
+      try store.send(to: \.destination?.game, .tap(.ended, C)) {
         try $0.destination.modify(\.game) {
           $0.optimisticallySelectedFace = nil
         }
       }
-      try store.send(.destination(.game(.tap(.began, A)))) {
+      try store.send(to: \.destination?.game, .tap(.began, A)) {
         try $0.destination.modify(\.game) {
           $0.optimisticallySelectedFace = A
           $0.selectedWord = [C, A]
         }
       }
-      try store.send(.destination(.game(.tap(.ended, A)))) {
+      try store.send(to: \.destination?.game, .tap(.ended, A)) {
         try $0.destination.modify(\.game) {
           $0.optimisticallySelectedFace = nil
         }
       }
-      try store.send(.destination(.game(.tap(.began, B)))) {
+      try store.send(to: \.destination?.game, .tap(.began, B)) {
         try $0.destination.modify(\.game) {
           $0.optimisticallySelectedFace = B
           $0.selectedWord = [C, A, B]
           $0.selectedWordIsValid = true
         }
       }
-      try store.send(.destination(.game(.tap(.ended, B)))) {
+      try store.send(to: \.destination?.game, .tap(.ended, B)) {
         try $0.destination.modify(\.game) {
           $0.optimisticallySelectedFace = nil
         }
@@ -221,7 +221,7 @@ class TurnBasedTests: XCTestCase {
       }
       loadedMatch.withValue { [updatedMatch] in $0 = updatedMatch }
 
-      await store.send(.destination(.game(.submitButtonTapped(reaction: .angel)))) {
+      await store.send(to: \.destination?.game, .submitButtonTapped(reaction: .angel)) {
         $0.destination = .game(snap(updatedGameState))
       }?.value
       expectNoDifference(
@@ -506,7 +506,7 @@ class TurnBasedTests: XCTestCase {
       }
     }
 
-    try store.send(.destination(.game(.doubleTap(index: .zero)))) {
+    try store.send(to: \.destination?.game, .doubleTap(index: .zero)) {
       try $0.destination.modify(\.game) {
         $0.destination = .bottomMenu(
           snap(
@@ -548,7 +548,7 @@ class TurnBasedTests: XCTestCase {
     }
     loadedMatch.withValue { [updatedMatch] in $0 = updatedMatch }
 
-    await store.send(.destination(.game(.destination(.bottomMenu(.confirmRemoveCube(.zero)))))) {
+    await store.send(to: \.destination?.game, .destination(.bottomMenu(.confirmRemoveCube(.zero)))) {
       $0.destination = .game(snap(updatedGameState))
     }?.value
     try store.expect {
@@ -563,7 +563,7 @@ class TurnBasedTests: XCTestCase {
       }
     }
     let game = try XCTUnwrap(store.state.destination?.game)
-    try store.send(.destination(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .one))))) {
+    try store.send(to: \.destination?.game, .doubleTap(index: .init(x: .zero, y: .zero, z: .one))) {
       try $0.destination.modify(\.game) {
         $0.destination = .bottomMenu(
           snap(
@@ -608,9 +608,8 @@ class TurnBasedTests: XCTestCase {
     loadedMatch.withValue { [updatedMatch] in $0 = updatedMatch }
 
     await store.send(
-      .destination(
-        .game(.destination(.bottomMenu(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one)))))
-      )
+      to: \.destination?.game,
+      .destination(.bottomMenu(.confirmRemoveCube(.init(x: .zero, y: .zero, z: .one))))
     ) {
       $0.destination = .game(snap(updatedGameState))
     }?.value
@@ -625,7 +624,7 @@ class TurnBasedTests: XCTestCase {
         )
       }
     }
-    store.send(.destination(.game(.doubleTap(index: .init(x: .zero, y: .zero, z: .two)))))
+    store.send(to: \.destination?.game, .doubleTap(index: .init(x: .zero, y: .zero, z: .two)))
 
     expectNoDifference(
       didEndTurnWithRequest.value,
@@ -737,7 +736,7 @@ class TurnBasedTests: XCTestCase {
         }
       }
 
-      store.send(.destination(.game(.destination(.gameOver(.rematchButtonTapped))))) {
+      store.send(to: \.destination?.game, .destination(.gameOver(.rematchButtonTapped))) {
         $0.destination = nil
       }
       await Task.megaYield()

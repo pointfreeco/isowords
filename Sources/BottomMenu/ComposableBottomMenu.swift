@@ -154,15 +154,12 @@ extension BottomMenuPrompt.State.Button {
     }
 
     enum Action {
-      case destination(Destination.Action)
       case showMenuButtonTapped
     }
 
     var body: some Feature {
       Update { state, action in
         switch action {
-        case .destination:
-          break
         case .showMenuButtonTapped:
           state.destination = .bottomMenu(
             BottomMenuState(

@@ -23,7 +23,6 @@ public struct DailyChallengeResults {
   }
 
   public enum Action {
-    case leaderboardResults(LeaderboardResults<DailyChallenge.GameNumber?>.Action)
     case reloadHistoryButtonTapped
   }
 
@@ -39,18 +38,15 @@ public struct DailyChallengeResults {
 
     Update { state, action in
       switch action {
-      case .leaderboardResults(.gameModeButtonTapped):
-        if let indices = state.history?.results.indices {
-          for index in indices {
-            state.history?.results[index].rank = nil
-          }
-        }
-
-      case .leaderboardResults:
-        break
-
       case .reloadHistoryButtonTapped:
         loadHistory(&state)
+      }
+    }
+    .onChange(of: store.leaderboardResults.gameMode) { state in
+      if let indices = state.history?.results.indices {
+        for index in indices {
+          state.history?.results[index].rank = nil
+        }
       }
     }
     .onChange(of: store.leaderboardResults.isTimeScopeMenuVisible) { _, isVisible, state in
